@@ -62,10 +62,10 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
 }
 
 export function resumoLinhas(linhas: LinhaCalculo[]) {
-  if (linhas.length === 0) return null;
   const ordenadas = [...linhas].sort((a, b) => a.total - b.total);
   const menor = ordenadas[0];
   const maior = ordenadas[ordenadas.length - 1];
+  if (!menor || !maior) return null;
   const media = linhas.reduce((acc, l) => acc + l.total, 0) / linhas.length;
   return { menor, maior, media };
 }
