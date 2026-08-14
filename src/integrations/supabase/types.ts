@@ -14,16 +14,296 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      calculo_itens: {
+        Row: {
+          calculo_id: string
+          id: string
+          material_id: string | null
+          material_nome: string
+          quantidade_color: number
+          quantidade_pb: number
+          total: number
+          total_color: number
+          total_pb: number
+          valor_unitario_color: number
+          valor_unitario_pb: number
+        }
+        Insert: {
+          calculo_id: string
+          id?: string
+          material_id?: string | null
+          material_nome?: string
+          quantidade_color?: number
+          quantidade_pb?: number
+          total?: number
+          total_color?: number
+          total_pb?: number
+          valor_unitario_color?: number
+          valor_unitario_pb?: number
+        }
+        Update: {
+          calculo_id?: string
+          id?: string
+          material_id?: string | null
+          material_nome?: string
+          quantidade_color?: number
+          quantidade_pb?: number
+          total?: number
+          total_color?: number
+          total_pb?: number
+          valor_unitario_color?: number
+          valor_unitario_pb?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calculo_itens_calculo_id_fkey"
+            columns: ["calculo_id"]
+            isOneToOne: false
+            referencedRelation: "calculos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calculo_itens_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calculos: {
+        Row: {
+          cliente_nome: string | null
+          cliente_telefone: string | null
+          created_at: string
+          id: string
+          material_nome: string | null
+          observacao: string | null
+          paginas_color: number
+          paginas_pb: number
+          paginas_total: number
+          quantidade_arquivos: number
+          tipo_impressao: string
+          usuario_id: string
+          valor_total: number
+        }
+        Insert: {
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
+          created_at?: string
+          id?: string
+          material_nome?: string | null
+          observacao?: string | null
+          paginas_color?: number
+          paginas_pb?: number
+          paginas_total?: number
+          quantidade_arquivos?: number
+          tipo_impressao?: string
+          usuario_id?: string
+          valor_total?: number
+        }
+        Update: {
+          cliente_nome?: string | null
+          cliente_telefone?: string | null
+          created_at?: string
+          id?: string
+          material_nome?: string | null
+          observacao?: string | null
+          paginas_color?: number
+          paginas_pb?: number
+          paginas_total?: number
+          quantidade_arquivos?: number
+          tipo_impressao?: string
+          usuario_id?: string
+          valor_total?: number
+        }
+        Relationships: []
+      }
+      configuracoes: {
+        Row: {
+          email: string | null
+          empresa_nome: string
+          endereco: string | null
+          id: string
+          instagram: string | null
+          logo_url: string | null
+          rodape_orcamento: string
+          telefone: string | null
+          updated_at: string
+          validade_padrao_dias: number
+          whatsapp: string | null
+        }
+        Insert: {
+          email?: string | null
+          empresa_nome?: string
+          endereco?: string | null
+          id?: string
+          instagram?: string | null
+          logo_url?: string | null
+          rodape_orcamento?: string
+          telefone?: string | null
+          updated_at?: string
+          validade_padrao_dias?: number
+          whatsapp?: string | null
+        }
+        Update: {
+          email?: string | null
+          empresa_nome?: string
+          endereco?: string | null
+          id?: string
+          instagram?: string | null
+          logo_url?: string | null
+          rodape_orcamento?: string
+          telefone?: string | null
+          updated_at?: string
+          validade_padrao_dias?: number
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      materiais: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string
+          id: string
+          nome: string
+          ordem: number
+          preco_color: number
+          preco_pb: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          id?: string
+          nome: string
+          ordem?: number
+          preco_color?: number
+          preco_pb?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          preco_color?: number
+          preco_pb?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      orcamentos: {
+        Row: {
+          calculo_id: string | null
+          cliente_nome: string
+          cliente_telefone: string | null
+          created_at: string
+          id: string
+          material_nome: string | null
+          numero: string
+          observacao: string | null
+          status: string
+          usuario_id: string
+          validade: string | null
+          valor_total: number
+        }
+        Insert: {
+          calculo_id?: string | null
+          cliente_nome?: string
+          cliente_telefone?: string | null
+          created_at?: string
+          id?: string
+          material_nome?: string | null
+          numero?: string
+          observacao?: string | null
+          status?: string
+          usuario_id?: string
+          validade?: string | null
+          valor_total?: number
+        }
+        Update: {
+          calculo_id?: string | null
+          cliente_nome?: string
+          cliente_telefone?: string | null
+          created_at?: string
+          id?: string
+          material_nome?: string | null
+          numero?: string
+          observacao?: string | null
+          status?: string
+          usuario_id?: string
+          validade?: string | null
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamentos_calculo_id_fkey"
+            columns: ["calculo_id"]
+            isOneToOne: false
+            referencedRelation: "calculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          nome: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          nome?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +430,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
