@@ -46,7 +46,10 @@ function AuthPage() {
     setEnviando(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
     setEnviando(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Bem-vindo de volta!");
     navigate({ to: "/" });
   }
@@ -60,7 +63,10 @@ function AuthPage() {
       options: { data: { nome }, emailRedirectTo: window.location.origin },
     });
     setEnviando(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Conta criada com sucesso.");
     navigate({ to: "/" });
   }
