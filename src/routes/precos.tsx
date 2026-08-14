@@ -95,14 +95,20 @@ function Precos() {
     const { error } = await supabase
       .from("materiais")
       .insert({ nome: "Novo material", descricao: "", ordem: linhas.length + 1 });
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ["materiais"] });
     toast.success("Material adicionado.");
   }
 
   async function excluir(id: string) {
     const { error } = await supabase.from("materiais").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ["materiais"] });
     toast.success("Material excluído.");
   }

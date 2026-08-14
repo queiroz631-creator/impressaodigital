@@ -55,7 +55,10 @@ function Historico() {
 
   async function excluir(id: string) {
     const { error } = await supabase.from("calculos").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: ["calculos"] });
     toast.success("Cálculo excluído.");
   }
