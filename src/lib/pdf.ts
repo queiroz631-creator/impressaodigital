@@ -6,12 +6,12 @@ export interface DadosOrcamentoPdf {
   numero: string;
   data: string;
   empresaNome: string;
-  empresaTelefone?: string | null;
-  empresaEmail?: string | null;
-  empresaEndereco?: string | null;
+  empresaTelefone?: string | null | undefined;
+  empresaEmail?: string | null | undefined;
+  empresaEndereco?: string | null | undefined;
   rodape: string;
   clienteNome: string;
-  clienteTelefone?: string | null;
+  clienteTelefone?: string | null | undefined;
   quantidadeArquivos: number;
   paginasTotal: number;
   paginasPb: number;
@@ -20,8 +20,8 @@ export interface DadosOrcamentoPdf {
   material: string;
   valorUnitario: number;
   valorTotal: number;
-  validade?: string | null;
-  observacao?: string | null;
+  validade?: string | null | undefined;
+  observacao?: string | null | undefined;
 }
 
 const NAVY: [number, number, number] = [26, 26, 94];
