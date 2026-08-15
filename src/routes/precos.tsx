@@ -8,11 +8,12 @@ import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMateriais } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
-import type { Material } from "@/lib/calc";
+import { faixasParaTexto, textoParaFaixas, type Material } from "@/lib/calc";
 
 export const Route = createFileRoute("/precos")({
   component: () => (
@@ -40,12 +41,17 @@ function Precos() {
   const queryClient = useQueryClient();
   const [linhas, setLinhas] = useState<Material[]>([]);
   const [salvando, setSalvando] = useState(false);
+  const [faixasTexto, setFaixasTexto] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (materiais) setLinhas(materiais.map((m) => ({ ...m })));
+    if (!materiais) return;
+    setLinhas(materiais.map((m) => ({ ...m })));
+    setFaixasTexto(
+      Object.fromEntries(materiais.map((m) => [m.id, faixasParaTexto(m.faixas ?? [])])),
+    );
   }, [materiais]);
 
-  function atualizar(id: string, campo: keyof Material, valor: string | number | boolean) {
+  function atualizar(id: string, campo: keyof Material, valor: unknown) {
     setLinhas((atual) => atual.map((m) => (m.id === id ? { ...m, [campo]: valor } : m)));
   }
 
@@ -76,6 +82,8 @@ function Precos() {
             descricao: m.descricao,
             preco_pb: Number(m.preco_pb),
             preco_color: Number(m.preco_color),
+            preco_por_arquivo: Number(m.preco_por_arquivo) || 0,
+            faixas: textoParaFaixas(faixasTexto[m.id] ?? "") as unknown as never,
             ativo: m.ativo,
             ordem: m.ordem,
           })
@@ -171,6 +179,8 @@ function Precos() {
                   <th className="px-2 py-3">MATERIAL</th>
                   <th className="px-2 py-3">DESCRIÇÃO</th>
                   <th className="px-2 py-3 w-32">PREÇO UNI</th>
+                  <th className="px-2 py-3 w-36">VALOR POR ARQUIVO</th>
+                  <th className="px-2 py-3 w-64">FAIXAS POR QUANTIDADE</th>
                   <th className="px-2 py-3 w-20">ATIVO</th>
                   <th className="px-2 py-3 w-28">ORDEM</th>
                   <th className="px-2 py-3 w-16" />
@@ -195,6 +205,26 @@ function Precos() {
                         min="0"
                         value={m.preco_pb}
                         onChange={(e) => atualizar(m.id, "preco_pb", e.target.value)}
+                      />
+                    </td>
+                    <td className="px-2 py-2">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={m.preco_por_arquivo ?? 0}
+                        onChange={(e) => atualizar(m.id, "preco_por_arquivo", e.target.value)}
+                      />
+                    </td>
+                    <td className="px-2 py-2">
+                      <Textarea
+                        rows={3}
+                        placeholder={"100 = 0,09\n500 = 0,08\n1000 = 0,07"}
+                        value={faixasTexto[m.id] ?? ""}
+                        onChange={(e) =>
+                          setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))
+                        }
+                        className="min-w-[15rem] font-mono text-xs"
                       />
                     </td>
                     <td className="px-2 py-2">
