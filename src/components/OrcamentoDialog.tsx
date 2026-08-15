@@ -41,6 +41,10 @@ interface Props {
   tipo: TipoImpressao;
   paginasPb: number;
   paginasColor: number;
+  tamanho?: string;
+  frenteVerso?: boolean;
+  valorAcabamento?: number;
+  acabamentos?: string[];
 }
 
 export function OrcamentoDialog({
@@ -51,6 +55,10 @@ export function OrcamentoDialog({
   tipo,
   paginasPb,
   paginasColor,
+  tamanho = "A4",
+  frenteVerso = false,
+  valorAcabamento = 0,
+  acabamentos = [],
 }: Props) {
   const { data: config } = useConfiguracao();
   const queryClient = useQueryClient();
@@ -72,6 +80,13 @@ export function OrcamentoDialog({
 
   const linha = linhas.find((l) => l.material.id === materialId) ?? linhas[0];
   const totalPaginas = paginasPb + paginasColor;
+  const resumoAcabamento = [
+    ...acabamentos,
+    frenteVerso ? "Frente e verso" : null,
+    `Tamanho ${tamanho}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   async function gerar() {
     if (!linha) return;
@@ -94,6 +109,10 @@ export function OrcamentoDialog({
           material_nome: linha.material.nome,
           valor_total: linha.total,
           observacao,
+          tamanho,
+          frente_verso: frenteVerso,
+          acabamentos: acabamentos as unknown as never,
+          valor_acabamento: valorAcabamento,
         })
         .select()
         .single();
@@ -152,7 +171,7 @@ export function OrcamentoDialog({
         valorUnitario: linha.valorUnitario,
         valorTotal: linha.total,
         validade,
-        observacao,
+        observacao: [observacao, resumoAcabamento].filter(Boolean).join("\n"),
       });
 
       queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
@@ -234,6 +253,12 @@ export function OrcamentoDialog({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tipo de impressão</span>
                 <span className="font-semibold">{rotuloTipo[tipo]}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-muted-foreground">Acabamento</span>
+                <span className="text-right font-semibold">
+                  {resumoAcabamento} — {brl(valorAcabamento)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Valor por página</span>

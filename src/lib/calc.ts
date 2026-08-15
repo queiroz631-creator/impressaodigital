@@ -132,3 +132,59 @@ export function resumoLinhas(linhas: LinhaCalculo[]) {
   const media = linhas.reduce((acc, l) => acc + l.total, 0) / linhas.length;
   return { menor, maior, media };
 }
+// ---------- Acabamentos ----------
+
+export type CobrancaAcabamento = "quantidade" | "bloco" | "pagina" | "fixo";
+
+export interface Acabamento {
+  id: string;
+  nome: string;
+  cobranca: CobrancaAcabamento;
+  valor: number;
+  paginas_bloco: number;
+  ativo: boolean;
+  ordem: number;
+}
+
+export interface SelecaoAcabamento {
+  ativo: boolean;
+  quantidade: number;
+}
+
+export interface LinhaAcabamento {
+  acabamento: Acabamento;
+  quantidade: number;
+  total: number;
+}
+
+export function calcularAcabamentos(
+  acabamentos: Acabamento[],
+  selecao: Record<string, SelecaoAcabamento>,
+  ctx: { paginas: number },
+): LinhaAcabamento[] {
+  return acabamentos
+    .filter((a) => a.ativo && selecao[a.id]?.ativo)
+    .map((a) => {
+      const valor = Number(a.valor) || 0;
+      const qtdInformada = Math.max(0, Number(selecao[a.id]?.quantidade) || 0);
+      const bloco = Math.max(1, Number(a.paginas_bloco) || 1);
+      let quantidade = 1;
+      if (a.cobranca === "quantidade") quantidade = qtdInformada;
+      else if (a.cobranca === "bloco") quantidade = Math.ceil(ctx.paginas / bloco);
+      else if (a.cobranca === "pagina") quantidade = ctx.paginas;
+      return { acabamento: a, quantidade, total: quantidade * valor };
+    });
+}
+
+export function totalAcabamentos(linhas: LinhaAcabamento[]) {
+  return linhas.reduce((acc, l) => acc + l.total, 0);
+}
+
+export const rotuloCobranca: Record<CobrancaAcabamento, string> = {
+  quantidade: "Por unidade",
+  bloco: "Por bloco de páginas",
+  pagina: "Por página",
+  fixo: "Valor fixo",
+};
+
+export const TAMANHOS = ["A4", "A5", "A6", "Outro"] as const;

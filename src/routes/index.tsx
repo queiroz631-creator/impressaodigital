@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -14,6 +14,8 @@ import {
   Layers,
   Info,
   Printer,
+  Paperclip,
+  Scissors,
 } from "lucide-react";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,8 +23,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMateriais } from "@/hooks/useDados";
-import { calcularLinhas, resumoLinhas } from "@/lib/calc";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAcabamentos, useMateriais } from "@/hooks/useDados";
+import {
+  TAMANHOS,
+  calcularAcabamentos,
+  calcularLinhas,
+  resumoLinhas,
+  rotuloCobranca,
+  totalAcabamentos,
+  type SelecaoAcabamento,
+} from "@/lib/calc";
+import { contarPaginas } from "@/lib/contagem";
 import { brl, numeroBR } from "@/lib/format";
 import { OrcamentoDialog } from "@/components/OrcamentoDialog";
 
@@ -55,10 +75,17 @@ function CalculadoraPage() {
 
 function Calculadora() {
   const { data: materiais, isLoading } = useMateriais(true);
+  const { data: acabamentos } = useAcabamentos(true);
   const queryClient = useQueryClient();
-  const [arquivos, setArquivos] = useState(10);
-  const [paginas, setPaginas] = useState(250);
+  const [arquivos, setArquivos] = useState(0);
+  const [paginas, setPaginas] = useState(0);
   const [dialogAberto, setDialogAberto] = useState(false);
+  const [selecao, setSelecao] = useState<Record<string, SelecaoAcabamento>>({});
+  const [frenteVerso, setFrenteVerso] = useState(false);
+  const [tamanho, setTamanho] = useState<string>("A4");
+  const [tamanhoOutro, setTamanhoOutro] = useState("");
+  const [lendoArquivos, setLendoArquivos] = useState(false);
+  const inputArquivos = useRef<HTMLInputElement>(null);
 
   const entrada = {
     tipo: "pb" as const,
@@ -74,10 +101,43 @@ function Calculadora() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [materiais, paginas, arquivos],
   );
-  const resumo = resumoLinhas(linhas);
+
+  const linhasAcabamento = useMemo(
+    () => calcularAcabamentos(acabamentos ?? [], selecao, { paginas }),
+    [acabamentos, selecao, paginas],
+  );
+  const valorAcabamento = totalAcabamentos(linhasAcabamento);
+  const tamanhoFinal = tamanho === "Outro" ? tamanhoOutro.trim() || "Outro" : tamanho;
+
+  const linhasFinais = useMemo(
+    () => linhas.map((l) => ({ ...l, total: l.total + valorAcabamento })),
+    [linhas, valorAcabamento],
+  );
+  const resumo = resumoLinhas(linhasFinais);
   const semPaginas = totalPaginas <= 0;
 
   const num = (v: string) => Math.max(0, Number(v.replace(/\D/g, "")) || 0);
+
+  async function anexar(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setLendoArquivos(true);
+    try {
+      const r = await contarPaginas(Array.from(files));
+      setArquivos(r.arquivos);
+      setPaginas(r.paginas);
+      if (r.ignorados.length > 0) {
+        toast.warning(`Arquivos ignorados: ${r.ignorados.join(", ")}`);
+      }
+      if (r.arquivos > 0) {
+        toast.success(`${r.arquivos} arquivo(s) e ${r.paginas} página(s) contabilizados.`);
+      }
+    } catch {
+      toast.error("Não foi possível ler os arquivos.");
+    } finally {
+      setLendoArquivos(false);
+      if (inputArquivos.current) inputArquivos.current.value = "";
+    }
+  }
 
   return (
     <>
@@ -97,7 +157,29 @@ function Calculadora() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="space-y-4">
+              <div>
+                <input
+                  ref={inputArquivos}
+                  type="file"
+                  multiple
+                  accept="application/pdf,image/*"
+                  className="hidden"
+                  onChange={(e) => anexar(e.target.files)}
+                />
+                <Button
+                  variant="outline"
+                  disabled={lendoArquivos}
+                  onClick={() => inputArquivos.current?.click()}
+                >
+                  <Paperclip className="h-4 w-4" />
+                  {lendoArquivos ? "Lendo arquivos..." : "Anexar PDFs / Imagens"}
+                </Button>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  As páginas dos PDFs são contadas automaticamente; cada imagem conta como 1 página.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <Campo
                 icon={<Files className="h-4 w-4 text-cyan-ink" />}
                 label="Quantidade de arquivos"
@@ -123,6 +205,7 @@ function Calculadora() {
                   className="text-xl font-bold"
                 />
               </Campo>
+              </div>
             </div>
 
             <div className="rounded-xl border border-border bg-accent/60 p-5">
@@ -136,7 +219,98 @@ function Calculadora() {
                   <dt className="text-muted-foreground">Total de páginas</dt>
                   <dd className="text-2xl font-extrabold text-primary">{numeroBR(totalPaginas)}</dd>
                 </div>
+                <div className="flex items-center justify-between border-t border-border pt-3">
+                  <dt className="text-muted-foreground">Acabamento</dt>
+                  <dd className="text-lg font-extrabold text-primary">{brl(valorAcabamento)}</dd>
+                </div>
               </dl>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6 shadow-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
+            <span className="rounded-lg bg-accent p-2 text-primary">
+              <Scissors className="h-4 w-4" />
+            </span>
+            ACABAMENTO
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {(acabamentos ?? []).map((a) => {
+              const sel = selecao[a.id] ?? { ativo: false, quantidade: 1 };
+              const linha = linhasAcabamento.find((l) => l.acabamento.id === a.id);
+              return (
+                <div key={a.id} className="rounded-xl border border-border p-4">
+                  <label className="flex items-center gap-3">
+                    <Checkbox
+                      checked={sel.ativo}
+                      onCheckedChange={(v) =>
+                        setSelecao((s) => ({ ...s, [a.id]: { ...sel, ativo: v === true } }))
+                      }
+                    />
+                    <span className="font-semibold">{a.nome}</span>
+                  </label>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {rotuloCobranca[a.cobranca]} · {brl(Number(a.valor) || 0)}
+                    {a.cobranca === "bloco" ? ` a cada ${a.paginas_bloco} páginas` : ""}
+                  </p>
+                  {sel.ativo && a.cobranca === "quantidade" && (
+                    <div className="mt-3">
+                      <Label className="text-xs text-muted-foreground">Quantidade</Label>
+                      <Input
+                        inputMode="numeric"
+                        value={sel.quantidade}
+                        onChange={(e) =>
+                          setSelecao((s) => ({
+                            ...s,
+                            [a.id]: { ...sel, quantidade: num(e.target.value) },
+                          }))
+                        }
+                        className="mt-1 font-bold"
+                      />
+                    </div>
+                  )}
+                  {sel.ativo && (
+                    <p className="mt-2 text-sm font-bold text-success">{brl(linha?.total ?? 0)}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="flex items-center justify-between rounded-xl border border-border p-4">
+              <div>
+                <p className="font-semibold">Frente e verso</p>
+                <p className="text-xs text-muted-foreground">Informado no orçamento</p>
+              </div>
+              <Switch checked={frenteVerso} onCheckedChange={setFrenteVerso} />
+            </div>
+            <div className="space-y-2 rounded-xl border border-border p-4">
+              <Label className="text-xs font-semibold text-muted-foreground">Tamanho</Label>
+              <Select value={tamanho} onValueChange={setTamanho}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TAMANHOS.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {tamanho === "Outro" && (
+                <Input
+                  placeholder="Informe o tamanho"
+                  value={tamanhoOutro}
+                  onChange={(e) => setTamanhoOutro(e.target.value)}
+                />
+              )}
             </div>
           </div>
         </CardContent>
@@ -160,7 +334,7 @@ function Calculadora() {
             >
               <RefreshCw className="h-4 w-4" /> Atualizar
             </Button>
-            <Button disabled={semPaginas || linhas.length === 0} onClick={() => setDialogAberto(true)}>
+            <Button disabled={semPaginas || linhasFinais.length === 0} onClick={() => setDialogAberto(true)}>
               <FileText className="h-4 w-4" /> Gerar Orçamento
             </Button>
           </div>
@@ -194,7 +368,7 @@ function Calculadora() {
                   </tr>
                 </thead>
                 <tbody>
-                  {linhas.map((l) => (
+                  {linhasFinais.map((l) => (
                     <tr key={l.material.id} className="bg-card shadow-xs">
                       <td className="rounded-l-lg border-y border-l border-border px-4 py-3 font-semibold">
                         {l.material.nome}
@@ -254,11 +428,15 @@ function Calculadora() {
       <OrcamentoDialog
         aberto={dialogAberto}
         onOpenChange={setDialogAberto}
-        linhas={linhas}
+        linhas={linhasFinais}
         arquivos={arquivos}
         tipo="pb"
         paginasPb={paginas}
         paginasColor={0}
+        tamanho={tamanhoFinal}
+        frenteVerso={frenteVerso}
+        valorAcabamento={valorAcabamento}
+        acabamentos={linhasAcabamento.map((l) => `${l.acabamento.nome} (${l.quantidade}x)`)}
       />
     </>
   );
