@@ -166,33 +166,39 @@ export type Database = {
           ativo: boolean
           created_at: string
           descricao: string
+          faixas: Json
           id: string
           nome: string
           ordem: number
           preco_color: number
           preco_pb: number
+          preco_por_arquivo: number
           updated_at: string
         }
         Insert: {
           ativo?: boolean
           created_at?: string
           descricao?: string
+          faixas?: Json
           id?: string
           nome: string
           ordem?: number
           preco_color?: number
           preco_pb?: number
+          preco_por_arquivo?: number
           updated_at?: string
         }
         Update: {
           ativo?: boolean
           created_at?: string
           descricao?: string
+          faixas?: Json
           id?: string
           nome?: string
           ordem?: number
           preco_color?: number
           preco_pb?: number
+          preco_por_arquivo?: number
           updated_at?: string
         }
         Relationships: []
