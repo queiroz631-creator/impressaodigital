@@ -35,7 +35,13 @@ export function precoPorQuantidade(material: Material, quantidade: number) {
 
 export function faixasParaTexto(faixas: FaixaPreco[]) {
   return normalizarFaixas(faixas)
-    .map((f) => `${f.min} = ${String(f.preco).replace(".", ",")}`)
+    .map(
+      (f) =>
+        `${f.min} = ${f.preco.toLocaleString("pt-BR", {
+          useGrouping: false,
+          maximumFractionDigits: 10,
+        })}`,
+    )
     .join("\n");
 }
 
