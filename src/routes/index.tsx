@@ -6,7 +6,6 @@ import {
   Calculator,
   Files,
   FileStack,
-  Palette,
   RefreshCw,
   FileText,
   TrendingDown,
@@ -22,15 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useMateriais } from "@/hooks/useDados";
-import { calcularLinhas, resumoLinhas, paginasEfetivas, type TipoImpressao } from "@/lib/calc";
+import { calcularLinhas, resumoLinhas } from "@/lib/calc";
 import { brl, numeroBR } from "@/lib/format";
 import { OrcamentoDialog } from "@/components/OrcamentoDialog";
 
@@ -53,12 +45,6 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-const TIPOS: { value: TipoImpressao; label: string }[] = [
-  { value: "pb", label: "PB (Preto e Branco)" },
-  { value: "color", label: "Colorida" },
-  { value: "ambas", label: "Ambas (PB e Color)" },
-];
-
 function CalculadoraPage() {
   return (
     <AppLayout>
@@ -72,21 +58,17 @@ function Calculadora() {
   const queryClient = useQueryClient();
   const [arquivos, setArquivos] = useState(10);
   const [paginas, setPaginas] = useState(250);
-  const [paginasPb, setPaginasPb] = useState(150);
-  const [paginasColor, setPaginasColor] = useState(100);
-  const [tipo, setTipo] = useState<TipoImpressao>("ambas");
   const [dialogAberto, setDialogAberto] = useState(false);
 
-  const entrada = { tipo, paginasTotal: paginas, paginasPb, paginasColor };
-  const totalPaginas = tipo === "ambas" ? paginasPb + paginasColor : paginas;
+  const entrada = { tipo: "pb" as const, paginasTotal: paginas, paginasPb: paginas, paginasColor: 0 };
+  const totalPaginas = paginas;
 
   const linhas = useMemo(
     () => calcularLinhas(materiais ?? [], entrada),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [materiais, tipo, paginas, paginasPb, paginasColor],
+    [materiais, paginas],
   );
   const resumo = resumoLinhas(linhas);
-  const efetivas = paginasEfetivas(entrada);
   const semPaginas = totalPaginas <= 0;
 
   const num = (v: string) => Math.max(0, Number(v.replace(/\D/g, "")) || 0);
@@ -123,61 +105,17 @@ function Calculadora() {
                 />
               </Campo>
 
-              {tipo === "ambas" ? (
-                <>
-                  <Campo
-                    icon={<FileStack className="h-4 w-4 text-navy" />}
-                    label="Páginas PB"
-                    sufixo="páginas"
-                  >
-                    <Input
-                      inputMode="numeric"
-                      value={paginasPb}
-                      onChange={(e) => setPaginasPb(num(e.target.value))}
-                      className="text-xl font-bold"
-                    />
-                  </Campo>
-                  <Campo
-                    icon={<Palette className="h-4 w-4 text-magenta-ink" />}
-                    label="Páginas coloridas"
-                    sufixo="páginas"
-                  >
-                    <Input
-                      inputMode="numeric"
-                      value={paginasColor}
-                      onChange={(e) => setPaginasColor(num(e.target.value))}
-                      className="text-xl font-bold"
-                    />
-                  </Campo>
-                </>
-              ) : (
-                <Campo
-                  icon={<FileStack className="h-4 w-4 text-navy" />}
-                  label="Quantidade total de páginas"
-                  sufixo="páginas"
-                >
-                  <Input
-                    inputMode="numeric"
-                    value={paginas}
-                    onChange={(e) => setPaginas(num(e.target.value))}
-                    className="text-xl font-bold"
-                  />
-                </Campo>
-              )}
-
-              <Campo icon={<Palette className="h-4 w-4 text-yellow-ink" />} label="Tipo de impressão">
-                <Select value={tipo} onValueChange={(v) => setTipo(v as TipoImpressao)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIPOS.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <Campo
+                icon={<FileStack className="h-4 w-4 text-navy" />}
+                label="Quantidade total de páginas"
+                sufixo="páginas"
+              >
+                <Input
+                  inputMode="numeric"
+                  value={paginas}
+                  onChange={(e) => setPaginas(num(e.target.value))}
+                  className="text-xl font-bold"
+                />
               </Campo>
             </div>
 
@@ -192,12 +130,6 @@ function Calculadora() {
                   <dt className="text-muted-foreground">Total de páginas</dt>
                   <dd className="text-2xl font-extrabold text-primary">{numeroBR(totalPaginas)}</dd>
                 </div>
-                {tipo === "ambas" && (
-                  <div className="flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
-                    <span>PB {numeroBR(efetivas.pb)}</span>
-                    <span>Color {numeroBR(efetivas.color)}</span>
-                  </div>
-                )}
               </dl>
             </div>
           </div>
@@ -249,7 +181,7 @@ function Calculadora() {
                   <tr className="bg-navy text-left text-xs font-bold tracking-wider text-navy-foreground">
                     <th className="rounded-l-lg px-4 py-3">MATERIAL</th>
                     <th className="px-4 py-3">DESCRIÇÃO</th>
-                    <th className="px-4 py-3 text-right">VALOR POR PÁGINA</th>
+                    <th className="px-4 py-3 text-right">PREÇO UNI</th>
                     <th className="rounded-r-lg px-4 py-3 text-right">
                       TOTAL ({numeroBR(totalPaginas)} PÁGINAS)
                     </th>
@@ -265,9 +197,7 @@ function Calculadora() {
                         {l.material.descricao}
                       </td>
                       <td className="border-y border-border px-4 py-3 text-right font-semibold">
-                        {tipo === "ambas"
-                          ? `${brl(l.valorUnitarioPb)} / ${brl(l.valorUnitarioColor)}`
-                          : brl(l.valorUnitario)}
+                        {brl(l.valorUnitarioPb)}
                       </td>
                       <td className="rounded-r-lg border-y border-r border-border px-4 py-3 text-right font-extrabold text-success">
                         {brl(l.total)}
@@ -276,12 +206,6 @@ function Calculadora() {
                   ))}
                 </tbody>
               </table>
-              {tipo === "ambas" && (
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Valor por página exibido como PB / Colorido. O total soma {numeroBR(efetivas.pb)}{" "}
-                  páginas PB e {numeroBR(efetivas.color)} coloridas.
-                </p>
-              )}
             </div>
           )}
         </CardContent>
@@ -326,9 +250,9 @@ function Calculadora() {
         onOpenChange={setDialogAberto}
         linhas={linhas}
         arquivos={arquivos}
-        tipo={tipo}
-        paginasPb={efetivas.pb}
-        paginasColor={efetivas.color}
+        tipo="pb"
+        paginasPb={paginas}
+        paginasColor={0}
       />
     </>
   );
