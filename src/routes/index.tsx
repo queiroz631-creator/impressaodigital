@@ -47,7 +47,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Calculadora de Impressão Digital" },
       {
         property: "og:description",
-        content: "Valores de impressão por tipo de papel, com orçamento em PDF.",
+        content: "Informe arquivos, páginas e tipo de impressão e veja o valor por página e o total de cada tipo de papel.",
       },
     ],
   }),
