@@ -35,8 +35,17 @@ export function precoPorQuantidade(material: Material, quantidade: number) {
 
 export function faixasParaTexto(faixas: FaixaPreco[]) {
   return normalizarFaixas(faixas)
-    .map((f) => `${f.min} = ${f.preco}`)
+    .map((f) => `${f.min} = ${String(f.preco).replace(".", ",")}`)
     .join("\n");
+}
+
+function parsePreco(valor: string) {
+  const texto = valor.trim();
+  if (texto.includes(",")) {
+    // vírgula é o separador decimal; pontos são separadores de milhar
+    return Number(texto.replace(/\./g, "").replace(",", "."));
+  }
+  return Number(texto);
 }
 
 export function textoParaFaixas(texto: string): FaixaPreco[] {
@@ -48,7 +57,7 @@ export function textoParaFaixas(texto: string): FaixaPreco[] {
       .map((linha) => {
         const partes = linha.split(/[=:\t]|\s{2,}|,(?=\s)/).map((p) => p.trim());
         const min = Number(String(partes[0] ?? "").replace(/\D/g, ""));
-        const preco = Number(String(partes[1] ?? "").replace(/\./g, "").replace(",", "."));
+        const preco = parsePreco(String(partes[1] ?? ""));
         return { min, preco };
       }),
   );
