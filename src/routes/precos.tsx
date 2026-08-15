@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AcabamentosTabela } from "@/components/AcabamentosTabela";
 import { useMateriais } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { faixasParaTexto, textoParaFaixas, type Material } from "@/lib/calc";
@@ -155,6 +157,12 @@ function Precos() {
         titulo="CONFIGURAR PREÇOS"
         subtitulo="Valores por página, valor cobrado por arquivo e faixas de preço por quantidade."
       />
+      <Tabs defaultValue="materiais">
+        <TabsList className="mb-4">
+          <TabsTrigger value="materiais">Materiais</TabsTrigger>
+          <TabsTrigger value="acabamentos">Acabamentos</TabsTrigger>
+        </TabsList>
+        <TabsContent value="materiais">
       <p className="mb-4 text-xs text-muted-foreground">
         Faixas: uma por linha no formato <span className="font-mono">quantidade = valor</span> (ex.:{" "}
         <span className="font-mono">500 = 0,08</span>). Pode colar vários valores de uma vez. A partir da quantidade
@@ -258,6 +266,11 @@ function Precos() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+        <TabsContent value="acabamentos">
+          <AcabamentosTabela />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
