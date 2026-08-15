@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      acabamentos: {
+        Row: {
+          ativo: boolean
+          cobranca: string
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          paginas_bloco: number
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          ativo?: boolean
+          cobranca?: string
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          paginas_bloco?: number
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          ativo?: boolean
+          cobranca?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          paginas_bloco?: number
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       calculo_itens: {
         Row: {
           calculo_id: string
@@ -73,9 +109,11 @@ export type Database = {
       }
       calculos: {
         Row: {
+          acabamentos: Json
           cliente_nome: string | null
           cliente_telefone: string | null
           created_at: string
+          frente_verso: boolean
           id: string
           material_nome: string | null
           observacao: string | null
@@ -83,14 +121,18 @@ export type Database = {
           paginas_pb: number
           paginas_total: number
           quantidade_arquivos: number
+          tamanho: string
           tipo_impressao: string
           usuario_id: string
+          valor_acabamento: number
           valor_total: number
         }
         Insert: {
+          acabamentos?: Json
           cliente_nome?: string | null
           cliente_telefone?: string | null
           created_at?: string
+          frente_verso?: boolean
           id?: string
           material_nome?: string | null
           observacao?: string | null
@@ -98,14 +140,18 @@ export type Database = {
           paginas_pb?: number
           paginas_total?: number
           quantidade_arquivos?: number
+          tamanho?: string
           tipo_impressao?: string
           usuario_id?: string
+          valor_acabamento?: number
           valor_total?: number
         }
         Update: {
+          acabamentos?: Json
           cliente_nome?: string | null
           cliente_telefone?: string | null
           created_at?: string
+          frente_verso?: boolean
           id?: string
           material_nome?: string | null
           observacao?: string | null
@@ -113,8 +159,10 @@ export type Database = {
           paginas_pb?: number
           paginas_total?: number
           quantidade_arquivos?: number
+          tamanho?: string
           tipo_impressao?: string
           usuario_id?: string
+          valor_acabamento?: number
           valor_total?: number
         }
         Relationships: []
