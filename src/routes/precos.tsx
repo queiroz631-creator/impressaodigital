@@ -161,8 +161,7 @@ function Precos() {
                 <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
                   <th className="px-2 py-3">MATERIAL</th>
                   <th className="px-2 py-3">DESCRIÇÃO</th>
-                  <th className="px-2 py-3 w-32">PREÇO PB</th>
-                  <th className="px-2 py-3 w-32">PREÇO COLOR</th>
+                  <th className="px-2 py-3 w-32">PREÇO UNI</th>
                   <th className="px-2 py-3 w-20">ATIVO</th>
                   <th className="px-2 py-3 w-28">ORDEM</th>
                   <th className="px-2 py-3 w-16" />
@@ -187,15 +186,6 @@ function Precos() {
                         min="0"
                         value={m.preco_pb}
                         onChange={(e) => atualizar(m.id, "preco_pb", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-2 py-2">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={m.preco_color}
-                        onChange={(e) => atualizar(m.id, "preco_color", e.target.value)}
                       />
                     </td>
                     <td className="px-2 py-2">
