@@ -71,10 +71,12 @@ function Precos() {
   async function salvar() {
     setSalvando(true);
     try {
+      const faixasNormalizadas: Record<string, string> = {};
       for (const m of linhas) {
         if (Number(m.preco_pb) < 0 || Number(m.preco_color) < 0) {
           throw new Error("Preços não podem ser negativos.");
         }
+        const faixas = textoParaFaixas(faixasTexto[m.id] ?? "");
         const { error } = await supabase
           .from("materiais")
           .update({
@@ -83,13 +85,15 @@ function Precos() {
             preco_pb: Number(m.preco_pb),
             preco_color: Number(m.preco_color),
             preco_por_arquivo: Number(m.preco_por_arquivo) || 0,
-            faixas: textoParaFaixas(faixasTexto[m.id] ?? "") as unknown as never,
+            faixas: faixas as unknown as never,
             ativo: m.ativo,
             ordem: m.ordem,
           })
           .eq("id", m.id);
         if (error) throw error;
+        faixasNormalizadas[m.id] = faixasParaTexto(faixas);
       }
+      setFaixasTexto(faixasNormalizadas);
       queryClient.invalidateQueries({ queryKey: ["materiais"] });
       toast.success("Preço atualizado com sucesso.");
     } catch (e) {
@@ -228,6 +232,12 @@ function Precos() {
                         value={faixasTexto[m.id] ?? ""}
                         onChange={(e) =>
                           setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))
+                        }
+                        onBlur={() =>
+                          setFaixasTexto((f) => ({
+                            ...f,
+                            [m.id]: faixasParaTexto(textoParaFaixas(f[m.id] ?? "")),
+                          }))
                         }
                         className="min-w-[15rem] font-mono text-xs"
                       />
