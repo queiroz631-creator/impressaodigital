@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Material } from "@/lib/calc";
+import type { Acabamento, Material } from "@/lib/calc";
 
 export function useMateriais(somenteAtivos = false) {
   return useQuery({
@@ -63,6 +63,18 @@ export function useCalculos() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
+    },
+  });
+}
+export function useAcabamentos(somenteAtivos = false) {
+  return useQuery({
+    queryKey: ["acabamentos", somenteAtivos],
+    queryFn: async () => {
+      let query = supabase.from("acabamentos").select("*").order("ordem");
+      if (somenteAtivos) query = query.eq("ativo", true);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []) as unknown as Acabamento[];
     },
   });
 }
