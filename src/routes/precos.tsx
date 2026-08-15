@@ -153,8 +153,13 @@ function Precos() {
     <>
       <PageHeader
         titulo="CONFIGURAR PREÇOS"
-        subtitulo="Altere nomes, descrições e valores por página de cada material."
+        subtitulo="Valores por página, valor cobrado por arquivo e faixas de preço por quantidade."
       />
+      <p className="mb-4 text-xs text-muted-foreground">
+        Faixas: uma por linha no formato <span className="font-mono">quantidade = valor</span> (ex.:{" "}
+        <span className="font-mono">500 = 0,08</span>). Pode colar vários valores de uma vez. A partir
+        da quantidade informada, o preço unitário passa a ser o da faixa.
+      </p>
       <div className="mb-4 flex flex-wrap gap-2">
         <Button variant="outline" onClick={adicionar}>
           <Plus className="h-4 w-4" /> Adicionar material
