@@ -46,9 +46,7 @@ function Precos() {
   useEffect(() => {
     if (!materiais) return;
     setLinhas(materiais.map((m) => ({ ...m })));
-    setFaixasTexto(
-      Object.fromEntries(materiais.map((m) => [m.id, faixasParaTexto(m.faixas ?? [])])),
-    );
+    setFaixasTexto(Object.fromEntries(materiais.map((m) => [m.id, faixasParaTexto(m.faixas ?? [])])));
   }, [materiais]);
 
   function atualizar(id: string, campo: keyof Material, valor: unknown) {
@@ -113,9 +111,7 @@ function Precos() {
           .eq("id", m.id);
         if (error) throw error;
       }
-      const { error } = await supabase
-        .from("materiais")
-        .insert({ nome: "Novo material", descricao: "", ordem: 1 });
+      const { error } = await supabase.from("materiais").insert({ nome: "Novo material", descricao: "", ordem: 1 });
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["materiais"] });
       toast.success("Material adicionado no início.");
@@ -161,8 +157,8 @@ function Precos() {
       />
       <p className="mb-4 text-xs text-muted-foreground">
         Faixas: uma por linha no formato <span className="font-mono">quantidade = valor</span> (ex.:{" "}
-        <span className="font-mono">500 = 0,08</span>). Pode colar vários valores de uma vez. A partir
-        da quantidade informada, o preço unitário passa a ser o da faixa.
+        <span className="font-mono">500 = 0,08</span>). Pode colar vários valores de uma vez. A partir da quantidade
+        informada, o preço unitário passa a ser o da faixa.
       </p>
       <div className="mb-4 flex flex-wrap gap-2">
         <Button variant="outline" onClick={adicionar}>
@@ -185,7 +181,7 @@ function Precos() {
             <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
-                  <th className="px-2 py-3">MATERIAL</th>
+                  <th className="px-2 py-3">TIPO</th>
                   <th className="px-2 py-3">DESCRIÇÃO</th>
                   <th className="px-2 py-3 w-32">PREÇO UNI</th>
                   <th className="px-2 py-3 w-36">VALOR POR ARQUIVO</th>
@@ -202,10 +198,7 @@ function Precos() {
                       <Input value={m.nome} onChange={(e) => atualizar(m.id, "nome", e.target.value)} />
                     </td>
                     <td className="px-2 py-2">
-                      <Input
-                        value={m.descricao ?? ""}
-                        onChange={(e) => atualizar(m.id, "descricao", e.target.value)}
-                      />
+                      <Input value={m.descricao ?? ""} onChange={(e) => atualizar(m.id, "descricao", e.target.value)} />
                     </td>
                     <td className="px-2 py-2">
                       <Input
@@ -230,9 +223,7 @@ function Precos() {
                         rows={3}
                         placeholder={"100 = 0,09\n500 = 0,08\n1000 = 0,07"}
                         value={faixasTexto[m.id] ?? ""}
-                        onChange={(e) =>
-                          setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))
-                        }
+                        onChange={(e) => setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))}
                         onBlur={() =>
                           setFaixasTexto((f) => ({
                             ...f,
@@ -243,10 +234,7 @@ function Precos() {
                       />
                     </td>
                     <td className="px-2 py-2">
-                      <Switch
-                        checked={m.ativo}
-                        onCheckedChange={(v) => atualizar(m.id, "ativo", v)}
-                      />
+                      <Switch checked={m.ativo} onCheckedChange={(v) => atualizar(m.id, "ativo", v)} />
                     </td>
                     <td className="px-2 py-2">
                       <div className="flex items-center gap-1">
