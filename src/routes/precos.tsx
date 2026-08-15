@@ -92,15 +92,24 @@ function Precos() {
   }
 
   async function adicionar() {
-    const { error } = await supabase
-      .from("materiais")
-      .insert({ nome: "Novo material", descricao: "", ordem: linhas.length + 1 });
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      // Desloca os materiais existentes para baixo para abrir espaço no início
+      for (const m of linhas) {
+        const { error } = await supabase
+          .from("materiais")
+          .update({ ordem: m.ordem + 1 })
+          .eq("id", m.id);
+        if (error) throw error;
+      }
+      const { error } = await supabase
+        .from("materiais")
+        .insert({ nome: "Novo material", descricao: "", ordem: 1 });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["materiais"] });
+      toast.success("Material adicionado no início.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao adicionar.");
     }
-    queryClient.invalidateQueries({ queryKey: ["materiais"] });
-    toast.success("Material adicionado.");
   }
 
   async function excluir(id: string) {
