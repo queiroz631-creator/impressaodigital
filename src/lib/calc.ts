@@ -6,8 +6,52 @@ export interface Material {
   descricao: string;
   preco_pb: number;
   preco_color: number;
+  preco_por_arquivo: number;
+  faixas: FaixaPreco[];
   ativo: boolean;
   ordem: number;
+}
+
+export interface FaixaPreco {
+  min: number;
+  preco: number;
+}
+
+export function normalizarFaixas(valor: unknown): FaixaPreco[] {
+  if (!Array.isArray(valor)) return [];
+  return valor
+    .map((f) => ({ min: Number((f as FaixaPreco)?.min) || 0, preco: Number((f as FaixaPreco)?.preco) || 0 }))
+    .filter((f) => f.min > 0)
+    .sort((a, b) => a.min - b.min);
+}
+
+export function precoPorQuantidade(material: Material, quantidade: number) {
+  const base = Number(material.preco_pb) || 0;
+  const faixas = normalizarFaixas(material.faixas);
+  let preco = base;
+  for (const f of faixas) if (quantidade >= f.min) preco = f.preco;
+  return preco;
+}
+
+export function faixasParaTexto(faixas: FaixaPreco[]) {
+  return normalizarFaixas(faixas)
+    .map((f) => `${f.min} = ${f.preco}`)
+    .join("\n");
+}
+
+export function textoParaFaixas(texto: string): FaixaPreco[] {
+  return normalizarFaixas(
+    texto
+      .split(/[\n;]+/)
+      .map((linha) => linha.trim())
+      .filter(Boolean)
+      .map((linha) => {
+        const partes = linha.split(/[=:\t]|\s{2,}|,(?=\s)/).map((p) => p.trim());
+        const min = Number(String(partes[0] ?? "").replace(/\D/g, ""));
+        const preco = Number(String(partes[1] ?? "").replace(/\./g, "").replace(",", "."));
+        return { min, preco };
+      }),
+  );
 }
 
 export interface LinhaCalculo {
@@ -19,6 +63,7 @@ export interface LinhaCalculo {
   paginasColor: number;
   totalPb: number;
   totalColor: number;
+  totalArquivos: number;
   total: number;
 }
 
@@ -27,6 +72,7 @@ export interface EntradaCalculo {
   paginasTotal: number;
   paginasPb: number;
   paginasColor: number;
+  arquivos?: number;
 }
 
 export function paginasEfetivas(entrada: EntradaCalculo) {
@@ -41,12 +87,13 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
     .filter((m) => m.ativo)
     .sort((a, b) => a.ordem - b.ordem)
     .map((material) => {
-      const precoPb = Number(material.preco_pb) || 0;
+      const precoPb = precoPorQuantidade(material, entrada.paginasTotal);
       const precoColor = Number(material.preco_color) || 0;
       const totalPb = pb * precoPb;
       const totalColor = color * precoColor;
       const paginas = pb + color;
-      const total = totalPb + totalColor;
+      const totalArquivos = (entrada.arquivos ?? 0) * (Number(material.preco_por_arquivo) || 0);
+      const total = totalPb + totalColor + totalArquivos;
       return {
         material,
         valorUnitario: paginas > 0 ? total / paginas : entrada.tipo === "color" ? precoColor : precoPb,
@@ -56,6 +103,7 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
         paginasColor: color,
         totalPb,
         totalColor,
+        totalArquivos,
         total,
       };
     });

@@ -60,13 +60,19 @@ function Calculadora() {
   const [paginas, setPaginas] = useState(250);
   const [dialogAberto, setDialogAberto] = useState(false);
 
-  const entrada = { tipo: "pb" as const, paginasTotal: paginas, paginasPb: paginas, paginasColor: 0 };
+  const entrada = {
+    tipo: "pb" as const,
+    paginasTotal: paginas,
+    paginasPb: paginas,
+    paginasColor: 0,
+    arquivos,
+  };
   const totalPaginas = paginas;
 
   const linhas = useMemo(
     () => calcularLinhas(materiais ?? [], entrada),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [materiais, paginas],
+    [materiais, paginas, arquivos],
   );
   const resumo = resumoLinhas(linhas);
   const semPaginas = totalPaginas <= 0;
