@@ -866,14 +866,9 @@ function Calculadora() {
               </span>
               ORÇAMENTOS ADICIONADOS AO PEDIDO {pedido?.numero ?? ""}
             </CardTitle>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => gerarOrcamentoPdf(documentoDoPedido())}>
-                <FileText className="h-4 w-4" /> Gerar PDF
-              </Button>
-              <Button variant="outline" onClick={() => gerarOrcamentoImagem(documentoDoPedido())}>
-                <ImageIcon className="h-4 w-4" /> Gerar Imagem
-              </Button>
-            </div>
+            <Button variant="outline" onClick={() => setDialogAberto(true)}>
+              <FileText className="h-4 w-4" /> Gerar Orçamento
+            </Button>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-sm">
@@ -965,6 +960,81 @@ function Calculadora() {
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         Os valores podem ser alterados a qualquer momento na tela de configuração de preços.
       </div>
+
+      <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Gerar orçamento</DialogTitle>
+            <DialogDescription>
+              Informe os dados do cliente para gerar o documento do pedido.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Cliente</Label>
+              <Input
+                value={estado.clienteNome}
+                onChange={(e) => set("clienteNome", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone</Label>
+              <Input
+                value={estado.clienteTelefone}
+                onChange={(e) => set("clienteTelefone", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Validade</Label>
+              <Input
+                type="date"
+                value={estado.validade}
+                onChange={(e) => set("validade", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Observação</Label>
+              <Textarea
+                rows={2}
+                value={estado.observacao}
+                onChange={(e) => set("observacao", e.target.value)}
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-xl border border-border p-3 sm:col-span-2">
+              <div>
+                <p className="font-semibold">Mostrar total</p>
+                <p className="text-xs text-muted-foreground">
+                  Desative para gerar o orçamento sem exibir os valores totais.
+                </p>
+              </div>
+              <Switch checked={incluirTotal} onCheckedChange={setIncluirTotal} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              disabled={(itensPedido ?? []).length === 0}
+              onClick={async () => {
+                await salvarDadosCliente();
+                gerarOrcamentoImagem(documentoParaGerar());
+                setDialogAberto(false);
+              }}
+            >
+              <ImageIcon className="h-4 w-4" /> Gerar Imagem
+            </Button>
+            <Button
+              disabled={(itensPedido ?? []).length === 0}
+              onClick={async () => {
+                await salvarDadosCliente();
+                gerarOrcamentoPdf(documentoParaGerar());
+                setDialogAberto(false);
+              }}
+            >
+              <FileText className="h-4 w-4" /> Gerar PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
