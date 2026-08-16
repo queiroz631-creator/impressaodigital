@@ -121,6 +121,12 @@ export interface EntradaCalculo {
   paginasPb: number;
   paginasColor: number;
   arquivos?: number;
+  /** Cor selecionada; quando informada, define qual preço será usado. */
+  cor?: CorImpressao;
+  /** Filtra os materiais pelo tipo de impressão. */
+  tipoServico?: TipoServico;
+  /** Cópia manual: cobra somente por página, ignorando o valor por arquivo. */
+  copiaManual?: boolean;
 }
 
 export function paginasEfetivas(entrada: EntradaCalculo) {
@@ -130,21 +136,26 @@ export function paginasEfetivas(entrada: EntradaCalculo) {
 }
 
 export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): LinhaCalculo[] {
-  const { pb, color } = paginasEfetivas(entrada);
+  const cor: CorImpressao = entrada.cor ?? (entrada.tipo === "color" ? "color" : "pb");
+  const pb = cor === "pb" ? entrada.paginasTotal : 0;
+  const color = cor === "color" ? entrada.paginasTotal : 0;
   return materiais
     .filter((m) => m.ativo)
+    .filter((m) => !entrada.tipoServico || (m.tipo_impressao ?? "simples") === entrada.tipoServico)
     .sort((a, b) => a.ordem - b.ordem)
     .map((material) => {
-      const precoPb = precoPorQuantidade(material, entrada.paginasTotal);
-      const precoColor = Number(material.preco_color) || 0;
+      const precoPb = precoPorQuantidade(material, entrada.paginasTotal, "pb");
+      const precoColor = precoPorQuantidade(material, entrada.paginasTotal, "color");
       const totalPb = pb * precoPb;
       const totalColor = color * precoColor;
       const paginas = pb + color;
-      const totalArquivos = (entrada.arquivos ?? 0) * (Number(material.preco_por_arquivo) || 0);
+      const totalArquivos = entrada.copiaManual
+        ? 0
+        : (entrada.arquivos ?? 0) * (Number(material.preco_por_arquivo) || 0);
       const total = totalPb + totalColor + totalArquivos;
       return {
         material,
-        valorUnitario: paginas > 0 ? total / paginas : entrada.tipo === "color" ? precoColor : precoPb,
+        valorUnitario: paginas > 0 ? total / paginas : cor === "color" ? precoColor : precoPb,
         valorUnitarioPb: precoPb,
         valorUnitarioColor: precoColor,
         paginasPb: pb,
