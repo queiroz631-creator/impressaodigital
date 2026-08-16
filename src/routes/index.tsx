@@ -799,8 +799,8 @@ function Calculadora() {
               <p className="font-semibold">Nenhum cálculo realizado ainda</p>
               <p className="text-sm text-muted-foreground">
                 {precisaSelecionar
-                  ? "Selecione o tipo de impressão e a cor da impressão para realizar o cálculo."
-                  : "Informe a quantidade de páginas e clique em Calcular."}
+                  ? "Selecione o tipo de impressão para ver os valores."
+                  : "Informe a quantidade de páginas para ver os valores."}
               </p>
             </div>
           ) : (
@@ -842,7 +842,7 @@ function Calculadora() {
                           {l.material.descricao}
                         </td>
                         <td className="border-y border-border px-4 py-3 text-right font-semibold">
-                          {brl(estado.cor === "color" ? l.valorUnitarioColor : l.valorUnitarioPb)}
+                          {brl(l.valorUnitario)}
                         </td>
                         <td className="rounded-r-lg border-y border-r border-border px-4 py-3 text-right font-extrabold text-success">
                           {brl(l.total)}
@@ -882,7 +882,7 @@ function Calculadora() {
                   <th className="px-3 py-3">Nº</th>
                   <th className="px-3 py-3">MATERIAL</th>
                   <th className="px-3 py-3">TIPO</th>
-                  <th className="px-3 py-3">COR</th>
+                  <th className="px-3 py-3">FORMATO</th>
                   <th className="px-3 py-3 text-right">PÁGINAS</th>
                   <th className="px-3 py-3 text-right">TOTAL</th>
                   <th className="px-3 py-3 text-right">AÇÕES</th>
@@ -894,9 +894,7 @@ function Calculadora() {
                     <td className="px-3 py-3 font-semibold">{String(i + 1).padStart(2, "0")}</td>
                     <td className="px-3 py-3">{o.material_nome}</td>
                     <td className="px-3 py-3 capitalize">{o.tipo_impressao}</td>
-                    <td className="px-3 py-3">
-                      {o.cor_impressao === "color" ? "Colorido" : "Preto e Branco"}
-                    </td>
+                    <td className="px-3 py-3">{o.tamanho}</td>
                     <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_total))}</td>
                     <td className="px-3 py-3 text-right font-bold text-success">
                       {brl(Number(o.valor_total))}
