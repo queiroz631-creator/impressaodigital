@@ -12,10 +12,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { AcabamentosTabela } from "@/components/AcabamentosTabela";
 import { useMateriais } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
-import { faixasParaTexto, textoParaFaixas, type Material } from "@/lib/calc";
+import {
+  faixasParaTexto,
+  textoParaFaixas,
+  type Material,
+  type TipoServico,
+} from "@/lib/calc";
 
 export const Route = createFileRoute("/precos")({
   component: () => (
@@ -86,6 +99,7 @@ function Precos() {
             preco_color: Number(m.preco_color),
             preco_por_arquivo: Number(m.preco_por_arquivo) || 0,
             faixas: faixas as unknown as never,
+            tipo_impressao: m.tipo_impressao ?? "simples",
             ativo: m.ativo,
             ordem: m.ordem,
           })
@@ -191,7 +205,9 @@ function Precos() {
                 <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
                   <th className="px-2 py-3">TIPO</th>
                   <th className="px-2 py-3">DESCRIÇÃO</th>
+                  <th className="px-2 py-3 w-44">TIPO DE IMPRESSÃO</th>
                   <th className="px-2 py-3 w-32">PREÇO UNI</th>
+                  <th className="px-2 py-3 w-32">PREÇO COLORIDO</th>
                   <th className="px-2 py-3 w-36">VALOR POR ARQUIVO</th>
                   <th className="px-2 py-3 w-64">FAIXAS POR QUANTIDADE</th>
                   <th className="px-2 py-3 w-20">ATIVO</th>
@@ -209,12 +225,35 @@ function Precos() {
                       <Input value={m.descricao ?? ""} onChange={(e) => atualizar(m.id, "descricao", e.target.value)} />
                     </td>
                     <td className="px-2 py-2">
+                      <Select
+                        value={m.tipo_impressao ?? "simples"}
+                        onValueChange={(v) => atualizar(m.id, "tipo_impressao", v as TipoServico)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="simples">Impressão Simples</SelectItem>
+                          <SelectItem value="especial">Impressão Especial</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="px-2 py-2">
                       <Input
                         type="number"
                         step="0.01"
                         min="0"
                         value={m.preco_pb}
                         onChange={(e) => atualizar(m.id, "preco_pb", e.target.value)}
+                      />
+                    </td>
+                    <td className="px-2 py-2">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={m.preco_color ?? 0}
+                        onChange={(e) => atualizar(m.id, "preco_color", e.target.value)}
                       />
                     </td>
                     <td className="px-2 py-2">
@@ -255,9 +294,11 @@ function Precos() {
                       </div>
                     </td>
                     <td className="px-2 py-2">
-                      <Button variant="ghost" size="icon" onClick={() => excluir(m.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <ConfirmarExclusao onConfirmar={() => excluir(m.id)}>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </ConfirmarExclusao>
                     </td>
                   </tr>
                 ))}
