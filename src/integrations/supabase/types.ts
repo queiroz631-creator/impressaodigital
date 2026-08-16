@@ -22,6 +22,7 @@ export type Database = {
           faixas: Json
           id: string
           mostrar_nao_incluso: boolean
+          mostrar_no_orcamento: boolean
           nome: string
           ordem: number
           paginas_bloco: number
@@ -36,6 +37,7 @@ export type Database = {
           faixas?: Json
           id?: string
           mostrar_nao_incluso?: boolean
+          mostrar_no_orcamento?: boolean
           nome: string
           ordem?: number
           paginas_bloco?: number
@@ -50,6 +52,7 @@ export type Database = {
           faixas?: Json
           id?: string
           mostrar_nao_incluso?: boolean
+          mostrar_no_orcamento?: boolean
           nome?: string
           ordem?: number
           paginas_bloco?: number
@@ -224,6 +227,7 @@ export type Database = {
           created_at: string
           descricao: string
           faixas: Json
+          formato: string
           id: string
           nome: string
           ordem: number
@@ -238,6 +242,7 @@ export type Database = {
           created_at?: string
           descricao?: string
           faixas?: Json
+          formato?: string
           id?: string
           nome: string
           ordem?: number
@@ -252,6 +257,7 @@ export type Database = {
           created_at?: string
           descricao?: string
           faixas?: Json
+          formato?: string
           id?: string
           nome?: string
           ordem?: number
