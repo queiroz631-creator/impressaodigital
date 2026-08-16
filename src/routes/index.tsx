@@ -495,19 +495,9 @@ function Calculadora() {
             <ShoppingCart className="h-4 w-4" /> Novo Pedido
           </Button>
         </ConfirmarAcao>
-        <ConfirmarAcao
-          titulo="Novo orçamento"
-          descricao="Deseja iniciar um novo orçamento? Os dados do orçamento atual serão limpos."
-          rotuloConfirmar="Novo Orçamento"
-          onConfirmar={() => {
-            limparFormulario(true);
-            toast.success("Novo orçamento iniciado.");
-          }}
-        >
-          <Button variant="outline">
-            <Plus className="h-4 w-4" /> Novo Orçamento
-          </Button>
-        </ConfirmarAcao>
+        <Button variant="outline" onClick={() => setDialogAberto(true)}>
+          <FileText className="h-4 w-4" /> Gerar Orçamento
+        </Button>
         {pedido && (
           <Badge variant="secondary" className="text-sm">
             Pedido {pedido.numero}
