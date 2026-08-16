@@ -1,12 +1,14 @@
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FileDown, FileText, Trash2 } from "lucide-react";
+import { FileDown, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -15,9 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { useConfiguracao, useOrcamentos } from "@/hooks/useDados";
 import { brl, dataBR } from "@/lib/format";
+import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
 import { gerarOrcamentoPdf } from "@/lib/pdf";
+import { gerarOrcamentoImagem } from "@/lib/imagem";
+import { STATUS_ORCAMENTO, normalizarStatus, rotuloStatus } from "@/lib/status";
 
 export const Route = createFileRoute("/orcamentos")({
   component: () => (
@@ -28,19 +34,26 @@ export const Route = createFileRoute("/orcamentos")({
   head: () => ({
     meta: [
       { title: "Orçamentos | Impressão Digital" },
-      { name: "description", content: "Consulte, atualize o status e reemita orçamentos em PDF." },
+      { name: "description", content: "Consulte, filtre por status e reemita orçamentos em PDF ou imagem." },
       { property: "og:title", content: "Orçamentos | Impressão Digital" },
       { property: "og:description", content: "Gestão dos orçamentos gerados pelo sistema." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
-
-const STATUS = ["rascunho", "enviado", "aprovado", "recusado", "expirado"];
 
 function Orcamentos() {
   const { data: orcamentos, isLoading } = useOrcamentos();
   const { data: config } = useConfiguracao();
   const queryClient = useQueryClient();
+  const [filtro, setFiltro] = useState("todos");
+
+  const lista = useMemo(() => {
+    return (orcamentos ?? []).filter((o) =>
+      filtro === "todos" ? true : normalizarStatus(o.status) === filtro,
+    );
+  }, [orcamentos, filtro]);
 
   async function alterarStatus(id: string, status: string) {
     const { error } = await supabase.from("orcamentos").update({ status }).eq("id", id);
@@ -62,37 +75,12 @@ function Orcamentos() {
     toast.success("Orçamento excluído.");
   }
 
-  async function baixarPdf(orc: Record<string, unknown>) {
-    const calculoId = orc["calculo_id"] as string | null;
-    let calculo: Record<string, unknown> | null = null;
-    if (calculoId) {
-      const { data } = await supabase.from("calculos").select("*").eq("id", calculoId).maybeSingle();
-      calculo = data as Record<string, unknown> | null;
-    }
-    const paginasPb = Number(calculo?.["paginas_pb"] ?? 0);
-    const paginasColor = Number(calculo?.["paginas_color"] ?? 0);
-    const paginasTotal = Number(calculo?.["paginas_total"] ?? paginasPb + paginasColor);
-    const valorTotal = Number(orc["valor_total"] ?? 0);
-    gerarOrcamentoPdf({
+  function documento(orc: Record<string, unknown>) {
+    return documentoDeOrcamentos([orc], config, {
       numero: String(orc["numero"]),
       data: String(orc["created_at"]),
-      empresaNome: config?.empresa_nome ?? "Impressão Digital",
-      empresaTelefone: config?.telefone,
-      empresaEmail: config?.email,
-      empresaEndereco: config?.endereco,
-      rodape:
-        config?.rodape_orcamento ??
-        "Orçamento gerado pelo sistema de Calculadora de Impressão Digital.",
       clienteNome: String(orc["cliente_nome"] ?? ""),
       clienteTelefone: (orc["cliente_telefone"] as string | null) ?? null,
-      quantidadeArquivos: Number(calculo?.["quantidade_arquivos"] ?? 0),
-      paginasTotal,
-      paginasPb,
-      paginasColor,
-      tipoImpressao: String(calculo?.["tipo_impressao"] ?? "-"),
-      material: String(orc["material_nome"] ?? "-"),
-      valorUnitario: paginasTotal > 0 ? valorTotal / paginasTotal : 0,
-      valorTotal,
       validade: (orc["validade"] as string | null) ?? null,
       observacao: (orc["observacao"] as string | null) ?? null,
     });
@@ -101,6 +89,26 @@ function Orcamentos() {
   return (
     <>
       <PageHeader titulo="ORÇAMENTOS" subtitulo="Todos os orçamentos gerados pelo sistema." />
+
+      <Card className="mb-4 shadow-card">
+        <CardContent className="grid gap-2 py-4 sm:max-w-xs">
+          <Label>Filtrar por status</Label>
+          <Select value={filtro} onValueChange={setFiltro}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              {STATUS_ORCAMENTO.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {rotuloStatus[s]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
       <Card className="shadow-card">
         <CardContent className="overflow-x-auto py-4">
           {isLoading ? (
@@ -109,62 +117,80 @@ function Orcamentos() {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
-          ) : (orcamentos ?? []).length === 0 ? (
+          ) : lista.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-16 text-center">
               <FileText className="h-10 w-10 text-muted-foreground" />
-              <p className="font-semibold">Nenhum orçamento gerado ainda</p>
+              <p className="font-semibold">Nenhum orçamento encontrado</p>
               <p className="text-sm text-muted-foreground">
-                Use a calculadora e clique em Gerar Orçamento.
+                Use a calculadora e clique em Adicionar ao Pedido.
               </p>
             </div>
           ) : (
-            <table className="w-full min-w-[860px] text-sm">
+            <table className="w-full min-w-[960px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
                   <th className="px-3 py-3">NÚMERO</th>
                   <th className="px-3 py-3">DATA</th>
                   <th className="px-3 py-3">CLIENTE</th>
-                  <th className="px-3 py-3">TELEFONE</th>
+                  <th className="px-3 py-3">MATERIAL</th>
+                  <th className="px-3 py-3 text-right">PÁGINAS</th>
                   <th className="px-3 py-3 text-right">VALOR</th>
                   <th className="px-3 py-3">STATUS</th>
                   <th className="px-3 py-3 text-right">AÇÕES</th>
                 </tr>
               </thead>
               <tbody>
-                {(orcamentos ?? []).map((o) => (
+                {lista.map((o) => (
                   <tr key={o.id} className="border-b border-border">
                     <td className="px-3 py-3 font-semibold">{o.numero}</td>
                     <td className="px-3 py-3">{dataBR(o.created_at)}</td>
-                    <td className="px-3 py-3">{o.cliente_nome}</td>
-                    <td className="px-3 py-3">{o.cliente_telefone || "-"}</td>
+                    <td className="px-3 py-3">{o.cliente_nome || "-"}</td>
+                    <td className="px-3 py-3">{o.material_nome || "-"}</td>
+                    <td className="px-3 py-3 text-right">{o.paginas_total ?? 0}</td>
                     <td className="px-3 py-3 text-right font-bold text-success">
                       {brl(Number(o.valor_total))}
                     </td>
                     <td className="px-3 py-3">
-                      <Select value={o.status} onValueChange={(v) => alterarStatus(o.id, v)}>
-                        <SelectTrigger className="h-8 w-36">
+                      <Select
+                        value={normalizarStatus(o.status)}
+                        onValueChange={(v) => alterarStatus(o.id, v)}
+                      >
+                        <SelectTrigger className="h-8 w-48">
                           <SelectValue>
-                            <Badge variant="secondary" className="capitalize">
-                              {o.status}
-                            </Badge>
+                            <Badge variant="secondary">{rotuloStatus[normalizarStatus(o.status)]}</Badge>
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {STATUS.map((s) => (
-                            <SelectItem key={s} value={s} className="capitalize">
-                              {s}
+                          {STATUS_ORCAMENTO.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {rotuloStatus[s]}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </td>
-                    <td className="px-3 py-3 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => baixarPdf(o)}>
+                    <td className="px-3 py-3 text-right whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Gerar PDF"
+                        onClick={() => gerarOrcamentoPdf(documento(o as unknown as Record<string, unknown>))}
+                      >
                         <FileDown className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => excluir(o.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Gerar Imagem"
+                        onClick={() => gerarOrcamentoImagem(documento(o as unknown as Record<string, unknown>))}
+                      >
+                        <ImageIcon className="h-4 w-4" />
                       </Button>
+                      <ConfirmarExclusao onConfirmar={() => excluir(o.id)}>
+                        <Button variant="ghost" size="icon" title="Excluir">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </ConfirmarExclusao>
                     </td>
                   </tr>
                 ))}

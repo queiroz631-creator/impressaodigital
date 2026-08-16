@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCalculos } from "@/hooks/useDados";
+import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { brl, dataHoraBR } from "@/lib/format";
 
 export const Route = createFileRoute("/historico")({
@@ -138,9 +139,11 @@ function Historico() {
                       {brl(Number(c.valor_total))}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => excluir(c.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <ConfirmarExclusao onConfirmar={() => excluir(c.id)}>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </ConfirmarExclusao>
                     </td>
                   </tr>
                 ))}

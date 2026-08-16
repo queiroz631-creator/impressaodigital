@@ -78,3 +78,54 @@ export function useAcabamentos(somenteAtivos = false) {
     },
   });
 }
+
+/** Orçamentos vinculados a um pedido, em ordem de criação. */
+export function useOrcamentosPedido(pedidoId: string | null) {
+  return useQuery({
+    queryKey: ["orcamentos-pedido", pedidoId],
+    enabled: !!pedidoId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orcamentos")
+        .select("*")
+        .eq("pedido_id", pedidoId!)
+        .order("ordem");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function usePedido(pedidoId: string | null) {
+  return useQuery({
+    queryKey: ["pedido", pedidoId],
+    enabled: !!pedidoId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pedidos")
+        .select("*")
+        .eq("id", pedidoId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+/** Rascunho do orçamento em andamento do usuário logado. */
+export function useRascunho(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["rascunho", userId],
+    enabled: !!userId,
+    staleTime: Infinity,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rascunhos")
+        .select("dados")
+        .eq("usuario_id", userId!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.dados ?? null) as Record<string, unknown> | null;
+    },
+  });
+}
