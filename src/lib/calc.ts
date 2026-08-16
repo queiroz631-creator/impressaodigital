@@ -186,6 +186,9 @@ export interface Acabamento {
   cobranca: CobrancaAcabamento;
   valor: number;
   paginas_bloco: number;
+  faixas: FaixaPreco[];
+  tipo_impressao: TipoServicoAcabamento;
+  mostrar_nao_incluso: boolean;
   ativo: boolean;
   ordem: number;
 }
@@ -198,6 +201,7 @@ export interface SelecaoAcabamento {
 export interface LinhaAcabamento {
   acabamento: Acabamento;
   quantidade: number;
+  valorUnitario: number;
   total: number;
 }
 
@@ -209,15 +213,24 @@ export function calcularAcabamentos(
   return acabamentos
     .filter((a) => a.ativo && selecao[a.id]?.ativo)
     .map((a) => {
-      const valor = Number(a.valor) || 0;
       const qtdInformada = Math.max(0, Number(selecao[a.id]?.quantidade) || 0);
       const bloco = Math.max(1, Number(a.paginas_bloco) || 1);
       let quantidade = 1;
       if (a.cobranca === "quantidade") quantidade = qtdInformada;
       else if (a.cobranca === "bloco") quantidade = Math.ceil(ctx.paginas / bloco);
       else if (a.cobranca === "pagina") quantidade = ctx.paginas;
-      return { acabamento: a, quantidade, total: quantidade * valor };
+      const valor = precoAcabamento(a, quantidade);
+      return { acabamento: a, quantidade, valorUnitario: valor, total: quantidade * valor };
     });
+}
+
+/** Acabamentos visíveis para o tipo de impressão selecionado. */
+export function acabamentosDoTipo(acabamentos: Acabamento[], tipo?: TipoServico) {
+  if (!tipo) return acabamentos;
+  return acabamentos.filter((a) => {
+    const t = a.tipo_impressao ?? "ambas";
+    return t === "ambas" || t === tipo;
+  });
 }
 
 export function totalAcabamentos(linhas: LinhaAcabamento[]) {
