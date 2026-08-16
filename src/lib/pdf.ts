@@ -48,12 +48,12 @@ export function gerarOrcamentoPdf(d: DadosDocumento) {
     y += 10;
 
     const resumo: string[][] = [
-      ["Cor da impressão", item.cor],
+      ["Material utilizado", item.material],
       ["Tipo de impressão", item.tipoImpressao],
       ["Quantidade de arquivos", String(item.quantidadeArquivos)],
       ["Total de páginas orçado", String(item.paginasTotal)],
     ];
-    if (item.tamanho) resumo.push(["Tamanho", item.tamanho]);
+    if (item.tamanho) resumo.push(["Formato", item.tamanho]);
     if (item.frenteVerso) resumo.push(["Frente e verso", "Sim"]);
     if (item.copiaManual) resumo.push(["Cópia manual", "Sim"]);
 
@@ -103,10 +103,12 @@ export function gerarOrcamentoPdf(d: DadosDocumento) {
       y = finalY(doc) + 18;
     }
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(`Total ${item.titulo}: ${brl(item.total)}`, width - 40, y, { align: "right" });
-    y += 28;
+    if (d.mostrarTotal !== false) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(`Total ${item.titulo}: ${brl(item.total)}`, width - 40, y, { align: "right" });
+      y += 28;
+    }
 
     if (y > doc.internal.pageSize.getHeight() - 140 && item !== d.itens[d.itens.length - 1]) {
       doc.addPage();
@@ -114,15 +116,17 @@ export function gerarOrcamentoPdf(d: DadosDocumento) {
     }
   }
 
-  autoTable(doc, {
-    startY: y,
-    body: [["VALOR TOTAL", brl(d.total)]],
-    theme: "grid",
-    bodyStyles: { fontSize: 12, fontStyle: "bold", fillColor: [235, 235, 245] },
-    columnStyles: { 1: { halign: "right" } },
-    margin: { left: 40, right: 40 },
-  });
-  y = finalY(doc) + 30;
+  if (d.mostrarTotal !== false) {
+    autoTable(doc, {
+      startY: y,
+      body: [["VALOR TOTAL", brl(d.total)]],
+      theme: "grid",
+      bodyStyles: { fontSize: 12, fontStyle: "bold", fillColor: [235, 235, 245] },
+      columnStyles: { 1: { halign: "right" } },
+      margin: { left: 40, right: 40 },
+    });
+    y = finalY(doc) + 30;
+  }
 
   if (d.observacao) {
     doc.setFont("helvetica", "bold");

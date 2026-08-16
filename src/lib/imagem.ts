@@ -21,9 +21,9 @@ function montarLinhas(d: DadosDocumento): Linha[] {
   for (const item of d.itens) {
     linhas.push({ texto: "sep", tipo: "sep" });
     linhas.push({ texto: `${item.titulo} — ${item.material}`, tipo: "sub" });
-    linhas.push({ texto: "Cor da impressão", tipo: "chave", valor: item.cor });
+    linhas.push({ texto: "Material utilizado", tipo: "chave", valor: item.material });
     linhas.push({ texto: "Tipo de impressão", tipo: "chave", valor: item.tipoImpressao });
-    if (item.tamanho) linhas.push({ texto: "Tamanho", tipo: "chave", valor: item.tamanho });
+    if (item.tamanho) linhas.push({ texto: "Formato", tipo: "chave", valor: item.tamanho });
     if (item.frenteVerso) linhas.push({ texto: "Frente e verso", tipo: "chave", valor: "Sim" });
     if (item.copiaManual) linhas.push({ texto: "Cópia manual", tipo: "chave", valor: "Sim" });
     linhas.push({
@@ -46,11 +46,15 @@ function montarLinhas(d: DadosDocumento): Linha[] {
         valor: a.incluso ? `${a.quantidade}x · ${brl(a.total)}` : "Não incluso",
       });
     }
-    linhas.push({ texto: `Total ${item.titulo}`, tipo: "total", valor: brl(item.total) });
+    if (d.mostrarTotal !== false) {
+      linhas.push({ texto: `Total ${item.titulo}`, tipo: "total", valor: brl(item.total) });
+    }
   }
 
-  linhas.push({ texto: "sep", tipo: "sep" });
-  linhas.push({ texto: "VALOR TOTAL", tipo: "total", valor: brl(d.total) });
+  if (d.mostrarTotal !== false) {
+    linhas.push({ texto: "sep", tipo: "sep" });
+    linhas.push({ texto: "VALOR TOTAL", tipo: "total", valor: brl(d.total) });
+  }
   if (d.observacao) {
     linhas.push({ texto: "sep", tipo: "sep" });
     linhas.push({ texto: "Observações", tipo: "sub" });
