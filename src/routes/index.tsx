@@ -395,16 +395,15 @@ function Calculadora() {
       arquivosLista: arquivos,
       arquivos: Number(row["quantidade_arquivos"] ?? arquivos.length),
       paginas: Number(row["paginas_total"] ?? 0),
-      cor: (row["cor_impressao"] as CorImpressao) ?? "pb",
       tipoServico: (row["tipo_impressao"] as TipoServico) ?? "simples",
       copiaManual: Boolean(row["copia_manual"]),
       materialId: String(row["material_id"] ?? ""),
       selecao,
       frenteVerso: Boolean(row["frente_verso"]),
-      tamanho: TAMANHOS.includes(row["tamanho"] as never) ? String(row["tamanho"]) : "Outro",
-      tamanhoOutro: TAMANHOS.includes(row["tamanho"] as never) ? "" : String(row["tamanho"] ?? ""),
+      formato: (["A3", "A4", "A5"].includes(String(row["tamanho"]))
+        ? String(row["tamanho"])
+        : FORMATO_PADRAO) as FormatoPapel,
     }));
-    setCalculado(true);
     toast.info("Orçamento carregado para edição.");
   }
 
@@ -428,7 +427,6 @@ function Calculadora() {
       clienteTelefone: manterPedido ? e.clienteTelefone : "",
       validade: manterPedido ? e.validade : "",
     }));
-    setCalculado(false);
   }
 
   function documentoDoPedido() {
@@ -444,6 +442,36 @@ function Calculadora() {
         observacao: estado.observacao || null,
       },
     );
+  }
+
+  function documentoParaGerar() {
+    return { ...documentoDoPedido(), mostrarTotal: incluirTotal };
+  }
+
+  async function salvarDadosCliente() {
+    if (!estado.pedidoId) return;
+    await supabase
+      .from("pedidos")
+      .update({
+        cliente_nome: estado.clienteNome,
+        cliente_telefone: estado.clienteTelefone,
+        observacao: estado.observacao,
+        validade: estado.validade || null,
+      })
+      .eq("id", estado.pedidoId);
+    if ((itensPedido ?? []).length > 0) {
+      await supabase
+        .from("orcamentos")
+        .update({
+          cliente_nome: estado.clienteNome,
+          cliente_telefone: estado.clienteTelefone,
+          observacao: estado.observacao,
+          validade: estado.validade || null,
+        })
+        .eq("pedido_id", estado.pedidoId);
+      queryClient.invalidateQueries({ queryKey: ["orcamentos-pedido", estado.pedidoId] });
+      queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
+    }
   }
 
   return (
