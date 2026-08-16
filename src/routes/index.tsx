@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -16,12 +16,21 @@ import {
   Printer,
   Paperclip,
   Scissors,
+  Plus,
+  Trash2,
+  Pencil,
+  ShoppingCart,
+  Copy,
+  Image as ImageIcon,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,19 +41,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAcabamentos, useMateriais } from "@/hooks/useDados";
+import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
+import { ConfirmarAcao } from "@/components/ConfirmarAcao";
+import {
+  useAcabamentos,
+  useConfiguracao,
+  useMateriais,
+  useOrcamentosPedido,
+  usePedido,
+  useRascunho,
+} from "@/hooks/useDados";
+import { useAuth } from "@/hooks/useAuth";
 import {
   TAMANHOS,
+  acabamentosDoTipo,
   calcularAcabamentos,
   calcularLinhas,
   resumoLinhas,
   rotuloCobranca,
   totalAcabamentos,
+  type CorImpressao,
   type SelecaoAcabamento,
+  type TipoServico,
 } from "@/lib/calc";
 import { contarPaginas } from "@/lib/contagem";
+import type { AcabamentoDoc, ArquivoDoc } from "@/lib/documento";
 import { brl, numeroBR } from "@/lib/format";
-import { OrcamentoDialog } from "@/components/OrcamentoDialog";
+import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
+import { gerarOrcamentoPdf } from "@/lib/pdf";
+import { gerarOrcamentoImagem } from "@/lib/imagem";
 
 export const Route = createFileRoute("/")({
   component: CalculadoraPage,
@@ -54,13 +79,15 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Informe arquivos, páginas e tipo de impressão e veja o valor por página e o total de cada tipo de papel.",
+          "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
       },
       { property: "og:title", content: "Calculadora de Impressão Digital" },
       {
         property: "og:description",
-        content: "Informe arquivos, páginas e tipo de impressão e veja o valor por página e o total de cada tipo de papel.",
+        content: "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
@@ -73,41 +100,125 @@ function CalculadoraPage() {
   );
 }
 
+interface EstadoRascunho {
+  pedidoId: string | null;
+  editandoId: string | null;
+  clienteNome: string;
+  clienteTelefone: string;
+  observacao: string;
+  validade: string;
+  arquivosLista: ArquivoDoc[];
+  arquivos: number;
+  paginas: number;
+  cor: CorImpressao | "";
+  tipoServico: TipoServico | "";
+  copiaManual: boolean;
+  materialId: string;
+  selecao: Record<string, SelecaoAcabamento>;
+  frenteVerso: boolean;
+  tamanho: string;
+  tamanhoOutro: string;
+}
+
+const ESTADO_INICIAL: EstadoRascunho = {
+  pedidoId: null,
+  editandoId: null,
+  clienteNome: "",
+  clienteTelefone: "",
+  observacao: "",
+  validade: "",
+  arquivosLista: [],
+  arquivos: 0,
+  paginas: 0,
+  cor: "",
+  tipoServico: "",
+  copiaManual: false,
+  materialId: "",
+  selecao: {},
+  frenteVerso: false,
+  tamanho: "A4",
+  tamanhoOutro: "",
+};
+
 function Calculadora() {
+  const { user } = useAuth();
   const { data: materiais, isLoading } = useMateriais(true);
   const { data: acabamentos } = useAcabamentos(true);
+  const { data: config } = useConfiguracao();
+  const { data: rascunhoSalvo, isFetched: rascunhoCarregado } = useRascunho(user?.id);
   const queryClient = useQueryClient();
-  const [arquivos, setArquivos] = useState(0);
-  const [paginas, setPaginas] = useState(0);
-  const [dialogAberto, setDialogAberto] = useState(false);
-  const [selecao, setSelecao] = useState<Record<string, SelecaoAcabamento>>({});
-  const [frenteVerso, setFrenteVerso] = useState(false);
-  const [tamanho, setTamanho] = useState<string>("A4");
-  const [tamanhoOutro, setTamanhoOutro] = useState("");
+
+  const [estado, setEstado] = useState<EstadoRascunho>(ESTADO_INICIAL);
+  const [hidratado, setHidratado] = useState(false);
+  const [calculado, setCalculado] = useState(false);
   const [lendoArquivos, setLendoArquivos] = useState(false);
+  const [salvandoItem, setSalvandoItem] = useState(false);
   const inputArquivos = useRef<HTMLInputElement>(null);
 
-  const entrada = {
-    tipo: "pb" as const,
-    paginasTotal: paginas,
-    paginasPb: paginas,
-    paginasColor: 0,
-    arquivos,
-  };
-  const totalPaginas = paginas;
+  const set = useCallback(
+    <K extends keyof EstadoRascunho>(campo: K, valor: EstadoRascunho[K]) =>
+      setEstado((e) => ({ ...e, [campo]: valor })),
+    [],
+  );
 
-  const linhas = useMemo(
-    () => calcularLinhas(materiais ?? [], entrada),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [materiais, paginas, arquivos],
+  const { data: pedido } = usePedido(estado.pedidoId);
+  const { data: itensPedido } = useOrcamentosPedido(estado.pedidoId);
+
+  // ----- Hidratação do rascunho (Supabase é a fonte persistente) -----
+  useEffect(() => {
+    if (hidratado || !rascunhoCarregado) return;
+    if (rascunhoSalvo && Object.keys(rascunhoSalvo).length > 0) {
+      setEstado({ ...ESTADO_INICIAL, ...(rascunhoSalvo as unknown as EstadoRascunho) });
+      setCalculado(true);
+    }
+    setHidratado(true);
+  }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
+
+  // ----- Persistência automática do rascunho -----
+  useEffect(() => {
+    if (!hidratado || !user?.id) return;
+    const timer = setTimeout(() => {
+      void supabase
+        .from("rascunhos")
+        .upsert(
+          { usuario_id: user.id, dados: estado as unknown as never },
+          { onConflict: "usuario_id" },
+        );
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [estado, hidratado, user?.id]);
+
+  const precisaSelecionar = !estado.cor || !estado.tipoServico;
+  const totalPaginas = estado.paginas;
+
+  const entrada = useMemo(
+    () => ({
+      tipo: "pb" as const,
+      paginasTotal: estado.paginas,
+      paginasPb: estado.paginas,
+      paginasColor: 0,
+      arquivos: estado.arquivos,
+      cor: (estado.cor || "pb") as CorImpressao,
+      ...(estado.tipoServico ? { tipoServico: estado.tipoServico as TipoServico } : {}),
+      copiaManual: estado.copiaManual,
+    }),
+    [estado.paginas, estado.arquivos, estado.cor, estado.tipoServico, estado.copiaManual],
+  );
+
+  const linhas = useMemo(() => calcularLinhas(materiais ?? [], entrada), [materiais, entrada]);
+
+  const acabamentosVisiveis = useMemo(
+    () => acabamentosDoTipo(acabamentos ?? [], (estado.tipoServico || undefined) as TipoServico | undefined),
+    [acabamentos, estado.tipoServico],
   );
 
   const linhasAcabamento = useMemo(
-    () => calcularAcabamentos(acabamentos ?? [], selecao, { paginas }),
-    [acabamentos, selecao, paginas],
+    () => calcularAcabamentos(acabamentosVisiveis, estado.selecao, { paginas: estado.paginas }),
+    [acabamentosVisiveis, estado.selecao, estado.paginas],
   );
   const valorAcabamento = totalAcabamentos(linhasAcabamento);
-  const tamanhoFinal = tamanho === "Outro" ? tamanhoOutro.trim() || "Outro" : tamanho;
+  const tamanhoFinal =
+    estado.tamanho === "Outro" ? estado.tamanhoOutro.trim() || "Outro" : estado.tamanho;
 
   const linhasFinais = useMemo(
     () => linhas.map((l) => ({ ...l, total: l.total + valorAcabamento })),
@@ -115,6 +226,12 @@ function Calculadora() {
   );
   const resumo = resumoLinhas(linhasFinais);
   const semPaginas = totalPaginas <= 0;
+  const mostrarTabela = calculado && !precisaSelecionar && !semPaginas;
+
+  const materialSelecionado =
+    linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
+
+  const totalPedido = (itensPedido ?? []).reduce((acc, o) => acc + Number(o.valor_total ?? 0), 0);
 
   const num = (v: string) => Math.max(0, Number(v.replace(/\D/g, "")) || 0);
 
@@ -123,14 +240,10 @@ function Calculadora() {
     setLendoArquivos(true);
     try {
       const r = await contarPaginas(Array.from(files));
-      setArquivos(r.arquivos);
-      setPaginas(r.paginas);
-      if (r.ignorados.length > 0) {
-        toast.warning(`Arquivos ignorados: ${r.ignorados.join(", ")}`);
-      }
-      if (r.arquivos > 0) {
-        toast.success(`${r.arquivos} arquivo(s) e ${r.paginas} página(s) contabilizados.`);
-      }
+      const lista = [...estado.arquivosLista, ...r.arquivos];
+      aplicarArquivos(lista);
+      if (r.ignorados.length > 0) toast.warning(`Arquivos ignorados: ${r.ignorados.join(", ")}`);
+      if (r.arquivos.length > 0) toast.success(`${r.arquivos.length} arquivo(s) anexado(s).`);
     } catch {
       toast.error("Não foi possível ler os arquivos.");
     } finally {
@@ -139,12 +252,232 @@ function Calculadora() {
     }
   }
 
+  function aplicarArquivos(lista: ArquivoDoc[]) {
+    setEstado((e) => ({
+      ...e,
+      arquivosLista: lista,
+      arquivos: lista.length,
+      paginas: lista.reduce((acc, a) => acc + a.paginas, 0),
+    }));
+  }
+
+  function removerArquivo(indice: number) {
+    aplicarArquivos(estado.arquivosLista.filter((_, i) => i !== indice));
+  }
+
+  function acabamentosParaSalvar(): AcabamentoDoc[] {
+    const selecionados: AcabamentoDoc[] = linhasAcabamento.map((l) => ({
+      nome: l.acabamento.nome,
+      quantidade: l.quantidade,
+      total: l.total,
+      incluso: true,
+    }));
+    const naoInclusos: AcabamentoDoc[] = acabamentosVisiveis
+      .filter((a) => a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo)
+      .map((a) => ({ nome: a.nome, quantidade: 0, total: 0, incluso: false }));
+    return [...selecionados, ...naoInclusos];
+  }
+
+  async function garantirPedido() {
+    if (estado.pedidoId) return estado.pedidoId;
+    const { data, error } = await supabase
+      .from("pedidos")
+      .insert({
+        cliente_nome: estado.clienteNome,
+        cliente_telefone: estado.clienteTelefone,
+        observacao: estado.observacao,
+        validade: estado.validade || null,
+        status: "pendente_envio",
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    set("pedidoId", data.id);
+    return data.id as string;
+  }
+
+  async function adicionarAoPedido() {
+    if (precisaSelecionar) {
+      toast.error("Selecione o tipo de impressão e a cor da impressão para realizar o cálculo.");
+      return;
+    }
+    if (!materialSelecionado) {
+      toast.error("Selecione um material para o orçamento.");
+      return;
+    }
+    if (semPaginas) {
+      toast.error("Informe a quantidade de páginas.");
+      return;
+    }
+    setSalvandoItem(true);
+    try {
+      const pedidoId = await garantirPedido();
+      const registro = {
+        pedido_id: pedidoId,
+        cliente_nome: estado.clienteNome,
+        cliente_telefone: estado.clienteTelefone,
+        material_id: materialSelecionado.material.id,
+        material_nome: materialSelecionado.material.nome,
+        arquivos: estado.arquivosLista as unknown as never,
+        acabamentos: acabamentosParaSalvar() as unknown as never,
+        cor_impressao: estado.cor,
+        tipo_impressao: estado.tipoServico,
+        quantidade_arquivos: estado.arquivos,
+        paginas_total: estado.paginas,
+        tamanho: tamanhoFinal,
+        frente_verso: estado.frenteVerso,
+        valor_acabamento: valorAcabamento,
+        valor_unitario: materialSelecionado.valorUnitario,
+        valor_total: materialSelecionado.total,
+        copia_manual: estado.copiaManual,
+        observacao: estado.observacao,
+        validade: estado.validade || null,
+        status: "pendente_envio",
+      };
+
+      if (estado.editandoId) {
+        const { error } = await supabase
+          .from("orcamentos")
+          .update(registro)
+          .eq("id", estado.editandoId);
+        if (error) throw error;
+        toast.success("Orçamento atualizado no pedido.");
+      } else {
+        const ordem = (itensPedido?.length ?? 0) + 1;
+        const { error } = await supabase.from("orcamentos").insert({ ...registro, ordem });
+        if (error) throw error;
+        toast.success("Orçamento adicionado ao pedido.");
+      }
+
+      await supabase
+        .from("pedidos")
+        .update({
+          cliente_nome: estado.clienteNome,
+          cliente_telefone: estado.clienteTelefone,
+          observacao: estado.observacao,
+          validade: estado.validade || null,
+        })
+        .eq("id", pedidoId);
+
+      set("editandoId", null);
+      queryClient.invalidateQueries({ queryKey: ["orcamentos-pedido", pedidoId] });
+      queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
+      queryClient.invalidateQueries({ queryKey: ["pedido", pedidoId] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível salvar o orçamento.");
+    } finally {
+      setSalvandoItem(false);
+    }
+  }
+
+  function editarItem(row: Record<string, unknown>) {
+    const arquivos = Array.isArray(row["arquivos"]) ? (row["arquivos"] as ArquivoDoc[]) : [];
+    const nomes = new Set(
+      (Array.isArray(row["acabamentos"]) ? (row["acabamentos"] as AcabamentoDoc[]) : [])
+        .filter((a) => a.incluso !== false)
+        .map((a) => a.nome),
+    );
+    const selecao: Record<string, SelecaoAcabamento> = {};
+    for (const a of acabamentos ?? []) {
+      if (nomes.has(a.nome)) selecao[a.id] = { ativo: true, quantidade: 1 };
+    }
+    setEstado((e) => ({
+      ...e,
+      editandoId: String(row["id"]),
+      arquivosLista: arquivos,
+      arquivos: Number(row["quantidade_arquivos"] ?? arquivos.length),
+      paginas: Number(row["paginas_total"] ?? 0),
+      cor: (row["cor_impressao"] as CorImpressao) ?? "pb",
+      tipoServico: (row["tipo_impressao"] as TipoServico) ?? "simples",
+      copiaManual: Boolean(row["copia_manual"]),
+      materialId: String(row["material_id"] ?? ""),
+      selecao,
+      frenteVerso: Boolean(row["frente_verso"]),
+      tamanho: TAMANHOS.includes(row["tamanho"] as never) ? String(row["tamanho"]) : "Outro",
+      tamanhoOutro: TAMANHOS.includes(row["tamanho"] as never) ? "" : String(row["tamanho"] ?? ""),
+    }));
+    setCalculado(true);
+    toast.info("Orçamento carregado para edição.");
+  }
+
+  async function excluirItem(id: string) {
+    const { error } = await supabase.from("orcamentos").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (estado.editandoId === id) set("editandoId", null);
+    queryClient.invalidateQueries({ queryKey: ["orcamentos-pedido", estado.pedidoId] });
+    queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
+    toast.success("Orçamento removido do pedido.");
+  }
+
+  function limparFormulario(manterPedido: boolean) {
+    setEstado((e) => ({
+      ...ESTADO_INICIAL,
+      pedidoId: manterPedido ? e.pedidoId : null,
+      clienteNome: manterPedido ? e.clienteNome : "",
+      clienteTelefone: manterPedido ? e.clienteTelefone : "",
+      validade: manterPedido ? e.validade : "",
+    }));
+    setCalculado(false);
+  }
+
+  function documentoDoPedido() {
+    return documentoDeOrcamentos(
+      (itensPedido ?? []) as unknown as Record<string, unknown>[],
+      config,
+      {
+        numero: String(pedido?.numero ?? "-"),
+        data: String(pedido?.created_at ?? new Date().toISOString()),
+        clienteNome: estado.clienteNome,
+        clienteTelefone: estado.clienteTelefone,
+        validade: estado.validade || null,
+        observacao: estado.observacao || null,
+      },
+    );
+  }
+
   return (
     <>
       <PageHeader
         titulo="CALCULADORA DE IMPRESSÃO DIGITAL"
-        subtitulo="Informe os dados do seu trabalho e veja os valores por tipo de papel."
+        subtitulo="Anexe os arquivos, escolha cor e tipo de impressão e monte o pedido."
       />
+
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <ConfirmarAcao
+          titulo="Novo pedido"
+          descricao="Deseja iniciar um novo pedido? Os dados atuais que ainda não foram adicionados ao pedido serão descartados."
+          rotuloConfirmar="Novo Pedido"
+          onConfirmar={() => {
+            limparFormulario(false);
+            toast.success("Novo pedido iniciado.");
+          }}
+        >
+          <Button>
+            <ShoppingCart className="h-4 w-4" /> Novo Pedido
+          </Button>
+        </ConfirmarAcao>
+        <ConfirmarAcao
+          titulo="Novo orçamento"
+          descricao="Deseja iniciar um novo orçamento? Os dados do orçamento atual serão limpos."
+          rotuloConfirmar="Novo Orçamento"
+          onConfirmar={() => {
+            limparFormulario(true);
+            toast.success("Novo orçamento iniciado.");
+          }}
+        >
+          <Button variant="outline">
+            <Plus className="h-4 w-4" /> Novo Orçamento
+          </Button>
+        </ConfirmarAcao>
+        {pedido && (
+          <Badge variant="secondary" className="text-sm">
+            Pedido {pedido.numero}
+          </Badge>
+        )}
+      </div>
 
       <Card className="mb-6 shadow-card">
         <CardHeader className="pb-2">
@@ -158,6 +491,39 @@ function Calculadora() {
         <CardContent>
           <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
             <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="space-y-2">
+                  <Label>Cliente</Label>
+                  <Input
+                    value={estado.clienteNome}
+                    onChange={(e) => set("clienteNome", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Telefone</Label>
+                  <Input
+                    value={estado.clienteTelefone}
+                    onChange={(e) => set("clienteTelefone", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Validade</Label>
+                  <Input
+                    type="date"
+                    value={estado.validade}
+                    onChange={(e) => set("validade", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Observação</Label>
+                  <Textarea
+                    rows={1}
+                    value={estado.observacao}
+                    onChange={(e) => set("observacao", e.target.value)}
+                  />
+                </div>
+              </div>
+
               <div>
                 <input
                   ref={inputArquivos}
@@ -179,33 +545,130 @@ function Calculadora() {
                   As páginas dos PDFs são contadas automaticamente; cada imagem conta como 1 página.
                 </p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Campo
-                icon={<Files className="h-4 w-4 text-cyan-ink" />}
-                label="Quantidade de arquivos"
-                sufixo="arquivos"
-              >
-                <Input
-                  inputMode="numeric"
-                  value={arquivos}
-                  onChange={(e) => setArquivos(num(e.target.value))}
-                  className="text-xl font-bold"
-                />
-              </Campo>
 
-              <Campo
-                icon={<FileStack className="h-4 w-4 text-navy" />}
-                label="Quantidade total de páginas"
-                sufixo="páginas"
-              >
-                <Input
-                  inputMode="numeric"
-                  value={paginas}
-                  onChange={(e) => setPaginas(num(e.target.value))}
-                  className="text-xl font-bold"
-                />
-              </Campo>
+              {estado.arquivosLista.length > 0 && (
+                <div className="overflow-x-auto rounded-xl border border-border">
+                  <table className="w-full min-w-[420px] text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
+                        <th className="px-3 py-2">ARQUIVO</th>
+                        <th className="px-3 py-2">TIPO</th>
+                        <th className="px-3 py-2 text-right">PÁGINAS</th>
+                        <th className="px-3 py-2 text-right">AÇÃO</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {estado.arquivosLista.map((a, i) => (
+                        <tr key={`${a.nome}-${i}`} className="border-b border-border last:border-0">
+                          <td className="px-3 py-2 font-semibold">{a.nome}</td>
+                          <td className="px-3 py-2 text-muted-foreground">{a.tipo}</td>
+                          <td className="px-3 py-2 text-right">{numeroBR(a.paginas)}</td>
+                          <td className="px-3 py-2 text-right">
+                            <ConfirmarExclusao
+                              titulo="Remover arquivo"
+                              descricao="Tem certeza que deseja remover este arquivo do orçamento?"
+                              rotuloConfirmar="Remover"
+                              onConfirmar={() => removerArquivo(i)}
+                            >
+                              <Button variant="ghost" size="icon">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </ConfirmarExclusao>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <Campo
+                  icon={<Files className="h-4 w-4 text-cyan-ink" />}
+                  label="Quantidade de arquivos"
+                  sufixo="arquivos"
+                >
+                  <Input
+                    inputMode="numeric"
+                    value={estado.arquivos}
+                    onChange={(e) => set("arquivos", num(e.target.value))}
+                    className="text-xl font-bold"
+                  />
+                </Campo>
+
+                <Campo
+                  icon={<FileStack className="h-4 w-4 text-navy" />}
+                  label="Quantidade total de páginas"
+                  sufixo="páginas"
+                >
+                  <Input
+                    inputMode="numeric"
+                    value={estado.paginas}
+                    onChange={(e) => set("paginas", num(e.target.value))}
+                    className="text-xl font-bold"
+                  />
+                </Campo>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-muted-foreground">
+                    Cor da impressão *
+                  </Label>
+                  <Select
+                    value={estado.cor}
+                    onValueChange={(v) => set("cor", v as CorImpressao)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pb">Preto e Branco</SelectItem>
+                      <SelectItem value="color">Colorido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-muted-foreground">
+                    Tipo de impressão *
+                  </Label>
+                  <Select
+                    value={estado.tipoServico}
+                    onValueChange={(v) => set("tipoServico", v as TipoServico)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="simples">Impressão Simples</SelectItem>
+                      <SelectItem value="especial">Impressão Especial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  variant={estado.copiaManual ? "default" : "outline"}
+                  onClick={() => set("copiaManual", !estado.copiaManual)}
+                >
+                  <Copy className="h-4 w-4" />
+                  Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Na cópia manual o cálculo usa somente a quantidade de páginas e as faixas
+                  cadastradas, sem cobrar valor por arquivo.
+                </p>
+              </div>
+
+              {precisaSelecionar && (
+                <p className="rounded-lg border border-border bg-accent/60 p-3 text-sm font-semibold text-primary">
+                  Selecione o tipo de impressão e a cor da impressão para realizar o cálculo.
+                </p>
+              )}
+
+              <Button disabled={precisaSelecionar || semPaginas} onClick={() => setCalculado(true)}>
+                <Calculator className="h-4 w-4" /> Calcular
+              </Button>
             </div>
 
             <div className="rounded-xl border border-border bg-accent/60 p-5">
@@ -213,7 +676,9 @@ function Calculadora() {
               <dl className="mt-4 space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <dt className="text-muted-foreground">Total de arquivos</dt>
-                  <dd className="text-2xl font-extrabold text-primary">{numeroBR(arquivos)}</dd>
+                  <dd className="text-2xl font-extrabold text-primary">
+                    {numeroBR(estado.arquivos)}
+                  </dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <dt className="text-muted-foreground">Total de páginas</dt>
@@ -239,48 +704,57 @@ function Calculadora() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {(acabamentos ?? []).map((a) => {
-              const sel = selecao[a.id] ?? { ativo: false, quantidade: 1 };
-              const linha = linhasAcabamento.find((l) => l.acabamento.id === a.id);
-              return (
-                <div key={a.id} className="rounded-xl border border-border p-4">
-                  <label className="flex items-center gap-3">
-                    <Checkbox
-                      checked={sel.ativo}
-                      onCheckedChange={(v) =>
-                        setSelecao((s) => ({ ...s, [a.id]: { ...sel, ativo: v === true } }))
-                      }
-                    />
-                    <span className="font-semibold">{a.nome}</span>
-                  </label>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {rotuloCobranca[a.cobranca]} · {brl(Number(a.valor) || 0)}
-                    {a.cobranca === "bloco" ? ` a cada ${a.paginas_bloco} páginas` : ""}
-                  </p>
-                  {sel.ativo && a.cobranca === "quantidade" && (
-                    <div className="mt-3">
-                      <Label className="text-xs text-muted-foreground">Quantidade</Label>
-                      <Input
-                        inputMode="numeric"
-                        value={sel.quantidade}
-                        onChange={(e) =>
-                          setSelecao((s) => ({
-                            ...s,
-                            [a.id]: { ...sel, quantidade: num(e.target.value) },
-                          }))
+          {acabamentosVisiveis.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum acabamento disponível para o tipo de impressão selecionado.
+            </p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {acabamentosVisiveis.map((a) => {
+                const sel = estado.selecao[a.id] ?? { ativo: false, quantidade: 1 };
+                const linha = linhasAcabamento.find((l) => l.acabamento.id === a.id);
+                return (
+                  <div key={a.id} className="rounded-xl border border-border p-4">
+                    <label className="flex items-center gap-3">
+                      <Checkbox
+                        checked={sel.ativo}
+                        onCheckedChange={(v) =>
+                          set("selecao", {
+                            ...estado.selecao,
+                            [a.id]: { ...sel, ativo: v === true },
+                          })
                         }
-                        className="mt-1 font-bold"
                       />
-                    </div>
-                  )}
-                  {sel.ativo && (
-                    <p className="mt-2 text-sm font-bold text-success">{brl(linha?.total ?? 0)}</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                      <span className="font-semibold">{a.nome}</span>
+                    </label>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {rotuloCobranca[a.cobranca]} · {brl(Number(a.valor) || 0)}
+                      {a.cobranca === "bloco" ? ` a cada ${a.paginas_bloco} páginas` : ""}
+                    </p>
+                    {sel.ativo && a.cobranca === "quantidade" && (
+                      <div className="mt-3">
+                        <Label className="text-xs text-muted-foreground">Quantidade</Label>
+                        <Input
+                          inputMode="numeric"
+                          value={sel.quantidade}
+                          onChange={(e) =>
+                            set("selecao", {
+                              ...estado.selecao,
+                              [a.id]: { ...sel, quantidade: num(e.target.value) },
+                            })
+                          }
+                          className="mt-1 font-bold"
+                        />
+                      </div>
+                    )}
+                    {sel.ativo && (
+                      <p className="mt-2 text-sm font-bold text-success">{brl(linha?.total ?? 0)}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <div className="flex items-center justify-between rounded-xl border border-border p-4">
@@ -288,11 +762,14 @@ function Calculadora() {
                 <p className="font-semibold">Frente e verso</p>
                 <p className="text-xs text-muted-foreground">Informado no orçamento</p>
               </div>
-              <Switch checked={frenteVerso} onCheckedChange={setFrenteVerso} />
+              <Switch
+                checked={estado.frenteVerso}
+                onCheckedChange={(v) => set("frenteVerso", v)}
+              />
             </div>
             <div className="space-y-2 rounded-xl border border-border p-4">
               <Label className="text-xs font-semibold text-muted-foreground">Tamanho</Label>
-              <Select value={tamanho} onValueChange={setTamanho}>
+              <Select value={estado.tamanho} onValueChange={(v) => set("tamanho", v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -304,11 +781,11 @@ function Calculadora() {
                   ))}
                 </SelectContent>
               </Select>
-              {tamanho === "Outro" && (
+              {estado.tamanho === "Outro" && (
                 <Input
                   placeholder="Informe o tamanho"
-                  value={tamanhoOutro}
-                  onChange={(e) => setTamanhoOutro(e.target.value)}
+                  value={estado.tamanhoOutro}
+                  onChange={(e) => set("tamanhoOutro", e.target.value)}
                 />
               )}
             </div>
@@ -334,8 +811,9 @@ function Calculadora() {
             >
               <RefreshCw className="h-4 w-4" /> Atualizar
             </Button>
-            <Button disabled={semPaginas || linhasFinais.length === 0} onClick={() => setDialogAberto(true)}>
-              <FileText className="h-4 w-4" /> Gerar Orçamento
+            <Button disabled={!mostrarTabela || salvandoItem} onClick={adicionarAoPedido}>
+              <Plus className="h-4 w-4" />
+              {estado.editandoId ? "Salvar alterações do orçamento" : "Adicionar ao Pedido"}
             </Button>
           </div>
         </CardHeader>
@@ -346,20 +824,23 @@ function Calculadora() {
                 <Skeleton key={i} className="h-11 w-full" />
               ))}
             </div>
-          ) : semPaginas ? (
+          ) : !mostrarTabela ? (
             <div className="flex flex-col items-center gap-2 py-12 text-center">
               <Printer className="h-10 w-10 text-muted-foreground" />
               <p className="font-semibold">Nenhum cálculo realizado ainda</p>
               <p className="text-sm text-muted-foreground">
-                Informe a quantidade de páginas para calcular.
+                {precisaSelecionar
+                  ? "Selecione o tipo de impressão e a cor da impressão para realizar o cálculo."
+                  : "Informe a quantidade de páginas e clique em Calcular."}
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] border-separate border-spacing-y-1 text-sm">
+              <table className="w-full min-w-[720px] border-separate border-spacing-y-1 text-sm">
                 <thead>
                   <tr className="bg-navy text-left text-xs font-bold tracking-wider text-navy-foreground">
-                    <th className="rounded-l-lg px-4 py-3">MATERIAL</th>
+                    <th className="rounded-l-lg px-4 py-3">SELECIONAR</th>
+                    <th className="px-4 py-3">MATERIAL</th>
                     <th className="px-4 py-3">DESCRIÇÃO</th>
                     <th className="px-4 py-3 text-right">PREÇO UNI</th>
                     <th className="rounded-r-lg px-4 py-3 text-right">
@@ -368,22 +849,38 @@ function Calculadora() {
                   </tr>
                 </thead>
                 <tbody>
-                  {linhasFinais.map((l) => (
-                    <tr key={l.material.id} className="bg-card shadow-xs">
-                      <td className="rounded-l-lg border-y border-l border-border px-4 py-3 font-semibold">
-                        {l.material.nome}
-                      </td>
-                      <td className="border-y border-border px-4 py-3 text-muted-foreground">
-                        {l.material.descricao}
-                      </td>
-                      <td className="border-y border-border px-4 py-3 text-right font-semibold">
-                        {brl(l.valorUnitarioPb)}
-                      </td>
-                      <td className="rounded-r-lg border-y border-r border-border px-4 py-3 text-right font-extrabold text-success">
-                        {brl(l.total)}
-                      </td>
-                    </tr>
-                  ))}
+                  {linhasFinais.map((l) => {
+                    const ativa = materialSelecionado?.material.id === l.material.id;
+                    return (
+                      <tr
+                        key={l.material.id}
+                        onClick={() => set("materialId", l.material.id)}
+                        className={`cursor-pointer bg-card shadow-xs ${ativa ? "ring-2 ring-primary" : ""}`}
+                      >
+                        <td className="rounded-l-lg border-y border-l border-border px-4 py-3">
+                          <input
+                            type="radio"
+                            className="h-4 w-4 accent-[var(--color-primary)]"
+                            checked={ativa}
+                            onChange={() => set("materialId", l.material.id)}
+                            aria-label={`Selecionar ${l.material.nome}`}
+                          />
+                        </td>
+                        <td className="border-y border-border px-4 py-3 font-semibold">
+                          {l.material.nome}
+                        </td>
+                        <td className="border-y border-border px-4 py-3 text-muted-foreground">
+                          {l.material.descricao}
+                        </td>
+                        <td className="border-y border-border px-4 py-3 text-right font-semibold">
+                          {brl(estado.cor === "color" ? l.valorUnitarioColor : l.valorUnitarioPb)}
+                        </td>
+                        <td className="rounded-r-lg border-y border-r border-border px-4 py-3 text-right font-extrabold text-success">
+                          {brl(l.total)}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -391,7 +888,84 @@ function Calculadora() {
         </CardContent>
       </Card>
 
-      {resumo && !semPaginas && (
+      {(itensPedido ?? []).length > 0 && (
+        <Card className="mb-6 shadow-card">
+          <CardHeader className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
+              <span className="rounded-lg bg-accent p-2 text-primary">
+                <ShoppingCart className="h-4 w-4" />
+              </span>
+              ORÇAMENTOS ADICIONADOS AO PEDIDO {pedido?.numero ?? ""}
+            </CardTitle>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => gerarOrcamentoPdf(documentoDoPedido())}>
+                <FileText className="h-4 w-4" /> Gerar PDF
+              </Button>
+              <Button variant="outline" onClick={() => gerarOrcamentoImagem(documentoDoPedido())}>
+                <ImageIcon className="h-4 w-4" /> Gerar Imagem
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
+                  <th className="px-3 py-3">Nº</th>
+                  <th className="px-3 py-3">MATERIAL</th>
+                  <th className="px-3 py-3">TIPO</th>
+                  <th className="px-3 py-3">COR</th>
+                  <th className="px-3 py-3 text-right">PÁGINAS</th>
+                  <th className="px-3 py-3 text-right">TOTAL</th>
+                  <th className="px-3 py-3 text-right">AÇÕES</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(itensPedido ?? []).map((o, i) => (
+                  <tr key={o.id} className="border-b border-border">
+                    <td className="px-3 py-3 font-semibold">{String(i + 1).padStart(2, "0")}</td>
+                    <td className="px-3 py-3">{o.material_nome}</td>
+                    <td className="px-3 py-3 capitalize">{o.tipo_impressao}</td>
+                    <td className="px-3 py-3">
+                      {o.cor_impressao === "color" ? "Colorido" : "Preto e Branco"}
+                    </td>
+                    <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_total))}</td>
+                    <td className="px-3 py-3 text-right font-bold text-success">
+                      {brl(Number(o.valor_total))}
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => editarItem(o as unknown as Record<string, unknown>)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <ConfirmarExclusao onConfirmar={() => excluirItem(o.id)}>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </ConfirmarExclusao>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan={5} className="px-3 py-3 text-right font-bold">
+                    TOTAL DO PEDIDO
+                  </td>
+                  <td className="px-3 py-3 text-right text-lg font-extrabold text-success">
+                    {brl(totalPedido)}
+                  </td>
+                  <td />
+                </tr>
+              </tfoot>
+            </table>
+          </CardContent>
+        </Card>
+      )}
+
+      {resumo && mostrarTabela && (
         <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <CardResumo
             icon={<TrendingDown className="h-5 w-5 text-success" />}
@@ -424,20 +998,6 @@ function Calculadora() {
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         Os valores podem ser alterados a qualquer momento na tela de configuração de preços.
       </div>
-
-      <OrcamentoDialog
-        aberto={dialogAberto}
-        onOpenChange={setDialogAberto}
-        linhas={linhasFinais}
-        arquivos={arquivos}
-        tipo="pb"
-        paginasPb={paginas}
-        paginasColor={0}
-        tamanho={tamanhoFinal}
-        frenteVerso={frenteVerso}
-        valorAcabamento={valorAcabamento}
-        acabamentos={linhasAcabamento.map((l) => `${l.acabamento.nome} (${l.quantidade}x)`)}
-      />
     </>
   );
 }
@@ -479,13 +1039,11 @@ function CardResumo({
   return (
     <Card className="shadow-card">
       <CardContent className="flex items-center gap-4 py-5">
-        <span className="rounded-full bg-accent p-3">{icon}</span>
-        <div className="min-w-0">
-          <p className="truncate text-xs font-semibold tracking-wide text-muted-foreground">
-            {titulo}
-          </p>
-          <p className="text-2xl font-extrabold text-primary">{valor}</p>
-          <p className="truncate text-xs text-muted-foreground">{detalhe}</p>
+        <span className="rounded-xl bg-accent p-3">{icon}</span>
+        <div>
+          <p className="text-xs font-bold tracking-wider text-muted-foreground">{titulo}</p>
+          <p className="text-xl font-extrabold text-primary">{valor}</p>
+          <p className="text-xs text-muted-foreground">{detalhe}</p>
         </div>
       </CardContent>
     </Card>
