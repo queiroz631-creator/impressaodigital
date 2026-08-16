@@ -604,64 +604,62 @@ function Calculadora() {
 
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold text-muted-foreground">
-                    Cor da impressão *
+                    Tipo de impressão *
                   </Label>
-                  <Select
-                    value={estado.cor}
-                    onValueChange={(v) => set("cor", v as CorImpressao)}
+                  <RadioGroup
+                    value={estado.tipoServico}
+                    onValueChange={(v) => set("tipoServico", v as TipoServico)}
+                    className="gap-2"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pb">Preto e Branco</SelectItem>
-                      <SelectItem value="color">Colorido</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <label className="flex items-center gap-2 text-sm font-medium">
+                      <RadioGroupItem value="simples" /> Impressão Simples
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-medium">
+                      <RadioGroupItem value="especial" /> Impressão Especial
+                    </label>
+                  </RadioGroup>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-muted-foreground">
-                    Tipo de impressão *
-                  </Label>
-                  <Select
-                    value={estado.tipoServico}
-                    onValueChange={(v) => set("tipoServico", v as TipoServico)}
+                  <Label className="text-xs font-semibold text-muted-foreground">Formato *</Label>
+                  <RadioGroup
+                    value={estado.formato}
+                    onValueChange={(v) => set("formato", v as FormatoPapel)}
+                    className="gap-2"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="simples">Impressão Simples</SelectItem>
-                      <SelectItem value="especial">Impressão Especial</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    {FORMATOS.map((f) => (
+                      <label key={f.valor} className="flex items-center gap-2 text-sm font-medium">
+                        <RadioGroupItem value={f.valor} /> {f.rotulo}
+                      </label>
+                    ))}
+                  </RadioGroup>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 <Button
-                  variant={estado.copiaManual ? "default" : "outline"}
+                  variant="outline"
+                  className={
+                    estado.copiaManual
+                      ? "border-transparent bg-magenta-ink text-white hover:bg-magenta-ink/90"
+                      : "border-magenta-ink text-magenta-ink hover:bg-magenta-ink/10 hover:text-magenta-ink"
+                  }
                   onClick={() => set("copiaManual", !estado.copiaManual)}
                 >
                   <Copy className="h-4 w-4" />
                   Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Na cópia manual o cálculo usa somente a quantidade de páginas e as faixas
-                  cadastradas, sem cobrar valor por arquivo.
+                  Na cópia manual o cálculo usa somente a quantidade de páginas e o preço unitário
+                  cadastrado, sem faixas por quantidade e sem valor por arquivo.
                 </p>
               </div>
 
               {precisaSelecionar && (
                 <p className="rounded-lg border border-border bg-accent/60 p-3 text-sm font-semibold text-primary">
-                  Selecione o tipo de impressão e a cor da impressão para realizar o cálculo.
+                  Selecione o tipo de impressão para ver os valores automaticamente.
                 </p>
               )}
-
-              <Button disabled={precisaSelecionar || semPaginas} onClick={() => setCalculado(true)}>
-                <Calculator className="h-4 w-4" /> Calcular
-              </Button>
             </div>
 
             <div className="rounded-xl border border-border bg-accent/60 p-5">
