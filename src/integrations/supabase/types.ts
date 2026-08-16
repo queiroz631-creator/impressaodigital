@@ -19,10 +19,13 @@ export type Database = {
           ativo: boolean
           cobranca: string
           created_at: string
+          faixas: Json
           id: string
+          mostrar_nao_incluso: boolean
           nome: string
           ordem: number
           paginas_bloco: number
+          tipo_impressao: string
           updated_at: string
           valor: number
         }
@@ -30,10 +33,13 @@ export type Database = {
           ativo?: boolean
           cobranca?: string
           created_at?: string
+          faixas?: Json
           id?: string
+          mostrar_nao_incluso?: boolean
           nome: string
           ordem?: number
           paginas_bloco?: number
+          tipo_impressao?: string
           updated_at?: string
           valor?: number
         }
@@ -41,10 +47,13 @@ export type Database = {
           ativo?: boolean
           cobranca?: string
           created_at?: string
+          faixas?: Json
           id?: string
+          mostrar_nao_incluso?: boolean
           nome?: string
           ordem?: number
           paginas_bloco?: number
+          tipo_impressao?: string
           updated_at?: string
           valor?: number
         }
@@ -221,6 +230,7 @@ export type Database = {
           preco_color: number
           preco_pb: number
           preco_por_arquivo: number
+          tipo_impressao: string
           updated_at: string
         }
         Insert: {
@@ -234,6 +244,7 @@ export type Database = {
           preco_color?: number
           preco_pb?: number
           preco_por_arquivo?: number
+          tipo_impressao?: string
           updated_at?: string
         }
         Update: {
@@ -247,52 +258,95 @@ export type Database = {
           preco_color?: number
           preco_pb?: number
           preco_por_arquivo?: number
+          tipo_impressao?: string
           updated_at?: string
         }
         Relationships: []
       }
       orcamentos: {
         Row: {
+          acabamentos: Json
+          arquivos: Json
           calculo_id: string | null
           cliente_nome: string
           cliente_telefone: string | null
+          copia_manual: boolean
+          cor_impressao: string
           created_at: string
+          frente_verso: boolean
           id: string
+          material_id: string | null
           material_nome: string | null
           numero: string
           observacao: string | null
+          ordem: number
+          paginas_total: number
+          pedido_id: string | null
+          quantidade_arquivos: number
           status: string
+          tamanho: string
+          tipo_impressao: string
           usuario_id: string
           validade: string | null
+          valor_acabamento: number
           valor_total: number
+          valor_unitario: number
         }
         Insert: {
+          acabamentos?: Json
+          arquivos?: Json
           calculo_id?: string | null
           cliente_nome?: string
           cliente_telefone?: string | null
+          copia_manual?: boolean
+          cor_impressao?: string
           created_at?: string
+          frente_verso?: boolean
           id?: string
+          material_id?: string | null
           material_nome?: string | null
           numero?: string
           observacao?: string | null
+          ordem?: number
+          paginas_total?: number
+          pedido_id?: string | null
+          quantidade_arquivos?: number
           status?: string
+          tamanho?: string
+          tipo_impressao?: string
           usuario_id?: string
           validade?: string | null
+          valor_acabamento?: number
           valor_total?: number
+          valor_unitario?: number
         }
         Update: {
+          acabamentos?: Json
+          arquivos?: Json
           calculo_id?: string | null
           cliente_nome?: string
           cliente_telefone?: string | null
+          copia_manual?: boolean
+          cor_impressao?: string
           created_at?: string
+          frente_verso?: boolean
           id?: string
+          material_id?: string | null
           material_nome?: string | null
           numero?: string
           observacao?: string | null
+          ordem?: number
+          paginas_total?: number
+          pedido_id?: string | null
+          quantidade_arquivos?: number
           status?: string
+          tamanho?: string
+          tipo_impressao?: string
           usuario_id?: string
           validade?: string | null
+          valor_acabamento?: number
           valor_total?: number
+          valor_unitario?: number
         }
         Relationships: [
           {
@@ -302,7 +356,63 @@ export type Database = {
             referencedRelation: "calculos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orcamentos_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamentos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      pedidos: {
+        Row: {
+          cliente_nome: string
+          cliente_telefone: string | null
+          created_at: string
+          id: string
+          numero: string
+          observacao: string | null
+          status: string
+          updated_at: string
+          usuario_id: string
+          validade: string | null
+          valor_total: number
+        }
+        Insert: {
+          cliente_nome?: string
+          cliente_telefone?: string | null
+          created_at?: string
+          id?: string
+          numero?: string
+          observacao?: string | null
+          status?: string
+          updated_at?: string
+          usuario_id?: string
+          validade?: string | null
+          valor_total?: number
+        }
+        Update: {
+          cliente_nome?: string
+          cliente_telefone?: string | null
+          created_at?: string
+          id?: string
+          numero?: string
+          observacao?: string | null
+          status?: string
+          updated_at?: string
+          usuario_id?: string
+          validade?: string | null
+          valor_total?: number
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -322,6 +432,30 @@ export type Database = {
           email?: string | null
           id?: string
           nome?: string | null
+        }
+        Relationships: []
+      }
+      rascunhos: {
+        Row: {
+          created_at: string
+          dados: Json
+          id: string
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          dados?: Json
+          id?: string
+          updated_at?: string
+          usuario_id?: string
+        }
+        Update: {
+          created_at?: string
+          dados?: Json
+          id?: string
+          updated_at?: string
+          usuario_id?: string
         }
         Relationships: []
       }
