@@ -49,7 +49,6 @@ export function itemDeOrcamento(row: Row, indice: number): ItemDoc {
   return {
     titulo: `Orçamento ${String(indice + 1).padStart(2, "0")}`,
     material: String(row["material_nome"] ?? "-"),
-    cor: row["cor_impressao"] === "color" ? "Colorido" : "Preto e Branco",
     tipoImpressao:
       row["tipo_impressao"] === "especial" ? "Impressão Especial" : "Impressão Simples",
     tamanho: (row["tamanho"] as string | null) ?? null,

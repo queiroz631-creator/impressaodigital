@@ -14,7 +14,6 @@ export interface AcabamentoDoc {
 export interface ItemDoc {
   titulo: string;
   material: string;
-  cor: string;
   tipoImpressao: string;
   tamanho?: string | null;
   frenteVerso?: boolean;
@@ -29,6 +28,8 @@ export interface ItemDoc {
 export interface DadosDocumento {
   numero: string;
   data: string;
+  /** Exibe (ou não) o valor total do orçamento no documento. */
+  mostrarTotal?: boolean;
   empresaNome: string;
   empresaTelefone?: string | null | undefined;
   empresaEmail?: string | null | undefined;

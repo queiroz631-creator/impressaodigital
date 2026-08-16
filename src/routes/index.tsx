@@ -34,6 +34,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -53,14 +62,15 @@ import {
 } from "@/hooks/useDados";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  TAMANHOS,
   acabamentosDoTipo,
   calcularAcabamentos,
   calcularLinhas,
   resumoLinhas,
   rotuloCobranca,
   totalAcabamentos,
-  type CorImpressao,
+  FORMATOS,
+  FORMATO_PADRAO,
+  type FormatoPapel,
   type SelecaoAcabamento,
   type TipoServico,
 } from "@/lib/calc";
@@ -110,14 +120,12 @@ interface EstadoRascunho {
   arquivosLista: ArquivoDoc[];
   arquivos: number;
   paginas: number;
-  cor: CorImpressao | "";
   tipoServico: TipoServico | "";
   copiaManual: boolean;
   materialId: string;
   selecao: Record<string, SelecaoAcabamento>;
   frenteVerso: boolean;
-  tamanho: string;
-  tamanhoOutro: string;
+  formato: FormatoPapel;
 }
 
 const ESTADO_INICIAL: EstadoRascunho = {
@@ -130,14 +138,12 @@ const ESTADO_INICIAL: EstadoRascunho = {
   arquivosLista: [],
   arquivos: 0,
   paginas: 0,
-  cor: "",
   tipoServico: "",
   copiaManual: false,
   materialId: "",
   selecao: {},
   frenteVerso: false,
-  tamanho: "A4",
-  tamanhoOutro: "",
+  formato: FORMATO_PADRAO,
 };
 
 function Calculadora() {
@@ -150,9 +156,10 @@ function Calculadora() {
 
   const [estado, setEstado] = useState<EstadoRascunho>(ESTADO_INICIAL);
   const [hidratado, setHidratado] = useState(false);
-  const [calculado, setCalculado] = useState(false);
   const [lendoArquivos, setLendoArquivos] = useState(false);
   const [salvandoItem, setSalvandoItem] = useState(false);
+  const [dialogAberto, setDialogAberto] = useState(false);
+  const [incluirTotal, setIncluirTotal] = useState(true);
   const inputArquivos = useRef<HTMLInputElement>(null);
 
   const set = useCallback(
@@ -169,7 +176,6 @@ function Calculadora() {
     if (hidratado || !rascunhoCarregado) return;
     if (rascunhoSalvo && Object.keys(rascunhoSalvo).length > 0) {
       setEstado({ ...ESTADO_INICIAL, ...(rascunhoSalvo as unknown as EstadoRascunho) });
-      setCalculado(true);
     }
     setHidratado(true);
   }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
@@ -188,21 +194,18 @@ function Calculadora() {
     return () => clearTimeout(timer);
   }, [estado, hidratado, user?.id]);
 
-  const precisaSelecionar = !estado.cor || !estado.tipoServico;
+  const precisaSelecionar = !estado.tipoServico;
   const totalPaginas = estado.paginas;
 
   const entrada = useMemo(
     () => ({
-      tipo: "pb" as const,
       paginasTotal: estado.paginas,
-      paginasPb: estado.paginas,
-      paginasColor: 0,
       arquivos: estado.arquivos,
-      cor: (estado.cor || "pb") as CorImpressao,
       ...(estado.tipoServico ? { tipoServico: estado.tipoServico as TipoServico } : {}),
+      formato: estado.formato,
       copiaManual: estado.copiaManual,
     }),
-    [estado.paginas, estado.arquivos, estado.cor, estado.tipoServico, estado.copiaManual],
+    [estado.paginas, estado.arquivos, estado.tipoServico, estado.formato, estado.copiaManual],
   );
 
   const linhas = useMemo(() => calcularLinhas(materiais ?? [], entrada), [materiais, entrada]);
@@ -217,8 +220,7 @@ function Calculadora() {
     [acabamentosVisiveis, estado.selecao, estado.paginas],
   );
   const valorAcabamento = totalAcabamentos(linhasAcabamento);
-  const tamanhoFinal =
-    estado.tamanho === "Outro" ? estado.tamanhoOutro.trim() || "Outro" : estado.tamanho;
+  const tamanhoFinal = estado.formato;
 
   const linhasFinais = useMemo(
     () => linhas.map((l) => ({ ...l, total: l.total + valorAcabamento })),
@@ -226,7 +228,7 @@ function Calculadora() {
   );
   const resumo = resumoLinhas(linhasFinais);
   const semPaginas = totalPaginas <= 0;
-  const mostrarTabela = calculado && !precisaSelecionar && !semPaginas;
+  const mostrarTabela = !precisaSelecionar && !semPaginas;
 
   const materialSelecionado =
     linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
@@ -266,14 +268,21 @@ function Calculadora() {
   }
 
   function acabamentosParaSalvar(): AcabamentoDoc[] {
-    const selecionados: AcabamentoDoc[] = linhasAcabamento.map((l) => ({
-      nome: l.acabamento.nome,
-      quantidade: l.quantidade,
-      total: l.total,
-      incluso: true,
-    }));
+    const selecionados: AcabamentoDoc[] = linhasAcabamento
+      .filter((l) => l.acabamento.mostrar_no_orcamento !== false)
+      .map((l) => ({
+        nome: l.acabamento.nome,
+        quantidade: l.quantidade,
+        total: l.total,
+        incluso: true,
+      }));
     const naoInclusos: AcabamentoDoc[] = acabamentosVisiveis
-      .filter((a) => a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo)
+      .filter(
+        (a) =>
+          a.mostrar_no_orcamento !== false &&
+          a.mostrar_nao_incluso &&
+          !estado.selecao[a.id]?.ativo,
+      )
       .map((a) => ({ nome: a.nome, quantidade: 0, total: 0, incluso: false }));
     return [...selecionados, ...naoInclusos];
   }
@@ -298,7 +307,7 @@ function Calculadora() {
 
   async function adicionarAoPedido() {
     if (precisaSelecionar) {
-      toast.error("Selecione o tipo de impressão e a cor da impressão para realizar o cálculo.");
+      toast.error("Selecione o tipo de impressão para realizar o cálculo.");
       return;
     }
     if (!materialSelecionado) {
@@ -320,7 +329,6 @@ function Calculadora() {
         material_nome: materialSelecionado.material.nome,
         arquivos: estado.arquivosLista as unknown as never,
         acabamentos: acabamentosParaSalvar() as unknown as never,
-        cor_impressao: estado.cor,
         tipo_impressao: estado.tipoServico,
         quantidade_arquivos: estado.arquivos,
         paginas_total: estado.paginas,
@@ -387,16 +395,15 @@ function Calculadora() {
       arquivosLista: arquivos,
       arquivos: Number(row["quantidade_arquivos"] ?? arquivos.length),
       paginas: Number(row["paginas_total"] ?? 0),
-      cor: (row["cor_impressao"] as CorImpressao) ?? "pb",
       tipoServico: (row["tipo_impressao"] as TipoServico) ?? "simples",
       copiaManual: Boolean(row["copia_manual"]),
       materialId: String(row["material_id"] ?? ""),
       selecao,
       frenteVerso: Boolean(row["frente_verso"]),
-      tamanho: TAMANHOS.includes(row["tamanho"] as never) ? String(row["tamanho"]) : "Outro",
-      tamanhoOutro: TAMANHOS.includes(row["tamanho"] as never) ? "" : String(row["tamanho"] ?? ""),
+      formato: (["A3", "A4", "A5"].includes(String(row["tamanho"]))
+        ? String(row["tamanho"])
+        : FORMATO_PADRAO) as FormatoPapel,
     }));
-    setCalculado(true);
     toast.info("Orçamento carregado para edição.");
   }
 
@@ -420,7 +427,6 @@ function Calculadora() {
       clienteTelefone: manterPedido ? e.clienteTelefone : "",
       validade: manterPedido ? e.validade : "",
     }));
-    setCalculado(false);
   }
 
   function documentoDoPedido() {
@@ -436,6 +442,36 @@ function Calculadora() {
         observacao: estado.observacao || null,
       },
     );
+  }
+
+  function documentoParaGerar() {
+    return { ...documentoDoPedido(), mostrarTotal: incluirTotal };
+  }
+
+  async function salvarDadosCliente() {
+    if (!estado.pedidoId) return;
+    await supabase
+      .from("pedidos")
+      .update({
+        cliente_nome: estado.clienteNome,
+        cliente_telefone: estado.clienteTelefone,
+        observacao: estado.observacao,
+        validade: estado.validade || null,
+      })
+      .eq("id", estado.pedidoId);
+    if ((itensPedido ?? []).length > 0) {
+      await supabase
+        .from("orcamentos")
+        .update({
+          cliente_nome: estado.clienteNome,
+          cliente_telefone: estado.clienteTelefone,
+          observacao: estado.observacao,
+          validade: estado.validade || null,
+        })
+        .eq("pedido_id", estado.pedidoId);
+      queryClient.invalidateQueries({ queryKey: ["orcamentos-pedido", estado.pedidoId] });
+      queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
+    }
   }
 
   return (
@@ -459,19 +495,9 @@ function Calculadora() {
             <ShoppingCart className="h-4 w-4" /> Novo Pedido
           </Button>
         </ConfirmarAcao>
-        <ConfirmarAcao
-          titulo="Novo orçamento"
-          descricao="Deseja iniciar um novo orçamento? Os dados do orçamento atual serão limpos."
-          rotuloConfirmar="Novo Orçamento"
-          onConfirmar={() => {
-            limparFormulario(true);
-            toast.success("Novo orçamento iniciado.");
-          }}
-        >
-          <Button variant="outline">
-            <Plus className="h-4 w-4" /> Novo Orçamento
-          </Button>
-        </ConfirmarAcao>
+        <Button variant="outline" onClick={() => setDialogAberto(true)}>
+          <FileText className="h-4 w-4" /> Gerar Orçamento
+        </Button>
         {pedido && (
           <Badge variant="secondary" className="text-sm">
             Pedido {pedido.numero}
@@ -491,39 +517,6 @@ function Calculadora() {
         <CardContent>
           <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
             <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="space-y-2">
-                  <Label>Cliente</Label>
-                  <Input
-                    value={estado.clienteNome}
-                    onChange={(e) => set("clienteNome", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Telefone</Label>
-                  <Input
-                    value={estado.clienteTelefone}
-                    onChange={(e) => set("clienteTelefone", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Validade</Label>
-                  <Input
-                    type="date"
-                    value={estado.validade}
-                    onChange={(e) => set("validade", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Observação</Label>
-                  <Textarea
-                    rows={1}
-                    value={estado.observacao}
-                    onChange={(e) => set("observacao", e.target.value)}
-                  />
-                </div>
-              </div>
-
               <div>
                 <input
                   ref={inputArquivos}
@@ -611,64 +604,62 @@ function Calculadora() {
 
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold text-muted-foreground">
-                    Cor da impressão *
+                    Tipo de impressão *
                   </Label>
-                  <Select
-                    value={estado.cor}
-                    onValueChange={(v) => set("cor", v as CorImpressao)}
+                  <RadioGroup
+                    value={estado.tipoServico}
+                    onValueChange={(v) => set("tipoServico", v as TipoServico)}
+                    className="gap-2"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pb">Preto e Branco</SelectItem>
-                      <SelectItem value="color">Colorido</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <label className="flex items-center gap-2 text-sm font-medium">
+                      <RadioGroupItem value="simples" /> Impressão Simples
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-medium">
+                      <RadioGroupItem value="especial" /> Impressão Especial
+                    </label>
+                  </RadioGroup>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-muted-foreground">
-                    Tipo de impressão *
-                  </Label>
-                  <Select
-                    value={estado.tipoServico}
-                    onValueChange={(v) => set("tipoServico", v as TipoServico)}
+                  <Label className="text-xs font-semibold text-muted-foreground">Formato *</Label>
+                  <RadioGroup
+                    value={estado.formato}
+                    onValueChange={(v) => set("formato", v as FormatoPapel)}
+                    className="gap-2"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="simples">Impressão Simples</SelectItem>
-                      <SelectItem value="especial">Impressão Especial</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    {FORMATOS.map((f) => (
+                      <label key={f.valor} className="flex items-center gap-2 text-sm font-medium">
+                        <RadioGroupItem value={f.valor} /> {f.rotulo}
+                      </label>
+                    ))}
+                  </RadioGroup>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 <Button
-                  variant={estado.copiaManual ? "default" : "outline"}
+                  variant="outline"
+                  className={
+                    estado.copiaManual
+                      ? "border-transparent bg-magenta-ink text-white hover:bg-magenta-ink/90"
+                      : "border-magenta-ink text-magenta-ink hover:bg-magenta-ink/10 hover:text-magenta-ink"
+                  }
                   onClick={() => set("copiaManual", !estado.copiaManual)}
                 >
                   <Copy className="h-4 w-4" />
                   Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Na cópia manual o cálculo usa somente a quantidade de páginas e as faixas
-                  cadastradas, sem cobrar valor por arquivo.
+                  Na cópia manual o cálculo usa somente a quantidade de páginas e o preço unitário
+                  cadastrado, sem faixas por quantidade e sem valor por arquivo.
                 </p>
               </div>
 
               {precisaSelecionar && (
                 <p className="rounded-lg border border-border bg-accent/60 p-3 text-sm font-semibold text-primary">
-                  Selecione o tipo de impressão e a cor da impressão para realizar o cálculo.
+                  Selecione o tipo de impressão para ver os valores automaticamente.
                 </p>
               )}
-
-              <Button disabled={precisaSelecionar || semPaginas} onClick={() => setCalculado(true)}>
-                <Calculator className="h-4 w-4" /> Calcular
-              </Button>
             </div>
 
             <div className="rounded-xl border border-border bg-accent/60 p-5">
@@ -767,28 +758,6 @@ function Calculadora() {
                 onCheckedChange={(v) => set("frenteVerso", v)}
               />
             </div>
-            <div className="space-y-2 rounded-xl border border-border p-4">
-              <Label className="text-xs font-semibold text-muted-foreground">Tamanho</Label>
-              <Select value={estado.tamanho} onValueChange={(v) => set("tamanho", v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TAMANHOS.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {estado.tamanho === "Outro" && (
-                <Input
-                  placeholder="Informe o tamanho"
-                  value={estado.tamanhoOutro}
-                  onChange={(e) => set("tamanhoOutro", e.target.value)}
-                />
-              )}
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -830,8 +799,8 @@ function Calculadora() {
               <p className="font-semibold">Nenhum cálculo realizado ainda</p>
               <p className="text-sm text-muted-foreground">
                 {precisaSelecionar
-                  ? "Selecione o tipo de impressão e a cor da impressão para realizar o cálculo."
-                  : "Informe a quantidade de páginas e clique em Calcular."}
+                  ? "Selecione o tipo de impressão para ver os valores."
+                  : "Informe a quantidade de páginas para ver os valores."}
               </p>
             </div>
           ) : (
@@ -873,7 +842,7 @@ function Calculadora() {
                           {l.material.descricao}
                         </td>
                         <td className="border-y border-border px-4 py-3 text-right font-semibold">
-                          {brl(estado.cor === "color" ? l.valorUnitarioColor : l.valorUnitarioPb)}
+                          {brl(l.valorUnitario)}
                         </td>
                         <td className="rounded-r-lg border-y border-r border-border px-4 py-3 text-right font-extrabold text-success">
                           {brl(l.total)}
@@ -897,14 +866,9 @@ function Calculadora() {
               </span>
               ORÇAMENTOS ADICIONADOS AO PEDIDO {pedido?.numero ?? ""}
             </CardTitle>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => gerarOrcamentoPdf(documentoDoPedido())}>
-                <FileText className="h-4 w-4" /> Gerar PDF
-              </Button>
-              <Button variant="outline" onClick={() => gerarOrcamentoImagem(documentoDoPedido())}>
-                <ImageIcon className="h-4 w-4" /> Gerar Imagem
-              </Button>
-            </div>
+            <Button variant="outline" onClick={() => setDialogAberto(true)}>
+              <FileText className="h-4 w-4" /> Gerar Orçamento
+            </Button>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-sm">
@@ -913,7 +877,7 @@ function Calculadora() {
                   <th className="px-3 py-3">Nº</th>
                   <th className="px-3 py-3">MATERIAL</th>
                   <th className="px-3 py-3">TIPO</th>
-                  <th className="px-3 py-3">COR</th>
+                  <th className="px-3 py-3">FORMATO</th>
                   <th className="px-3 py-3 text-right">PÁGINAS</th>
                   <th className="px-3 py-3 text-right">TOTAL</th>
                   <th className="px-3 py-3 text-right">AÇÕES</th>
@@ -925,9 +889,7 @@ function Calculadora() {
                     <td className="px-3 py-3 font-semibold">{String(i + 1).padStart(2, "0")}</td>
                     <td className="px-3 py-3">{o.material_nome}</td>
                     <td className="px-3 py-3 capitalize">{o.tipo_impressao}</td>
-                    <td className="px-3 py-3">
-                      {o.cor_impressao === "color" ? "Colorido" : "Preto e Branco"}
-                    </td>
+                    <td className="px-3 py-3">{o.tamanho}</td>
                     <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_total))}</td>
                     <td className="px-3 py-3 text-right font-bold text-success">
                       {brl(Number(o.valor_total))}
@@ -998,6 +960,81 @@ function Calculadora() {
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         Os valores podem ser alterados a qualquer momento na tela de configuração de preços.
       </div>
+
+      <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Gerar orçamento</DialogTitle>
+            <DialogDescription>
+              Informe os dados do cliente para gerar o documento do pedido.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Cliente</Label>
+              <Input
+                value={estado.clienteNome}
+                onChange={(e) => set("clienteNome", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone</Label>
+              <Input
+                value={estado.clienteTelefone}
+                onChange={(e) => set("clienteTelefone", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Validade</Label>
+              <Input
+                type="date"
+                value={estado.validade}
+                onChange={(e) => set("validade", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Observação</Label>
+              <Textarea
+                rows={2}
+                value={estado.observacao}
+                onChange={(e) => set("observacao", e.target.value)}
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-xl border border-border p-3 sm:col-span-2">
+              <div>
+                <p className="font-semibold">Mostrar total</p>
+                <p className="text-xs text-muted-foreground">
+                  Desative para gerar o orçamento sem exibir os valores totais.
+                </p>
+              </div>
+              <Switch checked={incluirTotal} onCheckedChange={setIncluirTotal} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              disabled={(itensPedido ?? []).length === 0}
+              onClick={async () => {
+                await salvarDadosCliente();
+                gerarOrcamentoImagem(documentoParaGerar());
+                setDialogAberto(false);
+              }}
+            >
+              <ImageIcon className="h-4 w-4" /> Gerar Imagem
+            </Button>
+            <Button
+              disabled={(itensPedido ?? []).length === 0}
+              onClick={async () => {
+                await salvarDadosCliente();
+                gerarOrcamentoPdf(documentoParaGerar());
+                setDialogAberto(false);
+              }}
+            >
+              <FileText className="h-4 w-4" /> Gerar PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

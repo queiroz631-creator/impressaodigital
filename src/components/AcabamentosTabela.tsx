@@ -66,6 +66,7 @@ export function AcabamentosTabela() {
             faixas: faixas as unknown as never,
             tipo_impressao: a.tipo_impressao ?? "ambas",
             mostrar_nao_incluso: !!a.mostrar_nao_incluso,
+            mostrar_no_orcamento: a.mostrar_no_orcamento !== false,
             ativo: a.ativo,
             ordem: Number(a.ordem) || 0,
           })
@@ -143,6 +144,7 @@ export function AcabamentosTabela() {
                   <th className="px-2 py-3 w-60">FAIXAS POR QUANTIDADE</th>
                   <th className="px-2 py-3 w-40">PÁGINAS POR BLOCO</th>
                   <th className="px-2 py-3 w-32">NÃO INCLUSO</th>
+                  <th className="px-2 py-3 w-40">APARECER NO ORÇAMENTO</th>
                   <th className="px-2 py-3 w-20">ATIVO</th>
                   <th className="px-2 py-3 w-24">ORDEM</th>
                   <th className="px-2 py-3 w-16" />
@@ -229,6 +231,12 @@ export function AcabamentosTabela() {
                       <Switch
                         checked={!!a.mostrar_nao_incluso}
                         onCheckedChange={(v) => atualizar(a.id, "mostrar_nao_incluso", v)}
+                      />
+                    </td>
+                    <td className="px-2 py-2">
+                      <Switch
+                        checked={a.mostrar_no_orcamento !== false}
+                        onCheckedChange={(v) => atualizar(a.id, "mostrar_no_orcamento", v)}
                       />
                     </td>
                     <td className="px-2 py-2">

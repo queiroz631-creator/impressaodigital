@@ -26,8 +26,10 @@ import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import {
   faixasParaTexto,
   textoParaFaixas,
+  FORMATOS,
   type Material,
   type TipoServico,
+  type FormatoPapel,
 } from "@/lib/calc";
 
 export const Route = createFileRoute("/precos")({
@@ -86,7 +88,7 @@ function Precos() {
     try {
       const faixasNormalizadas: Record<string, string> = {};
       for (const m of linhas) {
-        if (Number(m.preco_pb) < 0 || Number(m.preco_color) < 0) {
+        if (Number(m.preco_pb) < 0) {
           throw new Error("Preços não podem ser negativos.");
         }
         const faixas = textoParaFaixas(faixasTexto[m.id] ?? "");
@@ -96,10 +98,10 @@ function Precos() {
             nome: m.nome,
             descricao: m.descricao,
             preco_pb: Number(m.preco_pb),
-            preco_color: Number(m.preco_color),
             preco_por_arquivo: Number(m.preco_por_arquivo) || 0,
             faixas: faixas as unknown as never,
             tipo_impressao: m.tipo_impressao ?? "simples",
+            formato: m.formato ?? "A4",
             ativo: m.ativo,
             ordem: m.ordem,
           })
@@ -206,8 +208,8 @@ function Precos() {
                   <th className="px-2 py-3">TIPO</th>
                   <th className="px-2 py-3">DESCRIÇÃO</th>
                   <th className="px-2 py-3 w-44">TIPO DE IMPRESSÃO</th>
+                  <th className="px-2 py-3 w-44">FORMATO</th>
                   <th className="px-2 py-3 w-32">PREÇO UNI</th>
-                  <th className="px-2 py-3 w-32">PREÇO COLORIDO</th>
                   <th className="px-2 py-3 w-36">VALOR POR ARQUIVO</th>
                   <th className="px-2 py-3 w-64">FAIXAS POR QUANTIDADE</th>
                   <th className="px-2 py-3 w-20">ATIVO</th>
@@ -239,21 +241,29 @@ function Precos() {
                       </Select>
                     </td>
                     <td className="px-2 py-2">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={m.preco_pb}
-                        onChange={(e) => atualizar(m.id, "preco_pb", e.target.value)}
-                      />
+                      <Select
+                        value={m.formato ?? "A4"}
+                        onValueChange={(v) => atualizar(m.id, "formato", v as FormatoPapel)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {FORMATOS.map((f) => (
+                            <SelectItem key={f.valor} value={f.valor}>
+                              {f.rotulo}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </td>
                     <td className="px-2 py-2">
                       <Input
                         type="number"
                         step="0.01"
                         min="0"
-                        value={m.preco_color ?? 0}
-                        onChange={(e) => atualizar(m.id, "preco_color", e.target.value)}
+                        value={m.preco_pb}
+                        onChange={(e) => atualizar(m.id, "preco_pb", e.target.value)}
                       />
                     </td>
                     <td className="px-2 py-2">
