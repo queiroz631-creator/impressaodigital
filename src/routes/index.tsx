@@ -34,6 +34,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -53,14 +62,15 @@ import {
 } from "@/hooks/useDados";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  TAMANHOS,
   acabamentosDoTipo,
   calcularAcabamentos,
   calcularLinhas,
   resumoLinhas,
   rotuloCobranca,
   totalAcabamentos,
-  type CorImpressao,
+  FORMATOS,
+  FORMATO_PADRAO,
+  type FormatoPapel,
   type SelecaoAcabamento,
   type TipoServico,
 } from "@/lib/calc";
