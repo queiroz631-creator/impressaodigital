@@ -1,12 +1,12 @@
+import { tipoDoArquivo, type ArquivoDoc } from "./documento";
+
 export interface ContagemArquivos {
-  arquivos: number;
-  paginas: number;
+  arquivos: ArquivoDoc[];
   ignorados: string[];
 }
 
 export async function contarPaginas(files: File[]): Promise<ContagemArquivos> {
-  let arquivos = 0;
-  let paginas = 0;
+  const arquivos: ArquivoDoc[] = [];
   const ignorados: string[] = [];
   const { PDFDocument } = await import("pdf-lib");
 
@@ -16,18 +16,20 @@ export async function contarPaginas(files: File[]): Promise<ContagemArquivos> {
     if (ehPdf) {
       try {
         const doc = await PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
-        arquivos += 1;
-        paginas += doc.getPageCount();
+        arquivos.push({
+          nome: file.name,
+          tipo: tipoDoArquivo(file.name, file.type),
+          paginas: doc.getPageCount(),
+        });
       } catch {
         ignorados.push(file.name);
       }
     } else if (ehImagem) {
-      arquivos += 1;
-      paginas += 1;
+      arquivos.push({ nome: file.name, tipo: tipoDoArquivo(file.name, file.type), paginas: 1 });
     } else {
       ignorados.push(file.name);
     }
   }
 
-  return { arquivos, paginas, ignorados };
+  return { arquivos, ignorados };
 }
