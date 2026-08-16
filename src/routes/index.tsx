@@ -120,14 +120,12 @@ interface EstadoRascunho {
   arquivosLista: ArquivoDoc[];
   arquivos: number;
   paginas: number;
-  cor: CorImpressao | "";
   tipoServico: TipoServico | "";
   copiaManual: boolean;
   materialId: string;
   selecao: Record<string, SelecaoAcabamento>;
   frenteVerso: boolean;
-  tamanho: string;
-  tamanhoOutro: string;
+  formato: FormatoPapel;
 }
 
 const ESTADO_INICIAL: EstadoRascunho = {
@@ -140,14 +138,12 @@ const ESTADO_INICIAL: EstadoRascunho = {
   arquivosLista: [],
   arquivos: 0,
   paginas: 0,
-  cor: "",
   tipoServico: "",
   copiaManual: false,
   materialId: "",
   selecao: {},
   frenteVerso: false,
-  tamanho: "A4",
-  tamanhoOutro: "",
+  formato: FORMATO_PADRAO,
 };
 
 function Calculadora() {
@@ -160,9 +156,10 @@ function Calculadora() {
 
   const [estado, setEstado] = useState<EstadoRascunho>(ESTADO_INICIAL);
   const [hidratado, setHidratado] = useState(false);
-  const [calculado, setCalculado] = useState(false);
   const [lendoArquivos, setLendoArquivos] = useState(false);
   const [salvandoItem, setSalvandoItem] = useState(false);
+  const [dialogAberto, setDialogAberto] = useState(false);
+  const [incluirTotal, setIncluirTotal] = useState(true);
   const inputArquivos = useRef<HTMLInputElement>(null);
 
   const set = useCallback(
@@ -179,7 +176,6 @@ function Calculadora() {
     if (hidratado || !rascunhoCarregado) return;
     if (rascunhoSalvo && Object.keys(rascunhoSalvo).length > 0) {
       setEstado({ ...ESTADO_INICIAL, ...(rascunhoSalvo as unknown as EstadoRascunho) });
-      setCalculado(true);
     }
     setHidratado(true);
   }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
@@ -198,21 +194,18 @@ function Calculadora() {
     return () => clearTimeout(timer);
   }, [estado, hidratado, user?.id]);
 
-  const precisaSelecionar = !estado.cor || !estado.tipoServico;
+  const precisaSelecionar = !estado.tipoServico;
   const totalPaginas = estado.paginas;
 
   const entrada = useMemo(
     () => ({
-      tipo: "pb" as const,
       paginasTotal: estado.paginas,
-      paginasPb: estado.paginas,
-      paginasColor: 0,
       arquivos: estado.arquivos,
-      cor: (estado.cor || "pb") as CorImpressao,
       ...(estado.tipoServico ? { tipoServico: estado.tipoServico as TipoServico } : {}),
+      formato: estado.formato,
       copiaManual: estado.copiaManual,
     }),
-    [estado.paginas, estado.arquivos, estado.cor, estado.tipoServico, estado.copiaManual],
+    [estado.paginas, estado.arquivos, estado.tipoServico, estado.formato, estado.copiaManual],
   );
 
   const linhas = useMemo(() => calcularLinhas(materiais ?? [], entrada), [materiais, entrada]);
@@ -227,8 +220,7 @@ function Calculadora() {
     [acabamentosVisiveis, estado.selecao, estado.paginas],
   );
   const valorAcabamento = totalAcabamentos(linhasAcabamento);
-  const tamanhoFinal =
-    estado.tamanho === "Outro" ? estado.tamanhoOutro.trim() || "Outro" : estado.tamanho;
+  const tamanhoFinal = estado.formato;
 
   const linhasFinais = useMemo(
     () => linhas.map((l) => ({ ...l, total: l.total + valorAcabamento })),
@@ -236,7 +228,7 @@ function Calculadora() {
   );
   const resumo = resumoLinhas(linhasFinais);
   const semPaginas = totalPaginas <= 0;
-  const mostrarTabela = calculado && !precisaSelecionar && !semPaginas;
+  const mostrarTabela = !precisaSelecionar && !semPaginas;
 
   const materialSelecionado =
     linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
