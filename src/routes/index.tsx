@@ -268,14 +268,21 @@ function Calculadora() {
   }
 
   function acabamentosParaSalvar(): AcabamentoDoc[] {
-    const selecionados: AcabamentoDoc[] = linhasAcabamento.map((l) => ({
-      nome: l.acabamento.nome,
-      quantidade: l.quantidade,
-      total: l.total,
-      incluso: true,
-    }));
+    const selecionados: AcabamentoDoc[] = linhasAcabamento
+      .filter((l) => l.acabamento.mostrar_no_orcamento !== false)
+      .map((l) => ({
+        nome: l.acabamento.nome,
+        quantidade: l.quantidade,
+        total: l.total,
+        incluso: true,
+      }));
     const naoInclusos: AcabamentoDoc[] = acabamentosVisiveis
-      .filter((a) => a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo)
+      .filter(
+        (a) =>
+          a.mostrar_no_orcamento !== false &&
+          a.mostrar_nao_incluso &&
+          !estado.selecao[a.id]?.ativo,
+      )
       .map((a) => ({ nome: a.nome, quantidade: 0, total: 0, incluso: false }));
     return [...selecionados, ...naoInclusos];
   }
