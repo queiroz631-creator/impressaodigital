@@ -1,15 +1,23 @@
-export type TipoImpressao = "pb" | "color" | "ambas";
-
-/** Cor da impressão selecionada na calculadora. */
-export type CorImpressao = "pb" | "color";
 /** Classificação do material / acabamento. */
 export type TipoServico = "simples" | "especial";
 export type TipoServicoAcabamento = TipoServico | "ambas";
 
-export const rotuloCor: Record<CorImpressao, string> = {
-  pb: "Preto e Branco",
-  color: "Colorido",
+/** Formato do papel utilizado na impressão. */
+export type FormatoPapel = "A3" | "A4" | "A5";
+
+export const FORMATOS: { valor: FormatoPapel; rotulo: string }[] = [
+  { valor: "A3", rotulo: "Papel A3 (30x40cm)" },
+  { valor: "A4", rotulo: "Papel A4 (20x30cm)" },
+  { valor: "A5", rotulo: "Papel A5 (15x20cm)" },
+];
+
+export const rotuloFormato: Record<FormatoPapel, string> = {
+  A3: "Papel A3 (30x40cm)",
+  A4: "Papel A4 (20x30cm)",
+  A5: "Papel A5 (15x20cm)",
 };
+
+export const FORMATO_PADRAO: FormatoPapel = "A4";
 
 export const rotuloTipoServico: Record<TipoServicoAcabamento, string> = {
   simples: "Impressão Simples",
@@ -22,10 +30,10 @@ export interface Material {
   nome: string;
   descricao: string;
   preco_pb: number;
-  preco_color: number;
   preco_por_arquivo: number;
   faixas: FaixaPreco[];
   tipo_impressao: TipoServico;
+  formato: FormatoPapel;
   ativo: boolean;
   ordem: number;
 }
@@ -43,17 +51,19 @@ export function normalizarFaixas(valor: unknown): FaixaPreco[] {
     .sort((a, b) => a.min - b.min);
 }
 
+/**
+ * Preço unitário do material. Em cópia manual utiliza somente o preço unitário
+ * cadastrado, ignorando as faixas por quantidade.
+ */
 export function precoPorQuantidade(
   material: Material,
   quantidade: number,
-  cor: CorImpressao = "pb",
+  copiaManual = false,
 ) {
-  const base = Number(cor === "color" ? material.preco_color : material.preco_pb) || 0;
-  const faixas = normalizarFaixas(material.faixas);
+  const base = Number(material.preco_pb) || 0;
+  if (copiaManual) return base;
   let preco = base;
-  if (cor === "pb") {
-    for (const f of faixas) if (quantidade >= f.min) preco = f.preco;
-  }
+  for (const f of normalizarFaixas(material.faixas)) if (quantidade >= f.min) preco = f.preco;
   return preco;
 }
 
@@ -105,63 +115,42 @@ export function textoParaFaixas(texto: string): FaixaPreco[] {
 export interface LinhaCalculo {
   material: Material;
   valorUnitario: number;
-  valorUnitarioPb: number;
-  valorUnitarioColor: number;
-  paginasPb: number;
-  paginasColor: number;
-  totalPb: number;
-  totalColor: number;
+  paginas: number;
+  totalPaginas: number;
   totalArquivos: number;
   total: number;
 }
 
 export interface EntradaCalculo {
-  tipo: TipoImpressao;
   paginasTotal: number;
-  paginasPb: number;
-  paginasColor: number;
   arquivos?: number;
-  /** Cor selecionada; quando informada, define qual preço será usado. */
-  cor?: CorImpressao;
   /** Filtra os materiais pelo tipo de impressão. */
   tipoServico?: TipoServico;
-  /** Cópia manual: cobra somente por página, ignorando o valor por arquivo. */
+  /** Filtra os materiais pelo formato do papel. */
+  formato?: FormatoPapel;
+  /** Cópia manual: cobra somente por página, com o preço unitário cadastrado. */
   copiaManual?: boolean;
 }
 
-export function paginasEfetivas(entrada: EntradaCalculo) {
-  if (entrada.tipo === "pb") return { pb: entrada.paginasTotal, color: 0 };
-  if (entrada.tipo === "color") return { pb: 0, color: entrada.paginasTotal };
-  return { pb: entrada.paginasPb, color: entrada.paginasColor };
-}
-
 export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): LinhaCalculo[] {
-  const cor: CorImpressao = entrada.cor ?? (entrada.tipo === "color" ? "color" : "pb");
-  const pb = cor === "pb" ? entrada.paginasTotal : 0;
-  const color = cor === "color" ? entrada.paginasTotal : 0;
   return materiais
     .filter((m) => m.ativo)
     .filter((m) => !entrada.tipoServico || (m.tipo_impressao ?? "simples") === entrada.tipoServico)
+    .filter((m) => !entrada.formato || (m.formato ?? "A4") === entrada.formato)
     .sort((a, b) => a.ordem - b.ordem)
     .map((material) => {
-      const precoPb = precoPorQuantidade(material, entrada.paginasTotal, "pb");
-      const precoColor = precoPorQuantidade(material, entrada.paginasTotal, "color");
-      const totalPb = pb * precoPb;
-      const totalColor = color * precoColor;
-      const paginas = pb + color;
+      const preco = precoPorQuantidade(material, entrada.paginasTotal, entrada.copiaManual);
+      const paginas = entrada.paginasTotal;
+      const totalPaginas = paginas * preco;
       const totalArquivos = entrada.copiaManual
         ? 0
         : (entrada.arquivos ?? 0) * (Number(material.preco_por_arquivo) || 0);
-      const total = totalPb + totalColor + totalArquivos;
+      const total = totalPaginas + totalArquivos;
       return {
         material,
-        valorUnitario: paginas > 0 ? total / paginas : cor === "color" ? precoColor : precoPb,
-        valorUnitarioPb: precoPb,
-        valorUnitarioColor: precoColor,
-        paginasPb: pb,
-        paginasColor: color,
-        totalPb,
-        totalColor,
+        valorUnitario: preco,
+        paginas,
+        totalPaginas,
         totalArquivos,
         total,
       };
@@ -176,6 +165,7 @@ export function resumoLinhas(linhas: LinhaCalculo[]) {
   const media = linhas.reduce((acc, l) => acc + l.total, 0) / linhas.length;
   return { menor, maior, media };
 }
+
 // ---------- Acabamentos ----------
 
 export type CobrancaAcabamento = "quantidade" | "bloco" | "pagina" | "fixo";
@@ -189,6 +179,7 @@ export interface Acabamento {
   faixas: FaixaPreco[];
   tipo_impressao: TipoServicoAcabamento;
   mostrar_nao_incluso: boolean;
+  mostrar_no_orcamento: boolean;
   ativo: boolean;
   ordem: number;
 }
@@ -243,5 +234,3 @@ export const rotuloCobranca: Record<CobrancaAcabamento, string> = {
   pagina: "Por página",
   fixo: "Valor fixo",
 };
-
-export const TAMANHOS = ["A4", "A5", "A6", "Outro"] as const;
