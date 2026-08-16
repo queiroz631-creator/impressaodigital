@@ -758,28 +758,6 @@ function Calculadora() {
                 onCheckedChange={(v) => set("frenteVerso", v)}
               />
             </div>
-            <div className="space-y-2 rounded-xl border border-border p-4">
-              <Label className="text-xs font-semibold text-muted-foreground">Tamanho</Label>
-              <Select value={estado.tamanho} onValueChange={(v) => set("tamanho", v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TAMANHOS.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {estado.tamanho === "Outro" && (
-                <Input
-                  placeholder="Informe o tamanho"
-                  value={estado.tamanhoOutro}
-                  onChange={(e) => set("tamanhoOutro", e.target.value)}
-                />
-              )}
-            </div>
           </div>
         </CardContent>
       </Card>
