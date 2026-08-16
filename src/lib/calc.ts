@@ -1,5 +1,22 @@
 export type TipoImpressao = "pb" | "color" | "ambas";
 
+/** Cor da impressão selecionada na calculadora. */
+export type CorImpressao = "pb" | "color";
+/** Classificação do material / acabamento. */
+export type TipoServico = "simples" | "especial";
+export type TipoServicoAcabamento = TipoServico | "ambas";
+
+export const rotuloCor: Record<CorImpressao, string> = {
+  pb: "Preto e Branco",
+  color: "Colorido",
+};
+
+export const rotuloTipoServico: Record<TipoServicoAcabamento, string> = {
+  simples: "Impressão Simples",
+  especial: "Impressão Especial",
+  ambas: "Ambas",
+};
+
 export interface Material {
   id: string;
   nome: string;
@@ -8,6 +25,7 @@ export interface Material {
   preco_color: number;
   preco_por_arquivo: number;
   faixas: FaixaPreco[];
+  tipo_impressao: TipoServico;
   ativo: boolean;
   ordem: number;
 }
@@ -25,9 +43,24 @@ export function normalizarFaixas(valor: unknown): FaixaPreco[] {
     .sort((a, b) => a.min - b.min);
 }
 
-export function precoPorQuantidade(material: Material, quantidade: number) {
-  const base = Number(material.preco_pb) || 0;
+export function precoPorQuantidade(
+  material: Material,
+  quantidade: number,
+  cor: CorImpressao = "pb",
+) {
+  const base = Number(cor === "color" ? material.preco_color : material.preco_pb) || 0;
   const faixas = normalizarFaixas(material.faixas);
+  let preco = base;
+  if (cor === "pb") {
+    for (const f of faixas) if (quantidade >= f.min) preco = f.preco;
+  }
+  return preco;
+}
+
+/** Preço unitário de um acabamento considerando as faixas por quantidade. */
+export function precoAcabamento(acabamento: Acabamento, quantidade: number) {
+  const base = Number(acabamento.valor) || 0;
+  const faixas = normalizarFaixas(acabamento.faixas);
   let preco = base;
   for (const f of faixas) if (quantidade >= f.min) preco = f.preco;
   return preco;
