@@ -517,39 +517,6 @@ function Calculadora() {
         <CardContent>
           <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
             <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="space-y-2">
-                  <Label>Cliente</Label>
-                  <Input
-                    value={estado.clienteNome}
-                    onChange={(e) => set("clienteNome", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Telefone</Label>
-                  <Input
-                    value={estado.clienteTelefone}
-                    onChange={(e) => set("clienteTelefone", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Validade</Label>
-                  <Input
-                    type="date"
-                    value={estado.validade}
-                    onChange={(e) => set("validade", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Observação</Label>
-                  <Textarea
-                    rows={1}
-                    value={estado.observacao}
-                    onChange={(e) => set("observacao", e.target.value)}
-                  />
-                </div>
-              </div>
-
               <div>
                 <input
                   ref={inputArquivos}
