@@ -307,7 +307,7 @@ function Calculadora() {
 
   async function adicionarAoPedido() {
     if (precisaSelecionar) {
-      toast.error("Selecione o tipo de impressão e a cor da impressão para realizar o cálculo.");
+      toast.error("Selecione o tipo de impressão para realizar o cálculo.");
       return;
     }
     if (!materialSelecionado) {
@@ -329,7 +329,6 @@ function Calculadora() {
         material_nome: materialSelecionado.material.nome,
         arquivos: estado.arquivosLista as unknown as never,
         acabamentos: acabamentosParaSalvar() as unknown as never,
-        cor_impressao: estado.cor,
         tipo_impressao: estado.tipoServico,
         quantidade_arquivos: estado.arquivos,
         paginas_total: estado.paginas,
