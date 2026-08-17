@@ -88,9 +88,9 @@ export function gerarOrcamentoPdf(d: DadosDocumento) {
     if (item.acabamentos.length > 0) {
       autoTable(doc, {
         startY: y,
-        head: [["Acabamento", "Qtd.", "Valor"]],
+        head: [["Acabamento", "Qtd.", "Detalhe"]],
         body: item.acabamentos.map((a) =>
-          a.incluso ? [a.nome, String(a.quantidade), brl(a.total)] : [a.nome, "-", "Não incluso"],
+          a.incluso ? [a.nome, String(a.quantidade), "Incluso"] : [a.nome, "-", "Não incluso"],
         ),
         theme: "grid",
         headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: "bold" },
