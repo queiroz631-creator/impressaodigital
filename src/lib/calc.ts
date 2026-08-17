@@ -3,20 +3,18 @@ export type TipoServico = "simples" | "especial";
 export type TipoServicoAcabamento = TipoServico | "ambas";
 
 /** Formato do papel utilizado na impressão. */
-export type FormatoPapel = "A3" | "A4" | "A5" | "A6";
+export type FormatoPapel = "A3" | "A4" | "A5";
 
 export const FORMATOS: { valor: FormatoPapel; rotulo: string }[] = [
   { valor: "A3", rotulo: "Papel A3 (30x40cm)" },
   { valor: "A4", rotulo: "Papel A4 (20x30cm)" },
   { valor: "A5", rotulo: "Papel A5 (15x20cm)" },
-  { valor: "A6", rotulo: "Papel A6 (10x15cm)" },
 ];
 
 export const rotuloFormato: Record<FormatoPapel, string> = {
   A3: "Papel A3 (30x40cm)",
   A4: "Papel A4 (20x30cm)",
   A5: "Papel A5 (15x20cm)",
-  A6: "Papel A6 (10x15cm)",
 };
 
 export const FORMATO_PADRAO: FormatoPapel = "A4";
