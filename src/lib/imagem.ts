@@ -36,9 +36,6 @@ function montarLinhas(d: DadosDocumento): Linha[] {
       tipo: "chave",
       valor: String(item.paginasTotal),
     });
-    for (const a of item.arquivos) {
-      linhas.push({ texto: `• ${a.nome} (${a.tipo})`, tipo: "chave", valor: `${a.paginas} pág.` });
-    }
     for (const a of item.acabamentos) {
       linhas.push({
         texto: `Acabamento: ${a.nome}`,
