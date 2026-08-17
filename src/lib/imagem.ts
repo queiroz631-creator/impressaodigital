@@ -43,9 +43,7 @@ function montarLinhas(d: DadosDocumento): Linha[] {
         valor: a.incluso ? `${a.quantidade}x · "Incluso"` : "Não incluso",
       });
     }
-    if (d.mostrarTotal !== false) {
-      linhas.push({ texto: `Total ${item.titulo}`, tipo: "total", valor: brl(item.total) });
-    }
+    linhas.push({ texto: `Total ${item.titulo}`, tipo: "total", valor: brl(item.total) });
   }
 
   if (d.mostrarTotal !== false) {
