@@ -198,7 +198,14 @@ function Calculadora() {
       copiaManual: estado.copiaManual,
       usarFaixaCopiaManual: estado.usarFaixaCopiaManual,
     }),
-    [estado.paginas, estado.arquivos, estado.tipoServico, estado.formato, estado.copiaManual],
+    [
+      estado.paginas,
+      estado.arquivos,
+      estado.tipoServico,
+      estado.formato,
+      estado.copiaManual,
+      estado.usarFaixaCopiaManual,
+    ],
   );
 
   const linhas = useMemo(() => calcularLinhas(materiais ?? [], entrada), [materiais, entrada]);
