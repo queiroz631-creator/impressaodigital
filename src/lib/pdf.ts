@@ -18,7 +18,7 @@ export function gerarOrcamentoPdf(d: DadosDocumento) {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(17);
-  doc.text("CALCULADORA DE IMPRESSÃO DIGITAL", 40, 40);
+  doc.text("IMPRESSÃO DIGITAL", 40, 40);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.text(d.empresaNome, 40, 60);
@@ -90,9 +90,7 @@ export function gerarOrcamentoPdf(d: DadosDocumento) {
         startY: y,
         head: [["Acabamento", "Qtd.", "Valor"]],
         body: item.acabamentos.map((a) =>
-          a.incluso
-            ? [a.nome, String(a.quantidade), brl(a.total)]
-            : [a.nome, "-", "Não incluso"],
+          a.incluso ? [a.nome, String(a.quantidade), brl(a.total)] : [a.nome, "-", "Não incluso"],
         ),
         theme: "grid",
         headStyles: { fillColor: NAVY, textColor: 255, fontStyle: "bold" },
@@ -103,12 +101,10 @@ export function gerarOrcamentoPdf(d: DadosDocumento) {
       y = finalY(doc) + 18;
     }
 
-    if (d.mostrarTotal !== false) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text(`Total ${item.titulo}: ${brl(item.total)}`, width - 40, y, { align: "right" });
-      y += 28;
-    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(`Total ${item.titulo}: ${brl(item.total)}`, width - 40, y, { align: "right" });
+    y += 28;
 
     if (y > doc.internal.pageSize.getHeight() - 140 && item !== d.itens[d.itens.length - 1]) {
       doc.addPage();
