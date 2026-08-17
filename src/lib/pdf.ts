@@ -69,22 +69,6 @@ export function gerarOrcamentoPdf(d: DadosDocumento) {
     });
     y = finalY(doc) + 18;
 
-    if (item.arquivos.length > 0) {
-      autoTable(doc, {
-        startY: y,
-        head: [["Arquivo", "Tipo", "Páginas"]],
-        body: item.arquivos.map((a) => [a.nome, a.tipo, String(a.paginas)]),
-        foot: [["Total", String(item.arquivos.length), String(item.paginasTotal)]],
-        theme: "grid",
-        headStyles: { fillColor: NAVY, textColor: 255, fontStyle: "bold" },
-        footStyles: { fillColor: [235, 235, 245], textColor: 30, fontStyle: "bold" },
-        bodyStyles: { fontSize: 10 },
-        columnStyles: { 2: { halign: "right" } },
-        margin: { left: 40, right: 40 },
-      });
-      y = finalY(doc) + 18;
-    }
-
     if (item.acabamentos.length > 0) {
       autoTable(doc, {
         startY: y,
