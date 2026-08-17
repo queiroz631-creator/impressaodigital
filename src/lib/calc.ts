@@ -15,6 +15,7 @@ export const rotuloFormato: Record<FormatoPapel, string> = {
   A3: "Papel A3 (30x40cm)",
   A4: "Papel A4 (20x30cm)",
   A5: "Papel A5 (15x20cm)",
+  A6: "Papel A6 (10x15cm)",
 };
 
 export const FORMATO_PADRAO: FormatoPapel = "A4";
@@ -55,11 +56,7 @@ export function normalizarFaixas(valor: unknown): FaixaPreco[] {
  * Preço unitário do material. Em cópia manual utiliza somente o preço unitário
  * cadastrado, ignorando as faixas por quantidade.
  */
-export function precoPorQuantidade(
-  material: Material,
-  quantidade: number,
-  copiaManual = false,
-) {
+export function precoPorQuantidade(material: Material, quantidade: number, copiaManual = false) {
   const base = Number(material.preco_pb) || 0;
   if (copiaManual) return base;
   let preco = base;
