@@ -43,13 +43,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { ConfirmarAcao } from "@/components/ConfirmarAcao";
 import {
@@ -88,8 +82,7 @@ export const Route = createFileRoute("/")({
       { title: "Calculadora de Impressão Digital" },
       {
         name: "description",
-        content:
-          "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
+        content: "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
       },
       { property: "og:title", content: "Calculadora de Impressão Digital" },
       {
@@ -126,6 +119,7 @@ interface EstadoRascunho {
   selecao: Record<string, SelecaoAcabamento>;
   frenteVerso: boolean;
   formato: FormatoPapel;
+  usarFaixaCopiaManual: boolean;
 }
 
 const ESTADO_INICIAL: EstadoRascunho = {
@@ -144,6 +138,7 @@ const ESTADO_INICIAL: EstadoRascunho = {
   selecao: {},
   frenteVerso: false,
   formato: FORMATO_PADRAO,
+  usarFaixaCopiaManual: false,
 };
 
 function Calculadora() {
@@ -186,10 +181,7 @@ function Calculadora() {
     const timer = setTimeout(() => {
       void supabase
         .from("rascunhos")
-        .upsert(
-          { usuario_id: user.id, dados: estado as unknown as never },
-          { onConflict: "usuario_id" },
-        );
+        .upsert({ usuario_id: user.id, dados: estado as unknown as never }, { onConflict: "usuario_id" });
     }, 800);
     return () => clearTimeout(timer);
   }, [estado, hidratado, user?.id]);
@@ -204,6 +196,7 @@ function Calculadora() {
       ...(estado.tipoServico ? { tipoServico: estado.tipoServico as TipoServico } : {}),
       formato: estado.formato,
       copiaManual: estado.copiaManual,
+      usarFaixaCopiaManual: estado.usarFaixaCopiaManual,
     }),
     [estado.paginas, estado.arquivos, estado.tipoServico, estado.formato, estado.copiaManual],
   );
@@ -230,8 +223,7 @@ function Calculadora() {
   const semPaginas = totalPaginas <= 0;
   const mostrarTabela = !precisaSelecionar && !semPaginas;
 
-  const materialSelecionado =
-    linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
+  const materialSelecionado = linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
 
   const totalPedido = (itensPedido ?? []).reduce((acc, o) => acc + Number(o.valor_total ?? 0), 0);
 
@@ -277,12 +269,7 @@ function Calculadora() {
         incluso: true,
       }));
     const naoInclusos: AcabamentoDoc[] = acabamentosVisiveis
-      .filter(
-        (a) =>
-          a.mostrar_no_orcamento !== false &&
-          a.mostrar_nao_incluso &&
-          !estado.selecao[a.id]?.ativo,
-      )
+      .filter((a) => a.mostrar_no_orcamento !== false && a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo)
       .map((a) => ({ nome: a.nome, quantidade: 0, total: 0, incluso: false }));
     return [...selecionados, ...naoInclusos];
   }
@@ -344,10 +331,7 @@ function Calculadora() {
       };
 
       if (estado.editandoId) {
-        const { error } = await supabase
-          .from("orcamentos")
-          .update(registro)
-          .eq("id", estado.editandoId);
+        const { error } = await supabase.from("orcamentos").update(registro).eq("id", estado.editandoId);
         if (error) throw error;
         toast.success("Orçamento atualizado no pedido.");
       } else {
@@ -430,18 +414,14 @@ function Calculadora() {
   }
 
   function documentoDoPedido() {
-    return documentoDeOrcamentos(
-      (itensPedido ?? []) as unknown as Record<string, unknown>[],
-      config,
-      {
-        numero: String(pedido?.numero ?? "-"),
-        data: String(pedido?.created_at ?? new Date().toISOString()),
-        clienteNome: estado.clienteNome,
-        clienteTelefone: estado.clienteTelefone,
-        validade: estado.validade || null,
-        observacao: estado.observacao || null,
-      },
-    );
+    return documentoDeOrcamentos((itensPedido ?? []) as unknown as Record<string, unknown>[], config, {
+      numero: String(pedido?.numero ?? "-"),
+      data: String(pedido?.created_at ?? new Date().toISOString()),
+      clienteNome: estado.clienteNome,
+      clienteTelefone: estado.clienteTelefone,
+      validade: estado.validade || null,
+      observacao: estado.observacao || null,
+    });
   }
 
   function documentoParaGerar() {
@@ -526,11 +506,7 @@ function Calculadora() {
                   className="hidden"
                   onChange={(e) => anexar(e.target.files)}
                 />
-                <Button
-                  variant="outline"
-                  disabled={lendoArquivos}
-                  onClick={() => inputArquivos.current?.click()}
-                >
+                <Button variant="outline" disabled={lendoArquivos} onClick={() => inputArquivos.current?.click()}>
                   <Paperclip className="h-4 w-4" />
                   {lendoArquivos ? "Lendo arquivos..." : "Anexar PDFs / Imagens"}
                 </Button>
@@ -603,9 +579,7 @@ function Calculadora() {
                 </Campo>
 
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-muted-foreground">
-                    Tipo de impressão *
-                  </Label>
+                  <Label className="text-xs font-semibold text-muted-foreground">Tipo de impressão *</Label>
                   <RadioGroup
                     value={estado.tipoServico}
                     onValueChange={(v) => set("tipoServico", v as TipoServico)}
@@ -650,9 +624,22 @@ function Calculadora() {
                   Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Na cópia manual o cálculo usa somente a quantidade de páginas e o preço unitário
-                  cadastrado, sem faixas por quantidade e sem valor por arquivo.
+                  Na cópia manual o cálculo usa somente a quantidade de páginas e o preço unitário cadastrado, sem
+                  faixas por quantidade e sem valor por arquivo.
                 </p>
+                {estado.copiaManual && (
+                  <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
+                    <div>
+                      <p className="text-sm font-semibold">Usar faixa de quantidade</p>
+                      <p className="text-xs text-muted-foreground">Aplica as faixas cadastradas ao preço por página.</p>
+                    </div>
+
+                    <Switch
+                      checked={estado.usarFaixaCopiaManual}
+                      onCheckedChange={(v) => set("usarFaixaCopiaManual", v)}
+                    />
+                  </div>
+                )}
               </div>
 
               {precisaSelecionar && (
@@ -667,9 +654,7 @@ function Calculadora() {
               <dl className="mt-4 space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <dt className="text-muted-foreground">Total de arquivos</dt>
-                  <dd className="text-2xl font-extrabold text-primary">
-                    {numeroBR(estado.arquivos)}
-                  </dd>
+                  <dd className="text-2xl font-extrabold text-primary">{numeroBR(estado.arquivos)}</dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <dt className="text-muted-foreground">Total de páginas</dt>
@@ -738,9 +723,7 @@ function Calculadora() {
                         />
                       </div>
                     )}
-                    {sel.ativo && (
-                      <p className="mt-2 text-sm font-bold text-success">{brl(linha?.total ?? 0)}</p>
-                    )}
+                    {sel.ativo && <p className="mt-2 text-sm font-bold text-success">{brl(linha?.total ?? 0)}</p>}
                   </div>
                 );
               })}
@@ -753,10 +736,7 @@ function Calculadora() {
                 <p className="font-semibold">Frente e verso</p>
                 <p className="text-xs text-muted-foreground">Informado no orçamento</p>
               </div>
-              <Switch
-                checked={estado.frenteVerso}
-                onCheckedChange={(v) => set("frenteVerso", v)}
-              />
+              <Switch checked={estado.frenteVerso} onCheckedChange={(v) => set("frenteVerso", v)} />
             </div>
           </div>
         </CardContent>
@@ -812,9 +792,7 @@ function Calculadora() {
                     <th className="px-4 py-3">MATERIAL</th>
                     <th className="px-4 py-3">DESCRIÇÃO</th>
                     <th className="px-4 py-3 text-right">PREÇO UNI</th>
-                    <th className="rounded-r-lg px-4 py-3 text-right">
-                      TOTAL ({numeroBR(totalPaginas)} PÁGINAS)
-                    </th>
+                    <th className="rounded-r-lg px-4 py-3 text-right">TOTAL ({numeroBR(totalPaginas)} PÁGINAS)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -835,9 +813,7 @@ function Calculadora() {
                             aria-label={`Selecionar ${l.material.nome}`}
                           />
                         </td>
-                        <td className="border-y border-border px-4 py-3 font-semibold">
-                          {l.material.nome}
-                        </td>
+                        <td className="border-y border-border px-4 py-3 font-semibold">{l.material.nome}</td>
                         <td className="border-y border-border px-4 py-3 text-muted-foreground">
                           {l.material.descricao}
                         </td>
@@ -891,9 +867,7 @@ function Calculadora() {
                     <td className="px-3 py-3 capitalize">{o.tipo_impressao}</td>
                     <td className="px-3 py-3">{o.tamanho}</td>
                     <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_total))}</td>
-                    <td className="px-3 py-3 text-right font-bold text-success">
-                      {brl(Number(o.valor_total))}
-                    </td>
+                    <td className="px-3 py-3 text-right font-bold text-success">{brl(Number(o.valor_total))}</td>
                     <td className="px-3 py-3 text-right">
                       <Button
                         variant="ghost"
@@ -916,9 +890,7 @@ function Calculadora() {
                   <td colSpan={5} className="px-3 py-3 text-right font-bold">
                     TOTAL DO PEDIDO
                   </td>
-                  <td className="px-3 py-3 text-right text-lg font-extrabold text-success">
-                    {brl(totalPedido)}
-                  </td>
+                  <td className="px-3 py-3 text-right text-lg font-extrabold text-success">{brl(totalPedido)}</td>
                   <td />
                 </tr>
               </tfoot>
@@ -965,40 +937,24 @@ function Calculadora() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Gerar orçamento</DialogTitle>
-            <DialogDescription>
-              Informe os dados do cliente para gerar o documento do pedido.
-            </DialogDescription>
+            <DialogDescription>Informe os dados do cliente para gerar o documento do pedido.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Cliente</Label>
-              <Input
-                value={estado.clienteNome}
-                onChange={(e) => set("clienteNome", e.target.value)}
-              />
+              <Input value={estado.clienteNome} onChange={(e) => set("clienteNome", e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Telefone</Label>
-              <Input
-                value={estado.clienteTelefone}
-                onChange={(e) => set("clienteTelefone", e.target.value)}
-              />
+              <Input value={estado.clienteTelefone} onChange={(e) => set("clienteTelefone", e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Validade</Label>
-              <Input
-                type="date"
-                value={estado.validade}
-                onChange={(e) => set("validade", e.target.value)}
-              />
+              <Input type="date" value={estado.validade} onChange={(e) => set("validade", e.target.value)} />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label>Observação</Label>
-              <Textarea
-                rows={2}
-                value={estado.observacao}
-                onChange={(e) => set("observacao", e.target.value)}
-              />
+              <Textarea rows={2} value={estado.observacao} onChange={(e) => set("observacao", e.target.value)} />
             </div>
             <div className="flex items-center justify-between rounded-xl border border-border p-3 sm:col-span-2">
               <div>

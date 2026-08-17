@@ -55,9 +55,17 @@ export function normalizarFaixas(valor: unknown): FaixaPreco[] {
  * Preço unitário do material. Em cópia manual utiliza somente o preço unitário
  * cadastrado, ignorando as faixas por quantidade.
  */
-export function precoPorQuantidade(material: Material, quantidade: number, copiaManual = false) {
+export function precoPorQuantidade(
+  material: Material,
+  quantidade: number,
+  copiaManual = false,
+  usarFaixaCopiaManual = false,
+) {
   const base = Number(material.preco_pb) || 0;
-  if (copiaManual) return base;
+  // Cópia manual sem faixa: usa somente o preço base
+  if (copiaManual && !usarFaixaCopiaManual) {
+    return base;
+  }
   let preco = base;
   for (const f of normalizarFaixas(material.faixas)) if (quantidade >= f.min) preco = f.preco;
   return preco;
@@ -126,6 +134,8 @@ export interface EntradaCalculo {
   formato?: FormatoPapel;
   /** Cópia manual: cobra somente por página, com o preço unitário cadastrado. */
   copiaManual?: boolean;
+  // Quando true, utiliza as faixas de quantidade mesmo na cópia manual
+  usarFaixaCopiaManual?: boolean;
 }
 
 export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): LinhaCalculo[] {
@@ -135,7 +145,12 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
     .filter((m) => !entrada.formato || (m.formato ?? "A4") === entrada.formato)
     .sort((a, b) => a.ordem - b.ordem)
     .map((material) => {
-      const preco = precoPorQuantidade(material, entrada.paginasTotal, entrada.copiaManual);
+      const preco = precoPorQuantidade(
+        material,
+        entrada.paginasTotal,
+        entrada.copiaManual,
+        entrada.usarFaixaCopiaManual,
+      );
       const paginas = entrada.paginasTotal;
       const totalPaginas = paginas * preco;
       const totalArquivos = entrada.copiaManual
