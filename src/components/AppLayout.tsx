@@ -1,16 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-  LayoutDashboard,
-  Printer,
-  DollarSign,
-  FileText,
-  History,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react";
+import { LayoutDashboard, Printer, DollarSign, FileText, History, Settings, LogOut, Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -95,11 +85,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       {aberto && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-navy/60"
-            onClick={() => setAberto(false)}
-            aria-hidden
-          />
+          <div className="absolute inset-0 bg-navy/60" onClick={() => setAberto(false)} aria-hidden />
           <aside className="relative flex h-full w-64 flex-col bg-sidebar">
             <SidebarHeader />
             {nav}
@@ -118,9 +104,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           >
             {aberto ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
-          <span className="text-sm font-semibold text-navy-foreground">
-            Calculadora de Impressão Digital
-          </span>
+          <span className="text-sm font-semibold text-navy-foreground">Impressão Digital</span>
         </header>
         <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
       </div>
@@ -147,14 +131,7 @@ export function PageHeader({ titulo, subtitulo }: { titulo: string; subtitulo?: 
       style={{ backgroundImage: "var(--gradient-header)" }}
     >
       <div className="flex items-center gap-4">
-        <img
-          src={logo}
-          alt=""
-          width={56}
-          height={56}
-          className="hidden h-14 w-14 sm:block"
-          loading="lazy"
-        />
+        <img src={logo} alt="" width={56} height={56} className="hidden h-14 w-14 sm:block" loading="lazy" />
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{titulo}</h1>
           {subtitulo && <p className="mt-1 text-sm text-navy-foreground/80">{subtitulo}</p>}
