@@ -93,7 +93,7 @@ export function gerarOrcamentoPdf(d: DadosDocumento) {
           a.incluso ? [a.nome, String(a.quantidade), brl(a.total)] : [a.nome, "-", "Não incluso"],
         ),
         theme: "grid",
-        headStyles: { fillColor: NAVY, textColor: 255, fontStyle: "bold" },
+        headStyles: { fillColor: [220, 220, 220], textColor: [0, 0, 0], fontStyle: "bold" },
         bodyStyles: { fontSize: 10 },
         columnStyles: { 1: { halign: "right" }, 2: { halign: "right" } },
         margin: { left: 40, right: 40 },
