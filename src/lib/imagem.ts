@@ -40,7 +40,7 @@ function montarLinhas(d: DadosDocumento): Linha[] {
       linhas.push({
         texto: `Acabamento: ${a.nome}`,
         tipo: "chave",
-        valor: a.incluso ? `${a.quantidade}x · ${brl(a.total)}` : "Não incluso",
+        valor: a.incluso ? `${a.quantidade}x · "Incluso"` : "Não incluso",
       });
     }
     if (d.mostrarTotal !== false) {
