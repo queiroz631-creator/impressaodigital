@@ -194,15 +194,27 @@ function Calculadora() {
   const entrada = useMemo(
     () => ({
       paginasTotal: estado.paginas,
+
       arquivos: estado.arquivos,
-      ...(estado.tipoServico ? { tipoServico: estado.tipoServico as TipoServico } : {}),
+
+      copiasAdicionais: estado.copiasAdicionais,
+
+      ...(estado.tipoServico
+        ? {
+            tipoServico: estado.tipoServico as TipoServico,
+          }
+        : {}),
+
       formato: estado.formato,
+
       copiaManual: estado.copiaManual,
+
       usarFaixaCopiaManual: estado.usarFaixaCopiaManual,
     }),
     [
       estado.paginas,
       estado.arquivos,
+      estado.copiasAdicionais,
       estado.tipoServico,
       estado.formato,
       estado.copiaManual,
