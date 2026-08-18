@@ -12,13 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { AcabamentosTabela } from "@/components/AcabamentosTabela";
 import { useMateriais } from "@/hooks/useDados";
@@ -59,6 +53,7 @@ function Precos() {
   const [linhas, setLinhas] = useState<Material[]>([]);
   const [salvando, setSalvando] = useState(false);
   const [faixasTexto, setFaixasTexto] = useState<Record<string, string>>({});
+  const [faixasArquivosTexto, setFaixasArquivosTexto] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!materiais) return;
@@ -179,144 +174,147 @@ function Precos() {
           <TabsTrigger value="acabamentos">Acabamentos</TabsTrigger>
         </TabsList>
         <TabsContent value="materiais">
-      <p className="mb-4 text-xs text-muted-foreground">
-        Faixas: uma por linha no formato <span className="font-mono">quantidade = valor</span> (ex.:{" "}
-        <span className="font-mono">500 = 0,08</span>). Pode colar vários valores de uma vez. A partir da quantidade
-        informada, o preço unitário passa a ser o da faixa.
-      </p>
-      <div className="mb-4 flex flex-wrap gap-2">
-        <Button variant="outline" onClick={adicionar}>
-          <Plus className="h-4 w-4" /> Adicionar material
-        </Button>
-        <Button onClick={salvar} disabled={salvando}>
-          <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
-        </Button>
-      </div>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Faixas: uma por linha no formato <span className="font-mono">quantidade = valor</span> (ex.:{" "}
+            <span className="font-mono">500 = 0,08</span>). Pode colar vários valores de uma vez. A partir da quantidade
+            informada, o preço unitário passa a ser o da faixa.
+          </p>
+          <div className="mb-4 flex flex-wrap gap-2">
+            <Button variant="outline" onClick={adicionar}>
+              <Plus className="h-4 w-4" /> Adicionar material
+            </Button>
+            <Button onClick={salvar} disabled={salvando}>
+              <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </div>
 
-      <Card className="shadow-card">
-        <CardContent className="overflow-x-auto py-4">
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : (
-            <table className="w-full min-w-[900px] text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
-                  <th className="px-2 py-3">TIPO</th>
-                  <th className="px-2 py-3">DESCRIÇÃO</th>
-                  <th className="px-2 py-3 w-44">TIPO DE IMPRESSÃO</th>
-                  <th className="px-2 py-3 w-44">FORMATO</th>
-                  <th className="px-2 py-3 w-32">PREÇO UNI</th>
-                  <th className="px-2 py-3 w-36">VALOR POR ARQUIVO</th>
-                  <th className="px-2 py-3 w-64">FAIXAS POR QUANTIDADE</th>
-                  <th className="px-2 py-3 w-20">ATIVO</th>
-                  <th className="px-2 py-3 w-28">ORDEM</th>
-                  <th className="px-2 py-3 w-16" />
-                </tr>
-              </thead>
-              <tbody>
-                {linhas.map((m, i) => (
-                  <tr key={m.id} className="border-b border-border">
-                    <td className="px-2 py-2">
-                      <Input value={m.nome} onChange={(e) => atualizar(m.id, "nome", e.target.value)} />
-                    </td>
-                    <td className="px-2 py-2">
-                      <Input value={m.descricao ?? ""} onChange={(e) => atualizar(m.id, "descricao", e.target.value)} />
-                    </td>
-                    <td className="px-2 py-2">
-                      <Select
-                        value={m.tipo_impressao ?? "simples"}
-                        onValueChange={(v) => atualizar(m.id, "tipo_impressao", v as TipoServico)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="simples">Impressão Simples</SelectItem>
-                          <SelectItem value="especial">Impressão Especial</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="px-2 py-2">
-                      <Select
-                        value={m.formato ?? "A4"}
-                        onValueChange={(v) => atualizar(m.id, "formato", v as FormatoPapel)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {FORMATOS.map((f) => (
-                            <SelectItem key={f.valor} value={f.valor}>
-                              {f.rotulo}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="px-2 py-2">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={m.preco_pb}
-                        onChange={(e) => atualizar(m.id, "preco_pb", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-2 py-2">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={m.preco_por_arquivo ?? 0}
-                        onChange={(e) => atualizar(m.id, "preco_por_arquivo", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-2 py-2">
-                      <Textarea
-                        rows={3}
-                        placeholder={"100 = 0,09\n500 = 0,08\n1000 = 0,07"}
-                        value={faixasTexto[m.id] ?? ""}
-                        onChange={(e) => setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))}
-                        onBlur={() =>
-                          setFaixasTexto((f) => ({
-                            ...f,
-                            [m.id]: faixasParaTexto(textoParaFaixas(f[m.id] ?? "")),
-                          }))
-                        }
-                        className="min-w-[15rem] font-mono text-xs"
-                      />
-                    </td>
-                    <td className="px-2 py-2">
-                      <Switch checked={m.ativo} onCheckedChange={(v) => atualizar(m.id, "ativo", v)} />
-                    </td>
-                    <td className="px-2 py-2">
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => mover(i, -1)}>
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => mover(i, 1)}>
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                    <td className="px-2 py-2">
-                      <ConfirmarExclusao onConfirmar={() => excluir(m.id)}>
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </ConfirmarExclusao>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
+          <Card className="shadow-card">
+            <CardContent className="overflow-x-auto py-4">
+              {isLoading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <table className="w-full min-w-[900px] text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
+                      <th className="px-2 py-3">TIPO</th>
+                      <th className="px-2 py-3">DESCRIÇÃO</th>
+                      <th className="px-2 py-3 w-44">TIPO DE IMPRESSÃO</th>
+                      <th className="px-2 py-3 w-44">FORMATO</th>
+                      <th className="px-2 py-3 w-32">PREÇO UNI</th>
+                      <th className="px-2 py-3 w-36">VALOR POR ARQUIVO</th>
+                      <th className="px-2 py-3 w-64">FAIXAS POR QUANTIDADE</th>
+                      <th className="px-2 py-3 w-20">ATIVO</th>
+                      <th className="px-2 py-3 w-28">ORDEM</th>
+                      <th className="px-2 py-3 w-16" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {linhas.map((m, i) => (
+                      <tr key={m.id} className="border-b border-border">
+                        <td className="px-2 py-2">
+                          <Input value={m.nome} onChange={(e) => atualizar(m.id, "nome", e.target.value)} />
+                        </td>
+                        <td className="px-2 py-2">
+                          <Input
+                            value={m.descricao ?? ""}
+                            onChange={(e) => atualizar(m.id, "descricao", e.target.value)}
+                          />
+                        </td>
+                        <td className="px-2 py-2">
+                          <Select
+                            value={m.tipo_impressao ?? "simples"}
+                            onValueChange={(v) => atualizar(m.id, "tipo_impressao", v as TipoServico)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="simples">Impressão Simples</SelectItem>
+                              <SelectItem value="especial">Impressão Especial</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-2 py-2">
+                          <Select
+                            value={m.formato ?? "A4"}
+                            onValueChange={(v) => atualizar(m.id, "formato", v as FormatoPapel)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {FORMATOS.map((f) => (
+                                <SelectItem key={f.valor} value={f.valor}>
+                                  {f.rotulo}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-2 py-2">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={m.preco_pb}
+                            onChange={(e) => atualizar(m.id, "preco_pb", e.target.value)}
+                          />
+                        </td>
+                        <td className="px-2 py-2">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={m.preco_por_arquivo ?? 0}
+                            onChange={(e) => atualizar(m.id, "preco_por_arquivo", e.target.value)}
+                          />
+                        </td>
+                        <td className="px-2 py-2">
+                          <Textarea
+                            rows={3}
+                            placeholder={"100 = 0,09\n500 = 0,08\n1000 = 0,07"}
+                            value={faixasTexto[m.id] ?? ""}
+                            onChange={(e) => setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))}
+                            onBlur={() =>
+                              setFaixasTexto((f) => ({
+                                ...f,
+                                [m.id]: faixasParaTexto(textoParaFaixas(f[m.id] ?? "")),
+                              }))
+                            }
+                            className="min-w-[15rem] font-mono text-xs"
+                          />
+                        </td>
+                        <td className="px-2 py-2">
+                          <Switch checked={m.ativo} onCheckedChange={(v) => atualizar(m.id, "ativo", v)} />
+                        </td>
+                        <td className="px-2 py-2">
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => mover(i, -1)}>
+                              <ArrowUp className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => mover(i, 1)}>
+                              <ArrowDown className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                        <td className="px-2 py-2">
+                          <ConfirmarExclusao onConfirmar={() => excluir(m.id)}>
+                            <Button variant="ghost" size="icon">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </ConfirmarExclusao>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="acabamentos">
           <AcabamentosTabela />
