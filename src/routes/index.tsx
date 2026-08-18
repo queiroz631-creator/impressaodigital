@@ -1206,8 +1206,14 @@ function Calculadora() {
               variant="outline"
               disabled={(itensPedido ?? []).length === 0}
               onClick={async () => {
+                if (!validarDadosOrcamento()) {
+                  return;
+                }
+
                 await salvarDadosCliente();
+
                 gerarOrcamentoImagem(documentoParaGerar());
+
                 setDialogAberto(false);
               }}
             >
