@@ -449,6 +449,20 @@ function Calculadora() {
     return { ...documentoDoPedido(), mostrarTotal: incluirTotal };
   }
 
+  function validarDadosOrcamento() {
+    if (!estado.clienteNome.trim()) {
+      toast.error("Informe o nome do cliente para gerar o orçamento.");
+      return false;
+    }
+
+    if ((itensPedido ?? []).length === 0) {
+      toast.error("Adicione pelo menos um item ao pedido.");
+      return false;
+    }
+
+    return true;
+  }
+
   async function salvarDadosCliente() {
     if (!estado.pedidoId) return;
     await supabase
