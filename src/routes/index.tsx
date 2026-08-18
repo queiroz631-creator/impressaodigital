@@ -1217,15 +1217,18 @@ function Calculadora() {
                 Cliente <span className="text-destructive">*</span>
               </Label>
 
-              <Input
-                value={estado.clienteNome}
-                onChange={(e) => set("clienteNome", e.target.value)}
-                placeholder="Digite o nome do cliente"
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={estado.clienteNome}
+                  onChange={(e) => set("clienteNome", e.target.value)}
+                  placeholder="Digite o nome do cliente"
+                  className="flex-1"
+                />
 
-              {!estado.clienteNome.trim() && (
-                <p className="text-xs text-destructive">O nome do cliente é obrigatório.</p>
-              )}
+                <Button type="button" variant="outline" onClick={() => set("clienteNome", "CLIENTE PADRÃO")}>
+                  Cliente Padrão
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Telefone</Label>
