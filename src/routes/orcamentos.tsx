@@ -173,7 +173,7 @@ function Orcamentos() {
      */
 
     for (const pedido of grupos.values()) {
-      pedido.itens.sort((a, b) => Number(a.ordem ?? 0) - Number(b.ordem ?? 0));
+      pedido.itens.sort((a, b) => Number(a['ordem'] ?? 0) - Number(b['ordem'] ?? 0));
     }
 
     return Array.from(grupos.values());
@@ -189,7 +189,7 @@ function Orcamentos() {
    */
 
   async function alterarStatusPedido(itens: Record<string, unknown>[], status: string) {
-    const ids = itens.map((item) => String(item.id)).filter(Boolean);
+    const ids = itens.map((item) => String(item['id'])).filter(Boolean);
 
     if (ids.length === 0) {
       return;
@@ -223,7 +223,7 @@ function Orcamentos() {
    */
 
   async function excluirPedido(itens: Record<string, unknown>[]) {
-    const ids = itens.map((item) => String(item.id)).filter(Boolean);
+    const ids = itens.map((item) => String(item['id'])).filter(Boolean);
 
     if (ids.length === 0) {
       return;
@@ -530,19 +530,19 @@ function Orcamentos() {
 
                   <tbody>
                     {pedidoItensAberto.itens.map((item, index) => (
-                      <tr key={String(item.id)} className="border-b border-border last:border-0">
+                      <tr key={String(item['id'])} className="border-b border-border last:border-0">
                         <td className="px-4 py-3 font-bold">{String(index + 1).padStart(2, "0")}</td>
 
-                        <td className="px-4 py-3 font-semibold">{String(item.material_nome ?? "-")}</td>
+                        <td className="px-4 py-3 font-semibold">{String(item['material_nome'] ?? "-")}</td>
 
-                        <td className="px-4 py-3 capitalize">{String(item.tipo_impressao ?? "-")}</td>
+                        <td className="px-4 py-3 capitalize">{String(item['tipo_impressao'] ?? "-")}</td>
 
-                        <td className="px-4 py-3">{String(item.tamanho ?? "-")}</td>
+                        <td className="px-4 py-3">{String(item['tamanho'] ?? "-")}</td>
 
-                        <td className="px-4 py-3 text-right">{Number(item.paginas_total ?? 0)}</td>
+                        <td className="px-4 py-3 text-right">{Number(item['paginas_total'] ?? 0)}</td>
 
                         <td className="px-4 py-3 text-right font-bold text-success">
-                          {brl(Number(item.valor_total ?? 0))}
+                          {brl(Number(item['valor_total'] ?? 0))}
                         </td>
                       </tr>
                     ))}
