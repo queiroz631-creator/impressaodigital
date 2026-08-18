@@ -128,6 +128,7 @@ export interface LinhaCalculo {
 export interface EntradaCalculo {
   paginasTotal: number;
   arquivos?: number;
+  copiasAdicionais?: number;
   /** Filtra os materiais pelo tipo de impressão. */
   tipoServico?: TipoServico;
   /** Filtra os materiais pelo formato do papel. */
@@ -136,7 +137,6 @@ export interface EntradaCalculo {
   copiaManual?: boolean;
   // Quando true, utiliza as faixas de quantidade mesmo na cópia manual
   usarFaixaCopiaManual?: boolean;
-  copiasAdicionais?: number;
 }
 
 export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): LinhaCalculo[] {
