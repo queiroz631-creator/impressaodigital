@@ -98,6 +98,8 @@ function Precos() {
           throw new Error("Preços não podem ser negativos.");
         }
         const faixas = textoParaFaixas(faixasTexto[m.id] ?? "");
+
+        const faixasArquivos = textoParaFaixas(faixasArquivosTexto[m.id] ?? "");
         const { error } = await supabase
           .from("materiais")
           .update({
