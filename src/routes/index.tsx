@@ -439,6 +439,24 @@ function Calculadora() {
       validade: manterPedido ? e.validade : "",
     }));
   }
+  function calcularValidadePadrao() {
+    const dias = Number(config?.validade_padrao_dias ?? 0);
+
+    if (dias <= 0) {
+      return "";
+    }
+
+    const data = new Date();
+
+    data.setHours(0, 0, 0, 0);
+    data.setDate(data.getDate() + dias);
+
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, "0");
+    const dia = String(data.getDate()).padStart(2, "0");
+
+    return `${ano}-${mes}-${dia}`;
+  }
 
   function documentoDoPedido() {
     return documentoDeOrcamentos((itensPedido ?? []) as unknown as Record<string, unknown>[], config, {
