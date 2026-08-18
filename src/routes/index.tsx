@@ -470,7 +470,7 @@ function Calculadora() {
 
     const data = new Date();
 
-    data.setHours(0, 0, 0, 0);
+    data.setHours(12, 0, 0, 0);
     data.setDate(data.getDate() + dias);
 
     const ano = data.getFullYear();
