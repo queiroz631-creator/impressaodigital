@@ -1203,8 +1203,8 @@ function Calculadora() {
           </div>
           <DialogFooter className="gap-2">
             <Button
+              type="button"
               variant="outline"
-              disabled={(itensPedido ?? []).length === 0}
               onClick={async () => {
                 if (!validarDadosOrcamento()) {
                   return;
@@ -1217,7 +1217,8 @@ function Calculadora() {
                 setDialogAberto(false);
               }}
             >
-              <ImageIcon className="h-4 w-4" /> Gerar Imagem
+              <ImageIcon className="h-4 w-4" />
+              Gerar Imagem
             </Button>
             <Button
               type="button"
