@@ -599,12 +599,34 @@ function Calculadora() {
                   label="Quantidade total de páginas"
                   sufixo="páginas"
                 >
-                  <Input
-                    inputMode="numeric"
-                    value={estado.paginas}
-                    onChange={(e) => set("paginas", num(e.target.value))}
-                    className="text-xl font-bold"
-                  />
+                  <div className="flex h-11 overflow-hidden rounded-lg border border-border bg-background">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-full w-12 shrink-0 rounded-none border-r"
+                      onClick={() => set("paginas", Math.max(0, estado.paginas - 1))}
+                    >
+                      −
+                    </Button>
+
+                    <Input
+                      type="number"
+                      min="0"
+                      inputMode="numeric"
+                      value={estado.paginas}
+                      onChange={(e) => set("paginas", Math.max(0, num(e.target.value)))}
+                      className="h-full rounded-none border-0 text-center text-xl font-bold focus-visible:ring-0"
+                    />
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-full w-12 shrink-0 rounded-none border-l"
+                      onClick={() => set("paginas", estado.paginas + 1)}
+                    >
+                      +
+                    </Button>
+                  </div>
                 </Campo>
 
                 <div className="space-y-2">
