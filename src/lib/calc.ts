@@ -146,24 +146,47 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
     .filter((m) => !entrada.formato || (m.formato ?? "A4") === entrada.formato)
     .sort((a, b) => a.ordem - b.ordem)
     .map((material) => {
+      // Páginas originais
+      const paginas = Math.max(0, Number(entrada.paginasTotal) || 0);
+
+      // Cópias adicionais
+      const copiasAdicionais = Math.max(0, Number(entrada.copiasAdicionais) || 0);
+
+      // Quantidade efetivamente cobrada
+      const quantidadeCalculada = paginas + copiasAdicionais;
+
+      // Verifica a faixa usando a
+      // quantidade total calculada
       const preco = precoPorQuantidade(
         material,
-        entrada.paginasTotal,
+        quantidadeCalculada,
         entrada.copiaManual,
         entrada.usarFaixaCopiaManual,
       );
-      const paginas = entrada.paginasTotal;
-      const totalPaginas = paginas * preco;
+
+      // Valor das páginas + cópias adicionais
+      const totalPaginas = quantidadeCalculada * preco;
+
+      // Continua cobrando por arquivo
+      // normalmente, exceto na cópia manual
       const totalArquivos = entrada.copiaManual
         ? 0
         : (entrada.arquivos ?? 0) * (Number(material.preco_por_arquivo) || 0);
+
       const total = totalPaginas + totalArquivos;
+
       return {
         material,
         valorUnitario: preco,
+
+        // quantidade original de páginas
         paginas,
-        totalPaginas,
+
+        // quantidade usada no cálculo
+        totalPaginas: quantidadeCalculada,
+
         totalArquivos,
+
         total,
       };
     });

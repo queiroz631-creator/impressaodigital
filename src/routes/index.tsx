@@ -630,7 +630,12 @@ function Calculadora() {
                     </Button>
                   </div>
                 </Campo>
-                <Campo icon={<Copy className="h-4 w-4 text-magenta-ink" />} label="Cópias adicionais" sufixo="cópias">
+
+                <Campo
+                  icon={<Copy className="h-4 w-4 text-magenta-ink" />}
+                  label="Cópias adicionais"
+                  sufixo="cópias adicionais"
+                >
                   <div className="flex h-11 items-center overflow-hidden rounded-md border border-input">
                     <Button
                       type="button"
@@ -639,7 +644,7 @@ function Calculadora() {
                       onClick={() =>
                         setEstado((e) => ({
                           ...e,
-                          copiasAdicionais: Math.max(1, e.copiasAdicionais - 1),
+                          copiasAdicionais: Math.max(0, e.copiasAdicionais - 1),
                         }))
                       }
                     >
@@ -649,7 +654,7 @@ function Calculadora() {
                     <Input
                       inputMode="numeric"
                       value={estado.copiasAdicionais}
-                      onChange={(e) => set("copiasAdicionais", Math.max(1, num(e.target.value)))}
+                      onChange={(e) => set("copiasAdicionais", Math.max(0, num(e.target.value)))}
                       className="h-full border-0 text-center text-xl font-bold shadow-none focus-visible:ring-0"
                     />
 
