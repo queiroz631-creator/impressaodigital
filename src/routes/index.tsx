@@ -190,6 +190,28 @@ function Calculadora() {
     return () => clearTimeout(timer);
   }, [estado, hidratado, user?.id]);
 
+  useEffect(() => {
+    if (!config?.validade_padrao_dias) return;
+
+    if (estado.validade) return;
+
+    const dias = Number(config.validade_padrao_dias);
+
+    if (dias <= 0) return;
+
+    const data = new Date();
+
+    data.setHours(0, 0, 0, 0);
+    data.setDate(data.getDate() + dias);
+
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, "0");
+
+    const dia = String(data.getDate()).padStart(2, "0");
+
+    set("validade", `${ano}-${mes}-${dia}`);
+  }, [config?.validade_padrao_dias, estado.validade, set]);
+
   const precisaSelecionar = !estado.tipoServico;
   const totalPaginas = estado.paginas;
 
