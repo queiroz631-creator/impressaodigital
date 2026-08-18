@@ -459,12 +459,14 @@ function Calculadora() {
   }
 
   function documentoDoPedido() {
+    const validade = estado.validade || calcularValidadePadrao();
+
     return documentoDeOrcamentos((itensPedido ?? []) as unknown as Record<string, unknown>[], config, {
       numero: String(pedido?.numero ?? "-"),
       data: String(pedido?.created_at ?? new Date().toISOString()),
       clienteNome: estado.clienteNome,
       clienteTelefone: estado.clienteTelefone,
-      validade: estado.validade || null,
+      validade: validade || null,
       observacao: estado.observacao || null,
     });
   }
