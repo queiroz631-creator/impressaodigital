@@ -1222,8 +1222,14 @@ function Calculadora() {
             <Button
               disabled={(itensPedido ?? []).length === 0}
               onClick={async () => {
+                if (!validarDadosOrcamento()) {
+                  return;
+                }
+
                 await salvarDadosCliente();
+
                 gerarOrcamentoPdf(documentoParaGerar());
+
                 setDialogAberto(false);
               }}
             >
