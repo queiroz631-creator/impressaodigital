@@ -175,9 +175,11 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
 
       // Continua cobrando por arquivo
       // normalmente, exceto na cópia manual
-      const totalArquivos = entrada.copiaManual
-        ? 0
-        : (entrada.arquivos ?? 0) * (Number(material.preco_por_arquivo) || 0);
+      const quantidadeArquivos = entrada.arquivos ?? 0;
+
+      const precoArquivo = precoPorQuantidadeArquivos(material, quantidadeArquivos);
+
+      const totalArquivos = entrada.copiaManual ? 0 : quantidadeArquivos * precoArquivo;
 
       const total = totalPaginas + totalArquivos;
 
