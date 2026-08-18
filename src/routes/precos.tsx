@@ -228,7 +228,6 @@ function Precos() {
                       <th className="px-2 py-3 w-32">PREÇO UNI</th>
                       <th className="px-2 py-3 w-36">VALOR POR ARQUIVO</th>
                       <th className="px-2 py-3 w-64">FAIXAS POR PÁGINAS</th>
-
                       <th className="px-2 py-3 w-64">FAIXAS POR ARQUIVOS</th>
                       <th className="px-2 py-3 w-20">ATIVO</th>
                       <th className="px-2 py-3 w-28">ORDEM</th>
@@ -304,6 +303,26 @@ function Precos() {
                             onChange={(e) => setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))}
                             onBlur={() =>
                               setFaixasTexto((f) => ({
+                                ...f,
+                                [m.id]: faixasParaTexto(textoParaFaixas(f[m.id] ?? "")),
+                              }))
+                            }
+                            className="min-w-[15rem] font-mono text-xs"
+                          />
+                        </td>
+                        <td className="px-2 py-2">
+                          <Textarea
+                            rows={3}
+                            placeholder={"1 = 1,00\n11 = 0,80\n21 = 0,70"}
+                            value={faixasArquivosTexto[m.id] ?? ""}
+                            onChange={(e) =>
+                              setFaixasArquivosTexto((f) => ({
+                                ...f,
+                                [m.id]: e.target.value,
+                              }))
+                            }
+                            onBlur={() =>
+                              setFaixasArquivosTexto((f) => ({
                                 ...f,
                                 [m.id]: faixasParaTexto(textoParaFaixas(f[m.id] ?? "")),
                               }))
