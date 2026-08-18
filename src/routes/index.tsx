@@ -1220,7 +1220,7 @@ function Calculadora() {
               <ImageIcon className="h-4 w-4" /> Gerar Imagem
             </Button>
             <Button
-              disabled={(itensPedido ?? []).length === 0}
+              type="button"
               onClick={async () => {
                 if (!validarDadosOrcamento()) {
                   return;
@@ -1233,7 +1233,8 @@ function Calculadora() {
                 setDialogAberto(false);
               }}
             >
-              <FileText className="h-4 w-4" /> Gerar PDF
+              <FileText className="h-4 w-4" />
+              Gerar PDF
             </Button>
           </DialogFooter>
         </DialogContent>
