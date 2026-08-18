@@ -37,7 +37,7 @@ function montarLinhas(d: DadosDocumento): Linha[] {
 
   if (d.validade) {
     linhas.push({
-      texto: "Validade",
+      texto: "Validade do Orçamento",
       tipo: "chave",
       valor: dataBR(d.validade),
     });
