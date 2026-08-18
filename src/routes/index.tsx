@@ -158,7 +158,6 @@ function Calculadora() {
   const [dialogAberto, setDialogAberto] = useState(false);
   const [incluirTotal, setIncluirTotal] = useState(true);
   const [downloadDialogAberto, setDownloadDialogAberto] = useState(false);
-
   const [tipoGeracao, setTipoGeracao] = useState<"pdf" | "imagem" | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
 
@@ -268,6 +267,10 @@ function Calculadora() {
       setLendoArquivos(false);
       if (inputArquivos.current) inputArquivos.current.value = "";
     }
+  }
+  function solicitarDownload(tipo: "pdf" | "imagem") {
+    setTipoGeracao(tipo);
+    setDownloadDialogAberto(true);
   }
 
   function aplicarArquivos(lista: ArquivoDoc[]) {
