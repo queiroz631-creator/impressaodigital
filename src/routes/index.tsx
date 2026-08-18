@@ -765,8 +765,13 @@ function Calculadora() {
                   <dd className="text-2xl font-extrabold text-primary">{numeroBR(estado.arquivos)}</dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
-                  <dt className="text-muted-foreground">Total de páginas</dt>
+                  <dt className="text-muted-foreground">Páginas</dt>
                   <dd className="text-2xl font-extrabold text-primary">{numeroBR(totalPaginas)}</dd>
+                </div>
+                <div className="flex items-center justify-between border-t border-border pt-3">
+                  <dt className="text-muted-foreground">Cópias adicionais</dt>
+
+                  <dd className="text-xl font-extrabold text-primary">{numeroBR(estado.copiasAdicionais)}</dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <dt className="text-muted-foreground">Acabamento</dt>
