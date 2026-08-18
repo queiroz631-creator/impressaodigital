@@ -2,8 +2,8 @@ import { brl, dataBR } from "./format";
 import type { DadosDocumento } from "./documento";
 
 const NAVY = "#1a1a5e";
-const LARGURA = 900;
-const MARGEM = 48;
+const LARGURA = 450;
+const MARGEM = 24;
 
 interface Linha {
   texto: string;
