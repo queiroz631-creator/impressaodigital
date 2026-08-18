@@ -677,168 +677,260 @@ function Calculadora() {
         </CardContent>
       </Card>
 
-      <Card className="mb-6 shadow-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
-            <span className="rounded-lg bg-accent p-2 text-primary">
-              <Scissors className="h-4 w-4" />
-            </span>
-            ACABAMENTO
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {acabamentosVisiveis.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum acabamento disponível para o tipo de impressão selecionado.
-            </p>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {acabamentosVisiveis.map((a) => {
-                const sel = estado.selecao[a.id] ?? { ativo: false, quantidade: 1 };
-                const linha = linhasAcabamento.find((l) => l.acabamento.id === a.id);
-                return (
-                  <div key={a.id} className="rounded-xl border border-border p-4">
-                    <label className="flex items-center gap-3">
-                      <Checkbox
-                        checked={sel.ativo}
-                        onCheckedChange={(v) =>
-                          set("selecao", {
-                            ...estado.selecao,
-                            [a.id]: { ...sel, ativo: v === true },
-                          })
-                        }
-                      />
-                      <span className="font-semibold">{a.nome}</span>
-                    </label>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {rotuloCobranca[a.cobranca]} · {brl(Number(a.valor) || 0)}
-                      {a.cobranca === "bloco" ? ` a cada ${a.paginas_bloco} páginas` : ""}
-                    </p>
-                    {sel.ativo && a.cobranca === "quantidade" && (
-                      <div className="mt-3">
-                        <Label className="text-xs text-muted-foreground">Quantidade</Label>
-                        <Input
-                          inputMode="numeric"
-                          value={sel.quantidade}
-                          onChange={(e) =>
-                            set("selecao", {
-                              ...estado.selecao,
-                              [a.id]: { ...sel, quantidade: num(e.target.value) },
-                            })
-                          }
-                          className="mt-1 font-bold"
-                        />
-                      </div>
-                    )}
-                    {sel.ativo && <p className="mt-2 text-sm font-bold text-success">{brl(linha?.total ?? 0)}</p>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+      <div className="mb-6 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+        {/* ==================== ACABAMENTO ==================== */}
+        <Card className="shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
+              <span className="rounded-lg bg-accent p-2 text-primary">
+                <Scissors className="h-4 w-4" />
+              </span>
+              ACABAMENTO
+            </CardTitle>
+          </CardHeader>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="flex items-center justify-between rounded-xl border border-border p-4">
+          <CardContent className="space-y-4">
+            {acabamentosVisiveis.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhum acabamento disponível para o tipo de impressão selecionado.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {acabamentosVisiveis.map((a) => {
+                  const sel = estado.selecao[a.id] ?? {
+                    ativo: false,
+                    quantidade: 1,
+                  };
+
+                  const linha = linhasAcabamento.find((l) => l.acabamento.id === a.id);
+
+                  return (
+                    <div
+                      key={a.id}
+                      className={`rounded-xl border p-3 transition-colors ${
+                        sel.ativo ? "border-primary/50 bg-accent/30" : "border-border bg-card"
+                      }`}
+                    >
+                      {/* Cabeçalho do acabamento */}
+                      <div className="flex items-center justify-between gap-3">
+                        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+                          <Checkbox
+                            checked={sel.ativo}
+                            onCheckedChange={(v) =>
+                              set("selecao", {
+                                ...estado.selecao,
+                                [a.id]: {
+                                  ...sel,
+                                  ativo: v === true,
+                                },
+                              })
+                            }
+                          />
+
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold">{a.nome}</p>
+
+                            <p className="text-xs text-muted-foreground">
+                              {rotuloCobranca[a.cobranca]} · {brl(Number(a.valor) || 0)}
+                              {a.cobranca === "bloco" ? ` a cada ${a.paginas_bloco} páginas` : ""}
+                            </p>
+                          </div>
+                        </label>
+
+                        {/* Spinner para acabamentos por quantidade */}
+                        {sel.ativo && a.cobranca === "quantidade" && (
+                          <div className="flex shrink-0 items-center overflow-hidden rounded-lg border border-border bg-background">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 rounded-none border-r"
+                              onClick={() =>
+                                set("selecao", {
+                                  ...estado.selecao,
+                                  [a.id]: {
+                                    ...sel,
+                                    quantidade: Math.max(0, sel.quantidade - 1),
+                                  },
+                                })
+                              }
+                            >
+                              −
+                            </Button>
+
+                            <div className="flex h-8 min-w-10 items-center justify-center px-2 text-sm font-bold">
+                              {sel.quantidade}
+                            </div>
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 rounded-none border-l"
+                              onClick={() =>
+                                set("selecao", {
+                                  ...estado.selecao,
+                                  [a.id]: {
+                                    ...sel,
+                                    quantidade: sel.quantidade + 1,
+                                  },
+                                })
+                              }
+                            >
+                              +
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Valor do acabamento */}
+                      {sel.ativo && (
+                        <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
+                          <span className="text-xs text-muted-foreground">
+                            {a.cobranca === "quantidade"
+                              ? `${sel.quantidade} unidade(s)`
+                              : a.cobranca === "pagina"
+                                ? `${estado.paginas} página(s)`
+                                : a.cobranca === "bloco"
+                                  ? `${linha?.quantidade ?? 0} bloco(s)`
+                                  : "Valor fixo"}
+                          </span>
+
+                          <span className="text-sm font-bold text-success">{brl(linha?.total ?? 0)}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Frente e verso */}
+            <div className="flex items-center justify-between rounded-xl border border-border bg-accent/30 p-3">
               <div>
                 <p className="font-semibold">Frente e verso</p>
                 <p className="text-xs text-muted-foreground">Informado no orçamento</p>
               </div>
+
               <Switch checked={estado.frenteVerso} onCheckedChange={(v) => set("frenteVerso", v)} />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card className="mb-6 shadow-card">
-        <CardHeader className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
-            <span className="rounded-lg bg-accent p-2 text-primary">
-              <Printer className="h-4 w-4" />
-            </span>
-            VALORES DE IMPRESSÃO
-          </CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                queryClient.invalidateQueries({ queryKey: ["materiais"] });
-                toast.success("Cálculo atualizado com sucesso.");
-              }}
-            >
-              <RefreshCw className="h-4 w-4" /> Atualizar
-            </Button>
-            <Button disabled={!mostrarTabela || salvandoItem} onClick={adicionarAoPedido}>
-              <Plus className="h-4 w-4" />
-              {estado.editandoId ? "Salvar alterações do orçamento" : "Adicionar ao Pedido"}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-11 w-full" />
-              ))}
+        {/* ==================== VALORES DE IMPRESSÃO ==================== */}
+        <Card className="shadow-card">
+          <CardHeader className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
+              <span className="rounded-lg bg-accent p-2 text-primary">
+                <Printer className="h-4 w-4" />
+              </span>
+              VALORES DE IMPRESSÃO
+            </CardTitle>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  queryClient.invalidateQueries({
+                    queryKey: ["materiais"],
+                  });
+
+                  toast.success("Cálculo atualizado com sucesso.");
+                }}
+              >
+                <RefreshCw className="h-4 w-4" />
+                Atualizar
+              </Button>
+
+              <Button disabled={!mostrarTabela || salvandoItem} onClick={adicionarAoPedido}>
+                <Plus className="h-4 w-4" />
+
+                {estado.editandoId ? "Salvar alterações do orçamento" : "Adicionar ao Pedido"}
+              </Button>
             </div>
-          ) : !mostrarTabela ? (
-            <div className="flex flex-col items-center gap-2 py-12 text-center">
-              <Printer className="h-10 w-10 text-muted-foreground" />
-              <p className="font-semibold">Nenhum cálculo realizado ainda</p>
-              <p className="text-sm text-muted-foreground">
-                {precisaSelecionar
-                  ? "Selecione o tipo de impressão para ver os valores."
-                  : "Informe a quantidade de páginas para ver os valores."}
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] border-separate border-spacing-y-1 text-sm">
-                <thead>
-                  <tr className="bg-navy text-left text-xs font-bold tracking-wider text-navy-foreground">
-                    <th className="rounded-l-lg px-4 py-3">SELECIONAR</th>
-                    <th className="px-4 py-3">MATERIAL</th>
-                    <th className="px-4 py-3">DESCRIÇÃO</th>
-                    <th className="px-4 py-3 text-right">PREÇO UNI</th>
-                    <th className="rounded-r-lg px-4 py-3 text-right">TOTAL ({numeroBR(totalPaginas)} PÁGINAS)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {linhasFinais.map((l) => {
-                    const ativa = materialSelecionado?.material.id === l.material.id;
-                    return (
-                      <tr
-                        key={l.material.id}
-                        onClick={() => set("materialId", l.material.id)}
-                        className={`cursor-pointer bg-card shadow-xs ${ativa ? "ring-2 ring-primary" : ""}`}
-                      >
-                        <td className="rounded-l-lg border-y border-l border-border px-4 py-3">
-                          <input
-                            type="radio"
-                            className="h-4 w-4 accent-[var(--color-primary)]"
-                            checked={ativa}
-                            onChange={() => set("materialId", l.material.id)}
-                            aria-label={`Selecionar ${l.material.nome}`}
-                          />
-                        </td>
-                        <td className="border-y border-border px-4 py-3 font-semibold">{l.material.nome}</td>
-                        <td className="border-y border-border px-4 py-3 text-muted-foreground">
-                          {l.material.descricao}
-                        </td>
-                        <td className="border-y border-border px-4 py-3 text-right font-semibold">
-                          {brl(l.valorUnitario)}
-                        </td>
-                        <td className="rounded-r-lg border-y border-r border-border px-4 py-3 text-right font-extrabold text-success">
-                          {brl(l.total)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-11 w-full" />
+                ))}
+              </div>
+            ) : !mostrarTabela ? (
+              <div className="flex flex-col items-center gap-2 py-12 text-center">
+                <Printer className="h-10 w-10 text-muted-foreground" />
+
+                <p className="font-semibold">Nenhum cálculo realizado ainda</p>
+
+                <p className="text-sm text-muted-foreground">
+                  {precisaSelecionar
+                    ? "Selecione o tipo de impressão para ver os valores."
+                    : "Informe a quantidade de páginas para ver os valores."}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[600px] border-separate border-spacing-y-1 text-sm">
+                  <thead>
+                    <tr className="bg-navy text-left text-xs font-bold tracking-wider text-navy-foreground">
+                      <th className="rounded-l-lg px-3 py-3">SELECIONAR</th>
+
+                      <th className="px-3 py-3">MATERIAL</th>
+
+                      <th className="px-3 py-3">DESCRIÇÃO</th>
+
+                      <th className="px-3 py-3 text-right">PREÇO UNI</th>
+
+                      <th className="rounded-r-lg px-3 py-3 text-right">TOTAL ({numeroBR(totalPaginas)} PÁGINAS)</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {linhasFinais.map((l) => {
+                      const ativa = materialSelecionado?.material.id === l.material.id;
+
+                      return (
+                        <tr
+                          key={l.material.id}
+                          onClick={() => set("materialId", l.material.id)}
+                          className={`cursor-pointer bg-card shadow-xs transition-all ${
+                            ativa ? "ring-2 ring-primary" : "hover:bg-accent/30"
+                          }`}
+                        >
+                          <td className="rounded-l-lg border-y border-l border-border px-3 py-3">
+                            <input
+                              type="radio"
+                              className="h-4 w-4 accent-[var(--color-primary)]"
+                              checked={ativa}
+                              onChange={() => set("materialId", l.material.id)}
+                              aria-label={`Selecionar ${l.material.nome}`}
+                            />
+                          </td>
+
+                          <td className="border-y border-border px-3 py-3 font-semibold">{l.material.nome}</td>
+
+                          <td className="border-y border-border px-3 py-3 text-muted-foreground">
+                            {l.material.descricao}
+                          </td>
+
+                          <td className="border-y border-border px-3 py-3 text-right font-semibold">
+                            {brl(l.valorUnitario)}
+                          </td>
+
+                          <td className="rounded-r-lg border-y border-r border-border px-3 py-3 text-right font-extrabold text-success">
+                            {brl(l.total)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {(itensPedido ?? []).length > 0 && (
         <Card className="mb-6 shadow-card">
