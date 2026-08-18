@@ -120,6 +120,7 @@ interface EstadoRascunho {
   frenteVerso: boolean;
   formato: FormatoPapel;
   usarFaixaCopiaManual: boolean;
+  copiasAdicionais: number;
 }
 
 const ESTADO_INICIAL: EstadoRascunho = {
@@ -139,6 +140,7 @@ const ESTADO_INICIAL: EstadoRascunho = {
   frenteVerso: false,
   formato: FORMATO_PADRAO,
   usarFaixaCopiaManual: false,
+  copiasAdicionais: 0,
 };
 
 function Calculadora() {
@@ -623,6 +625,44 @@ function Calculadora() {
                       variant="ghost"
                       className="h-full w-12 shrink-0 rounded-none border-l"
                       onClick={() => set("paginas", estado.paginas + 1)}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </Campo>
+                <Campo icon={<Copy className="h-4 w-4 text-magenta-ink" />} label="Cópias adicionais" sufixo="cópias">
+                  <div className="flex h-11 items-center overflow-hidden rounded-md border border-input">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-full rounded-none px-3"
+                      onClick={() =>
+                        setEstado((e) => ({
+                          ...e,
+                          copiasAdicionais: Math.max(1, e.copiasAdicionais - 1),
+                        }))
+                      }
+                    >
+                      −
+                    </Button>
+
+                    <Input
+                      inputMode="numeric"
+                      value={estado.copiasAdicionais}
+                      onChange={(e) => set("copiasAdicionais", Math.max(1, num(e.target.value)))}
+                      className="h-full border-0 text-center text-xl font-bold shadow-none focus-visible:ring-0"
+                    />
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-full rounded-none px-3"
+                      onClick={() =>
+                        setEstado((e) => ({
+                          ...e,
+                          copiasAdicionais: e.copiasAdicionais + 1,
+                        }))
+                      }
                     >
                       +
                     </Button>

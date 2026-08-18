@@ -136,6 +136,7 @@ export interface EntradaCalculo {
   copiaManual?: boolean;
   // Quando true, utiliza as faixas de quantidade mesmo na cópia manual
   usarFaixaCopiaManual?: boolean;
+  copiasAdicionais?: number;
 }
 
 export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): LinhaCalculo[] {
