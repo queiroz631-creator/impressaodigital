@@ -9,7 +9,7 @@ function finalY(doc: jsPDF) {
   return (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
 }
 
-export function gerarOrcamentoPdf(d: DadosDocumento) {
+export function gerarOrcamentoPdf(d: DadosDocumento, baixar = true) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const width = doc.internal.pageSize.getWidth();
 
@@ -121,5 +121,7 @@ export function gerarOrcamentoPdf(d: DadosDocumento) {
   doc.setTextColor(110, 110, 130);
   doc.text(d.rodape, width / 2, doc.internal.pageSize.getHeight() - 40, { align: "center" });
 
-  doc.save(`orcamento-${d.numero}.pdf`);
+  if (baixar) {
+    doc.save(`orcamento-${d.numero}.pdf`);
+  }
 }
