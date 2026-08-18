@@ -2,25 +2,37 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { FileDown, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
+
+import { FileDown, FileText, Image as ImageIcon, Trash2, Eye } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+
 import { AppLayout, PageHeader } from "@/components/AppLayout";
+
 import { Card, CardContent } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
+
 import { Badge } from "@/components/ui/badge";
+
 import { Label } from "@/components/ui/label";
+
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 
 import { useConfiguracao, useOrcamentos } from "@/hooks/useDados";
 
 import { brl, dataBR } from "@/lib/format";
+
 import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
+
 import { gerarOrcamentoPdf } from "@/lib/pdf";
+
 import { gerarOrcamentoImagem } from "@/lib/imagem";
 
 import { STATUS_ORCAMENTO, normalizarStatus, rotuloStatus } from "@/lib/status";
@@ -68,7 +80,21 @@ function Orcamentos() {
 
   const queryClient = useQueryClient();
 
+  /*
+   * ============================================================
+   * FILTRO
+   * ============================================================
+   */
+
   const [filtro, setFiltro] = useState("todos");
+
+  /*
+   * ============================================================
+   * PEDIDO ABERTO NO DIALOG
+   * ============================================================
+   */
+
+  const [pedidoItensAberto, setPedidoItensAberto] = useState<PedidoAgrupado | null>(null);
 
   /*
    * ============================================================
@@ -77,38 +103,37 @@ function Orcamentos() {
    */
 
   const listaFiltrada = useMemo(() => {
-    return (orcamentos ?? []).filter((o) => (filtro === "todos" ? true : normalizarStatus(o.status) === filtro));
+    return (orcamentos ?? []).filter((orc) => {
+      if (filtro === "todos") {
+        return true;
+      }
+
+      return normalizarStatus(orc.status) === filtro;
+    });
   }, [orcamentos, filtro]);
 
   /*
    * ============================================================
-   * AGRUPA OS ORÇAMENTOS PELO PEDIDO
+   * AGRUPAMENTO POR PEDIDO
+   *
+   * Vários registros da tabela "orcamentos"
+   * podem possuir o mesmo pedido_id.
+   *
+   * Aqui transformamos:
+   *
+   * pedido 1
+   *   orçamento A
+   *   orçamento B
+   *   orçamento C
+   *
+   * em um único pedido na tela.
    * ============================================================
    */
 
-  const pedidos = useMemo(() => {
-    const grupos = new Map<
-      string,
-      {
-        pedidoId: string;
-        numero: string;
-        data: string;
-        clienteNome: string;
-        clienteTelefone: string | null;
-        validade: string | null;
-        observacao: string | null;
-        itens: Record<string, unknown>[];
-        total: number;
-        status: string;
-      }
-    >();
+  const pedidos = useMemo<PedidoAgrupado[]>(() => {
+    const grupos = new Map<string, PedidoAgrupado>();
 
     for (const orc of listaFiltrada) {
-      /*
-       * O pedido_id é o campo que une os vários
-       * orçamentos pertencentes ao mesmo pedido.
-       */
-
       const pedidoId = String(orc.pedido_id ?? orc.id);
 
       if (!grupos.has(pedidoId)) {
@@ -142,21 +167,40 @@ function Orcamentos() {
       grupo.total += Number(orc.valor_total ?? 0);
     }
 
+    /*
+     * Ordena os itens de cada pedido pela
+     * coluna "ordem", quando existir.
+     */
+
+    for (const pedido of grupos.values()) {
+      pedido.itens.sort((a, b) => Number(a.ordem ?? 0) - Number(b.ordem ?? 0));
+    }
+
     return Array.from(grupos.values());
   }, [listaFiltrada]);
 
   /*
    * ============================================================
-   * ALTERAR STATUS
+   * ALTERAR STATUS DO PEDIDO
+   *
+   * Atualiza todos os orçamentos que pertencem
+   * ao mesmo pedido.
    * ============================================================
    */
 
   async function alterarStatusPedido(itens: Record<string, unknown>[], status: string) {
-    const ids = itens.map((o) => String(o.id)).filter(Boolean);
+    const ids = itens.map((item) => String(item.id)).filter(Boolean);
 
-    if (ids.length === 0) return;
+    if (ids.length === 0) {
+      return;
+    }
 
-    const { error } = await supabase.from("orcamentos").update({ status }).in("id", ids);
+    const { error } = await supabase
+      .from("orcamentos")
+      .update({
+        status,
+      })
+      .in("id", ids);
 
     if (error) {
       toast.error(error.message);
@@ -167,19 +211,23 @@ function Orcamentos() {
       queryKey: ["orcamentos"],
     });
 
-    toast.success("Status do pedido atualizado com sucesso.");
+    toast.success("Status do pedido atualizado.");
   }
 
   /*
    * ============================================================
-   * EXCLUIR PEDIDO INTEIRO
+   * EXCLUIR PEDIDO
+   *
+   * Exclui todos os orçamentos daquele pedido.
    * ============================================================
    */
 
   async function excluirPedido(itens: Record<string, unknown>[]) {
-    const ids = itens.map((o) => String(o.id)).filter(Boolean);
+    const ids = itens.map((item) => String(item.id)).filter(Boolean);
 
-    if (ids.length === 0) return;
+    if (ids.length === 0) {
+      return;
+    }
 
     const { error } = await supabase.from("orcamentos").delete().in("id", ids);
 
@@ -192,24 +240,19 @@ function Orcamentos() {
       queryKey: ["orcamentos"],
     });
 
-    toast.success("Pedido e seus orçamentos foram excluídos.");
+    toast.success("Pedido excluído com sucesso.");
   }
 
   /*
    * ============================================================
-   * GERAR DOCUMENTO DO PEDIDO
+   * DOCUMENTO COMPLETO DO PEDIDO
+   *
+   * Aqui passamos TODOS os itens daquele pedido.
+   * Portanto o PDF/imagem será unificado.
    * ============================================================
    */
 
-  function documentoPedido(pedido: {
-    numero: string;
-    data: string;
-    clienteNome: string;
-    clienteTelefone: string | null;
-    validade: string | null;
-    observacao: string | null;
-    itens: Record<string, unknown>[];
-  }) {
+  function documentoPedido(pedido: PedidoAgrupado) {
     return documentoDeOrcamentos(pedido.itens, config, {
       numero: pedido.numero,
 
@@ -227,44 +270,52 @@ function Orcamentos() {
 
   /*
    * ============================================================
-   * TELA
+   * RENDER
    * ============================================================
    */
 
   return (
     <>
-      <PageHeader titulo="ORÇAMENTOS" subtitulo="Pedidos de orçamento agrupados por pedido." />
+      <PageHeader titulo="ORÇAMENTOS" subtitulo="Consulte e gerencie os pedidos de orçamento." />
 
-      {/* FILTRO */}
-      <Card className="mb-4 shadow-card">
-        <CardContent className="grid gap-2 py-4 sm:max-w-xs">
-          <Label>Filtrar por status</Label>
+      {/* ======================================================
+          FILTRO
+          ====================================================== */}
 
-          <Select value={filtro} onValueChange={setFiltro}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+      <Card className="mb-6 shadow-card">
+        <CardContent className="py-4">
+          <div className="grid max-w-xs gap-2">
+            <Label>Filtrar por status</Label>
 
-            <SelectContent>
-              <SelectItem value="todos">Todos</SelectItem>
+            <Select value={filtro} onValueChange={setFiltro}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
 
-              {STATUS_ORCAMENTO.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {rotuloStatus[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+
+                {STATUS_ORCAMENTO.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {rotuloStatus[status]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
-      {/* LISTA */}
+      {/* ======================================================
+          TABELA DE PEDIDOS
+          ====================================================== */}
+
       <Card className="shadow-card">
-        <CardContent className="overflow-x-auto py-4">
+        <CardContent className="py-4">
           {isLoading ? (
             <div className="space-y-2">
               {Array.from({
-                length: 5,
+                length: 6,
               }).map((_, i) => (
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
@@ -275,137 +326,302 @@ function Orcamentos() {
 
               <p className="font-semibold">Nenhum pedido encontrado</p>
 
-              <p className="text-sm text-muted-foreground">Use a calculadora e clique em Adicionar ao Pedido.</p>
+              <p className="text-sm text-muted-foreground">Use a calculadora para criar um novo pedido.</p>
             </div>
           ) : (
-            <div className="space-y-6">
-              {pedidos.map((pedido) => (
-                <div key={pedido.pedidoId} className="overflow-hidden rounded-xl border border-border">
-                  {/* CABEÇALHO DO PEDIDO */}
-                  <div className="flex flex-col gap-4 bg-accent/50 p-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-lg font-extrabold text-primary">PEDIDO {pedido.numero}</h2>
+            <div className="overflow-x-auto rounded-xl border border-border">
+              <table className="w-full min-w-[950px] text-sm">
+                {/* CABEÇALHO */}
+                <thead>
+                  <tr className="border-b border-border bg-accent/60 text-left text-xs font-bold tracking-wider text-muted-foreground">
+                    <th className="px-4 py-3">Nº PEDIDO</th>
 
-                        <Badge variant="secondary">
-                          {pedido.itens.length} {pedido.itens.length === 1 ? "item" : "itens"}
-                        </Badge>
-                      </div>
+                    <th className="px-4 py-3">DATA</th>
 
-                      <p className="mt-1 text-sm">
-                        <strong>Cliente:</strong> {pedido.clienteNome || "-"}
-                      </p>
+                    <th className="px-4 py-3">CLIENTE</th>
 
-                      <p className="text-xs text-muted-foreground">Data: {dataBR(pedido.data)}</p>
-                    </div>
+                    <th className="px-4 py-3 text-center">ITENS</th>
 
-                    <div className="flex flex-wrap gap-2">
-                      {/* PDF */}
-                      <Button variant="outline" size="sm" onClick={() => gerarOrcamentoPdf(documentoPedido(pedido))}>
-                        <FileDown className="h-4 w-4" />
-                        PDF
-                      </Button>
+                    <th className="px-4 py-3 text-right">VALOR TOTAL</th>
 
-                      {/* IMAGEM */}
-                      <Button variant="outline" size="sm" onClick={() => gerarOrcamentoImagem(documentoPedido(pedido))}>
-                        <ImageIcon className="h-4 w-4" />
-                        Imagem
-                      </Button>
+                    <th className="px-4 py-3 text-center">STATUS</th>
+
+                    <th className="px-4 py-3 text-right">AÇÕES</th>
+                  </tr>
+                </thead>
+
+                {/* CORPO */}
+                <tbody>
+                  {pedidos.map((pedido) => (
+                    <tr
+                      key={pedido.pedidoId}
+                      className="border-b border-border transition-colors last:border-0 hover:bg-accent/30"
+                    >
+                      {/* Nº PEDIDO */}
+                      <td className="px-4 py-4">
+                        <span className="font-bold text-primary">{pedido.numero}</span>
+                      </td>
+
+                      {/* DATA */}
+                      <td className="whitespace-nowrap px-4 py-4">{dataBR(pedido.data)}</td>
+
+                      {/* CLIENTE */}
+                      <td className="px-4 py-4">
+                        <div>
+                          <p className="font-semibold">{pedido.clienteNome}</p>
+
+                          {pedido.clienteTelefone && (
+                            <p className="text-xs text-muted-foreground">{pedido.clienteTelefone}</p>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* ITENS */}
+                      <td className="px-4 py-4 text-center">
+                        <Badge variant="secondary">{pedido.itens.length}</Badge>
+                      </td>
+
+                      {/* TOTAL */}
+                      <td className="px-4 py-4 text-right">
+                        <span className="text-base font-extrabold text-success">{brl(pedido.total)}</span>
+                      </td>
 
                       {/* STATUS */}
-                      <Select
-                        value={normalizarStatus(pedido.status)}
-                        onValueChange={(v) => alterarStatusPedido(pedido.itens, v)}
-                      >
-                        <SelectTrigger className="h-9 w-44">
-                          <SelectValue>
-                            <Badge variant="secondary">{rotuloStatus[normalizarStatus(pedido.status)]}</Badge>
-                          </SelectValue>
-                        </SelectTrigger>
+                      <td className="px-4 py-4 text-center">
+                        <Select
+                          value={normalizarStatus(pedido.status)}
+                          onValueChange={(value) => alterarStatusPedido(pedido.itens, value)}
+                        >
+                          <SelectTrigger className="mx-auto h-9 w-36">
+                            <SelectValue />
+                          </SelectTrigger>
 
-                        <SelectContent>
-                          {STATUS_ORCAMENTO.map((s) => (
-                            <SelectItem key={s} value={s}>
-                              {rotuloStatus[s]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            {STATUS_ORCAMENTO.map((status) => (
+                              <SelectItem key={status} value={status}>
+                                {rotuloStatus[status]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </td>
 
-                      {/* EXCLUIR */}
-                      <ConfirmarExclusao
-                        titulo="Excluir pedido"
-                        descricao={`Tem certeza que deseja excluir o pedido ${pedido.numero} e todos os seus ${pedido.itens.length} orçamento(s)?`}
-                        rotuloConfirmar="Excluir pedido"
-                        onConfirmar={() => excluirPedido(pedido.itens)}
-                      >
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                          Excluir
-                        </Button>
-                      </ConfirmarExclusao>
-                    </div>
-                  </div>
+                      {/* AÇÕES */}
+                      <td className="px-4 py-4">
+                        <div className="flex justify-end gap-1">
+                          {/* VER ITENS */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Ver itens"
+                            onClick={() => setPedidoItensAberto(pedido)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
 
-                  {/* ITENS DO PEDIDO */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[760px] text-sm">
-                      <thead>
-                        <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
-                          <th className="px-4 py-3">Nº</th>
+                          {/* PDF */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Gerar PDF"
+                            onClick={() => gerarOrcamentoPdf(documentoPedido(pedido))}
+                          >
+                            <FileDown className="h-4 w-4" />
+                          </Button>
 
-                          <th className="px-4 py-3">MATERIAL</th>
+                          {/* IMAGEM */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Gerar imagem"
+                            onClick={() => gerarOrcamentoImagem(documentoPedido(pedido))}
+                          >
+                            <ImageIcon className="h-4 w-4" />
+                          </Button>
 
-                          <th className="px-4 py-3">TIPO</th>
-
-                          <th className="px-4 py-3">FORMATO</th>
-
-                          <th className="px-4 py-3 text-right">PÁGINAS</th>
-
-                          <th className="px-4 py-3 text-right">VALOR</th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {pedido.itens.map((o, index) => (
-                          <tr key={String(o.id)} className="border-b border-border last:border-0">
-                            <td className="px-4 py-3 font-bold">{String(index + 1).padStart(2, "0")}</td>
-
-                            <td className="px-4 py-3 font-semibold">{String(o.material_nome ?? "-")}</td>
-
-                            <td className="px-4 py-3 capitalize">{String(o.tipo_impressao ?? "-")}</td>
-
-                            <td className="px-4 py-3">{String(o.tamanho ?? "-")}</td>
-
-                            <td className="px-4 py-3 text-right">{Number(o.paginas_total ?? 0)}</td>
-
-                            <td className="px-4 py-3 text-right font-bold text-success">
-                              {brl(Number(o.valor_total ?? 0))}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-
-                      {/* TOTAL DO PEDIDO */}
-                      <tfoot>
-                        <tr className="bg-accent/50">
-                          <td colSpan={5} className="px-4 py-4 text-right font-extrabold">
-                            TOTAL DO PEDIDO
-                          </td>
-
-                          <td className="px-4 py-4 text-right text-lg font-extrabold text-success">
-                            {brl(pedido.total)}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </div>
-              ))}
+                          {/* EXCLUIR */}
+                          <ConfirmarExclusao
+                            titulo="Excluir pedido"
+                            descricao={`Tem certeza que deseja excluir o pedido ${pedido.numero} e todos os seus ${pedido.itens.length} item(ns)?`}
+                            rotuloConfirmar="Excluir pedido"
+                            onConfirmar={() => excluirPedido(pedido.itens)}
+                          >
+                            <Button variant="ghost" size="icon" title="Excluir pedido">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </ConfirmarExclusao>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* ======================================================
+          DIALOG - VER ITENS
+          ====================================================== */}
+
+      <Dialog
+        open={pedidoItensAberto !== null}
+        onOpenChange={(aberto) => {
+          if (!aberto) {
+            setPedidoItensAberto(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Pedido {pedidoItensAberto?.numero ?? "-"}</DialogTitle>
+
+            <DialogDescription>Itens incluídos neste pedido.</DialogDescription>
+          </DialogHeader>
+
+          {pedidoItensAberto && (
+            <div className="space-y-5">
+              {/* ================================================
+                  INFORMAÇÕES DO PEDIDO
+                  ================================================ */}
+
+              <div className="grid gap-3 rounded-xl border border-border bg-accent/40 p-4 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground">CLIENTE</p>
+
+                  <p className="font-semibold">{pedidoItensAberto.clienteNome || "-"}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground">DATA</p>
+
+                  <p className="font-semibold">{dataBR(pedidoItensAberto.data)}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground">QUANTIDADE DE ITENS</p>
+
+                  <p className="font-semibold">{pedidoItensAberto.itens.length}</p>
+                </div>
+              </div>
+
+              {/* ================================================
+                  TABELA DE ITENS
+                  ================================================ */}
+
+              <div className="max-h-[55vh] overflow-auto rounded-xl border border-border">
+                <table className="w-full min-w-[750px] text-sm">
+                  <thead className="sticky top-0 z-10 bg-accent">
+                    <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
+                      <th className="px-4 py-3">Nº</th>
+
+                      <th className="px-4 py-3">MATERIAL</th>
+
+                      <th className="px-4 py-3">TIPO</th>
+
+                      <th className="px-4 py-3">FORMATO</th>
+
+                      <th className="px-4 py-3 text-right">PÁGINAS</th>
+
+                      <th className="px-4 py-3 text-right">VALOR</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {pedidoItensAberto.itens.map((item, index) => (
+                      <tr key={String(item.id)} className="border-b border-border last:border-0">
+                        <td className="px-4 py-3 font-bold">{String(index + 1).padStart(2, "0")}</td>
+
+                        <td className="px-4 py-3 font-semibold">{String(item.material_nome ?? "-")}</td>
+
+                        <td className="px-4 py-3 capitalize">{String(item.tipo_impressao ?? "-")}</td>
+
+                        <td className="px-4 py-3">{String(item.tamanho ?? "-")}</td>
+
+                        <td className="px-4 py-3 text-right">{Number(item.paginas_total ?? 0)}</td>
+
+                        <td className="px-4 py-3 text-right font-bold text-success">
+                          {brl(Number(item.valor_total ?? 0))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+
+                  {/* TOTAL */}
+                  <tfoot>
+                    <tr className="bg-accent/50">
+                      <td colSpan={5} className="px-4 py-4 text-right font-extrabold">
+                        TOTAL DO PEDIDO
+                      </td>
+
+                      <td className="px-4 py-4 text-right text-lg font-extrabold text-success">
+                        {brl(pedidoItensAberto.total)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              {/* ================================================
+                  OBSERVAÇÃO
+                  ================================================ */}
+
+              {pedidoItensAberto.observacao && (
+                <div className="rounded-xl border border-border bg-accent/30 p-4">
+                  <p className="mb-1 text-xs font-bold text-muted-foreground">OBSERVAÇÃO</p>
+
+                  <p className="whitespace-pre-wrap text-sm">{pedidoItensAberto.observacao}</p>
+                </div>
+              )}
+
+              {/* ================================================
+                  BOTÕES
+                  ================================================ */}
+
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button variant="outline" onClick={() => gerarOrcamentoImagem(documentoPedido(pedidoItensAberto))}>
+                  <ImageIcon className="h-4 w-4" />
+                  Gerar Imagem
+                </Button>
+
+                <Button onClick={() => gerarOrcamentoPdf(documentoPedido(pedidoItensAberto))}>
+                  <FileDown className="h-4 w-4" />
+                  Gerar PDF
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
+
+/*
+ * ================================================================
+ * TIPO DO PEDIDO AGRUPADO
+ * ================================================================
+ */
+
+type PedidoAgrupado = {
+  pedidoId: string;
+
+  numero: string;
+
+  data: string;
+
+  clienteNome: string;
+
+  clienteTelefone: string | null;
+
+  validade: string | null;
+
+  observacao: string | null;
+
+  itens: Record<string, unknown>[];
+
+  total: number;
+
+  status: string;
+};
