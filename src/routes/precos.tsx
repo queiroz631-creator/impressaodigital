@@ -57,8 +57,19 @@ function Precos() {
 
   useEffect(() => {
     if (!materiais) return;
-    setLinhas(materiais.map((m) => ({ ...m })));
+
+    setLinhas(
+      materiais.map((m) => ({
+        ...m,
+        faixas_por_arquivo: m.faixas_por_arquivo ?? [],
+      })),
+    );
+
     setFaixasTexto(Object.fromEntries(materiais.map((m) => [m.id, faixasParaTexto(m.faixas ?? [])])));
+
+    setFaixasArquivosTexto(
+      Object.fromEntries(materiais.map((m) => [m.id, faixasParaTexto(m.faixas_por_arquivo ?? [])])),
+    );
   }, [materiais]);
 
   function atualizar(id: string, campo: keyof Material, valor: unknown) {
