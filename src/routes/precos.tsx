@@ -90,6 +90,7 @@ function Precos() {
   }
 
   async function salvar() {
+    update;
     setSalvando(true);
     try {
       const faixasNormalizadas: Record<string, string> = {};
@@ -98,18 +99,25 @@ function Precos() {
           throw new Error("Preços não podem ser negativos.");
         }
         const faixas = textoParaFaixas(faixasTexto[m.id] ?? "");
-
         const faixasArquivos = textoParaFaixas(faixasArquivosTexto[m.id] ?? "");
         const { error } = await supabase
           .from("materiais")
           .update({
             nome: m.nome,
             descricao: m.descricao,
+
             preco_pb: Number(m.preco_pb),
+
             preco_por_arquivo: Number(m.preco_por_arquivo) || 0,
+
             faixas: faixas as unknown as never,
+
+            faixas_por_arquivo: faixasArquivos as unknown as never,
+
             tipo_impressao: m.tipo_impressao ?? "simples",
+
             formato: m.formato ?? "A4",
+
             ativo: m.ativo,
             ordem: m.ordem,
           })
