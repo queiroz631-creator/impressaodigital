@@ -59,7 +59,7 @@ function montarLinhas(d: DadosDocumento): Linha[] {
 }
 
 /** Gera e baixa uma imagem PNG do orçamento com layout profissional. */
-export function gerarOrcamentoImagem(d: DadosDocumento) {
+export function gerarOrcamentoImagem(d: DadosDocumento, baixar = true) {
   const linhas = montarLinhas(d);
   const alturaLinha = 30;
   const topo = 190;
