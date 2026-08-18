@@ -31,7 +31,13 @@ export interface Material {
   descricao: string;
   preco_pb: number;
   preco_por_arquivo: number;
+
+  // Faixas de preço por quantidade de páginas
   faixas: FaixaPreco[];
+
+  // Faixas de preço por quantidade de arquivos
+  faixas_por_arquivo: FaixaPreco[];
+
   tipo_impressao: TipoServico;
   formato: FormatoPapel;
   ativo: boolean;
