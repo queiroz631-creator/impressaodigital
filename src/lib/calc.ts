@@ -77,6 +77,17 @@ export function precoPorQuantidade(
   return preco;
 }
 
+/**
+ * Preço unitário cobrado por arquivo, considerando as faixas por quantidade
+ * de arquivos. Sem faixas, utiliza o preço base por arquivo.
+ */
+export function precoPorQuantidadeArquivos(material: Material, quantidade: number) {
+  const base = Number(material.preco_por_arquivo) || 0;
+  let preco = base;
+  for (const f of normalizarFaixas(material.faixas_por_arquivo)) if (quantidade >= f.min) preco = f.preco;
+  return preco;
+}
+
 /** Preço unitário de um acabamento considerando as faixas por quantidade. */
 export function precoAcabamento(acabamento: Acabamento, quantidade: number) {
   const base = Number(acabamento.valor) || 0;

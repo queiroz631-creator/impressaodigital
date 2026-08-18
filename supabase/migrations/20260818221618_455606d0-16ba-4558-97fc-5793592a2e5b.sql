@@ -1,0 +1,1 @@
+ALTER TABLE materiais ADD COLUMN IF NOT EXISTS faixas_por_arquivo jsonb DEFAULT '[]'::jsonb;

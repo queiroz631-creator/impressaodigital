@@ -227,6 +227,7 @@ export type Database = {
           created_at: string
           descricao: string
           faixas: Json
+          faixas_por_arquivo: Json | null
           formato: string
           id: string
           nome: string
@@ -242,6 +243,7 @@ export type Database = {
           created_at?: string
           descricao?: string
           faixas?: Json
+          faixas_por_arquivo?: Json | null
           formato?: string
           id?: string
           nome: string
@@ -257,6 +259,7 @@ export type Database = {
           created_at?: string
           descricao?: string
           faixas?: Json
+          faixas_por_arquivo?: Json | null
           formato?: string
           id?: string
           nome?: string
