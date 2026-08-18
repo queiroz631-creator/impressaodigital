@@ -1218,7 +1218,7 @@ function Calculadora() {
 
                 await salvarDadosCliente();
 
-                gerarOrcamentoImagem(documentoParaGerar());
+                solicitarDownload("imagem");
 
                 setDialogAberto(false);
               }}
@@ -1235,13 +1235,57 @@ function Calculadora() {
 
                 await salvarDadosCliente();
 
-                gerarOrcamentoPdf(documentoParaGerar());
+                solicitarDownload("pdf");
 
                 setDialogAberto(false);
               }}
             >
               <FileText className="h-4 w-4" />
               Gerar PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={downloadDialogAberto} onOpenChange={setDownloadDialogAberto}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{tipoGeracao === "pdf" ? "PDF gerado" : "Imagem gerada"}</DialogTitle>
+
+            <DialogDescription>
+              {tipoGeracao === "pdf"
+                ? "O orçamento foi gerado. Deseja fazer o download do PDF?"
+                : "A imagem do orçamento foi gerada. Deseja fazer o download da imagem?"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDownloadDialogAberto(false);
+                setTipoGeracao(null);
+              }}
+            >
+              Não baixar
+            </Button>
+
+            <Button
+              onClick={() => {
+                const documento = documentoParaGerar();
+
+                if (tipoGeracao === "pdf") {
+                  gerarOrcamentoPdf(documento, true);
+                }
+
+                if (tipoGeracao === "imagem") {
+                  gerarOrcamentoImagem(documento, true);
+                }
+
+                setDownloadDialogAberto(false);
+                setTipoGeracao(null);
+              }}
+            >
+              {tipoGeracao === "pdf" ? "Baixar PDF" : "Baixar Imagem"}
             </Button>
           </DialogFooter>
         </DialogContent>
