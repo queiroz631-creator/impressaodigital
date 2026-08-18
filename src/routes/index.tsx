@@ -157,6 +157,9 @@ function Calculadora() {
   const [salvandoItem, setSalvandoItem] = useState(false);
   const [dialogAberto, setDialogAberto] = useState(false);
   const [incluirTotal, setIncluirTotal] = useState(true);
+  const [downloadDialogAberto, setDownloadDialogAberto] = useState(false);
+
+  const [tipoGeracao, setTipoGeracao] = useState<"pdf" | "imagem" | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
 
   const set = useCallback(
