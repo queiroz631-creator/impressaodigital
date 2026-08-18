@@ -1151,8 +1151,19 @@ function Calculadora() {
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Cliente</Label>
-              <Input value={estado.clienteNome} onChange={(e) => set("clienteNome", e.target.value)} />
+              <Label>
+                Cliente <span className="text-destructive">*</span>
+              </Label>
+
+              <Input
+                value={estado.clienteNome}
+                onChange={(e) => set("clienteNome", e.target.value)}
+                placeholder="Digite o nome do cliente"
+              />
+
+              {!estado.clienteNome.trim() && (
+                <p className="text-xs text-destructive">O nome do cliente é obrigatório.</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Telefone</Label>
