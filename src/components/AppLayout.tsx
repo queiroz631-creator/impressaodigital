@@ -73,19 +73,24 @@ export function AppLayout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-64 shrink-0 flex-col bg-sidebar lg:flex">
+    <div className="min-h-screen bg-background">
+      {/* MENU LATERAL FIXO */}
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto bg-sidebar lg:flex">
         <SidebarHeader />
+
         {nav}
+
         <div className="mt-auto border-t border-sidebar-border p-4 text-xs text-sidebar-foreground/70">
           <p className="truncate">{user.email}</p>
           <p className="mt-1">{isAdmin ? "Administrador" : "Usuário"}</p>
         </div>
       </aside>
 
+      {/* MENU MOBILE */}
       {aberto && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-navy/60" onClick={() => setAberto(false)} aria-hidden />
+
           <aside className="relative flex h-full w-64 flex-col bg-sidebar">
             <SidebarHeader />
             {nav}
@@ -93,7 +98,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* CONTEÚDO */}
+      <div className="flex min-w-0 flex-1 flex-col lg:ml-64">
         <header className="flex items-center gap-3 bg-navy px-4 py-3 lg:hidden">
           <Button
             variant="ghost"
@@ -104,8 +110,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
           >
             {aberto ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
+
           <span className="text-sm font-semibold text-navy-foreground">Impressão Digital</span>
         </header>
+
         <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
       </div>
     </div>
