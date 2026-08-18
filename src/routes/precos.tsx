@@ -90,7 +90,6 @@ function Precos() {
   }
 
   async function salvar() {
-    update;
     setSalvando(true);
     try {
       const faixasNormalizadas: Record<string, string> = {};
