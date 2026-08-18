@@ -93,6 +93,7 @@ function Precos() {
     setSalvando(true);
     try {
       const faixasNormalizadas: Record<string, string> = {};
+      const faixasArquivosNormalizadas: Record<string, string> = {};
       for (const m of linhas) {
         if (Number(m.preco_pb) < 0) {
           throw new Error("Preços não podem ser negativos.");
@@ -123,8 +124,10 @@ function Precos() {
           .eq("id", m.id);
         if (error) throw error;
         faixasNormalizadas[m.id] = faixasParaTexto(faixas);
+        faixasArquivosNormalizadas[m.id] = faixasParaTexto(faixasArquivos);
       }
       setFaixasTexto(faixasNormalizadas);
+      setFaixasArquivosTexto(faixasArquivosNormalizadas);
       queryClient.invalidateQueries({ queryKey: ["materiais"] });
       toast.success("Preço atualizado com sucesso.");
     } catch (e) {
