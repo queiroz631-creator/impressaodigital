@@ -770,8 +770,14 @@ function Calculadora() {
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <dt className="text-muted-foreground">Cópias adicionais</dt>
-
                   <dd className="text-xl font-extrabold text-primary">{numeroBR(estado.copiasAdicionais)}</dd>
+                </div>
+                <div className="flex items-center justify-between border-t border-border pt-3">
+                  <dt className="text-muted-foreground">Total para cobrança</dt>
+
+                  <dd className="text-2xl font-extrabold text-success">
+                    {numeroBR(estado.paginas + estado.copiasAdicionais)}
+                  </dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <dt className="text-muted-foreground">Acabamento</dt>
