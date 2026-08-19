@@ -85,8 +85,27 @@ export function precoPorQuantidade(
  */
 export function precoPorQuantidadeArquivos(material: Material, quantidade: number) {
   const base = Number(material.preco_por_arquivo) || 0;
+
+  const quantidadeFixa = Math.max(0, Number(material.quantidade_arquivos_fixo) || 0);
+
+  const faixas = normalizarFaixas(material.faixas_por_arquivo);
+
+  // Somente os arquivos que ultrapassarem
+  // a quantidade fixa podem utilizar as faixas.
+  if (quantidade <= quantidadeFixa) {
+    return 0;
+  }
+
+  const quantidadeExcedente = quantidade - quantidadeFixa;
+
   let preco = base;
-  for (const f of normalizarFaixas(material.faixas_por_arquivo)) if (quantidade >= f.min) preco = f.preco;
+
+  for (const f of faixas) {
+    if (quantidadeExcedente >= f.min) {
+      preco = f.preco;
+    }
+  }
+
   return preco;
 }
 
