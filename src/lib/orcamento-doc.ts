@@ -46,6 +46,11 @@ export function itemDeOrcamento(row: Row, indice: number): ItemDoc {
   const arquivos = lerArquivos(row["arquivos"]);
   const paginas = Number(row["paginas_total"] ?? 0) ||
     arquivos.reduce((acc, a) => acc + a.paginas, 0);
+  const quantidadeArquivos = Number(row["quantidade_arquivos"] ?? arquivos.length);
+  const paginasAdicionais =
+    row["paginas_adicionais"] != null
+      ? Number(row["paginas_adicionais"])
+      : Math.max(0, paginas - quantidadeArquivos);
   return {
     titulo: `Orçamento ${String(indice + 1).padStart(2, "0")}`,
     material: String(row["material_nome"] ?? "-"),
@@ -55,8 +60,10 @@ export function itemDeOrcamento(row: Row, indice: number): ItemDoc {
     frenteVerso: Boolean(row["frente_verso"]),
     copiaManual: Boolean(row["copia_manual"]),
     arquivos,
-    quantidadeArquivos: Number(row["quantidade_arquivos"] ?? arquivos.length),
+    quantidadeArquivos,
     paginasTotal: paginas,
+    paginasAdicionais,
+    copiasAdicionais: Number(row["copias_adicionais"] ?? 0),
     acabamentos: lerAcabamentos(row["acabamentos"]),
     total: Number(row["valor_total"] ?? 0),
   };
