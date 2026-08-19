@@ -297,6 +297,11 @@ function Calculadora() {
       const lista = [...estado.arquivosLista, ...r.arquivos];
       aplicarArquivos(lista);
       if (r.ignorados.length > 0) toast.warning(`Arquivos ignorados: ${r.ignorados.join(", ")}`);
+      if (r.manuais.length > 0) {
+        toast.warning(
+          `Informe manualmente a quantidade de páginas de: ${r.manuais.join(", ")}. Arquivos .DOC e alguns .DOCX não permitem contagem automática confiável no navegador.`,
+        );
+      }
       if (r.arquivos.length > 0) toast.success(`${r.arquivos.length} arquivo(s) anexado(s).`);
     } catch {
       toast.error("Não foi possível ler os arquivos.");
