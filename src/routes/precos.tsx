@@ -233,7 +233,9 @@ function Precos() {
                       <th className="px-2 py-3 w-44">TIPO DE IMPRESSÃO</th>
                       <th className="px-2 py-3 w-44">FORMATO</th>
                       <th className="px-2 py-3 w-32">PREÇO UNI</th>
-                      <th className="px-2 py-3 w-36">VALOR POR ARQUIVO</th>
+                      <th className="px-2 py-3 w-32">QTD. FIXA</th>
+
+                      <th className="px-2 py-3 w-36">VALOR FIXO</th>
                       <th className="px-2 py-3 w-64">FAIXAS POR PÁGINAS</th>
                       <th className="px-2 py-3 w-64">FAIXAS POR ARQUIVOS</th>
                       <th className="px-2 py-3 w-20">ATIVO</th>
