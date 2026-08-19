@@ -129,6 +129,7 @@ export type Database = {
           id: string
           material_nome: string | null
           observacao: string | null
+          paginas_adicionais: number
           paginas_color: number
           paginas_pb: number
           paginas_total: number
@@ -148,6 +149,7 @@ export type Database = {
           id?: string
           material_nome?: string | null
           observacao?: string | null
+          paginas_adicionais?: number
           paginas_color?: number
           paginas_pb?: number
           paginas_total?: number
@@ -167,6 +169,7 @@ export type Database = {
           id?: string
           material_nome?: string | null
           observacao?: string | null
+          paginas_adicionais?: number
           paginas_color?: number
           paginas_pb?: number
           paginas_total?: number
@@ -280,6 +283,7 @@ export type Database = {
           cliente_nome: string
           cliente_telefone: string | null
           copia_manual: boolean
+          copias_adicionais: number
           cor_impressao: string
           created_at: string
           frente_verso: boolean
@@ -289,6 +293,7 @@ export type Database = {
           numero: string
           observacao: string | null
           ordem: number
+          paginas_adicionais: number
           paginas_total: number
           pedido_id: string | null
           quantidade_arquivos: number
@@ -308,6 +313,7 @@ export type Database = {
           cliente_nome?: string
           cliente_telefone?: string | null
           copia_manual?: boolean
+          copias_adicionais?: number
           cor_impressao?: string
           created_at?: string
           frente_verso?: boolean
@@ -317,6 +323,7 @@ export type Database = {
           numero?: string
           observacao?: string | null
           ordem?: number
+          paginas_adicionais?: number
           paginas_total?: number
           pedido_id?: string | null
           quantidade_arquivos?: number
@@ -336,6 +343,7 @@ export type Database = {
           cliente_nome?: string
           cliente_telefone?: string | null
           copia_manual?: boolean
+          copias_adicionais?: number
           cor_impressao?: string
           created_at?: string
           frente_verso?: boolean
@@ -345,6 +353,7 @@ export type Database = {
           numero?: string
           observacao?: string | null
           ordem?: number
+          paginas_adicionais?: number
           paginas_total?: number
           pedido_id?: string | null
           quantidade_arquivos?: number

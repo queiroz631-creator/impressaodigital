@@ -112,7 +112,7 @@ interface EstadoRascunho {
   validade: string;
   arquivosLista: ArquivoDoc[];
   arquivos: number;
-  paginas: number;
+  paginasAdicionais: number;
   tipoServico: TipoServico | "";
   copiaManual: boolean;
   materialId: string;
@@ -132,7 +132,7 @@ const ESTADO_INICIAL: EstadoRascunho = {
   validade: "",
   arquivosLista: [],
   arquivos: 0,
-  paginas: 0,
+  paginasAdicionais: 0,
   tipoServico: "",
   copiaManual: false,
   materialId: "",
@@ -174,7 +174,17 @@ function Calculadora() {
   useEffect(() => {
     if (hidratado || !rascunhoCarregado) return;
     if (rascunhoSalvo && Object.keys(rascunhoSalvo).length > 0) {
-      setEstado({ ...ESTADO_INICIAL, ...(rascunhoSalvo as unknown as EstadoRascunho) });
+      const salvo = rascunhoSalvo as Record<string, unknown>;
+      const compat: Partial<EstadoRascunho> =
+        salvo["paginasAdicionais"] == null && salvo["paginas"] != null
+          ? {
+              paginasAdicionais: Math.max(
+                0,
+                Number(salvo["paginas"] ?? 0) - Number(salvo["arquivos"] ?? 0),
+              ),
+            }
+          : {};
+      setEstado({ ...ESTADO_INICIAL, ...(salvo as unknown as EstadoRascunho), ...compat });
     }
     setHidratado(true);
   }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
@@ -213,11 +223,12 @@ function Calculadora() {
   }, [config?.validade_padrao_dias, estado.validade, set]);
 
   const precisaSelecionar = !estado.tipoServico;
-  const totalPaginas = estado.paginas;
+  const paginasAdicionais = estado.paginasAdicionais;
+  const paginasArquivos = estado.arquivosLista.reduce((acc, a) => acc + a.paginas, 0);
 
   const entrada = useMemo(
     () => ({
-      paginasTotal: estado.paginas,
+      paginasAdicionais: estado.paginasAdicionais,
 
       arquivos: estado.arquivos,
 
@@ -236,7 +247,7 @@ function Calculadora() {
       usarFaixaCopiaManual: estado.usarFaixaCopiaManual,
     }),
     [
-      estado.paginas,
+      estado.paginasAdicionais,
       estado.arquivos,
       estado.copiasAdicionais,
       estado.tipoServico,
@@ -254,8 +265,8 @@ function Calculadora() {
   );
 
   const linhasAcabamento = useMemo(
-    () => calcularAcabamentos(acabamentosVisiveis, estado.selecao, { paginas: estado.paginas }),
-    [acabamentosVisiveis, estado.selecao, estado.paginas],
+    () => calcularAcabamentos(acabamentosVisiveis, estado.selecao, { paginas: estado.paginasAdicionais }),
+    [acabamentosVisiveis, estado.selecao, estado.paginasAdicionais],
   );
   const valorAcabamento = totalAcabamentos(linhasAcabamento);
   const tamanhoFinal = estado.formato;
@@ -265,8 +276,9 @@ function Calculadora() {
     [linhas, valorAcabamento],
   );
   const resumo = resumoLinhas(linhasFinais);
-  const semPaginas = totalPaginas <= 0;
-  const mostrarTabela = !precisaSelecionar && !semPaginas;
+  const quantidadeTotal = estado.arquivos + paginasAdicionais + estado.copiasAdicionais;
+  const semQuantidade = quantidadeTotal <= 0;
+  const mostrarTabela = !precisaSelecionar && !semQuantidade;
 
   const materialSelecionado = linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
 
@@ -300,7 +312,7 @@ function Calculadora() {
       ...e,
       arquivosLista: lista,
       arquivos: lista.length,
-      paginas: lista.reduce((acc, a) => acc + a.paginas, 0),
+      paginasAdicionais: Math.max(0, lista.reduce((acc, a) => acc + a.paginas, 0) - lista.length),
     }));
   }
 
@@ -350,8 +362,8 @@ function Calculadora() {
       toast.error("Selecione um material para o orçamento.");
       return;
     }
-    if (semPaginas) {
-      toast.error("Informe a quantidade de páginas.");
+    if (semQuantidade) {
+      toast.error("Informe arquivos, páginas adicionais ou cópias adicionais.");
       return;
     }
     setSalvandoItem(true);
@@ -367,7 +379,9 @@ function Calculadora() {
         acabamentos: acabamentosParaSalvar() as unknown as never,
         tipo_impressao: estado.tipoServico,
         quantidade_arquivos: estado.arquivos,
-        paginas_total: estado.paginas,
+        paginas_total: paginasArquivos,
+        paginas_adicionais: estado.paginasAdicionais,
+        copias_adicionais: estado.copiasAdicionais,
         tamanho: tamanhoFinal,
         frente_verso: estado.frenteVerso,
         valor_acabamento: valorAcabamento,
@@ -427,7 +441,14 @@ function Calculadora() {
       editandoId: String(row["id"]),
       arquivosLista: arquivos,
       arquivos: Number(row["quantidade_arquivos"] ?? arquivos.length),
-      paginas: Number(row["paginas_total"] ?? 0),
+      paginasAdicionais:
+        row["paginas_adicionais"] != null
+          ? Number(row["paginas_adicionais"])
+          : Math.max(
+              0,
+              Number(row["paginas_total"] ?? 0) - Number(row["quantidade_arquivos"] ?? arquivos.length),
+            ),
+      copiasAdicionais: Number(row["copias_adicionais"] ?? 0),
       tipoServico: (row["tipo_impressao"] as TipoServico) ?? "simples",
       copiaManual: Boolean(row["copia_manual"]),
       materialId: String(row["material_id"] ?? ""),
@@ -594,7 +615,8 @@ function Calculadora() {
                   {lendoArquivos ? "Lendo arquivos..." : "Anexar PDFs / Imagens"}
                 </Button>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  As páginas dos PDFs são contadas automaticamente; cada imagem conta como 1 página.
+                  As páginas dos PDFs são contadas automaticamente; cada arquivo já inclui 1 página e o excedente vira
+                  páginas adicionais.
                 </p>
               </div>
 
@@ -672,15 +694,15 @@ function Calculadora() {
 
                 <Campo
                   icon={<FileStack className="h-4 w-4 text-navy" />}
-                  label="Quantidade total de páginas"
-                  sufixo="páginas"
+                  label="Páginas adicionais"
+                  sufixo="páginas adicionais"
                 >
                   <div className="flex h-11 overflow-hidden rounded-lg border border-border bg-background">
                     <Button
                       type="button"
                       variant="ghost"
                       className="h-full w-12 shrink-0 rounded-none border-r"
-                      onClick={() => set("paginas", Math.max(0, estado.paginas - 1))}
+                      onClick={() => set("paginasAdicionais", Math.max(0, estado.paginasAdicionais - 1))}
                     >
                       −
                     </Button>
@@ -689,8 +711,8 @@ function Calculadora() {
                       type="number"
                       min="0"
                       inputMode="numeric"
-                      value={estado.paginas}
-                      onChange={(e) => set("paginas", Math.max(0, num(e.target.value)))}
+                      value={estado.paginasAdicionais}
+                      onChange={(e) => set("paginasAdicionais", Math.max(0, num(e.target.value)))}
                       className="h-full rounded-none border-0 text-center text-xl font-bold focus-visible:ring-0"
                     />
 
@@ -698,7 +720,7 @@ function Calculadora() {
                       type="button"
                       variant="ghost"
                       className="h-full w-12 shrink-0 rounded-none border-l"
-                      onClick={() => set("paginas", estado.paginas + 1)}
+                      onClick={() => set("paginasAdicionais", estado.paginasAdicionais + 1)}
                     >
                       +
                     </Button>
@@ -794,8 +816,8 @@ function Calculadora() {
                   Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Na cópia manual o cálculo usa somente a quantidade de páginas e o preço unitário cadastrado, sem
-                  faixas por quantidade e sem valor por arquivo.
+                  Na cópia manual tudo é cobrado por página (cada arquivo conta 1 página) com o preço unitário
+                  cadastrado, sem faixas por quantidade e sem valor por arquivo.
                 </p>
                 {estado.copiaManual && (
                   <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
@@ -827,8 +849,8 @@ function Calculadora() {
                   <dd className="text-2xl font-extrabold text-primary">{numeroBR(estado.arquivos)}</dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
-                  <dt className="text-muted-foreground">Páginas</dt>
-                  <dd className="text-2xl font-extrabold text-primary">{numeroBR(totalPaginas)}</dd>
+                  <dt className="text-muted-foreground">Páginas adicionais</dt>
+                  <dd className="text-2xl font-extrabold text-primary">{numeroBR(paginasAdicionais)}</dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <dt className="text-muted-foreground">Cópias adicionais</dt>
@@ -837,7 +859,7 @@ function Calculadora() {
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <dt className="text-muted-foreground">Total para cobrança</dt>
                   <dd className="text-2xl font-extrabold text-success">
-                    {numeroBR(estado.paginas + estado.copiasAdicionais)}
+                    {numeroBR(quantidadeTotal)}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
@@ -963,7 +985,7 @@ function Calculadora() {
                             {a.cobranca === "quantidade"
                               ? `${sel.quantidade} unidade(s)`
                               : a.cobranca === "pagina"
-                                ? `${estado.paginas} página(s)`
+                                ? `${estado.paginasAdicionais} página(s) adicionais`
                                 : a.cobranca === "bloco"
                                   ? `${linha?.quantidade ?? 0} bloco(s)`
                                   : "Valor fixo"}
@@ -1039,7 +1061,7 @@ function Calculadora() {
                 <p className="text-sm text-muted-foreground">
                   {precisaSelecionar
                     ? "Selecione o tipo de impressão para ver os valores."
-                    : "Informe a quantidade de páginas para ver os valores."}
+                    : "Informe arquivos, páginas adicionais ou cópias adicionais para ver os valores."}
                 </p>
               </div>
             ) : (
@@ -1055,7 +1077,7 @@ function Calculadora() {
 
                       <th className="px-3 py-3 text-right">PREÇO UNI</th>
 
-                      <th className="rounded-r-lg px-3 py-3 text-right">TOTAL ({numeroBR(totalPaginas)} PÁGINAS)</th>
+                      <th className="rounded-r-lg px-3 py-3 text-right">TOTAL</th>
                     </tr>
                   </thead>
 
@@ -1099,6 +1121,36 @@ function Calculadora() {
                     })}
                   </tbody>
                 </table>
+
+                {materialSelecionado && (
+                  <dl className="mt-4 space-y-1 rounded-xl border border-border bg-accent/40 p-4 text-sm">
+                    <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">
+                      RESUMO DO CÁLCULO · {materialSelecionado.material.nome}
+                    </p>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Arquivos ({numeroBR(estado.arquivos)})</dt>
+                      <dd className="font-semibold">{brl(materialSelecionado.totalArquivos)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Páginas adicionais ({numeroBR(paginasAdicionais)})</dt>
+                      <dd className="font-semibold">{brl(materialSelecionado.totalPaginasAdicionais)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">
+                        Cópias adicionais ({numeroBR(estado.copiasAdicionais)})
+                      </dt>
+                      <dd className="font-semibold">{brl(materialSelecionado.totalCopiasAdicionais)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Acabamentos</dt>
+                      <dd className="font-semibold">{brl(valorAcabamento)}</dd>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-2">
+                      <dt className="font-bold">Total</dt>
+                      <dd className="font-extrabold text-success">{brl(materialSelecionado.total)}</dd>
+                    </div>
+                  </dl>
+                )}
               </div>
             )}
           </CardContent>
@@ -1126,7 +1178,7 @@ function Calculadora() {
                   <th className="px-3 py-3">MATERIAL</th>
                   <th className="px-3 py-3">TIPO</th>
                   <th className="px-3 py-3">FORMATO</th>
-                  <th className="px-3 py-3 text-right">PÁGINAS</th>
+                  <th className="px-3 py-3 text-right">PÁG. ADIC.</th>
                   <th className="px-3 py-3 text-right">TOTAL</th>
                   <th className="px-3 py-3 text-right">AÇÕES</th>
                 </tr>
@@ -1138,7 +1190,7 @@ function Calculadora() {
                     <td className="px-3 py-3">{o.material_nome}</td>
                     <td className="px-3 py-3 capitalize">{o.tipo_impressao}</td>
                     <td className="px-3 py-3">{o.tamanho}</td>
-                    <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_total))}</td>
+                    <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_adicionais ?? 0))}</td>
                     <td className="px-3 py-3 text-right font-bold text-success">{brl(Number(o.valor_total))}</td>
                     <td className="px-3 py-3 text-right">
                       <Button
@@ -1175,13 +1227,13 @@ function Calculadora() {
         <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <CardResumo
             icon={<TrendingDown className="h-5 w-5 text-success" />}
-            titulo={`MENOR VALOR (${numeroBR(totalPaginas)} pág.)`}
+            titulo={`MENOR VALOR (${numeroBR(estado.arquivos)} arq. · ${numeroBR(paginasAdicionais)} pág. adic.)`}
             valor={brl(resumo.menor.total)}
             detalhe={resumo.menor.material.nome}
           />
           <CardResumo
             icon={<TrendingUp className="h-5 w-5 text-cyan-ink" />}
-            titulo={`MAIOR VALOR (${numeroBR(totalPaginas)} pág.)`}
+            titulo={`MAIOR VALOR (${numeroBR(estado.arquivos)} arq. · ${numeroBR(paginasAdicionais)} pág. adic.)`}
             valor={brl(resumo.maior.total)}
             detalhe={resumo.maior.material.nome}
           />
@@ -1193,9 +1245,9 @@ function Calculadora() {
           />
           <CardResumo
             icon={<Layers className="h-5 w-5 text-magenta-ink" />}
-            titulo="TOTAL DE PÁGINAS"
-            valor={numeroBR(totalPaginas)}
-            detalhe="páginas"
+            titulo="PÁGINAS ADICIONAIS"
+            valor={numeroBR(paginasAdicionais)}
+            detalhe={`${numeroBR(paginasArquivos)} página(s) nos arquivos`}
           />
         </div>
       )}

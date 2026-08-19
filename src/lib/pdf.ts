@@ -51,7 +51,8 @@ export function gerarOrcamentoPdf(d: DadosDocumento, baixar = true) {
       ["Material utilizado", item.material],
       ["Tipo de impressão", item.tipoImpressao],
       ["Quantidade de arquivos", String(item.quantidadeArquivos)],
-      ["Total de páginas orçado", String(item.paginasTotal)],
+      ["Páginas adicionais", String(item.paginasAdicionais)],
+      ["Cópias adicionais", String(item.copiasAdicionais)],
     ];
     if (item.tamanho) resumo.push(["Formato", item.tamanho]);
     if (item.frenteVerso) resumo.push(["Frente e verso", "Sim"]);

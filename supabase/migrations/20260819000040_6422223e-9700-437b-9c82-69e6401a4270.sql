@@ -1,0 +1,2 @@
+ALTER TABLE public.orcamentos ADD COLUMN IF NOT EXISTS paginas_adicionais integer NOT NULL DEFAULT 0;
+ALTER TABLE public.calculos ADD COLUMN IF NOT EXISTS paginas_adicionais integer NOT NULL DEFAULT 0;
