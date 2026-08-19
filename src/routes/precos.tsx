@@ -237,6 +237,7 @@ function Precos() {
                       <th className="px-2 py-3 w-32">PREÇO UNI</th>
                       <th className="px-2 py-3 w-32">QTD. FIXA</th>
                       <th className="px-2 py-3 w-36">VALOR FIXO</th>
+                      <th className="px-2 py-3 w-36">PREÇO ARQUIVO EXCEDENTE</th>
                       <th className="px-2 py-3 w-64">FAIXAS POR PÁGINAS</th>
                       <th className="px-2 py-3 w-64">FAIXAS POR ARQUIVOS EXCEDENTES</th>
                       <th className="px-2 py-3 w-20">ATIVO</th>
@@ -312,6 +313,16 @@ function Precos() {
                           <Input
                             type="number"
                             min="0"
+                            step="1"
+                            value={m.quantidade_arquivos_fixo ?? 0}
+                            onChange={(e) => atualizar(m.id, "quantidade_arquivos_fixo", e.target.value)}
+                            title="Quantidade de arquivos cobrados pelo valor fixo"
+                          />
+                        </td>
+                        <td className="px-2 py-2">
+                          <Input
+                            type="number"
+                            min="0"
                             step="0.01"
                             value={m.preco_arquivos_fixo ?? 0}
                             onChange={(e) => atualizar(m.id, "preco_arquivos_fixo", e.target.value)}
@@ -325,6 +336,7 @@ function Precos() {
                             min="0"
                             value={m.preco_por_arquivo ?? 0}
                             onChange={(e) => atualizar(m.id, "preco_por_arquivo", e.target.value)}
+                            title="Preço padrão dos arquivos excedentes quando não houver faixa"
                           />
                         </td>
                         <td className="px-2 py-2">
