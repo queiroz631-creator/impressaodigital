@@ -446,7 +446,11 @@ function Calculadora() {
   }
 
   function editarItem(row: Record<string, unknown>) {
-    const arquivos = Array.isArray(row["arquivos"]) ? (row["arquivos"] as ArquivoDoc[]) : [];
+    const arquivos = (Array.isArray(row["arquivos"]) ? (row["arquivos"] as ArquivoDoc[]) : []).map((a) => ({
+      ...a,
+      copias: Math.max(1, Number(a.copias ?? 1) || 1),
+      frenteVerso: a.frenteVerso === true,
+    }));
     const nomes = new Set(
       (Array.isArray(row["acabamentos"]) ? (row["acabamentos"] as AcabamentoDoc[]) : [])
         .filter((a) => a.incluso !== false)
