@@ -311,12 +311,24 @@ function Calculadora() {
   }
 
   function aplicarArquivos(lista: ArquivoDoc[]) {
+    const paginasAdicionais = lista.reduce((acc, a) => acc + Math.max(0, (a.paginas || 0) - 1), 0);
+    const copiasAdicionais = lista.reduce((acc, a) => {
+      const paginas = Math.max(0, a.paginas || 0);
+      const copias = Math.max(1, a.copias ?? 1);
+      return acc + paginas * copias - paginas;
+    }, 0);
     setEstado((e) => ({
       ...e,
       arquivosLista: lista,
       arquivos: lista.length,
-      paginasAdicionais: Math.max(0, lista.reduce((acc, a) => acc + a.paginas, 0) - lista.length),
+      paginasAdicionais,
+      copiasAdicionais,
     }));
+  }
+
+  /** Atualiza um arquivo da lista e recalcula páginas/cópias adicionais. */
+  function atualizarArquivo(indice: number, dados: Partial<ArquivoDoc>) {
+    aplicarArquivos(estado.arquivosLista.map((a, i) => (i === indice ? { ...a, ...dados } : a)));
   }
 
   function removerArquivo(indice: number) {
