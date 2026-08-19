@@ -693,15 +693,15 @@ function Calculadora() {
 
                 <Campo
                   icon={<FileStack className="h-4 w-4 text-navy" />}
-                  label="Quantidade total de páginas"
-                  sufixo="páginas"
+                  label="Páginas adicionais"
+                  sufixo="páginas adicionais"
                 >
                   <div className="flex h-11 overflow-hidden rounded-lg border border-border bg-background">
                     <Button
                       type="button"
                       variant="ghost"
                       className="h-full w-12 shrink-0 rounded-none border-r"
-                      onClick={() => set("paginas", Math.max(0, estado.paginas - 1))}
+                      onClick={() => set("paginasAdicionais", Math.max(0, estado.paginasAdicionais - 1))}
                     >
                       −
                     </Button>
@@ -710,8 +710,8 @@ function Calculadora() {
                       type="number"
                       min="0"
                       inputMode="numeric"
-                      value={estado.paginas}
-                      onChange={(e) => set("paginas", Math.max(0, num(e.target.value)))}
+                      value={estado.paginasAdicionais}
+                      onChange={(e) => set("paginasAdicionais", Math.max(0, num(e.target.value)))}
                       className="h-full rounded-none border-0 text-center text-xl font-bold focus-visible:ring-0"
                     />
 
@@ -719,7 +719,7 @@ function Calculadora() {
                       type="button"
                       variant="ghost"
                       className="h-full w-12 shrink-0 rounded-none border-l"
-                      onClick={() => set("paginas", estado.paginas + 1)}
+                      onClick={() => set("paginasAdicionais", estado.paginasAdicionais + 1)}
                     >
                       +
                     </Button>
