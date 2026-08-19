@@ -223,9 +223,9 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
       const totalCopiasAdicionais = copiasAdicionais * preco;
 
       // Arquivos: por página na cópia manual, por arquivo (faixas) no cálculo normal.
-      const precoArquivo = entrada.copiaManual ? preco : precoPorQuantidadeArquivos(material, quantidadeArquivos);
-
-      const totalArquivos = quantidadeArquivos * precoArquivo;
+      const totalArquivos = entrada.copiaManual
+        ? quantidadeArquivos * preco
+        : calcularValorArquivos(material, quantidadeArquivos);
 
       const total = totalArquivos + totalPaginasAdicionais + totalCopiasAdicionais;
 
