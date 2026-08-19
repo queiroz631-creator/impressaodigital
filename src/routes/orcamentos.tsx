@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { FileDown, FileText, Image as ImageIcon, Trash2, Eye } from "lucide-react";
+import { FileDown, FileText, Image as ImageIcon, Trash2, Eye, Printer, Tags } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,15 +17,25 @@ import { Badge } from "@/components/ui/badge";
 
 import { Label } from "@/components/ui/label";
 
+import { Input } from "@/components/ui/input";
+
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
+import { ImprimirEtiqueta } from "@/components/ImprimirEtiqueta";
 
-import { useConfiguracao, useOrcamentos } from "@/hooks/useDados";
+import { useConfiguracao, useOrcamentos, usePedidos } from "@/hooks/useDados";
 
 import { brl, dataBR } from "@/lib/format";
 
