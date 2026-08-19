@@ -62,6 +62,8 @@ function Precos() {
       materiais.map((m) => ({
         ...m,
         faixas_por_arquivo: m.faixas_por_arquivo ?? [],
+        quantidade_arquivos_fixo: m.quantidade_arquivos_fixo ?? 3,
+        preco_arquivos_fixo: m.preco_arquivos_fixo ?? 0,
       })),
     );
 
