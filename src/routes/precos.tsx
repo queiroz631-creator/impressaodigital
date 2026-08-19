@@ -136,6 +136,8 @@ function Precos() {
       queryClient.invalidateQueries({ queryKey: ["materiais"] });
       toast.success("Preço atualizado com sucesso.");
     } catch (e) {
+      console.error("ERRO AO SALVAR MATERIAL:", e);
+
       toast.error(e instanceof Error ? e.message : "Erro ao salvar.");
     } finally {
       setSalvando(false);
