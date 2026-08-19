@@ -14,13 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { brl, dataHoraBR } from "@/lib/format";
 import { resumoDoPedido } from "@/lib/etiqueta";
 import { normalizarStatus, rotuloStatus } from "@/lib/status";
@@ -75,10 +69,7 @@ export function ImprimirEtiqueta({
     return lista;
   }, [config]);
 
-  const opcoes = useMemo(
-    () => Array.from(new Set([...configuradas, ...disponiveis])),
-    [configuradas, disponiveis],
-  );
+  const opcoes = useMemo(() => Array.from(new Set([...configuradas, ...disponiveis])), [configuradas, disponiveis]);
 
   const statusFinal = normalizarStatus(status);
   const resumo = useMemo(() => resumoDoPedido(itens), [itens]);
@@ -87,8 +78,7 @@ export function ImprimirEtiqueta({
   const excedeu = valorPagoNumero > total;
   const restante = Math.max(0, total - valorPagoNumero);
 
-  const situacaoPagamento =
-    valorPagoNumero <= 0 ? "NÃO PAGO" : valorPagoNumero >= total ? "PAGO" : "PARCIAL";
+  const situacaoPagamento = valorPagoNumero <= 0 ? "NÃO PAGO" : valorPagoNumero >= total ? "PAGO" : "PARCIAL";
 
   useEffect(() => {
     if (!aberto) return;
@@ -99,7 +89,9 @@ export function ImprimirEtiqueta({
       (user?.user_metadata?.["full_name"] as string | undefined) ??
       (user?.email ? user.email.split("@")[0]! : "");
     setAtendente((atual) => atual || nome || "");
-    listarImpressoras().then(setDisponiveis).catch(() => setDisponiveis([]));
+    listarImpressoras()
+      .then(setDisponiveis)
+      .catch(() => setDisponiveis([]));
   }, [aberto, valorPago, configuradas, user]);
 
   async function executarImpressao(escolher: boolean) {
@@ -130,12 +122,10 @@ export function ImprimirEtiqueta({
     <Dialog open={aberto} onOpenChange={setAberto}>
       <DialogTrigger asChild>{children}</DialogTrigger>
 
-      <DialogContent className="max-h-[90vh] w-[95vw] max-w-md overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Imprimir etiqueta — pedido {numero}</DialogTitle>
-          <DialogDescription>
-            Informe o pagamento e imprima na térmica de 80mm.
-          </DialogDescription>
+          <DialogDescription>Informe o pagamento e imprima na térmica de 80mm.</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3 rounded-lg border border-border p-3 text-sm">
@@ -149,19 +139,17 @@ export function ImprimirEtiqueta({
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="valor-pago" className="text-xs">Valor pago</Label>
+            <Label htmlFor="valor-pago" className="text-xs">
+              Valor pago
+            </Label>
             <Input
               id="valor-pago"
               inputMode="decimal"
-              className="h-8 w-40 text-sm"
+              className="h-8 w-28 text-sm"
               value={pago}
               onChange={(e) => setPago(e.target.value.replace(/[^\d.,]/g, ""))}
             />
-            {excedeu && (
-              <p className="text-xs font-semibold text-destructive">
-                Valor pago maior que o total.
-              </p>
-            )}
+            {excedeu && <p className="text-xs font-semibold text-destructive">Valor pago maior que o total.</p>}
           </div>
 
           <div className="flex justify-between">
@@ -176,10 +164,12 @@ export function ImprimirEtiqueta({
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="atendente" className="text-xs">Atendente</Label>
+            <Label htmlFor="atendente" className="text-xs">
+              Atendente
+            </Label>
             <Input
               id="atendente"
-              className="h-8 w-56 text-sm"
+              className="h-8 w-40 text-sm"
               value={atendente}
               onChange={(e) => setAtendente(e.target.value)}
               placeholder="Nome do atendente"
@@ -203,8 +193,7 @@ export function ImprimirEtiqueta({
               </Select>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Nenhuma impressora configurada. Será usada a impressora escolhida na janela do
-                navegador.
+                Nenhuma impressora configurada. Será usada a impressora escolhida na janela do navegador.
               </p>
             )}
           </div>
@@ -213,7 +202,7 @@ export function ImprimirEtiqueta({
         {/* ETIQUETA */}
         <div
           id="etiqueta-print"
-          className="etiqueta-80mm mx-auto rounded-lg border border-border bg-card p-3 text-foreground"
+          className="etiqueta-80mm mx-auto w-full max-w-[320px] overflow-hidden rounded-lg border border-border bg-card p-2 text-foreground"
         >
           {linhaDupla}
           {"\n"}PEDIDO {numero}
