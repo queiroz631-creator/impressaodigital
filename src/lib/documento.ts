@@ -2,6 +2,12 @@ export interface ArquivoDoc {
   nome: string;
   tipo: string;
   paginas: number;
+  /** Quantidade de cópias do arquivo (mínimo 1). Registros antigos assumem 1. */
+  copias?: number;
+  /** Frente e verso individual do arquivo. Registros antigos assumem false. */
+  frenteVerso?: boolean;
+  /** Indica que a contagem de páginas precisa ser informada manualmente. */
+  paginasManuais?: boolean;
 }
 
 export interface AcabamentoDoc {
