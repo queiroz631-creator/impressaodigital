@@ -21,6 +21,9 @@ export interface ItemDoc {
   arquivos: ArquivoDoc[];
   quantidadeArquivos: number;
   paginasTotal: number;
+  /** Páginas que excedem 1 página por arquivo. */
+  paginasAdicionais: number;
+  copiasAdicionais: number;
   acabamentos: AcabamentoDoc[];
   total: number;
 }
