@@ -175,10 +175,11 @@ export function ImprimirEtiqueta({
             <span className="font-semibold">{brl(restante)}</span>
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="atendente">Atendente</Label>
+          <div className="grid gap-1.5">
+            <Label htmlFor="atendente" className="text-xs">Atendente</Label>
             <Input
               id="atendente"
+              className="h-8 w-56 text-sm"
               value={atendente}
               onChange={(e) => setAtendente(e.target.value)}
               placeholder="Nome do atendente"
