@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Save, ShieldAlert } from "lucide-react";
+import { Plus, Printer, Save, ShieldAlert, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useConfiguracao } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { listarImpressoras, qzDisponivel, testarImpressora } from "@/lib/impressora";
 
 export const Route = createFileRoute("/configuracoes")({
   component: () => (
@@ -39,6 +41,8 @@ interface Form {
   instagram: string;
   rodape_orcamento: string;
   validade_padrao_dias: number;
+  impressora_padrao_tipo: string;
+  impressoras_padrao: string[];
 }
 
 const vazio: Form = {
@@ -50,6 +54,8 @@ const vazio: Form = {
   instagram: "",
   rodape_orcamento: "",
   validade_padrao_dias: 7,
+  impressora_padrao_tipo: "navegador",
+  impressoras_padrao: [],
 };
 
 function Configuracoes() {
@@ -59,9 +65,23 @@ function Configuracoes() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<Form>(vazio);
   const [salvando, setSalvando] = useState(false);
+  const [impressorasDetectadas, setImpressorasDetectadas] = useState<string[]>([]);
+  const [novaImpressora, setNovaImpressora] = useState("");
+  const impressaoDireta = qzDisponivel();
+
+  useEffect(() => {
+    listarImpressoras()
+      .then(setImpressorasDetectadas)
+      .catch(() => setImpressorasDetectadas([]));
+  }, []);
 
   useEffect(() => {
     if (!config) return;
+    const lista = Array.isArray(config.impressoras_padrao)
+      ? (config.impressoras_padrao as unknown[]).map((n) => String(n)).filter(Boolean)
+      : [];
+    const padrao = config.impressora_padrao_nome?.trim();
+    if (padrao && !lista.includes(padrao)) lista.unshift(padrao);
     setForm({
       empresa_nome: config.empresa_nome ?? "",
       telefone: config.telefone ?? "",
@@ -71,6 +91,8 @@ function Configuracoes() {
       instagram: config.instagram ?? "",
       rodape_orcamento: config.rodape_orcamento ?? "",
       validade_padrao_dias: config.validade_padrao_dias ?? 7,
+      impressora_padrao_tipo: config.impressora_padrao_tipo ?? "navegador",
+      impressoras_padrao: lista,
     });
   }, [config]);
 
@@ -93,6 +115,10 @@ function Configuracoes() {
       instagram: form.instagram || null,
       rodape_orcamento: form.rodape_orcamento,
       validade_padrao_dias: Number(form.validade_padrao_dias) || 7,
+      impressora_padrao_nome: form.impressoras_padrao[0] ?? null,
+      impressora_padrao_tipo: form.impressora_padrao_tipo,
+      impressora_padrao_largura: 80,
+      impressoras_padrao: form.impressoras_padrao,
     };
     const { error } = config
       ? await supabase.from("configuracoes").update(payload).eq("id", config.id)
