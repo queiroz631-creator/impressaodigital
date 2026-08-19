@@ -97,19 +97,22 @@ export function calcularValorArquivos(material: Material, quantidadeArquivos: nu
     return 0;
   }
 
+  // QUANTIDADE de arquivos que receberão o preço fixo
   const quantidadeFixa = Math.max(0, Number(material.quantidade_arquivos_fixo) || 0);
 
+  // VALOR de cada um dos arquivos fixos
   const precoFixo = Number(material.preco_arquivos_fixo) || 0;
 
-  // Quantidade que recebe o preço fixo
+  // Quantos arquivos realmente receberão o preço fixo
   const quantidadeComPrecoFixo = Math.min(quantidade, quantidadeFixa);
 
-  // Valor dos primeiros arquivos
+  // Valor dos arquivos fixos
   const valorFixo = quantidadeComPrecoFixo * precoFixo;
 
-  // Quantidade que ultrapassou a quantidade fixa
+  // Arquivos que ultrapassaram a quantidade fixa
   const quantidadeExcedente = Math.max(0, quantidade - quantidadeFixa);
 
+  // Se não houver excedentes, retorna somente os fixos
   if (quantidadeExcedente === 0) {
     return valorFixo;
   }
@@ -117,6 +120,7 @@ export function calcularValorArquivos(material: Material, quantidadeArquivos: nu
   // Preço da faixa para os arquivos excedentes
   const precoFaixa = precoPorQuantidadeArquivos(material, quantidade);
 
+  // Valor dos arquivos excedentes
   const valorExcedente = quantidadeExcedente * precoFaixa;
 
   return valorFixo + valorExcedente;
