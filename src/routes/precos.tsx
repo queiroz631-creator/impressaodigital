@@ -289,12 +289,22 @@ function Precos() {
                         </td>
                         <td className="px-2 py-2">
                           <Input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={m.quantidade_arquivos_fixo ?? 3}
-                            onChange={(e) => atualizar(m.id, "quantidade_arquivos_fixo", e.target.value)}
-                            title="Quantidade de arquivos que receberão o preço fixo"
+                            inputMode="decimal"
+                            value={String(m.preco_pb ?? "").replace(".", ",")}
+                            onChange={(e) => {
+                              const valor = e.target.value;
+
+                              // Permite somente números e uma vírgula
+                              if (!/^\d*[,.]?\d*$/.test(valor)) return;
+
+                              atualizar(m.id, "preco_pb", valor.replace(",", "."));
+                            }}
+                            onBlur={() => {
+                              const valor = Number(m.preco_pb) || 0;
+
+                              atualizar(m.id, "preco_pb", valor);
+                            }}
+                            placeholder="0,00"
                           />
                         </td>
 
