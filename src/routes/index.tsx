@@ -848,8 +848,8 @@ function Calculadora() {
                   <dd className="text-2xl font-extrabold text-primary">{numeroBR(estado.arquivos)}</dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
-                  <dt className="text-muted-foreground">Páginas</dt>
-                  <dd className="text-2xl font-extrabold text-primary">{numeroBR(totalPaginas)}</dd>
+                  <dt className="text-muted-foreground">Páginas adicionais</dt>
+                  <dd className="text-2xl font-extrabold text-primary">{numeroBR(paginasAdicionais)}</dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <dt className="text-muted-foreground">Cópias adicionais</dt>
@@ -858,7 +858,7 @@ function Calculadora() {
                 <div className="flex items-center justify-between border-t border-border pt-3">
                   <dt className="text-muted-foreground">Total para cobrança</dt>
                   <dd className="text-2xl font-extrabold text-success">
-                    {numeroBR(estado.paginas + estado.copiasAdicionais)}
+                    {numeroBR(quantidadeTotal)}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between border-t border-border pt-3">
@@ -984,7 +984,7 @@ function Calculadora() {
                             {a.cobranca === "quantidade"
                               ? `${sel.quantidade} unidade(s)`
                               : a.cobranca === "pagina"
-                                ? `${estado.paginas} página(s)`
+                                ? `${estado.paginasAdicionais} página(s) adicionais`
                                 : a.cobranca === "bloco"
                                   ? `${linha?.quantidade ?? 0} bloco(s)`
                                   : "Valor fixo"}
@@ -1076,7 +1076,7 @@ function Calculadora() {
 
                       <th className="px-3 py-3 text-right">PREÇO UNI</th>
 
-                      <th className="rounded-r-lg px-3 py-3 text-right">TOTAL ({numeroBR(totalPaginas)} PÁGINAS)</th>
+                      <th className="rounded-r-lg px-3 py-3 text-right">TOTAL</th>
                     </tr>
                   </thead>
 
