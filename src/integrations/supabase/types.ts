@@ -235,9 +235,11 @@ export type Database = {
           id: string
           nome: string
           ordem: number
+          preco_arquivos_fixo: number | null
           preco_color: number
           preco_pb: number
           preco_por_arquivo: number
+          quantidade_arquivos_fixo: number | null
           tipo_impressao: string
           updated_at: string
         }
@@ -251,9 +253,11 @@ export type Database = {
           id?: string
           nome: string
           ordem?: number
+          preco_arquivos_fixo?: number | null
           preco_color?: number
           preco_pb?: number
           preco_por_arquivo?: number
+          quantidade_arquivos_fixo?: number | null
           tipo_impressao?: string
           updated_at?: string
         }
@@ -267,9 +271,11 @@ export type Database = {
           id?: string
           nome?: string
           ordem?: number
+          preco_arquivos_fixo?: number | null
           preco_color?: number
           preco_pb?: number
           preco_por_arquivo?: number
+          quantidade_arquivos_fixo?: number | null
           tipo_impressao?: string
           updated_at?: string
         }
