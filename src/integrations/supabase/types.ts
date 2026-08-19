@@ -408,6 +408,7 @@ export type Database = {
           updated_at: string
           usuario_id: string
           validade: string | null
+          valor_pago: number
           valor_total: number
         }
         Insert: {
@@ -421,6 +422,7 @@ export type Database = {
           updated_at?: string
           usuario_id?: string
           validade?: string | null
+          valor_pago?: number
           valor_total?: number
         }
         Update: {
@@ -434,6 +436,7 @@ export type Database = {
           updated_at?: string
           usuario_id?: string
           validade?: string | null
+          valor_pago?: number
           valor_total?: number
         }
         Relationships: []
