@@ -283,6 +283,7 @@ export type Database = {
           cliente_nome: string
           cliente_telefone: string | null
           copia_manual: boolean
+          copias_adicionais: number
           cor_impressao: string
           created_at: string
           frente_verso: boolean
@@ -312,6 +313,7 @@ export type Database = {
           cliente_nome?: string
           cliente_telefone?: string | null
           copia_manual?: boolean
+          copias_adicionais?: number
           cor_impressao?: string
           created_at?: string
           frente_verso?: boolean
@@ -341,6 +343,7 @@ export type Database = {
           cliente_nome?: string
           cliente_telefone?: string | null
           copia_manual?: boolean
+          copias_adicionais?: number
           cor_impressao?: string
           created_at?: string
           frente_verso?: boolean

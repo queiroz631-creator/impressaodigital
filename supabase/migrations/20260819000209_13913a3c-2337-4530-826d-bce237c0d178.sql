@@ -1,0 +1,1 @@
+ALTER TABLE public.orcamentos ADD COLUMN IF NOT EXISTS copias_adicionais integer NOT NULL DEFAULT 0;
