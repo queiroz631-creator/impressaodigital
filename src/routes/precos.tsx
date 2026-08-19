@@ -111,6 +111,9 @@ function Precos() {
             preco_pb: Number(m.preco_pb),
 
             preco_por_arquivo: Number(m.preco_por_arquivo) || 0,
+            quantidade_arquivos_fixo: Math.max(0, Number(m.quantidade_arquivos_fixo) || 0),
+
+            preco_arquivos_fixo: Math.max(0, Number(m.preco_arquivos_fixo) || 0),
 
             faixas: faixas as unknown as never,
 
