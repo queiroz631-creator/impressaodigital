@@ -148,11 +148,12 @@ export function ImprimirEtiqueta({
             <span className="font-semibold">{brl(total)}</span>
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="valor-pago">Valor pago</Label>
+          <div className="grid gap-1.5">
+            <Label htmlFor="valor-pago" className="text-xs">Valor pago</Label>
             <Input
               id="valor-pago"
               inputMode="decimal"
+              className="h-8 w-40 text-sm"
               value={pago}
               onChange={(e) => setPago(e.target.value.replace(/[^\d.,]/g, ""))}
             />
