@@ -1187,13 +1187,13 @@ function Calculadora() {
         <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <CardResumo
             icon={<TrendingDown className="h-5 w-5 text-success" />}
-            titulo={`MENOR VALOR (${numeroBR(totalPaginas)} pág.)`}
+            titulo={`MENOR VALOR (${numeroBR(estado.arquivos)} arq. · ${numeroBR(paginasAdicionais)} pág. adic.)`}
             valor={brl(resumo.menor.total)}
             detalhe={resumo.menor.material.nome}
           />
           <CardResumo
             icon={<TrendingUp className="h-5 w-5 text-cyan-ink" />}
-            titulo={`MAIOR VALOR (${numeroBR(totalPaginas)} pág.)`}
+            titulo={`MAIOR VALOR (${numeroBR(estado.arquivos)} arq. · ${numeroBR(paginasAdicionais)} pág. adic.)`}
             valor={brl(resumo.maior.total)}
             detalhe={resumo.maior.material.nome}
           />
@@ -1205,9 +1205,9 @@ function Calculadora() {
           />
           <CardResumo
             icon={<Layers className="h-5 w-5 text-magenta-ink" />}
-            titulo="TOTAL DE PÁGINAS"
-            valor={numeroBR(totalPaginas)}
-            detalhe="páginas"
+            titulo="PÁGINAS ADICIONAIS"
+            valor={numeroBR(paginasAdicionais)}
+            detalhe={`${numeroBR(paginasArquivos)} página(s) nos arquivos`}
           />
         </div>
       )}
