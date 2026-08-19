@@ -26,6 +26,10 @@ export interface Configuracao {
   email: string | null;
   rodape_orcamento: string;
   validade_padrao_dias: number;
+  impressora_padrao_nome: string | null;
+  impressora_padrao_tipo: string | null;
+  impressora_padrao_largura: number | null;
+  impressoras_padrao: unknown;
 }
 
 export function useConfiguracao() {
