@@ -37,6 +37,8 @@ export interface Material {
 
   // Faixas de preço por quantidade de arquivos
   faixas_por_arquivo: FaixaPreco[];
+  quantidade_arquivos_fixo: number;
+  preco_arquivos_fixo: number;
 
   tipo_impressao: TipoServico;
   formato: FormatoPapel;
@@ -176,8 +178,7 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
       const quantidadeArquivos = Math.max(0, Number(entrada.arquivos) || 0);
 
       // Na cópia manual cada arquivo equivale a 1 página cobrada por página.
-      const quantidadeParaFaixa =
-        paginasAdicionais + copiasAdicionais + (entrada.copiaManual ? quantidadeArquivos : 0);
+      const quantidadeParaFaixa = paginasAdicionais + copiasAdicionais + (entrada.copiaManual ? quantidadeArquivos : 0);
 
       const preco = precoPorQuantidade(
         material,
@@ -190,9 +191,7 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
       const totalCopiasAdicionais = copiasAdicionais * preco;
 
       // Arquivos: por página na cópia manual, por arquivo (faixas) no cálculo normal.
-      const precoArquivo = entrada.copiaManual
-        ? preco
-        : precoPorQuantidadeArquivos(material, quantidadeArquivos);
+      const precoArquivo = entrada.copiaManual ? preco : precoPorQuantidadeArquivos(material, quantidadeArquivos);
 
       const totalArquivos = quantidadeArquivos * precoArquivo;
 
