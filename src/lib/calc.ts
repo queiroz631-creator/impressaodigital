@@ -90,6 +90,38 @@ export function precoPorQuantidadeArquivos(material: Material, quantidade: numbe
   return preco;
 }
 
+export function calcularValorArquivos(material: Material, quantidadeArquivos: number) {
+  const quantidade = Math.max(0, Number(quantidadeArquivos) || 0);
+
+  if (quantidade === 0) {
+    return 0;
+  }
+
+  const quantidadeFixa = Math.max(0, Number(material.quantidade_arquivos_fixo) || 0);
+
+  const precoFixo = Number(material.preco_arquivos_fixo) || 0;
+
+  // Quantidade que recebe o preço fixo
+  const quantidadeComPrecoFixo = Math.min(quantidade, quantidadeFixa);
+
+  // Valor dos primeiros arquivos
+  const valorFixo = quantidadeComPrecoFixo * precoFixo;
+
+  // Quantidade que ultrapassou a quantidade fixa
+  const quantidadeExcedente = Math.max(0, quantidade - quantidadeFixa);
+
+  if (quantidadeExcedente === 0) {
+    return valorFixo;
+  }
+
+  // Preço da faixa para os arquivos excedentes
+  const precoFaixa = precoPorQuantidadeArquivos(material, quantidade);
+
+  const valorExcedente = quantidadeExcedente * precoFaixa;
+
+  return valorFixo + valorExcedente;
+}
+
 /** Preço unitário de um acabamento considerando as faixas por quantidade. */
 export function precoAcabamento(acabamento: Acabamento, quantidade: number) {
   const base = Number(acabamento.valor) || 0;
