@@ -615,7 +615,8 @@ function Calculadora() {
                   {lendoArquivos ? "Lendo arquivos..." : "Anexar PDFs / Imagens"}
                 </Button>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  As páginas dos PDFs são contadas automaticamente; cada imagem conta como 1 página.
+                  As páginas dos PDFs são contadas automaticamente; cada arquivo já inclui 1 página e o excedente vira
+                  páginas adicionais.
                 </p>
               </div>
 
@@ -815,8 +816,8 @@ function Calculadora() {
                   Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Na cópia manual o cálculo usa somente a quantidade de páginas e o preço unitário cadastrado, sem
-                  faixas por quantidade e sem valor por arquivo.
+                  Na cópia manual tudo é cobrado por página (cada arquivo conta 1 página) com o preço unitário
+                  cadastrado, sem faixas por quantidade e sem valor por arquivo.
                 </p>
                 {estado.copiaManual && (
                   <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
@@ -1060,7 +1061,7 @@ function Calculadora() {
                 <p className="text-sm text-muted-foreground">
                   {precisaSelecionar
                     ? "Selecione o tipo de impressão para ver os valores."
-                    : "Informe a quantidade de páginas para ver os valores."}
+                    : "Informe arquivos, páginas adicionais ou cópias adicionais para ver os valores."}
                 </p>
               </div>
             ) : (
@@ -1177,7 +1178,7 @@ function Calculadora() {
                   <th className="px-3 py-3">MATERIAL</th>
                   <th className="px-3 py-3">TIPO</th>
                   <th className="px-3 py-3">FORMATO</th>
-                  <th className="px-3 py-3 text-right">PÁGINAS</th>
+                  <th className="px-3 py-3 text-right">PÁG. ADIC.</th>
                   <th className="px-3 py-3 text-right">TOTAL</th>
                   <th className="px-3 py-3 text-right">AÇÕES</th>
                 </tr>
@@ -1189,7 +1190,7 @@ function Calculadora() {
                     <td className="px-3 py-3">{o.material_nome}</td>
                     <td className="px-3 py-3 capitalize">{o.tipo_impressao}</td>
                     <td className="px-3 py-3">{o.tamanho}</td>
-                    <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_total))}</td>
+                    <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_adicionais ?? 0))}</td>
                     <td className="px-3 py-3 text-right font-bold text-success">{brl(Number(o.valor_total))}</td>
                     <td className="px-3 py-3 text-right">
                       <Button
