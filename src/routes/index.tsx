@@ -1120,6 +1120,36 @@ function Calculadora() {
                     })}
                   </tbody>
                 </table>
+
+                {materialSelecionado && (
+                  <dl className="mt-4 space-y-1 rounded-xl border border-border bg-accent/40 p-4 text-sm">
+                    <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">
+                      RESUMO DO CÁLCULO · {materialSelecionado.material.nome}
+                    </p>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Arquivos ({numeroBR(estado.arquivos)})</dt>
+                      <dd className="font-semibold">{brl(materialSelecionado.totalArquivos)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Páginas adicionais ({numeroBR(paginasAdicionais)})</dt>
+                      <dd className="font-semibold">{brl(materialSelecionado.totalPaginasAdicionais)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">
+                        Cópias adicionais ({numeroBR(estado.copiasAdicionais)})
+                      </dt>
+                      <dd className="font-semibold">{brl(materialSelecionado.totalCopiasAdicionais)}</dd>
+                    </div>
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Acabamentos</dt>
+                      <dd className="font-semibold">{brl(valorAcabamento)}</dd>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-2">
+                      <dt className="font-bold">Total</dt>
+                      <dd className="font-extrabold text-success">{brl(materialSelecionado.total)}</dd>
+                    </div>
+                  </dl>
+                )}
               </div>
             )}
           </CardContent>
