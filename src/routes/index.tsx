@@ -312,7 +312,7 @@ function Calculadora() {
       ...e,
       arquivosLista: lista,
       arquivos: lista.length,
-      paginas: lista.reduce((acc, a) => acc + a.paginas, 0),
+      paginasAdicionais: Math.max(0, lista.reduce((acc, a) => acc + a.paginas, 0) - lista.length),
     }));
   }
 
@@ -362,8 +362,8 @@ function Calculadora() {
       toast.error("Selecione um material para o orçamento.");
       return;
     }
-    if (semPaginas) {
-      toast.error("Informe a quantidade de páginas.");
+    if (semQuantidade) {
+      toast.error("Informe arquivos, páginas adicionais ou cópias adicionais.");
       return;
     }
     setSalvandoItem(true);
@@ -379,7 +379,9 @@ function Calculadora() {
         acabamentos: acabamentosParaSalvar() as unknown as never,
         tipo_impressao: estado.tipoServico,
         quantidade_arquivos: estado.arquivos,
-        paginas_total: estado.paginas,
+        paginas_total: paginasArquivos,
+        paginas_adicionais: estado.paginasAdicionais,
+        copias_adicionais: estado.copiasAdicionais,
         tamanho: tamanhoFinal,
         frente_verso: estado.frenteVerso,
         valor_acabamento: valorAcabamento,
@@ -439,7 +441,14 @@ function Calculadora() {
       editandoId: String(row["id"]),
       arquivosLista: arquivos,
       arquivos: Number(row["quantidade_arquivos"] ?? arquivos.length),
-      paginas: Number(row["paginas_total"] ?? 0),
+      paginasAdicionais:
+        row["paginas_adicionais"] != null
+          ? Number(row["paginas_adicionais"])
+          : Math.max(
+              0,
+              Number(row["paginas_total"] ?? 0) - Number(row["quantidade_arquivos"] ?? arquivos.length),
+            ),
+      copiasAdicionais: Number(row["copias_adicionais"] ?? 0),
       tipoServico: (row["tipo_impressao"] as TipoServico) ?? "simples",
       copiaManual: Boolean(row["copia_manual"]),
       materialId: String(row["material_id"] ?? ""),
