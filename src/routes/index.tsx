@@ -112,7 +112,7 @@ interface EstadoRascunho {
   validade: string;
   arquivosLista: ArquivoDoc[];
   arquivos: number;
-  paginas: number;
+  paginasAdicionais: number;
   tipoServico: TipoServico | "";
   copiaManual: boolean;
   materialId: string;
@@ -132,7 +132,7 @@ const ESTADO_INICIAL: EstadoRascunho = {
   validade: "",
   arquivosLista: [],
   arquivos: 0,
-  paginas: 0,
+  paginasAdicionais: 0,
   tipoServico: "",
   copiaManual: false,
   materialId: "",
@@ -174,7 +174,17 @@ function Calculadora() {
   useEffect(() => {
     if (hidratado || !rascunhoCarregado) return;
     if (rascunhoSalvo && Object.keys(rascunhoSalvo).length > 0) {
-      setEstado({ ...ESTADO_INICIAL, ...(rascunhoSalvo as unknown as EstadoRascunho) });
+      const salvo = rascunhoSalvo as Record<string, unknown>;
+      const compat: Partial<EstadoRascunho> =
+        salvo["paginasAdicionais"] == null && salvo["paginas"] != null
+          ? {
+              paginasAdicionais: Math.max(
+                0,
+                Number(salvo["paginas"] ?? 0) - Number(salvo["arquivos"] ?? 0),
+              ),
+            }
+          : {};
+      setEstado({ ...ESTADO_INICIAL, ...(salvo as unknown as EstadoRascunho), ...compat });
     }
     setHidratado(true);
   }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
@@ -213,11 +223,12 @@ function Calculadora() {
   }, [config?.validade_padrao_dias, estado.validade, set]);
 
   const precisaSelecionar = !estado.tipoServico;
-  const totalPaginas = estado.paginas;
+  const paginasAdicionais = estado.paginasAdicionais;
+  const paginasArquivos = estado.arquivosLista.reduce((acc, a) => acc + a.paginas, 0);
 
   const entrada = useMemo(
     () => ({
-      paginasTotal: estado.paginas,
+      paginasAdicionais: estado.paginasAdicionais,
 
       arquivos: estado.arquivos,
 
@@ -236,7 +247,7 @@ function Calculadora() {
       usarFaixaCopiaManual: estado.usarFaixaCopiaManual,
     }),
     [
-      estado.paginas,
+      estado.paginasAdicionais,
       estado.arquivos,
       estado.copiasAdicionais,
       estado.tipoServico,
@@ -254,8 +265,8 @@ function Calculadora() {
   );
 
   const linhasAcabamento = useMemo(
-    () => calcularAcabamentos(acabamentosVisiveis, estado.selecao, { paginas: estado.paginas }),
-    [acabamentosVisiveis, estado.selecao, estado.paginas],
+    () => calcularAcabamentos(acabamentosVisiveis, estado.selecao, { paginas: estado.paginasAdicionais }),
+    [acabamentosVisiveis, estado.selecao, estado.paginasAdicionais],
   );
   const valorAcabamento = totalAcabamentos(linhasAcabamento);
   const tamanhoFinal = estado.formato;
@@ -265,8 +276,9 @@ function Calculadora() {
     [linhas, valorAcabamento],
   );
   const resumo = resumoLinhas(linhasFinais);
-  const semPaginas = totalPaginas <= 0;
-  const mostrarTabela = !precisaSelecionar && !semPaginas;
+  const quantidadeTotal = estado.arquivos + paginasAdicionais + estado.copiasAdicionais;
+  const semQuantidade = quantidadeTotal <= 0;
+  const mostrarTabela = !precisaSelecionar && !semQuantidade;
 
   const materialSelecionado = linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
 
