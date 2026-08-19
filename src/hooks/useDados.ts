@@ -66,6 +66,21 @@ export function useCalculos() {
     },
   });
 }
+
+/** Todos os pedidos (fonte principal do status e do pagamento). */
+export function usePedidos() {
+  return useQuery({
+    queryKey: ["pedidos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pedidos")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
 export function useAcabamentos(somenteAtivos = false) {
   return useQuery({
     queryKey: ["acabamentos", somenteAtivos],
