@@ -265,8 +265,11 @@ function Calculadora() {
   );
 
   const linhasAcabamento = useMemo(
-    () => calcularAcabamentos(acabamentosVisiveis, estado.selecao, { paginas: estado.paginasAdicionais }),
-    [acabamentosVisiveis, estado.selecao, estado.paginasAdicionais],
+    () =>
+      calcularAcabamentos(acabamentosVisiveis, estado.selecao, {
+        paginas: estado.arquivos + estado.paginasAdicionais + estado.copiasAdicionais,
+      }),
+    [acabamentosVisiveis, estado.selecao, estado.arquivos, estado.paginasAdicionais, estado.copiasAdicionais],
   );
   const valorAcabamento = totalAcabamentos(linhasAcabamento);
   const tamanhoFinal = estado.formato;
