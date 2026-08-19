@@ -129,6 +129,7 @@ export type Database = {
           id: string
           material_nome: string | null
           observacao: string | null
+          paginas_adicionais: number
           paginas_color: number
           paginas_pb: number
           paginas_total: number
@@ -148,6 +149,7 @@ export type Database = {
           id?: string
           material_nome?: string | null
           observacao?: string | null
+          paginas_adicionais?: number
           paginas_color?: number
           paginas_pb?: number
           paginas_total?: number
@@ -167,6 +169,7 @@ export type Database = {
           id?: string
           material_nome?: string | null
           observacao?: string | null
+          paginas_adicionais?: number
           paginas_color?: number
           paginas_pb?: number
           paginas_total?: number
@@ -289,6 +292,7 @@ export type Database = {
           numero: string
           observacao: string | null
           ordem: number
+          paginas_adicionais: number
           paginas_total: number
           pedido_id: string | null
           quantidade_arquivos: number
@@ -317,6 +321,7 @@ export type Database = {
           numero?: string
           observacao?: string | null
           ordem?: number
+          paginas_adicionais?: number
           paginas_total?: number
           pedido_id?: string | null
           quantidade_arquivos?: number
@@ -345,6 +350,7 @@ export type Database = {
           numero?: string
           observacao?: string | null
           ordem?: number
+          paginas_adicionais?: number
           paginas_total?: number
           pedido_id?: string | null
           quantidade_arquivos?: number
