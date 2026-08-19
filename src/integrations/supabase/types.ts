@@ -188,6 +188,10 @@ export type Database = {
           empresa_nome: string
           endereco: string | null
           id: string
+          impressora_padrao_largura: number
+          impressora_padrao_nome: string | null
+          impressora_padrao_tipo: string
+          impressoras_padrao: Json
           instagram: string | null
           logo_url: string | null
           rodape_orcamento: string
@@ -201,6 +205,10 @@ export type Database = {
           empresa_nome?: string
           endereco?: string | null
           id?: string
+          impressora_padrao_largura?: number
+          impressora_padrao_nome?: string | null
+          impressora_padrao_tipo?: string
+          impressoras_padrao?: Json
           instagram?: string | null
           logo_url?: string | null
           rodape_orcamento?: string
@@ -214,6 +222,10 @@ export type Database = {
           empresa_nome?: string
           endereco?: string | null
           id?: string
+          impressora_padrao_largura?: number
+          impressora_padrao_nome?: string | null
+          impressora_padrao_tipo?: string
+          impressoras_padrao?: Json
           instagram?: string | null
           logo_url?: string | null
           rodape_orcamento?: string
