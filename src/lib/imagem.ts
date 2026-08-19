@@ -101,9 +101,15 @@ function montarLinhas(d: DadosDocumento): Linha[] {
     });
 
     linhas.push({
-      texto: "Total de páginas orçado",
+      texto: "Páginas adicionais",
       tipo: "chave",
-      valor: String(item.paginasTotal),
+      valor: String(item.paginasAdicionais),
+    });
+
+    linhas.push({
+      texto: "Cópias adicionais",
+      tipo: "chave",
+      valor: String(item.copiasAdicionais),
     });
 
     // ==========================================================
