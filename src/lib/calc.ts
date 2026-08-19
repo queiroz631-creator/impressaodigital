@@ -136,21 +136,29 @@ export function textoParaFaixas(texto: string): FaixaPreco[] {
 export interface LinhaCalculo {
   material: Material;
   valorUnitario: number;
+  /** Quantidade de páginas adicionais consideradas. */
   paginas: number;
+  /** Quantidade usada na busca de faixa por página (páginas adicionais + cópias). */
   totalPaginas: number;
+  /** Valor cobrado pelos arquivos. */
   totalArquivos: number;
+  /** Valor cobrado pelas páginas adicionais. */
+  totalPaginasAdicionais: number;
+  /** Valor cobrado pelas cópias adicionais. */
+  totalCopiasAdicionais: number;
   total: number;
 }
 
 export interface EntradaCalculo {
-  paginasTotal: number;
+  /** Páginas que excedem 1 página por arquivo. */
+  paginasAdicionais: number;
   arquivos?: number;
   copiasAdicionais?: number;
   /** Filtra os materiais pelo tipo de impressão. */
   tipoServico?: TipoServico;
   /** Filtra os materiais pelo formato do papel. */
   formato?: FormatoPapel;
-  /** Cópia manual: cobra somente por página, com o preço unitário cadastrado. */
+  /** Cópia manual: cobra somente por página (arquivos contam 1 página cada). */
   copiaManual?: boolean;
   // Quando true, utiliza as faixas de quantidade mesmo na cópia manual
   usarFaixaCopiaManual?: boolean;
@@ -163,49 +171,41 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
     .filter((m) => !entrada.formato || (m.formato ?? "A4") === entrada.formato)
     .sort((a, b) => a.ordem - b.ordem)
     .map((material) => {
-      // Páginas originais
-      const paginas = Math.max(0, Number(entrada.paginasTotal) || 0);
-
-      // Cópias adicionais
+      const paginasAdicionais = Math.max(0, Number(entrada.paginasAdicionais) || 0);
       const copiasAdicionais = Math.max(0, Number(entrada.copiasAdicionais) || 0);
+      const quantidadeArquivos = Math.max(0, Number(entrada.arquivos) || 0);
 
-      // Quantidade efetivamente cobrada
-      const quantidadeCalculada = paginas + copiasAdicionais;
+      // Na cópia manual cada arquivo equivale a 1 página cobrada por página.
+      const quantidadeParaFaixa =
+        paginasAdicionais + copiasAdicionais + (entrada.copiaManual ? quantidadeArquivos : 0);
 
-      // Verifica a faixa usando a
-      // quantidade total calculada
       const preco = precoPorQuantidade(
         material,
-        quantidadeCalculada,
+        quantidadeParaFaixa,
         entrada.copiaManual,
         entrada.usarFaixaCopiaManual,
       );
 
-      // Valor das páginas + cópias adicionais
-      const totalPaginas = quantidadeCalculada * preco;
+      const totalPaginasAdicionais = paginasAdicionais * preco;
+      const totalCopiasAdicionais = copiasAdicionais * preco;
 
-      // Continua cobrando por arquivo
-      // normalmente, exceto na cópia manual
-      const quantidadeArquivos = entrada.arquivos ?? 0;
+      // Arquivos: por página na cópia manual, por arquivo (faixas) no cálculo normal.
+      const precoArquivo = entrada.copiaManual
+        ? preco
+        : precoPorQuantidadeArquivos(material, quantidadeArquivos);
 
-      const precoArquivo = precoPorQuantidadeArquivos(material, quantidadeArquivos);
+      const totalArquivos = quantidadeArquivos * precoArquivo;
 
-      const totalArquivos = entrada.copiaManual ? 0 : quantidadeArquivos * precoArquivo;
-
-      const total = totalPaginas + totalArquivos;
+      const total = totalArquivos + totalPaginasAdicionais + totalCopiasAdicionais;
 
       return {
         material,
         valorUnitario: preco,
-
-        // quantidade original de páginas
-        paginas,
-
-        // quantidade usada no cálculo
-        totalPaginas: quantidadeCalculada,
-
+        paginas: paginasAdicionais,
+        totalPaginas: quantidadeParaFaixa,
         totalArquivos,
-
+        totalPaginasAdicionais,
+        totalCopiasAdicionais,
         total,
       };
     });
