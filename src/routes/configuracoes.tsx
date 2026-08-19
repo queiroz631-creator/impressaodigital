@@ -222,6 +222,131 @@ function Configuracoes() {
           </div>
         </CardContent>
       </Card>
+
+      <Card className="mt-6 max-w-3xl shadow-card">
+        <CardHeader>
+          <CardTitle className="text-base">Impressão</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <p className="text-sm text-muted-foreground">
+            Estas impressoras serão utilizadas como padrão para impressão de etiquetas e recibos
+            térmicos de 80mm. A impressão usa a ordem da lista: a primeira disponível é escolhida.
+          </p>
+
+          <div className="space-y-2">
+            <Label>Impressoras padrão</Label>
+            <div className="flex flex-col gap-2">
+              {form.impressoras_padrao.map((nome, i) => (
+                <div key={`${nome}-${i}`} className="flex items-center gap-2">
+                  <Input
+                    value={nome}
+                    onChange={(e) =>
+                      set(
+                        "impressoras_padrao",
+                        form.impressoras_padrao.map((n, idx) => (idx === i ? e.target.value : n)),
+                      )
+                    }
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Remover impressora"
+                    onClick={() =>
+                      set(
+                        "impressoras_padrao",
+                        form.impressoras_padrao.filter((_, idx) => idx !== i),
+                      )
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {form.impressoras_padrao.length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhuma impressora configurada.</p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <Input
+                list="impressoras-detectadas"
+                value={novaImpressora}
+                placeholder={
+                  impressorasDetectadas.length > 0
+                    ? "Selecionar impressora"
+                    : "Nome da impressora (ex.: POS-80)"
+                }
+                onChange={(e) => setNovaImpressora(e.target.value)}
+              />
+              <datalist id="impressoras-detectadas">
+                {impressorasDetectadas.map((nome) => (
+                  <option key={nome} value={nome} />
+                ))}
+              </datalist>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const nome = novaImpressora.trim();
+                  if (!nome) return;
+                  if (form.impressoras_padrao.includes(nome)) {
+                    toast.error("Essa impressora já está na lista.");
+                    return;
+                  }
+                  set("impressoras_padrao", [...form.impressoras_padrao, nome]);
+                  setNovaImpressora("");
+                }}
+              >
+                <Plus className="h-4 w-4" /> Adicionar
+              </Button>
+            </div>
+            {!impressaoDireta && (
+              <p className="text-xs text-muted-foreground">
+                Impressão direta não disponível neste computador. Você pode informar o nome da
+                impressora manualmente, mas a seleção automática depende da integração local (QZ
+                Tray).
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Formato da etiqueta</Label>
+            <Input value="80mm" readOnly disabled />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Método de impressão</Label>
+            <RadioGroup
+              value={form.impressora_padrao_tipo}
+              onValueChange={(v) => set("impressora_padrao_tipo", v)}
+              className="gap-2"
+            >
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="navegador" id="metodo-navegador" />
+                <Label htmlFor="metodo-navegador">Impressão pelo navegador</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="qz" id="metodo-qz" disabled={!impressaoDireta} />
+                <Label htmlFor="metodo-qz">Impressão direta via QZ Tray</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const resultado = await testarImpressora(form.impressoras_padrao[0] ?? null, 80);
+                if (resultado.metodo === "qz") toast.success("Teste enviado para a impressora.");
+              }}
+            >
+              <Printer className="h-4 w-4" /> Testar impressão
+            </Button>
+            <Button onClick={salvar} disabled={salvando}>
+              <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </>
   );
 }
