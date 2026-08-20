@@ -305,7 +305,7 @@ function Calculadora() {
   const mostrarTabela = !precisaSelecionar && !semQuantidade;
 
   const materialSelecionado =
-    linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
+    linhasFinais.find((l) => l.material.id === estado.materialId) ?? null;
 
   const totalPedido = (itensPedido ?? []).reduce((acc, o) => acc + Number(o.valor_total ?? 0), 0);
 
