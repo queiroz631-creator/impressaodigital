@@ -122,20 +122,20 @@ export function ImprimirEtiqueta({
     <Dialog open={aberto} onOpenChange={setAberto}>
       <DialogTrigger asChild>{children}</DialogTrigger>
 
-      <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-hidden">
+      <DialogContent className="flex max-h-[90vh] w-[95vw] max-w-md flex-col overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Imprimir etiqueta — pedido {numero}</DialogTitle>
           <DialogDescription>Informe o pagamento e imprima na térmica de 80mm.</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3 rounded-lg border border-border p-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Cliente</span>
-            <span className="font-medium">{clienteNome || "-"}</span>
+          <div className="flex items-start justify-between gap-3">
+            <span className="shrink-0 text-muted-foreground">Cliente</span>
+            <span className="break-words text-right font-medium">{clienteNome || "-"}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Valor total</span>
-            <span className="font-semibold">{brl(total)}</span>
+          <div className="flex items-start justify-between gap-3">
+            <span className="shrink-0 text-muted-foreground">Valor total</span>
+            <span className="text-right font-semibold">{brl(total)}</span>
           </div>
 
           <div className="grid gap-1.5">
@@ -152,15 +152,15 @@ export function ImprimirEtiqueta({
             {excedeu && <p className="text-xs font-semibold text-destructive">Valor pago maior que o total.</p>}
           </div>
 
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Status</span>
-            <span className="font-semibold">
+          <div className="flex items-start justify-between gap-3">
+            <span className="shrink-0 text-muted-foreground">Status</span>
+            <span className="text-right font-semibold">
               {situacaoPagamento === "PARCIAL" ? "PAGAMENTO PARCIAL" : situacaoPagamento}
             </span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Restante</span>
-            <span className="font-semibold">{brl(restante)}</span>
+          <div className="flex items-start justify-between gap-3">
+            <span className="shrink-0 text-muted-foreground">Restante</span>
+            <span className="text-right font-semibold">{brl(restante)}</span>
           </div>
 
           <div className="grid gap-1.5">
@@ -202,7 +202,7 @@ export function ImprimirEtiqueta({
         {/* ETIQUETA */}
         <div
           id="etiqueta-print"
-          className="etiqueta-80mm mx-auto max-h-[38vh] w-full max-w-[320px] overflow-y-auto rounded-lg border border-border bg-card p-2 text-foreground"
+          className="etiqueta-80mm mx-auto w-full max-w-[320px] rounded-lg border border-border bg-card p-2 text-foreground"
         >
           {linhaDupla}
           {"\n"}PEDIDO {numero}
