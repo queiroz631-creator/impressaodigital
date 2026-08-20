@@ -278,13 +278,16 @@
     font-weight: 700 !important;
   }
 
-  #etiqueta-print-area .etiqueta-tarja,
-  #etiqueta-print-area .etiqueta-tarja * {
+  #etiqueta-print-area .etiqueta-tarja {
     display: block !important;
     width: 100% !important;
     box-sizing: border-box !important;
     padding: 2mm !important;
     margin: 2mm 0 !important;
+  }
+
+  #etiqueta-print-area .etiqueta-tarja,
+  #etiqueta-print-area .etiqueta-tarja * {
     background: #000 !important;
     color: #fff !important;
     font-weight: 900 !important;
