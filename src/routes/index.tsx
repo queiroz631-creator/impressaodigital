@@ -683,12 +683,12 @@ function Calculadora() {
           <ResumoItem rotulo="Formato" valor={estado.formato} pequeno />
           <ResumoItem rotulo="Material" valor={materialSelecionado?.material.nome ?? "—"} pequeno />
 
-          <div className="col-span-2 rounded-lg border border-success/40 bg-success/10 px-3 py-2 sm:col-span-3 lg:col-span-1">
-            <p className="text-[10px] font-bold tracking-wider text-muted-foreground">
+          <div className="col-span-2 rounded-lg border border-success/50 bg-success/15 px-3 py-2 sm:col-span-3 lg:col-span-1">
+            <p className="text-[10px] font-bold tracking-wider text-sidebar-foreground/70">
               VALOR TOTAL
             </p>
             <p className="truncate text-xl font-extrabold text-success">
-              {brl(materialSelecionado?.total ?? 0)}
+              {materialSelecionado ? brl(materialSelecionado.total) : "—"}
             </p>
           </div>
         </div>
