@@ -205,6 +205,9 @@
     height: auto !important;
     overflow: visible !important;
     background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   #etiqueta-print-area {
@@ -212,16 +215,27 @@
     left: 0 !important;
     top: 0 !important;
     margin: 0 !important;
-    padding: 2mm !important;
+    padding: 3mm !important;
     width: 80mm !important;
+    max-width: 80mm !important;
+    box-sizing: border-box !important;
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
     transform: none !important;
     border: 0 !important;
     border-radius: 0 !important;
+    box-shadow: none !important;
     background: #fff !important;
     color: #000 !important;
+    font-family: "Courier New", Courier, monospace !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    line-height: 1.35 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   #etiqueta-print-area * {
@@ -229,17 +243,52 @@
     overflow: visible !important;
     border: 0 !important;
     box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+    mix-blend-mode: normal !important;
     background: transparent !important;
+    color: #000 !important;
+    opacity: 1 !important;
+    font-weight: 700 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  #etiqueta-print-area strong,
+  #etiqueta-print-area b {
+    font-weight: 900 !important;
     color: #000 !important;
   }
 
-  #etiqueta-print-area .etiqueta-80mm {
-    width: 76mm !important;
+  #etiqueta-print-area hr {
+    border: 0 !important;
+    border-top: 1px solid #000 !important;
+    margin: 2mm 0 !important;
   }
 
-  #etiqueta-print-area .etiqueta-tarja {
+  #etiqueta-print-area a {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+
+  #etiqueta-print-area .etiqueta-80mm {
+    width: 74mm !important;
+    max-width: 74mm !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+  }
+
+  #etiqueta-print-area .etiqueta-tarja,
+  #etiqueta-print-area .etiqueta-tarja * {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 2mm !important;
+    margin: 2mm 0 !important;
     background: #000 !important;
     color: #fff !important;
+    font-weight: 900 !important;
+    font-size: 13px !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
