@@ -24,7 +24,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { AppLayout, PageHeader } from "@/components/AppLayout";
+import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,7 +43,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { ConfirmarAcao } from "@/components/ConfirmarAcao";
 import {
@@ -82,12 +88,14 @@ export const Route = createFileRoute("/")({
       { title: "Calculadora de Impressão Digital" },
       {
         name: "description",
-        content: "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
+        content:
+          "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
       },
       { property: "og:title", content: "Calculadora de Impressão Digital" },
       {
         property: "og:description",
-        content: "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
+        content:
+          "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -195,7 +203,10 @@ function Calculadora() {
     const timer = setTimeout(() => {
       void supabase
         .from("rascunhos")
-        .upsert({ usuario_id: user.id, dados: estado as unknown as never }, { onConflict: "usuario_id" });
+        .upsert(
+          { usuario_id: user.id, dados: estado as unknown as never },
+          { onConflict: "usuario_id" },
+        );
     }, 800);
     return () => clearTimeout(timer);
   }, [estado, hidratado, user?.id]);
@@ -260,7 +271,11 @@ function Calculadora() {
   const linhas = useMemo(() => calcularLinhas(materiais ?? [], entrada), [materiais, entrada]);
 
   const acabamentosVisiveis = useMemo(
-    () => acabamentosDoTipo(acabamentos ?? [], (estado.tipoServico || undefined) as TipoServico | undefined),
+    () =>
+      acabamentosDoTipo(
+        acabamentos ?? [],
+        (estado.tipoServico || undefined) as TipoServico | undefined,
+      ),
     [acabamentos, estado.tipoServico],
   );
 
@@ -269,7 +284,13 @@ function Calculadora() {
       calcularAcabamentos(acabamentosVisiveis, estado.selecao, {
         paginas: estado.arquivos + estado.paginasAdicionais + estado.copiasAdicionais,
       }),
-    [acabamentosVisiveis, estado.selecao, estado.arquivos, estado.paginasAdicionais, estado.copiasAdicionais],
+    [
+      acabamentosVisiveis,
+      estado.selecao,
+      estado.arquivos,
+      estado.paginasAdicionais,
+      estado.copiasAdicionais,
+    ],
   );
   const valorAcabamento = totalAcabamentos(linhasAcabamento);
   const tamanhoFinal = estado.formato;
@@ -283,7 +304,8 @@ function Calculadora() {
   const semQuantidade = quantidadeTotal <= 0;
   const mostrarTabela = !precisaSelecionar && !semQuantidade;
 
-  const materialSelecionado = linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
+  const materialSelecionado =
+    linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
 
   const totalPedido = (itensPedido ?? []).reduce((acc, o) => acc + Number(o.valor_total ?? 0), 0);
 
@@ -350,7 +372,10 @@ function Calculadora() {
         incluso: true,
       }));
     const naoInclusos: AcabamentoDoc[] = acabamentosVisiveis
-      .filter((a) => a.mostrar_no_orcamento !== false && a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo)
+      .filter(
+        (a) =>
+          a.mostrar_no_orcamento !== false && a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo,
+      )
       .map((a) => ({ nome: a.nome, quantidade: 0, total: 0, incluso: false }));
     return [...selecionados, ...naoInclusos];
   }
@@ -414,7 +439,10 @@ function Calculadora() {
       };
 
       if (estado.editandoId) {
-        const { error } = await supabase.from("orcamentos").update(registro).eq("id", estado.editandoId);
+        const { error } = await supabase
+          .from("orcamentos")
+          .update(registro)
+          .eq("id", estado.editandoId);
         if (error) throw error;
         toast.success("Orçamento atualizado no pedido.");
       } else {
@@ -446,11 +474,13 @@ function Calculadora() {
   }
 
   function editarItem(row: Record<string, unknown>) {
-    const arquivos = (Array.isArray(row["arquivos"]) ? (row["arquivos"] as ArquivoDoc[]) : []).map((a) => ({
-      ...a,
-      copias: Math.max(1, Number(a.copias ?? 1) || 1),
-      frenteVerso: a.frenteVerso === true,
-    }));
+    const arquivos = (Array.isArray(row["arquivos"]) ? (row["arquivos"] as ArquivoDoc[]) : []).map(
+      (a) => ({
+        ...a,
+        copias: Math.max(1, Number(a.copias ?? 1) || 1),
+        frenteVerso: a.frenteVerso === true,
+      }),
+    );
     const nomes = new Set(
       (Array.isArray(row["acabamentos"]) ? (row["acabamentos"] as AcabamentoDoc[]) : [])
         .filter((a) => a.incluso !== false)
@@ -470,7 +500,8 @@ function Calculadora() {
           ? Number(row["paginas_adicionais"])
           : Math.max(
               0,
-              Number(row["paginas_total"] ?? 0) - Number(row["quantidade_arquivos"] ?? arquivos.length),
+              Number(row["paginas_total"] ?? 0) -
+                Number(row["quantidade_arquivos"] ?? arquivos.length),
             ),
       copiasAdicionais: Number(row["copias_adicionais"] ?? 0),
       tipoServico: (row["tipo_impressao"] as TipoServico) ?? "simples",
@@ -528,14 +559,18 @@ function Calculadora() {
   function documentoDoPedido() {
     const validade = estado.validade || calcularValidadePadrao();
 
-    return documentoDeOrcamentos((itensPedido ?? []) as unknown as Record<string, unknown>[], config, {
-      numero: String(pedido?.numero ?? "-"),
-      data: String(pedido?.created_at ?? new Date().toISOString()),
-      clienteNome: estado.clienteNome,
-      clienteTelefone: estado.clienteTelefone,
-      validade: validade || null,
-      observacao: estado.observacao || null,
-    });
+    return documentoDeOrcamentos(
+      (itensPedido ?? []) as unknown as Record<string, unknown>[],
+      config,
+      {
+        numero: String(pedido?.numero ?? "-"),
+        data: String(pedido?.created_at ?? new Date().toISOString()),
+        clienteNome: estado.clienteNome,
+        clienteTelefone: estado.clienteTelefone,
+        validade: validade || null,
+        observacao: estado.observacao || null,
+      },
+    );
   }
 
   function documentoParaGerar() {
@@ -584,35 +619,82 @@ function Calculadora() {
 
   return (
     <>
-      <PageHeader
-        titulo="CALCULADORA DE IMPRESSÃO DIGITAL"
-        subtitulo="Anexe os arquivos, escolha cor e tipo de impressão e monte o pedido."
-      />
+      {/* ==================== HEADER FIXO ==================== */}
+      <div className="sticky top-0 z-30 -mx-4 mb-6 border-b border-border bg-background/95 px-4 pt-3 pb-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-extrabold tracking-tight sm:text-2xl">
+              CALCULADORA DE IMPRESSÃO DIGITAL
+            </h1>
+            <p className="truncate text-xs text-muted-foreground sm:text-sm">
+              Anexe os arquivos, escolha as opções e veja o cálculo do seu pedido.
+            </p>
+          </div>
 
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        <ConfirmarAcao
-          titulo="Novo pedido"
-          descricao="Deseja iniciar um novo pedido? Os dados atuais que ainda não foram adicionados ao pedido serão descartados."
-          rotuloConfirmar="Novo Pedido"
-          onConfirmar={() => {
-            limparFormulario(false);
-            toast.success("Novo pedido iniciado.");
-          }}
-        >
-          <Button>
-            <ShoppingCart className="h-4 w-4" /> Novo Pedido
-          </Button>
-        </ConfirmarAcao>
-        <Button variant="outline" onClick={() => setDialogAberto(true)}>
-          <FileText className="h-4 w-4" /> Gerar Orçamento
-        </Button>
-        {pedido && (
-          <Badge variant="secondary" className="text-sm">
-            Pedido {pedido.numero}
-          </Badge>
-        )}
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {pedido && (
+              <Badge variant="secondary" className="hidden text-xs sm:inline-flex">
+                Pedido {pedido.numero}
+              </Badge>
+            )}
+
+            <ConfirmarAcao
+              titulo="Novo pedido"
+              descricao="Deseja iniciar um novo pedido? Os dados atuais que ainda não foram adicionados ao pedido serão descartados."
+              rotuloConfirmar="Novo Pedido"
+              onConfirmar={() => {
+                limparFormulario(false);
+                toast.success("Novo pedido iniciado.");
+              }}
+            >
+              <Button size="sm">
+                <ShoppingCart className="h-4 w-4" /> Novo Pedido
+              </Button>
+            </ConfirmarAcao>
+
+            <Button
+              size="sm"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => setDialogAberto(true)}
+            >
+              <FileText className="h-4 w-4" /> Gerar Orçamento
+            </Button>
+          </div>
+        </div>
+
+        {/* ---------- FAIXA DE RESUMO ---------- */}
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9">
+          <ResumoItem rotulo="Total de Arquivos" valor={numeroBR(estado.arquivos)} />
+          <ResumoItem rotulo="Páginas Adicionais" valor={numeroBR(paginasAdicionais)} />
+          <ResumoItem rotulo="Cópias Adicionais" valor={numeroBR(estado.copiasAdicionais)} />
+          <ResumoItem rotulo="Total para Cobrança" valor={numeroBR(quantidadeTotal)} destaque />
+          <ResumoItem rotulo="Valor do Acabamento" valor={brl(valorAcabamento)} />
+          <ResumoItem
+            rotulo="Tipo de Impressão"
+            valor={
+              estado.tipoServico === "simples"
+                ? "Impressão Simples"
+                : estado.tipoServico === "especial"
+                  ? "Impressão Especial"
+                  : "—"
+            }
+            pequeno
+          />
+          <ResumoItem rotulo="Formato" valor={estado.formato} pequeno />
+          <ResumoItem rotulo="Material" valor={materialSelecionado?.material.nome ?? "—"} pequeno />
+
+          <div className="col-span-2 rounded-lg border border-success/40 bg-success/10 px-3 py-2 sm:col-span-3 lg:col-span-1">
+            <p className="text-[10px] font-bold tracking-wider text-muted-foreground">
+              VALOR TOTAL
+            </p>
+            <p className="truncate text-xl font-extrabold text-success">
+              {brl(materialSelecionado?.total ?? 0)}
+            </p>
+          </div>
+        </div>
       </div>
 
+      {/* ==================== DADOS DO TRABALHO ==================== */}
       <Card className="mb-6 shadow-card">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
@@ -623,46 +705,242 @@ function Calculadora() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
+          <div className="grid gap-5 lg:grid-cols-2">
+            {/* ---------- COLUNA ESQUERDA: CONFIGURAÇÃO ---------- */}
             <div className="space-y-4">
-              <div>
-                <input
-                  ref={inputArquivos}
-                  type="file"
-                  multiple
-                  accept="application/pdf,image/*,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  className="hidden"
-                  onChange={(e) => anexar(e.target.files)}
-                />
-                <Button variant="outline" disabled={lendoArquivos} onClick={() => inputArquivos.current?.click()}>
-                  <Paperclip className="h-4 w-4" />
-                  {lendoArquivos ? "Lendo arquivos..." : "Anexar PDFs / Imagens / Word"}
-                </Button>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  As páginas dos PDFs são contadas automaticamente; cada arquivo já inclui 1 página e o excedente vira
-                  páginas adicionais. Em arquivos Word, quando a contagem não for confiável, informe as páginas
-                  manualmente.
-                </p>
+              <Campo
+                icon={<Files className="h-4 w-4 text-cyan-ink" />}
+                label="Quantidade de arquivos"
+              >
+                <div className="flex h-10 overflow-hidden rounded-lg border border-border bg-background">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-full w-11 shrink-0 rounded-none border-r"
+                    onClick={() => set("arquivos", Math.max(0, estado.arquivos - 1))}
+                  >
+                    −
+                  </Button>
+
+                  <Input
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    value={estado.arquivos}
+                    onChange={(e) => set("arquivos", Math.max(0, num(e.target.value)))}
+                    className="h-full rounded-none border-0 text-center text-lg font-bold focus-visible:ring-0"
+                  />
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-full w-11 shrink-0 rounded-none border-l"
+                    onClick={() => set("arquivos", estado.arquivos + 1)}
+                  >
+                    +
+                  </Button>
+                </div>
+              </Campo>
+
+              <Campo icon={<FileStack className="h-4 w-4 text-navy" />} label="Páginas adicionais">
+                <div className="flex h-10 overflow-hidden rounded-lg border border-border bg-background">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-full w-11 shrink-0 rounded-none border-r"
+                    onClick={() =>
+                      set("paginasAdicionais", Math.max(0, estado.paginasAdicionais - 1))
+                    }
+                  >
+                    −
+                  </Button>
+
+                  <Input
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    value={estado.paginasAdicionais}
+                    onChange={(e) => set("paginasAdicionais", Math.max(0, num(e.target.value)))}
+                    className="h-full rounded-none border-0 text-center text-lg font-bold focus-visible:ring-0"
+                  />
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-full w-11 shrink-0 rounded-none border-l"
+                    onClick={() => set("paginasAdicionais", estado.paginasAdicionais + 1)}
+                  >
+                    +
+                  </Button>
+                </div>
+              </Campo>
+
+              <Campo icon={<Copy className="h-4 w-4 text-magenta-ink" />} label="Cópias adicionais">
+                <div className="flex h-10 overflow-hidden rounded-lg border border-border bg-background">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-full w-11 shrink-0 rounded-none border-r"
+                    onClick={() =>
+                      setEstado((e) => ({
+                        ...e,
+                        copiasAdicionais: Math.max(0, e.copiasAdicionais - 1),
+                      }))
+                    }
+                  >
+                    −
+                  </Button>
+
+                  <Input
+                    inputMode="numeric"
+                    value={estado.copiasAdicionais}
+                    onChange={(e) => set("copiasAdicionais", Math.max(0, num(e.target.value)))}
+                    className="h-full rounded-none border-0 text-center text-lg font-bold shadow-none focus-visible:ring-0"
+                  />
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-full w-11 shrink-0 rounded-none border-l"
+                    onClick={() =>
+                      setEstado((e) => ({
+                        ...e,
+                        copiasAdicionais: e.copiasAdicionais + 1,
+                      }))
+                    }
+                  >
+                    +
+                  </Button>
+                </div>
+              </Campo>
+
+              <div className="space-y-2 rounded-lg border border-border p-3">
+                <Label className="text-xs font-semibold text-muted-foreground">
+                  Tipo de impressão *
+                </Label>
+                <RadioGroup
+                  value={estado.tipoServico}
+                  onValueChange={(v) => set("tipoServico", v as TipoServico)}
+                  className="gap-2"
+                >
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <RadioGroupItem value="simples" /> Impressão Simples
+                  </label>
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <RadioGroupItem value="especial" /> Impressão Especial
+                  </label>
+                </RadioGroup>
               </div>
 
-              {estado.arquivosLista.length > 0 && (
-                <div className="rounded-xl border border-border p-3">
-                  <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">ARQUIVOS DO PEDIDO</p>
+              <div className="space-y-2 rounded-lg border border-border p-3">
+                <Label className="text-xs font-semibold text-muted-foreground">Formato *</Label>
+                <RadioGroup
+                  value={estado.formato}
+                  onValueChange={(v) => set("formato", v as FormatoPapel)}
+                  className="gap-2"
+                >
+                  {FORMATOS.map((f) => (
+                    <label key={f.valor} className="flex items-center gap-2 text-sm font-medium">
+                      <RadioGroupItem value={f.valor} /> {f.rotulo}
+                    </label>
+                  ))}
+                </RadioGroup>
+              </div>
 
-                  <div className="max-h-[400px] space-y-3 overflow-y-auto pr-1">
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  className={
+                    estado.copiaManual
+                      ? "border-transparent bg-magenta-ink text-white hover:bg-magenta-ink/90"
+                      : "border-magenta-ink text-magenta-ink hover:bg-magenta-ink/10 hover:text-magenta-ink"
+                  }
+                  onClick={() => set("copiaManual", !estado.copiaManual)}
+                >
+                  <Copy className="h-4 w-4" />
+                  Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Na cópia manual tudo é cobrado por página (cada arquivo conta 1 página) com o
+                  preço unitário cadastrado, sem faixas por quantidade e sem valor por arquivo.
+                </p>
+                {estado.copiaManual && (
+                  <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
+                    <div>
+                      <p className="text-sm font-semibold">Usar faixa de quantidade</p>
+                      <p className="text-xs text-muted-foreground">
+                        Aplica as faixas cadastradas ao preço por página.
+                      </p>
+                    </div>
+
+                    <Switch
+                      checked={estado.usarFaixaCopiaManual}
+                      onCheckedChange={(v) => set("usarFaixaCopiaManual", v)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {precisaSelecionar && (
+                <p className="rounded-lg border border-border bg-accent/60 p-3 text-sm font-semibold text-primary">
+                  Selecione o tipo de impressão para ver os valores automaticamente.
+                </p>
+              )}
+            </div>
+
+            {/* ---------- COLUNA DIREITA: ARQUIVOS ---------- */}
+            <div className="space-y-3">
+              <input
+                ref={inputArquivos}
+                type="file"
+                multiple
+                accept="application/pdf,image/*,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+                onChange={(e) => anexar(e.target.files)}
+              />
+              <Button
+                variant="outline"
+                className="w-full"
+                disabled={lendoArquivos}
+                onClick={() => inputArquivos.current?.click()}
+              >
+                <Paperclip className="h-4 w-4" />
+                {lendoArquivos ? "Lendo arquivos..." : "Anexar PDFs / Imagens / Word"}
+              </Button>
+
+              <p className="text-xs text-muted-foreground">
+                As páginas dos PDFs são contadas automaticamente; cada arquivo já inclui 1 página e
+                o excedente vira páginas adicionais. Em arquivos Word, quando a contagem não for
+                confiável, informe as páginas manualmente.
+              </p>
+
+              <div className="rounded-xl border border-border p-3">
+                <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">
+                  ARQUIVOS ANEXADOS
+                </p>
+
+                {estado.arquivosLista.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    Nenhum arquivo anexado.
+                  </p>
+                ) : (
+                  <div className="max-h-[430px] space-y-2 overflow-y-auto pr-1">
                     {estado.arquivosLista.map((a, i) => {
                       const copias = Math.max(1, a.copias ?? 1);
                       return (
-                        <div key={`${a.nome}-${i}`} className="rounded-xl border border-border bg-accent/30 p-3">
-                          <p className="font-semibold break-all">{a.nome}</p>
+                        <div
+                          key={`${a.nome}-${i}`}
+                          className="rounded-lg border border-border bg-accent/30 p-2.5"
+                        >
+                          <p className="text-sm font-semibold break-all">{a.nome}</p>
 
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                             <span>{a.tipo}</span>
                             <span>·</span>
                             <span>{numeroBR(a.paginas)} página(s)</span>
                           </div>
 
-                          <div className="mt-3 flex flex-wrap items-center gap-4">
+                          <div className="mt-2 flex flex-wrap items-center gap-3">
                             {/* PÁGINAS (editável) */}
                             <div className="flex items-center gap-2">
                               <Label className="text-xs font-semibold">Páginas:</Label>
@@ -670,7 +948,7 @@ function Calculadora() {
                                 type="number"
                                 min="1"
                                 inputMode="numeric"
-                                className="h-8 w-20"
+                                className="h-8 w-16"
                                 value={a.paginas}
                                 onChange={(e) =>
                                   atualizarArquivo(i, {
@@ -689,7 +967,9 @@ function Calculadora() {
                                   type="button"
                                   variant="ghost"
                                   className="h-full rounded-none px-2"
-                                  onClick={() => atualizarArquivo(i, { copias: Math.max(1, copias - 1) })}
+                                  onClick={() =>
+                                    atualizarArquivo(i, { copias: Math.max(1, copias - 1) })
+                                  }
                                 >
                                   −
                                 </Button>
@@ -698,8 +978,12 @@ function Calculadora() {
                                   min="1"
                                   inputMode="numeric"
                                   value={copias}
-                                  onChange={(e) => atualizarArquivo(i, { copias: Math.max(1, num(e.target.value) || 1) })}
-                                  className="h-full w-14 rounded-none border-0 text-center font-bold focus-visible:ring-0"
+                                  onChange={(e) =>
+                                    atualizarArquivo(i, {
+                                      copias: Math.max(1, num(e.target.value) || 1),
+                                    })
+                                  }
+                                  className="h-full w-12 rounded-none border-0 text-center font-bold focus-visible:ring-0"
                                 />
                                 <Button
                                   type="button"
@@ -713,10 +997,12 @@ function Calculadora() {
                             </div>
 
                             {/* FRENTE E VERSO */}
-                            <label className="flex items-center gap-2 text-sm font-medium">
+                            <label className="flex items-center gap-2 text-xs font-medium">
                               <Checkbox
                                 checked={a.frenteVerso ?? false}
-                                onCheckedChange={(v) => atualizarArquivo(i, { frenteVerso: v === true })}
+                                onCheckedChange={(v) =>
+                                  atualizarArquivo(i, { frenteVerso: v === true })
+                                }
                               />
                               Frente e verso
                             </label>
@@ -727,7 +1013,11 @@ function Calculadora() {
                               rotuloConfirmar="Remover"
                               onConfirmar={() => removerArquivo(i)}
                             >
-                              <Button variant="ghost" size="sm" className="ml-auto text-destructive">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="ml-auto text-destructive"
+                              >
                                 <Trash2 className="h-4 w-4" /> Remover
                               </Button>
                             </ConfirmarExclusao>
@@ -742,227 +1032,16 @@ function Calculadora() {
                       );
                     })}
                   </div>
-                </div>
-              )}
-
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <Campo
-                  icon={<Files className="h-4 w-4 text-cyan-ink" />}
-                  label="Quantidade de arquivos"
-                  sufixo="arquivos"
-                >
-                  <div className="flex h-11 overflow-hidden rounded-lg border border-border bg-background">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="h-full w-12 shrink-0 rounded-none border-r"
-                      onClick={() => set("arquivos", Math.max(0, estado.arquivos - 1))}
-                    >
-                      −
-                    </Button>
-
-                    <Input
-                      type="number"
-                      min="0"
-                      inputMode="numeric"
-                      value={estado.arquivos}
-                      onChange={(e) => set("arquivos", Math.max(0, num(e.target.value)))}
-                      className="h-full rounded-none border-0 text-center text-xl font-bold focus-visible:ring-0"
-                    />
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="h-full w-12 shrink-0 rounded-none border-l"
-                      onClick={() => set("arquivos", estado.arquivos + 1)}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </Campo>
-
-                <Campo
-                  icon={<FileStack className="h-4 w-4 text-navy" />}
-                  label="Páginas adicionais"
-                  sufixo="páginas adicionais"
-                >
-                  <div className="flex h-11 overflow-hidden rounded-lg border border-border bg-background">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="h-full w-12 shrink-0 rounded-none border-r"
-                      onClick={() => set("paginasAdicionais", Math.max(0, estado.paginasAdicionais - 1))}
-                    >
-                      −
-                    </Button>
-
-                    <Input
-                      type="number"
-                      min="0"
-                      inputMode="numeric"
-                      value={estado.paginasAdicionais}
-                      onChange={(e) => set("paginasAdicionais", Math.max(0, num(e.target.value)))}
-                      className="h-full rounded-none border-0 text-center text-xl font-bold focus-visible:ring-0"
-                    />
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="h-full w-12 shrink-0 rounded-none border-l"
-                      onClick={() => set("paginasAdicionais", estado.paginasAdicionais + 1)}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </Campo>
-
-                <Campo
-                  icon={<Copy className="h-4 w-4 text-magenta-ink" />}
-                  label="Cópias adicionais"
-                  sufixo="cópias adicionais"
-                >
-                  <div className="flex h-11 items-center overflow-hidden rounded-md border border-input">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="h-full rounded-none px-3"
-                      onClick={() =>
-                        setEstado((e) => ({
-                          ...e,
-                          copiasAdicionais: Math.max(0, e.copiasAdicionais - 1),
-                        }))
-                      }
-                    >
-                      −
-                    </Button>
-
-                    <Input
-                      inputMode="numeric"
-                      value={estado.copiasAdicionais}
-                      onChange={(e) => set("copiasAdicionais", Math.max(0, num(e.target.value)))}
-                      className="h-full border-0 text-center text-xl font-bold shadow-none focus-visible:ring-0"
-                    />
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="h-full rounded-none px-3"
-                      onClick={() =>
-                        setEstado((e) => ({
-                          ...e,
-                          copiasAdicionais: e.copiasAdicionais + 1,
-                        }))
-                      }
-                    >
-                      +
-                    </Button>
-                  </div>
-                </Campo>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-muted-foreground">Tipo de impressão *</Label>
-                  <RadioGroup
-                    value={estado.tipoServico}
-                    onValueChange={(v) => set("tipoServico", v as TipoServico)}
-                    className="gap-2"
-                  >
-                    <label className="flex items-center gap-2 text-sm font-medium">
-                      <RadioGroupItem value="simples" /> Impressão Simples
-                    </label>
-                    <label className="flex items-center gap-2 text-sm font-medium">
-                      <RadioGroupItem value="especial" /> Impressão Especial
-                    </label>
-                  </RadioGroup>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-muted-foreground">Formato *</Label>
-                  <RadioGroup
-                    value={estado.formato}
-                    onValueChange={(v) => set("formato", v as FormatoPapel)}
-                    className="gap-2"
-                  >
-                    {FORMATOS.map((f) => (
-                      <label key={f.valor} className="flex items-center gap-2 text-sm font-medium">
-                        <RadioGroupItem value={f.valor} /> {f.rotulo}
-                      </label>
-                    ))}
-                  </RadioGroup>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  variant="outline"
-                  className={
-                    estado.copiaManual
-                      ? "border-transparent bg-magenta-ink text-white hover:bg-magenta-ink/90"
-                      : "border-magenta-ink text-magenta-ink hover:bg-magenta-ink/10 hover:text-magenta-ink"
-                  }
-                  onClick={() => set("copiaManual", !estado.copiaManual)}
-                >
-                  <Copy className="h-4 w-4" />
-                  Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
-                </Button>
-                <p className="text-xs text-muted-foreground">
-                  Na cópia manual tudo é cobrado por página (cada arquivo conta 1 página) com o preço unitário
-                  cadastrado, sem faixas por quantidade e sem valor por arquivo.
-                </p>
-                {estado.copiaManual && (
-                  <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
-                    <div>
-                      <p className="text-sm font-semibold">Usar faixa de quantidade</p>
-                      <p className="text-xs text-muted-foreground">Aplica as faixas cadastradas ao preço por página.</p>
-                    </div>
-
-                    <Switch
-                      checked={estado.usarFaixaCopiaManual}
-                      onCheckedChange={(v) => set("usarFaixaCopiaManual", v)}
-                    />
-                  </div>
                 )}
               </div>
-
-              {precisaSelecionar && (
-                <p className="rounded-lg border border-border bg-accent/60 p-3 text-sm font-semibold text-primary">
-                  Selecione o tipo de impressão para ver os valores automaticamente.
-                </p>
-              )}
-            </div>
-
-            <div className="rounded-xl border border-border bg-accent/60 p-5">
-              <p className="text-center text-sm font-bold tracking-widest text-primary">RESUMO</p>
-              <dl className="mt-4 space-y-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <dt className="text-muted-foreground">Total de arquivos</dt>
-                  <dd className="text-2xl font-extrabold text-primary">{numeroBR(estado.arquivos)}</dd>
-                </div>
-                <div className="flex items-center justify-between border-t border-border pt-3">
-                  <dt className="text-muted-foreground">Páginas adicionais</dt>
-                  <dd className="text-2xl font-extrabold text-primary">{numeroBR(paginasAdicionais)}</dd>
-                </div>
-                <div className="flex items-center justify-between border-t border-border pt-3">
-                  <dt className="text-muted-foreground">Cópias adicionais</dt>
-                  <dd className="text-xl font-extrabold text-primary">{numeroBR(estado.copiasAdicionais)}</dd>
-                </div>
-                <div className="flex items-center justify-between border-t border-border pt-3">
-                  <dt className="text-muted-foreground">Total para cobrança</dt>
-                  <dd className="text-2xl font-extrabold text-success">
-                    {numeroBR(quantidadeTotal)}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between border-t border-border pt-3">
-                  <dt className="text-muted-foreground">Acabamento</dt>
-                  <dd className="text-lg font-extrabold text-primary">{brl(valorAcabamento)}</dd>
-                </div>
-              </dl>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="mb-6 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-        {/* ==================== ACABAMENTO ==================== */}
+      {/* ==================== 3 COLUNAS ==================== */}
+      <div className="mb-6 grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {/* ==================== COLUNA 1 — ACABAMENTO ==================== */}
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
@@ -973,13 +1052,13 @@ function Calculadora() {
             </CardTitle>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {acabamentosVisiveis.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Nenhum acabamento disponível para o tipo de impressão selecionado.
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {acabamentosVisiveis.map((a) => {
                   const sel = estado.selecao[a.id] ?? {
                     ativo: false,
@@ -991,13 +1070,12 @@ function Calculadora() {
                   return (
                     <div
                       key={a.id}
-                      className={`rounded-xl border p-3 transition-colors ${
-                        sel.ativo ? "border-primary/50 bg-accent/30" : "border-border bg-card"
+                      className={`rounded-lg border px-2.5 py-2 transition-colors ${
+                        sel.ativo ? "border-primary bg-accent/50" : "border-border bg-card"
                       }`}
                     >
-                      {/* Cabeçalho do acabamento */}
-                      <div className="flex items-center justify-between gap-3">
-                        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
                           <Checkbox
                             checked={sel.ativo}
                             onCheckedChange={(v) =>
@@ -1012,23 +1090,22 @@ function Calculadora() {
                           />
 
                           <div className="min-w-0">
-                            <p className="truncate font-semibold">{a.nome}</p>
+                            <p className="truncate text-sm font-semibold">{a.nome}</p>
 
-                            <p className="text-xs text-muted-foreground">
+                            <p className="truncate text-[11px] text-muted-foreground">
                               {rotuloCobranca[a.cobranca]} · {brl(Number(a.valor) || 0)}
                               {a.cobranca === "bloco" ? ` a cada ${a.paginas_bloco} páginas` : ""}
                             </p>
                           </div>
                         </label>
 
-                        {/* Spinner para acabamentos por quantidade */}
                         {sel.ativo && a.cobranca === "quantidade" && (
-                          <div className="flex shrink-0 items-center overflow-hidden rounded-lg border border-border bg-background">
+                          <div className="flex shrink-0 items-center overflow-hidden rounded-md border border-border bg-background">
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 rounded-none border-r"
+                              className="h-7 w-7 rounded-none border-r"
                               onClick={() =>
                                 set("selecao", {
                                   ...estado.selecao,
@@ -1042,7 +1119,7 @@ function Calculadora() {
                               −
                             </Button>
 
-                            <div className="flex h-8 min-w-10 items-center justify-center px-2 text-sm font-bold">
+                            <div className="flex h-7 min-w-8 items-center justify-center px-1 text-sm font-bold">
                               {sel.quantidade}
                             </div>
 
@@ -1050,7 +1127,7 @@ function Calculadora() {
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 rounded-none border-l"
+                              className="h-7 w-7 rounded-none border-l"
                               onClick={() =>
                                 set("selecao", {
                                   ...estado.selecao,
@@ -1065,24 +1142,13 @@ function Calculadora() {
                             </Button>
                           </div>
                         )}
-                      </div>
 
-                      {/* Valor do acabamento */}
-                      {sel.ativo && (
-                        <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
-                          <span className="text-xs text-muted-foreground">
-                            {a.cobranca === "quantidade"
-                              ? `${sel.quantidade} unidade(s)`
-                              : a.cobranca === "pagina"
-                                ? `${estado.paginasAdicionais} página(s) adicionais`
-                                : a.cobranca === "bloco"
-                                  ? `${linha?.quantidade ?? 0} bloco(s)`
-                                  : "Valor fixo"}
+                        {sel.ativo && (
+                          <span className="shrink-0 text-sm font-bold text-success">
+                            {brl(linha?.total ?? 0)}
                           </span>
-
-                          <span className="text-sm font-bold text-success">{brl(linha?.total ?? 0)}</span>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -1090,10 +1156,10 @@ function Calculadora() {
             )}
 
             {/* Frente e verso */}
-            <div className="flex items-center justify-between rounded-xl border border-border bg-accent/30 p-3">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-accent/30 px-2.5 py-2">
               <div>
-                <p className="font-semibold">Frente e verso</p>
-                <p className="text-xs text-muted-foreground">Informado no orçamento</p>
+                <p className="text-sm font-semibold">Frente e verso</p>
+                <p className="text-[11px] text-muted-foreground">Informado no orçamento</p>
               </div>
 
               <Switch checked={estado.frenteVerso} onCheckedChange={(v) => set("frenteVerso", v)} />
@@ -1101,9 +1167,9 @@ function Calculadora() {
           </CardContent>
         </Card>
 
-        {/* ==================== VALORES DE IMPRESSÃO ==================== */}
+        {/* ==================== COLUNA 2 — VALORES DE IMPRESSÃO ==================== */}
         <Card className="shadow-card">
-          <CardHeader className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between">
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
               <span className="rounded-lg bg-accent p-2 text-primary">
                 <Printer className="h-4 w-4" />
@@ -1111,8 +1177,9 @@ function Calculadora() {
               VALORES DE IMPRESSÃO
             </CardTitle>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 pt-2">
               <Button
+                size="sm"
                 variant="outline"
                 onClick={() => {
                   queryClient.invalidateQueries({
@@ -1126,15 +1193,19 @@ function Calculadora() {
                 Atualizar
               </Button>
 
-              <Button disabled={!mostrarTabela || salvandoItem} onClick={adicionarAoPedido}>
+              <Button
+                size="sm"
+                disabled={!mostrarTabela || salvandoItem}
+                onClick={adicionarAoPedido}
+              >
                 <Plus className="h-4 w-4" />
 
-                {estado.editandoId ? "Salvar alterações do orçamento" : "Adicionar ao Pedido"}
+                {estado.editandoId ? "Salvar alterações" : "Adicionar ao Pedido"}
               </Button>
             </div>
           </CardHeader>
 
-          <CardContent>
+          <CardContent className="space-y-3">
             {isLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -1154,93 +1225,134 @@ function Calculadora() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[600px] border-separate border-spacing-y-1 text-sm">
-                  <thead>
-                    <tr className="bg-navy text-left text-xs font-bold tracking-wider text-navy-foreground">
-                      <th className="rounded-l-lg px-3 py-3">SELECIONAR</th>
+              <div className="max-h-[430px] space-y-1.5 overflow-y-auto pr-1">
+                {linhasFinais.map((l) => {
+                  const ativa = materialSelecionado?.material.id === l.material.id;
 
-                      <th className="px-3 py-3">MATERIAL</th>
+                  return (
+                    <button
+                      type="button"
+                      key={l.material.id}
+                      onClick={() => set("materialId", l.material.id)}
+                      className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${
+                        ativa
+                          ? "border-primary bg-accent/50"
+                          : "border-border bg-card hover:bg-accent/30"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        className="h-4 w-4 shrink-0 accent-[var(--color-primary)]"
+                        checked={ativa}
+                        onChange={() => set("materialId", l.material.id)}
+                        aria-label={`Selecionar ${l.material.nome}`}
+                      />
 
-                      <th className="px-3 py-3">DESCRIÇÃO</th>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">{l.material.nome}</p>
+                        <p className="truncate text-[11px] text-muted-foreground">
+                          {l.material.descricao} · Preço uni. {brl(l.valorUnitario)}
+                        </p>
+                      </div>
 
-                      <th className="px-3 py-3 text-right">PREÇO UNI</th>
-
-                      <th className="rounded-r-lg px-3 py-3 text-right">TOTAL</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {linhasFinais.map((l) => {
-                      const ativa = materialSelecionado?.material.id === l.material.id;
-
-                      return (
-                        <tr
-                          key={l.material.id}
-                          onClick={() => set("materialId", l.material.id)}
-                          className={`cursor-pointer bg-card shadow-xs transition-all ${
-                            ativa ? "ring-2 ring-primary" : "hover:bg-accent/30"
-                          }`}
-                        >
-                          <td className="rounded-l-lg border-y border-l border-border px-3 py-3">
-                            <input
-                              type="radio"
-                              className="h-4 w-4 accent-[var(--color-primary)]"
-                              checked={ativa}
-                              onChange={() => set("materialId", l.material.id)}
-                              aria-label={`Selecionar ${l.material.nome}`}
-                            />
-                          </td>
-
-                          <td className="border-y border-border px-3 py-3 font-semibold">{l.material.nome}</td>
-
-                          <td className="border-y border-border px-3 py-3 text-muted-foreground">
-                            {l.material.descricao}
-                          </td>
-
-                          <td className="border-y border-border px-3 py-3 text-right font-semibold">
-                            {brl(l.valorUnitario)}
-                          </td>
-
-                          <td className="rounded-r-lg border-y border-r border-border px-3 py-3 text-right font-extrabold text-success">
-                            {brl(l.total)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-
-                {materialSelecionado && (
-                  <dl className="mt-4 space-y-1 rounded-xl border border-border bg-accent/40 p-4 text-sm">
-                    <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">
-                      RESUMO DO CÁLCULO · {materialSelecionado.material.nome}
-                    </p>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Arquivos ({numeroBR(estado.arquivos)})</dt>
-                      <dd className="font-semibold">{brl(materialSelecionado.totalArquivos)}</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Páginas adicionais ({numeroBR(paginasAdicionais)})</dt>
-                      <dd className="font-semibold">{brl(materialSelecionado.totalPaginasAdicionais)}</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">
-                        Cópias adicionais ({numeroBR(estado.copiasAdicionais)})
-                      </dt>
-                      <dd className="font-semibold">{brl(materialSelecionado.totalCopiasAdicionais)}</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Acabamentos</dt>
-                      <dd className="font-semibold">{brl(valorAcabamento)}</dd>
-                    </div>
-                    <div className="flex justify-between border-t border-border pt-2">
-                      <dt className="font-bold">Total</dt>
-                      <dd className="font-extrabold text-success">{brl(materialSelecionado.total)}</dd>
-                    </div>
-                  </dl>
-                )}
+                      <span className="shrink-0 text-sm font-extrabold text-success">
+                        {brl(l.total)}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+            )}
+
+            <p className="flex items-start gap-2 text-[11px] text-muted-foreground">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+              Valores baseados na configuração de preços.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* ==================== COLUNA 3 — RESUMO DO CÁLCULO ==================== */}
+        <Card className="shadow-card md:col-span-2 xl:col-span-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
+              <span className="rounded-lg bg-accent p-2 text-primary">
+                <Calculator className="h-4 w-4" />
+              </span>
+              RESUMO DO CÁLCULO
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            {!materialSelecionado ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Informe os dados do trabalho para ver o resumo.
+              </p>
+            ) : (
+              <dl className="space-y-1.5 text-sm">
+                <div className="flex justify-between gap-2">
+                  <dt className="truncate text-muted-foreground">Material</dt>
+                  <dd className="truncate font-semibold">{materialSelecionado.material.nome}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-muted-foreground">Arquivos ({numeroBR(estado.arquivos)})</dt>
+                  <dd className="font-semibold">{brl(materialSelecionado.totalArquivos)}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-muted-foreground">
+                    Páginas adicionais ({numeroBR(paginasAdicionais)})
+                  </dt>
+                  <dd className="font-semibold">
+                    {brl(materialSelecionado.totalPaginasAdicionais)}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-muted-foreground">
+                    Cópias adicionais ({numeroBR(estado.copiasAdicionais)})
+                  </dt>
+                  <dd className="font-semibold">
+                    {brl(materialSelecionado.totalCopiasAdicionais)}
+                  </dd>
+                </div>
+
+                <div className="flex justify-between gap-2 border-t border-border pt-2">
+                  <dt className="font-semibold">Subtotal impressão</dt>
+                  <dd className="font-bold">
+                    {brl(
+                      materialSelecionado.totalArquivos +
+                        materialSelecionado.totalPaginasAdicionais +
+                        materialSelecionado.totalCopiasAdicionais,
+                    )}
+                  </dd>
+                </div>
+
+                {linhasAcabamento.length > 0 && (
+                  <div className="space-y-1 border-t border-border pt-2">
+                    <p className="text-[11px] font-bold tracking-wider text-muted-foreground">
+                      ACABAMENTOS
+                    </p>
+                    {linhasAcabamento.map((l) => (
+                      <div key={l.acabamento.id} className="flex justify-between gap-2">
+                        <dt className="truncate text-muted-foreground">
+                          {l.acabamento.nome} ({numeroBR(l.quantidade)})
+                        </dt>
+                        <dd className="font-semibold">{brl(l.total)}</dd>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex justify-between gap-2 border-t border-border pt-2">
+                  <dt className="font-semibold">Subtotal acabamentos</dt>
+                  <dd className="font-bold">{brl(valorAcabamento)}</dd>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-success/40 bg-success/10 px-3 py-3">
+                  <dt className="text-sm font-bold">TOTAL</dt>
+                  <dd className="text-2xl font-extrabold text-success">
+                    {brl(materialSelecionado.total)}
+                  </dd>
+                </div>
+              </dl>
             )}
           </CardContent>
         </Card>
@@ -1279,8 +1391,12 @@ function Calculadora() {
                     <td className="px-3 py-3">{o.material_nome}</td>
                     <td className="px-3 py-3 capitalize">{o.tipo_impressao}</td>
                     <td className="px-3 py-3">{o.tamanho}</td>
-                    <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_adicionais ?? 0))}</td>
-                    <td className="px-3 py-3 text-right font-bold text-success">{brl(Number(o.valor_total))}</td>
+                    <td className="px-3 py-3 text-right">
+                      {numeroBR(Number(o.paginas_adicionais ?? 0))}
+                    </td>
+                    <td className="px-3 py-3 text-right font-bold text-success">
+                      {brl(Number(o.valor_total))}
+                    </td>
                     <td className="px-3 py-3 text-right">
                       <Button
                         variant="ghost"
@@ -1303,7 +1419,9 @@ function Calculadora() {
                   <td colSpan={5} className="px-3 py-3 text-right font-bold">
                     TOTAL DO PEDIDO
                   </td>
-                  <td className="px-3 py-3 text-right text-lg font-extrabold text-success">{brl(totalPedido)}</td>
+                  <td className="px-3 py-3 text-right text-lg font-extrabold text-success">
+                    {brl(totalPedido)}
+                  </td>
                   <td />
                 </tr>
               </tfoot>
@@ -1350,7 +1468,9 @@ function Calculadora() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Gerar orçamento</DialogTitle>
-            <DialogDescription>Informe os dados do cliente para gerar o documento do pedido.</DialogDescription>
+            <DialogDescription>
+              Informe os dados do cliente para gerar o documento do pedido.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -1366,22 +1486,37 @@ function Calculadora() {
                   className="flex-1"
                 />
 
-                <Button type="button" variant="outline" onClick={() => set("clienteNome", "CLIENTE PADRÃO")}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => set("clienteNome", "CLIENTE PADRÃO")}
+                >
                   Cliente Padrão
                 </Button>
               </div>
             </div>
             <div className="space-y-2">
               <Label>Telefone</Label>
-              <Input value={estado.clienteTelefone} onChange={(e) => set("clienteTelefone", e.target.value)} />
+              <Input
+                value={estado.clienteTelefone}
+                onChange={(e) => set("clienteTelefone", e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Validade</Label>
-              <Input type="date" value={estado.validade} onChange={(e) => set("validade", e.target.value)} />
+              <Input
+                type="date"
+                value={estado.validade}
+                onChange={(e) => set("validade", e.target.value)}
+              />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label>Observação</Label>
-              <Textarea rows={2} value={estado.observacao} onChange={(e) => set("observacao", e.target.value)} />
+              <Textarea
+                rows={2}
+                value={estado.observacao}
+                onChange={(e) => set("observacao", e.target.value)}
+              />
             </div>
             <div className="flex items-center justify-between rounded-xl border border-border p-3 sm:col-span-2">
               <div>
@@ -1525,5 +1660,32 @@ function CardResumo({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function ResumoItem({
+  rotulo,
+  valor,
+  destaque,
+  pequeno,
+}: {
+  rotulo: string;
+  valor: string;
+  destaque?: boolean;
+  pequeno?: boolean;
+}) {
+  return (
+    <div className="min-w-0 rounded-lg border border-border bg-card px-3 py-2">
+      <p className="truncate text-[10px] font-bold tracking-wider text-muted-foreground">
+        {rotulo.toUpperCase()}
+      </p>
+      <p
+        className={`truncate font-extrabold ${pequeno ? "text-sm" : "text-lg"} ${
+          destaque ? "text-success" : "text-primary"
+        }`}
+      >
+        {valor}
+      </p>
+    </div>
   );
 }
