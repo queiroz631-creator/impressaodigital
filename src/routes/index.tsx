@@ -1675,13 +1675,13 @@ function ResumoItem({
   pequeno?: boolean;
 }) {
   return (
-    <div className="min-w-0 rounded-lg border border-border bg-card px-3 py-2">
-      <p className="truncate text-[10px] font-bold tracking-wider text-muted-foreground">
+    <div className="min-w-0 rounded-lg border border-sidebar-border bg-sidebar-accent/60 px-3 py-2">
+      <p className="truncate text-[10px] font-bold tracking-wider text-sidebar-foreground/60">
         {rotulo.toUpperCase()}
       </p>
       <p
         className={`truncate font-extrabold ${pequeno ? "text-sm" : "text-lg"} ${
-          destaque ? "text-success" : "text-primary"
+          destaque ? "text-success" : "text-sidebar-foreground"
         }`}
       >
         {valor}
