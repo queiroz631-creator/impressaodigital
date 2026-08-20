@@ -90,7 +90,7 @@ function imprimirPeloNavegador(texto?: string) {
   if (origem) {
     const copia = origem.cloneNode(true) as HTMLElement;
     copia.removeAttribute("id");
-    copia.classList.add("etiqueta-80mm");
+    copia.classList.add("etiqueta-80mm", "etiqueta-impressao");
     area.appendChild(copia);
   } else {
     const bloco = document.createElement("div");
