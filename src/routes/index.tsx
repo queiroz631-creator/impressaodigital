@@ -305,7 +305,7 @@ function Calculadora() {
   const mostrarTabela = !precisaSelecionar && !semQuantidade;
 
   const materialSelecionado =
-    linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
+    linhasFinais.find((l) => l.material.id === estado.materialId) ?? null;
 
   const totalPedido = (itensPedido ?? []).reduce((acc, o) => acc + Number(o.valor_total ?? 0), 0);
 
@@ -620,13 +620,13 @@ function Calculadora() {
   return (
     <>
       {/* ==================== HEADER FIXO ==================== */}
-      <div className="sticky top-0 z-30 -mx-4 mb-6 border-b border-border bg-background/95 px-4 pt-3 pb-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+      <div className="sticky top-0 z-30 -mx-4 mb-6 border-b border-sidebar-border bg-sidebar px-4 pt-3 pb-3 text-sidebar-foreground sm:-mx-6 sm:px-6">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-extrabold tracking-tight sm:text-2xl">
+            <h1 className="truncate text-lg font-extrabold tracking-tight text-sidebar-foreground sm:text-2xl">
               CALCULADORA DE IMPRESSÃO DIGITAL
             </h1>
-            <p className="truncate text-xs text-muted-foreground sm:text-sm">
+            <p className="truncate text-xs text-sidebar-foreground/70 sm:text-sm">
               Anexe os arquivos, escolha as opções e veja o cálculo do seu pedido.
             </p>
           </div>
@@ -683,12 +683,12 @@ function Calculadora() {
           <ResumoItem rotulo="Formato" valor={estado.formato} pequeno />
           <ResumoItem rotulo="Material" valor={materialSelecionado?.material.nome ?? "—"} pequeno />
 
-          <div className="col-span-2 rounded-lg border border-success/40 bg-success/10 px-3 py-2 sm:col-span-3 lg:col-span-1">
-            <p className="text-[10px] font-bold tracking-wider text-muted-foreground">
+          <div className="col-span-2 rounded-lg border border-success/50 bg-success/15 px-3 py-2 sm:col-span-3 lg:col-span-1">
+            <p className="text-[10px] font-bold tracking-wider text-sidebar-foreground/70">
               VALOR TOTAL
             </p>
             <p className="truncate text-xl font-extrabold text-success">
-              {brl(materialSelecionado?.total ?? 0)}
+              {materialSelecionado ? brl(materialSelecionado.total) : "—"}
             </p>
           </div>
         </div>
@@ -705,18 +705,18 @@ function Calculadora() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             {/* ---------- COLUNA ESQUERDA: CONFIGURAÇÃO ---------- */}
             <div className="space-y-4">
               <Campo
                 icon={<Files className="h-4 w-4 text-cyan-ink" />}
                 label="Quantidade de arquivos"
               >
-                <div className="flex h-10 overflow-hidden rounded-lg border border-border bg-background">
+                <div className="flex h-8 overflow-hidden rounded-md border border-border bg-background">
                   <Button
                     type="button"
                     variant="ghost"
-                    className="h-full w-11 shrink-0 rounded-none border-r"
+                    className="h-full w-9 shrink-0 rounded-none border-r text-base"
                     onClick={() => set("arquivos", Math.max(0, estado.arquivos - 1))}
                   >
                     −
@@ -728,13 +728,13 @@ function Calculadora() {
                     inputMode="numeric"
                     value={estado.arquivos}
                     onChange={(e) => set("arquivos", Math.max(0, num(e.target.value)))}
-                    className="h-full rounded-none border-0 text-center text-lg font-bold focus-visible:ring-0"
+                    className="h-full rounded-none border-0 text-center text-sm font-bold focus-visible:ring-0"
                   />
 
                   <Button
                     type="button"
                     variant="ghost"
-                    className="h-full w-11 shrink-0 rounded-none border-l"
+                    className="h-full w-9 shrink-0 rounded-none border-l text-base"
                     onClick={() => set("arquivos", estado.arquivos + 1)}
                   >
                     +
@@ -743,11 +743,11 @@ function Calculadora() {
               </Campo>
 
               <Campo icon={<FileStack className="h-4 w-4 text-navy" />} label="Páginas adicionais">
-                <div className="flex h-10 overflow-hidden rounded-lg border border-border bg-background">
+                <div className="flex h-8 overflow-hidden rounded-md border border-border bg-background">
                   <Button
                     type="button"
                     variant="ghost"
-                    className="h-full w-11 shrink-0 rounded-none border-r"
+                    className="h-full w-9 shrink-0 rounded-none border-r text-base"
                     onClick={() =>
                       set("paginasAdicionais", Math.max(0, estado.paginasAdicionais - 1))
                     }
@@ -761,13 +761,13 @@ function Calculadora() {
                     inputMode="numeric"
                     value={estado.paginasAdicionais}
                     onChange={(e) => set("paginasAdicionais", Math.max(0, num(e.target.value)))}
-                    className="h-full rounded-none border-0 text-center text-lg font-bold focus-visible:ring-0"
+                    className="h-full rounded-none border-0 text-center text-sm font-bold focus-visible:ring-0"
                   />
 
                   <Button
                     type="button"
                     variant="ghost"
-                    className="h-full w-11 shrink-0 rounded-none border-l"
+                    className="h-full w-9 shrink-0 rounded-none border-l text-base"
                     onClick={() => set("paginasAdicionais", estado.paginasAdicionais + 1)}
                   >
                     +
@@ -776,11 +776,11 @@ function Calculadora() {
               </Campo>
 
               <Campo icon={<Copy className="h-4 w-4 text-magenta-ink" />} label="Cópias adicionais">
-                <div className="flex h-10 overflow-hidden rounded-lg border border-border bg-background">
+                <div className="flex h-8 overflow-hidden rounded-md border border-border bg-background">
                   <Button
                     type="button"
                     variant="ghost"
-                    className="h-full w-11 shrink-0 rounded-none border-r"
+                    className="h-full w-9 shrink-0 rounded-none border-r text-base"
                     onClick={() =>
                       setEstado((e) => ({
                         ...e,
@@ -795,13 +795,13 @@ function Calculadora() {
                     inputMode="numeric"
                     value={estado.copiasAdicionais}
                     onChange={(e) => set("copiasAdicionais", Math.max(0, num(e.target.value)))}
-                    className="h-full rounded-none border-0 text-center text-lg font-bold shadow-none focus-visible:ring-0"
+                    className="h-full rounded-none border-0 text-center text-sm font-bold shadow-none focus-visible:ring-0"
                   />
 
                   <Button
                     type="button"
                     variant="ghost"
-                    className="h-full w-11 shrink-0 rounded-none border-l"
+                    className="h-full w-9 shrink-0 rounded-none border-l text-base"
                     onClick={() =>
                       setEstado((e) => ({
                         ...e,
@@ -1675,13 +1675,13 @@ function ResumoItem({
   pequeno?: boolean;
 }) {
   return (
-    <div className="min-w-0 rounded-lg border border-border bg-card px-3 py-2">
-      <p className="truncate text-[10px] font-bold tracking-wider text-muted-foreground">
+    <div className="min-w-0 rounded-lg border border-sidebar-border bg-sidebar-accent/60 px-3 py-2">
+      <p className="truncate text-[10px] font-bold tracking-wider text-sidebar-foreground/60">
         {rotulo.toUpperCase()}
       </p>
       <p
         className={`truncate font-extrabold ${pequeno ? "text-sm" : "text-lg"} ${
-          destaque ? "text-success" : "text-primary"
+          destaque ? "text-success" : "text-sidebar-foreground"
         }`}
       >
         {valor}
