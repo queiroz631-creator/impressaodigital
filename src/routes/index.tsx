@@ -620,7 +620,7 @@ function Calculadora() {
   return (
     <>
       {/* ==================== HEADER FIXO ==================== */}
-      <div className="sticky top-0 z-30 -mx-4 mb-6 border-b border-border bg-background/95 px-4 pt-3 pb-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+      <div className="sticky top-0 z-30 -mx-4 mb-6 border-b border-sidebar-border bg-sidebar px-4 pt-3 pb-3 text-sidebar-foreground sm:-mx-6 sm:px-6">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <div className="min-w-0">
             <h1 className="truncate text-lg font-extrabold tracking-tight sm:text-2xl">
