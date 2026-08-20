@@ -74,19 +74,44 @@ async function imprimirViaQz(texto: string, impressora: string): Promise<boolean
   }
 }
 
-/** Imprime pelo navegador usando o elemento #etiqueta-print já renderizado. */
+/**
+ * Imprime pelo navegador clonando a etiqueta para uma área de impressão
+ * anexada ao <body>, fora do diálogo (que recorta e rola o conteúdo).
+ */
 function imprimirPeloNavegador(texto?: string) {
   if (typeof window === "undefined") return;
-  let temporario: HTMLElement | null = null;
-  if (texto !== undefined && !document.getElementById("etiqueta-print")) {
-    temporario = document.createElement("div");
-    temporario.id = "etiqueta-print";
-    temporario.className = "etiqueta-80mm";
-    temporario.textContent = texto;
-    document.body.appendChild(temporario);
+
+  document.getElementById("etiqueta-print-area")?.remove();
+
+  const area = document.createElement("div");
+  area.id = "etiqueta-print-area";
+
+  const origem = document.getElementById("etiqueta-print");
+  if (origem) {
+    const copia = origem.cloneNode(true) as HTMLElement;
+    copia.removeAttribute("id");
+    copia.classList.add("etiqueta-80mm");
+    area.appendChild(copia);
+  } else {
+    const bloco = document.createElement("div");
+    bloco.className = "etiqueta-80mm";
+    bloco.textContent = texto ?? "";
+    area.appendChild(bloco);
   }
-  window.print();
-  if (temporario) temporario.remove();
+
+  document.body.appendChild(area);
+
+  const limpar = () => {
+    area.remove();
+    window.removeEventListener("afterprint", limpar);
+  };
+  window.addEventListener("afterprint", limpar);
+
+  try {
+    window.print();
+  } finally {
+    setTimeout(limpar, 1000);
+  }
 }
 
 /**
