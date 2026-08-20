@@ -24,7 +24,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { AppLayout, PageHeader } from "@/components/AppLayout";
+import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1548,5 +1548,30 @@ function CardResumo({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function ResumoItem({
+  rotulo,
+  valor,
+  destaque,
+  pequeno,
+}: {
+  rotulo: string;
+  valor: string;
+  destaque?: boolean;
+  pequeno?: boolean;
+}) {
+  return (
+    <div className="min-w-0 rounded-lg border border-border bg-card px-3 py-2">
+      <p className="truncate text-[10px] font-bold tracking-wider text-muted-foreground">{rotulo.toUpperCase()}</p>
+      <p
+        className={`truncate font-extrabold ${pequeno ? "text-sm" : "text-lg"} ${
+          destaque ? "text-success" : "text-primary"
+        }`}
+      >
+        {valor}
+      </p>
+    </div>
   );
 }
