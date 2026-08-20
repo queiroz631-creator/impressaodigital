@@ -202,7 +202,7 @@ export function ImprimirEtiqueta({
         {/* ETIQUETA */}
         <div
           id="etiqueta-print"
-          className="etiqueta-80mm mx-auto w-full max-w-[320px] overflow-hidden rounded-lg border border-border bg-card p-2 text-foreground"
+          className="etiqueta-80mm mx-auto max-h-[38vh] w-full max-w-[320px] overflow-y-auto rounded-lg border border-border bg-card p-2 text-foreground"
         >
           {linhaDupla}
           {"\n"}PEDIDO {numero}
