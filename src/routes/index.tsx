@@ -43,7 +43,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { ConfirmarAcao } from "@/components/ConfirmarAcao";
 import {
@@ -82,12 +88,14 @@ export const Route = createFileRoute("/")({
       { title: "Calculadora de Impressão Digital" },
       {
         name: "description",
-        content: "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
+        content:
+          "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
       },
       { property: "og:title", content: "Calculadora de Impressão Digital" },
       {
         property: "og:description",
-        content: "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
+        content:
+          "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -195,7 +203,10 @@ function Calculadora() {
     const timer = setTimeout(() => {
       void supabase
         .from("rascunhos")
-        .upsert({ usuario_id: user.id, dados: estado as unknown as never }, { onConflict: "usuario_id" });
+        .upsert(
+          { usuario_id: user.id, dados: estado as unknown as never },
+          { onConflict: "usuario_id" },
+        );
     }, 800);
     return () => clearTimeout(timer);
   }, [estado, hidratado, user?.id]);
@@ -260,7 +271,11 @@ function Calculadora() {
   const linhas = useMemo(() => calcularLinhas(materiais ?? [], entrada), [materiais, entrada]);
 
   const acabamentosVisiveis = useMemo(
-    () => acabamentosDoTipo(acabamentos ?? [], (estado.tipoServico || undefined) as TipoServico | undefined),
+    () =>
+      acabamentosDoTipo(
+        acabamentos ?? [],
+        (estado.tipoServico || undefined) as TipoServico | undefined,
+      ),
     [acabamentos, estado.tipoServico],
   );
 
@@ -269,7 +284,13 @@ function Calculadora() {
       calcularAcabamentos(acabamentosVisiveis, estado.selecao, {
         paginas: estado.arquivos + estado.paginasAdicionais + estado.copiasAdicionais,
       }),
-    [acabamentosVisiveis, estado.selecao, estado.arquivos, estado.paginasAdicionais, estado.copiasAdicionais],
+    [
+      acabamentosVisiveis,
+      estado.selecao,
+      estado.arquivos,
+      estado.paginasAdicionais,
+      estado.copiasAdicionais,
+    ],
   );
   const valorAcabamento = totalAcabamentos(linhasAcabamento);
   const tamanhoFinal = estado.formato;
@@ -283,7 +304,8 @@ function Calculadora() {
   const semQuantidade = quantidadeTotal <= 0;
   const mostrarTabela = !precisaSelecionar && !semQuantidade;
 
-  const materialSelecionado = linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
+  const materialSelecionado =
+    linhasFinais.find((l) => l.material.id === estado.materialId) ?? linhasFinais[0];
 
   const totalPedido = (itensPedido ?? []).reduce((acc, o) => acc + Number(o.valor_total ?? 0), 0);
 
@@ -350,7 +372,10 @@ function Calculadora() {
         incluso: true,
       }));
     const naoInclusos: AcabamentoDoc[] = acabamentosVisiveis
-      .filter((a) => a.mostrar_no_orcamento !== false && a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo)
+      .filter(
+        (a) =>
+          a.mostrar_no_orcamento !== false && a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo,
+      )
       .map((a) => ({ nome: a.nome, quantidade: 0, total: 0, incluso: false }));
     return [...selecionados, ...naoInclusos];
   }
@@ -414,7 +439,10 @@ function Calculadora() {
       };
 
       if (estado.editandoId) {
-        const { error } = await supabase.from("orcamentos").update(registro).eq("id", estado.editandoId);
+        const { error } = await supabase
+          .from("orcamentos")
+          .update(registro)
+          .eq("id", estado.editandoId);
         if (error) throw error;
         toast.success("Orçamento atualizado no pedido.");
       } else {
@@ -446,11 +474,13 @@ function Calculadora() {
   }
 
   function editarItem(row: Record<string, unknown>) {
-    const arquivos = (Array.isArray(row["arquivos"]) ? (row["arquivos"] as ArquivoDoc[]) : []).map((a) => ({
-      ...a,
-      copias: Math.max(1, Number(a.copias ?? 1) || 1),
-      frenteVerso: a.frenteVerso === true,
-    }));
+    const arquivos = (Array.isArray(row["arquivos"]) ? (row["arquivos"] as ArquivoDoc[]) : []).map(
+      (a) => ({
+        ...a,
+        copias: Math.max(1, Number(a.copias ?? 1) || 1),
+        frenteVerso: a.frenteVerso === true,
+      }),
+    );
     const nomes = new Set(
       (Array.isArray(row["acabamentos"]) ? (row["acabamentos"] as AcabamentoDoc[]) : [])
         .filter((a) => a.incluso !== false)
@@ -470,7 +500,8 @@ function Calculadora() {
           ? Number(row["paginas_adicionais"])
           : Math.max(
               0,
-              Number(row["paginas_total"] ?? 0) - Number(row["quantidade_arquivos"] ?? arquivos.length),
+              Number(row["paginas_total"] ?? 0) -
+                Number(row["quantidade_arquivos"] ?? arquivos.length),
             ),
       copiasAdicionais: Number(row["copias_adicionais"] ?? 0),
       tipoServico: (row["tipo_impressao"] as TipoServico) ?? "simples",
@@ -528,14 +559,18 @@ function Calculadora() {
   function documentoDoPedido() {
     const validade = estado.validade || calcularValidadePadrao();
 
-    return documentoDeOrcamentos((itensPedido ?? []) as unknown as Record<string, unknown>[], config, {
-      numero: String(pedido?.numero ?? "-"),
-      data: String(pedido?.created_at ?? new Date().toISOString()),
-      clienteNome: estado.clienteNome,
-      clienteTelefone: estado.clienteTelefone,
-      validade: validade || null,
-      observacao: estado.observacao || null,
-    });
+    return documentoDeOrcamentos(
+      (itensPedido ?? []) as unknown as Record<string, unknown>[],
+      config,
+      {
+        numero: String(pedido?.numero ?? "-"),
+        data: String(pedido?.created_at ?? new Date().toISOString()),
+        clienteNome: estado.clienteNome,
+        clienteTelefone: estado.clienteTelefone,
+        validade: validade || null,
+        observacao: estado.observacao || null,
+      },
+    );
   }
 
   function documentoParaGerar() {
@@ -649,8 +684,12 @@ function Calculadora() {
           <ResumoItem rotulo="Material" valor={materialSelecionado?.material.nome ?? "—"} pequeno />
 
           <div className="col-span-2 rounded-lg border border-success/40 bg-success/10 px-3 py-2 sm:col-span-3 lg:col-span-1">
-            <p className="text-[10px] font-bold tracking-wider text-muted-foreground">VALOR TOTAL</p>
-            <p className="truncate text-xl font-extrabold text-success">{brl(materialSelecionado?.total ?? 0)}</p>
+            <p className="text-[10px] font-bold tracking-wider text-muted-foreground">
+              VALOR TOTAL
+            </p>
+            <p className="truncate text-xl font-extrabold text-success">
+              {brl(materialSelecionado?.total ?? 0)}
+            </p>
           </div>
         </div>
       </div>
@@ -669,7 +708,10 @@ function Calculadora() {
           <div className="grid gap-5 lg:grid-cols-2">
             {/* ---------- COLUNA ESQUERDA: CONFIGURAÇÃO ---------- */}
             <div className="space-y-4">
-              <Campo icon={<Files className="h-4 w-4 text-cyan-ink" />} label="Quantidade de arquivos">
+              <Campo
+                icon={<Files className="h-4 w-4 text-cyan-ink" />}
+                label="Quantidade de arquivos"
+              >
                 <div className="flex h-10 overflow-hidden rounded-lg border border-border bg-background">
                   <Button
                     type="button"
@@ -706,7 +748,9 @@ function Calculadora() {
                     type="button"
                     variant="ghost"
                     className="h-full w-11 shrink-0 rounded-none border-r"
-                    onClick={() => set("paginasAdicionais", Math.max(0, estado.paginasAdicionais - 1))}
+                    onClick={() =>
+                      set("paginasAdicionais", Math.max(0, estado.paginasAdicionais - 1))
+                    }
                   >
                     −
                   </Button>
@@ -771,7 +815,9 @@ function Calculadora() {
               </Campo>
 
               <div className="space-y-2 rounded-lg border border-border p-3">
-                <Label className="text-xs font-semibold text-muted-foreground">Tipo de impressão *</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">
+                  Tipo de impressão *
+                </Label>
                 <RadioGroup
                   value={estado.tipoServico}
                   onValueChange={(v) => set("tipoServico", v as TipoServico)}
@@ -815,14 +861,16 @@ function Calculadora() {
                   Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Na cópia manual tudo é cobrado por página (cada arquivo conta 1 página) com o preço unitário
-                  cadastrado, sem faixas por quantidade e sem valor por arquivo.
+                  Na cópia manual tudo é cobrado por página (cada arquivo conta 1 página) com o
+                  preço unitário cadastrado, sem faixas por quantidade e sem valor por arquivo.
                 </p>
                 {estado.copiaManual && (
                   <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
                     <div>
                       <p className="text-sm font-semibold">Usar faixa de quantidade</p>
-                      <p className="text-xs text-muted-foreground">Aplica as faixas cadastradas ao preço por página.</p>
+                      <p className="text-xs text-muted-foreground">
+                        Aplica as faixas cadastradas ao preço por página.
+                      </p>
                     </div>
 
                     <Switch
@@ -861,22 +909,29 @@ function Calculadora() {
               </Button>
 
               <p className="text-xs text-muted-foreground">
-                As páginas dos PDFs são contadas automaticamente; cada arquivo já inclui 1 página e o excedente vira
-                páginas adicionais. Em arquivos Word, quando a contagem não for confiável, informe as páginas
-                manualmente.
+                As páginas dos PDFs são contadas automaticamente; cada arquivo já inclui 1 página e
+                o excedente vira páginas adicionais. Em arquivos Word, quando a contagem não for
+                confiável, informe as páginas manualmente.
               </p>
 
               <div className="rounded-xl border border-border p-3">
-                <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">ARQUIVOS ANEXADOS</p>
+                <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">
+                  ARQUIVOS ANEXADOS
+                </p>
 
                 {estado.arquivosLista.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">Nenhum arquivo anexado.</p>
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    Nenhum arquivo anexado.
+                  </p>
                 ) : (
                   <div className="max-h-[430px] space-y-2 overflow-y-auto pr-1">
                     {estado.arquivosLista.map((a, i) => {
                       const copias = Math.max(1, a.copias ?? 1);
                       return (
-                        <div key={`${a.nome}-${i}`} className="rounded-lg border border-border bg-accent/30 p-2.5">
+                        <div
+                          key={`${a.nome}-${i}`}
+                          className="rounded-lg border border-border bg-accent/30 p-2.5"
+                        >
                           <p className="text-sm font-semibold break-all">{a.nome}</p>
 
                           <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -912,7 +967,9 @@ function Calculadora() {
                                   type="button"
                                   variant="ghost"
                                   className="h-full rounded-none px-2"
-                                  onClick={() => atualizarArquivo(i, { copias: Math.max(1, copias - 1) })}
+                                  onClick={() =>
+                                    atualizarArquivo(i, { copias: Math.max(1, copias - 1) })
+                                  }
                                 >
                                   −
                                 </Button>
@@ -921,7 +978,11 @@ function Calculadora() {
                                   min="1"
                                   inputMode="numeric"
                                   value={copias}
-                                  onChange={(e) => atualizarArquivo(i, { copias: Math.max(1, num(e.target.value) || 1) })}
+                                  onChange={(e) =>
+                                    atualizarArquivo(i, {
+                                      copias: Math.max(1, num(e.target.value) || 1),
+                                    })
+                                  }
                                   className="h-full w-12 rounded-none border-0 text-center font-bold focus-visible:ring-0"
                                 />
                                 <Button
@@ -939,7 +1000,9 @@ function Calculadora() {
                             <label className="flex items-center gap-2 text-xs font-medium">
                               <Checkbox
                                 checked={a.frenteVerso ?? false}
-                                onCheckedChange={(v) => atualizarArquivo(i, { frenteVerso: v === true })}
+                                onCheckedChange={(v) =>
+                                  atualizarArquivo(i, { frenteVerso: v === true })
+                                }
                               />
                               Frente e verso
                             </label>
@@ -950,7 +1013,11 @@ function Calculadora() {
                               rotuloConfirmar="Remover"
                               onConfirmar={() => removerArquivo(i)}
                             >
-                              <Button variant="ghost" size="sm" className="ml-auto text-destructive">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="ml-auto text-destructive"
+                              >
                                 <Trash2 className="h-4 w-4" /> Remover
                               </Button>
                             </ConfirmarExclusao>
@@ -1077,7 +1144,9 @@ function Calculadora() {
                         )}
 
                         {sel.ativo && (
-                          <span className="shrink-0 text-sm font-bold text-success">{brl(linha?.total ?? 0)}</span>
+                          <span className="shrink-0 text-sm font-bold text-success">
+                            {brl(linha?.total ?? 0)}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -1124,7 +1193,11 @@ function Calculadora() {
                 Atualizar
               </Button>
 
-              <Button size="sm" disabled={!mostrarTabela || salvandoItem} onClick={adicionarAoPedido}>
+              <Button
+                size="sm"
+                disabled={!mostrarTabela || salvandoItem}
+                onClick={adicionarAoPedido}
+              >
                 <Plus className="h-4 w-4" />
 
                 {estado.editandoId ? "Salvar alterações" : "Adicionar ao Pedido"}
@@ -1162,7 +1235,9 @@ function Calculadora() {
                       key={l.material.id}
                       onClick={() => set("materialId", l.material.id)}
                       className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${
-                        ativa ? "border-primary bg-accent/50" : "border-border bg-card hover:bg-accent/30"
+                        ativa
+                          ? "border-primary bg-accent/50"
+                          : "border-border bg-card hover:bg-accent/30"
                       }`}
                     >
                       <input
@@ -1180,7 +1255,9 @@ function Calculadora() {
                         </p>
                       </div>
 
-                      <span className="shrink-0 text-sm font-extrabold text-success">{brl(l.total)}</span>
+                      <span className="shrink-0 text-sm font-extrabold text-success">
+                        {brl(l.total)}
+                      </span>
                     </button>
                   );
                 })}
@@ -1221,12 +1298,20 @@ function Calculadora() {
                   <dd className="font-semibold">{brl(materialSelecionado.totalArquivos)}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-muted-foreground">Páginas adicionais ({numeroBR(paginasAdicionais)})</dt>
-                  <dd className="font-semibold">{brl(materialSelecionado.totalPaginasAdicionais)}</dd>
+                  <dt className="text-muted-foreground">
+                    Páginas adicionais ({numeroBR(paginasAdicionais)})
+                  </dt>
+                  <dd className="font-semibold">
+                    {brl(materialSelecionado.totalPaginasAdicionais)}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-muted-foreground">Cópias adicionais ({numeroBR(estado.copiasAdicionais)})</dt>
-                  <dd className="font-semibold">{brl(materialSelecionado.totalCopiasAdicionais)}</dd>
+                  <dt className="text-muted-foreground">
+                    Cópias adicionais ({numeroBR(estado.copiasAdicionais)})
+                  </dt>
+                  <dd className="font-semibold">
+                    {brl(materialSelecionado.totalCopiasAdicionais)}
+                  </dd>
                 </div>
 
                 <div className="flex justify-between gap-2 border-t border-border pt-2">
@@ -1242,7 +1327,9 @@ function Calculadora() {
 
                 {linhasAcabamento.length > 0 && (
                   <div className="space-y-1 border-t border-border pt-2">
-                    <p className="text-[11px] font-bold tracking-wider text-muted-foreground">ACABAMENTOS</p>
+                    <p className="text-[11px] font-bold tracking-wider text-muted-foreground">
+                      ACABAMENTOS
+                    </p>
                     {linhasAcabamento.map((l) => (
                       <div key={l.acabamento.id} className="flex justify-between gap-2">
                         <dt className="truncate text-muted-foreground">
@@ -1261,7 +1348,9 @@ function Calculadora() {
 
                 <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-success/40 bg-success/10 px-3 py-3">
                   <dt className="text-sm font-bold">TOTAL</dt>
-                  <dd className="text-2xl font-extrabold text-success">{brl(materialSelecionado.total)}</dd>
+                  <dd className="text-2xl font-extrabold text-success">
+                    {brl(materialSelecionado.total)}
+                  </dd>
                 </div>
               </dl>
             )}
@@ -1302,8 +1391,12 @@ function Calculadora() {
                     <td className="px-3 py-3">{o.material_nome}</td>
                     <td className="px-3 py-3 capitalize">{o.tipo_impressao}</td>
                     <td className="px-3 py-3">{o.tamanho}</td>
-                    <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_adicionais ?? 0))}</td>
-                    <td className="px-3 py-3 text-right font-bold text-success">{brl(Number(o.valor_total))}</td>
+                    <td className="px-3 py-3 text-right">
+                      {numeroBR(Number(o.paginas_adicionais ?? 0))}
+                    </td>
+                    <td className="px-3 py-3 text-right font-bold text-success">
+                      {brl(Number(o.valor_total))}
+                    </td>
                     <td className="px-3 py-3 text-right">
                       <Button
                         variant="ghost"
@@ -1326,7 +1419,9 @@ function Calculadora() {
                   <td colSpan={5} className="px-3 py-3 text-right font-bold">
                     TOTAL DO PEDIDO
                   </td>
-                  <td className="px-3 py-3 text-right text-lg font-extrabold text-success">{brl(totalPedido)}</td>
+                  <td className="px-3 py-3 text-right text-lg font-extrabold text-success">
+                    {brl(totalPedido)}
+                  </td>
                   <td />
                 </tr>
               </tfoot>
@@ -1373,7 +1468,9 @@ function Calculadora() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Gerar orçamento</DialogTitle>
-            <DialogDescription>Informe os dados do cliente para gerar o documento do pedido.</DialogDescription>
+            <DialogDescription>
+              Informe os dados do cliente para gerar o documento do pedido.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -1389,22 +1486,37 @@ function Calculadora() {
                   className="flex-1"
                 />
 
-                <Button type="button" variant="outline" onClick={() => set("clienteNome", "CLIENTE PADRÃO")}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => set("clienteNome", "CLIENTE PADRÃO")}
+                >
                   Cliente Padrão
                 </Button>
               </div>
             </div>
             <div className="space-y-2">
               <Label>Telefone</Label>
-              <Input value={estado.clienteTelefone} onChange={(e) => set("clienteTelefone", e.target.value)} />
+              <Input
+                value={estado.clienteTelefone}
+                onChange={(e) => set("clienteTelefone", e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Validade</Label>
-              <Input type="date" value={estado.validade} onChange={(e) => set("validade", e.target.value)} />
+              <Input
+                type="date"
+                value={estado.validade}
+                onChange={(e) => set("validade", e.target.value)}
+              />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label>Observação</Label>
-              <Textarea rows={2} value={estado.observacao} onChange={(e) => set("observacao", e.target.value)} />
+              <Textarea
+                rows={2}
+                value={estado.observacao}
+                onChange={(e) => set("observacao", e.target.value)}
+              />
             </div>
             <div className="flex items-center justify-between rounded-xl border border-border p-3 sm:col-span-2">
               <div>
@@ -1564,7 +1676,9 @@ function ResumoItem({
 }) {
   return (
     <div className="min-w-0 rounded-lg border border-border bg-card px-3 py-2">
-      <p className="truncate text-[10px] font-bold tracking-wider text-muted-foreground">{rotulo.toUpperCase()}</p>
+      <p className="truncate text-[10px] font-bold tracking-wider text-muted-foreground">
+        {rotulo.toUpperCase()}
+      </p>
       <p
         className={`truncate font-extrabold ${pequeno ? "text-sm" : "text-lg"} ${
           destaque ? "text-success" : "text-primary"
