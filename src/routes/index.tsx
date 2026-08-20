@@ -623,10 +623,10 @@ function Calculadora() {
       <div className="sticky top-0 z-30 -mx-4 mb-6 border-b border-sidebar-border bg-sidebar px-4 pt-3 pb-3 text-sidebar-foreground sm:-mx-6 sm:px-6">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-extrabold tracking-tight sm:text-2xl">
+            <h1 className="truncate text-lg font-extrabold tracking-tight text-sidebar-foreground sm:text-2xl">
               CALCULADORA DE IMPRESSÃO DIGITAL
             </h1>
-            <p className="truncate text-xs text-muted-foreground sm:text-sm">
+            <p className="truncate text-xs text-sidebar-foreground/70 sm:text-sm">
               Anexe os arquivos, escolha as opções e veja o cálculo do seu pedido.
             </p>
           </div>
