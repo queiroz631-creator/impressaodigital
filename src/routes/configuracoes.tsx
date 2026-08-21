@@ -186,7 +186,19 @@ function Configuracoes() {
   return (
     <>
       <PageHeader titulo="CONFIGURAÇÕES" subtitulo="Dados usados no cabeçalho e rodapé dos orçamentos." />
-      <Card className="max-w-3xl shadow-card">
+
+      <Tabs defaultValue="empresa" className="max-w-3xl">
+        <TabsList className="mb-4 flex h-auto flex-wrap justify-start gap-1">
+          <TabsTrigger value="empresa">Empresa</TabsTrigger>
+          <TabsTrigger value="pix">PIX e prazo</TabsTrigger>
+          <TabsTrigger value="impressao">Impressão</TabsTrigger>
+          <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+          <TabsTrigger value="bot">Bot</TabsTrigger>
+          <TabsTrigger value="link">Link do orçamento</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="empresa">
+        <Card className="max-w-3xl shadow-card">
         <CardHeader>
           <CardTitle className="text-base">Dados da empresa</CardTitle>
         </CardHeader>
