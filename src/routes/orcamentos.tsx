@@ -264,6 +264,28 @@ function Orcamentos() {
     invalidar(pedido.pedidoId);
   }
 
+  /** Gera (ou reaproveita) o link público do orçamento e copia para a área de transferência. */
+  async function copiarLink(pedido: PedidoAgrupado) {
+    const primeiro = pedido.itens[0];
+    const orcamentoId = primeiro ? String(primeiro["id"] ?? "") : "";
+    if (!orcamentoId) {
+      toast.error("Este pedido não possui itens para gerar o link.");
+      return;
+    }
+    try {
+      const r = await criarLink({ data: { orcamentoId } });
+      if (!r.ok || !r.url) {
+        toast.error(r.motivo ?? "Não foi possível gerar o link.");
+        return;
+      }
+      const url = r.url.startsWith("http") ? r.url : `${window.location.origin}${r.url}`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copiado para a área de transferência.");
+    } catch {
+      toast.error("Não foi possível gerar o link do orçamento.");
+    }
+  }
+
   /** Abre o pedido na calculadora para continuar/editar os itens. */
   async function editarPedido(pedido: PedidoAgrupado) {
     if (!pedido.temPedido) {
