@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import {
-  enderecoCompleto,
+  enderecoLinhas,
   formacaoFinal,
   formatarTelefone,
   informacoesAdicionais,
