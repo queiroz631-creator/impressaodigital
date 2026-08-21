@@ -3,7 +3,7 @@ import { urlBase } from "@/lib/link-dados.server";
 import type { CurriculoCompleto, PayloadEtapa } from "@/lib/curriculo";
 
 const CAMPOS =
-  "id, cliente_id, status, nome_completo, cpf, telefone_principal, data_nascimento, estado_civil, email, documentacao_completa, habilitacao, categoria_habilitacao, escolaridade, curso_superior, objetivo_tipo, objetivo_texto, exibir_data_atualizacao, created_at, updated_at, completed_at";
+  "id, cliente_id, status, nome_completo, cpf, telefone_principal, data_nascimento, estado_civil, email, documentacao_completa, habilitacao, categoria_habilitacao, escolaridade, curso_superior, pos_graduacao_nome, endereco, bairro, cidade, uf, cep, objetivo_tipo, objetivo_texto, exibir_data_atualizacao, created_at, updated_at, completed_at";
 
 export interface DadosPublicos {
   curriculo: Omit<CurriculoCompleto["curriculo"], "cpf"> & { cpf: string };
