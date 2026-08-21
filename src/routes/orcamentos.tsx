@@ -431,6 +431,8 @@ function Orcamentos() {
                     <th className="px-4 py-3 text-center">ITENS</th>
                     <th className="px-4 py-3 text-right">VALOR TOTAL</th>
                     <th className="px-4 py-3 text-center">STATUS</th>
+                    <th className="px-4 py-3 text-center">PAGAMENTO</th>
+
                     <th className="px-4 py-3 text-right">AÇÕES</th>
                   </tr>
                 </thead>
