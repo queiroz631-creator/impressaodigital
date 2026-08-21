@@ -47,6 +47,7 @@ Outros ajustes visuais:
 - Escolaridade: permitir vários cursos superiores (adicionar/remover) e, quando pós-graduação, informar o nome da pós.
 - Cursos: novo campo "Ano" (opcional).
 - Card de experiência ganha destaque visual quando a empresa está preenchida.
+- Destacar com uma cor os botões de adicionar das seções (Adicionar telefone, Adicionar curso, Adicionar experiência, Adicionar habilidade) — trocar o `variant="outline"` atual por uma cor de destaque para que fiquem visíveis e convidem à ação.
 - Na etapa de **Revisão**, cada seção terá um botão "Editar" que abre apenas aquela etapa e retorna direto para a revisão ao salvar.
 
 ## 5. Calculadora
