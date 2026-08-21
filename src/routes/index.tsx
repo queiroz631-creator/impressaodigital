@@ -131,8 +131,12 @@ interface EstadoRascunho {
   formato: FormatoPapel;
   usarFaixaCopiaManual: boolean;
   copiasAdicionais: number;
+  /** Decisão do usuário sobre incluir PIX (vazio = não respondido). */
+  decisaoPix: "" | "sim" | "nao";
   /** Incluir dados de pagamento PIX no orçamento. */
   incluirPix: boolean;
+  /** Decisão do usuário sobre prazo de entrega (vazio = não respondido). */
+  decisaoPrazo: "" | "sim" | "nao";
   /** Informar prazo de entrega no orçamento. */
   precisaPrazo: boolean;
   prazoTipo: PrazoTipo | "";
