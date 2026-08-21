@@ -59,6 +59,7 @@ interface ConfigBot {
   bot_ativo: boolean;
   permitir_orcamento_automatico: boolean;
   exigir_revisao_humana: boolean;
+  permitir_link: boolean;
   msg_inicial: string;
   msg_boas_vindas: string;
   msg_transferencia: string;
