@@ -78,6 +78,8 @@ import { contarPaginas } from "@/lib/contagem";
 import type { AcabamentoDoc, ArquivoDoc } from "@/lib/documento";
 import { brl, numeroBR } from "@/lib/format";
 import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
+import { montarTextoPix, montarTextoPrazo, type PrazoTipo } from "@/lib/orcamento-extras";
+
 import { gerarOrcamentoPdf } from "@/lib/pdf";
 import { gerarOrcamentoImagem } from "@/lib/imagem";
 
