@@ -1607,7 +1607,7 @@ function Calculadora() {
               {estado.precisaPrazo && (
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <Select
-                    value={estado.prazoTipo || undefined}
+                    value={estado.prazoTipo}
                     onValueChange={(v) => set("prazoTipo", v as PrazoTipo)}
                   >
                     <SelectTrigger>
