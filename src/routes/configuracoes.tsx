@@ -142,7 +142,14 @@ function Configuracoes() {
       impressora_padrao_tipo: form.impressora_padrao_tipo,
       impressora_padrao_largura: 80,
       impressoras_padrao: form.impressoras_padrao,
+      pix_ativo: form.pix_ativo,
+      pix_chave: form.pix_chave || null,
+      pix_nome: form.pix_nome || null,
+      pix_banco: form.pix_banco || null,
+      pix_mensagem: form.pix_mensagem || PIX_MENSAGEM_PADRAO,
+      mensagem_prazo_orcamento: form.mensagem_prazo_orcamento || PRAZO_MENSAGEM_PADRAO,
     };
+
     const { error } = config
       ? await supabase.from("configuracoes").update(payload).eq("id", config.id)
       : await supabase.from("configuracoes").insert(payload);
