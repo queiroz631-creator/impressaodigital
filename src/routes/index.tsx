@@ -1610,7 +1610,7 @@ function Calculadora() {
                       type="button"
                       size="sm"
                       variant={estado.decisaoPix === "sim" ? "default" : "outline"}
-                      onClick={() => set({ decisaoPix: "sim", incluirPix: true })}
+                      onClick={() => setEstado((p) => ({ ...p, decisaoPix: "sim", incluirPix: true }))}
                     >
                       Sim
                     </Button>
@@ -1618,7 +1618,7 @@ function Calculadora() {
                       type="button"
                       size="sm"
                       variant={estado.decisaoPix === "nao" ? "default" : "outline"}
-                      onClick={() => set({ decisaoPix: "nao", incluirPix: false })}
+                      onClick={() => setEstado((p) => ({ ...p, decisaoPix: "nao", incluirPix: false }))}
                     >
                       Não
                     </Button>
