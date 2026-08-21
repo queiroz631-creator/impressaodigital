@@ -1,18 +1,29 @@
-# Digitação livre com capitalização apenas ao salvar
+# Currículo: capitalização ao salvar, correção da impressão e novo cabeçalho
 
-## Problema confirmado
+## 1. Digitação livre com capitalização apenas ao salvar
 
-A normalização é aplicada a cada tecla digitada (nos campos nome, endereço, bairro, cidade, curso superior, pós-graduação, cursos, formações, empresa e cargo). Como a função remove espaços das pontas do texto, o espaço digitado ao final de uma palavra some imediatamente e o cliente não consegue separar as palavras.
+Hoje a normalização roda a cada tecla e remove os espaços das pontas, por isso o espaço entre palavras some.
 
-## Solução
+- Os campos passam a aceitar exatamente o que o cliente digita (espaços livres, maiúsculo ou minúsculo).
+- A capitalização "Cada Palavra Com Inicial Maiúscula" é aplicada somente no momento de salvar cada etapa.
+- Siglas (UF, RG, CNH) são preservadas; e-mail, CPF, telefone e CEP não são alterados; conectivos (de, da, do, dos, das, e) ficam em minúsculo, exceto como primeira palavra.
 
-1. Deixar a digitação totalmente livre: os campos passam a guardar exatamente o que o usuário digita (com espaços, maiúsculas ou minúsculas).
-2. Aplicar a capitalização somente no momento de salvar cada etapa — cada palavra fica com a inicial maiúscula e o restante minúsculo, preservando siglas (ex.: UF, RG, CNH) e sem alterar e-mail, CPF, telefone e CEP.
-3. Ajustar a função de normalização para não descartar espaços internos e tratar corretamente palavras curtas de ligação (de, da, do, dos, das, e) mantendo-as em minúsculo, exceto quando forem a primeira palavra.
+## 2. Impressão em branco
 
-Efeito prático: o cliente digita como quiser ("joão carlos da silva" ou "JOÃO CARLOS DA SILVA") e o currículo salvo/exibido/impresso mostra "João Carlos da Silva".
+A impressão atual esconde todo o conteúdo da página e não exibe nada. Correção: montar a área de impressão como um documento isolado, com o conteúdo clonado corretamente (incluindo estilos aplicados), garantindo que apenas o currículo apareça e que ele realmente seja renderizado — sem página extra em branco e sem folha vazia.
+
+## 3. Cabeçalho do documento (PDF, visualização e impressão)
+
+- "CURRÍCULO VITAE" passa a ser exibido dentro da mesma faixa azul usada nas seções, ocupando a largura do documento.
+- Todo o cabeçalho fica centralizado: nome, telefones e e-mail.
+- Mais espaço entre o nome e a linha de telefones.
+- A seção "Dados pessoais" é mantida e passa a conter o endereço assim:
+  - linha 1: endereço (rua/nº) e bairro
+  - linha 2: cidade - UF e CEP (na mesma linha, se couber)
 
 ## Notas técnicas
 
-- `src/lib/curriculo.ts`: revisar `capitalizarTexto` (sem `trim` destrutivo durante digitação, lista de conectivos em minúsculo, siglas preservadas).
-- `src/components/curriculo/FormularioCurriculo.tsx`: remover `capitalizarTexto` de todos os `onChange`; manter/estender sua aplicação apenas no payload enviado ao salvar cada etapa (incluindo cursos, formações, experiências e habilidades).
+- `src/lib/curriculo.ts`: ajustar `capitalizarTexto` (sem `trim` destrutivo, conectivos em minúsculo, siglas preservadas) e adicionar helper que devolve as linhas de endereço separadas.
+- `src/components/curriculo/FormularioCurriculo.tsx`: remover `capitalizarTexto` de todos os `onChange` e aplicá-lo no payload de cada etapa (dados pessoais, formações, cursos, experiências, habilidades).
+- `src/lib/curriculo-pdf.ts`: faixa azul com título centralizado no topo, cabeçalho centralizado, espaçamento maior antes dos telefones, endereço em duas linhas dentro de "Dados pessoais"; revisar `imprimirCurriculo` para clonar o nó com `cloneNode(true)` e CSS de impressão que mantém o conteúdo visível.
+- `src/components/curriculo/CurriculoDocumento.tsx`: mesmo cabeçalho/ordem para manter paridade entre tela, impressão e PDF.
