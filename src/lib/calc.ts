@@ -484,8 +484,17 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
 
       /**
        * Valor das cópias adicionais.
+       *
+       * Usa as faixas por cópias adicionais quando cadastradas
+       * (baseadas somente nas cópias adicionais); caso contrário
+       * mantém o preço unitário de página.
        */
-      const totalCopiasAdicionais = copiasAdicionais * preco;
+      const precoCopia = entrada.copiaManual
+        ? preco
+        : precoPorCopiasAdicionais(material, copiasAdicionais, preco);
+
+      const totalCopiasAdicionais = copiasAdicionais * precoCopia;
+
 
       /**
        * ================================
