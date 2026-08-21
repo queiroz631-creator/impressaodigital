@@ -1076,7 +1076,9 @@ function Calculadora() {
       </Card>
 
       {/* ==================== 3 COLUNAS ==================== */}
-      <div className="mb-6 grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
+      {!precisaSelecionar && (
+        <div className="mb-6 grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
+
         {/* ==================== COLUNA 1 — ACABAMENTO ==================== */}
         <Card className="shadow-card">
           <CardHeader className="pb-2">
