@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Printer, DollarSign, FileText, History, Settings, LogOut, Menu, X, MessageCircle } from "lucide-react";
+import { LayoutDashboard, Printer, DollarSign, FileText, History, Settings, LogOut, Menu, X, MessageCircle, FileUser } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
@@ -13,6 +13,7 @@ const itens = [
   { to: "/", label: "Calculadora", icon: Printer },
   { to: "/precos", label: "Configurar Preços", icon: DollarSign, adminOnly: true },
   { to: "/orcamentos", label: "Orçamentos", icon: FileText },
+  { to: "/curriculos", label: "Currículo Vitae", icon: FileUser },
   { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle, badge: true },
   { to: "/historico", label: "Histórico", icon: History },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
