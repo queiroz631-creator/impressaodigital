@@ -230,10 +230,10 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
   estilo.textContent = `
     @media print {
       @page { size: A4; margin: 10mm; }
-      body * { visibility: hidden !important; }
-      #curriculo-print-area, #curriculo-print-area * { visibility: visible !important; }
+      body > *:not(#curriculo-print-area) { display: none !important; }
       #curriculo-print-area {
-        position: absolute !important; left: 0 !important; top: 0 !important;
+        position: static !important;
+        left: auto !important; top: auto !important;
         width: 100% !important; max-width: 100% !important; margin: 0 !important;
         padding: 0 !important; box-shadow: none !important; border: 0 !important;
         background: #fff !important; color: #111 !important;
