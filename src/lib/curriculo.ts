@@ -24,6 +24,12 @@ export interface CurriculoRegistro {
   created_at: string;
   updated_at: string;
   completed_at: string | null;
+  endereco: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  uf: string | null;
+  cep: string | null;
+  pos_graduacao_nome: string | null;
 }
 
 export interface TelefoneItem {
@@ -32,6 +38,12 @@ export interface TelefoneItem {
 export interface CursoItem {
   nome_curso: string;
   instituicao: string | null;
+  ano: string | null;
+}
+export interface FormacaoItem {
+  nome_curso: string;
+  instituicao: string | null;
+  ano: string | null;
 }
 export interface ExperienciaItem {
   empresa: string | null;
@@ -48,6 +60,7 @@ export interface CurriculoCompleto {
   curriculo: CurriculoRegistro;
   telefones: TelefoneItem[];
   cursos: CursoItem[];
+  formacoes: FormacaoItem[];
   experiencias: ExperienciaItem[];
   habilidades: HabilidadeItem[];
 }
@@ -69,6 +82,12 @@ export type CamposCurriculo = Partial<
     | "objetivo_tipo"
     | "objetivo_texto"
     | "exibir_data_atualizacao"
+    | "endereco"
+    | "bairro"
+    | "cidade"
+    | "uf"
+    | "cep"
+    | "pos_graduacao_nome"
   >
 >;
 
@@ -76,6 +95,7 @@ export interface PayloadEtapa {
   campos?: CamposCurriculo;
   telefones?: TelefoneItem[];
   cursos?: CursoItem[];
+  formacoes?: FormacaoItem[];
   experiencias?: ExperienciaItem[];
   habilidades?: HabilidadeItem[];
   finalizar?: boolean;
@@ -104,6 +124,31 @@ export const CATEGORIAS_HABILITACAO = ["A", "B", "AB", "C", "D", "E"];
 
 export function escolaridadeTemCurso(valor?: string | null) {
   return !!valor && valor.startsWith("Ensino Superior");
+}
+
+export function escolaridadeTemPos(valor?: string | null) {
+  return !!valor && valor === "Pós-graduação";
+}
+
+/**
+ * Normaliza texto para "Inicial maiúscula" de cada palavra, preservando
+ * siglas (todas maiúsculas) e não alterando e-mail.
+ */
+export function capitalizarTexto(valor: string): string {
+  if (!valor) return valor;
+  return valor
+    .trim()
+    .split(/(\s+)/)
+    .map((parte) => {
+      if (/^\s+$/.test(parte)) return parte;
+      const lower = parte.toLowerCase();
+      // Siglas (ex.: UF, RG) ficam como estão.
+      if (parte.length <= 3 && parte === parte.toUpperCase() && /[A-Z]/.test(parte)) {
+        return parte;
+      }
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join("");
 }
 
 /* -------------------------------------------------------------- CPF */
@@ -155,10 +200,25 @@ export function objetivoFinal(c: CurriculoRegistro) {
 
 export function formacaoFinal(c: CurriculoRegistro) {
   if (!c.escolaridade) return "";
+  if (escolaridadeTemPos(c.escolaridade) && c.pos_graduacao_nome) {
+    return `${c.escolaridade} — ${c.pos_graduacao_nome}`;
+  }
   if (escolaridadeTemCurso(c.escolaridade) && c.curso_superior) {
     return `${c.escolaridade} — ${c.curso_superior}`;
   }
   return c.escolaridade;
+}
+
+/** Monta uma linha única com o endereço completo, quando houver. */
+export function enderecoCompleto(c: CurriculoRegistro): string {
+  return [
+    c.endereco,
+    c.bairro,
+    [c.cidade, c.uf].filter(Boolean).join(" - "),
+    c.cep ? `CEP ${c.cep}` : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
 }
 
 export function informacoesAdicionais(c: CurriculoRegistro) {

@@ -69,6 +69,7 @@ function CurriculoPublico() {
       curriculo: data.curriculo as CurriculoCompleto["curriculo"],
       telefones: data.telefones,
       cursos: data.cursos,
+      formacoes: data.formacoes,
       experiencias: data.experiencias,
       habilidades: data.habilidades,
     };

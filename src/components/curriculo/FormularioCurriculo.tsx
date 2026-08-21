@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Plus, Save, Trash2 } from "lucide-react";
 
@@ -22,11 +22,14 @@ import {
   CATEGORIAS_HABILITACAO,
   ESCOLARIDADES,
   ESTADOS_CIVIS,
+  capitalizarTexto,
   escolaridadeTemCurso,
+  escolaridadeTemPos,
   formatarTelefone,
   type CurriculoCompleto,
   type CursoItem,
   type ExperienciaItem,
+  type FormacaoItem,
   type HabilidadeItem,
   type PayloadEtapa,
 } from "@/lib/curriculo";
@@ -77,6 +80,11 @@ export function FormularioCurriculo({
   const [nascimento, setNascimento] = useState(c.data_nascimento ?? "");
   const [estadoCivil, setEstadoCivil] = useState(c.estado_civil ?? "");
   const [email, setEmail] = useState(c.email ?? "");
+  const [endereco, setEndereco] = useState(c.endereco ?? "");
+  const [bairro, setBairro] = useState(c.bairro ?? "");
+  const [cidade, setCidade] = useState(c.cidade ?? "");
+  const [uf, setUf] = useState(c.uf ?? "");
+  const [cep, setCep] = useState(c.cep ?? "");
 
   // Etapa 2
   const [documentacao, setDocumentacao] = useState<string>(
@@ -92,6 +100,8 @@ export function FormularioCurriculo({
   // Etapa 3
   const [escolaridade, setEscolaridade] = useState(c.escolaridade ?? "");
   const [cursoSuperior, setCursoSuperior] = useState(c.curso_superior ?? "");
+  const [posGraduacaoNome, setPosGraduacaoNome] = useState(c.pos_graduacao_nome ?? "");
+  const [formacoes, setFormacoes] = useState<FormacaoItem[]>(dados.formacoes);
 
   // Etapa 4
   const [cursos, setCursos] = useState<CursoItem[]>(dados.cursos);
@@ -127,11 +137,16 @@ export function FormularioCurriculo({
       case 1:
         return {
           campos: {
-            nome_completo: nome.trim(),
+            nome_completo: capitalizarTexto(nome),
             telefone_principal: telefone.trim(),
             data_nascimento: nascimento || null,
             estado_civil: estadoCivil || null,
             email: email.trim() || null,
+            endereco: capitalizarTexto(endereco) || null,
+            bairro: capitalizarTexto(bairro) || null,
+            cidade: capitalizarTexto(cidade) || null,
+            uf: uf.toUpperCase() || null,
+            cep: cep.trim() || null,
           },
           telefones: telefones.filter((t) => t.trim()).map((t) => ({ telefone: t.trim() })),
         };
@@ -147,8 +162,10 @@ export function FormularioCurriculo({
         return {
           campos: {
             escolaridade: escolaridade || null,
-            curso_superior: escolaridadeTemCurso(escolaridade) ? cursoSuperior.trim() || null : null,
+            curso_superior: escolaridadeTemCurso(escolaridade) ? capitalizarTexto(cursoSuperior) || null : null,
+            pos_graduacao_nome: escolaridadeTemPos(escolaridade) ? capitalizarTexto(posGraduacaoNome) || null : null,
           },
+          formacoes,
         };
       case 4:
         return { cursos };
@@ -236,7 +253,11 @@ export function FormularioCurriculo({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Label htmlFor="nome">Nome completo *</Label>
-                  <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+                  <Input
+                    id="nome"
+                    value={nome}
+                    onChange={(e) => setNome(capitalizarTexto(e.target.value))}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="tel">Telefone principal *</Label>
@@ -245,6 +266,15 @@ export function FormularioCurriculo({
                     value={telefone}
                     onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
                     placeholder="(00) 00000-0000"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div>
@@ -271,9 +301,51 @@ export function FormularioCurriculo({
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Label htmlFor="endereco">Endereço</Label>
+                  <Input
+                    id="endereco"
+                    value={endereco}
+                    onChange={(e) => setEndereco(capitalizarTexto(e.target.value))}
+                  />
+                </div>
                 <div>
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Label htmlFor="bairro">Bairro</Label>
+                  <Input
+                    id="bairro"
+                    value={bairro}
+                    onChange={(e) => setBairro(capitalizarTexto(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cep">CEP</Label>
+                  <Input
+                    id="cep"
+                    value={cep}
+                    onChange={(e) => setCep(e.target.value)}
+                    placeholder="00000-000"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cidade">Cidade</Label>
+                  <Input
+                    id="cidade"
+                    value={cidade}
+                    onChange={(e) => setCidade(capitalizarTexto(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="uf">UF</Label>
+                  <Input
+                    id="uf"
+                    value={uf}
+                    onChange={(e) => setUf(e.target.value.toUpperCase().slice(0, 2))}
+                    placeholder="EX"
+                    className="max-w-[80px]"
+                  />
                 </div>
               </div>
 
@@ -299,7 +371,7 @@ export function FormularioCurriculo({
                     </Button>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={() => setTelefones((a) => [...a, ""])}>
+                <Button variant="default" size="sm" onClick={() => setTelefones((a) => [...a, ""])}>
                   <Plus className="mr-1 h-4 w-4" /> Adicionar telefone
                 </Button>
               </div>
@@ -360,14 +432,89 @@ export function FormularioCurriculo({
                   </SelectContent>
                 </Select>
               </div>
-              {escolaridadeTemCurso(escolaridade) && (
+              {escolaridadeTemCurso(escolaridade) && !escolaridadeTemPos(escolaridade) && (
                 <div>
-                  <Label htmlFor="curso">Curso</Label>
+                  <Label htmlFor="curso">Curso superior</Label>
                   <Input
                     id="curso"
                     value={cursoSuperior}
-                    onChange={(e) => setCursoSuperior(e.target.value)}
+                    onChange={(e) => setCursoSuperior(capitalizarTexto(e.target.value))}
+                    placeholder="Ex.: Administração"
                   />
+                </div>
+              )}
+              {escolaridadeTemPos(escolaridade) && (
+                <div>
+                  <Label htmlFor="pos">Nome da pós-graduação</Label>
+                  <Input
+                    id="pos"
+                    value={posGraduacaoNome}
+                    onChange={(e) => setPosGraduacaoNome(capitalizarTexto(e.target.value))}
+                    placeholder="Ex.: MBA em Gestão Empresarial"
+                  />
+                </div>
+              )}
+              {escolaridadeTemCurso(escolaridade) && (
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Outras formações (opcional)</Label>
+                  {formacoes.map((f, i) => (
+                    <div
+                      key={i}
+                      className={`grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_100px_auto] ${
+                        f.nome_curso.trim() ? "border-primary/40 bg-primary/5" : ""
+                      }`}
+                    >
+                      <div>
+                        <Label>Curso</Label>
+                        <Input
+                          value={f.nome_curso}
+                          onChange={(e) =>
+                            setFormacoes((a) =>
+                              a.map((v, j) => (j === i ? { ...v, nome_curso: capitalizarTexto(e.target.value) } : v)),
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Instituição</Label>
+                        <Input
+                          value={f.instituicao ?? ""}
+                          onChange={(e) =>
+                            setFormacoes((a) =>
+                              a.map((v, j) => (j === i ? { ...v, instituicao: capitalizarTexto(e.target.value) } : v)),
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Ano</Label>
+                        <Input
+                          value={f.ano ?? ""}
+                          onChange={(e) =>
+                            setFormacoes((a) =>
+                              a.map((v, j) => (j === i ? { ...v, ano: e.target.value } : v)),
+                            )
+                          }
+                          placeholder="2024"
+                        />
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="self-end"
+                        onClick={() => setFormacoes((a) => a.filter((_, j) => j !== i))}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setFormacoes((a) => [...a, { nome_curso: "", instituicao: "", ano: "" }])}
+                  >
+                    <Plus className="mr-1 h-4 w-4" /> Adicionar formação
+                  </Button>
                 </div>
               )}
             </>
@@ -376,14 +523,19 @@ export function FormularioCurriculo({
           {etapa === 4 && (
             <div className="space-y-3">
               {cursos.map((curso, i) => (
-                <div key={i} className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto]">
+                <div
+                  key={i}
+                  className={`grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_100px_auto] ${
+                    curso.nome_curso.trim() ? "border-primary/40 bg-primary/5" : ""
+                  }`}
+                >
                   <div>
                     <Label>Curso *</Label>
                     <Input
                       value={curso.nome_curso}
                       onChange={(e) =>
                         setCursos((a) =>
-                          a.map((v, j) => (j === i ? { ...v, nome_curso: e.target.value } : v)),
+                          a.map((v, j) => (j === i ? { ...v, nome_curso: capitalizarTexto(e.target.value) } : v)),
                         )
                       }
                     />
@@ -394,9 +546,21 @@ export function FormularioCurriculo({
                       value={curso.instituicao ?? ""}
                       onChange={(e) =>
                         setCursos((a) =>
-                          a.map((v, j) => (j === i ? { ...v, instituicao: e.target.value } : v)),
+                          a.map((v, j) => (j === i ? { ...v, instituicao: capitalizarTexto(e.target.value) } : v)),
                         )
                       }
+                    />
+                  </div>
+                  <div>
+                    <Label>Ano</Label>
+                    <Input
+                      value={curso.ano ?? ""}
+                      onChange={(e) =>
+                        setCursos((a) =>
+                          a.map((v, j) => (j === i ? { ...v, ano: e.target.value } : v)),
+                        )
+                      }
+                      placeholder="2024"
                     />
                   </div>
                   <Button
@@ -410,9 +574,9 @@ export function FormularioCurriculo({
                 </div>
               ))}
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
-                onClick={() => setCursos((a) => [...a, { nome_curso: "", instituicao: "" }])}
+                onClick={() => setCursos((a) => [...a, { nome_curso: "", instituicao: "", ano: "" }])}
               >
                 <Plus className="mr-1 h-4 w-4" /> Adicionar curso
               </Button>
@@ -425,7 +589,12 @@ export function FormularioCurriculo({
           {etapa === 5 && (
             <div className="space-y-3">
               {experiencias.map((exp, i) => (
-                <div key={i} className="space-y-2 rounded-lg border p-3">
+                <div
+                  key={i}
+                  className={`space-y-2 rounded-lg border p-3 ${
+                    exp.empresa?.trim() ? "border-primary/40 bg-primary/5" : ""
+                  }`}
+                >
                   <div className="grid gap-2 sm:grid-cols-3">
                     <div>
                       <Label>Empresa</Label>
@@ -433,7 +602,7 @@ export function FormularioCurriculo({
                         value={exp.empresa ?? ""}
                         onChange={(e) =>
                           setExperiencias((a) =>
-                            a.map((v, j) => (j === i ? { ...v, empresa: e.target.value } : v)),
+                            a.map((v, j) => (j === i ? { ...v, empresa: capitalizarTexto(e.target.value) } : v)),
                           )
                         }
                       />
@@ -444,7 +613,7 @@ export function FormularioCurriculo({
                         value={exp.cargo ?? ""}
                         onChange={(e) =>
                           setExperiencias((a) =>
-                            a.map((v, j) => (j === i ? { ...v, cargo: e.target.value } : v)),
+                            a.map((v, j) => (j === i ? { ...v, cargo: capitalizarTexto(e.target.value) } : v)),
                           )
                         }
                       />
@@ -484,7 +653,7 @@ export function FormularioCurriculo({
                 </div>
               ))}
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 onClick={() =>
                   setExperiencias((a) => [
@@ -606,9 +775,15 @@ export function FormularioCurriculo({
                 <p className="text-muted-foreground">
                   {[telefone, ...telefones].filter(Boolean).join(" • ")}
                 </p>
+                <p className="text-muted-foreground">{email || "-"}</p>
                 <p className="text-muted-foreground">
-                  {[nascimento ? dataBR(nascimento) : "", estadoCivil, email].filter(Boolean).join(" • ") || "-"}
+                  {[nascimento ? dataBR(nascimento) : "", estadoCivil].filter(Boolean).join(" • ") || "-"}
                 </p>
+                {(endereco || bairro || cidade || cep) && (
+                  <p className="text-muted-foreground">
+                    {[endereco, bairro, cidade, uf, cep].filter(Boolean).join(" • ")}
+                  </p>
+                )}
               </ResumoLinha>
 
               <ResumoLinha titulo="Documentação" etapa={2} ir={setEtapa}>
@@ -622,8 +797,22 @@ export function FormularioCurriculo({
 
               <ResumoLinha titulo="Escolaridade" etapa={3} ir={setEtapa}>
                 <p>{escolaridade || "-"}</p>
-                {escolaridadeTemCurso(escolaridade) && cursoSuperior && (
+                {escolaridadeTemPos(escolaridade) && posGraduacaoNome && (
+                  <p className="text-muted-foreground">{posGraduacaoNome}</p>
+                )}
+                {escolaridadeTemCurso(escolaridade) && !escolaridadeTemPos(escolaridade) && cursoSuperior && (
                   <p className="text-muted-foreground">{cursoSuperior}</p>
+                )}
+                {formacoes.length > 0 && (
+                  <div className="mt-1 space-y-0.5">
+                    {formacoes.map((f, i) => (
+                      <p key={i} className="text-muted-foreground">
+                        {f.nome_curso}
+                        {f.instituicao ? ` — ${f.instituicao}` : ""}
+                        {f.ano ? ` (${f.ano})` : ""}
+                      </p>
+                    ))}
+                  </div>
                 )}
               </ResumoLinha>
 
@@ -635,6 +824,7 @@ export function FormularioCurriculo({
                     <p key={i}>
                       {x.nome_curso}
                       {x.instituicao ? ` — ${x.instituicao}` : ""}
+                      {x.ano ? ` (${x.ano})` : ""}
                     </p>
                   ))
                 )}
@@ -703,7 +893,7 @@ function ResumoLinha({
   titulo: string;
   etapa: number;
   ir: (n: number) => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="rounded-lg border p-3">

@@ -3,12 +3,13 @@ import { urlBase } from "@/lib/link-dados.server";
 import type { CurriculoCompleto, PayloadEtapa } from "@/lib/curriculo";
 
 const CAMPOS =
-  "id, cliente_id, status, nome_completo, cpf, telefone_principal, data_nascimento, estado_civil, email, documentacao_completa, habilitacao, categoria_habilitacao, escolaridade, curso_superior, objetivo_tipo, objetivo_texto, exibir_data_atualizacao, created_at, updated_at, completed_at";
+  "id, cliente_id, status, nome_completo, cpf, telefone_principal, data_nascimento, estado_civil, email, documentacao_completa, habilitacao, categoria_habilitacao, escolaridade, curso_superior, pos_graduacao_nome, endereco, bairro, cidade, uf, cep, objetivo_tipo, objetivo_texto, exibir_data_atualizacao, created_at, updated_at, completed_at";
 
 export interface DadosPublicos {
   curriculo: Omit<CurriculoCompleto["curriculo"], "cpf"> & { cpf: string };
   telefones: CurriculoCompleto["telefones"];
   cursos: CurriculoCompleto["cursos"];
+  formacoes: CurriculoCompleto["formacoes"];
   experiencias: CurriculoCompleto["experiencias"];
   habilidades: CurriculoCompleto["habilidades"];
   catalogoHabilidades: { id: string; descricao: string }[];
@@ -31,7 +32,7 @@ async function lerLink(token: string) {
 }
 
 export async function carregarCurriculo(curriculoId: string): Promise<CurriculoCompleto> {
-  const [c, tel, cur, exp, hab] = await Promise.all([
+  const [c, tel, cur, form, exp, hab] = await Promise.all([
     supabaseAdmin.from("curriculos").select(CAMPOS).eq("id", curriculoId).maybeSingle(),
     supabaseAdmin
       .from("curriculo_telefones")
@@ -40,7 +41,12 @@ export async function carregarCurriculo(curriculoId: string): Promise<CurriculoC
       .order("ordem"),
     supabaseAdmin
       .from("curriculo_cursos")
-      .select("nome_curso, instituicao")
+      .select("nome_curso, instituicao, ano")
+      .eq("curriculo_id", curriculoId)
+      .order("ordem"),
+    supabaseAdmin
+      .from("curriculo_formacoes")
+      .select("nome_curso, instituicao, ano")
       .eq("curriculo_id", curriculoId)
       .order("ordem"),
     supabaseAdmin
@@ -61,6 +67,7 @@ export async function carregarCurriculo(curriculoId: string): Promise<CurriculoC
     curriculo: c.data as CurriculoCompleto["curriculo"],
     telefones: tel.data ?? [],
     cursos: cur.data ?? [],
+    formacoes: form.data ?? [],
     experiencias: exp.data ?? [],
     habilidades: hab.data ?? [],
   };
@@ -77,7 +84,12 @@ export async function gravarEtapa(curriculoId: string, payload: PayloadEtapa) {
   }
 
   const trocarLista = async (
-    tabela: "curriculo_telefones" | "curriculo_cursos" | "curriculo_experiencias" | "curriculo_habilidades",
+    tabela:
+      | "curriculo_telefones"
+      | "curriculo_cursos"
+      | "curriculo_formacoes"
+      | "curriculo_experiencias"
+      | "curriculo_habilidades",
     linhas: Record<string, unknown>[],
   ) => {
     await supabaseAdmin.from(tabela).delete().eq("curriculo_id", curriculoId);
@@ -101,7 +113,23 @@ export async function gravarEtapa(curriculoId: string, payload: PayloadEtapa) {
       "curriculo_cursos",
       payload.cursos
         .filter((c) => c.nome_curso.trim())
-        .map((c) => ({ nome_curso: c.nome_curso.trim(), instituicao: c.instituicao?.trim() || null })),
+        .map((c) => ({
+          nome_curso: c.nome_curso.trim(),
+          instituicao: c.instituicao?.trim() || null,
+          ano: c.ano?.trim() || null,
+        })),
+    );
+  }
+  if (payload.formacoes) {
+    await trocarLista(
+      "curriculo_formacoes",
+      payload.formacoes
+        .filter((f) => f.nome_curso.trim())
+        .map((f) => ({
+          nome_curso: f.nome_curso.trim(),
+          instituicao: f.instituicao?.trim() || null,
+          ano: f.ano?.trim() || null,
+        })),
     );
   }
   if (payload.experiencias) {
@@ -178,6 +206,7 @@ export async function carregarPublico(token: string): Promise<DadosPublicos> {
     curriculo: { ...completo.curriculo, cpf: "" },
     telefones: completo.telefones,
     cursos: completo.cursos,
+    formacoes: completo.formacoes,
     experiencias: completo.experiencias,
     habilidades: completo.habilidades,
     catalogoHabilidades: cat.data ?? [],
