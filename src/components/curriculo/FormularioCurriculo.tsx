@@ -137,11 +137,16 @@ export function FormularioCurriculo({
       case 1:
         return {
           campos: {
-            nome_completo: nome.trim(),
+            nome_completo: capitalizarTexto(nome),
             telefone_principal: telefone.trim(),
             data_nascimento: nascimento || null,
             estado_civil: estadoCivil || null,
             email: email.trim() || null,
+            endereco: capitalizarTexto(endereco) || null,
+            bairro: capitalizarTexto(bairro) || null,
+            cidade: capitalizarTexto(cidade) || null,
+            uf: uf.toUpperCase() || null,
+            cep: cep.trim() || null,
           },
           telefones: telefones.filter((t) => t.trim()).map((t) => ({ telefone: t.trim() })),
         };
@@ -157,8 +162,10 @@ export function FormularioCurriculo({
         return {
           campos: {
             escolaridade: escolaridade || null,
-            curso_superior: escolaridadeTemCurso(escolaridade) ? cursoSuperior.trim() || null : null,
+            curso_superior: escolaridadeTemCurso(escolaridade) ? capitalizarTexto(cursoSuperior) || null : null,
+            pos_graduacao_nome: escolaridadeTemPos(escolaridade) ? capitalizarTexto(posGraduacaoNome) || null : null,
           },
+          formacoes,
         };
       case 4:
         return { cursos };
