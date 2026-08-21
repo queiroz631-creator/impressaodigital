@@ -1567,7 +1567,71 @@ function Calculadora() {
               </div>
               <Switch checked={incluirTotal} onCheckedChange={setIncluirTotal} />
             </div>
+
+            {config?.pix_ativo && (
+              <div className="rounded-xl border border-border p-3 sm:col-span-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">Incluir pagamento via PIX</p>
+                    <p className="text-xs text-muted-foreground">
+                      Adiciona os dados do PIX no documento do orçamento.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={estado.incluirPix}
+                    onCheckedChange={(v) => set("incluirPix", v)}
+                  />
+                </div>
+                {estado.incluirPix && textoPix && (
+                  <pre className="mt-2 rounded-md bg-muted p-2 text-xs whitespace-pre-wrap">
+                    {textoPix}
+                  </pre>
+                )}
+              </div>
+            )}
+
+            <div className="rounded-xl border border-border p-3 sm:col-span-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold">Informar prazo de entrega</p>
+                  <p className="text-xs text-muted-foreground">
+                    Escolha entre horas ou dias e a quantidade.
+                  </p>
+                </div>
+                <Switch
+                  checked={estado.precisaPrazo}
+                  onCheckedChange={(v) => set("precisaPrazo", v)}
+                />
+              </div>
+
+              {estado.precisaPrazo && (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <Select
+                    value={estado.prazoTipo || undefined}
+                    onValueChange={(v) => set("prazoTipo", v as PrazoTipo)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Horas ou dias" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="horas">Horas</SelectItem>
+                      <SelectItem value="dias">Dias</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    inputMode="numeric"
+                    placeholder="Quantidade"
+                    value={estado.prazoQuantidade ? String(estado.prazoQuantidade) : ""}
+                    onChange={(e) => set("prazoQuantidade", num(e.target.value))}
+                  />
+                  {textoPrazo && (
+                    <p className="text-xs text-muted-foreground sm:col-span-2">{textoPrazo}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
+
           <DialogFooter className="gap-2">
             <Button
               type="button"
