@@ -220,6 +220,20 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           })
           .eq("id", conversaId);
 
+        // Atendimento automático: responde apenas quando o bot está ativo
+        // e a conversa continua no modo automático.
+        try {
+          const { processarBot } = await import("@/lib/bot.server");
+          await processarBot(conversaId, { tipo: conteudo.tipo, texto: conteudo.texto });
+        } catch (e) {
+          await supabaseAdmin.from("whatsapp_auditoria").insert({
+            conversa_id: conversaId,
+            usuario_nome: "Bot",
+            acao: "bot_erro",
+            detalhe: e instanceof Error ? e.message : "Falha no atendimento automático",
+          });
+        }
+
         return Response.json({ ok: true });
       },
 

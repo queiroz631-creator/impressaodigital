@@ -451,6 +451,9 @@ function Configuracoes() {
       </Card>
 
       <CardWhatsapp />
+
+      <CardBot />
+
     </>
   );
 }
@@ -545,6 +548,152 @@ function CardWhatsapp() {
             <strong>ZAPI_CLIENT_TOKEN</strong> e, opcionalmente, <strong>ZAPI_BASE_URL</strong>.
           </p>
           <p>Conexão: {config.data?.conexao_nome ?? "Principal"} · Base: {config.data?.base_url ?? "https://api.z-api.io"}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface FormBot {
+  bot_ativo: boolean;
+  permitir_orcamento_automatico: boolean;
+  exigir_revisao_humana: boolean;
+  msg_inicial: string;
+  msg_boas_vindas: string;
+  msg_transferencia: string;
+  msg_finalizacao: string;
+  msg_orcamento_gerado: string;
+  msg_revisao: string;
+  msg_orcamento_confirmado: string;
+}
+
+const CAMPOS_MENSAGEM: { chave: keyof FormBot; rotulo: string; ajuda: string }[] = [
+  { chave: "msg_inicial", rotulo: "Primeira mensagem", ajuda: "Enviada no primeiro contato do cliente." },
+  { chave: "msg_boas_vindas", rotulo: "Boas-vindas", ajuda: "Após o cliente informar o nome. Use {nome}." },
+  { chave: "msg_orcamento_gerado", rotulo: "Orçamento gerado", ajuda: "Texto antes do resumo do orçamento." },
+  { chave: "msg_revisao", rotulo: "Em revisão", ajuda: "Quando o orçamento aguarda revisão da equipe." },
+  { chave: "msg_orcamento_confirmado", rotulo: "Orçamento confirmado", ajuda: "Quando o cliente confirma o pedido." },
+  { chave: "msg_transferencia", rotulo: "Transferência para atendente", ajuda: "Ao encaminhar para a fila humana." },
+  { chave: "msg_finalizacao", rotulo: "Finalização", ajuda: "Ao encerrar o atendimento." },
+];
+
+/** Atendimento automático (bot) do WhatsApp. */
+function CardBot() {
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState<FormBot | null>(null);
+  const [salvando, setSalvando] = useState(false);
+
+  const config = useQuery({
+    queryKey: ["whatsapp-config-bot"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("whatsapp_config").select("*").limit(1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    const d = config.data;
+    if (!d || form) return;
+    setForm({
+      bot_ativo: Boolean(d.bot_ativo),
+      permitir_orcamento_automatico: Boolean(d.permitir_orcamento_automatico),
+      exigir_revisao_humana: Boolean(d.exigir_revisao_humana),
+      msg_inicial: d.msg_inicial ?? "",
+      msg_boas_vindas: d.msg_boas_vindas ?? "",
+      msg_transferencia: d.msg_transferencia ?? "",
+      msg_finalizacao: d.msg_finalizacao ?? "",
+      msg_orcamento_gerado: d.msg_orcamento_gerado ?? "",
+      msg_revisao: d.msg_revisao ?? "",
+      msg_orcamento_confirmado: d.msg_orcamento_confirmado ?? "",
+    });
+  }, [config.data, form]);
+
+  if (config.isLoading || !form) {
+    return <Skeleton className="mt-6 h-64 max-w-3xl" />;
+  }
+
+  const id = config.data?.id;
+
+  async function salvarBot() {
+    if (!id || !form) return;
+    setSalvando(true);
+    const { error } = await supabase.from("whatsapp_config").update(form).eq("id", id);
+    setSalvando(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Atendimento automático atualizado.");
+    await queryClient.invalidateQueries({ queryKey: ["whatsapp-config-bot"] });
+  }
+
+  return (
+    <Card className="mt-6 max-w-3xl shadow-card">
+      <CardHeader>
+        <CardTitle className="text-base">Atendimento automático (Bot)</CardTitle>
+      </CardHeader>
+
+      <CardContent className="grid gap-5">
+        <div className="grid gap-3">
+          <label className="flex items-center justify-between gap-4 text-sm">
+            <span>
+              <strong>Bot ativo</strong>
+              <span className="block text-xs text-muted-foreground">
+                Responde automaticamente as conversas na aba Automático.
+              </span>
+            </span>
+            <Switch
+              checked={form.bot_ativo}
+              onCheckedChange={(v) => setForm({ ...form, bot_ativo: v })}
+            />
+          </label>
+
+          <label className="flex items-center justify-between gap-4 text-sm">
+            <span>
+              <strong>Orçamento automático</strong>
+              <span className="block text-xs text-muted-foreground">
+                O bot coleta arquivos e opções e gera o orçamento com os preços cadastrados.
+              </span>
+            </span>
+            <Switch
+              checked={form.permitir_orcamento_automatico}
+              onCheckedChange={(v) => setForm({ ...form, permitir_orcamento_automatico: v })}
+            />
+          </label>
+
+          <label className="flex items-center justify-between gap-4 text-sm">
+            <span>
+              <strong>Exigir revisão humana</strong>
+              <span className="block text-xs text-muted-foreground">
+                O orçamento gerado vai para a aba Pendente antes de ser confirmado pelo cliente.
+              </span>
+            </span>
+            <Switch
+              checked={form.exigir_revisao_humana}
+              onCheckedChange={(v) => setForm({ ...form, exigir_revisao_humana: v })}
+            />
+          </label>
+        </div>
+
+        <div className="grid gap-4">
+          {CAMPOS_MENSAGEM.map((campo) => (
+            <div key={campo.chave} className="grid gap-1">
+              <Label>{campo.rotulo}</Label>
+              <Textarea
+                rows={3}
+                value={String(form[campo.chave] ?? "")}
+                onChange={(e) => setForm({ ...form, [campo.chave]: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">{campo.ajuda}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-end">
+          <Button onClick={salvarBot} disabled={salvando}>
+            <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar atendimento automático"}
+          </Button>
         </div>
       </CardContent>
     </Card>
