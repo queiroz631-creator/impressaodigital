@@ -83,7 +83,7 @@ function dataLocalISO(valor: Date | string | null | undefined) {
 /** Situação do pagamento de um pedido. */
 function situacaoPagamento(total: number, pago: number) {
   if (pago <= 0) return { rotulo: "NÃO PAGO", classe: "bg-destructive text-destructive-foreground" };
-  if (pago + 0.009 < total) return { rotulo: "PARCIAL", classe: "bg-warning text-warning-foreground" };
+  if (pago + 0.009 < total) return { rotulo: "PARCIAL", classe: "bg-yellow-ink text-sidebar" };
   return { rotulo: "PAGO", classe: "bg-success text-success-foreground" };
 }
 
