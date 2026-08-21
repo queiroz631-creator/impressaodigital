@@ -325,7 +325,10 @@ function Configuracoes() {
 
 
 
-      <Card className="mt-6 max-w-3xl shadow-card">
+        </TabsContent>
+
+        <TabsContent value="impressao">
+        <Card className="max-w-3xl shadow-card">
         <CardHeader>
           <CardTitle className="text-base">Impressão</CardTitle>
         </CardHeader>
