@@ -507,6 +507,15 @@ function Orcamentos() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            title="Copiar link do orçamento"
+                            onClick={() => void copiarLink(pedido)}
+                          >
+                            <LinkIcon className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             title="Alterar status"
                             onClick={() => {
                               setNovoStatus(pedido.status);
