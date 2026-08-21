@@ -200,10 +200,25 @@ export function objetivoFinal(c: CurriculoRegistro) {
 
 export function formacaoFinal(c: CurriculoRegistro) {
   if (!c.escolaridade) return "";
+  if (escolaridadeTemPos(c.escolaridade) && c.pos_graduacao_nome) {
+    return `${c.escolaridade} — ${c.pos_graduacao_nome}`;
+  }
   if (escolaridadeTemCurso(c.escolaridade) && c.curso_superior) {
     return `${c.escolaridade} — ${c.curso_superior}`;
   }
   return c.escolaridade;
+}
+
+/** Monta uma linha única com o endereço completo, quando houver. */
+export function enderecoCompleto(c: CurriculoRegistro): string {
+  return [
+    c.endereco,
+    c.bairro,
+    [c.cidade, c.uf].filter(Boolean).join(" - "),
+    c.cep ? `CEP ${c.cep}` : "",
+  ]
+    .filter(Boolean)
+    .join(", ");
 }
 
 export function informacoesAdicionais(c: CurriculoRegistro) {
