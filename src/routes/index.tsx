@@ -394,7 +394,16 @@ function Calculadora() {
   }
 
   async function garantirPedido() {
-    if (estado.pedidoId) return estado.pedidoId;
+    if (estado.pedidoId) {
+      // O pedido salvo no rascunho pode ter sido excluído — valida antes de reutilizar.
+      const { data: existente } = await supabase
+        .from("pedidos")
+        .select("id")
+        .eq("id", estado.pedidoId)
+        .maybeSingle();
+      if (existente) return estado.pedidoId;
+      set("pedidoId", null);
+    }
     const { data, error } = await supabase
       .from("pedidos")
       .insert({
