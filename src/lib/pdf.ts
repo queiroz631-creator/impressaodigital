@@ -109,6 +109,24 @@ export function gerarOrcamentoPdf(d: DadosDocumento, baixar = true) {
     y = finalY(doc) + 30;
   }
 
+  if (d.prazoTexto) {
+    doc.setFont("helvetica", "bold");
+    doc.text("Prazo de entrega", 40, y);
+    doc.setFont("helvetica", "normal");
+    const linhasPrazo = doc.splitTextToSize(d.prazoTexto, width - 80);
+    doc.text(linhasPrazo, 40, y + 16);
+    y += 16 + linhasPrazo.length * 14 + 10;
+  }
+
+  if (d.pix) {
+    doc.setFont("helvetica", "bold");
+    doc.text("PAGAMENTO VIA PIX", 40, y);
+    doc.setFont("helvetica", "normal");
+    const linhasPix = doc.splitTextToSize(d.pix, width - 80);
+    doc.text(linhasPix, 40, y + 16);
+    y += 16 + linhasPix.length * 14 + 10;
+  }
+
   if (d.observacao) {
     doc.setFont("helvetica", "bold");
     doc.text("Observações", 40, y);
@@ -117,6 +135,7 @@ export function gerarOrcamentoPdf(d: DadosDocumento, baixar = true) {
     doc.text(linhas, 40, y + 16);
     y += 16 + linhas.length * 14;
   }
+
 
   doc.setFontSize(9);
   doc.setTextColor(110, 110, 130);
