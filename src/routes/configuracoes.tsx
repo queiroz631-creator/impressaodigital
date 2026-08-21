@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Copy, Plus, Printer, RefreshCw, Save, ShieldAlert, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -186,7 +187,19 @@ function Configuracoes() {
   return (
     <>
       <PageHeader titulo="CONFIGURAÇÕES" subtitulo="Dados usados no cabeçalho e rodapé dos orçamentos." />
-      <Card className="max-w-3xl shadow-card">
+
+      <Tabs defaultValue="empresa" className="max-w-3xl">
+        <TabsList className="mb-4 flex h-auto flex-wrap justify-start gap-1">
+          <TabsTrigger value="empresa">Empresa</TabsTrigger>
+          <TabsTrigger value="pix">PIX e prazo</TabsTrigger>
+          <TabsTrigger value="impressao">Impressão</TabsTrigger>
+          <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+          <TabsTrigger value="bot">Bot</TabsTrigger>
+          <TabsTrigger value="link">Link do orçamento</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="empresa">
+        <Card className="max-w-3xl shadow-card">
         <CardHeader>
           <CardTitle className="text-base">Dados da empresa</CardTitle>
         </CardHeader>
@@ -255,7 +268,10 @@ function Configuracoes() {
         </CardContent>
       </Card>
 
-      <Card className="mt-6 max-w-3xl shadow-card">
+        </TabsContent>
+
+        <TabsContent value="pix">
+        <Card className="max-w-3xl shadow-card">
         <CardHeader>
           <CardTitle className="text-base">Pagamento PIX e prazo de entrega</CardTitle>
         </CardHeader>
@@ -325,7 +341,10 @@ function Configuracoes() {
 
 
 
-      <Card className="mt-6 max-w-3xl shadow-card">
+        </TabsContent>
+
+        <TabsContent value="impressao">
+        <Card className="max-w-3xl shadow-card">
         <CardHeader>
           <CardTitle className="text-base">Impressão</CardTitle>
         </CardHeader>
@@ -450,12 +469,20 @@ function Configuracoes() {
         </CardContent>
       </Card>
 
-      <CardWhatsapp />
+        </TabsContent>
 
-      <CardBot />
+        <TabsContent value="whatsapp">
+          <CardWhatsapp />
+        </TabsContent>
 
-      <CardLinkPublico />
+        <TabsContent value="bot">
+          <CardBot />
+        </TabsContent>
 
+        <TabsContent value="link">
+          <CardLinkPublico />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
@@ -513,7 +540,7 @@ function CardLinkPublico() {
     setForm(inicial);
   }, [config.data, form]);
 
-  if (config.isLoading || !form) return <Skeleton className="mt-6 h-64 max-w-3xl" />;
+  if (config.isLoading || !form) return <Skeleton className="h-64 max-w-3xl" />;
 
   const id = config.data?.id;
 
@@ -531,7 +558,7 @@ function CardLinkPublico() {
   }
 
   return (
-    <Card className="mt-6 max-w-3xl shadow-card">
+    <Card className="max-w-3xl shadow-card">
       <CardHeader>
         <CardTitle className="text-base">Link público do orçamento</CardTitle>
       </CardHeader>
@@ -602,7 +629,7 @@ function CardWhatsapp() {
       : "bg-destructive text-destructive-foreground";
 
   return (
-    <Card className="mt-6 max-w-3xl shadow-card">
+    <Card className="max-w-3xl shadow-card">
       <CardHeader>
         <CardTitle className="text-base">WhatsApp (Z-API)</CardTitle>
       </CardHeader>
@@ -719,7 +746,7 @@ function CardBot() {
   }, [config.data, form]);
 
   if (config.isLoading || !form) {
-    return <Skeleton className="mt-6 h-64 max-w-3xl" />;
+    return <Skeleton className="h-64 max-w-3xl" />;
   }
 
   const id = config.data?.id;
@@ -738,7 +765,7 @@ function CardBot() {
   }
 
   return (
-    <Card className="mt-6 max-w-3xl shadow-card">
+    <Card className="max-w-3xl shadow-card">
       <CardHeader>
         <CardTitle className="text-base">Atendimento automático (Bot)</CardTitle>
       </CardHeader>
