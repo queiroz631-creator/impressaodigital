@@ -260,6 +260,51 @@ function Orcamentos() {
     invalidar(pedido.pedidoId);
   }
 
+  /** Abre o pedido na calculadora para continuar/editar os itens. */
+  async function editarPedido(pedido: PedidoAgrupado) {
+    if (!pedido.temPedido) {
+      toast.error("Este orçamento antigo não possui pedido vinculado.");
+      return;
+    }
+    if (!user?.id) return;
+    const dados = {
+      pedidoId: pedido.pedidoId,
+      editandoId: null,
+      clienteNome: pedido.clienteNome,
+      clienteTelefone: pedido.clienteTelefone ?? "",
+      observacao: pedido.observacao ?? "",
+      validade: pedido.validade ?? "",
+      arquivosLista: [],
+      arquivos: 0,
+      paginasAdicionais: 0,
+      copiasAdicionais: 0,
+      tipoServico: "",
+      copiaManual: false,
+      materialId: "",
+      selecao: {},
+      frenteVerso: false,
+      usarFaixaCopiaManual: false,
+      incluirPix: false,
+      precisaPrazo: false,
+      prazoTipo: "",
+      prazoQuantidade: 0,
+    };
+    const { error } = await supabase
+      .from("rascunhos")
+      .upsert(
+        { usuario_id: user.id, dados: dados as unknown as never },
+        { onConflict: "usuario_id" },
+      );
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["rascunho", user.id] });
+    toast.success(`Pedido ${pedido.numero} aberto na calculadora.`);
+    void navigate({ to: "/" });
+  }
+
+
   async function excluirPedido(pedido: PedidoAgrupado) {
     const ids = pedido.itens.map((item) => String(item["id"])).filter(Boolean);
     if (ids.length === 0) return;
