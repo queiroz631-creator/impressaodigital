@@ -523,14 +523,19 @@ export function FormularioCurriculo({
           {etapa === 4 && (
             <div className="space-y-3">
               {cursos.map((curso, i) => (
-                <div key={i} className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto]">
+                <div
+                  key={i}
+                  className={`grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_100px_auto] ${
+                    curso.nome_curso.trim() ? "border-primary/40 bg-primary/5" : ""
+                  }`}
+                >
                   <div>
                     <Label>Curso *</Label>
                     <Input
                       value={curso.nome_curso}
                       onChange={(e) =>
                         setCursos((a) =>
-                          a.map((v, j) => (j === i ? { ...v, nome_curso: e.target.value } : v)),
+                          a.map((v, j) => (j === i ? { ...v, nome_curso: capitalizarTexto(e.target.value) } : v)),
                         )
                       }
                     />
@@ -541,9 +546,21 @@ export function FormularioCurriculo({
                       value={curso.instituicao ?? ""}
                       onChange={(e) =>
                         setCursos((a) =>
-                          a.map((v, j) => (j === i ? { ...v, instituicao: e.target.value } : v)),
+                          a.map((v, j) => (j === i ? { ...v, instituicao: capitalizarTexto(e.target.value) } : v)),
                         )
                       }
+                    />
+                  </div>
+                  <div>
+                    <Label>Ano</Label>
+                    <Input
+                      value={curso.ano ?? ""}
+                      onChange={(e) =>
+                        setCursos((a) =>
+                          a.map((v, j) => (j === i ? { ...v, ano: e.target.value } : v)),
+                        )
+                      }
+                      placeholder="2024"
                     />
                   </div>
                   <Button
@@ -557,7 +574,7 @@ export function FormularioCurriculo({
                 </div>
               ))}
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 onClick={() => setCursos((a) => [...a, { nome_curso: "", instituicao: "", ano: "" }])}
               >
