@@ -432,14 +432,89 @@ export function FormularioCurriculo({
                   </SelectContent>
                 </Select>
               </div>
-              {escolaridadeTemCurso(escolaridade) && (
+              {escolaridadeTemCurso(escolaridade) && !escolaridadeTemPos(escolaridade) && (
                 <div>
-                  <Label htmlFor="curso">Curso</Label>
+                  <Label htmlFor="curso">Curso superior</Label>
                   <Input
                     id="curso"
                     value={cursoSuperior}
-                    onChange={(e) => setCursoSuperior(e.target.value)}
+                    onChange={(e) => setCursoSuperior(capitalizarTexto(e.target.value))}
+                    placeholder="Ex.: Administração"
                   />
+                </div>
+              )}
+              {escolaridadeTemPos(escolaridade) && (
+                <div>
+                  <Label htmlFor="pos">Nome da pós-graduação</Label>
+                  <Input
+                    id="pos"
+                    value={posGraduacaoNome}
+                    onChange={(e) => setPosGraduacaoNome(capitalizarTexto(e.target.value))}
+                    placeholder="Ex.: MBA em Gestão Empresarial"
+                  />
+                </div>
+              )}
+              {escolaridadeTemCurso(escolaridade) && (
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Outras formações (opcional)</Label>
+                  {formacoes.map((f, i) => (
+                    <div
+                      key={i}
+                      className={`grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_100px_auto] ${
+                        f.nome_curso.trim() ? "border-primary/40 bg-primary/5" : ""
+                      }`}
+                    >
+                      <div>
+                        <Label>Curso</Label>
+                        <Input
+                          value={f.nome_curso}
+                          onChange={(e) =>
+                            setFormacoes((a) =>
+                              a.map((v, j) => (j === i ? { ...v, nome_curso: capitalizarTexto(e.target.value) } : v)),
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Instituição</Label>
+                        <Input
+                          value={f.instituicao ?? ""}
+                          onChange={(e) =>
+                            setFormacoes((a) =>
+                              a.map((v, j) => (j === i ? { ...v, instituicao: capitalizarTexto(e.target.value) } : v)),
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Ano</Label>
+                        <Input
+                          value={f.ano ?? ""}
+                          onChange={(e) =>
+                            setFormacoes((a) =>
+                              a.map((v, j) => (j === i ? { ...v, ano: e.target.value } : v)),
+                            )
+                          }
+                          placeholder="2024"
+                        />
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="self-end"
+                        onClick={() => setFormacoes((a) => a.filter((_, j) => j !== i))}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setFormacoes((a) => [...a, { nome_curso: "", instituicao: "", ano: "" }])}
+                  >
+                    <Plus className="mr-1 h-4 w-4" /> Adicionar formação
+                  </Button>
                 </div>
               )}
             </>
