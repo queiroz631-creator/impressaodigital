@@ -82,6 +82,12 @@ export type CamposCurriculo = Partial<
     | "objetivo_tipo"
     | "objetivo_texto"
     | "exibir_data_atualizacao"
+    | "endereco"
+    | "bairro"
+    | "cidade"
+    | "uf"
+    | "cep"
+    | "pos_graduacao_nome"
   >
 >;
 
@@ -89,6 +95,7 @@ export interface PayloadEtapa {
   campos?: CamposCurriculo;
   telefones?: TelefoneItem[];
   cursos?: CursoItem[];
+  formacoes?: FormacaoItem[];
   experiencias?: ExperienciaItem[];
   habilidades?: HabilidadeItem[];
   finalizar?: boolean;
