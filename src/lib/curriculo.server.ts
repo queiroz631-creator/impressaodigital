@@ -205,6 +205,7 @@ export async function carregarPublico(token: string): Promise<DadosPublicos> {
     curriculo: { ...completo.curriculo, cpf: "" },
     telefones: completo.telefones,
     cursos: completo.cursos,
+    formacoes: completo.formacoes,
     experiencias: completo.experiencias,
     habilidades: completo.habilidades,
     catalogoHabilidades: cat.data ?? [],
