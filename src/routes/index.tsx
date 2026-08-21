@@ -1600,15 +1600,29 @@ function Calculadora() {
               <div className="rounded-xl border border-border p-3 sm:col-span-2">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold">Incluir pagamento via PIX</p>
+                    <p className="font-semibold">Incluir pagamento via PIX? *</p>
                     <p className="text-xs text-muted-foreground">
                       Adiciona os dados do PIX no documento do orçamento.
                     </p>
                   </div>
-                  <Switch
-                    checked={estado.incluirPix}
-                    onCheckedChange={(v) => set("incluirPix", v)}
-                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={estado.decisaoPix === "sim" ? "default" : "outline"}
+                      onClick={() => set({ decisaoPix: "sim", incluirPix: true })}
+                    >
+                      Sim
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={estado.decisaoPix === "nao" ? "default" : "outline"}
+                      onClick={() => set({ decisaoPix: "nao", incluirPix: false })}
+                    >
+                      Não
+                    </Button>
+                  </div>
                 </div>
                 {estado.incluirPix && textoPix && (
                   <pre className="mt-2 rounded-md bg-muted p-2 text-xs whitespace-pre-wrap">
@@ -1621,15 +1635,36 @@ function Calculadora() {
             <div className="rounded-xl border border-border p-3 sm:col-span-2">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="font-semibold">Informar prazo de entrega</p>
+                  <p className="font-semibold">Informar prazo de entrega? *</p>
                   <p className="text-xs text-muted-foreground">
                     Escolha entre horas ou dias e a quantidade.
                   </p>
                 </div>
-                <Switch
-                  checked={estado.precisaPrazo}
-                  onCheckedChange={(v) => set("precisaPrazo", v)}
-                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={estado.decisaoPrazo === "sim" ? "default" : "outline"}
+                    onClick={() => set({ decisaoPrazo: "sim", precisaPrazo: true })}
+                  >
+                    Sim
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={estado.decisaoPrazo === "nao" ? "default" : "outline"}
+                    onClick={() =>
+                      set({
+                        decisaoPrazo: "nao",
+                        precisaPrazo: false,
+                        prazoTipo: "",
+                        prazoQuantidade: 0,
+                      })
+                    }
+                  >
+                    Não
+                  </Button>
+                </div>
               </div>
 
               {estado.precisaPrazo && (
