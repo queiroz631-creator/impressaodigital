@@ -22,11 +22,14 @@ import {
   CATEGORIAS_HABILITACAO,
   ESCOLARIDADES,
   ESTADOS_CIVIS,
+  capitalizarTexto,
   escolaridadeTemCurso,
+  escolaridadeTemPos,
   formatarTelefone,
   type CurriculoCompleto,
   type CursoItem,
   type ExperienciaItem,
+  type FormacaoItem,
   type HabilidadeItem,
   type PayloadEtapa,
 } from "@/lib/curriculo";
@@ -77,6 +80,11 @@ export function FormularioCurriculo({
   const [nascimento, setNascimento] = useState(c.data_nascimento ?? "");
   const [estadoCivil, setEstadoCivil] = useState(c.estado_civil ?? "");
   const [email, setEmail] = useState(c.email ?? "");
+  const [endereco, setEndereco] = useState(c.endereco ?? "");
+  const [bairro, setBairro] = useState(c.bairro ?? "");
+  const [cidade, setCidade] = useState(c.cidade ?? "");
+  const [uf, setUf] = useState(c.uf ?? "");
+  const [cep, setCep] = useState(c.cep ?? "");
 
   // Etapa 2
   const [documentacao, setDocumentacao] = useState<string>(
@@ -92,6 +100,8 @@ export function FormularioCurriculo({
   // Etapa 3
   const [escolaridade, setEscolaridade] = useState(c.escolaridade ?? "");
   const [cursoSuperior, setCursoSuperior] = useState(c.curso_superior ?? "");
+  const [posGraduacaoNome, setPosGraduacaoNome] = useState(c.pos_graduacao_nome ?? "");
+  const [formacoes, setFormacoes] = useState<FormacaoItem[]>(dados.formacoes);
 
   // Etapa 4
   const [cursos, setCursos] = useState<CursoItem[]>(dados.cursos);
