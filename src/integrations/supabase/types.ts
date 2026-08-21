@@ -194,6 +194,12 @@ export type Database = {
           impressoras_padrao: Json
           instagram: string | null
           logo_url: string | null
+          mensagem_prazo_orcamento: string
+          pix_ativo: boolean
+          pix_banco: string | null
+          pix_chave: string | null
+          pix_mensagem: string
+          pix_nome: string | null
           rodape_orcamento: string
           telefone: string | null
           updated_at: string
@@ -211,6 +217,12 @@ export type Database = {
           impressoras_padrao?: Json
           instagram?: string | null
           logo_url?: string | null
+          mensagem_prazo_orcamento?: string
+          pix_ativo?: boolean
+          pix_banco?: string | null
+          pix_chave?: string | null
+          pix_mensagem?: string
+          pix_nome?: string | null
           rodape_orcamento?: string
           telefone?: string | null
           updated_at?: string
@@ -228,6 +240,12 @@ export type Database = {
           impressoras_padrao?: Json
           instagram?: string | null
           logo_url?: string | null
+          mensagem_prazo_orcamento?: string
+          pix_ativo?: boolean
+          pix_banco?: string | null
+          pix_chave?: string | null
+          pix_mensagem?: string
+          pix_nome?: string | null
           rodape_orcamento?: string
           telefone?: string | null
           updated_at?: string
@@ -243,6 +261,7 @@ export type Database = {
           descricao: string
           faixas: Json
           faixas_por_arquivo: Json | null
+          faixas_por_copia_adicional: Json
           formato: string
           id: string
           nome: string
@@ -261,6 +280,7 @@ export type Database = {
           descricao?: string
           faixas?: Json
           faixas_por_arquivo?: Json | null
+          faixas_por_copia_adicional?: Json
           formato?: string
           id?: string
           nome: string
@@ -279,6 +299,7 @@ export type Database = {
           descricao?: string
           faixas?: Json
           faixas_por_arquivo?: Json | null
+          faixas_por_copia_adicional?: Json
           formato?: string
           id?: string
           nome?: string
@@ -306,6 +327,7 @@ export type Database = {
           created_at: string
           frente_verso: boolean
           id: string
+          incluir_pix: boolean
           material_id: string | null
           material_nome: string | null
           numero: string
@@ -314,6 +336,11 @@ export type Database = {
           paginas_adicionais: number
           paginas_total: number
           pedido_id: string | null
+          pix_texto_final: string | null
+          prazo_quantidade: number
+          prazo_texto_final: string | null
+          prazo_tipo: string | null
+          precisa_prazo: boolean
           quantidade_arquivos: number
           status: string
           tamanho: string
@@ -336,6 +363,7 @@ export type Database = {
           created_at?: string
           frente_verso?: boolean
           id?: string
+          incluir_pix?: boolean
           material_id?: string | null
           material_nome?: string | null
           numero?: string
@@ -344,6 +372,11 @@ export type Database = {
           paginas_adicionais?: number
           paginas_total?: number
           pedido_id?: string | null
+          pix_texto_final?: string | null
+          prazo_quantidade?: number
+          prazo_texto_final?: string | null
+          prazo_tipo?: string | null
+          precisa_prazo?: boolean
           quantidade_arquivos?: number
           status?: string
           tamanho?: string
@@ -366,6 +399,7 @@ export type Database = {
           created_at?: string
           frente_verso?: boolean
           id?: string
+          incluir_pix?: boolean
           material_id?: string | null
           material_nome?: string | null
           numero?: string
@@ -374,6 +408,11 @@ export type Database = {
           paginas_adicionais?: number
           paginas_total?: number
           pedido_id?: string | null
+          pix_texto_final?: string | null
+          prazo_quantidade?: number
+          prazo_texto_final?: string | null
+          prazo_tipo?: string | null
+          precisa_prazo?: boolean
           quantidade_arquivos?: number
           status?: string
           tamanho?: string
@@ -414,8 +453,14 @@ export type Database = {
           cliente_telefone: string | null
           created_at: string
           id: string
+          incluir_pix: boolean
           numero: string
           observacao: string | null
+          pix_texto_final: string | null
+          prazo_quantidade: number
+          prazo_texto_final: string | null
+          prazo_tipo: string | null
+          precisa_prazo: boolean
           status: string
           updated_at: string
           usuario_id: string
@@ -428,8 +473,14 @@ export type Database = {
           cliente_telefone?: string | null
           created_at?: string
           id?: string
+          incluir_pix?: boolean
           numero?: string
           observacao?: string | null
+          pix_texto_final?: string | null
+          prazo_quantidade?: number
+          prazo_texto_final?: string | null
+          prazo_tipo?: string | null
+          precisa_prazo?: boolean
           status?: string
           updated_at?: string
           usuario_id?: string
@@ -442,8 +493,14 @@ export type Database = {
           cliente_telefone?: string | null
           created_at?: string
           id?: string
+          incluir_pix?: boolean
           numero?: string
           observacao?: string | null
+          pix_texto_final?: string | null
+          prazo_quantidade?: number
+          prazo_texto_final?: string | null
+          prazo_tipo?: string | null
+          precisa_prazo?: boolean
           status?: string
           updated_at?: string
           usuario_id?: string
