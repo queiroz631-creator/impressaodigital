@@ -1392,7 +1392,9 @@ function Calculadora() {
             )}
           </CardContent>
         </Card>
-      </div>
+        </div>
+      )}
+
 
       {(itensPedido ?? []).length > 0 && (
         <Card className="mb-6 shadow-card">
