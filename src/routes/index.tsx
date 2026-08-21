@@ -1641,29 +1641,30 @@ function Calculadora() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={estado.decisaoPrazo === "sim" ? "default" : "outline"}
-                    onClick={() => set({ decisaoPrazo: "sim", precisaPrazo: true })}
-                  >
-                    Sim
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={estado.decisaoPrazo === "nao" ? "default" : "outline"}
-                    onClick={() =>
-                      set({
-                        decisaoPrazo: "nao",
-                        precisaPrazo: false,
-                        prazoTipo: "",
-                        prazoQuantidade: 0,
-                      })
-                    }
-                  >
-                    Não
-                  </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={estado.decisaoPrazo === "sim" ? "default" : "outline"}
+                      onClick={() => setEstado((p) => ({ ...p, decisaoPrazo: "sim", precisaPrazo: true }))}
+                    >
+                      Sim
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={estado.decisaoPrazo === "nao" ? "default" : "outline"}
+                      onClick={() =>
+                        setEstado((p) => ({
+                          ...p,
+                          decisaoPrazo: "nao",
+                          precisaPrazo: false,
+                          prazoTipo: "",
+                          prazoQuantidade: 0,
+                        }))
+                      }
+                    >
+                      Não
+                    </Button>
                 </div>
               </div>
 
