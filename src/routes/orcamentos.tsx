@@ -39,6 +39,8 @@ import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { ImprimirEtiqueta } from "@/components/ImprimirEtiqueta";
 
 import { useConfiguracao, useOrcamentos, usePedidos } from "@/hooks/useDados";
+import { useAuth } from "@/hooks/useAuth";
+
 
 import { brl, dataBR } from "@/lib/format";
 import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
