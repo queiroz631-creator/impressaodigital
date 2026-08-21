@@ -105,12 +105,14 @@ function Precos() {
     try {
       const faixasNormalizadas: Record<string, string> = {};
       const faixasArquivosNormalizadas: Record<string, string> = {};
+      const faixasCopiasNormalizadas: Record<string, string> = {};
       for (const m of linhas) {
         if (Number(m.preco_pb) < 0) {
           throw new Error("Preços não podem ser negativos.");
         }
         const faixas = textoParaFaixas(faixasTexto[m.id] ?? "");
         const faixasArquivos = textoParaFaixas(faixasArquivosTexto[m.id] ?? "");
+        const faixasCopias = textoParaFaixas(faixasCopiasTexto[m.id] ?? "");
         const { error } = await supabase
           .from("materiais")
           .update({
@@ -128,6 +130,8 @@ function Precos() {
 
             faixas_por_arquivo: faixasArquivos as unknown as never,
 
+            faixas_por_copia_adicional: faixasCopias as unknown as never,
+
             tipo_impressao: m.tipo_impressao ?? "simples",
 
             formato: m.formato ?? "A4",
@@ -139,9 +143,12 @@ function Precos() {
         if (error) throw error;
         faixasNormalizadas[m.id] = faixasParaTexto(faixas);
         faixasArquivosNormalizadas[m.id] = faixasParaTexto(faixasArquivos);
+        faixasCopiasNormalizadas[m.id] = faixasParaTexto(faixasCopias);
       }
       setFaixasTexto(faixasNormalizadas);
       setFaixasArquivosTexto(faixasArquivosNormalizadas);
+      setFaixasCopiasTexto(faixasCopiasNormalizadas);
+
       queryClient.invalidateQueries({ queryKey: ["materiais"] });
       toast.success("Preço atualizado com sucesso.");
     } catch (e) {
