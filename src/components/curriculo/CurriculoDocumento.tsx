@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import {
-  enderecoCompleto,
+  enderecoLinhas,
   formacaoFinal,
   formatarTelefone,
   informacoesAdicionais,
