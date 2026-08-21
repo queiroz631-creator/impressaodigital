@@ -569,6 +569,15 @@ function Calculadora() {
     return `${ano}-${mes}-${dia}`;
   }
 
+  /** Texto do PIX (vazio quando não incluído). */
+  const textoPix =
+    config?.pix_ativo && estado.incluirPix ? montarTextoPix(config) : "";
+
+  /** Texto do prazo de entrega (vazio quando não informado). */
+  const textoPrazo = estado.precisaPrazo
+    ? montarTextoPrazo(config, estado.prazoTipo, estado.prazoQuantidade)
+    : "";
+
   function documentoDoPedido() {
     const validade = estado.validade || calcularValidadePadrao();
 
@@ -582,9 +591,12 @@ function Calculadora() {
         clienteTelefone: estado.clienteTelefone,
         validade: validade || null,
         observacao: estado.observacao || null,
+        pix: textoPix || null,
+        prazoTexto: textoPrazo || null,
       },
     );
   }
+
 
   function documentoParaGerar() {
     return { ...documentoDoPedido(), mostrarTotal: incluirTotal };
