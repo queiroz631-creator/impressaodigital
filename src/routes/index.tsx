@@ -129,6 +129,12 @@ interface EstadoRascunho {
   formato: FormatoPapel;
   usarFaixaCopiaManual: boolean;
   copiasAdicionais: number;
+  /** Incluir dados de pagamento PIX no orçamento. */
+  incluirPix: boolean;
+  /** Informar prazo de entrega no orçamento. */
+  precisaPrazo: boolean;
+  prazoTipo: PrazoTipo | "";
+  prazoQuantidade: number;
 }
 
 const ESTADO_INICIAL: EstadoRascunho = {
@@ -149,7 +155,12 @@ const ESTADO_INICIAL: EstadoRascunho = {
   formato: FORMATO_PADRAO,
   usarFaixaCopiaManual: false,
   copiasAdicionais: 0,
+  incluirPix: false,
+  precisaPrazo: false,
+  prazoTipo: "",
+  prazoQuantidade: 0,
 };
+
 
 function Calculadora() {
   const { user } = useAuth();
