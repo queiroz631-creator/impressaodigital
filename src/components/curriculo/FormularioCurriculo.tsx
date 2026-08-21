@@ -775,9 +775,15 @@ export function FormularioCurriculo({
                 <p className="text-muted-foreground">
                   {[telefone, ...telefones].filter(Boolean).join(" • ")}
                 </p>
+                <p className="text-muted-foreground">{email || "-"}</p>
                 <p className="text-muted-foreground">
-                  {[nascimento ? dataBR(nascimento) : "", estadoCivil, email].filter(Boolean).join(" • ") || "-"}
+                  {[nascimento ? dataBR(nascimento) : "", estadoCivil].filter(Boolean).join(" • ") || "-"}
                 </p>
+                {(endereco || bairro || cidade || cep) && (
+                  <p className="text-muted-foreground">
+                    {[endereco, bairro, cidade, uf, cep].filter(Boolean).join(" • ")}
+                  </p>
+                )}
               </ResumoLinha>
 
               <ResumoLinha titulo="Documentação" etapa={2} ir={setEtapa}>
@@ -791,8 +797,22 @@ export function FormularioCurriculo({
 
               <ResumoLinha titulo="Escolaridade" etapa={3} ir={setEtapa}>
                 <p>{escolaridade || "-"}</p>
-                {escolaridadeTemCurso(escolaridade) && cursoSuperior && (
+                {escolaridadeTemPos(escolaridade) && posGraduacaoNome && (
+                  <p className="text-muted-foreground">{posGraduacaoNome}</p>
+                )}
+                {escolaridadeTemCurso(escolaridade) && !escolaridadeTemPos(escolaridade) && cursoSuperior && (
                   <p className="text-muted-foreground">{cursoSuperior}</p>
+                )}
+                {formacoes.length > 0 && (
+                  <div className="mt-1 space-y-0.5">
+                    {formacoes.map((f, i) => (
+                      <p key={i} className="text-muted-foreground">
+                        {f.nome_curso}
+                        {f.instituicao ? ` — ${f.instituicao}` : ""}
+                        {f.ano ? ` (${f.ano})` : ""}
+                      </p>
+                    ))}
+                  </div>
                 )}
               </ResumoLinha>
 
@@ -804,6 +824,7 @@ export function FormularioCurriculo({
                     <p key={i}>
                       {x.nome_curso}
                       {x.instituicao ? ` — ${x.instituicao}` : ""}
+                      {x.ano ? ` (${x.ano})` : ""}
                     </p>
                   ))
                 )}
