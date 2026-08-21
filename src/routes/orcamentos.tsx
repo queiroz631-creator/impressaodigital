@@ -80,11 +80,22 @@ function dataLocalISO(valor: Date | string | null | undefined) {
   return `${ano}-${mes}-${dia}`;
 }
 
+/** Situação do pagamento de um pedido. */
+function situacaoPagamento(total: number, pago: number) {
+  if (pago <= 0) return { rotulo: "NÃO PAGO", classe: "bg-destructive text-destructive-foreground" };
+  if (pago + 0.009 < total) return { rotulo: "PARCIAL", classe: "bg-warning text-warning-foreground" };
+  return { rotulo: "PAGO", classe: "bg-success text-success-foreground" };
+}
+
 function Orcamentos() {
   const { data: orcamentos, isLoading } = useOrcamentos();
   const { data: listaPedidos } = usePedidos();
   const { data: config } = useConfiguracao();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+
 
   const hoje = dataLocalISO(new Date());
 
