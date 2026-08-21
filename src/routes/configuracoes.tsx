@@ -451,6 +451,9 @@ function Configuracoes() {
       </Card>
 
       <CardWhatsapp />
+
+      <CardBot />
+
     </>
   );
 }
