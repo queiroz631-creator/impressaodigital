@@ -470,6 +470,19 @@ function Orcamentos() {
                         <Badge variant="outline">{rotuloStatus[pedido.status]}</Badge>
                       </td>
 
+                      <td className="px-4 py-4 text-center">
+                        {(() => {
+                          const p = situacaoPagamento(pedido.total, pedido.valorPago);
+                          return (
+                            <span
+                              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${p.classe}`}
+                            >
+                              {p.rotulo}
+                            </span>
+                          );
+                        })()}
+                      </td>
+
                       <td className="px-4 py-4">
                         <div className="flex justify-end gap-1">
                           <Button
@@ -480,6 +493,16 @@ function Orcamentos() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Editar pedido"
+                            onClick={() => void editarPedido(pedido)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+
 
                           <Button
                             variant="ghost"
