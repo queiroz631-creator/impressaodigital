@@ -15,6 +15,9 @@ import { useConfiguracao } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { listarImpressoras, qzDisponivel, testarImpressora } from "@/lib/impressora";
+import { PIX_MENSAGEM_PADRAO, PRAZO_MENSAGEM_PADRAO } from "@/lib/orcamento-extras";
+import { Switch } from "@/components/ui/switch";
+
 
 export const Route = createFileRoute("/configuracoes")({
   component: () => (
