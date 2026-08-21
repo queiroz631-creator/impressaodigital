@@ -165,12 +165,29 @@ export function FormularioCurriculo({
             curso_superior: escolaridadeTemCurso(escolaridade) ? capitalizarTexto(cursoSuperior) || null : null,
             pos_graduacao_nome: escolaridadeTemPos(escolaridade) ? capitalizarTexto(posGraduacaoNome) || null : null,
           },
-          formacoes,
+          formacoes: formacoes.map((f) => ({
+            nome_curso: capitalizarTexto(f.nome_curso),
+            instituicao: capitalizarTexto(f.instituicao ?? "") || null,
+            ano: f.ano?.trim() || null,
+          })),
         };
       case 4:
-        return { cursos };
+        return {
+          cursos: cursos.map((cur) => ({
+            nome_curso: capitalizarTexto(cur.nome_curso),
+            instituicao: capitalizarTexto(cur.instituicao ?? "") || null,
+            ano: cur.ano?.trim() || null,
+          })),
+        };
       case 5:
-        return { experiencias };
+        return {
+          experiencias: experiencias.map((exp) => ({
+            empresa: capitalizarTexto(exp.empresa ?? "") || null,
+            cargo: capitalizarTexto(exp.cargo ?? "") || null,
+            periodo: exp.periodo?.trim() || null,
+            atividades: exp.atividades?.trim() || null,
+          })),
+        };
       case 6:
         return {
           campos: {
@@ -256,7 +273,7 @@ export function FormularioCurriculo({
                   <Input
                     id="nome"
                     value={nome}
-                    onChange={(e) => setNome(capitalizarTexto(e.target.value))}
+                    onChange={(e) => setNome(e.target.value)}
                   />
                 </div>
                 <div>
@@ -309,7 +326,7 @@ export function FormularioCurriculo({
                   <Input
                     id="endereco"
                     value={endereco}
-                    onChange={(e) => setEndereco(capitalizarTexto(e.target.value))}
+                    onChange={(e) => setEndereco(e.target.value)}
                   />
                 </div>
                 <div>
@@ -317,7 +334,7 @@ export function FormularioCurriculo({
                   <Input
                     id="bairro"
                     value={bairro}
-                    onChange={(e) => setBairro(capitalizarTexto(e.target.value))}
+                    onChange={(e) => setBairro(e.target.value)}
                   />
                 </div>
                 <div>
@@ -334,7 +351,7 @@ export function FormularioCurriculo({
                   <Input
                     id="cidade"
                     value={cidade}
-                    onChange={(e) => setCidade(capitalizarTexto(e.target.value))}
+                    onChange={(e) => setCidade(e.target.value)}
                   />
                 </div>
                 <div>
@@ -438,7 +455,7 @@ export function FormularioCurriculo({
                   <Input
                     id="curso"
                     value={cursoSuperior}
-                    onChange={(e) => setCursoSuperior(capitalizarTexto(e.target.value))}
+                    onChange={(e) => setCursoSuperior(e.target.value)}
                     placeholder="Ex.: Administração"
                   />
                 </div>
@@ -449,7 +466,7 @@ export function FormularioCurriculo({
                   <Input
                     id="pos"
                     value={posGraduacaoNome}
-                    onChange={(e) => setPosGraduacaoNome(capitalizarTexto(e.target.value))}
+                    onChange={(e) => setPosGraduacaoNome(e.target.value)}
                     placeholder="Ex.: MBA em Gestão Empresarial"
                   />
                 </div>
@@ -470,7 +487,7 @@ export function FormularioCurriculo({
                           value={f.nome_curso}
                           onChange={(e) =>
                             setFormacoes((a) =>
-                              a.map((v, j) => (j === i ? { ...v, nome_curso: capitalizarTexto(e.target.value) } : v)),
+                              a.map((v, j) => (j === i ? { ...v, nome_curso: e.target.value } : v)),
                             )
                           }
                         />
@@ -481,7 +498,7 @@ export function FormularioCurriculo({
                           value={f.instituicao ?? ""}
                           onChange={(e) =>
                             setFormacoes((a) =>
-                              a.map((v, j) => (j === i ? { ...v, instituicao: capitalizarTexto(e.target.value) } : v)),
+                              a.map((v, j) => (j === i ? { ...v, instituicao: e.target.value } : v)),
                             )
                           }
                         />
@@ -535,7 +552,7 @@ export function FormularioCurriculo({
                       value={curso.nome_curso}
                       onChange={(e) =>
                         setCursos((a) =>
-                          a.map((v, j) => (j === i ? { ...v, nome_curso: capitalizarTexto(e.target.value) } : v)),
+                          a.map((v, j) => (j === i ? { ...v, nome_curso: e.target.value } : v)),
                         )
                       }
                     />
@@ -546,7 +563,7 @@ export function FormularioCurriculo({
                       value={curso.instituicao ?? ""}
                       onChange={(e) =>
                         setCursos((a) =>
-                          a.map((v, j) => (j === i ? { ...v, instituicao: capitalizarTexto(e.target.value) } : v)),
+                          a.map((v, j) => (j === i ? { ...v, instituicao: e.target.value } : v)),
                         )
                       }
                     />
@@ -602,7 +619,7 @@ export function FormularioCurriculo({
                         value={exp.empresa ?? ""}
                         onChange={(e) =>
                           setExperiencias((a) =>
-                            a.map((v, j) => (j === i ? { ...v, empresa: capitalizarTexto(e.target.value) } : v)),
+                            a.map((v, j) => (j === i ? { ...v, empresa: e.target.value } : v)),
                           )
                         }
                       />
@@ -613,7 +630,7 @@ export function FormularioCurriculo({
                         value={exp.cargo ?? ""}
                         onChange={(e) =>
                           setExperiencias((a) =>
-                            a.map((v, j) => (j === i ? { ...v, cargo: capitalizarTexto(e.target.value) } : v)),
+                            a.map((v, j) => (j === i ? { ...v, cargo: e.target.value } : v)),
                           )
                         }
                       />

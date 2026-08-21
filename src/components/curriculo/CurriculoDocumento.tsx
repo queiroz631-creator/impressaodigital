@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import {
-  enderecoCompleto,
+  enderecoLinhas,
   formacaoFinal,
   formatarTelefone,
   informacoesAdicionais,
@@ -32,7 +32,7 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
     const pessoais = [
       c.data_nascimento ? `Nascimento: ${dataBR(c.data_nascimento)}` : "",
       c.estado_civil ?? "",
-      enderecoCompleto(c),
+      ...enderecoLinhas(c),
     ].filter(Boolean);
 
     const objetivo = objetivoFinal(c);
@@ -41,13 +41,15 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
 
     return (
       <div ref={ref} className="mx-auto w-full max-w-[210mm] bg-white p-8 text-foreground shadow-sm">
-        <header className="border-b-2 border-navy pb-3">
-          <p className="text-[12pt] font-bold uppercase tracking-widest text-navy">Currículo Vitae</p>
-          <h1 className="mt-1 text-[18pt] font-bold uppercase leading-tight text-navy">
+        <header className="text-center">
+          <p className="cv-secao rounded bg-navy px-3 py-2 text-[13pt] font-bold uppercase tracking-widest text-navy-foreground">
+            Currículo Vitae
+          </p>
+          <h1 className="mt-4 text-[18pt] font-bold uppercase leading-tight text-navy">
             {c.nome_completo || "Currículo"}
           </h1>
           {telefones.length > 0 && (
-            <p className="mt-1 text-[10.5pt]">{telefones.join("  •  ")}</p>
+            <p className="mt-3 text-[10.5pt]">{telefones.join("  •  ")}</p>
           )}
           {c.email && <p className="text-[10.5pt]">{c.email}</p>}
         </header>
