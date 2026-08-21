@@ -9,6 +9,7 @@ export interface DadosPublicos {
   curriculo: Omit<CurriculoCompleto["curriculo"], "cpf"> & { cpf: string };
   telefones: CurriculoCompleto["telefones"];
   cursos: CurriculoCompleto["cursos"];
+  formacoes: CurriculoCompleto["formacoes"];
   experiencias: CurriculoCompleto["experiencias"];
   habilidades: CurriculoCompleto["habilidades"];
   catalogoHabilidades: { id: string; descricao: string }[];
