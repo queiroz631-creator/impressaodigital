@@ -24,6 +24,12 @@ export interface CurriculoRegistro {
   created_at: string;
   updated_at: string;
   completed_at: string | null;
+  endereco: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  uf: string | null;
+  cep: string | null;
+  pos_graduacao_nome: string | null;
 }
 
 export interface TelefoneItem {
