@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { FileDown, FileText, Image as ImageIcon, Trash2, Eye, Printer, Tags } from "lucide-react";
+import {
+  FileDown,
+  FileText,
+  Image as ImageIcon,
+  Trash2,
+  Eye,
+  Printer,
+  Tags,
+  Pencil,
+} from "lucide-react";
+
 
 import { supabase } from "@/integrations/supabase/client";
 
