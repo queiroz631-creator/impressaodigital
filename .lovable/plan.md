@@ -60,9 +60,9 @@ Página enxuta com nome da empresa, "Preencha seu currículo", indicador "Etapa 
 
 ## Detalhes técnicos
 
-- Migração única: coluna `cpf` + índice único parcial em `clientes`, remoção de `clientes_telefone_normalizado_key`, novas tabelas com GRANTs e RLS, seed das habilidades padrão e dos objetivos sugeridos.
+- Migração única: novas tabelas de currículo com `cpf` único em `curriculos`, GRANTs e RLS, seed das habilidades padrão e dos objetivos sugeridos. Nenhuma constraint da tabela `clientes` é alterada.
 - Rotas novas: `src/routes/curriculos.tsx` (lista), `src/routes/curriculos.$id.tsx` (formulário/detalhe) e `src/routes/curriculo.publico.$token.tsx`.
 - Server functions: `src/lib/curriculo.functions.ts` (administrativo, com `requireSupabaseAuth`) e `src/lib/curriculo-publico.functions.ts` (token-based, sem auth) apoiadas por `curriculo.server.ts`.
 - PDF em `src/lib/curriculo-pdf.ts` (jsPDF, A4) e impressão via o serviço de impressão existente.
-- Ajuste em `src/routes/api/public/whatsapp/webhook.ts` e `src/lib/bot.server.ts` para tratar múltiplos clientes com o mesmo telefone pedindo o CPF.
+- Nenhuma alteração no webhook do WhatsApp nem no bot.
 - Após implementar: verificação de tipos, RLS, constraints e testes de ponta a ponta (criação por etapas, continuidade, link expirado, bloqueio de PDF/impressão pelo link).
