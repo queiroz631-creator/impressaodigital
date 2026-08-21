@@ -417,6 +417,24 @@ async function calcularOrcamento(conversa: ConversaBot, ctx: ContextoBot) {
 
   await responder(conversa, resumo);
 
+  // Link público do orçamento (quando habilitado nas configurações).
+  if (config.permitir_link && orcamento?.id) {
+    try {
+      const { criarLink } = await import("@/lib/link.server");
+      const { urlBase } = await import("@/lib/link-dados.server");
+      const token = await criarLink(orcamento.id, pedido.id, conversa.id);
+      const base = urlBase();
+      if (base) {
+        await responder(
+          conversa,
+          `Você também pode conferir e ajustar o pedido por aqui:\n${base}/orcamento/${token}`,
+        );
+      }
+    } catch {
+      /* o link é opcional: falhas não interrompem o atendimento */
+    }
+  }
+
   await salvar(conversa, {
     pedido_id: pedido.id,
     orcamento_id: orcamento?.id ?? null,
