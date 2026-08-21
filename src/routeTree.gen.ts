@@ -16,6 +16,8 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as HistoricoRouteImport } from './routes/historico'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as PrecosRouteImport } from './routes/precos'
+import { Route as WhatsappRouteImport } from './routes/whatsapp'
+import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +54,17 @@ const PrecosRoute = PrecosRouteImport.update({
   path: '/precos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WhatsappRoute = WhatsappRouteImport.update({
+  id: '/whatsapp',
+  path: '/whatsapp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWhatsappWebhookRoute =
+  ApiPublicWhatsappWebhookRouteImport.update({
+    id: '/api/public/whatsapp/webhook',
+    path: '/api/public/whatsapp/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +74,8 @@ export interface FileRoutesByFullPath {
   '/historico': typeof HistoricoRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
+  '/whatsapp': typeof WhatsappRoute
+  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +85,8 @@ export interface FileRoutesByTo {
   '/historico': typeof HistoricoRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
+  '/whatsapp': typeof WhatsappRoute
+  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +97,8 @@ export interface FileRoutesById {
   '/historico': typeof HistoricoRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
+  '/whatsapp': typeof WhatsappRoute
+  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +110,8 @@ export interface FileRouteTypes {
     | '/historico'
     | '/orcamentos'
     | '/precos'
+    | '/whatsapp'
+    | '/api/public/whatsapp/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +121,8 @@ export interface FileRouteTypes {
     | '/historico'
     | '/orcamentos'
     | '/precos'
+    | '/whatsapp'
+    | '/api/public/whatsapp/webhook'
   id:
     | '__root__'
     | '/'
@@ -109,6 +132,8 @@ export interface FileRouteTypes {
     | '/historico'
     | '/orcamentos'
     | '/precos'
+    | '/whatsapp'
+    | '/api/public/whatsapp/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +144,8 @@ export interface RootRouteChildren {
   HistoricoRoute: typeof HistoricoRoute
   OrcamentosRoute: typeof OrcamentosRoute
   PrecosRoute: typeof PrecosRoute
+  WhatsappRoute: typeof WhatsappRoute
+  ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +199,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrecosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/whatsapp': {
+      id: '/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/whatsapp'
+      preLoaderRoute: typeof WhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/whatsapp/webhook': {
+      id: '/api/public/whatsapp/webhook'
+      path: '/api/public/whatsapp/webhook'
+      fullPath: '/api/public/whatsapp/webhook'
+      preLoaderRoute: typeof ApiPublicWhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,6 +224,8 @@ const rootRouteChildren: RootRouteChildren = {
   HistoricoRoute: HistoricoRoute,
   OrcamentosRoute: OrcamentosRoute,
   PrecosRoute: PrecosRoute,
+  WhatsappRoute: WhatsappRoute,
+  ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

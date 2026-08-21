@@ -182,6 +182,39 @@ export type Database = {
         }
         Relationships: []
       }
+      clientes: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          nome: string
+          observacao: string | null
+          telefone: string | null
+          telefone_normalizado: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          observacao?: string | null
+          telefone?: string | null
+          telefone_normalizado?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          observacao?: string | null
+          telefone?: string | null
+          telefone_normalizado?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       configuracoes: {
         Row: {
           email: string | null
@@ -319,6 +352,7 @@ export type Database = {
           acabamentos: Json
           arquivos: Json
           calculo_id: string | null
+          cliente_id: string | null
           cliente_nome: string
           cliente_telefone: string | null
           copia_manual: boolean
@@ -333,6 +367,7 @@ export type Database = {
           numero: string
           observacao: string | null
           ordem: number
+          origem_orcamento: string
           paginas_adicionais: number
           paginas_total: number
           pedido_id: string | null
@@ -342,6 +377,7 @@ export type Database = {
           prazo_tipo: string | null
           precisa_prazo: boolean
           quantidade_arquivos: number
+          revisao_necessaria: boolean
           status: string
           tamanho: string
           tipo_impressao: string
@@ -355,6 +391,7 @@ export type Database = {
           acabamentos?: Json
           arquivos?: Json
           calculo_id?: string | null
+          cliente_id?: string | null
           cliente_nome?: string
           cliente_telefone?: string | null
           copia_manual?: boolean
@@ -369,6 +406,7 @@ export type Database = {
           numero?: string
           observacao?: string | null
           ordem?: number
+          origem_orcamento?: string
           paginas_adicionais?: number
           paginas_total?: number
           pedido_id?: string | null
@@ -378,6 +416,7 @@ export type Database = {
           prazo_tipo?: string | null
           precisa_prazo?: boolean
           quantidade_arquivos?: number
+          revisao_necessaria?: boolean
           status?: string
           tamanho?: string
           tipo_impressao?: string
@@ -391,6 +430,7 @@ export type Database = {
           acabamentos?: Json
           arquivos?: Json
           calculo_id?: string | null
+          cliente_id?: string | null
           cliente_nome?: string
           cliente_telefone?: string | null
           copia_manual?: boolean
@@ -405,6 +445,7 @@ export type Database = {
           numero?: string
           observacao?: string | null
           ordem?: number
+          origem_orcamento?: string
           paginas_adicionais?: number
           paginas_total?: number
           pedido_id?: string | null
@@ -414,6 +455,7 @@ export type Database = {
           prazo_tipo?: string | null
           precisa_prazo?: boolean
           quantidade_arquivos?: number
+          revisao_necessaria?: boolean
           status?: string
           tamanho?: string
           tipo_impressao?: string
@@ -429,6 +471,13 @@ export type Database = {
             columns: ["calculo_id"]
             isOneToOne: false
             referencedRelation: "calculos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
           {
@@ -449,6 +498,7 @@ export type Database = {
       }
       pedidos: {
         Row: {
+          cliente_id: string | null
           cliente_nome: string
           cliente_telefone: string | null
           created_at: string
@@ -469,6 +519,7 @@ export type Database = {
           valor_total: number
         }
         Insert: {
+          cliente_id?: string | null
           cliente_nome?: string
           cliente_telefone?: string | null
           created_at?: string
@@ -489,6 +540,7 @@ export type Database = {
           valor_total?: number
         }
         Update: {
+          cliente_id?: string | null
           cliente_nome?: string
           cliente_telefone?: string | null
           created_at?: string
@@ -508,7 +560,15 @@ export type Database = {
           valor_pago?: number
           valor_total?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -572,6 +632,379 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      whatsapp_arquivos: {
+        Row: {
+          cliente_id: string | null
+          conversa_id: string
+          copias: number
+          created_at: string
+          frente_verso: boolean
+          id: string
+          mensagem_id: string | null
+          mime_type: string | null
+          nome: string
+          paginas: number
+          paginas_manuais: boolean
+          pedido_id: string | null
+          storage_path: string | null
+          tipo: string
+          url: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          conversa_id: string
+          copias?: number
+          created_at?: string
+          frente_verso?: boolean
+          id?: string
+          mensagem_id?: string | null
+          mime_type?: string | null
+          nome?: string
+          paginas?: number
+          paginas_manuais?: boolean
+          pedido_id?: string | null
+          storage_path?: string | null
+          tipo?: string
+          url?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          conversa_id?: string
+          copias?: number
+          created_at?: string
+          frente_verso?: boolean
+          id?: string
+          mensagem_id?: string | null
+          mime_type?: string | null
+          nome?: string
+          paginas?: number
+          paginas_manuais?: boolean
+          pedido_id?: string | null
+          storage_path?: string | null
+          tipo?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_arquivos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_arquivos_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_arquivos_mensagem_id_fkey"
+            columns: ["mensagem_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_mensagens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_arquivos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_auditoria: {
+        Row: {
+          acao: string
+          conversa_id: string | null
+          created_at: string
+          detalhe: string | null
+          id: string
+          usuario_id: string | null
+          usuario_nome: string | null
+        }
+        Insert: {
+          acao: string
+          conversa_id?: string | null
+          created_at?: string
+          detalhe?: string | null
+          id?: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Update: {
+          acao?: string
+          conversa_id?: string | null
+          created_at?: string
+          detalhe?: string | null
+          id?: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_auditoria_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_config: {
+        Row: {
+          base_url: string
+          bot_ativo: boolean
+          conexao_nome: string
+          exigir_revisao_humana: boolean
+          id: string
+          link_exigir_telefone: boolean
+          link_permitir_acabamento: boolean
+          link_permitir_confirmacao: boolean
+          link_permitir_copias: boolean
+          link_permitir_formato: boolean
+          link_permitir_frente_verso: boolean
+          link_permitir_material: boolean
+          link_permitir_tipo: boolean
+          link_permitir_upload: boolean
+          mostrar_precos_link: boolean
+          msg_boas_vindas: string
+          msg_finalizacao: string
+          msg_inicial: string
+          msg_orcamento_confirmado: string
+          msg_orcamento_gerado: string
+          msg_revisao: string
+          msg_transferencia: string
+          permitir_link: boolean
+          permitir_orcamento_automatico: boolean
+          reabrir_mesmo_dia: boolean
+          updated_at: string
+          webhook_token: string
+        }
+        Insert: {
+          base_url?: string
+          bot_ativo?: boolean
+          conexao_nome?: string
+          exigir_revisao_humana?: boolean
+          id?: string
+          link_exigir_telefone?: boolean
+          link_permitir_acabamento?: boolean
+          link_permitir_confirmacao?: boolean
+          link_permitir_copias?: boolean
+          link_permitir_formato?: boolean
+          link_permitir_frente_verso?: boolean
+          link_permitir_material?: boolean
+          link_permitir_tipo?: boolean
+          link_permitir_upload?: boolean
+          mostrar_precos_link?: boolean
+          msg_boas_vindas?: string
+          msg_finalizacao?: string
+          msg_inicial?: string
+          msg_orcamento_confirmado?: string
+          msg_orcamento_gerado?: string
+          msg_revisao?: string
+          msg_transferencia?: string
+          permitir_link?: boolean
+          permitir_orcamento_automatico?: boolean
+          reabrir_mesmo_dia?: boolean
+          updated_at?: string
+          webhook_token?: string
+        }
+        Update: {
+          base_url?: string
+          bot_ativo?: boolean
+          conexao_nome?: string
+          exigir_revisao_humana?: boolean
+          id?: string
+          link_exigir_telefone?: boolean
+          link_permitir_acabamento?: boolean
+          link_permitir_confirmacao?: boolean
+          link_permitir_copias?: boolean
+          link_permitir_formato?: boolean
+          link_permitir_frente_verso?: boolean
+          link_permitir_material?: boolean
+          link_permitir_tipo?: boolean
+          link_permitir_upload?: boolean
+          mostrar_precos_link?: boolean
+          msg_boas_vindas?: string
+          msg_finalizacao?: string
+          msg_inicial?: string
+          msg_orcamento_confirmado?: string
+          msg_orcamento_gerado?: string
+          msg_revisao?: string
+          msg_transferencia?: string
+          permitir_link?: boolean
+          permitir_orcamento_automatico?: boolean
+          reabrir_mesmo_dia?: boolean
+          updated_at?: string
+          webhook_token?: string
+        }
+        Relationships: []
+      }
+      whatsapp_conversas: {
+        Row: {
+          atendente_id: string | null
+          atendente_nome: string | null
+          cliente_id: string | null
+          contexto: Json
+          created_at: string
+          data_finalizacao: string | null
+          etapa: string
+          id: string
+          inicio_atendimento: string | null
+          motivo_encaminhamento: string | null
+          motivo_finalizacao: string | null
+          motivo_pendencia: string | null
+          nao_lidas: number
+          nome_contato: string | null
+          orcamento_id: string | null
+          pedido_id: string | null
+          status: string
+          telefone: string
+          total_mensagens: number
+          ultima_mensagem: string | null
+          ultima_mensagem_em: string | null
+          updated_at: string
+        }
+        Insert: {
+          atendente_id?: string | null
+          atendente_nome?: string | null
+          cliente_id?: string | null
+          contexto?: Json
+          created_at?: string
+          data_finalizacao?: string | null
+          etapa?: string
+          id?: string
+          inicio_atendimento?: string | null
+          motivo_encaminhamento?: string | null
+          motivo_finalizacao?: string | null
+          motivo_pendencia?: string | null
+          nao_lidas?: number
+          nome_contato?: string | null
+          orcamento_id?: string | null
+          pedido_id?: string | null
+          status?: string
+          telefone: string
+          total_mensagens?: number
+          ultima_mensagem?: string | null
+          ultima_mensagem_em?: string | null
+          updated_at?: string
+        }
+        Update: {
+          atendente_id?: string | null
+          atendente_nome?: string | null
+          cliente_id?: string | null
+          contexto?: Json
+          created_at?: string
+          data_finalizacao?: string | null
+          etapa?: string
+          id?: string
+          inicio_atendimento?: string | null
+          motivo_encaminhamento?: string | null
+          motivo_finalizacao?: string | null
+          motivo_pendencia?: string | null
+          nao_lidas?: number
+          nome_contato?: string | null
+          orcamento_id?: string | null
+          pedido_id?: string | null
+          status?: string
+          telefone?: string
+          total_mensagens?: number
+          ultima_mensagem?: string | null
+          ultima_mensagem_em?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_conversas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_conversas_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_conversas_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_mensagens: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_path: string | null
+          arquivo_url: string | null
+          autor: string | null
+          conversa_id: string
+          created_at: string
+          data_hora: string
+          direcao: string
+          erro: string | null
+          id: string
+          mime_type: string | null
+          payload: Json
+          status: string
+          texto: string | null
+          tipo: string
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          arquivo_url?: string | null
+          autor?: string | null
+          conversa_id: string
+          created_at?: string
+          data_hora?: string
+          direcao?: string
+          erro?: string | null
+          id?: string
+          mime_type?: string | null
+          payload?: Json
+          status?: string
+          texto?: string | null
+          tipo?: string
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
+          arquivo_url?: string | null
+          autor?: string | null
+          conversa_id?: string
+          created_at?: string
+          data_hora?: string
+          direcao?: string
+          erro?: string | null
+          id?: string
+          mime_type?: string | null
+          payload?: Json
+          status?: string
+          texto?: string | null
+          tipo?: string
+          whatsapp_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_mensagens_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { statusInstanciaZapi } from "@/lib/whatsapp.functions";
 import { toast } from "sonner";
-import { Plus, Printer, Save, ShieldAlert, Trash2 } from "lucide-react";
+import { Copy, Plus, Printer, RefreshCw, Save, ShieldAlert, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -447,6 +449,104 @@ function Configuracoes() {
           </div>
         </CardContent>
       </Card>
+
+      <CardWhatsapp />
     </>
+  );
+}
+/** Conexão com a Z-API e endereço do webhook do WhatsApp. */
+function CardWhatsapp() {
+  const [origem, setOrigem] = useState("");
+  const consultarStatus = useServerFn(statusInstanciaZapi);
+
+  useEffect(() => setOrigem(window.location.origin), []);
+
+  const config = useQuery({
+    queryKey: ["whatsapp-config"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_config")
+        .select("id, conexao_nome, base_url, webhook_token")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const status = useQuery({
+    queryKey: ["whatsapp-status"],
+    queryFn: async () => consultarStatus(),
+    retry: false,
+  });
+
+  const token = config.data?.webhook_token ?? "";
+  const urlWebhook = origem && token ? `${origem}/api/public/whatsapp/webhook?token=${token}` : "";
+
+  const cor = !status.data?.configurado
+    ? "bg-muted text-muted-foreground"
+    : status.data.conectado
+      ? "bg-success text-success-foreground"
+      : "bg-destructive text-destructive-foreground";
+
+  return (
+    <Card className="mt-6 max-w-3xl shadow-card">
+      <CardHeader>
+        <CardTitle className="text-base">WhatsApp (Z-API)</CardTitle>
+      </CardHeader>
+
+      <CardContent className="grid gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${cor}`}>
+            {status.isFetching
+              ? "Verificando..."
+              : !status.data?.configurado
+                ? "Não configurado"
+                : status.data.conectado
+                  ? "Conectado"
+                  : "Desconectado"}
+          </span>
+
+          <Button variant="outline" size="sm" onClick={() => status.refetch()} disabled={status.isFetching}>
+            <RefreshCw className="h-4 w-4" /> Testar conexão
+          </Button>
+
+          <span className="text-xs text-muted-foreground">
+            {status.data?.detalhe ?? "Credenciais guardadas com segurança no servidor."}
+          </span>
+        </div>
+
+        <div className="grid gap-2">
+          <Label>URL do webhook (cole no painel da Z-API)</Label>
+          <div className="flex gap-2">
+            <Input readOnly value={urlWebhook} placeholder="Gerando..." className="font-mono text-xs" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                if (!urlWebhook) return;
+                await navigator.clipboard.writeText(urlWebhook);
+                toast.success("URL copiada.");
+              }}
+            >
+              <Copy className="h-4 w-4" /> Copiar
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Configure em <strong>Ao receber</strong>, <strong>Ao receber status</strong> e{" "}
+            <strong>Ao desconectar</strong> na Z-API. O token na URL valida as chamadas recebidas.
+          </p>
+        </div>
+
+        <div className="grid gap-1 text-xs text-muted-foreground">
+          <p>
+            Credenciais necessárias (guardadas como segredos do backend):{" "}
+            <strong>ZAPI_INSTANCE_ID</strong>, <strong>ZAPI_INSTANCE_TOKEN</strong>,{" "}
+            <strong>ZAPI_CLIENT_TOKEN</strong> e, opcionalmente, <strong>ZAPI_BASE_URL</strong>.
+          </p>
+          <p>Conexão: {config.data?.conexao_nome ?? "Principal"} · Base: {config.data?.base_url ?? "https://api.z-api.io"}</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

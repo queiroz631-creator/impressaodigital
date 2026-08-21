@@ -1,0 +1,2 @@
+ALTER TABLE public.whatsapp_config ADD COLUMN IF NOT EXISTS webhook_token text NOT NULL DEFAULT replace(gen_random_uuid()::text, '-', '');
+UPDATE public.whatsapp_config SET webhook_token = replace(gen_random_uuid()::text, '-', '') WHERE webhook_token IS NULL OR webhook_token = '';
