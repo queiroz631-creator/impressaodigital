@@ -454,7 +454,116 @@ function Configuracoes() {
 
       <CardBot />
 
+      <CardLinkPublico />
+
     </>
+  );
+}
+
+interface FormLink {
+  permitir_link: boolean;
+  mostrar_precos_link: boolean;
+  link_permitir_upload: boolean;
+  link_permitir_material: boolean;
+  link_permitir_acabamento: boolean;
+  link_permitir_formato: boolean;
+  link_permitir_tipo: boolean;
+  link_permitir_copias: boolean;
+  link_permitir_frente_verso: boolean;
+  link_permitir_confirmacao: boolean;
+  link_exigir_telefone: boolean;
+}
+
+const CAMPOS_LINK: { chave: keyof FormLink; rotulo: string; ajuda: string }[] = [
+  { chave: "permitir_link", rotulo: "Link ativo", ajuda: "Habilita o link público do orçamento enviado ao cliente." },
+  { chave: "mostrar_precos_link", rotulo: "Mostrar valores", ajuda: "Exibe o total do orçamento na página do cliente." },
+  { chave: "link_permitir_material", rotulo: "Alterar material", ajuda: "O cliente pode trocar o papel/material." },
+  { chave: "link_permitir_copias", rotulo: "Alterar cópias", ajuda: "O cliente pode mudar a quantidade de cópias." },
+  { chave: "link_permitir_frente_verso", rotulo: "Alterar frente e verso", ajuda: "O cliente pode ligar/desligar frente e verso." },
+  { chave: "link_permitir_acabamento", rotulo: "Alterar acabamentos", ajuda: "O cliente pode escolher acabamentos." },
+  { chave: "link_permitir_formato", rotulo: "Alterar formato", ajuda: "Permite trocar A3/A4/A5 pelo link." },
+  { chave: "link_permitir_tipo", rotulo: "Alterar tipo de impressão", ajuda: "Permite trocar impressão simples/especial." },
+  { chave: "link_permitir_upload", rotulo: "Enviar arquivos pelo link", ajuda: "Reservado para envio de novos arquivos pelo cliente." },
+  { chave: "link_permitir_confirmacao", rotulo: "Confirmar pelo link", ajuda: "O cliente pode aprovar o pedido pela página." },
+  { chave: "link_exigir_telefone", rotulo: "Exigir telefone", ajuda: "Pede confirmação do telefone antes de aprovar." },
+];
+
+/** Link público do orçamento enviado ao cliente. */
+function CardLinkPublico() {
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState<FormLink | null>(null);
+  const [salvando, setSalvando] = useState(false);
+
+  const config = useQuery({
+    queryKey: ["whatsapp-config-link"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("whatsapp_config").select("*").limit(1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    const d = config.data;
+    if (!d || form) return;
+    const inicial = {} as FormLink;
+    for (const campo of CAMPOS_LINK) {
+      inicial[campo.chave] = Boolean((d as Record<string, unknown>)[campo.chave]);
+    }
+    setForm(inicial);
+  }, [config.data, form]);
+
+  if (config.isLoading || !form) return <Skeleton className="mt-6 h-64 max-w-3xl" />;
+
+  const id = config.data?.id;
+
+  async function salvarLink() {
+    if (!id || !form) return;
+    setSalvando(true);
+    const { error } = await supabase.from("whatsapp_config").update(form).eq("id", id);
+    setSalvando(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Link do orçamento atualizado.");
+    await queryClient.invalidateQueries({ queryKey: ["whatsapp-config-link"] });
+  }
+
+  return (
+    <Card className="mt-6 max-w-3xl shadow-card">
+      <CardHeader>
+        <CardTitle className="text-base">Link público do orçamento</CardTitle>
+      </CardHeader>
+
+      <CardContent className="grid gap-5">
+        <p className="text-xs text-muted-foreground">
+          O cliente recebe um endereço exclusivo para conferir o orçamento. Os valores continuam
+          sendo calculados pelo sistema — o cliente só escolhe entre as opções liberadas abaixo.
+        </p>
+
+        <div className="grid gap-3">
+          {CAMPOS_LINK.map((campo) => (
+            <label key={campo.chave} className="flex items-center justify-between gap-4 text-sm">
+              <span>
+                <strong>{campo.rotulo}</strong>
+                <span className="block text-xs text-muted-foreground">{campo.ajuda}</span>
+              </span>
+              <Switch
+                checked={form[campo.chave]}
+                onCheckedChange={(v) => setForm({ ...form, [campo.chave]: v })}
+              />
+            </label>
+          ))}
+        </div>
+
+        <div className="flex justify-end">
+          <Button onClick={salvarLink} disabled={salvando}>
+            <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar link do orçamento"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 /** Conexão com a Z-API e endereço do webhook do WhatsApp. */

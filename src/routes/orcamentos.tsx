@@ -12,7 +12,11 @@ import {
   Printer,
   Tags,
   Pencil,
+  Link2 as LinkIcon,
 } from "lucide-react";
+
+import { useServerFn } from "@tanstack/react-start";
+import { gerarLinkOrcamento } from "@/lib/link.functions";
 
 
 import { supabase } from "@/integrations/supabase/client";
@@ -98,6 +102,7 @@ function Orcamentos() {
 
 
   const hoje = dataLocalISO(new Date());
+  const criarLink = useServerFn(gerarLinkOrcamento);
 
   /* ---------------- FILTRO POR DATA ---------------- */
   const [dataInicio, setDataInicio] = useState(hoje);
@@ -258,6 +263,28 @@ function Orcamentos() {
       return;
     }
     invalidar(pedido.pedidoId);
+  }
+
+  /** Gera (ou reaproveita) o link público do orçamento e copia para a área de transferência. */
+  async function copiarLink(pedido: PedidoAgrupado) {
+    const primeiro = pedido.itens[0];
+    const orcamentoId = primeiro ? String(primeiro["id"] ?? "") : "";
+    if (!orcamentoId) {
+      toast.error("Este pedido não possui itens para gerar o link.");
+      return;
+    }
+    try {
+      const r = await criarLink({ data: { orcamentoId } });
+      if (!r.ok || !r.url) {
+        toast.error(r.motivo ?? "Não foi possível gerar o link.");
+        return;
+      }
+      const url = r.url.startsWith("http") ? r.url : `${window.location.origin}${r.url}`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copiado para a área de transferência.");
+    } catch {
+      toast.error("Não foi possível gerar o link do orçamento.");
+    }
   }
 
   /** Abre o pedido na calculadora para continuar/editar os itens. */
@@ -503,6 +530,15 @@ function Orcamentos() {
                             <Pencil className="h-4 w-4" />
                           </Button>
 
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Copiar link do orçamento"
+                            onClick={() => void copiarLink(pedido)}
+                          >
+                            <LinkIcon className="h-4 w-4" />
+                          </Button>
 
                           <Button
                             variant="ghost"

@@ -17,6 +17,7 @@ import { Route as HistoricoRouteImport } from './routes/historico'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as PrecosRouteImport } from './routes/precos'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
+import { Route as OrcamentoTokenRouteImport } from './routes/orcamento.$token'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +60,11 @@ const WhatsappRoute = WhatsappRouteImport.update({
   path: '/whatsapp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrcamentoTokenRoute = OrcamentoTokenRouteImport.update({
+  id: '/orcamento/$token',
+  path: '/orcamento/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWhatsappWebhookRoute =
   ApiPublicWhatsappWebhookRouteImport.update({
     id: '/api/public/whatsapp/webhook',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
+  '/orcamento/$token': typeof OrcamentoTokenRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
+  '/orcamento/$token': typeof OrcamentoTokenRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRoutesById {
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
+  '/orcamento/$token': typeof OrcamentoTokenRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRouteTypes {
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
+    | '/orcamento/$token'
     | '/api/public/whatsapp/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
+    | '/orcamento/$token'
     | '/api/public/whatsapp/webhook'
   id:
     | '__root__'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
+    | '/orcamento/$token'
     | '/api/public/whatsapp/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -145,6 +157,7 @@ export interface RootRouteChildren {
   OrcamentosRoute: typeof OrcamentosRoute
   PrecosRoute: typeof PrecosRoute
   WhatsappRoute: typeof WhatsappRoute
+  OrcamentoTokenRoute: typeof OrcamentoTokenRoute
   ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
 }
 
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WhatsappRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/orcamento/$token': {
+      id: '/orcamento/$token'
+      path: '/orcamento/$token'
+      fullPath: '/orcamento/$token'
+      preLoaderRoute: typeof OrcamentoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/whatsapp/webhook': {
       id: '/api/public/whatsapp/webhook'
       path: '/api/public/whatsapp/webhook'
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrcamentosRoute: OrcamentosRoute,
   PrecosRoute: PrecosRoute,
   WhatsappRoute: WhatsappRoute,
+  OrcamentoTokenRoute: OrcamentoTokenRoute,
   ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
 }
 export const routeTree = rootRouteImport
