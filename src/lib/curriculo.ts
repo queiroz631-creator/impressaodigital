@@ -225,6 +225,18 @@ export function enderecoCompleto(c: CurriculoRegistro): string {
     .join(", ");
 }
 
+/**
+ * Endereço em duas linhas:
+ * 1) rua/nº e bairro  2) cidade - UF e CEP.
+ */
+export function enderecoLinhas(c: CurriculoRegistro): string[] {
+  const linha1 = [c.endereco, c.bairro].filter(Boolean).join(", ");
+  const linha2 = [[c.cidade, c.uf].filter(Boolean).join(" - "), c.cep ? `CEP ${c.cep}` : ""]
+    .filter(Boolean)
+    .join(" — ");
+  return [linha1, linha2].filter(Boolean);
+}
+
 export function informacoesAdicionais(c: CurriculoRegistro) {
   const linhas: string[] = [];
   if (c.documentacao_completa === true) linhas.push("Possui documentação completa.");
