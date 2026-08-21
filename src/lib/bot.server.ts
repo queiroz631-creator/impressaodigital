@@ -441,7 +441,7 @@ async function lerConfig(): Promise<ConfigBot | null> {
   const { data } = await supabaseAdmin
     .from("whatsapp_config")
     .select(
-      "bot_ativo, permitir_orcamento_automatico, exigir_revisao_humana, msg_inicial, msg_boas_vindas, msg_transferencia, msg_orcamento_gerado, msg_revisao, msg_orcamento_confirmado",
+      "bot_ativo, permitir_orcamento_automatico, exigir_revisao_humana, permitir_link, msg_inicial, msg_boas_vindas, msg_transferencia, msg_orcamento_gerado, msg_revisao, msg_orcamento_confirmado",
     )
     .limit(1)
     .maybeSingle();
