@@ -287,6 +287,304 @@ export type Database = {
         }
         Relationships: []
       }
+      curriculo_cursos: {
+        Row: {
+          created_at: string
+          curriculo_id: string
+          id: string
+          instituicao: string | null
+          nome_curso: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          curriculo_id: string
+          id?: string
+          instituicao?: string | null
+          nome_curso: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          curriculo_id?: string
+          id?: string
+          instituicao?: string | null
+          nome_curso?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculo_cursos_curriculo_id_fkey"
+            columns: ["curriculo_id"]
+            isOneToOne: false
+            referencedRelation: "curriculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculo_experiencias: {
+        Row: {
+          atividades: string | null
+          cargo: string | null
+          created_at: string
+          curriculo_id: string
+          empresa: string | null
+          id: string
+          ordem: number
+          periodo: string | null
+          updated_at: string
+        }
+        Insert: {
+          atividades?: string | null
+          cargo?: string | null
+          created_at?: string
+          curriculo_id: string
+          empresa?: string | null
+          id?: string
+          ordem?: number
+          periodo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          atividades?: string | null
+          cargo?: string | null
+          created_at?: string
+          curriculo_id?: string
+          empresa?: string | null
+          id?: string
+          ordem?: number
+          periodo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculo_experiencias_curriculo_id_fkey"
+            columns: ["curriculo_id"]
+            isOneToOne: false
+            referencedRelation: "curriculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculo_habilidades: {
+        Row: {
+          created_at: string
+          curriculo_id: string
+          descricao: string
+          habilidade_id: string | null
+          id: string
+          ordem: number
+        }
+        Insert: {
+          created_at?: string
+          curriculo_id: string
+          descricao: string
+          habilidade_id?: string | null
+          id?: string
+          ordem?: number
+        }
+        Update: {
+          created_at?: string
+          curriculo_id?: string
+          descricao?: string
+          habilidade_id?: string | null
+          id?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculo_habilidades_curriculo_id_fkey"
+            columns: ["curriculo_id"]
+            isOneToOne: false
+            referencedRelation: "curriculos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculo_habilidades_habilidade_id_fkey"
+            columns: ["habilidade_id"]
+            isOneToOne: false
+            referencedRelation: "habilidades_curriculo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculo_links: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          curriculo_id: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          curriculo_id: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          curriculo_id?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculo_links_curriculo_id_fkey"
+            columns: ["curriculo_id"]
+            isOneToOne: false
+            referencedRelation: "curriculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculo_telefones: {
+        Row: {
+          created_at: string
+          curriculo_id: string
+          id: string
+          ordem: number
+          telefone: string
+          tipo: string | null
+        }
+        Insert: {
+          created_at?: string
+          curriculo_id: string
+          id?: string
+          ordem?: number
+          telefone: string
+          tipo?: string | null
+        }
+        Update: {
+          created_at?: string
+          curriculo_id?: string
+          id?: string
+          ordem?: number
+          telefone?: string
+          tipo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculo_telefones_curriculo_id_fkey"
+            columns: ["curriculo_id"]
+            isOneToOne: false
+            referencedRelation: "curriculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculos: {
+        Row: {
+          categoria_habilitacao: string | null
+          cliente_id: string | null
+          completed_at: string | null
+          cpf: string
+          created_at: string
+          curso_superior: string | null
+          data_nascimento: string | null
+          documentacao_completa: boolean | null
+          email: string | null
+          escolaridade: string | null
+          estado_civil: string | null
+          exibir_data_atualizacao: boolean
+          habilitacao: boolean
+          id: string
+          nome_completo: string
+          objetivo_texto: string | null
+          objetivo_tipo: string
+          status: string
+          telefone_principal: string
+          updated_at: string
+        }
+        Insert: {
+          categoria_habilitacao?: string | null
+          cliente_id?: string | null
+          completed_at?: string | null
+          cpf: string
+          created_at?: string
+          curso_superior?: string | null
+          data_nascimento?: string | null
+          documentacao_completa?: boolean | null
+          email?: string | null
+          escolaridade?: string | null
+          estado_civil?: string | null
+          exibir_data_atualizacao?: boolean
+          habilitacao?: boolean
+          id?: string
+          nome_completo?: string
+          objetivo_texto?: string | null
+          objetivo_tipo?: string
+          status?: string
+          telefone_principal?: string
+          updated_at?: string
+        }
+        Update: {
+          categoria_habilitacao?: string | null
+          cliente_id?: string | null
+          completed_at?: string | null
+          cpf?: string
+          created_at?: string
+          curso_superior?: string | null
+          data_nascimento?: string | null
+          documentacao_completa?: boolean | null
+          email?: string | null
+          escolaridade?: string | null
+          estado_civil?: string | null
+          exibir_data_atualizacao?: boolean
+          habilitacao?: boolean
+          id?: string
+          nome_completo?: string
+          objetivo_texto?: string | null
+          objetivo_tipo?: string
+          status?: string
+          telefone_principal?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habilidades_curriculo: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string
+          id: string
+          ordem: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao: string
+          id?: string
+          ordem?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          id?: string
+          ordem?: number
+        }
+        Relationships: []
+      }
       materiais: {
         Row: {
           ativo: boolean
@@ -344,6 +642,30 @@ export type Database = {
           quantidade_arquivos_fixo?: number | null
           tipo_impressao?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      objetivos_curriculo: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          ordem: number
+          texto: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          ordem?: number
+          texto: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          ordem?: number
+          texto?: string
         }
         Relationships: []
       }
