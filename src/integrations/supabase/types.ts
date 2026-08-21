@@ -347,6 +347,70 @@ export type Database = {
         }
         Relationships: []
       }
+      orcamento_links: {
+        Row: {
+          aberto_em: string | null
+          cancelado: boolean
+          confirmado_em: string | null
+          conversa_id: string | null
+          created_at: string
+          expira_em: string
+          id: string
+          orcamento_id: string
+          pedido_id: string | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          aberto_em?: string | null
+          cancelado?: boolean
+          confirmado_em?: string | null
+          conversa_id?: string | null
+          created_at?: string
+          expira_em?: string
+          id?: string
+          orcamento_id: string
+          pedido_id?: string | null
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          aberto_em?: string | null
+          cancelado?: boolean
+          confirmado_em?: string | null
+          conversa_id?: string | null
+          created_at?: string
+          expira_em?: string
+          id?: string
+          orcamento_id?: string
+          pedido_id?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamento_links_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_links_orcamento_id_fkey"
+            columns: ["orcamento_id"]
+            isOneToOne: false
+            referencedRelation: "orcamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_links_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orcamentos: {
         Row: {
           acabamentos: Json
