@@ -130,25 +130,29 @@ export function escolaridadeTemPos(valor?: string | null) {
   return !!valor && valor === "Pós-graduação";
 }
 
+const CONECTIVOS = new Set(["de", "da", "do", "dos", "das", "e"]);
+const SIGLAS = new Set(["RG", "CPF", "CNH", "UF", "CEP", "MEI", "TI", "RH"]);
+
 /**
  * Normaliza texto para "Inicial maiúscula" de cada palavra, preservando
- * siglas (todas maiúsculas) e não alterando e-mail.
+ * siglas conhecidas e mantendo conectivos em minúsculo.
+ * Aplicada apenas no momento de salvar — nunca durante a digitação.
  */
 export function capitalizarTexto(valor: string): string {
   if (!valor) return valor;
-  return valor
-    .trim()
-    .split(/(\s+)/)
-    .map((parte) => {
-      if (/^\s+$/.test(parte)) return parte;
-      const lower = parte.toLowerCase();
-      // Siglas (ex.: UF, RG) ficam como estão.
-      if (parte.length <= 3 && parte === parte.toUpperCase() && /[A-Z]/.test(parte)) {
-        return parte;
+  const limpo = valor.replace(/\s+/g, " ").trim();
+  if (!limpo) return "";
+  return limpo
+    .split(" ")
+    .map((palavra, indice) => {
+      if (SIGLAS.has(palavra.toUpperCase()) && palavra.length <= 4 && palavra === palavra.toUpperCase()) {
+        return palavra;
       }
+      const lower = palavra.toLowerCase();
+      if (indice > 0 && CONECTIVOS.has(lower)) return lower;
       return lower.charAt(0).toUpperCase() + lower.slice(1);
     })
-    .join("");
+    .join(" ");
 }
 
 /* -------------------------------------------------------------- CPF */
