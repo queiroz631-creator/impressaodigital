@@ -589,7 +589,12 @@ export function FormularioCurriculo({
           {etapa === 5 && (
             <div className="space-y-3">
               {experiencias.map((exp, i) => (
-                <div key={i} className="space-y-2 rounded-lg border p-3">
+                <div
+                  key={i}
+                  className={`space-y-2 rounded-lg border p-3 ${
+                    exp.empresa?.trim() ? "border-primary/40 bg-primary/5" : ""
+                  }`}
+                >
                   <div className="grid gap-2 sm:grid-cols-3">
                     <div>
                       <Label>Empresa</Label>
@@ -597,7 +602,7 @@ export function FormularioCurriculo({
                         value={exp.empresa ?? ""}
                         onChange={(e) =>
                           setExperiencias((a) =>
-                            a.map((v, j) => (j === i ? { ...v, empresa: e.target.value } : v)),
+                            a.map((v, j) => (j === i ? { ...v, empresa: capitalizarTexto(e.target.value) } : v)),
                           )
                         }
                       />
@@ -608,7 +613,7 @@ export function FormularioCurriculo({
                         value={exp.cargo ?? ""}
                         onChange={(e) =>
                           setExperiencias((a) =>
-                            a.map((v, j) => (j === i ? { ...v, cargo: e.target.value } : v)),
+                            a.map((v, j) => (j === i ? { ...v, cargo: capitalizarTexto(e.target.value) } : v)),
                           )
                         }
                       />
@@ -648,7 +653,7 @@ export function FormularioCurriculo({
                 </div>
               ))}
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 onClick={() =>
                   setExperiencias((a) => [
