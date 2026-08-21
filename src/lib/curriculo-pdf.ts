@@ -85,23 +85,34 @@ function renderizar(
     y += h + 8 * escala + espacamentoExtra / 2;
   };
 
-  // ===== Cabeçalho =====
-  setFont(true, 20);
-  doc.setTextColor(...NAVY);
-  doc.text("CURRÍCULO VITAE", MARGEM, y + 16);
-  y += 24 * escala;
+  const centro = largura / 2;
+  const centrado = (linha: string, tamanho: number, negrito = false, cor: [number, number, number] = TEXTO) => {
+    setFont(negrito, tamanho);
+    doc.setTextColor(...cor);
+    doc.text(linha, centro, y, { align: "center" });
+    y += (tamanho + 4) * escala;
+  };
 
-  setFont(true, 15);
-  doc.setTextColor(...TEXTO);
-  doc.text((c.nome_completo || "").toUpperCase(), MARGEM, y + 12);
-  y += 20 * escala;
+  // ===== Cabeçalho: faixa azul com título centralizado =====
+  const hFaixa = 26 * escala;
+  doc.setFillColor(...NAVY);
+  doc.rect(MARGEM, y, util, hFaixa, "F");
+  setFont(true, 16);
+  doc.setTextColor(255, 255, 255);
+  doc.text("CURRÍCULO VITAE", centro, y + hFaixa - 8 * escala, { align: "center" });
+  y += hFaixa + 16 * escala;
+
+  centrado((c.nome_completo || "").toUpperCase(), 15, true, NAVY);
+
+  // Espaço maior entre o nome e os telefones
+  y += 12 * escala;
 
   const telefones = [
     c.telefone_principal ? formatarTelefone(c.telefone_principal) : "",
     ...dados.telefones.map((t) => formatarTelefone(t.telefone)),
   ].filter(Boolean);
-  if (telefones.length) paragrafo(telefones.join("  •  "), MARGEM, util, 10);
-  if (c.email) paragrafo(c.email, MARGEM, util, 10);
+  if (telefones.length) centrado(telefones.join("  •  "), 10);
+  if (c.email) centrado(c.email, 10);
 
   y += 6 * escala;
 
@@ -109,8 +120,7 @@ function renderizar(
   const pessoais: string[] = [];
   if (c.data_nascimento) pessoais.push(`Nascimento: ${dataBR(c.data_nascimento)}`);
   if (c.estado_civil) pessoais.push(c.estado_civil);
-  const end = enderecoCompleto(c);
-  if (end) pessoais.push(end);
+  pessoais.push(...enderecoLinhas(c));
   if (pessoais.length) {
     secao("Dados pessoais");
     for (const p of pessoais) paragrafo(p, MARGEM, util, 10);
