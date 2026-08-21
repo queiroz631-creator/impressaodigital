@@ -46,7 +46,7 @@ Outros ajustes visuais:
 - Endereço adicionado na etapa de dados pessoais.
 - Escolaridade: permitir vários cursos superiores (adicionar/remover) e, quando pós-graduação, informar o nome da pós.
 - Cursos: novo campo "Ano" (opcional).
-- Card de experiência ganha destaque visual quando a empresa está preenchida.
+- Destacar visualmente os cards preenchidos em todas as etapas (experiência, cursos, telefones adicionais, etc.): quando o campo principal estiver preenchido (empresa, nome do curso, telefone), o card ganha destaque (borda/cor de fundo) para diferenciar dos vazios — mesmo padrão aplicado a todas as seções, não só à empresa.
 - Destacar com uma cor os botões de adicionar das seções (Adicionar telefone, Adicionar curso, Adicionar experiência, Adicionar habilidade) — trocar o `variant="outline"` atual por uma cor de destaque para que fiquem visíveis e convidem à ação.
 - Na etapa de **Revisão**, cada seção terá um botão "Editar" que abre apenas aquela etapa e retorna direto para a revisão ao salvar.
 
