@@ -256,6 +256,8 @@ function Precos() {
                       <th className="px-2 py-3 w-36">PREÇO ARQUIVO EXCEDENTE</th>
                       <th className="px-2 py-3 w-64">FAIXAS POR PÁGINAS</th>
                       <th className="px-2 py-3 w-64">FAIXAS POR ARQUIVOS EXCEDENTES</th>
+                      <th className="px-2 py-3 w-64">FAIXAS POR CÓPIAS ADICIONAIS</th>
+
                       <th className="px-2 py-3 w-20">ATIVO</th>
                       <th className="px-2 py-3 w-28">ORDEM</th>
                       <th className="px-2 py-3 w-16" />
