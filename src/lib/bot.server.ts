@@ -100,7 +100,21 @@ async function responder(conversa: ConversaBot, texto: string) {
     .eq("id", conversa.id);
 }
 
-async function salvar(conversa: ConversaBot, dados: Record<string, unknown>) {
+type AtualizacaoConversa = Partial<{
+  status: string;
+  etapa: string;
+  contexto: never;
+  nome_contato: string;
+  pedido_id: string | null;
+  orcamento_id: string | null;
+  motivo_encaminhamento: string | null;
+  motivo_pendencia: string | null;
+  motivo_finalizacao: string | null;
+  ultima_mensagem: string;
+  ultima_mensagem_em: string;
+}>;
+
+async function salvar(conversa: ConversaBot, dados: AtualizacaoConversa) {
   await supabaseAdmin.from("whatsapp_conversas").update(dados).eq("id", conversa.id);
 }
 
