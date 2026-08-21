@@ -43,6 +43,12 @@ interface Form {
   validade_padrao_dias: number;
   impressora_padrao_tipo: string;
   impressoras_padrao: string[];
+  pix_ativo: boolean;
+  pix_chave: string;
+  pix_nome: string;
+  pix_banco: string;
+  pix_mensagem: string;
+  mensagem_prazo_orcamento: string;
 }
 
 const vazio: Form = {
@@ -56,7 +62,14 @@ const vazio: Form = {
   validade_padrao_dias: 7,
   impressora_padrao_tipo: "navegador",
   impressoras_padrao: [],
+  pix_ativo: false,
+  pix_chave: "",
+  pix_nome: "",
+  pix_banco: "",
+  pix_mensagem: PIX_MENSAGEM_PADRAO,
+  mensagem_prazo_orcamento: PRAZO_MENSAGEM_PADRAO,
 };
+
 
 function Configuracoes() {
   const { user } = useAuth();
