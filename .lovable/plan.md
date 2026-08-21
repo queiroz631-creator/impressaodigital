@@ -27,7 +27,7 @@ Novo módulo integrado ao sistema atual (mesmo layout, menu, autenticação e ta
 **Listagem `/curriculos`**: título "CURRÍCULO VITAE", subtítulo "Gerencie os currículos cadastrados dos clientes". Colunas Nome, Telefone principal, Data de nascimento, Última alteração, Ações. Pesquisa em tempo real por nome, telefone ou CPF (busca no banco), filtro Todos/Rascunhos/Completos, ordenação por nome, nascimento ou última alteração (padrão: última alteração desc), paginação de 20 por página, cards no mobile. Botão "+ NOVO CURRÍCULO".
 
 **Formulário em 8 etapas** (mesmo componente para criar e editar, com indicador de progresso):
-1. Dados pessoais — Nome*, CPF*, Telefone principal*, telefones adicionais, nascimento, estado civil, e-mail. Ao avançar, o CPF é validado; se já existir cliente, mostra "Cliente encontrado." e preenche nome/telefone; se já houver currículo, oferece abrir/continuar. Caso contrário cria cliente + currículo em RASCUNHO imediatamente.
+1. Dados pessoais — Nome*, CPF*, Telefone principal*, telefones adicionais, nascimento, estado civil, e-mail. Ao avançar, o CPF é validado; se já existir um currículo com aquele CPF, mostra "Este CPF já possui um currículo cadastrado." com a opção de abrir/continuar. O cliente é localizado pelo telefone (cadastro existente é reaproveitado; se não existir, é criado) e o currículo é criado em RASCUNHO imediatamente, vinculado a esse cliente.
 2. Documentação — possui documentação completa (Sim/Não) e habilitação com categorias A/B/AB/C/D/E.
 3. Escolaridade — lista fixa; campo Curso aparece nas opções de Ensino Superior.
 4. Cursos complementares — vários, curso* e instituição opcional, editar/remover.
