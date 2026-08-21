@@ -126,6 +126,31 @@ export function escolaridadeTemCurso(valor?: string | null) {
   return !!valor && valor.startsWith("Ensino Superior");
 }
 
+export function escolaridadeTemPos(valor?: string | null) {
+  return !!valor && valor === "Pós-graduação";
+}
+
+/**
+ * Normaliza texto para "Inicial maiúscula" de cada palavra, preservando
+ * siglas (todas maiúsculas) e não alterando e-mail.
+ */
+export function capitalizarTexto(valor: string): string {
+  if (!valor) return valor;
+  return valor
+    .trim()
+    .split(/(\s+)/)
+    .map((parte) => {
+      if (/^\s+$/.test(parte)) return parte;
+      const lower = parte.toLowerCase();
+      // Siglas (ex.: UF, RG) ficam como estão.
+      if (parte.length <= 3 && parte === parte.toUpperCase() && /[A-Z]/.test(parte)) {
+        return parte;
+      }
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join("");
+}
+
 /* -------------------------------------------------------------- CPF */
 
 export function somenteNumeros(v: string) {
