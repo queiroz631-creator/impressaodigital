@@ -893,7 +893,7 @@ function ResumoLinha({
   titulo: string;
   etapa: number;
   ir: (n: number) => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="rounded-lg border p-3">
