@@ -540,7 +540,7 @@ function CardLinkPublico() {
     setForm(inicial);
   }, [config.data, form]);
 
-  if (config.isLoading || !form) return <Skeleton className="mt-6 h-64 max-w-3xl" />;
+  if (config.isLoading || !form) return <Skeleton className="h-64 max-w-3xl" />;
 
   const id = config.data?.id;
 
@@ -558,7 +558,7 @@ function CardLinkPublico() {
   }
 
   return (
-    <Card className="mt-6 max-w-3xl shadow-card">
+    <Card className="max-w-3xl shadow-card">
       <CardHeader>
         <CardTitle className="text-base">Link público do orçamento</CardTitle>
       </CardHeader>
@@ -629,7 +629,7 @@ function CardWhatsapp() {
       : "bg-destructive text-destructive-foreground";
 
   return (
-    <Card className="mt-6 max-w-3xl shadow-card">
+    <Card className="max-w-3xl shadow-card">
       <CardHeader>
         <CardTitle className="text-base">WhatsApp (Z-API)</CardTitle>
       </CardHeader>
@@ -746,7 +746,7 @@ function CardBot() {
   }, [config.data, form]);
 
   if (config.isLoading || !form) {
-    return <Skeleton className="mt-6 h-64 max-w-3xl" />;
+    return <Skeleton className="h-64 max-w-3xl" />;
   }
 
   const id = config.data?.id;
@@ -765,7 +765,7 @@ function CardBot() {
   }
 
   return (
-    <Card className="mt-6 max-w-3xl shadow-card">
+    <Card className="max-w-3xl shadow-card">
       <CardHeader>
         <CardTitle className="text-base">Atendimento automático (Bot)</CardTitle>
       </CardHeader>
