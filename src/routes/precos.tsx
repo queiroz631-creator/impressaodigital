@@ -54,6 +54,7 @@ function Precos() {
   const [salvando, setSalvando] = useState(false);
   const [faixasTexto, setFaixasTexto] = useState<Record<string, string>>({});
   const [faixasArquivosTexto, setFaixasArquivosTexto] = useState<Record<string, string>>({});
+  const [faixasCopiasTexto, setFaixasCopiasTexto] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!materiais) return;
@@ -62,6 +63,7 @@ function Precos() {
       materiais.map((m) => ({
         ...m,
         faixas_por_arquivo: m.faixas_por_arquivo ?? [],
+        faixas_por_copia_adicional: m.faixas_por_copia_adicional ?? [],
         quantidade_arquivos_fixo: m.quantidade_arquivos_fixo ?? 3,
         preco_arquivos_fixo: m.preco_arquivos_fixo ?? 0,
       })),
@@ -72,7 +74,14 @@ function Precos() {
     setFaixasArquivosTexto(
       Object.fromEntries(materiais.map((m) => [m.id, faixasParaTexto(m.faixas_por_arquivo ?? [])])),
     );
+
+    setFaixasCopiasTexto(
+      Object.fromEntries(
+        materiais.map((m) => [m.id, faixasParaTexto(m.faixas_por_copia_adicional ?? [])]),
+      ),
+    );
   }, [materiais]);
+
 
   function atualizar(id: string, campo: keyof Material, valor: unknown) {
     setLinhas((atual) => atual.map((m) => (m.id === id ? { ...m, [campo]: valor } : m)));
