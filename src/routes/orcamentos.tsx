@@ -102,6 +102,7 @@ function Orcamentos() {
 
 
   const hoje = dataLocalISO(new Date());
+  const criarLink = useServerFn(gerarLinkOrcamento);
 
   /* ---------------- FILTRO POR DATA ---------------- */
   const [dataInicio, setDataInicio] = useState(hoje);
