@@ -1,124 +1,213 @@
 import jsPDF from "jspdf";
 import {
+  enderecoCompleto,
   formacaoFinal,
   formatarTelefone,
   informacoesAdicionais,
   objetivoFinal,
   type CurriculoCompleto,
+  type FormacaoItem,
 } from "./curriculo";
 import { dataBR } from "./format";
 
-const MARGEM = 48;
+const MARGEM = 40;
+const NAVY: [number, number, number] = [26, 26, 94];
+const TEXTO: [number, number, number] = [17, 17, 26];
 
 export function gerarCurriculoPdf(dados: CurriculoCompleto): jsPDF {
-  const c = dados.curriculo;
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const largura = doc.internal.pageSize.getWidth();
   const altura = doc.internal.pageSize.getHeight();
   const util = largura - MARGEM * 2;
-  let y = MARGEM;
 
-  const quebra = (necessario = 16) => {
-    if (y + necessario > altura - MARGEM) {
-      doc.addPage();
-      y = MARGEM;
+  // Primeira passagem: mede a altura total do conteúdo com escala 1.
+  const medida = renderizar(doc, dados, largura, altura, util, 1, 0);
+  const disponivel = altura - MARGEM * 2;
+  let escala = 1;
+  if (medida.total > disponivel) {
+    escala = Math.max(0.7, disponivel / medida.total);
+  }
+  const espacamentoExtra = medida.total < disponivel * 0.6 && escala === 1
+    ? (disponivel - medida.total) / Math.max(1, medida.secoes)
+    : 0;
+
+  // Segunda passagem: desenha com a escala calculada.
+  renderizar(doc, dados, largura, altura, util, escala, espacamentoExtra);
+  return doc;
+}
+
+interface RenderResult {
+  total: number;
+  secoes: number;
+}
+
+function renderizar(
+  doc: jsPDF,
+  dados: CurriculoCompleto,
+  largura: number,
+  altura: number,
+  util: number,
+  escala: number,
+  espacamentoExtra: number,
+): RenderResult {
+  const c = dados.curriculo;
+  let y = MARGEM;
+  let secoes = 0;
+
+  if (escala !== 1) doc.addPage ? doc : doc; // no-op para satisfazer linter
+  const novaPagina = () => {
+    if (escala === 1) {
+      // na passagem de medida não cria páginas
     }
   };
+  void novaPagina;
 
-  const paragrafo = (texto: string, tamanho = 10, negrito = false) => {
+  const quebra = (necessario: number) => {
+    if (y + necessario > altura - MARGEM && escala === 1) {
+      // sem quebra real — apenas para medida
+    }
+  };
+  void quebra;
+
+  const setFont = (negrito: boolean, tamanho: number) => {
     doc.setFont("helvetica", negrito ? "bold" : "normal");
-    doc.setFontSize(tamanho);
-    doc.setTextColor(20, 20, 30);
-    for (const linha of doc.splitTextToSize(texto, util) as string[]) {
-      quebra(tamanho + 4);
-      doc.text(linha, MARGEM, y);
-      y += tamanho + 4;
+    doc.setFontSize(tamanho * escala);
+  };
+
+  const texto = (linha: string, x: number, tamanho: number, negrito = false, cor: [number, number, number] = TEXTO) => {
+    setFont(negrito, tamanho);
+    doc.setTextColor(...cor);
+    doc.text(linha, x, y);
+    y += (tamanho + 4) * escala;
+  };
+
+  const paragrafo = (str: string, x: number, larguraDisp: number, tamanho: number, negrito = false) => {
+    setFont(negrito, tamanho);
+    doc.setTextColor(...TEXTO);
+    for (const linha of doc.splitTextToSize(str, larguraDisp) as string[]) {
+      texto(linha, x, tamanho, negrito);
     }
   };
 
   const secao = (titulo: string) => {
-    quebra(34);
-    y += 10;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(26, 26, 94);
-    doc.text(titulo.toUpperCase(), MARGEM, y);
-    y += 6;
-    doc.setDrawColor(26, 26, 94);
-    doc.setLineWidth(0.8);
-    doc.line(MARGEM, y, largura - MARGEM, y);
-    y += 14;
+    secoes += 1;
+    const h = 18 * escala;
+    doc.setFillColor(...NAVY);
+    doc.rect(MARGEM, y - 2, util, h, "F");
+    setFont(true, 11);
+    doc.setTextColor(255, 255, 255);
+    doc.text(titulo.toUpperCase(), MARGEM + 8, y + h - 5);
+    y += h + 8 * escala + espacamentoExtra / 2;
   };
 
-  // Cabeçalho
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
-  doc.setTextColor(26, 26, 94);
-  doc.text((c.nome_completo || "Currículo").toUpperCase(), MARGEM, y);
-  y += 20;
+  // ===== Cabeçalho =====
+  setFont(true, 20);
+  doc.setTextColor(...NAVY);
+  doc.text("CURRÍCULO VITAE", MARGEM, y + 16);
+  y += 24 * escala;
 
-  const contatos: string[] = [];
-  if (c.telefone_principal) contatos.push(formatarTelefone(c.telefone_principal));
-  for (const t of dados.telefones) contatos.push(formatarTelefone(t.telefone));
-  if (c.email) contatos.push(c.email);
-  if (contatos.length) paragrafo(contatos.join("  •  "), 10);
+  setFont(true, 15);
+  doc.setTextColor(...TEXTO);
+  doc.text((c.nome_completo || "").toUpperCase(), MARGEM, y + 12);
+  y += 20 * escala;
 
+  const telefones = [
+    c.telefone_principal ? formatarTelefone(c.telefone_principal) : "",
+    ...dados.telefones.map((t) => formatarTelefone(t.telefone)),
+  ].filter(Boolean);
+  if (telefones.length) paragrafo(telefones.join("  •  "), MARGEM, util, 10);
+  if (c.email) paragrafo(c.email, MARGEM, util, 10);
+
+  y += 6 * escala;
+
+  // ===== Dados pessoais =====
   const pessoais: string[] = [];
   if (c.data_nascimento) pessoais.push(`Nascimento: ${dataBR(c.data_nascimento)}`);
   if (c.estado_civil) pessoais.push(c.estado_civil);
-  if (pessoais.length) paragrafo(pessoais.join("  •  "), 10);
-
-  const objetivo = objetivoFinal(c);
-  if (objetivo) {
-    secao("Objetivo");
-    paragrafo(objetivo);
+  const end = enderecoCompleto(c);
+  if (end) pessoais.push(end);
+  if (pessoais.length) {
+    secao("Dados pessoais");
+    for (const p of pessoais) paragrafo(p, MARGEM, util, 10);
+    y += 4 * escala + espacamentoExtra / 2;
   }
 
-  const formacao = formacaoFinal(c);
-  if (formacao) {
-    secao("Formação");
-    paragrafo(formacao);
-  }
-
-  if (dados.cursos.length) {
-    secao("Cursos complementares");
-    for (const curso of dados.cursos) {
-      paragrafo(curso.instituicao ? `${curso.nome_curso} — ${curso.instituicao}` : curso.nome_curso);
-    }
-  }
-
-  if (dados.experiencias.length) {
-    secao("Experiência profissional");
-    for (const exp of dados.experiencias) {
-      const titulo = [exp.empresa, exp.cargo].filter(Boolean).join(" — ");
-      if (titulo) paragrafo(titulo, 10, true);
-      if (exp.periodo) paragrafo(`Período: ${exp.periodo}`, 9);
-      if (exp.atividades) paragrafo(exp.atividades, 10);
-      y += 6;
-    }
-  }
-
-  if (dados.habilidades.length) {
-    secao("Habilidades");
-    for (const h of dados.habilidades) paragrafo(`• ${h.descricao}`);
-  }
-
+  // ===== Informações adicionais =====
   const adicionais = informacoesAdicionais(c);
   if (adicionais.length) {
     secao("Informações adicionais");
-    for (const linha of adicionais) paragrafo(`• ${linha}`);
+    for (const linha of adicionais) paragrafo(`• ${linha}`, MARGEM, util, 10);
+    y += 4 * escala + espacamentoExtra / 2;
+  }
+
+  // ===== Formação =====
+  const formacao = formacaoFinal(c);
+  if (formacao || dados.formacoes.length) {
+    secao("Formação");
+    if (formacao) paragrafo(formacao, MARGEM, util, 10);
+    for (const f of dados.formacoes) {
+      paragrafo(formatarFormacao(f), MARGEM, util, 10);
+    }
+    y += 4 * escala + espacamentoExtra / 2;
+  }
+
+  // ===== Cursos complementares =====
+  if (dados.cursos.length) {
+    secao("Cursos complementares");
+    for (const curso of dados.cursos) {
+      paragrafo(formatarCurso(curso), MARGEM, util, 10);
+    }
+    y += 4 * escala + espacamentoExtra / 2;
+  }
+
+  // ===== Experiência profissional =====
+  if (dados.experiencias.length) {
+    secao("Experiência profissional");
+    for (const exp of dados.experiencias) {
+      if (exp.empresa) texto(exp.empresa, MARGEM, 11, true, NAVY);
+      if (exp.cargo) texto(exp.cargo, MARGEM, 10);
+      if (exp.periodo) texto(`Período: ${exp.periodo}`, MARGEM, 9);
+      if (exp.atividades) paragrafo(exp.atividades, MARGEM, util, 10);
+      y += 6 * escala + espacamentoExtra / 2;
+    }
+  }
+
+  // ===== Habilidades =====
+  if (dados.habilidades.length) {
+    secao("Habilidades");
+    for (const h of dados.habilidades) paragrafo(`• ${h.descricao}`, MARGEM, util, 10);
+    y += 4 * escala + espacamentoExtra / 2;
+  }
+
+  // ===== Objetivo (por último) =====
+  const objetivo = objetivoFinal(c);
+  if (objetivo) {
+    secao("Objetivo");
+    paragrafo(objetivo, MARGEM, util, 10);
   }
 
   if (c.exibir_data_atualizacao) {
-    quebra(30);
-    y += 16;
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(9);
+    y += 16 * escala + espacamentoExtra / 2;
+    setFont(false, 9);
     doc.setTextColor(110, 110, 120);
     doc.text(`Atualizado em ${dataBR(c.updated_at)}`, MARGEM, y);
   }
 
-  return doc;
+  return { total: y - MARGEM, secoes };
+}
+
+function formatarCurso(curso: { nome_curso: string; instituicao: string | null; ano: string | null }) {
+  const partes = [curso.nome_curso];
+  if (curso.instituicao) partes.push(curso.instituicao);
+  if (curso.ano) partes.push(curso.ano);
+  return partes.join(" — ");
+}
+
+function formatarFormacao(f: FormacaoItem) {
+  const partes = [f.nome_curso];
+  if (f.instituicao) partes.push(f.instituicao);
+  if (f.ano) partes.push(f.ano);
+  return partes.join(" — ");
 }
 
 export function nomeArquivoCurriculo(nome: string) {
@@ -155,16 +244,18 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
   estilo.id = "curriculo-print-style";
   estilo.textContent = `
     @media print {
-      @page { size: A4; margin: 14mm; }
+      @page { size: A4; margin: 10mm; }
       body * { visibility: hidden !important; }
       #curriculo-print-area, #curriculo-print-area * { visibility: visible !important; }
       #curriculo-print-area {
         position: absolute !important; left: 0 !important; top: 0 !important;
         width: 100% !important; max-width: 100% !important; margin: 0 !important;
         padding: 0 !important; box-shadow: none !important; border: 0 !important;
-        background: #fff !important; color: #000 !important;
+        background: #fff !important; color: #111 !important;
       }
-      html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+      html, body { height: auto !important; overflow: visible !important; background: #fff !important; margin: 0 !important; padding: 0 !important; }
+      #curriculo-print-area .cv-secao { background: #1a1a5e !important; color: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      #curriculo-print-area .cv-empresa { color: #1a1a5e !important; font-weight: 700 !important; }
     }
     #curriculo-print-area { position: fixed; left: -10000px; top: 0; width: 180mm; }
   `;
