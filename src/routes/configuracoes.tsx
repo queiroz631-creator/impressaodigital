@@ -106,7 +106,14 @@ function Configuracoes() {
       validade_padrao_dias: config.validade_padrao_dias ?? 7,
       impressora_padrao_tipo: config.impressora_padrao_tipo ?? "navegador",
       impressoras_padrao: lista,
+      pix_ativo: config.pix_ativo ?? false,
+      pix_chave: config.pix_chave ?? "",
+      pix_nome: config.pix_nome ?? "",
+      pix_banco: config.pix_banco ?? "",
+      pix_mensagem: config.pix_mensagem || PIX_MENSAGEM_PADRAO,
+      mensagem_prazo_orcamento: config.mensagem_prazo_orcamento || PRAZO_MENSAGEM_PADRAO,
     });
+
   }, [config]);
 
   function set<K extends keyof Form>(campo: K, valor: Form[K]) {
