@@ -38,6 +38,12 @@ export interface TelefoneItem {
 export interface CursoItem {
   nome_curso: string;
   instituicao: string | null;
+  ano: string | null;
+}
+export interface FormacaoItem {
+  nome_curso: string;
+  instituicao: string | null;
+  ano: string | null;
 }
 export interface ExperienciaItem {
   empresa: string | null;
