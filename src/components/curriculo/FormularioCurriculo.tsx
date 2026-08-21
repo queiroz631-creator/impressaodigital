@@ -165,12 +165,29 @@ export function FormularioCurriculo({
             curso_superior: escolaridadeTemCurso(escolaridade) ? capitalizarTexto(cursoSuperior) || null : null,
             pos_graduacao_nome: escolaridadeTemPos(escolaridade) ? capitalizarTexto(posGraduacaoNome) || null : null,
           },
-          formacoes,
+          formacoes: formacoes.map((f) => ({
+            nome_curso: capitalizarTexto(f.nome_curso),
+            instituicao: capitalizarTexto(f.instituicao ?? "") || null,
+            ano: f.ano?.trim() || null,
+          })),
         };
       case 4:
-        return { cursos };
+        return {
+          cursos: cursos.map((cur) => ({
+            nome_curso: capitalizarTexto(cur.nome_curso),
+            instituicao: capitalizarTexto(cur.instituicao ?? "") || null,
+            ano: cur.ano?.trim() || null,
+          })),
+        };
       case 5:
-        return { experiencias };
+        return {
+          experiencias: experiencias.map((exp) => ({
+            empresa: capitalizarTexto(exp.empresa ?? "") || null,
+            cargo: capitalizarTexto(exp.cargo ?? "") || null,
+            periodo: exp.periodo?.trim() || null,
+            atividades: exp.atividades?.trim() || null,
+          })),
+        };
       case 6:
         return {
           campos: {
