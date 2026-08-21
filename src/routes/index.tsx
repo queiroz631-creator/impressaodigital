@@ -618,6 +618,14 @@ function Calculadora() {
 
   async function salvarDadosCliente() {
     if (!estado.pedidoId) return;
+    const extras = {
+      incluir_pix: estado.incluirPix,
+      pix_texto_final: textoPix || null,
+      precisa_prazo: estado.precisaPrazo,
+      prazo_tipo: estado.prazoTipo || null,
+      prazo_quantidade: Math.max(0, Number(estado.prazoQuantidade) || 0),
+      prazo_texto_final: textoPrazo || null,
+    };
     await supabase
       .from("pedidos")
       .update({
@@ -625,6 +633,7 @@ function Calculadora() {
         cliente_telefone: estado.clienteTelefone,
         observacao: estado.observacao,
         validade: estado.validade || null,
+        ...extras,
       })
       .eq("id", estado.pedidoId);
     if ((itensPedido ?? []).length > 0) {
@@ -635,12 +644,14 @@ function Calculadora() {
           cliente_telefone: estado.clienteTelefone,
           observacao: estado.observacao,
           validade: estado.validade || null,
+          ...extras,
         })
         .eq("pedido_id", estado.pedidoId);
       queryClient.invalidateQueries({ queryKey: ["orcamentos-pedido", estado.pedidoId] });
       queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
     }
   }
+
 
   return (
     <>
