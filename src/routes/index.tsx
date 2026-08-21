@@ -489,7 +489,10 @@ function Calculadora() {
       queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
       queryClient.invalidateQueries({ queryKey: ["pedido", pedidoId] });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível salvar o orçamento.");
+      const msg =
+        (e as { message?: string })?.message || (e instanceof Error ? e.message : "") ||
+        "Não foi possível salvar o orçamento.";
+      toast.error(msg);
     } finally {
       setSalvandoItem(false);
     }
