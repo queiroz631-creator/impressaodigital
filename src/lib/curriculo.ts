@@ -60,6 +60,7 @@ export interface CurriculoCompleto {
   curriculo: CurriculoRegistro;
   telefones: TelefoneItem[];
   cursos: CursoItem[];
+  formacoes: FormacaoItem[];
   experiencias: ExperienciaItem[];
   habilidades: HabilidadeItem[];
 }
