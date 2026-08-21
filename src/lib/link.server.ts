@@ -65,7 +65,7 @@ export function arquivosDoOrcamento(valor: unknown): ArquivoOrcamento[] {
     const o = (item ?? {}) as Record<string, unknown>;
     return {
       nome: String(o["nome"] ?? "Arquivo"),
-      tipo: o["tipo"] ? String(o["tipo"]) : undefined,
+      tipo: o["tipo"] ? String(o["tipo"]) : "documento",
       paginas: Math.max(1, Number(o["paginas"] ?? 1) || 1),
       copias: Math.max(1, Number(o["copias"] ?? 1) || 1),
       frenteVerso: Boolean(o["frenteVerso"]),
