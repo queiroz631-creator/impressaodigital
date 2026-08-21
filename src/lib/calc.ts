@@ -180,6 +180,40 @@ export function precoPorQuantidadeArquivos(material: Material, quantidade: numbe
 }
 
 /**
+ * Preço unitário das CÓPIAS ADICIONAIS.
+ *
+ * A faixa considera somente a quantidade de cópias adicionais
+ * (não o total de cópias).
+ *
+ * Se o material não possuir faixas por cópia adicional,
+ * retorna `precoPadrao` (o preço unitário de página já calculado),
+ * mantendo o comportamento anterior.
+ */
+export function precoPorCopiasAdicionais(
+  material: Material,
+  copiasAdicionais: number,
+  precoPadrao: number,
+) {
+  const faixas = normalizarFaixas(material.faixas_por_copia_adicional);
+
+  if (faixas.length === 0) {
+    return precoPadrao;
+  }
+
+  let preco = precoPadrao;
+
+  for (const f of faixas) {
+    if (copiasAdicionais >= f.min) {
+      preco = f.preco;
+    }
+  }
+
+  return preco;
+}
+
+
+
+/**
  * Calcula o valor dos arquivos considerando:
  *
  * 1. Quantidade fixa de arquivos
