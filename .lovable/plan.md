@@ -2,24 +2,23 @@
 
 Novo módulo integrado ao sistema atual (mesmo layout, menu, autenticação e tabela de clientes já existente). Nenhuma funcionalidade atual é removida.
 
-## O que muda no cadastro de clientes
+## Como o cliente e o currículo se relacionam
 
-Hoje a tabela `clientes` identifica o cliente pelo telefone (o telefone é único no banco). A nova regra passa a ser:
-
-- CPF é o identificador único do cliente (obrigatório e validado).
-- Telefone deixa de ser único — vários clientes podem ter o mesmo número.
-- Nome continua obrigatório e não único.
-
-Impacto no atendimento WhatsApp: quando o número tiver mais de um cliente, o bot deixa de escolher automaticamente e pede o CPF ("Identificamos mais de um cadastro associado a este número..."). Com um único cadastro, o comportamento atual continua igual.
+- A tabela `clientes` continua exatamente como está: o telefone permanece único e é o cadastro de contato.
+- O CPF fica na tabela de currículos, não no cliente.
+- Um mesmo cliente (mesmo telefone) pode ter vários currículos — por exemplo, familiares que usam o mesmo número.
+- Cada currículo tem um CPF diferente: o CPF é único entre os currículos e é o que identifica a pessoa do currículo.
+- O atendimento por WhatsApp continua funcionando como hoje, sem alteração.
 
 ## Banco de dados
 
-- `clientes`: adiciona `cpf` (somente números, único quando preenchido); remove a restrição de telefone único.
-- `curriculos`: um por cliente (`UNIQUE(cliente_id)`), com status rascunho/completo, dados pessoais, documentação, habilitação, escolaridade, objetivo, exibir data de atualização, `created_at`/`updated_at`/`completed_at`.
+- `curriculos`: `cliente_id` (vários currículos por cliente), `cpf` único (somente números), status rascunho/completo, dados pessoais, documentação, habilitação, escolaridade, objetivo, exibir data de atualização, `created_at`/`updated_at`/`completed_at`.
 - `curriculo_telefones`, `curriculo_cursos`, `curriculo_experiencias`: listas ordenáveis ligadas ao currículo.
 - `habilidades_curriculo` (catálogo, já com as 3 habilidades padrão) e `curriculo_habilidades` (seleção por currículo, incluindo habilidades personalizadas).
 - `curriculo_links`: token aleatório seguro, `expires_at` (24h), `ativo`, `used_at`.
+- Nenhuma alteração em `clientes` além do reaproveitamento do cadastro existente.
 - Acesso: leitura/escrita apenas para usuários autenticados; o link público não usa acesso direto ao banco, e sim funções de servidor que validam o token.
+
 
 ## Telas
 
@@ -28,7 +27,7 @@ Impacto no atendimento WhatsApp: quando o número tiver mais de um cliente, o bo
 **Listagem `/curriculos`**: título "CURRÍCULO VITAE", subtítulo "Gerencie os currículos cadastrados dos clientes". Colunas Nome, Telefone principal, Data de nascimento, Última alteração, Ações. Pesquisa em tempo real por nome, telefone ou CPF (busca no banco), filtro Todos/Rascunhos/Completos, ordenação por nome, nascimento ou última alteração (padrão: última alteração desc), paginação de 20 por página, cards no mobile. Botão "+ NOVO CURRÍCULO".
 
 **Formulário em 8 etapas** (mesmo componente para criar e editar, com indicador de progresso):
-1. Dados pessoais — Nome*, CPF*, Telefone principal*, telefones adicionais, nascimento, estado civil, e-mail. Ao avançar, o CPF é validado; se já existir cliente, mostra "Cliente encontrado." e preenche nome/telefone; se já houver currículo, oferece abrir/continuar. Caso contrário cria cliente + currículo em RASCUNHO imediatamente.
+1. Dados pessoais — Nome*, CPF*, Telefone principal*, telefones adicionais, nascimento, estado civil, e-mail. Ao avançar, o CPF é validado; se já existir um currículo com aquele CPF, mostra "Este CPF já possui um currículo cadastrado." com a opção de abrir/continuar. O cliente é localizado pelo telefone (cadastro existente é reaproveitado; se não existir, é criado) e o currículo é criado em RASCUNHO imediatamente, vinculado a esse cliente.
 2. Documentação — possui documentação completa (Sim/Não) e habilitação com categorias A/B/AB/C/D/E.
 3. Escolaridade — lista fixa; campo Curso aparece nas opções de Ensino Superior.
 4. Cursos complementares — vários, curso* e instituição opcional, editar/remover.
@@ -56,14 +55,14 @@ Página enxuta com nome da empresa, "Preencha seu currículo", indicador "Etapa 
 - Toda leitura/escrita pública passa por funções de servidor que validam token ativo e não expirado e trabalham apenas com o currículo daquele token — o cliente não pode trocar ids pela URL nem alterar `cliente_id`, `status`, datas ou token.
 - PDF, impressão, envio por WhatsApp, listagem e geração de link só existem em rotas autenticadas; não há URL pública de PDF/impressão/download.
 - CPF nunca aparece em currículo, prévia, impressão, PDF, imagem, WhatsApp ou link público — apenas no formulário administrativo.
-- Alteração de CPF para um já usado por outro cliente é bloqueada: "Este CPF já está cadastrado para outro cliente."
+- Alteração de CPF para um já usado por outro currículo é bloqueada: "Este CPF já está cadastrado em outro currículo."
 - Auditoria: ações relevantes (criar, editar, gerar link, invalidar link, enviar WhatsApp) registradas com usuário, currículo, ação e data/hora.
 
 ## Detalhes técnicos
 
-- Migração única: coluna `cpf` + índice único parcial em `clientes`, remoção de `clientes_telefone_normalizado_key`, novas tabelas com GRANTs e RLS, seed das habilidades padrão e dos objetivos sugeridos.
+- Migração única: novas tabelas de currículo com `cpf` único em `curriculos`, GRANTs e RLS, seed das habilidades padrão e dos objetivos sugeridos. Nenhuma constraint da tabela `clientes` é alterada.
 - Rotas novas: `src/routes/curriculos.tsx` (lista), `src/routes/curriculos.$id.tsx` (formulário/detalhe) e `src/routes/curriculo.publico.$token.tsx`.
 - Server functions: `src/lib/curriculo.functions.ts` (administrativo, com `requireSupabaseAuth`) e `src/lib/curriculo-publico.functions.ts` (token-based, sem auth) apoiadas por `curriculo.server.ts`.
 - PDF em `src/lib/curriculo-pdf.ts` (jsPDF, A4) e impressão via o serviço de impressão existente.
-- Ajuste em `src/routes/api/public/whatsapp/webhook.ts` e `src/lib/bot.server.ts` para tratar múltiplos clientes com o mesmo telefone pedindo o CPF.
+- Nenhuma alteração no webhook do WhatsApp nem no bot.
 - Após implementar: verificação de tipos, RLS, constraints e testes de ponta a ponta (criação por etapas, continuidade, link expirado, bloqueio de PDF/impressão pelo link).
