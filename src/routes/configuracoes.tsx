@@ -450,12 +450,20 @@ function Configuracoes() {
         </CardContent>
       </Card>
 
-      <CardWhatsapp />
+        </TabsContent>
 
-      <CardBot />
+        <TabsContent value="whatsapp">
+          <CardWhatsapp />
+        </TabsContent>
 
-      <CardLinkPublico />
+        <TabsContent value="bot">
+          <CardBot />
+        </TabsContent>
 
+        <TabsContent value="link">
+          <CardLinkPublico />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
