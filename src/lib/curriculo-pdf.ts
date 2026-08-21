@@ -223,46 +223,65 @@ export function curriculoPdfBase64(dados: CurriculoCompleto) {
   return gerarCurriculoPdf(dados).output("datauristring");
 }
 
-/** Impressão A4 do currículo, isolando o conteúdo do restante da tela. */
+/**
+ * Impressão A4 do currículo em um iframe isolado, com os estilos da página
+ * copiados — evita folha em branco e conteúdo oculto.
+ */
 export function imprimirCurriculo(elemento: HTMLElement | null) {
   if (!elemento) return;
 
-  const anterior = document.getElementById("curriculo-print-area");
-  anterior?.remove();
+  document.getElementById("curriculo-print-frame")?.remove();
 
-  const area = document.createElement("div");
-  area.id = "curriculo-print-area";
-  area.innerHTML = elemento.innerHTML;
-  document.body.appendChild(area);
+  const frame = document.createElement("iframe");
+  frame.id = "curriculo-print-frame";
+  frame.setAttribute("aria-hidden", "true");
+  frame.style.cssText =
+    "position:fixed;right:0;bottom:0;width:210mm;height:297mm;border:0;opacity:0;pointer-events:none;";
+  document.body.appendChild(frame);
 
-  const estilo = document.createElement("style");
-  estilo.id = "curriculo-print-style";
-  estilo.textContent = `
-    @media print {
-      @page { size: A4; margin: 10mm; }
-      body > *:not(#curriculo-print-area) { display: none !important; }
-      #curriculo-print-area {
-        position: static !important;
-        left: auto !important; top: auto !important;
-        width: 100% !important; max-width: 100% !important; margin: 0 !important;
-        padding: 0 !important; box-shadow: none !important; border: 0 !important;
-        background: #fff !important; color: #111 !important;
-      }
-      html, body { height: auto !important; overflow: visible !important; background: #fff !important; margin: 0 !important; padding: 0 !important; }
-      #curriculo-print-area .cv-secao { background: #1a1a5e !important; color: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      #curriculo-print-area .cv-empresa { color: #1a1a5e !important; font-weight: 700 !important; }
-    }
-    #curriculo-print-area { position: fixed; left: -10000px; top: 0; width: 180mm; }
-  `;
-  document.head.appendChild(estilo);
+  const doc = frame.contentDocument;
+  if (!doc) {
+    frame.remove();
+    return;
+  }
 
-  const limpar = () => {
-    area.remove();
-    estilo.remove();
-    window.removeEventListener("afterprint", limpar);
+  const estilos = Array.from(
+    document.querySelectorAll('link[rel="stylesheet"], style'),
+  )
+    .map((n) => n.outerHTML)
+    .join("\n");
+
+  doc.open();
+  doc.write(`<!doctype html><html><head><meta charset="utf-8">${estilos}
+<style>
+  @page { size: A4; margin: 10mm; }
+  html, body { margin:0; padding:0; background:#fff; height:auto; overflow:visible; }
+  body > .cv-print { width:100%; max-width:100%; margin:0; padding:0; box-shadow:none !important; border:0; background:#fff; }
+  .cv-secao { background:#1a1a5e !important; color:#fff !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+  .cv-empresa { color:#1a1a5e !important; font-weight:700 !important; }
+  .cv-print, .cv-print * { color:#11111a; }
+  .cv-secao, .cv-secao * { color:#fff !important; }
+</style></head><body></body></html>`);
+  doc.close();
+
+  const clone = elemento.cloneNode(true) as HTMLElement;
+  clone.classList.add("cv-print");
+  clone.style.boxShadow = "none";
+  doc.body.appendChild(clone);
+
+  const limpar = () => window.setTimeout(() => frame.remove(), 500);
+
+  const disparar = () => {
+    frame.contentWindow?.focus();
+    frame.contentWindow?.print();
+    limpar();
   };
-  window.addEventListener("afterprint", limpar);
 
-  window.print();
-  window.setTimeout(limpar, 3000);
+  // Aguarda as folhas de estilo/fontes carregarem antes de imprimir.
+  const janela = frame.contentWindow;
+  if (janela && "fonts" in janela.document) {
+    janela.document.fonts.ready.then(() => window.setTimeout(disparar, 150));
+  } else {
+    window.setTimeout(disparar, 400);
+  }
 }
