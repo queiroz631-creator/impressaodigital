@@ -55,7 +55,7 @@ Página enxuta com nome da empresa, "Preencha seu currículo", indicador "Etapa 
 - Toda leitura/escrita pública passa por funções de servidor que validam token ativo e não expirado e trabalham apenas com o currículo daquele token — o cliente não pode trocar ids pela URL nem alterar `cliente_id`, `status`, datas ou token.
 - PDF, impressão, envio por WhatsApp, listagem e geração de link só existem em rotas autenticadas; não há URL pública de PDF/impressão/download.
 - CPF nunca aparece em currículo, prévia, impressão, PDF, imagem, WhatsApp ou link público — apenas no formulário administrativo.
-- Alteração de CPF para um já usado por outro cliente é bloqueada: "Este CPF já está cadastrado para outro cliente."
+- Alteração de CPF para um já usado por outro currículo é bloqueada: "Este CPF já está cadastrado em outro currículo."
 - Auditoria: ações relevantes (criar, editar, gerar link, invalidar link, enviar WhatsApp) registradas com usuário, currículo, ação e data/hora.
 
 ## Detalhes técnicos
