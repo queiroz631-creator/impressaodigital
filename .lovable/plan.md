@@ -2,24 +2,23 @@
 
 Novo módulo integrado ao sistema atual (mesmo layout, menu, autenticação e tabela de clientes já existente). Nenhuma funcionalidade atual é removida.
 
-## O que muda no cadastro de clientes
+## Como o cliente e o currículo se relacionam
 
-Hoje a tabela `clientes` identifica o cliente pelo telefone (o telefone é único no banco). A nova regra passa a ser:
-
-- CPF é o identificador único do cliente (obrigatório e validado).
-- Telefone deixa de ser único — vários clientes podem ter o mesmo número.
-- Nome continua obrigatório e não único.
-
-Impacto no atendimento WhatsApp: quando o número tiver mais de um cliente, o bot deixa de escolher automaticamente e pede o CPF ("Identificamos mais de um cadastro associado a este número..."). Com um único cadastro, o comportamento atual continua igual.
+- A tabela `clientes` continua exatamente como está: o telefone permanece único e é o cadastro de contato.
+- O CPF fica na tabela de currículos, não no cliente.
+- Um mesmo cliente (mesmo telefone) pode ter vários currículos — por exemplo, familiares que usam o mesmo número.
+- Cada currículo tem um CPF diferente: o CPF é único entre os currículos e é o que identifica a pessoa do currículo.
+- O atendimento por WhatsApp continua funcionando como hoje, sem alteração.
 
 ## Banco de dados
 
-- `clientes`: adiciona `cpf` (somente números, único quando preenchido); remove a restrição de telefone único.
-- `curriculos`: um por cliente (`UNIQUE(cliente_id)`), com status rascunho/completo, dados pessoais, documentação, habilitação, escolaridade, objetivo, exibir data de atualização, `created_at`/`updated_at`/`completed_at`.
+- `curriculos`: `cliente_id` (vários currículos por cliente), `cpf` único (somente números), status rascunho/completo, dados pessoais, documentação, habilitação, escolaridade, objetivo, exibir data de atualização, `created_at`/`updated_at`/`completed_at`.
 - `curriculo_telefones`, `curriculo_cursos`, `curriculo_experiencias`: listas ordenáveis ligadas ao currículo.
 - `habilidades_curriculo` (catálogo, já com as 3 habilidades padrão) e `curriculo_habilidades` (seleção por currículo, incluindo habilidades personalizadas).
 - `curriculo_links`: token aleatório seguro, `expires_at` (24h), `ativo`, `used_at`.
+- Nenhuma alteração em `clientes` além do reaproveitamento do cadastro existente.
 - Acesso: leitura/escrita apenas para usuários autenticados; o link público não usa acesso direto ao banco, e sim funções de servidor que validam o token.
+
 
 ## Telas
 
