@@ -393,6 +393,28 @@ function Precos() {
                           />
                         </td>
                         <td className="px-2 py-2">
+                          <Textarea
+                            rows={3}
+                            placeholder={"1 = 1,00\n11 = 0,80\n21 = 0,60"}
+                            value={faixasCopiasTexto[m.id] ?? ""}
+                            onChange={(e) =>
+                              setFaixasCopiasTexto((f) => ({
+                                ...f,
+                                [m.id]: e.target.value,
+                              }))
+                            }
+                            onBlur={() =>
+                              setFaixasCopiasTexto((f) => ({
+                                ...f,
+                                [m.id]: faixasParaTexto(textoParaFaixas(f[m.id] ?? "")),
+                              }))
+                            }
+                            className="min-w-[15rem] font-mono text-xs"
+                            title="Faixas aplicadas somente às cópias adicionais"
+                          />
+                        </td>
+
+                        <td className="px-2 py-2">
                           <Switch checked={m.ativo} onCheckedChange={(v) => atualizar(m.id, "ativo", v)} />
                         </td>
                         <td className="px-2 py-2">
