@@ -42,6 +42,10 @@ export interface Material {
   /** Faixas de preço por quantidade TOTAL de arquivos. */
   faixas_por_arquivo: FaixaPreco[];
 
+  /** Faixas de preço por quantidade de CÓPIAS ADICIONAIS. */
+  faixas_por_copia_adicional: FaixaPreco[];
+
+
   /**
    * Quantidade inicial de arquivos que utiliza o preço fixo.
    *
