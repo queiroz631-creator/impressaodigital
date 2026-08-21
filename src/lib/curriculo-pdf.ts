@@ -54,21 +54,6 @@ function renderizar(
   let y = MARGEM;
   let secoes = 0;
 
-  if (escala !== 1) doc.addPage ? doc : doc; // no-op para satisfazer linter
-  const novaPagina = () => {
-    if (escala === 1) {
-      // na passagem de medida não cria páginas
-    }
-  };
-  void novaPagina;
-
-  const quebra = (necessario: number) => {
-    if (y + necessario > altura - MARGEM && escala === 1) {
-      // sem quebra real — apenas para medida
-    }
-  };
-  void quebra;
-
   const setFont = (negrito: boolean, tamanho: number) => {
     doc.setFont("helvetica", negrito ? "bold" : "normal");
     doc.setFontSize(tamanho * escala);

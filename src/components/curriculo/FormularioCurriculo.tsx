@@ -412,7 +412,7 @@ export function FormularioCurriculo({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCursos((a) => [...a, { nome_curso: "", instituicao: "" }])}
+                onClick={() => setCursos((a) => [...a, { nome_curso: "", instituicao: "", ano: "" }])}
               >
                 <Plus className="mr-1 h-4 w-4" /> Adicionar curso
               </Button>
