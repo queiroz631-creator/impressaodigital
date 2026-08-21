@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Printer, DollarSign, FileText, History, Settings, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Printer, DollarSign, FileText, History, Settings, LogOut, Menu, X, MessageCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,7 @@ const itens = [
   { to: "/", label: "Calculadora", icon: Printer },
   { to: "/precos", label: "Configurar Preços", icon: DollarSign, adminOnly: true },
   { to: "/orcamentos", label: "Orçamentos", icon: FileText },
+  { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle, badge: true },
   { to: "/historico", label: "Histórico", icon: History },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
@@ -22,6 +24,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [aberto, setAberto] = useState(false);
+  const pendentes = useConversasPendentes(!!user);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -55,7 +58,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
             )}
           >
             <item.icon className="h-4 w-4 shrink-0" />
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {"badge" in item && item.badge && pendentes > 0 && (
+              <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
+                {pendentes}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -118,6 +126,25 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </div>
     </div>
   );
+}
+
+/** Conversas com mensagens não lidas, exibidas como contador no menu. */
+function useConversasPendentes(habilitado: boolean) {
+  const { data } = useQuery({
+    queryKey: ["whatsapp-nao-lidas"],
+    enabled: habilitado,
+    refetchInterval: 20000,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("whatsapp_conversas")
+        .select("id", { count: "exact", head: true })
+        .gt("nao_lidas", 0)
+        .neq("status", "finalizado");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  return data ?? 0;
 }
 
 function SidebarHeader() {
