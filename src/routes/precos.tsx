@@ -54,6 +54,7 @@ function Precos() {
   const [salvando, setSalvando] = useState(false);
   const [faixasTexto, setFaixasTexto] = useState<Record<string, string>>({});
   const [faixasArquivosTexto, setFaixasArquivosTexto] = useState<Record<string, string>>({});
+  const [faixasCopiasTexto, setFaixasCopiasTexto] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!materiais) return;
@@ -62,6 +63,7 @@ function Precos() {
       materiais.map((m) => ({
         ...m,
         faixas_por_arquivo: m.faixas_por_arquivo ?? [],
+        faixas_por_copia_adicional: m.faixas_por_copia_adicional ?? [],
         quantidade_arquivos_fixo: m.quantidade_arquivos_fixo ?? 3,
         preco_arquivos_fixo: m.preco_arquivos_fixo ?? 0,
       })),
@@ -72,7 +74,14 @@ function Precos() {
     setFaixasArquivosTexto(
       Object.fromEntries(materiais.map((m) => [m.id, faixasParaTexto(m.faixas_por_arquivo ?? [])])),
     );
+
+    setFaixasCopiasTexto(
+      Object.fromEntries(
+        materiais.map((m) => [m.id, faixasParaTexto(m.faixas_por_copia_adicional ?? [])]),
+      ),
+    );
   }, [materiais]);
+
 
   function atualizar(id: string, campo: keyof Material, valor: unknown) {
     setLinhas((atual) => atual.map((m) => (m.id === id ? { ...m, [campo]: valor } : m)));
@@ -96,12 +105,14 @@ function Precos() {
     try {
       const faixasNormalizadas: Record<string, string> = {};
       const faixasArquivosNormalizadas: Record<string, string> = {};
+      const faixasCopiasNormalizadas: Record<string, string> = {};
       for (const m of linhas) {
         if (Number(m.preco_pb) < 0) {
           throw new Error("Preços não podem ser negativos.");
         }
         const faixas = textoParaFaixas(faixasTexto[m.id] ?? "");
         const faixasArquivos = textoParaFaixas(faixasArquivosTexto[m.id] ?? "");
+        const faixasCopias = textoParaFaixas(faixasCopiasTexto[m.id] ?? "");
         const { error } = await supabase
           .from("materiais")
           .update({
@@ -119,6 +130,8 @@ function Precos() {
 
             faixas_por_arquivo: faixasArquivos as unknown as never,
 
+            faixas_por_copia_adicional: faixasCopias as unknown as never,
+
             tipo_impressao: m.tipo_impressao ?? "simples",
 
             formato: m.formato ?? "A4",
@@ -130,9 +143,12 @@ function Precos() {
         if (error) throw error;
         faixasNormalizadas[m.id] = faixasParaTexto(faixas);
         faixasArquivosNormalizadas[m.id] = faixasParaTexto(faixasArquivos);
+        faixasCopiasNormalizadas[m.id] = faixasParaTexto(faixasCopias);
       }
       setFaixasTexto(faixasNormalizadas);
       setFaixasArquivosTexto(faixasArquivosNormalizadas);
+      setFaixasCopiasTexto(faixasCopiasNormalizadas);
+
       queryClient.invalidateQueries({ queryKey: ["materiais"] });
       toast.success("Preço atualizado com sucesso.");
     } catch (e) {
@@ -240,6 +256,8 @@ function Precos() {
                       <th className="px-2 py-3 w-36">PREÇO ARQUIVO EXCEDENTE</th>
                       <th className="px-2 py-3 w-64">FAIXAS POR PÁGINAS</th>
                       <th className="px-2 py-3 w-64">FAIXAS POR ARQUIVOS EXCEDENTES</th>
+                      <th className="px-2 py-3 w-64">FAIXAS POR CÓPIAS ADICIONAIS</th>
+
                       <th className="px-2 py-3 w-20">ATIVO</th>
                       <th className="px-2 py-3 w-28">ORDEM</th>
                       <th className="px-2 py-3 w-16" />
@@ -374,6 +392,28 @@ function Precos() {
                             className="min-w-[15rem] font-mono text-xs"
                           />
                         </td>
+                        <td className="px-2 py-2">
+                          <Textarea
+                            rows={3}
+                            placeholder={"1 = 1,00\n11 = 0,80\n21 = 0,60"}
+                            value={faixasCopiasTexto[m.id] ?? ""}
+                            onChange={(e) =>
+                              setFaixasCopiasTexto((f) => ({
+                                ...f,
+                                [m.id]: e.target.value,
+                              }))
+                            }
+                            onBlur={() =>
+                              setFaixasCopiasTexto((f) => ({
+                                ...f,
+                                [m.id]: faixasParaTexto(textoParaFaixas(f[m.id] ?? "")),
+                              }))
+                            }
+                            className="min-w-[15rem] font-mono text-xs"
+                            title="Faixas aplicadas somente às cópias adicionais"
+                          />
+                        </td>
+
                         <td className="px-2 py-2">
                           <Switch checked={m.ativo} onCheckedChange={(v) => atualizar(m.id, "ativo", v)} />
                         </td>

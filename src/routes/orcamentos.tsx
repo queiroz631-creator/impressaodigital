@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { FileDown, FileText, Image as ImageIcon, Trash2, Eye, Printer, Tags } from "lucide-react";
+import {
+  FileDown,
+  FileText,
+  Image as ImageIcon,
+  Trash2,
+  Eye,
+  Printer,
+  Tags,
+  Pencil,
+} from "lucide-react";
+
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,6 +39,8 @@ import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { ImprimirEtiqueta } from "@/components/ImprimirEtiqueta";
 
 import { useConfiguracao, useOrcamentos, usePedidos } from "@/hooks/useDados";
+import { useAuth } from "@/hooks/useAuth";
+
 
 import { brl, dataBR } from "@/lib/format";
 import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
@@ -68,11 +80,22 @@ function dataLocalISO(valor: Date | string | null | undefined) {
   return `${ano}-${mes}-${dia}`;
 }
 
+/** Situação do pagamento de um pedido. */
+function situacaoPagamento(total: number, pago: number) {
+  if (pago <= 0) return { rotulo: "NÃO PAGO", classe: "bg-destructive text-destructive-foreground" };
+  if (pago + 0.009 < total) return { rotulo: "PARCIAL", classe: "bg-yellow-ink text-sidebar" };
+  return { rotulo: "PAGO", classe: "bg-success text-success-foreground" };
+}
+
 function Orcamentos() {
   const { data: orcamentos, isLoading } = useOrcamentos();
   const { data: listaPedidos } = usePedidos();
   const { data: config } = useConfiguracao();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+
 
   const hoje = dataLocalISO(new Date());
 
@@ -237,6 +260,51 @@ function Orcamentos() {
     invalidar(pedido.pedidoId);
   }
 
+  /** Abre o pedido na calculadora para continuar/editar os itens. */
+  async function editarPedido(pedido: PedidoAgrupado) {
+    if (!pedido.temPedido) {
+      toast.error("Este orçamento antigo não possui pedido vinculado.");
+      return;
+    }
+    if (!user?.id) return;
+    const dados = {
+      pedidoId: pedido.pedidoId,
+      editandoId: null,
+      clienteNome: pedido.clienteNome,
+      clienteTelefone: pedido.clienteTelefone ?? "",
+      observacao: pedido.observacao ?? "",
+      validade: pedido.validade ?? "",
+      arquivosLista: [],
+      arquivos: 0,
+      paginasAdicionais: 0,
+      copiasAdicionais: 0,
+      tipoServico: "",
+      copiaManual: false,
+      materialId: "",
+      selecao: {},
+      frenteVerso: false,
+      usarFaixaCopiaManual: false,
+      incluirPix: false,
+      precisaPrazo: false,
+      prazoTipo: "",
+      prazoQuantidade: 0,
+    };
+    const { error } = await supabase
+      .from("rascunhos")
+      .upsert(
+        { usuario_id: user.id, dados: dados as unknown as never },
+        { onConflict: "usuario_id" },
+      );
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["rascunho", user.id] });
+    toast.success(`Pedido ${pedido.numero} aberto na calculadora.`);
+    void navigate({ to: "/" });
+  }
+
+
   async function excluirPedido(pedido: PedidoAgrupado) {
     const ids = pedido.itens.map((item) => String(item["id"])).filter(Boolean);
     if (ids.length === 0) return;
@@ -363,6 +431,8 @@ function Orcamentos() {
                     <th className="px-4 py-3 text-center">ITENS</th>
                     <th className="px-4 py-3 text-right">VALOR TOTAL</th>
                     <th className="px-4 py-3 text-center">STATUS</th>
+                    <th className="px-4 py-3 text-center">PAGAMENTO</th>
+
                     <th className="px-4 py-3 text-right">AÇÕES</th>
                   </tr>
                 </thead>
@@ -400,6 +470,19 @@ function Orcamentos() {
                         <Badge variant="outline">{rotuloStatus[pedido.status]}</Badge>
                       </td>
 
+                      <td className="px-4 py-4 text-center">
+                        {(() => {
+                          const p = situacaoPagamento(pedido.total, pedido.valorPago);
+                          return (
+                            <span
+                              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${p.classe}`}
+                            >
+                              {p.rotulo}
+                            </span>
+                          );
+                        })()}
+                      </td>
+
                       <td className="px-4 py-4">
                         <div className="flex justify-end gap-1">
                           <Button
@@ -410,6 +493,16 @@ function Orcamentos() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Editar pedido"
+                            onClick={() => void editarPedido(pedido)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+
 
                           <Button
                             variant="ghost"

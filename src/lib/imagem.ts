@@ -153,6 +153,30 @@ function montarLinhas(d: DadosDocumento): Linha[] {
   }
 
   // ============================================================
+  // PRAZO DE ENTREGA
+  // ============================================================
+
+  if (d.prazoTexto) {
+    linhas.push({ texto: "sep", tipo: "sep" });
+    linhas.push({ texto: "PRAZO DE ENTREGA", tipo: "sub" });
+    for (const linha of d.prazoTexto.split("\n")) {
+      linhas.push({ texto: linha, tipo: "texto" });
+    }
+  }
+
+  // ============================================================
+  // PAGAMENTO VIA PIX
+  // ============================================================
+
+  if (d.pix) {
+    linhas.push({ texto: "sep", tipo: "sep" });
+    linhas.push({ texto: "PAGAMENTO VIA PIX", tipo: "sub" });
+    for (const linha of d.pix.split("\n")) {
+      linhas.push({ texto: linha, tipo: "texto" });
+    }
+  }
+
+  // ============================================================
   // OBSERVAÇÕES
   // ============================================================
 
@@ -174,6 +198,7 @@ function montarLinhas(d: DadosDocumento): Linha[] {
       });
     }
   }
+
 
   return linhas;
 }

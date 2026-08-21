@@ -15,6 +15,9 @@ import { useConfiguracao } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { listarImpressoras, qzDisponivel, testarImpressora } from "@/lib/impressora";
+import { PIX_MENSAGEM_PADRAO, PRAZO_MENSAGEM_PADRAO } from "@/lib/orcamento-extras";
+import { Switch } from "@/components/ui/switch";
+
 
 export const Route = createFileRoute("/configuracoes")({
   component: () => (
@@ -43,6 +46,12 @@ interface Form {
   validade_padrao_dias: number;
   impressora_padrao_tipo: string;
   impressoras_padrao: string[];
+  pix_ativo: boolean;
+  pix_chave: string;
+  pix_nome: string;
+  pix_banco: string;
+  pix_mensagem: string;
+  mensagem_prazo_orcamento: string;
 }
 
 const vazio: Form = {
@@ -56,7 +65,14 @@ const vazio: Form = {
   validade_padrao_dias: 7,
   impressora_padrao_tipo: "navegador",
   impressoras_padrao: [],
+  pix_ativo: false,
+  pix_chave: "",
+  pix_nome: "",
+  pix_banco: "",
+  pix_mensagem: PIX_MENSAGEM_PADRAO,
+  mensagem_prazo_orcamento: PRAZO_MENSAGEM_PADRAO,
 };
+
 
 function Configuracoes() {
   const { user } = useAuth();
@@ -93,7 +109,14 @@ function Configuracoes() {
       validade_padrao_dias: config.validade_padrao_dias ?? 7,
       impressora_padrao_tipo: config.impressora_padrao_tipo ?? "navegador",
       impressoras_padrao: lista,
+      pix_ativo: config.pix_ativo ?? false,
+      pix_chave: config.pix_chave ?? "",
+      pix_nome: config.pix_nome ?? "",
+      pix_banco: config.pix_banco ?? "",
+      pix_mensagem: config.pix_mensagem || PIX_MENSAGEM_PADRAO,
+      mensagem_prazo_orcamento: config.mensagem_prazo_orcamento || PRAZO_MENSAGEM_PADRAO,
     });
+
   }, [config]);
 
   function set<K extends keyof Form>(campo: K, valor: Form[K]) {
@@ -119,7 +142,14 @@ function Configuracoes() {
       impressora_padrao_tipo: form.impressora_padrao_tipo,
       impressora_padrao_largura: 80,
       impressoras_padrao: form.impressoras_padrao,
+      pix_ativo: form.pix_ativo,
+      pix_chave: form.pix_chave || null,
+      pix_nome: form.pix_nome || null,
+      pix_banco: form.pix_banco || null,
+      pix_mensagem: form.pix_mensagem || PIX_MENSAGEM_PADRAO,
+      mensagem_prazo_orcamento: form.mensagem_prazo_orcamento || PRAZO_MENSAGEM_PADRAO,
     };
+
     const { error } = config
       ? await supabase.from("configuracoes").update(payload).eq("id", config.id)
       : await supabase.from("configuracoes").insert(payload);
@@ -222,6 +252,76 @@ function Configuracoes() {
           </div>
         </CardContent>
       </Card>
+
+      <Card className="mt-6 max-w-3xl shadow-card">
+        <CardHeader>
+          <CardTitle className="text-base">Pagamento PIX e prazo de entrega</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2 flex items-center justify-between rounded-md border p-3">
+            <div>
+              <Label className="text-sm">Habilitar PIX nos orçamentos</Label>
+              <p className="text-xs text-muted-foreground">
+                Quando ativo, é possível incluir os dados do PIX ao gerar o orçamento.
+              </p>
+            </div>
+            <Switch checked={form.pix_ativo} onCheckedChange={(v) => set("pix_ativo", v)} />
+          </div>
+          <div>
+            <Label htmlFor="pix_chave">Chave PIX</Label>
+            <Input
+              id="pix_chave"
+              value={form.pix_chave}
+              onChange={(e) => set("pix_chave", e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="pix_nome">Nome do beneficiário</Label>
+            <Input
+              id="pix_nome"
+              value={form.pix_nome}
+              onChange={(e) => set("pix_nome", e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="pix_banco">Banco</Label>
+            <Input
+              id="pix_banco"
+              value={form.pix_banco}
+              onChange={(e) => set("pix_banco", e.target.value)}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="pix_mensagem">Mensagem do PIX</Label>
+            <Textarea
+              id="pix_mensagem"
+              rows={4}
+              value={form.pix_mensagem}
+              onChange={(e) => set("pix_mensagem", e.target.value)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Variáveis: {"{chave_pix}"}, {"{nome_pix}"}, {"{banco_pix}"}, {"{empresa}"}
+            </p>
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="msg_prazo">Mensagem do prazo de entrega</Label>
+            <Textarea
+              id="msg_prazo"
+              rows={2}
+              value={form.mensagem_prazo_orcamento}
+              onChange={(e) => set("mensagem_prazo_orcamento", e.target.value)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">Variável: {"{prazo}"}</p>
+          </div>
+          <div className="sm:col-span-2">
+            <Button onClick={salvar} disabled={salvando}>
+              <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+
 
       <Card className="mt-6 max-w-3xl shadow-card">
         <CardHeader>

@@ -78,6 +78,8 @@ import { contarPaginas } from "@/lib/contagem";
 import type { AcabamentoDoc, ArquivoDoc } from "@/lib/documento";
 import { brl, numeroBR } from "@/lib/format";
 import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
+import { montarTextoPix, montarTextoPrazo, type PrazoTipo } from "@/lib/orcamento-extras";
+
 import { gerarOrcamentoPdf } from "@/lib/pdf";
 import { gerarOrcamentoImagem } from "@/lib/imagem";
 
@@ -129,6 +131,12 @@ interface EstadoRascunho {
   formato: FormatoPapel;
   usarFaixaCopiaManual: boolean;
   copiasAdicionais: number;
+  /** Incluir dados de pagamento PIX no orçamento. */
+  incluirPix: boolean;
+  /** Informar prazo de entrega no orçamento. */
+  precisaPrazo: boolean;
+  prazoTipo: PrazoTipo | "";
+  prazoQuantidade: number;
 }
 
 const ESTADO_INICIAL: EstadoRascunho = {
@@ -149,7 +157,12 @@ const ESTADO_INICIAL: EstadoRascunho = {
   formato: FORMATO_PADRAO,
   usarFaixaCopiaManual: false,
   copiasAdicionais: 0,
+  incluirPix: false,
+  precisaPrazo: false,
+  prazoTipo: "",
+  prazoQuantidade: 0,
 };
+
 
 function Calculadora() {
   const { user } = useAuth();
@@ -556,6 +569,15 @@ function Calculadora() {
     return `${ano}-${mes}-${dia}`;
   }
 
+  /** Texto do PIX (vazio quando não incluído). */
+  const textoPix =
+    config?.pix_ativo && estado.incluirPix ? montarTextoPix(config) : "";
+
+  /** Texto do prazo de entrega (vazio quando não informado). */
+  const textoPrazo = estado.precisaPrazo
+    ? montarTextoPrazo(config, estado.prazoTipo, estado.prazoQuantidade)
+    : "";
+
   function documentoDoPedido() {
     const validade = estado.validade || calcularValidadePadrao();
 
@@ -569,9 +591,12 @@ function Calculadora() {
         clienteTelefone: estado.clienteTelefone,
         validade: validade || null,
         observacao: estado.observacao || null,
+        pix: textoPix || null,
+        prazoTexto: textoPrazo || null,
       },
     );
   }
+
 
   function documentoParaGerar() {
     return { ...documentoDoPedido(), mostrarTotal: incluirTotal };
@@ -593,6 +618,14 @@ function Calculadora() {
 
   async function salvarDadosCliente() {
     if (!estado.pedidoId) return;
+    const extras = {
+      incluir_pix: estado.incluirPix,
+      pix_texto_final: textoPix || null,
+      precisa_prazo: estado.precisaPrazo,
+      prazo_tipo: estado.prazoTipo || null,
+      prazo_quantidade: Math.max(0, Number(estado.prazoQuantidade) || 0),
+      prazo_texto_final: textoPrazo || null,
+    };
     await supabase
       .from("pedidos")
       .update({
@@ -600,6 +633,7 @@ function Calculadora() {
         cliente_telefone: estado.clienteTelefone,
         observacao: estado.observacao,
         validade: estado.validade || null,
+        ...extras,
       })
       .eq("id", estado.pedidoId);
     if ((itensPedido ?? []).length > 0) {
@@ -610,12 +644,14 @@ function Calculadora() {
           cliente_telefone: estado.clienteTelefone,
           observacao: estado.observacao,
           validade: estado.validade || null,
+          ...extras,
         })
         .eq("pedido_id", estado.pedidoId);
       queryClient.invalidateQueries({ queryKey: ["orcamentos-pedido", estado.pedidoId] });
       queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
     }
   }
+
 
   return (
     <>
@@ -1040,7 +1076,9 @@ function Calculadora() {
       </Card>
 
       {/* ==================== 3 COLUNAS ==================== */}
-      <div className="mb-6 grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
+      {!precisaSelecionar && (
+        <div className="mb-6 grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
+
         {/* ==================== COLUNA 1 — ACABAMENTO ==================== */}
         <Card className="shadow-card">
           <CardHeader className="pb-2">
@@ -1356,7 +1394,9 @@ function Calculadora() {
             )}
           </CardContent>
         </Card>
-      </div>
+        </div>
+      )}
+
 
       {(itensPedido ?? []).length > 0 && (
         <Card className="mb-6 shadow-card">
@@ -1527,7 +1567,71 @@ function Calculadora() {
               </div>
               <Switch checked={incluirTotal} onCheckedChange={setIncluirTotal} />
             </div>
+
+            {config?.pix_ativo && (
+              <div className="rounded-xl border border-border p-3 sm:col-span-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">Incluir pagamento via PIX</p>
+                    <p className="text-xs text-muted-foreground">
+                      Adiciona os dados do PIX no documento do orçamento.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={estado.incluirPix}
+                    onCheckedChange={(v) => set("incluirPix", v)}
+                  />
+                </div>
+                {estado.incluirPix && textoPix && (
+                  <pre className="mt-2 rounded-md bg-muted p-2 text-xs whitespace-pre-wrap">
+                    {textoPix}
+                  </pre>
+                )}
+              </div>
+            )}
+
+            <div className="rounded-xl border border-border p-3 sm:col-span-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold">Informar prazo de entrega</p>
+                  <p className="text-xs text-muted-foreground">
+                    Escolha entre horas ou dias e a quantidade.
+                  </p>
+                </div>
+                <Switch
+                  checked={estado.precisaPrazo}
+                  onCheckedChange={(v) => set("precisaPrazo", v)}
+                />
+              </div>
+
+              {estado.precisaPrazo && (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <Select
+                    value={estado.prazoTipo}
+                    onValueChange={(v) => set("prazoTipo", v as PrazoTipo)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Horas ou dias" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="horas">Horas</SelectItem>
+                      <SelectItem value="dias">Dias</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    inputMode="numeric"
+                    placeholder="Quantidade"
+                    value={estado.prazoQuantidade ? String(estado.prazoQuantidade) : ""}
+                    onChange={(e) => set("prazoQuantidade", num(e.target.value))}
+                  />
+                  {textoPrazo && (
+                    <p className="text-xs text-muted-foreground sm:col-span-2">{textoPrazo}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
+
           <DialogFooter className="gap-2">
             <Button
               type="button"

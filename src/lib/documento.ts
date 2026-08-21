@@ -48,9 +48,14 @@ export interface DadosDocumento {
   clienteTelefone?: string | null | undefined;
   validade?: string | null | undefined;
   observacao?: string | null | undefined;
+  /** Texto de pagamento via PIX (quando incluído no orçamento). */
+  pix?: string | null | undefined;
+  /** Mensagem de prazo de entrega (quando informado). */
+  prazoTexto?: string | null | undefined;
   itens: ItemDoc[];
   total: number;
 }
+
 
 /** Extrai a extensão/tipo legível de um nome de arquivo. */
 export function tipoDoArquivo(nome: string, mime?: string) {

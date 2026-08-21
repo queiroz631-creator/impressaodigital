@@ -80,9 +80,12 @@ export function documentoDeOrcamentos(
     clienteTelefone?: string | null;
     validade?: string | null;
     observacao?: string | null;
+    pix?: string | null;
+    prazoTexto?: string | null;
   },
 ): DadosDocumento {
   const itens = rows.map((r, i) => itemDeOrcamento(r, i));
+  const primeira = rows[0];
   return {
     numero: extra.numero,
     data: extra.data,
@@ -95,6 +98,8 @@ export function documentoDeOrcamentos(
     clienteTelefone: extra.clienteTelefone ?? null,
     validade: extra.validade ?? null,
     observacao: extra.observacao ?? null,
+    pix: extra.pix ?? (primeira?.["pix_texto_final"] as string | null) ?? null,
+    prazoTexto: extra.prazoTexto ?? (primeira?.["prazo_texto_final"] as string | null) ?? null,
     itens,
     total: itens.reduce((acc, i) => acc + i.total, 0),
   };

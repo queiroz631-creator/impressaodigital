@@ -42,6 +42,10 @@ export interface Material {
   /** Faixas de preço por quantidade TOTAL de arquivos. */
   faixas_por_arquivo: FaixaPreco[];
 
+  /** Faixas de preço por quantidade de CÓPIAS ADICIONAIS. */
+  faixas_por_copia_adicional: FaixaPreco[];
+
+
   /**
    * Quantidade inicial de arquivos que utiliza o preço fixo.
    *
@@ -174,6 +178,40 @@ export function precoPorQuantidadeArquivos(material: Material, quantidade: numbe
 
   return preco;
 }
+
+/**
+ * Preço unitário das CÓPIAS ADICIONAIS.
+ *
+ * A faixa considera somente a quantidade de cópias adicionais
+ * (não o total de cópias).
+ *
+ * Se o material não possuir faixas por cópia adicional,
+ * retorna `precoPadrao` (o preço unitário de página já calculado),
+ * mantendo o comportamento anterior.
+ */
+export function precoPorCopiasAdicionais(
+  material: Material,
+  copiasAdicionais: number,
+  precoPadrao: number,
+) {
+  const faixas = normalizarFaixas(material.faixas_por_copia_adicional);
+
+  if (faixas.length === 0) {
+    return precoPadrao;
+  }
+
+  let preco = precoPadrao;
+
+  for (const f of faixas) {
+    if (copiasAdicionais >= f.min) {
+      preco = f.preco;
+    }
+  }
+
+  return preco;
+}
+
+
 
 /**
  * Calcula o valor dos arquivos considerando:
@@ -446,8 +484,17 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
 
       /**
        * Valor das cópias adicionais.
+       *
+       * Usa as faixas por cópias adicionais quando cadastradas
+       * (baseadas somente nas cópias adicionais); caso contrário
+       * mantém o preço unitário de página.
        */
-      const totalCopiasAdicionais = copiasAdicionais * preco;
+      const precoCopia = entrada.copiaManual
+        ? preco
+        : precoPorCopiasAdicionais(material, copiasAdicionais, preco);
+
+      const totalCopiasAdicionais = copiasAdicionais * precoCopia;
+
 
       /**
        * ================================

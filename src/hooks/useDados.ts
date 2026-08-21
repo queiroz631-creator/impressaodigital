@@ -30,7 +30,14 @@ export interface Configuracao {
   impressora_padrao_tipo: string | null;
   impressora_padrao_largura: number | null;
   impressoras_padrao: unknown;
+  pix_ativo: boolean;
+  pix_chave: string | null;
+  pix_nome: string | null;
+  pix_banco: string | null;
+  pix_mensagem: string;
+  mensagem_prazo_orcamento: string;
 }
+
 
 export function useConfiguracao() {
   return useQuery({
