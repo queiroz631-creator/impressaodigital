@@ -255,7 +255,10 @@ function Configuracoes() {
         </CardContent>
       </Card>
 
-      <Card className="mt-6 max-w-3xl shadow-card">
+        </TabsContent>
+
+        <TabsContent value="pix">
+        <Card className="max-w-3xl shadow-card">
         <CardHeader>
           <CardTitle className="text-base">Pagamento PIX e prazo de entrega</CardTitle>
         </CardHeader>
