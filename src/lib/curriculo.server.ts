@@ -31,7 +31,7 @@ async function lerLink(token: string) {
 }
 
 export async function carregarCurriculo(curriculoId: string): Promise<CurriculoCompleto> {
-  const [c, tel, cur, exp, hab] = await Promise.all([
+  const [c, tel, cur, form, exp, hab] = await Promise.all([
     supabaseAdmin.from("curriculos").select(CAMPOS).eq("id", curriculoId).maybeSingle(),
     supabaseAdmin
       .from("curriculo_telefones")
@@ -40,7 +40,12 @@ export async function carregarCurriculo(curriculoId: string): Promise<CurriculoC
       .order("ordem"),
     supabaseAdmin
       .from("curriculo_cursos")
-      .select("nome_curso, instituicao")
+      .select("nome_curso, instituicao, ano")
+      .eq("curriculo_id", curriculoId)
+      .order("ordem"),
+    supabaseAdmin
+      .from("curriculo_formacoes")
+      .select("nome_curso, instituicao, ano")
       .eq("curriculo_id", curriculoId)
       .order("ordem"),
     supabaseAdmin
@@ -61,6 +66,7 @@ export async function carregarCurriculo(curriculoId: string): Promise<CurriculoC
     curriculo: c.data as CurriculoCompleto["curriculo"],
     telefones: tel.data ?? [],
     cursos: cur.data ?? [],
+    formacoes: form.data ?? [],
     experiencias: exp.data ?? [],
     habilidades: hab.data ?? [],
   };
