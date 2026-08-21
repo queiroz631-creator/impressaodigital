@@ -253,7 +253,11 @@ export function FormularioCurriculo({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Label htmlFor="nome">Nome completo *</Label>
-                  <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+                  <Input
+                    id="nome"
+                    value={nome}
+                    onChange={(e) => setNome(capitalizarTexto(e.target.value))}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="tel">Telefone principal *</Label>
@@ -262,6 +266,15 @@ export function FormularioCurriculo({
                     value={telefone}
                     onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
                     placeholder="(00) 00000-0000"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div>
@@ -288,9 +301,51 @@ export function FormularioCurriculo({
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Label htmlFor="endereco">Endereço</Label>
+                  <Input
+                    id="endereco"
+                    value={endereco}
+                    onChange={(e) => setEndereco(capitalizarTexto(e.target.value))}
+                  />
+                </div>
                 <div>
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Label htmlFor="bairro">Bairro</Label>
+                  <Input
+                    id="bairro"
+                    value={bairro}
+                    onChange={(e) => setBairro(capitalizarTexto(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cep">CEP</Label>
+                  <Input
+                    id="cep"
+                    value={cep}
+                    onChange={(e) => setCep(e.target.value)}
+                    placeholder="00000-000"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cidade">Cidade</Label>
+                  <Input
+                    id="cidade"
+                    value={cidade}
+                    onChange={(e) => setCidade(capitalizarTexto(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="uf">UF</Label>
+                  <Input
+                    id="uf"
+                    value={uf}
+                    onChange={(e) => setUf(e.target.value.toUpperCase().slice(0, 2))}
+                    placeholder="EX"
+                    className="max-w-[80px]"
+                  />
                 </div>
               </div>
 
@@ -316,7 +371,7 @@ export function FormularioCurriculo({
                     </Button>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={() => setTelefones((a) => [...a, ""])}>
+                <Button variant="default" size="sm" onClick={() => setTelefones((a) => [...a, ""])}>
                   <Plus className="mr-1 h-4 w-4" /> Adicionar telefone
                 </Button>
               </div>
