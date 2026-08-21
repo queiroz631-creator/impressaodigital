@@ -289,6 +289,7 @@ export type Database = {
       }
       curriculo_cursos: {
         Row: {
+          ano: string | null
           created_at: string
           curriculo_id: string
           id: string
@@ -298,6 +299,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ano?: string | null
           created_at?: string
           curriculo_id: string
           id?: string
@@ -307,6 +309,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ano?: string | null
           created_at?: string
           curriculo_id?: string
           id?: string
@@ -362,6 +365,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "curriculo_experiencias_curriculo_id_fkey"
+            columns: ["curriculo_id"]
+            isOneToOne: false
+            referencedRelation: "curriculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculo_formacoes: {
+        Row: {
+          ano: string | null
+          created_at: string
+          curriculo_id: string
+          id: string
+          instituicao: string | null
+          nome_curso: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ano?: string | null
+          created_at?: string
+          curriculo_id: string
+          id?: string
+          instituicao?: string | null
+          nome_curso: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ano?: string | null
+          created_at?: string
+          curriculo_id?: string
+          id?: string
+          instituicao?: string | null
+          nome_curso?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculo_formacoes_curriculo_id_fkey"
             columns: ["curriculo_id"]
             isOneToOne: false
             referencedRelation: "curriculos"
@@ -486,7 +530,10 @@ export type Database = {
       }
       curriculos: {
         Row: {
+          bairro: string | null
           categoria_habilitacao: string | null
+          cep: string | null
+          cidade: string | null
           cliente_id: string | null
           completed_at: string | null
           cpf: string
@@ -495,6 +542,7 @@ export type Database = {
           data_nascimento: string | null
           documentacao_completa: boolean | null
           email: string | null
+          endereco: string | null
           escolaridade: string | null
           estado_civil: string | null
           exibir_data_atualizacao: boolean
@@ -503,12 +551,17 @@ export type Database = {
           nome_completo: string
           objetivo_texto: string | null
           objetivo_tipo: string
+          pos_graduacao_nome: string | null
           status: string
           telefone_principal: string
+          uf: string | null
           updated_at: string
         }
         Insert: {
+          bairro?: string | null
           categoria_habilitacao?: string | null
+          cep?: string | null
+          cidade?: string | null
           cliente_id?: string | null
           completed_at?: string | null
           cpf: string
@@ -517,6 +570,7 @@ export type Database = {
           data_nascimento?: string | null
           documentacao_completa?: boolean | null
           email?: string | null
+          endereco?: string | null
           escolaridade?: string | null
           estado_civil?: string | null
           exibir_data_atualizacao?: boolean
@@ -525,12 +579,17 @@ export type Database = {
           nome_completo?: string
           objetivo_texto?: string | null
           objetivo_tipo?: string
+          pos_graduacao_nome?: string | null
           status?: string
           telefone_principal?: string
+          uf?: string | null
           updated_at?: string
         }
         Update: {
+          bairro?: string | null
           categoria_habilitacao?: string | null
+          cep?: string | null
+          cidade?: string | null
           cliente_id?: string | null
           completed_at?: string | null
           cpf?: string
@@ -539,6 +598,7 @@ export type Database = {
           data_nascimento?: string | null
           documentacao_completa?: boolean | null
           email?: string | null
+          endereco?: string | null
           escolaridade?: string | null
           estado_civil?: string | null
           exibir_data_atualizacao?: boolean
@@ -547,8 +607,10 @@ export type Database = {
           nome_completo?: string
           objetivo_texto?: string | null
           objetivo_tipo?: string
+          pos_graduacao_nome?: string | null
           status?: string
           telefone_principal?: string
+          uf?: string | null
           updated_at?: string
         }
         Relationships: [
