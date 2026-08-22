@@ -572,13 +572,16 @@ function Calculadora() {
 
   function limparFormulario(manterPedido: boolean) {
     const anterior = estado.pedidoId;
-    setEstado((e) => ({
-      ...ESTADO_INICIAL,
-      pedidoId: manterPedido ? e.pedidoId : null,
-      clienteNome: manterPedido ? e.clienteNome : "",
-      clienteTelefone: manterPedido ? e.clienteTelefone : "",
-      validade: manterPedido ? e.validade : "",
-    }));
+    const novo: EstadoRascunho = manterPedido
+      ? {
+          ...ESTADO_INICIAL,
+          pedidoId: estado.pedidoId,
+          clienteNome: estado.clienteNome,
+          clienteTelefone: estado.clienteTelefone,
+          validade: estado.validade,
+        }
+      : { ...ESTADO_INICIAL };
+    setEstado(novo);
     if (!manterPedido) {
       // Descarta a lista de orçamentos que estava vinculada ao pedido anterior.
       setIncluirTotal(true);
@@ -588,7 +591,19 @@ function Calculadora() {
         queryClient.removeQueries({ queryKey: ["pedido", anterior] });
       }
     }
+    // Grava o rascunho limpo imediatamente (sem esperar o debounce) e atualiza o
+    // cache, para que ao sair e voltar da tela nada antigo seja reidratado.
+    if (user?.id) {
+      queryClient.setQueryData(["rascunho", user.id], novo as unknown as Record<string, unknown>);
+      void supabase
+        .from("rascunhos")
+        .upsert(
+          { usuario_id: user.id, dados: novo as unknown as never },
+          { onConflict: "usuario_id" },
+        );
+    }
   }
+
   function calcularValidadePadrao() {
     const dias = Number(config?.validade_padrao_dias ?? 0);
 
