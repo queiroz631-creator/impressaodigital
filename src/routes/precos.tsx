@@ -299,13 +299,14 @@ function Precos() {
                   ))}
                 </div>
               ) : (
-                <table className="w-full min-w-[820px] text-sm">
+                <table className="w-full min-w-[960px] text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
                       <th className="px-2 py-3">TIPO</th>
                       <th className="px-2 py-3">DESCRIÇÃO</th>
                       <th className="px-2 py-3 w-40">IMPRESSÃO / CÓPIA</th>
                       <th className="px-2 py-3 w-44">TIPO DE IMPRESSÃO</th>
+                      <th className="px-2 py-3 w-44">FORMATO</th>
                       <th className="px-2 py-3 w-20">ATIVO</th>
                       <th className="px-2 py-3 w-28">ORDEM</th>
                       <th className="px-2 py-3 w-28">EDITAR</th>
@@ -358,6 +359,23 @@ function Precos() {
                           </Select>
                         </td>
 
+                        <td className="px-2 py-2">
+                          <Select
+                            value={m.formato ?? "A4"}
+                            onValueChange={(v) => atualizar(m.id, "formato", v as FormatoPapel)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {FORMATOS.map((f) => (
+                                <SelectItem key={f.valor} value={f.valor}>
+                                  {f.rotulo}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </td>
                         <td className="px-2 py-2">
                           <Switch checked={m.ativo} onCheckedChange={(v) => atualizar(m.id, "ativo", v)} />
                         </td>
@@ -412,24 +430,6 @@ function Precos() {
                 </DialogHeader>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label>Formato</Label>
-                    <Select
-                      value={m.formato ?? "A4"}
-                      onValueChange={(v) => atualizar(m.id, "formato", v as FormatoPapel)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {FORMATOS.map((f) => (
-                          <SelectItem key={f.valor} value={f.valor}>
-                            {f.rotulo}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                   <div className="space-y-1.5">
                     <Label>Preço uni.</Label>
                     <Input
