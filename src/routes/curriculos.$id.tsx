@@ -113,7 +113,12 @@ function DetalheCurriculo() {
     }
 
     const trocar = async (
-      tabela: "curriculo_telefones" | "curriculo_cursos" | "curriculo_experiencias" | "curriculo_habilidades",
+      tabela:
+        | "curriculo_telefones"
+        | "curriculo_cursos"
+        | "curriculo_formacoes"
+        | "curriculo_experiencias"
+        | "curriculo_habilidades",
       linhas: Record<string, unknown>[],
     ) => {
       await supabase.from(tabela).delete().eq("curriculo_id", id);
@@ -137,9 +142,26 @@ function DetalheCurriculo() {
         "curriculo_cursos",
         payload.cursos
           .filter((c) => c.nome_curso.trim())
-          .map((c) => ({ nome_curso: c.nome_curso.trim(), instituicao: c.instituicao?.trim() || null })),
+          .map((c) => ({
+            nome_curso: c.nome_curso.trim(),
+            instituicao: c.instituicao?.trim() || null,
+            ano: c.ano?.trim() || null,
+          })),
       );
     }
+    if (payload.formacoes) {
+      await trocar(
+        "curriculo_formacoes",
+        payload.formacoes
+          .filter((f) => f.nome_curso.trim())
+          .map((f) => ({
+            nome_curso: f.nome_curso.trim(),
+            instituicao: f.instituicao?.trim() || null,
+            ano: f.ano?.trim() || null,
+          })),
+      );
+    }
+
     if (payload.experiencias) {
       await trocar(
         "curriculo_experiencias",
