@@ -1,34 +1,52 @@
-# Aviso de páginas, edição de preços em modal e botões destacados
+# Ajustes na calculadora, preços, currículo e destaque dos botões
 
-## 1. Calculadora: aviso claro quando não for possível ler as páginas
+## 1. Calculadora
 
-Hoje o sistema já marca o arquivo e mostra um aviso pequeno. Vai ficar mais visível:
+**Aviso de páginas não lidas**
+- Ao anexar arquivos sem contagem automática (.doc, alguns .docx, PDFs protegidos), exibir um alerta destacado no topo da lista de arquivos: "X arquivo(s) sem contagem automática. Informe a quantidade de páginas."
+- O arquivo pendente fica realçado e o aviso some quando todas as quantidades forem informadas.
 
-- Ao anexar arquivos cuja contagem falhar (.doc, .docx sem contagem, PDFs protegidos), abrir um alerta destacado no topo da lista de arquivos: "X arquivo(s) sem contagem automática. Informe a quantidade de páginas."
-- Cada arquivo nessa situação recebe borda/realce e o campo de páginas fica destacado até o usuário digitar um valor.
-- O aviso some automaticamente quando todas as quantidades forem informadas.
-- Nada muda no cálculo nem na contagem automática de PDFs/imagens.
+**Acabamento obrigatório (Sim/Não)**
+- Nova escolha "Precisa de acabamento? Sim / Não" antes da lista de acabamentos.
+- Enquanto não escolher, a lista de acabamentos, o card "Valores de impressão" e o "Resumo do cálculo" ficam ocultos.
+- Se "Sim", é obrigatório marcar pelo menos um acabamento para liberar valores e resumo.
+- Se "Não", segue direto sem acabamentos.
 
-## 2. Configurar Preços: tabela enxuta + modal de edição
+**Frente e verso obrigatório**
+- Trocar o interruptor por escolha obrigatória Sim/Não, com o mesmo bloqueio de exibição enquanto não for escolhido.
 
-A tabela de materiais passa a exibir somente:
+**Novo Pedido**
+- Ao confirmar "Novo Pedido", além de limpar o formulário, os orçamentos já adicionados ao pedido são removidos e o pedido atual é encerrado, começando um pedido vazio.
 
-`TIPO | DESCRIÇÃO | IMPRESSÃO/CÓPIA | TIPO DE IMPRESSÃO | ATIVO | ORDEM | EDITAR | EXCLUIR`
+**Gerar orçamento**
+- O campo Cliente passa a iniciar em branco (o botão "Cliente Padrão" continua disponível para preencher manualmente).
+- "Mostrar total" vira escolha obrigatória Sim/Não, no mesmo padrão do PIX; sem escolha, não gera o documento.
 
-- Novo botão "Editar" (ícone de lápis) em cada linha abre um modal com todos os campos de valores: Formato, Preço Uni, Qtd. fixa, Valor fixo, Preço arquivo excedente, Faixas por páginas, Faixas por arquivos excedentes, Faixas por cópias adicionais.
-- O modal tem "Cancelar" e "Salvar", salvando apenas aquele material (mesma lógica de update já existente, incluindo normalização das faixas com vírgula).
-- Os campos que continuam na tabela (tipo, descrição, categoria, tipo de impressão, ativo, ordem) seguem editáveis direto na linha, com o botão "Salvar Alterações" atual.
-- "Adicionar material" e exclusão permanecem como estão.
+**Documento (PDF e imagem)**
+- Remover a linha "Cópia manual".
+- "Quantidade de arquivos" só aparece quando for maior que 0.
+- Substituir "Páginas adicionais" e "Cópias adicionais" por uma única linha **"Total p/ impressão"** com a quantidade usada na cobrança (arquivos + páginas adicionais + cópias adicionais), a mesma do resumo.
 
-## 3. Botões com cor mais forte (todas as telas)
+## 2. Configurar Preços
 
-- Reforçar os tokens de cor no design system (`src/styles.css`): primário mais saturado/escuro, com texto de alto contraste, em tema claro e escuro.
-- Ajustar as variantes do componente de botão (`outline`, `secondary`, `ghost`) para terem borda/fundo mais definidos, mantendo os tokens semânticos.
-- Sem trocar textos, ícones ou posições dos botões — só a intensidade visual.
+- A tabela passa a exibir apenas: Tipo, Descrição, Impressão/Cópia, Tipo de impressão, Ativo, Ordem, Editar e Excluir.
+- Novo botão "Editar" abre um modal com Formato, Preço Uni, Qtd. fixa, Valor fixo, Preço arquivo excedente e as três faixas (páginas, arquivos excedentes, cópias adicionais).
+- O modal salva apenas aquele material, mantendo a normalização das faixas com vírgula.
+- "Adicionar material", ordenação e exclusão continuam como estão.
+
+## 3. Currículo — impressão em branco
+
+- Corrigir a impressão: o conteúdo é medido/escalado antes de o layout do iframe estabilizar, o que pode resultar em página vazia. A correção aguarda o carregamento e o layout do clone antes de calcular a escala, com fallback para escala 1 quando a medição falhar, mantendo o ajuste em uma única folha A4 e todo o estilo atual.
+
+## 4. Botões mais destacados (todas as telas)
+
+- Reforçar os tokens de cor no design system (`src/styles.css`): primário mais forte com texto de alto contraste, claro e escuro.
+- Deixar as variantes `outline`/`secondary` com borda e fundo mais definidos, sem mudar textos, ícones ou posições.
 
 ## Detalhes técnicos
 
-- `src/lib/contagem.ts`: sem mudança de lógica; a flag `paginasManuais` já existente alimenta o novo alerta.
-- `src/routes/index.tsx`: banner condicional na coluna de arquivos + realce por arquivo pendente.
-- `src/routes/precos.tsx`: reduzir colunas da tabela e extrair os campos de valores/faixas para um novo componente de modal (Dialog) com estado local por material; reaproveitar `faixasParaTexto` / `textoParaFaixas`.
-- `src/styles.css` e `src/components/ui/button.tsx`: ajuste de tokens/variantes, sem cores fixas em componentes.
+- `src/routes/index.tsx`: novos estados `decisaoAcabamento` e `decisaoFrenteVerso` (obrigatórios, no mesmo padrão de `decisaoPix`), gate de renderização de valores/resumo, banner de páginas manuais, `limparFormulario` excluindo os orçamentos do pedido, `incluirTotal` como decisão obrigatória, cliente iniciando vazio.
+- `src/lib/pdf.ts` e `src/lib/imagem.ts`: remover linha de cópia manual, condicionar quantidade de arquivos e trocar as duas linhas por "Total p/ impressão".
+- `src/routes/precos.tsx`: reduzir colunas e mover valores/faixas para um Dialog reaproveitando `faixasParaTexto` / `textoParaFaixas`.
+- `src/lib/curriculo-pdf.ts`: ajustar `imprimirCurriculo` (espera de layout/fontes + fallback de escala).
+- `src/styles.css` e `src/components/ui/button.tsx`: tokens e variantes, sem cores fixas em componentes.
