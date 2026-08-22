@@ -1331,7 +1331,11 @@ function Calculadora() {
                 <p className="text-sm text-muted-foreground">
                   {precisaSelecionar
                     ? "Selecione o tipo de impressão para ver os valores."
-                    : "Informe arquivos, páginas adicionais ou cópias adicionais para ver os valores."}
+                    : semQuantidade
+                      ? "Informe arquivos, páginas adicionais ou cópias adicionais para ver os valores."
+                      : !frenteVersoOk
+                        ? "Informe se o trabalho é frente e verso para ver os valores."
+                        : "Escolha se haverá acabamento (e selecione ao menos uma opção) para ver os valores."}
                 </p>
               </div>
             ) : (
