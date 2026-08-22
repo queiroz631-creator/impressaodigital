@@ -2,13 +2,12 @@
 
 Quatro correções no assistente de currículo (usado tanto na tela administrativa quanto no link público).
 
-## 1. Escolaridade: repetir nível, instituição e ano nas formações extras
+## 1. Escolaridade: segunda graduação em um novo card
 
-Hoje o bloco "Outras formações" pede apenas curso, instituição e ano.
-
-- Cada formação adicional passa a ter um seletor de nível com apenas duas opções: "Ensino Superior" e "Pós-graduação".
-- Ao escolher qualquer uma das duas, aparecem os campos nome do curso, instituição e ano (ano opcional).
-- O nível escolhido é exibido na revisão, no documento e no PDF junto do curso.
+- Quando o cliente escolher qualquer tipo de curso superior (Incompleto, Cursando ou Completo), aparece automaticamente um novo card abaixo, com as mesmas opções de escolaridade (os tipos de Ensino Superior e Pós-graduação), para informar uma segunda graduação.
+- Ao selecionar a opção nesse card, aparecem os campos: nome do curso, instituição e ano.
+- Preenchendo o segundo card, surge outro card vazio na sequência, permitindo quantas graduações forem necessárias; cards em branco são ignorados ao salvar e cada card tem botão de remover.
+- O nível escolhido aparece junto do curso na revisão, no documento e no PDF.
 - Requer uma coluna nova `nivel` (texto, opcional) na tabela de formações do currículo.
 
 ## 2. Experiência profissional: atividades opcionais
