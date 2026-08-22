@@ -137,7 +137,10 @@ function Precos() {
 
             tipo_impressao: m.tipo_impressao ?? "simples",
 
+            categoria: m.categoria ?? "impressao",
+
             formato: m.formato ?? "A4",
+
 
             ativo: m.ativo,
             ordem: m.ordem,
