@@ -199,7 +199,9 @@ function formatarCurso(curso: { nome_curso: string; instituicao: string | null; 
 }
 
 function formatarFormacao(f: FormacaoItem) {
-  const partes = [f.nome_curso];
+  const partes = [];
+  if (f.nivel) partes.push(f.nivel);
+  if (f.nome_curso) partes.push(f.nome_curso);
   if (f.instituicao) partes.push(f.instituicao);
   if (f.ano) partes.push(f.ano);
   return partes.join(" — ");
