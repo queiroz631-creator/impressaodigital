@@ -318,9 +318,15 @@ function DetalheCurriculo() {
           modo="admin"
           salvar={salvarEtapa}
           criarHabilidade={async (descricao) => {
+            const { data: existente } = await supabase
+              .from("habilidades_curriculo")
+              .select("id, descricao")
+              .ilike("descricao", descricao.trim())
+              .maybeSingle();
+            if (existente) return existente;
             const { data: nova, error } = await supabase
               .from("habilidades_curriculo")
-              .insert({ descricao, ordem: 99 })
+              .insert({ descricao: descricao.trim(), ordem: 99 })
               .select("id, descricao")
               .single();
             if (error) return null;
