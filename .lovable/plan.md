@@ -34,8 +34,8 @@ Hoje o botão "Editar" leva à etapa e obriga a percorrer todas as etapas seguin
 
 - Migração: `ALTER TABLE public.curriculo_formacoes ADD COLUMN nivel text` (nulo permitido).
 - `src/lib/curriculo.ts`: incluir `nivel` em `FormacaoItem`; constante com os níveis permitidos nas formações extras.
-- `src/lib/curriculo.functions.ts`: aceitar `nivel` no schema de formações e adicionar a função de criação de habilidade no fluxo público (com o token do link).
-- `src/lib/curriculo.server.ts`: persistir `nivel`; implementar a criação/reuso de habilidade no catálogo.
-- `src/components/curriculo/FormularioCurriculo.tsx`: seletor de nível, alternância de atividades, estado `origemRevisao` para o retorno à etapa de revisão.
+- `src/lib/curriculo.functions.ts`: aceitar `nivel` no schema de formações (sem função pública de criação de habilidade).
+- `src/lib/curriculo.server.ts`: persistir `nivel`.
+- `src/components/curriculo/FormularioCurriculo.tsx`: seletor de nível com instituição/ano, alternância de atividades, estado `origemRevisao` para o retorno à etapa de revisão.
 - `src/routes/curriculos.$id.tsx` e `src/routes/curriculo.publico.$token.tsx`: gravar/ler `nivel` e passar `criarHabilidade` também no público.
 - `src/components/curriculo/CurriculoDocumento.tsx` e `src/lib/curriculo-pdf.ts`: mostrar o nível junto da formação, mantendo o layout de página única já ajustado.
