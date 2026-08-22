@@ -102,6 +102,20 @@ export function gerarOrcamentoPdf(d: DadosDocumento, baixar = true) {
     }
   }
 
+  if (d.leituraAutomatica) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(190, 30, 60);
+    const aviso = doc.splitTextToSize(
+      "Quantidade de páginas foi lida automaticamente, favor verificar se há divergência!",
+      width - 80,
+    );
+    doc.text(aviso, 40, y);
+    y += aviso.length * 14 + 12;
+    doc.setTextColor(20, 20, 30);
+    doc.setFont("helvetica", "normal");
+  }
+
   if (d.mostrarTotal !== false) {
     autoTable(doc, {
       startY: y,
