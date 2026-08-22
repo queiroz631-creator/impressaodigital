@@ -923,25 +923,12 @@ function Calculadora() {
                   Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Na cópia manual tudo é cobrado por página (cada arquivo conta 1 página) com o
-                  preço unitário cadastrado, sem faixas por quantidade e sem valor por arquivo.
+                  Ativado, mostra em valores de impressão apenas os materiais da categoria
+                  &quot;Cópia&quot;. Desativado, mostra os materiais da categoria
+                  &quot;Impressão&quot;.
                 </p>
-                {estado.copiaManual && (
-                  <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
-                    <div>
-                      <p className="text-sm font-semibold">Usar faixa de quantidade</p>
-                      <p className="text-xs text-muted-foreground">
-                        Aplica as faixas cadastradas ao preço por página.
-                      </p>
-                    </div>
-
-                    <Switch
-                      checked={estado.usarFaixaCopiaManual}
-                      onCheckedChange={(v) => set("usarFaixaCopiaManual", v)}
-                    />
-                  </div>
-                )}
               </div>
+
 
               {precisaSelecionar && (
                 <p className="rounded-lg border border-border bg-accent/60 p-3 text-sm font-semibold text-primary">
