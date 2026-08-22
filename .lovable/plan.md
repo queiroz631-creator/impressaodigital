@@ -2,11 +2,12 @@
 
 Quatro correções no assistente de currículo (usado tanto na tela administrativa quanto no link público).
 
-## 1. Escolaridade: repetir nível + curso nas formações extras
+## 1. Escolaridade: repetir nível, instituição e ano nas formações extras
 
 Hoje o bloco "Outras formações" pede apenas curso, instituição e ano.
 
-- Cada formação adicional passa a ter um seletor de nível com apenas duas opções: "Ensino Superior" (incompleto/cursando/completo) e "Pós-graduação", além do nome do curso, instituição e ano.
+- Cada formação adicional passa a ter um seletor de nível com apenas duas opções: "Ensino Superior" e "Pós-graduação".
+- Ao escolher qualquer uma das duas, aparecem os campos nome do curso, instituição e ano (ano opcional).
 - O nível escolhido é exibido na revisão, no documento e no PDF junto do curso.
 - Requer uma coluna nova `nivel` (texto, opcional) na tabela de formações do currículo.
 
@@ -16,12 +17,11 @@ Hoje o bloco "Outras formações" pede apenas curso, instituição e ano.
 - Com "Não", o campo de atividades fica oculto e é gravado vazio.
 - Padrão para experiências novas: "Não" (campo escondido até o usuário escolher Sim); experiências já existentes com texto abrem em "Sim".
 
-## 3. Habilidades digitadas devem ficar disponíveis para todos
+## 3. Habilidades digitadas pelo cliente ficam só no currículo dele
 
-Causa: no link público o formulário não recebe a função de cadastro, então habilidades digitadas por ali ficam apenas naquele currículo e nunca entram no catálogo compartilhado.
+- Habilidade digitada no link público é gravada apenas no currículo em questão e nunca entra no catálogo compartilhado (comportamento atual mantido e garantido).
+- Somente pela tela administrativa uma habilidade pode ser adicionada ao catálogo que aparece para todos, com checagem de duplicidade por descrição (sem diferenciar maiúsculas).
 
-- Criar uma função de servidor no fluxo público que grava a habilidade nova no catálogo (validando duplicidade por descrição, sem diferenciar maiúsculas) e devolve o registro para marcar no formulário.
-- Na tela administrativa, aplicar a mesma checagem de duplicidade antes de inserir, evitando repetição no catálogo.
 
 ## 4. Editar pela revisão deve voltar direto para a revisão
 
@@ -34,8 +34,8 @@ Hoje o botão "Editar" leva à etapa e obriga a percorrer todas as etapas seguin
 
 - Migração: `ALTER TABLE public.curriculo_formacoes ADD COLUMN nivel text` (nulo permitido).
 - `src/lib/curriculo.ts`: incluir `nivel` em `FormacaoItem`; constante com os níveis permitidos nas formações extras.
-- `src/lib/curriculo.functions.ts`: aceitar `nivel` no schema de formações e adicionar a função de criação de habilidade no fluxo público (com o token do link).
-- `src/lib/curriculo.server.ts`: persistir `nivel`; implementar a criação/reuso de habilidade no catálogo.
-- `src/components/curriculo/FormularioCurriculo.tsx`: seletor de nível, alternância de atividades, estado `origemRevisao` para o retorno à etapa de revisão.
-- `src/routes/curriculos.$id.tsx` e `src/routes/curriculo.publico.$token.tsx`: gravar/ler `nivel` e passar `criarHabilidade` também no público.
+- `src/lib/curriculo.functions.ts`: aceitar `nivel` no schema de formações (sem função pública de criação de habilidade).
+- `src/lib/curriculo.server.ts`: persistir `nivel`.
+- `src/components/curriculo/FormularioCurriculo.tsx`: seletor de nível com instituição/ano, alternância de atividades, estado `origemRevisao` para o retorno à etapa de revisão.
+- `src/routes/curriculos.$id.tsx` e `src/routes/curriculo.publico.$token.tsx`: gravar/ler `nivel`; o público continua sem `criarHabilidade`.
 - `src/components/curriculo/CurriculoDocumento.tsx` e `src/lib/curriculo-pdf.ts`: mostrar o nível junto da formação, mantendo o layout de página única já ajustado.
