@@ -2,16 +2,25 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Save, Trash2, ArrowUp, ArrowDown, ShieldAlert } from "lucide-react";
+import { Plus, Save, Trash2, ArrowUp, ArrowDown, ShieldAlert, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { AcabamentosTabela } from "@/components/AcabamentosTabela";
