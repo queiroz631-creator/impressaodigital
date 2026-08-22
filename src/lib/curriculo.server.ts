@@ -46,7 +46,7 @@ export async function carregarCurriculo(curriculoId: string): Promise<CurriculoC
       .order("ordem"),
     supabaseAdmin
       .from("curriculo_formacoes")
-      .select("nome_curso, instituicao, ano")
+      .select("nome_curso, instituicao, ano, nivel")
       .eq("curriculo_id", curriculoId)
       .order("ordem"),
     supabaseAdmin
