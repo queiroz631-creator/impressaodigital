@@ -332,7 +332,20 @@ function Calculadora() {
     estado.decisaoAcabamento === "nao" ||
     (estado.decisaoAcabamento === "sim" && linhasAcabamento.length > 0);
   const frenteVersoOk = estado.decisaoFrenteVerso !== "";
-  const mostrarTabela = !precisaSelecionar && !semQuantidade && acabamentoOk && frenteVersoOk;
+  /** Arquivos Word aguardando a quantidade de páginas informada manualmente. */
+  const arquivosPendentes = estado.arquivosLista.filter(
+    (a) => a.paginasManuais === true || Number(a.paginas || 0) < 1,
+  );
+  /** Existe ao menos um arquivo cuja contagem foi feita automaticamente. */
+  const leituraAutomatica = estado.arquivosLista.some(
+    (a) => a.paginasManuais !== true && Number(a.paginas || 0) > 0,
+  );
+  const mostrarTabela =
+    !precisaSelecionar &&
+    !semQuantidade &&
+    acabamentoOk &&
+    frenteVersoOk &&
+    arquivosPendentes.length === 0;
 
   const materialSelecionado =
     linhasFinais.find((l) => l.material.id === estado.materialId) ?? null;
@@ -652,8 +665,21 @@ function Calculadora() {
   }
 
 
+  /** Há arquivos no pedido cuja contagem de páginas foi lida automaticamente. */
+  const leituraAutomaticaPedido =
+    leituraAutomatica ||
+    (itensPedido ?? []).some((o) =>
+      (((o as unknown as { arquivos?: ArquivoDoc[] }).arquivos ?? []) as ArquivoDoc[]).some(
+        (a) => a.paginasManuais !== true && Number(a.paginas || 0) > 0,
+      ),
+    );
+
   function documentoParaGerar() {
-    return { ...documentoDoPedido(), mostrarTotal: incluirTotal };
+    return {
+      ...documentoDoPedido(),
+      mostrarTotal: incluirTotal,
+      leituraAutomatica: leituraAutomaticaPedido,
+    };
   }
 
   function validarDadosOrcamento() {
@@ -833,15 +859,26 @@ function Calculadora() {
               </Button>
 
               <p className="text-xs text-muted-foreground">
-                As páginas dos PDFs são contadas automaticamente; cada arquivo já inclui 1 página e
-                o excedente vira páginas adicionais. Em arquivos Word, quando a contagem não for
-                confiável, informe as páginas manualmente.
+                As páginas dos PDFs e imagens são contadas automaticamente; cada arquivo já inclui 1
+                página e o excedente vira páginas adicionais. Arquivos Word (.doc/.docx) sempre
+                exigem que a quantidade de páginas seja informada manualmente.
               </p>
 
               <div className="rounded-xl border border-border p-3">
                 <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">
                   ARQUIVOS ANEXADOS
                 </p>
+
+                {arquivosPendentes.length > 0 && (
+                  <div className="mb-2 rounded-lg border-2 border-destructive bg-destructive/10 p-2.5">
+                    <p className="text-sm font-bold text-destructive">
+                      {arquivosPendentes.length} arquivo(s) Word aguardando a quantidade de páginas
+                    </p>
+                    <p className="text-xs font-medium text-destructive">
+                      O cálculo fica bloqueado até que todas as quantidades sejam informadas.
+                    </p>
+                  </div>
+                )}
 
                 {estado.arquivosLista.length === 0 ? (
                   <p className="py-6 text-center text-sm text-muted-foreground">
@@ -851,10 +888,15 @@ function Calculadora() {
                   <div className="max-h-[430px] space-y-2 overflow-y-auto pr-1">
                     {estado.arquivosLista.map((a, i) => {
                       const copias = Math.max(1, a.copias ?? 1);
+                      const pendente = a.paginasManuais === true || Number(a.paginas || 0) < 1;
                       return (
                         <div
                           key={`${a.nome}-${i}`}
-                          className="rounded-lg border border-border bg-accent/30 p-2.5"
+                          className={`rounded-lg border p-2.5 ${
+                            pendente
+                              ? "border-2 border-destructive bg-destructive/5"
+                              : "border-border bg-accent/30"
+                          }`}
                         >
                           <p className="text-sm font-semibold break-all">{a.nome}</p>
 
@@ -872,8 +914,11 @@ function Calculadora() {
                                 type="number"
                                 min="1"
                                 inputMode="numeric"
-                                className="h-8 w-16"
-                                value={a.paginas}
+                                placeholder="0"
+                                className={`h-8 w-16 ${
+                                  pendente ? "border-2 border-destructive font-bold" : ""
+                                }`}
+                                value={a.paginas || ""}
                                 onChange={(e) =>
                                   atualizarArquivo(i, {
                                     paginas: Math.max(1, num(e.target.value) || 1),
@@ -947,9 +992,9 @@ function Calculadora() {
                             </ConfirmarExclusao>
                           </div>
 
-                          {a.paginasManuais && (
-                            <p className="mt-2 text-xs font-semibold text-magenta-ink">
-                              Arquivo Word adicionado. Informe a quantidade de páginas.
+                          {pendente && (
+                            <p className="mt-2 text-xs font-bold text-destructive">
+                              Informe a quantidade de páginas deste arquivo.
                             </p>
                           )}
                         </div>
@@ -1364,11 +1409,13 @@ function Calculadora() {
                 <p className="text-sm text-muted-foreground">
                   {precisaSelecionar
                     ? "Selecione o tipo de impressão para ver os valores."
-                    : semQuantidade
-                      ? "Informe arquivos, páginas adicionais ou cópias adicionais para ver os valores."
-                      : !frenteVersoOk
-                        ? "Informe se o trabalho é frente e verso para ver os valores."
-                        : "Escolha se haverá acabamento (e selecione ao menos uma opção) para ver os valores."}
+                    : arquivosPendentes.length > 0
+                      ? `Informe a quantidade de páginas de: ${arquivosPendentes.map((a) => a.nome).join(", ")}.`
+                      : semQuantidade
+                        ? "Informe arquivos, páginas adicionais ou cópias adicionais para ver os valores."
+                        : !frenteVersoOk
+                          ? "Informe se o trabalho é frente e verso para ver os valores."
+                          : "Escolha se haverá acabamento (e selecione ao menos uma opção) para ver os valores."}
                 </p>
               </div>
             ) : (
@@ -1621,6 +1668,15 @@ function Calculadora() {
               Informe os dados do cliente para gerar o documento do pedido.
             </DialogDescription>
           </DialogHeader>
+
+          {leituraAutomaticaPedido && (
+            <div className="rounded-lg border-2 border-yellow-ink bg-yellow-ink/15 p-3">
+              <p className="text-sm font-bold text-foreground">
+                Quantidade de páginas foi lida automaticamente, favor verificar se há divergência!
+              </p>
+            </div>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>

@@ -128,6 +128,18 @@ function montarLinhas(d: DadosDocumento): Linha[] {
   }
 
   // ============================================================
+  // AVISO DE LEITURA AUTOMÁTICA
+  // ============================================================
+
+  if (d.leituraAutomatica) {
+    linhas.push({ texto: "sep", tipo: "sep" });
+    linhas.push({
+      texto: "Quantidade de páginas foi lida automaticamente, favor verificar se há divergência!",
+      tipo: "sub",
+    });
+  }
+
+  // ============================================================
   // TOTAL GERAL
   // ============================================================
 

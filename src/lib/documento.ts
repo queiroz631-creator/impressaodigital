@@ -52,6 +52,8 @@ export interface DadosDocumento {
   pix?: string | null | undefined;
   /** Mensagem de prazo de entrega (quando informado). */
   prazoTexto?: string | null | undefined;
+  /** Indica que a quantidade de páginas foi lida automaticamente dos arquivos. */
+  leituraAutomatica?: boolean;
   itens: ItemDoc[];
   total: number;
 }
