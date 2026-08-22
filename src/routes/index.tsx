@@ -569,6 +569,7 @@ function Calculadora() {
   }
 
   function limparFormulario(manterPedido: boolean) {
+    const anterior = estado.pedidoId;
     setEstado((e) => ({
       ...ESTADO_INICIAL,
       pedidoId: manterPedido ? e.pedidoId : null,
@@ -576,6 +577,15 @@ function Calculadora() {
       clienteTelefone: manterPedido ? e.clienteTelefone : "",
       validade: manterPedido ? e.validade : "",
     }));
+    if (!manterPedido) {
+      // Descarta a lista de orçamentos que estava vinculada ao pedido anterior.
+      setIncluirTotal(true);
+      setDecisaoTotal("");
+      if (anterior) {
+        queryClient.removeQueries({ queryKey: ["orcamentos-pedido", anterior] });
+        queryClient.removeQueries({ queryKey: ["pedido", anterior] });
+      }
+    }
   }
   function calcularValidadePadrao() {
     const dias = Number(config?.validade_padrao_dias ?? 0);
