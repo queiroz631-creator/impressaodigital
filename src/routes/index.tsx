@@ -1246,16 +1246,33 @@ function Calculadora() {
                   );
                 })}
               </div>
-            )}
+            ))}
 
-            {/* Frente e verso */}
-            <div className="flex items-center justify-between rounded-lg border border-border bg-accent/30 px-2.5 py-2">
-              <div>
-                <p className="text-sm font-semibold">Frente e verso</p>
-                <p className="text-[11px] text-muted-foreground">Informado no orçamento</p>
+            {/* Frente e verso — decisão obrigatória */}
+            <div className="rounded-lg border border-border bg-accent/30 px-2.5 py-2">
+              <p className="mb-2 text-sm font-semibold">Frente e verso?</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={estado.decisaoFrenteVerso === "sim" ? "default" : "outline"}
+                  onClick={() =>
+                    setEstado((p) => ({ ...p, decisaoFrenteVerso: "sim", frenteVerso: true }))
+                  }
+                >
+                  Sim
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={estado.decisaoFrenteVerso === "nao" ? "default" : "outline"}
+                  onClick={() =>
+                    setEstado((p) => ({ ...p, decisaoFrenteVerso: "nao", frenteVerso: false }))
+                  }
+                >
+                  Não
+                </Button>
               </div>
-
-              <Switch checked={estado.frenteVerso} onCheckedChange={(v) => set("frenteVerso", v)} />
             </div>
           </CardContent>
         </Card>
