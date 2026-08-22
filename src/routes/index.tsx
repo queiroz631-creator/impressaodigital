@@ -325,7 +325,12 @@ function Calculadora() {
   const resumo = resumoLinhas(linhasFinais);
   const quantidadeTotal = estado.arquivos + paginasAdicionais + estado.copiasAdicionais;
   const semQuantidade = quantidadeTotal <= 0;
-  const mostrarTabela = !precisaSelecionar && !semQuantidade;
+  /** Decisões obrigatórias antes de exibir valores/resumo. */
+  const acabamentoOk =
+    estado.decisaoAcabamento === "nao" ||
+    (estado.decisaoAcabamento === "sim" && linhasAcabamento.length > 0);
+  const frenteVersoOk = estado.decisaoFrenteVerso !== "";
+  const mostrarTabela = !precisaSelecionar && !semQuantidade && acabamentoOk && frenteVersoOk;
 
   const materialSelecionado =
     linhasFinais.find((l) => l.material.id === estado.materialId) ?? null;
