@@ -251,27 +251,48 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
     .map((n) => n.outerHTML)
     .join("\n");
 
+  // Área útil A4 com margem de 10mm (96dpi).
+  const MM = 96 / 25.4;
+  const larguraUtil = Math.round(190 * MM);
+  const alturaUtil = Math.round(277 * MM);
+
   doc.open();
   doc.write(`<!doctype html><html><head><meta charset="utf-8">${estilos}
 <style>
   @page { size: A4; margin: 10mm; }
   html, body { margin:0; padding:0; background:#fff; height:auto; overflow:visible; }
-  body > .cv-print { width:100%; max-width:100%; margin:0; padding:0; box-shadow:none !important; border:0; background:#fff; }
+  #cv-escala { width:${larguraUtil}px; transform-origin: top left; }
+  #cv-escala > .cv-print { width:100%; max-width:100%; margin:0; padding:0; box-shadow:none !important; border:0; background:#fff; }
   .cv-secao { background:#1a1a5e !important; color:#fff !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
   .cv-empresa { color:#1a1a5e !important; font-weight:700 !important; }
   .cv-print, .cv-print * { color:#11111a; }
   .cv-secao, .cv-secao * { color:#fff !important; }
-</style></head><body></body></html>`);
+  .cv-print, .cv-print * { break-inside: avoid; page-break-inside: avoid; }
+</style></head><body><div id="cv-escala"></div></body></html>`);
   doc.close();
 
   const clone = elemento.cloneNode(true) as HTMLElement;
   clone.classList.add("cv-print");
   clone.style.boxShadow = "none";
-  doc.body.appendChild(clone);
+  const wrapper = doc.getElementById("cv-escala") as HTMLElement;
+  wrapper.appendChild(clone);
 
   const limpar = () => window.setTimeout(() => frame.remove(), 500);
 
+  const ajustarEscala = () => {
+    wrapper.style.transform = "none";
+    wrapper.style.height = "auto";
+    const alturaConteudo = clone.getBoundingClientRect().height || clone.scrollHeight;
+    if (alturaConteudo > alturaUtil) {
+      const fator = Math.max(0.5, (alturaUtil - 2) / alturaConteudo);
+      wrapper.style.transform = `scale(${fator})`;
+      // Evita que o espaço do conteúdo original gere uma segunda folha.
+      wrapper.style.height = `${alturaConteudo * fator}px`;
+    }
+  };
+
   const disparar = () => {
+    ajustarEscala();
     frame.contentWindow?.focus();
     frame.contentWindow?.print();
     limpar();
@@ -285,3 +306,4 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
     window.setTimeout(disparar, 400);
   }
 }
+
