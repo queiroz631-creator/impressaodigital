@@ -894,7 +894,11 @@ export function FormularioCurriculo({
           <ChevronLeft className="mr-1 h-4 w-4" /> Voltar
         </Button>
 
-        {etapa < totalEtapas ? (
+        {origemRevisao && etapa < totalEtapas ? (
+          <Button onClick={voltarParaRevisao} disabled={salvando}>
+            <Save className="mr-1 h-4 w-4" /> Salvar e voltar à revisão
+          </Button>
+        ) : etapa < totalEtapas ? (
           <Button onClick={avancar} disabled={salvando}>
             Avançar <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
