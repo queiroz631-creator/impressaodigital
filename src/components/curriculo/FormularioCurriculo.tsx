@@ -270,6 +270,18 @@ export function FormularioCurriculo({
     if (etapa < totalEtapas) setEtapa(etapa + 1);
   };
 
+  /** Editar uma seção a partir da revisão. */
+  const irParaEtapa = (n: number) => {
+    setOrigemRevisao(true);
+    setEtapa(n);
+  };
+
+  const voltarParaRevisao = async () => {
+    if (!(await gravar(etapa))) return;
+    setOrigemRevisao(false);
+    setEtapa(totalEtapas);
+  };
+
   const concluir = async () => {
     const ok = await gravar(modo === "admin" ? 8 : 7, {
       campos: { exibir_data_atualizacao: exibirData },
