@@ -901,8 +901,11 @@ function Calculadora() {
                                 type="number"
                                 min="1"
                                 inputMode="numeric"
-                                className="h-8 w-16"
-                                value={a.paginas}
+                                placeholder="0"
+                                className={`h-8 w-16 ${
+                                  pendente ? "border-2 border-destructive font-bold" : ""
+                                }`}
+                                value={a.paginas || ""}
                                 onChange={(e) =>
                                   atualizarArquivo(i, {
                                     paginas: Math.max(1, num(e.target.value) || 1),
