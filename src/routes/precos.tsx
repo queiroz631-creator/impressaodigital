@@ -57,6 +57,13 @@ export const Route = createFileRoute("/precos")({
   }),
 });
 
+/** Converte texto digitado (aceita vírgula) em número. */
+function parsePreco(valor: string) {
+  const limpo = valor.replace(/[^\d,.-]/g, "").replace(",", ".");
+  const n = Number(limpo);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function Precos() {
   const { user } = useAuth();
   const { data: isAdmin, isLoading: carregandoPapel } = useIsAdmin(user?.id);
