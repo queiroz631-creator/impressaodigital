@@ -1,0 +1,1 @@
+ALTER TABLE public.curriculo_formacoes ADD COLUMN IF NOT EXISTS nivel text;

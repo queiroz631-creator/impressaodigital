@@ -79,7 +79,7 @@ function DetalheCurriculo() {
         supabase.from("curriculos").select(CAMPOS).eq("id", id).maybeSingle(),
         supabase.from("curriculo_telefones").select("telefone").eq("curriculo_id", id).order("ordem"),
         supabase.from("curriculo_cursos").select("nome_curso, instituicao, ano").eq("curriculo_id", id).order("ordem"),
-        supabase.from("curriculo_formacoes").select("nome_curso, instituicao, ano").eq("curriculo_id", id).order("ordem"),
+        supabase.from("curriculo_formacoes").select("nome_curso, instituicao, ano, nivel").eq("curriculo_id", id).order("ordem"),
         supabase
           .from("curriculo_experiencias")
           .select("empresa, cargo, periodo, atividades")
@@ -153,11 +153,12 @@ function DetalheCurriculo() {
       await trocar(
         "curriculo_formacoes",
         payload.formacoes
-          .filter((f) => f.nome_curso.trim())
+          .filter((f) => f.nome_curso.trim() || (f.nivel ?? "").trim())
           .map((f) => ({
             nome_curso: f.nome_curso.trim(),
             instituicao: f.instituicao?.trim() || null,
             ano: f.ano?.trim() || null,
+            nivel: f.nivel?.trim() || null,
           })),
       );
     }
@@ -317,9 +318,15 @@ function DetalheCurriculo() {
           modo="admin"
           salvar={salvarEtapa}
           criarHabilidade={async (descricao) => {
+            const { data: existente } = await supabase
+              .from("habilidades_curriculo")
+              .select("id, descricao")
+              .ilike("descricao", descricao.trim())
+              .maybeSingle();
+            if (existente) return existente;
             const { data: nova, error } = await supabase
               .from("habilidades_curriculo")
-              .insert({ descricao, ordem: 99 })
+              .insert({ descricao: descricao.trim(), ordem: 99 })
               .select("id, descricao")
               .single();
             if (error) return null;

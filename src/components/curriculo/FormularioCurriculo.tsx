@@ -21,9 +21,11 @@ import {
 import {
   CATEGORIAS_HABILITACAO,
   ESCOLARIDADES,
+  NIVEIS_FORMACAO,
   ESTADOS_CIVIS,
   capitalizarTexto,
   escolaridadeTemCurso,
+  formacaoLinha,
   escolaridadeTemPos,
   formatarTelefone,
   type CurriculoCompleto,
@@ -121,6 +123,36 @@ export function FormularioCurriculo({
   // Etapa 8
   const [exibirData, setExibirData] = useState(c.exibir_data_atualizacao);
 
+  // Navegação a partir da revisão
+  const [origemRevisao, setOrigemRevisao] = useState(false);
+
+  // Mostrar/ocultar o campo de atividades por experiência
+  const [atividadesVisiveis, setAtividadesVisiveis] = useState<Record<number, boolean>>(() =>
+    Object.fromEntries(dados.experiencias.map((e, i) => [i, !!e.atividades?.trim()])),
+  );
+  const mostrarAtividades = (i: number) => atividadesVisiveis[i] ?? false;
+  const definirAtividades = (i: number, valor: boolean) => {
+    setAtividadesVisiveis((a) => ({ ...a, [i]: valor }));
+    if (!valor) {
+      setExperiencias((a) => a.map((v, j) => (j === i ? { ...v, atividades: "" } : v)));
+    }
+  };
+
+  // Graduações adicionais: sempre exibe um card vazio no fim
+  const ultimaFormacao = formacoes[formacoes.length - 1];
+  const listaFormacoes: FormacaoItem[] =
+    formacoes.length === 0 || (ultimaFormacao?.nivel ?? "").trim()
+      ? [...formacoes, { nome_curso: "", instituicao: "", ano: "", nivel: "" }]
+      : formacoes;
+
+  const atualizarFormacao = (i: number, patch: Partial<FormacaoItem>) => {
+    setFormacoes((a) => {
+      const base = i >= a.length ? [...a, { nome_curso: "", instituicao: "", ano: "", nivel: "" }] : [...a];
+      base[i] = { ...base[i]!, ...patch };
+      return base;
+    });
+  };
+
   const marcada = (descricao: string) =>
     habilidades.some((h) => h.descricao.toLowerCase() === descricao.toLowerCase());
 
@@ -165,11 +197,14 @@ export function FormularioCurriculo({
             curso_superior: escolaridadeTemCurso(escolaridade) ? capitalizarTexto(cursoSuperior) || null : null,
             pos_graduacao_nome: escolaridadeTemPos(escolaridade) ? capitalizarTexto(posGraduacaoNome) || null : null,
           },
-          formacoes: formacoes.map((f) => ({
-            nome_curso: capitalizarTexto(f.nome_curso),
-            instituicao: capitalizarTexto(f.instituicao ?? "") || null,
-            ano: f.ano?.trim() || null,
-          })),
+          formacoes: formacoes
+            .filter((f) => (f.nivel ?? "").trim() || f.nome_curso.trim())
+            .map((f) => ({
+              nome_curso: capitalizarTexto(f.nome_curso),
+              instituicao: capitalizarTexto(f.instituicao ?? "") || null,
+              ano: f.ano?.trim() || null,
+              nivel: f.nivel?.trim() || null,
+            })),
         };
       case 4:
         return {
@@ -234,6 +269,18 @@ export function FormularioCurriculo({
   const avancar = async () => {
     if (!(await gravar(etapa))) return;
     if (etapa < totalEtapas) setEtapa(etapa + 1);
+  };
+
+  /** Editar uma seção a partir da revisão. */
+  const irParaEtapa = (n: number) => {
+    setOrigemRevisao(true);
+    setEtapa(n);
+  };
+
+  const voltarParaRevisao = async () => {
+    if (!(await gravar(etapa))) return;
+    setOrigemRevisao(false);
+    setEtapa(totalEtapas);
   };
 
   const concluir = async () => {
@@ -473,65 +520,72 @@ export function FormularioCurriculo({
               )}
               {escolaridadeTemCurso(escolaridade) && (
                 <div className="space-y-3">
-                  <Label className="text-sm font-semibold">Outras formações (opcional)</Label>
-                  {formacoes.map((f, i) => (
+                  <Label className="text-sm font-semibold">Outras graduações (opcional)</Label>
+                  {listaFormacoes.map((f, i) => (
                     <div
                       key={i}
-                      className={`grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_100px_auto] ${
-                        f.nome_curso.trim() ? "border-primary/40 bg-primary/5" : ""
+                      className={`space-y-2 rounded-lg border p-3 ${
+                        (f.nivel ?? "").trim() ? "border-primary/40 bg-primary/5" : ""
                       }`}
                     >
-                      <div>
-                        <Label>Curso</Label>
-                        <Input
-                          value={f.nome_curso}
-                          onChange={(e) =>
-                            setFormacoes((a) =>
-                              a.map((v, j) => (j === i ? { ...v, nome_curso: e.target.value } : v)),
-                            )
-                          }
-                        />
+                      <div className="flex items-end gap-2">
+                        <div className="flex-1">
+                          <Label>Escolaridade</Label>
+                          <Select
+                            value={f.nivel ?? ""}
+                            onValueChange={(v) => atualizarFormacao(i, { nivel: v })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {NIVEIS_FORMACAO.map((v) => (
+                                <SelectItem key={v} value={v}>
+                                  {v}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {i < formacoes.length && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setFormacoes((a) => a.filter((_, j) => j !== i))}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
-                      <div>
-                        <Label>Instituição</Label>
-                        <Input
-                          value={f.instituicao ?? ""}
-                          onChange={(e) =>
-                            setFormacoes((a) =>
-                              a.map((v, j) => (j === i ? { ...v, instituicao: e.target.value } : v)),
-                            )
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label>Ano</Label>
-                        <Input
-                          value={f.ano ?? ""}
-                          onChange={(e) =>
-                            setFormacoes((a) =>
-                              a.map((v, j) => (j === i ? { ...v, ano: e.target.value } : v)),
-                            )
-                          }
-                          placeholder="2024"
-                        />
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="self-end"
-                        onClick={() => setFormacoes((a) => a.filter((_, j) => j !== i))}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+
+                      {(f.nivel ?? "").trim() && (
+                        <div className="grid gap-2 sm:grid-cols-[1fr_1fr_100px]">
+                          <div>
+                            <Label>Nome do curso</Label>
+                            <Input
+                              value={f.nome_curso}
+                              onChange={(e) => atualizarFormacao(i, { nome_curso: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label>Instituição</Label>
+                            <Input
+                              value={f.instituicao ?? ""}
+                              onChange={(e) => atualizarFormacao(i, { instituicao: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label>Ano</Label>
+                            <Input
+                              value={f.ano ?? ""}
+                              onChange={(e) => atualizarFormacao(i, { ano: e.target.value })}
+                              placeholder="2024"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => setFormacoes((a) => [...a, { nome_curso: "", instituicao: "", ano: "" }])}
-                  >
-                    <Plus className="mr-1 h-4 w-4" /> Adicionar formação
-                  </Button>
                 </div>
               )}
             </>
@@ -648,17 +702,37 @@ export function FormularioCurriculo({
                       />
                     </div>
                   </div>
-                  <div>
-                    <Label>Atividades</Label>
-                    <Textarea
-                      rows={3}
-                      value={exp.atividades ?? ""}
-                      onChange={(e) =>
-                        setExperiencias((a) =>
-                          a.map((v, j) => (j === i ? { ...v, atividades: e.target.value } : v)),
-                        )
-                      }
-                    />
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Label className="mb-0">Informar atividades?</Label>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={mostrarAtividades(i) ? "default" : "outline"}
+                        onClick={() => definirAtividades(i, true)}
+                      >
+                        Sim
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={!mostrarAtividades(i) ? "default" : "outline"}
+                        onClick={() => definirAtividades(i, false)}
+                      >
+                        Não
+                      </Button>
+                    </div>
+                    {mostrarAtividades(i) && (
+                      <Textarea
+                        rows={3}
+                        value={exp.atividades ?? ""}
+                        onChange={(e) =>
+                          setExperiencias((a) =>
+                            a.map((v, j) => (j === i ? { ...v, atividades: e.target.value } : v)),
+                          )
+                        }
+                      />
+                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -787,7 +861,7 @@ export function FormularioCurriculo({
 
           {etapa === 8 && (
             <div className="space-y-4 text-sm">
-              <ResumoLinha titulo="Dados pessoais" etapa={1} ir={setEtapa}>
+              <ResumoLinha titulo="Dados pessoais" etapa={1} ir={irParaEtapa}>
                 <p>{nome || "-"}</p>
                 <p className="text-muted-foreground">
                   {[telefone, ...telefones].filter(Boolean).join(" • ")}
@@ -803,7 +877,7 @@ export function FormularioCurriculo({
                 )}
               </ResumoLinha>
 
-              <ResumoLinha titulo="Documentação" etapa={2} ir={setEtapa}>
+              <ResumoLinha titulo="Documentação" etapa={2} ir={irParaEtapa}>
                 <p>
                   {documentacao === "" ? "Não informado" : documentacao === "sim" ? "Documentação completa" : "Documentação incompleta"}
                 </p>
@@ -812,7 +886,7 @@ export function FormularioCurriculo({
                 </p>
               </ResumoLinha>
 
-              <ResumoLinha titulo="Escolaridade" etapa={3} ir={setEtapa}>
+              <ResumoLinha titulo="Escolaridade" etapa={3} ir={irParaEtapa}>
                 <p>{escolaridade || "-"}</p>
                 {escolaridadeTemPos(escolaridade) && posGraduacaoNome && (
                   <p className="text-muted-foreground">{posGraduacaoNome}</p>
@@ -820,20 +894,20 @@ export function FormularioCurriculo({
                 {escolaridadeTemCurso(escolaridade) && !escolaridadeTemPos(escolaridade) && cursoSuperior && (
                   <p className="text-muted-foreground">{cursoSuperior}</p>
                 )}
-                {formacoes.length > 0 && (
+                {formacoes.filter((f) => (f.nivel ?? "").trim() || f.nome_curso.trim()).length > 0 && (
                   <div className="mt-1 space-y-0.5">
-                    {formacoes.map((f, i) => (
-                      <p key={i} className="text-muted-foreground">
-                        {f.nome_curso}
-                        {f.instituicao ? ` — ${f.instituicao}` : ""}
-                        {f.ano ? ` (${f.ano})` : ""}
-                      </p>
-                    ))}
+                    {formacoes
+                      .filter((f) => (f.nivel ?? "").trim() || f.nome_curso.trim())
+                      .map((f, i) => (
+                        <p key={i} className="text-muted-foreground">
+                          {formacaoLinha(f)}
+                        </p>
+                      ))}
                   </div>
                 )}
               </ResumoLinha>
 
-              <ResumoLinha titulo="Cursos complementares" etapa={4} ir={setEtapa}>
+              <ResumoLinha titulo="Cursos complementares" etapa={4} ir={irParaEtapa}>
                 {cursos.length === 0 ? (
                   <p className="text-muted-foreground">Nenhum</p>
                 ) : (
@@ -847,7 +921,7 @@ export function FormularioCurriculo({
                 )}
               </ResumoLinha>
 
-              <ResumoLinha titulo="Experiência profissional" etapa={5} ir={setEtapa}>
+              <ResumoLinha titulo="Experiência profissional" etapa={5} ir={irParaEtapa}>
                 {experiencias.length === 0 ? (
                   <p className="text-muted-foreground">Nenhuma</p>
                 ) : (
@@ -857,11 +931,11 @@ export function FormularioCurriculo({
                 )}
               </ResumoLinha>
 
-              <ResumoLinha titulo="Objetivo" etapa={6} ir={setEtapa}>
+              <ResumoLinha titulo="Objetivo" etapa={6} ir={irParaEtapa}>
                 <p>{objetivoTipo === "nao_informar" ? "Não informado" : objetivoTexto || "-"}</p>
               </ResumoLinha>
 
-              <ResumoLinha titulo="Habilidades" etapa={7} ir={setEtapa}>
+              <ResumoLinha titulo="Habilidades" etapa={7} ir={irParaEtapa}>
                 {habilidades.length === 0 ? (
                   <p className="text-muted-foreground">Nenhuma</p>
                 ) : (
@@ -887,7 +961,11 @@ export function FormularioCurriculo({
           <ChevronLeft className="mr-1 h-4 w-4" /> Voltar
         </Button>
 
-        {etapa < totalEtapas ? (
+        {origemRevisao && etapa < totalEtapas ? (
+          <Button onClick={voltarParaRevisao} disabled={salvando}>
+            <Save className="mr-1 h-4 w-4" /> Salvar e voltar à revisão
+          </Button>
+        ) : etapa < totalEtapas ? (
           <Button onClick={avancar} disabled={salvando}>
             Avançar <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
