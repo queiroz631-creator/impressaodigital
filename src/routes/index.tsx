@@ -846,15 +846,26 @@ function Calculadora() {
               </Button>
 
               <p className="text-xs text-muted-foreground">
-                As páginas dos PDFs são contadas automaticamente; cada arquivo já inclui 1 página e
-                o excedente vira páginas adicionais. Em arquivos Word, quando a contagem não for
-                confiável, informe as páginas manualmente.
+                As páginas dos PDFs e imagens são contadas automaticamente; cada arquivo já inclui 1
+                página e o excedente vira páginas adicionais. Arquivos Word (.doc/.docx) sempre
+                exigem que a quantidade de páginas seja informada manualmente.
               </p>
 
               <div className="rounded-xl border border-border p-3">
                 <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">
                   ARQUIVOS ANEXADOS
                 </p>
+
+                {arquivosPendentes.length > 0 && (
+                  <div className="mb-2 rounded-lg border-2 border-destructive bg-destructive/10 p-2.5">
+                    <p className="text-sm font-bold text-destructive">
+                      {arquivosPendentes.length} arquivo(s) Word aguardando a quantidade de páginas
+                    </p>
+                    <p className="text-xs font-medium text-destructive">
+                      O cálculo fica bloqueado até que todas as quantidades sejam informadas.
+                    </p>
+                  </div>
+                )}
 
                 {estado.arquivosLista.length === 0 ? (
                   <p className="py-6 text-center text-sm text-muted-foreground">
@@ -864,10 +875,15 @@ function Calculadora() {
                   <div className="max-h-[430px] space-y-2 overflow-y-auto pr-1">
                     {estado.arquivosLista.map((a, i) => {
                       const copias = Math.max(1, a.copias ?? 1);
+                      const pendente = a.paginasManuais === true || Number(a.paginas || 0) < 1;
                       return (
                         <div
                           key={`${a.nome}-${i}`}
-                          className="rounded-lg border border-border bg-accent/30 p-2.5"
+                          className={`rounded-lg border p-2.5 ${
+                            pendente
+                              ? "border-2 border-destructive bg-destructive/5"
+                              : "border-border bg-accent/30"
+                          }`}
                         >
                           <p className="text-sm font-semibold break-all">{a.nome}</p>
 
