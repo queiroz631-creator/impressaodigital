@@ -1115,7 +1115,38 @@ function Calculadora() {
           </CardHeader>
 
           <CardContent className="space-y-3">
-            {acabamentosVisiveis.length === 0 ? (
+            {/* Decisão obrigatória: usar acabamento? */}
+            <div className="rounded-lg border border-border bg-accent/30 px-2.5 py-2">
+              <p className="mb-2 text-sm font-semibold">Deseja acabamento?</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={estado.decisaoAcabamento === "sim" ? "default" : "outline"}
+                  onClick={() => set("decisaoAcabamento", "sim")}
+                >
+                  Sim
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={estado.decisaoAcabamento === "nao" ? "default" : "outline"}
+                  onClick={() =>
+                    setEstado((p) => ({ ...p, decisaoAcabamento: "nao", selecao: {} }))
+                  }
+                >
+                  Não
+                </Button>
+              </div>
+              {estado.decisaoAcabamento === "sim" && linhasAcabamento.length === 0 && (
+                <p className="mt-2 text-[11px] font-semibold text-destructive">
+                  Selecione ao menos uma opção de acabamento.
+                </p>
+              )}
+            </div>
+
+            {estado.decisaoAcabamento === "sim" &&
+              (acabamentosVisiveis.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Nenhum acabamento disponível para o tipo de impressão selecionado.
               </p>
