@@ -21,10 +21,13 @@ import {
   faixasParaTexto,
   textoParaFaixas,
   FORMATOS,
+  CATEGORIAS_MATERIAL,
   type Material,
   type TipoServico,
   type FormatoPapel,
+  type CategoriaMaterial,
 } from "@/lib/calc";
+
 
 export const Route = createFileRoute("/precos")({
   component: () => (
@@ -64,6 +67,8 @@ function Precos() {
         ...m,
         faixas_por_arquivo: m.faixas_por_arquivo ?? [],
         faixas_por_copia_adicional: m.faixas_por_copia_adicional ?? [],
+        categoria: (m.categoria ?? "impressao") as CategoriaMaterial,
+
         quantidade_arquivos_fixo: m.quantidade_arquivos_fixo ?? 3,
         preco_arquivos_fixo: m.preco_arquivos_fixo ?? 0,
       })),
@@ -134,7 +139,10 @@ function Precos() {
 
             tipo_impressao: m.tipo_impressao ?? "simples",
 
+            categoria: m.categoria ?? "impressao",
+
             formato: m.formato ?? "A4",
+
 
             ativo: m.ativo,
             ordem: m.ordem,
@@ -170,7 +178,10 @@ function Precos() {
           .eq("id", m.id);
         if (error) throw error;
       }
-      const { error } = await supabase.from("materiais").insert({ nome: "Novo material", descricao: "", ordem: 1 });
+      const { error } = await supabase
+        .from("materiais")
+        .insert({ nome: "Novo material", descricao: "", ordem: 1, categoria: "impressao" });
+
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["materiais"] });
       toast.success("Material adicionado no início.");
@@ -248,7 +259,9 @@ function Precos() {
                     <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
                       <th className="px-2 py-3">TIPO</th>
                       <th className="px-2 py-3">DESCRIÇÃO</th>
+                      <th className="px-2 py-3 w-40">IMPRESSÃO / CÓPIA</th>
                       <th className="px-2 py-3 w-44">TIPO DE IMPRESSÃO</th>
+
                       <th className="px-2 py-3 w-44">FORMATO</th>
                       <th className="px-2 py-3 w-32">PREÇO UNI</th>
                       <th className="px-2 py-3 w-32">QTD. FIXA</th>
@@ -277,6 +290,25 @@ function Precos() {
                         </td>
                         <td className="px-2 py-2">
                           <Select
+                            value={m.categoria ?? "impressao"}
+                            onValueChange={(v) =>
+                              atualizar(m.id, "categoria", v as CategoriaMaterial)
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CATEGORIAS_MATERIAL.map((c) => (
+                                <SelectItem key={c.valor} value={c.valor}>
+                                  {c.rotulo}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-2 py-2">
+                          <Select
                             value={m.tipo_impressao ?? "simples"}
                             onValueChange={(v) => atualizar(m.id, "tipo_impressao", v as TipoServico)}
                           >
@@ -289,6 +321,7 @@ function Precos() {
                             </SelectContent>
                           </Select>
                         </td>
+
                         <td className="px-2 py-2">
                           <Select
                             value={m.formato ?? "A4"}

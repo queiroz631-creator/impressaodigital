@@ -19,6 +19,15 @@ export const rotuloFormato: Record<FormatoPapel, string> = {
 
 export const FORMATO_PADRAO: FormatoPapel = "A4";
 
+/** Categoria do material: usada para separar impressão de cópia. */
+export type CategoriaMaterial = "impressao" | "copia";
+
+export const CATEGORIAS_MATERIAL: { valor: CategoriaMaterial; rotulo: string }[] = [
+  { valor: "impressao", rotulo: "Impressão" },
+  { valor: "copia", rotulo: "Cópia" },
+];
+
+
 export const rotuloTipoServico: Record<TipoServicoAcabamento, string> = {
   simples: "Impressão Simples",
   especial: "Impressão Especial",
@@ -63,6 +72,10 @@ export interface Material {
   preco_arquivos_fixo: number;
 
   tipo_impressao: TipoServico;
+
+  /** Categoria do material: impressão ou cópia. */
+  categoria: CategoriaMaterial;
+
   formato: FormatoPapel;
   ativo: boolean;
   ordem: number;
@@ -103,27 +116,10 @@ export function normalizarFaixas(valor: unknown): FaixaPreco[] {
 }
 
 /**
- * Preço unitário das páginas.
- *
- * Em cópia manual:
- * - se usarFaixaCopiaManual = false:
- *   utiliza somente preco_pb;
- *
- * - se usarFaixaCopiaManual = true:
- *   utiliza as faixas por páginas.
+ * Preço unitário das páginas, considerando as faixas por quantidade.
  */
-export function precoPorQuantidade(
-  material: Material,
-  quantidade: number,
-  copiaManual = false,
-  usarFaixaCopiaManual = false,
-) {
+export function precoPorQuantidade(material: Material, quantidade: number) {
   const base = Number(material.preco_pb) || 0;
-
-  // Cópia manual sem utilização das faixas.
-  if (copiaManual && !usarFaixaCopiaManual) {
-    return base;
-  }
 
   let preco = base;
 
@@ -135,6 +131,7 @@ export function precoPorQuantidade(
 
   return preco;
 }
+
 
 /**
  * Retorna o preço aplicável aos arquivos excedentes.
@@ -417,16 +414,12 @@ export interface EntradaCalculo {
 
   /**
    * Cópia manual:
-   * cobra somente por página.
+   * quando true, lista somente os materiais
+   * da categoria "copia"; quando false,
+   * somente os da categoria "impressao".
    */
   copiaManual?: boolean;
 
-  /**
-   * Quando true:
-   * utiliza as faixas de quantidade
-   * mesmo na cópia manual.
-   */
-  usarFaixaCopiaManual?: boolean;
 }
 
 /**
@@ -448,6 +441,14 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
 
     .filter((m) => !entrada.formato || (m.formato ?? "A4") === entrada.formato)
 
+    /**
+     * Cópia manual ativa: somente materiais da categoria "copia".
+     * Cópia manual inativa: somente materiais da categoria "impressao".
+     */
+    .filter(
+      (m) => (m.categoria ?? "impressao") === (entrada.copiaManual ? "copia" : "impressao"),
+    )
+
     .sort((a, b) => a.ordem - b.ordem)
 
     .map((material) => {
@@ -458,24 +459,15 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
       const quantidadeArquivos = Math.max(0, Number(entrada.arquivos) || 0);
 
       /**
-       * Na cópia manual cada arquivo
-       * equivale a uma página.
-       *
-       * No cálculo normal, somente as
-       * páginas adicionais e cópias
-       * adicionais entram nesse cálculo.
+       * Somente as páginas adicionais e cópias
+       * adicionais determinam a faixa de preço.
        */
-      const quantidadeParaFaixa = paginasAdicionais + copiasAdicionais + (entrada.copiaManual ? quantidadeArquivos : 0);
+      const quantidadeParaFaixa = paginasAdicionais + copiasAdicionais;
 
       /**
        * Preço das páginas.
        */
-      const preco = precoPorQuantidade(
-        material,
-        quantidadeParaFaixa,
-        entrada.copiaManual,
-        entrada.usarFaixaCopiaManual,
-      );
+      const preco = precoPorQuantidade(material, quantidadeParaFaixa);
 
       /**
        * Valor das páginas adicionais.
@@ -489,9 +481,7 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
        * (baseadas somente nas cópias adicionais); caso contrário
        * mantém o preço unitário de página.
        */
-      const precoCopia = entrada.copiaManual
-        ? preco
-        : precoPorCopiasAdicionais(material, copiasAdicionais, preco);
+      const precoCopia = precoPorCopiasAdicionais(material, copiasAdicionais, preco);
 
       const totalCopiasAdicionais = copiasAdicionais * precoCopia;
 
@@ -501,15 +491,10 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
        * VALOR DOS ARQUIVOS
        * ================================
        *
-       * Cópia manual:
-       * cada arquivo é cobrado como página.
-       *
-       * Cálculo normal:
-       * utiliza quantidade fixa + excedentes.
+       * Utiliza quantidade fixa + excedentes.
        */
-      const totalArquivos = entrada.copiaManual
-        ? quantidadeArquivos * preco
-        : calcularValorArquivos(material, quantidadeArquivos);
+      const totalArquivos = calcularValorArquivos(material, quantidadeArquivos);
+
 
       /**
        * TOTAL DO MATERIAL

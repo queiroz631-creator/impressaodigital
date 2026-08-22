@@ -653,6 +653,7 @@ export type Database = {
       materiais: {
         Row: {
           ativo: boolean
+          categoria: string
           created_at: string
           descricao: string
           faixas: Json
@@ -672,6 +673,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          categoria?: string
           created_at?: string
           descricao?: string
           faixas?: Json
@@ -691,6 +693,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          categoria?: string
           created_at?: string
           descricao?: string
           faixas?: Json

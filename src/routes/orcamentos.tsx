@@ -310,7 +310,6 @@ function Orcamentos() {
       materialId: "",
       selecao: {},
       frenteVerso: false,
-      usarFaixaCopiaManual: false,
       incluirPix: false,
       precisaPrazo: false,
       prazoTipo: "",
