@@ -34,8 +34,9 @@ Hoje o sistema tenta ler as páginas de arquivos `.docx` pelos metadados interno
 - Sempre que o usuário anexar arquivos pelo botão de leitura (PDF/imagem lidos automaticamente), marcar o cálculo como "leitura automática".
 - No diálogo de gerar orçamento, exibir em destaque (faixa amarela/atenção, texto forte) o aviso:
   "Quantidade de páginas foi lida automaticamente, favor verificar se há divergência!"
+- O mesmo aviso aparece no documento gerado (PDF e imagem), em destaque, logo abaixo do resumo do trabalho.
 - O aviso é apenas informativo: não bloqueia a geração.
-- Técnico: flag derivada da lista de arquivos (existe arquivo lido automaticamente, ou seja, sem `paginasManuais`), renderizada no topo do diálogo de orçamento em `src/routes/index.tsx`.
+- Técnico: flag derivada da lista de arquivos (existe arquivo lido automaticamente, ou seja, sem `paginasManuais`), renderizada no topo do diálogo de orçamento em `src/routes/index.tsx` e repassada aos geradores `src/lib/pdf.ts` e `src/lib/imagem.ts` (novo campo opcional em `ItemDoc`/dados do documento), que desenham a linha de aviso só quando a flag estiver ativa.
 
 ## Botões com cor mais forte
 
