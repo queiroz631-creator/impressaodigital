@@ -401,16 +401,12 @@ export interface EntradaCalculo {
 
   /**
    * Cópia manual:
-   * cobra somente por página.
+   * quando true, lista somente os materiais
+   * da categoria "copia"; quando false,
+   * somente os da categoria "impressao".
    */
   copiaManual?: boolean;
 
-  /**
-   * Quando true:
-   * utiliza as faixas de quantidade
-   * mesmo na cópia manual.
-   */
-  usarFaixaCopiaManual?: boolean;
 }
 
 /**
