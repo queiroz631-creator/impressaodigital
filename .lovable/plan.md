@@ -37,5 +37,5 @@ Hoje o botão "Editar" leva à etapa e obriga a percorrer todas as etapas seguin
 - `src/lib/curriculo.functions.ts`: aceitar `nivel` no schema de formações (sem função pública de criação de habilidade).
 - `src/lib/curriculo.server.ts`: persistir `nivel`.
 - `src/components/curriculo/FormularioCurriculo.tsx`: seletor de nível com instituição/ano, alternância de atividades, estado `origemRevisao` para o retorno à etapa de revisão.
-- `src/routes/curriculos.$id.tsx` e `src/routes/curriculo.publico.$token.tsx`: gravar/ler `nivel` e passar `criarHabilidade` também no público.
+- `src/routes/curriculos.$id.tsx` e `src/routes/curriculo.publico.$token.tsx`: gravar/ler `nivel`; o público continua sem `criarHabilidade`.
 - `src/components/curriculo/CurriculoDocumento.tsx` e `src/lib/curriculo-pdf.ts`: mostrar o nível junto da formação, mantendo o layout de página única já ajustado.
