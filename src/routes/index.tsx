@@ -129,7 +129,7 @@ interface EstadoRascunho {
   selecao: Record<string, SelecaoAcabamento>;
   frenteVerso: boolean;
   formato: FormatoPapel;
-  usarFaixaCopiaManual: boolean;
+  
   copiasAdicionais: number;
   /** Decisão do usuário sobre incluir PIX (vazio = não respondido). */
   decisaoPix: "" | "sim" | "nao";
