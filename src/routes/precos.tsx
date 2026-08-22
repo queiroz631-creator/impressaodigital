@@ -67,6 +67,7 @@ function Precos() {
   const [faixasTexto, setFaixasTexto] = useState<Record<string, string>>({});
   const [faixasArquivosTexto, setFaixasArquivosTexto] = useState<Record<string, string>>({});
   const [faixasCopiasTexto, setFaixasCopiasTexto] = useState<Record<string, string>>({});
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!materiais) return;
