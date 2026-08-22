@@ -25,6 +25,7 @@ import {
   ESTADOS_CIVIS,
   capitalizarTexto,
   escolaridadeTemCurso,
+  formacaoLinha,
   escolaridadeTemPos,
   formatarTelefone,
   type CurriculoCompleto,
