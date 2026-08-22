@@ -652,10 +652,16 @@ function Calculadora() {
       return false;
     }
 
+    if (!decisaoTotal) {
+      toast.error("Responda se deseja mostrar o total no orçamento.");
+      return false;
+    }
+
     if (config?.pix_ativo && !estado.decisaoPix) {
       toast.error("Responda se deseja incluir os dados do PIX.");
       return false;
     }
+
 
     if (!estado.decisaoPrazo) {
       toast.error("Responda se deseja informar o prazo de entrega.");
