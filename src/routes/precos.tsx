@@ -2,16 +2,25 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Save, Trash2, ArrowUp, ArrowDown, ShieldAlert } from "lucide-react";
+import { Plus, Save, Trash2, ArrowUp, ArrowDown, ShieldAlert, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { AcabamentosTabela } from "@/components/AcabamentosTabela";
@@ -48,6 +57,13 @@ export const Route = createFileRoute("/precos")({
   }),
 });
 
+/** Converte texto digitado (aceita vírgula) em número. */
+function parsePreco(valor: string) {
+  const limpo = valor.replace(/[^\d,.-]/g, "").replace(",", ".");
+  const n = Number(limpo);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function Precos() {
   const { user } = useAuth();
   const { data: isAdmin, isLoading: carregandoPapel } = useIsAdmin(user?.id);
@@ -58,6 +74,7 @@ function Precos() {
   const [faixasTexto, setFaixasTexto] = useState<Record<string, string>>({});
   const [faixasArquivosTexto, setFaixasArquivosTexto] = useState<Record<string, string>>({});
   const [faixasCopiasTexto, setFaixasCopiasTexto] = useState<Record<string, string>>({});
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!materiais) return;
@@ -105,6 +122,52 @@ function Precos() {
     });
   }
 
+  /** Persiste um material e devolve as faixas já normalizadas. */
+  async function salvarMaterial(m: Material) {
+    if (Number(m.preco_pb) < 0) {
+      throw new Error("Preços não podem ser negativos.");
+    }
+    const faixas = textoParaFaixas(faixasTexto[m.id] ?? "");
+    const faixasArquivos = textoParaFaixas(faixasArquivosTexto[m.id] ?? "");
+    const faixasCopias = textoParaFaixas(faixasCopiasTexto[m.id] ?? "");
+    const { error } = await supabase
+      .from("materiais")
+      .update({
+        nome: m.nome,
+        descricao: m.descricao,
+
+        preco_pb: Number(m.preco_pb),
+
+        preco_por_arquivo: Number(m.preco_por_arquivo) || 0,
+        quantidade_arquivos_fixo: Math.max(0, Number(m.quantidade_arquivos_fixo) || 0),
+
+        preco_arquivos_fixo: Math.max(0, Number(m.preco_arquivos_fixo) || 0),
+
+        faixas: faixas as unknown as never,
+
+        faixas_por_arquivo: faixasArquivos as unknown as never,
+
+        faixas_por_copia_adicional: faixasCopias as unknown as never,
+
+        tipo_impressao: m.tipo_impressao ?? "simples",
+
+        categoria: m.categoria ?? "impressao",
+
+        formato: m.formato ?? "A4",
+
+
+        ativo: m.ativo,
+        ordem: m.ordem,
+      })
+      .eq("id", m.id);
+    if (error) throw error;
+    return {
+      faixas: faixasParaTexto(faixas),
+      faixasArquivos: faixasParaTexto(faixasArquivos),
+      faixasCopias: faixasParaTexto(faixasCopias),
+    };
+  }
+
   async function salvar() {
     setSalvando(true);
     try {
@@ -112,46 +175,10 @@ function Precos() {
       const faixasArquivosNormalizadas: Record<string, string> = {};
       const faixasCopiasNormalizadas: Record<string, string> = {};
       for (const m of linhas) {
-        if (Number(m.preco_pb) < 0) {
-          throw new Error("Preços não podem ser negativos.");
-        }
-        const faixas = textoParaFaixas(faixasTexto[m.id] ?? "");
-        const faixasArquivos = textoParaFaixas(faixasArquivosTexto[m.id] ?? "");
-        const faixasCopias = textoParaFaixas(faixasCopiasTexto[m.id] ?? "");
-        const { error } = await supabase
-          .from("materiais")
-          .update({
-            nome: m.nome,
-            descricao: m.descricao,
-
-            preco_pb: Number(m.preco_pb),
-
-            preco_por_arquivo: Number(m.preco_por_arquivo) || 0,
-            quantidade_arquivos_fixo: Math.max(0, Number(m.quantidade_arquivos_fixo) || 0),
-
-            preco_arquivos_fixo: Math.max(0, Number(m.preco_arquivos_fixo) || 0),
-
-            faixas: faixas as unknown as never,
-
-            faixas_por_arquivo: faixasArquivos as unknown as never,
-
-            faixas_por_copia_adicional: faixasCopias as unknown as never,
-
-            tipo_impressao: m.tipo_impressao ?? "simples",
-
-            categoria: m.categoria ?? "impressao",
-
-            formato: m.formato ?? "A4",
-
-
-            ativo: m.ativo,
-            ordem: m.ordem,
-          })
-          .eq("id", m.id);
-        if (error) throw error;
-        faixasNormalizadas[m.id] = faixasParaTexto(faixas);
-        faixasArquivosNormalizadas[m.id] = faixasParaTexto(faixasArquivos);
-        faixasCopiasNormalizadas[m.id] = faixasParaTexto(faixasCopias);
+        const normalizado = await salvarMaterial(m);
+        faixasNormalizadas[m.id] = normalizado.faixas;
+        faixasArquivosNormalizadas[m.id] = normalizado.faixasArquivos;
+        faixasCopiasNormalizadas[m.id] = normalizado.faixasCopias;
       }
       setFaixasTexto(faixasNormalizadas);
       setFaixasArquivosTexto(faixasArquivosNormalizadas);
@@ -162,6 +189,24 @@ function Precos() {
     } catch (e) {
       console.error("ERRO AO SALVAR MATERIAL:", e);
 
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  /** Salva apenas o material aberto no modal de valores/faixas. */
+  async function salvarUm(m: Material) {
+    setSalvando(true);
+    try {
+      const normalizado = await salvarMaterial(m);
+      setFaixasTexto((f) => ({ ...f, [m.id]: normalizado.faixas }));
+      setFaixasArquivosTexto((f) => ({ ...f, [m.id]: normalizado.faixasArquivos }));
+      setFaixasCopiasTexto((f) => ({ ...f, [m.id]: normalizado.faixasCopias }));
+      queryClient.invalidateQueries({ queryKey: ["materiais"] });
+      toast.success("Valores do material atualizados.");
+      setEditandoId(null);
+    } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao salvar.");
     } finally {
       setSalvando(false);
@@ -254,25 +299,16 @@ function Precos() {
                   ))}
                 </div>
               ) : (
-                <table className="w-full min-w-[900px] text-sm">
+                <table className="w-full min-w-[820px] text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
                       <th className="px-2 py-3">TIPO</th>
                       <th className="px-2 py-3">DESCRIÇÃO</th>
                       <th className="px-2 py-3 w-40">IMPRESSÃO / CÓPIA</th>
                       <th className="px-2 py-3 w-44">TIPO DE IMPRESSÃO</th>
-
-                      <th className="px-2 py-3 w-44">FORMATO</th>
-                      <th className="px-2 py-3 w-32">PREÇO UNI</th>
-                      <th className="px-2 py-3 w-32">QTD. FIXA</th>
-                      <th className="px-2 py-3 w-36">VALOR FIXO</th>
-                      <th className="px-2 py-3 w-36">PREÇO ARQUIVO EXCEDENTE</th>
-                      <th className="px-2 py-3 w-64">FAIXAS POR PÁGINAS</th>
-                      <th className="px-2 py-3 w-64">FAIXAS POR ARQUIVOS EXCEDENTES</th>
-                      <th className="px-2 py-3 w-64">FAIXAS POR CÓPIAS ADICIONAIS</th>
-
                       <th className="px-2 py-3 w-20">ATIVO</th>
                       <th className="px-2 py-3 w-28">ORDEM</th>
+                      <th className="px-2 py-3 w-28">EDITAR</th>
                       <th className="px-2 py-3 w-16" />
                     </tr>
                   </thead>
@@ -323,131 +359,6 @@ function Precos() {
                         </td>
 
                         <td className="px-2 py-2">
-                          <Select
-                            value={m.formato ?? "A4"}
-                            onValueChange={(v) => atualizar(m.id, "formato", v as FormatoPapel)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {FORMATOS.map((f) => (
-                                <SelectItem key={f.valor} value={f.valor}>
-                                  {f.rotulo}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        <td className="px-2 py-2">
-                          <Input
-                            inputMode="decimal"
-                            value={String(m.preco_pb ?? "").replace(".", ",")}
-                            onChange={(e) => {
-                              const valor = e.target.value;
-
-                              // Permite somente números e uma vírgula
-                              if (!/^\d*[,.]?\d*$/.test(valor)) return;
-
-                              atualizar(m.id, "preco_pb", valor.replace(",", "."));
-                            }}
-                            onBlur={() => {
-                              const valor = Number(m.preco_pb) || 0;
-
-                              atualizar(m.id, "preco_pb", valor);
-                            }}
-                            placeholder="0,00"
-                          />
-                        </td>
-
-                        <td className="px-2 py-2">
-                          <Input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={m.quantidade_arquivos_fixo ?? 0}
-                            onChange={(e) => atualizar(m.id, "quantidade_arquivos_fixo", e.target.value)}
-                            title="Quantidade de arquivos cobrados pelo valor fixo"
-                          />
-                        </td>
-                        <td className="px-2 py-2">
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={m.preco_arquivos_fixo ?? 0}
-                            onChange={(e) => atualizar(m.id, "preco_arquivos_fixo", e.target.value)}
-                            title="Valor de cada um dos arquivos com preço fixo"
-                          />
-                        </td>
-                        <td className="px-2 py-2">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={m.preco_por_arquivo ?? 0}
-                            onChange={(e) => atualizar(m.id, "preco_por_arquivo", e.target.value)}
-                            title="Preço padrão dos arquivos excedentes quando não houver faixa"
-                          />
-                        </td>
-                        <td className="px-2 py-2">
-                          <Textarea
-                            rows={3}
-                            placeholder={"100 = 0,09\n500 = 0,08\n1000 = 0,07"}
-                            value={faixasTexto[m.id] ?? ""}
-                            onChange={(e) => setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))}
-                            onBlur={() =>
-                              setFaixasTexto((f) => ({
-                                ...f,
-                                [m.id]: faixasParaTexto(textoParaFaixas(f[m.id] ?? "")),
-                              }))
-                            }
-                            className="min-w-[15rem] font-mono text-xs"
-                          />
-                        </td>
-                        <td className="px-2 py-2">
-                          <Textarea
-                            rows={3}
-                            placeholder={"1 = 1,00\n11 = 0,80\n21 = 0,70"}
-                            value={faixasArquivosTexto[m.id] ?? ""}
-                            onChange={(e) =>
-                              setFaixasArquivosTexto((f) => ({
-                                ...f,
-                                [m.id]: e.target.value,
-                              }))
-                            }
-                            onBlur={() =>
-                              setFaixasArquivosTexto((f) => ({
-                                ...f,
-                                [m.id]: faixasParaTexto(textoParaFaixas(f[m.id] ?? "")),
-                              }))
-                            }
-                            className="min-w-[15rem] font-mono text-xs"
-                          />
-                        </td>
-                        <td className="px-2 py-2">
-                          <Textarea
-                            rows={3}
-                            placeholder={"1 = 1,00\n11 = 0,80\n21 = 0,60"}
-                            value={faixasCopiasTexto[m.id] ?? ""}
-                            onChange={(e) =>
-                              setFaixasCopiasTexto((f) => ({
-                                ...f,
-                                [m.id]: e.target.value,
-                              }))
-                            }
-                            onBlur={() =>
-                              setFaixasCopiasTexto((f) => ({
-                                ...f,
-                                [m.id]: faixasParaTexto(textoParaFaixas(f[m.id] ?? "")),
-                              }))
-                            }
-                            className="min-w-[15rem] font-mono text-xs"
-                            title="Faixas aplicadas somente às cópias adicionais"
-                          />
-                        </td>
-
-                        <td className="px-2 py-2">
                           <Switch checked={m.ativo} onCheckedChange={(v) => atualizar(m.id, "ativo", v)} />
                         </td>
                         <td className="px-2 py-2">
@@ -459,6 +370,11 @@ function Precos() {
                               <ArrowDown className="h-4 w-4" />
                             </Button>
                           </div>
+                        </td>
+                        <td className="px-2 py-2">
+                          <Button size="sm" onClick={() => setEditandoId(m.id)}>
+                            <Pencil className="h-4 w-4" /> Editar
+                          </Button>
                         </td>
                         <td className="px-2 py-2">
                           <ConfirmarExclusao onConfirmar={() => excluir(m.id)}>
@@ -479,6 +395,132 @@ function Precos() {
           <AcabamentosTabela />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!editandoId} onOpenChange={(aberto) => !aberto && setEditandoId(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {(() => {
+            const m = linhas.find((l) => l.id === editandoId);
+            if (!m) return null;
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>Valores — {m.nome}</DialogTitle>
+                  <DialogDescription>
+                    Faixas: uma por linha no formato{" "}
+                    <span className="font-mono">quantidade = valor</span>.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>Formato</Label>
+                    <Select
+                      value={m.formato ?? "A4"}
+                      onValueChange={(v) => atualizar(m.id, "formato", v as FormatoPapel)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FORMATOS.map((f) => (
+                          <SelectItem key={f.valor} value={f.valor}>
+                            {f.rotulo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Preço uni.</Label>
+                    <Input
+                      inputMode="decimal"
+                      value={String(m.preco_pb ?? 0)}
+                      onChange={(e) => atualizar(m.id, "preco_pb", parsePreco(e.target.value))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Qtd. fixa de arquivos</Label>
+                    <Input
+                      inputMode="numeric"
+                      value={String(m.quantidade_arquivos_fixo ?? 0)}
+                      onChange={(e) =>
+                        atualizar(
+                          m.id,
+                          "quantidade_arquivos_fixo",
+                          Math.max(0, Number(e.target.value.replace(/\D/g, "")) || 0),
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Valor fixo</Label>
+                    <Input
+                      inputMode="decimal"
+                      value={String(m.preco_arquivos_fixo ?? 0)}
+                      onChange={(e) =>
+                        atualizar(m.id, "preco_arquivos_fixo", parsePreco(e.target.value))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Preço por arquivo excedente</Label>
+                    <Input
+                      inputMode="decimal"
+                      value={String(m.preco_por_arquivo ?? 0)}
+                      onChange={(e) =>
+                        atualizar(m.id, "preco_por_arquivo", parsePreco(e.target.value))
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Faixas por páginas</Label>
+                    <Textarea
+                      rows={4}
+                      value={faixasTexto[m.id] ?? ""}
+                      onChange={(e) =>
+                        setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))
+                      }
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Faixas por arquivos excedentes</Label>
+                    <Textarea
+                      rows={4}
+                      value={faixasArquivosTexto[m.id] ?? ""}
+                      onChange={(e) =>
+                        setFaixasArquivosTexto((f) => ({ ...f, [m.id]: e.target.value }))
+                      }
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Faixas por cópias adicionais</Label>
+                    <Textarea
+                      rows={4}
+                      value={faixasCopiasTexto[m.id] ?? ""}
+                      onChange={(e) =>
+                        setFaixasCopiasTexto((f) => ({ ...f, [m.id]: e.target.value }))
+                      }
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditandoId(null)}>
+                    Cancelar
+                  </Button>
+                  <Button disabled={salvando} onClick={() => salvarUm(m)}>
+                    <Save className="h-4 w-4" /> Salvar
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

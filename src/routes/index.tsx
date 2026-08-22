@@ -32,7 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -128,6 +128,10 @@ interface EstadoRascunho {
   materialId: string;
   selecao: Record<string, SelecaoAcabamento>;
   frenteVerso: boolean;
+  /** Decisão obrigatória sobre frente e verso (vazio = não respondido). */
+  decisaoFrenteVerso: "" | "sim" | "nao";
+  /** Decisão obrigatória sobre usar acabamento (vazio = não respondido). */
+  decisaoAcabamento: "" | "sim" | "nao";
   formato: FormatoPapel;
   
   copiasAdicionais: number;
@@ -158,6 +162,8 @@ const ESTADO_INICIAL: EstadoRascunho = {
   materialId: "",
   selecao: {},
   frenteVerso: false,
+  decisaoFrenteVerso: "",
+  decisaoAcabamento: "",
   formato: FORMATO_PADRAO,
   
   copiasAdicionais: 0,
@@ -184,6 +190,8 @@ function Calculadora() {
   const [salvandoItem, setSalvandoItem] = useState(false);
   const [dialogAberto, setDialogAberto] = useState(false);
   const [incluirTotal, setIncluirTotal] = useState(true);
+  /** Decisão obrigatória sobre mostrar o total no documento. */
+  const [decisaoTotal, setDecisaoTotal] = useState<"" | "sim" | "nao">("");
   const [downloadDialogAberto, setDownloadDialogAberto] = useState(false);
   const [tipoGeracao, setTipoGeracao] = useState<"pdf" | "imagem" | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
@@ -319,7 +327,12 @@ function Calculadora() {
   const resumo = resumoLinhas(linhasFinais);
   const quantidadeTotal = estado.arquivos + paginasAdicionais + estado.copiasAdicionais;
   const semQuantidade = quantidadeTotal <= 0;
-  const mostrarTabela = !precisaSelecionar && !semQuantidade;
+  /** Decisões obrigatórias antes de exibir valores/resumo. */
+  const acabamentoOk =
+    estado.decisaoAcabamento === "nao" ||
+    (estado.decisaoAcabamento === "sim" && linhasAcabamento.length > 0);
+  const frenteVersoOk = estado.decisaoFrenteVerso !== "";
+  const mostrarTabela = !precisaSelecionar && !semQuantidade && acabamentoOk && frenteVersoOk;
 
   const materialSelecionado =
     linhasFinais.find((l) => l.material.id === estado.materialId) ?? null;
@@ -558,6 +571,7 @@ function Calculadora() {
   }
 
   function limparFormulario(manterPedido: boolean) {
+    const anterior = estado.pedidoId;
     setEstado((e) => ({
       ...ESTADO_INICIAL,
       pedidoId: manterPedido ? e.pedidoId : null,
@@ -565,6 +579,15 @@ function Calculadora() {
       clienteTelefone: manterPedido ? e.clienteTelefone : "",
       validade: manterPedido ? e.validade : "",
     }));
+    if (!manterPedido) {
+      // Descarta a lista de orçamentos que estava vinculada ao pedido anterior.
+      setIncluirTotal(true);
+      setDecisaoTotal("");
+      if (anterior) {
+        queryClient.removeQueries({ queryKey: ["orcamentos-pedido", anterior] });
+        queryClient.removeQueries({ queryKey: ["pedido", anterior] });
+      }
+    }
   }
   function calcularValidadePadrao() {
     const dias = Number(config?.validade_padrao_dias ?? 0);
@@ -629,10 +652,16 @@ function Calculadora() {
       return false;
     }
 
+    if (!decisaoTotal) {
+      toast.error("Responda se deseja mostrar o total no orçamento.");
+      return false;
+    }
+
     if (config?.pix_ativo && !estado.decisaoPix) {
       toast.error("Responda se deseja incluir os dados do PIX.");
       return false;
     }
+
 
     if (!estado.decisaoPrazo) {
       toast.error("Responda se deseja informar o prazo de entrega.");
@@ -1104,7 +1133,38 @@ function Calculadora() {
           </CardHeader>
 
           <CardContent className="space-y-3">
-            {acabamentosVisiveis.length === 0 ? (
+            {/* Decisão obrigatória: usar acabamento? */}
+            <div className="rounded-lg border border-border bg-accent/30 px-2.5 py-2">
+              <p className="mb-2 text-sm font-semibold">Deseja acabamento?</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={estado.decisaoAcabamento === "sim" ? "default" : "outline"}
+                  onClick={() => set("decisaoAcabamento", "sim")}
+                >
+                  Sim
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={estado.decisaoAcabamento === "nao" ? "default" : "outline"}
+                  onClick={() =>
+                    setEstado((p) => ({ ...p, decisaoAcabamento: "nao", selecao: {} }))
+                  }
+                >
+                  Não
+                </Button>
+              </div>
+              {estado.decisaoAcabamento === "sim" && linhasAcabamento.length === 0 && (
+                <p className="mt-2 text-[11px] font-semibold text-destructive">
+                  Selecione ao menos uma opção de acabamento.
+                </p>
+              )}
+            </div>
+
+            {estado.decisaoAcabamento === "sim" &&
+              (acabamentosVisiveis.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Nenhum acabamento disponível para o tipo de impressão selecionado.
               </p>
@@ -1204,16 +1264,33 @@ function Calculadora() {
                   );
                 })}
               </div>
-            )}
+            ))}
 
-            {/* Frente e verso */}
-            <div className="flex items-center justify-between rounded-lg border border-border bg-accent/30 px-2.5 py-2">
-              <div>
-                <p className="text-sm font-semibold">Frente e verso</p>
-                <p className="text-[11px] text-muted-foreground">Informado no orçamento</p>
+            {/* Frente e verso — decisão obrigatória */}
+            <div className="rounded-lg border border-border bg-accent/30 px-2.5 py-2">
+              <p className="mb-2 text-sm font-semibold">Frente e verso?</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={estado.decisaoFrenteVerso === "sim" ? "default" : "outline"}
+                  onClick={() =>
+                    setEstado((p) => ({ ...p, decisaoFrenteVerso: "sim", frenteVerso: true }))
+                  }
+                >
+                  Sim
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={estado.decisaoFrenteVerso === "nao" ? "default" : "outline"}
+                  onClick={() =>
+                    setEstado((p) => ({ ...p, decisaoFrenteVerso: "nao", frenteVerso: false }))
+                  }
+                >
+                  Não
+                </Button>
               </div>
-
-              <Switch checked={estado.frenteVerso} onCheckedChange={(v) => set("frenteVerso", v)} />
             </div>
           </CardContent>
         </Card>
@@ -1272,7 +1349,11 @@ function Calculadora() {
                 <p className="text-sm text-muted-foreground">
                   {precisaSelecionar
                     ? "Selecione o tipo de impressão para ver os valores."
-                    : "Informe arquivos, páginas adicionais ou cópias adicionais para ver os valores."}
+                    : semQuantidade
+                      ? "Informe arquivos, páginas adicionais ou cópias adicionais para ver os valores."
+                      : !frenteVersoOk
+                        ? "Informe se o trabalho é frente e verso para ver os valores."
+                        : "Escolha se haverá acabamento (e selecione ao menos uma opção) para ver os valores."}
                 </p>
               </div>
             ) : (
@@ -1541,8 +1622,13 @@ function Calculadora() {
 
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => set("clienteNome", "CLIENTE PADRÃO")}
+                  variant={estado.clienteNome === "CLIENTE PADRÃO" ? "default" : "outline"}
+                  onClick={() =>
+                    set(
+                      "clienteNome",
+                      estado.clienteNome === "CLIENTE PADRÃO" ? "" : "CLIENTE PADRÃO",
+                    )
+                  }
                 >
                   Cliente Padrão
                 </Button>
@@ -1571,14 +1657,39 @@ function Calculadora() {
                 onChange={(e) => set("observacao", e.target.value)}
               />
             </div>
-            <div className="flex items-center justify-between rounded-xl border border-border p-3 sm:col-span-2">
-              <div>
-                <p className="font-semibold">Mostrar total</p>
-                <p className="text-xs text-muted-foreground">
-                  Desative para gerar o orçamento sem exibir os valores totais.
-                </p>
+            <div className="rounded-xl border border-border p-3 sm:col-span-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold">Mostrar total? *</p>
+                  <p className="text-xs text-muted-foreground">
+                    Escolha "Não" para gerar o orçamento sem exibir os valores totais.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={decisaoTotal === "sim" ? "default" : "outline"}
+                    onClick={() => {
+                      setDecisaoTotal("sim");
+                      setIncluirTotal(true);
+                    }}
+                  >
+                    Sim
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={decisaoTotal === "nao" ? "default" : "outline"}
+                    onClick={() => {
+                      setDecisaoTotal("nao");
+                      setIncluirTotal(false);
+                    }}
+                  >
+                    Não
+                  </Button>
+                </div>
               </div>
-              <Switch checked={incluirTotal} onCheckedChange={setIncluirTotal} />
             </div>
 
             {config?.pix_ativo && (

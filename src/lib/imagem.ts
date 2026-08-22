@@ -86,30 +86,22 @@ function montarLinhas(d: DadosDocumento): Linha[] {
       });
     }
 
-    if (item.copiaManual) {
+    if (Number(item.quantidadeArquivos) > 0) {
       linhas.push({
-        texto: "Cópia manual",
+        texto: "Quantidade de arquivos",
         tipo: "chave",
-        valor: "Sim",
+        valor: String(item.quantidadeArquivos),
       });
     }
 
     linhas.push({
-      texto: "Quantidade de arquivos",
+      texto: "Total p/ impressão",
       tipo: "chave",
-      valor: String(item.quantidadeArquivos),
-    });
-
-    linhas.push({
-      texto: "Páginas adicionais",
-      tipo: "chave",
-      valor: String(item.paginasAdicionais),
-    });
-
-    linhas.push({
-      texto: "Cópias adicionais",
-      tipo: "chave",
-      valor: String(item.copiasAdicionais),
+      valor: String(
+        Number(item.quantidadeArquivos || 0) +
+          Number(item.paginasAdicionais || 0) +
+          Number(item.copiasAdicionais || 0),
+      ),
     });
 
     // ==========================================================

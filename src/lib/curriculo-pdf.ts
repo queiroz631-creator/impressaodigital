@@ -263,6 +263,13 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
 <style>
   @page { size: A4; margin: 10mm; }
   html, body { margin:0; padding:0; background:#fff; height:auto; overflow:visible; }
+  /* Os estilos copiados da página incluem regras de impressão da etiqueta
+     térmica (body * { visibility:hidden }) que deixariam a folha em branco. */
+  @media print {
+    @page { size: A4; margin: 10mm; }
+    html, body, body *, #cv-escala, #cv-escala * { visibility: visible !important; }
+    body { width:auto !important; }
+  }
   #cv-escala { width:${larguraUtil}px; transform-origin: top left; }
   #cv-escala > .cv-print { width:100%; max-width:100%; margin:0; padding:0; box-shadow:none !important; border:0; background:#fff; }
   .cv-secao { background:#1a1a5e !important; color:#fff !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
