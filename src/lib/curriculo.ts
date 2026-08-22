@@ -44,6 +44,7 @@ export interface FormacaoItem {
   nome_curso: string;
   instituicao: string | null;
   ano: string | null;
+  nivel?: string | null;
 }
 export interface ExperienciaItem {
   empresa: string | null;
