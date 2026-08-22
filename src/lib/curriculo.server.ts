@@ -124,11 +124,12 @@ export async function gravarEtapa(curriculoId: string, payload: PayloadEtapa) {
     await trocarLista(
       "curriculo_formacoes",
       payload.formacoes
-        .filter((f) => f.nome_curso.trim())
+        .filter((f) => f.nome_curso.trim() || (f.nivel ?? "").trim())
         .map((f) => ({
           nome_curso: f.nome_curso.trim(),
           instituicao: f.instituicao?.trim() || null,
           ano: f.ano?.trim() || null,
+          nivel: f.nivel?.trim() || null,
         })),
     );
   }
