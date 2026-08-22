@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import {
   enderecoLinhas,
   formacaoFinal,
+  formacaoLinha,
   formatarTelefone,
   informacoesAdicionais,
   objetivoFinal,
