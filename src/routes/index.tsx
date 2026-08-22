@@ -1644,14 +1644,39 @@ function Calculadora() {
                 onChange={(e) => set("observacao", e.target.value)}
               />
             </div>
-            <div className="flex items-center justify-between rounded-xl border border-border p-3 sm:col-span-2">
-              <div>
-                <p className="font-semibold">Mostrar total</p>
-                <p className="text-xs text-muted-foreground">
-                  Desative para gerar o orçamento sem exibir os valores totais.
-                </p>
+            <div className="rounded-xl border border-border p-3 sm:col-span-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold">Mostrar total? *</p>
+                  <p className="text-xs text-muted-foreground">
+                    Escolha "Não" para gerar o orçamento sem exibir os valores totais.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={decisaoTotal === "sim" ? "default" : "outline"}
+                    onClick={() => {
+                      setDecisaoTotal("sim");
+                      setIncluirTotal(true);
+                    }}
+                  >
+                    Sim
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={decisaoTotal === "nao" ? "default" : "outline"}
+                    onClick={() => {
+                      setDecisaoTotal("nao");
+                      setIncluirTotal(false);
+                    }}
+                  >
+                    Não
+                  </Button>
+                </div>
               </div>
-              <Switch checked={incluirTotal} onCheckedChange={setIncluirTotal} />
             </div>
 
             {config?.pix_ativo && (
