@@ -26,6 +26,6 @@ Todo o resto (acabamentos, pedidos, orçamentos, impressão, WhatsApp, currícul
 ## Detalhes técnicos
 
 - Migração: `ALTER TABLE public.materiais ADD COLUMN categoria text NOT NULL DEFAULT 'impressao'` com `CHECK (categoria IN ('impressao','copia'))`; linhas existentes recebem `'impressao'` pelo default.
-- `src/lib/calc.ts`: adicionar `categoria: "impressao" | "copia"` em `Material`; em `EntradaCalculo` remover `usarFaixaCopiaManual` e filtrar por `(m.categoria ?? "impressao") === (entrada.copiaManual ? "copia" : "impressao")`; `precoPorQuantidade` deixa de receber o parâmetro de faixa e sempre usa `preco_pb` na cópia manual.
+- `src/lib/calc.ts`: adicionar `categoria: "impressao" | "copia"` em `Material`; em `EntradaCalculo` remover `usarFaixaCopiaManual` e usar `copiaManual` apenas como filtro `(m.categoria ?? "impressao") === (entrada.copiaManual ? "copia" : "impressao")`; remover os ramos de cálculo condicionados a `copiaManual` em `precoPorQuantidade`, no total de arquivos e no preço das cópias adicionais.
 - `src/routes/precos.tsx`: coluna/seletor "Tipo" (Impressão/Cópia) por material, incluído no mapeamento de leitura e no salvamento; novo material criado com `categoria: "impressao"`.
 - `src/routes/index.tsx`: trocar a ordem das duas colunas dentro do grid de "Dados do trabalho"; remover `usarFaixaCopiaManual` do estado inicial, do `useMemo` de cálculo, do bloco do Switch e da restauração de rascunho.
