@@ -12,14 +12,14 @@
    - Todos os materiais já cadastrados ficam como **Impressão**.
    - Novos materiais entram como **Impressão** por padrão.
 
-3. **Botão Cópia Manual muda de função**
-   - Ativado: a tabela "Valores de impressão" mostra somente materiais com a categoria **Cópia**.
-   - Desativado: mostra somente materiais com a categoria **Impressão**.
-   - As regras de cálculo atuais da cópia manual (cobrança por página, cada arquivo conta 1 página, sem valor por arquivo) continuam iguais.
+3. **Botão Cópia Manual vira apenas filtro**
+   - Ativado: a tabela "Valores de impressão" mostra somente materiais da categoria **Cópia**.
+   - Desativado: mostra somente materiais da categoria **Impressão**.
+   - A antiga lógica de cálculo da cópia manual é removida: nada mais de "cada arquivo conta 1 página", nem preço unitário sem faixas, nem ignorar o valor por arquivo. O cálculo passa a ser sempre o padrão (arquivos + páginas adicionais + cópias adicionais, com as faixas cadastradas), independentemente do botão.
 
 4. **Remoção do "Usar faixa de quantidade"**
    - O botão e a opção somem da tela e deixam de existir no estado, nos rascunhos e no cálculo.
-   - Na cópia manual continua valendo o preço unitário cadastrado, sem faixas (comportamento atual com a opção desligada).
+
 
 Todo o resto (acabamentos, pedidos, orçamentos, impressão, WhatsApp, currículos) permanece intacto.
 
