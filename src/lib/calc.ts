@@ -428,6 +428,14 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
 
     .filter((m) => !entrada.formato || (m.formato ?? "A4") === entrada.formato)
 
+    /**
+     * Cópia manual ativa: somente materiais da categoria "copia".
+     * Cópia manual inativa: somente materiais da categoria "impressao".
+     */
+    .filter(
+      (m) => (m.categoria ?? "impressao") === (entrada.copiaManual ? "copia" : "impressao"),
+    )
+
     .sort((a, b) => a.ordem - b.ordem)
 
     .map((material) => {
@@ -438,24 +446,15 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
       const quantidadeArquivos = Math.max(0, Number(entrada.arquivos) || 0);
 
       /**
-       * Na cópia manual cada arquivo
-       * equivale a uma página.
-       *
-       * No cálculo normal, somente as
-       * páginas adicionais e cópias
-       * adicionais entram nesse cálculo.
+       * Somente as páginas adicionais e cópias
+       * adicionais determinam a faixa de preço.
        */
-      const quantidadeParaFaixa = paginasAdicionais + copiasAdicionais + (entrada.copiaManual ? quantidadeArquivos : 0);
+      const quantidadeParaFaixa = paginasAdicionais + copiasAdicionais;
 
       /**
        * Preço das páginas.
        */
-      const preco = precoPorQuantidade(
-        material,
-        quantidadeParaFaixa,
-        entrada.copiaManual,
-        entrada.usarFaixaCopiaManual,
-      );
+      const preco = precoPorQuantidade(material, quantidadeParaFaixa);
 
       /**
        * Valor das páginas adicionais.
@@ -469,9 +468,7 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
        * (baseadas somente nas cópias adicionais); caso contrário
        * mantém o preço unitário de página.
        */
-      const precoCopia = entrada.copiaManual
-        ? preco
-        : precoPorCopiasAdicionais(material, copiasAdicionais, preco);
+      const precoCopia = precoPorCopiasAdicionais(material, copiasAdicionais, preco);
 
       const totalCopiasAdicionais = copiasAdicionais * precoCopia;
 
@@ -481,15 +478,10 @@ export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): 
        * VALOR DOS ARQUIVOS
        * ================================
        *
-       * Cópia manual:
-       * cada arquivo é cobrado como página.
-       *
-       * Cálculo normal:
-       * utiliza quantidade fixa + excedentes.
+       * Utiliza quantidade fixa + excedentes.
        */
-      const totalArquivos = entrada.copiaManual
-        ? quantidadeArquivos * preco
-        : calcularValorArquivos(material, quantidadeArquivos);
+      const totalArquivos = calcularValorArquivos(material, quantidadeArquivos);
+
 
       /**
        * TOTAL DO MATERIAL
