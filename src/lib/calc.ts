@@ -63,6 +63,10 @@ export interface Material {
   preco_arquivos_fixo: number;
 
   tipo_impressao: TipoServico;
+
+  /** Categoria do material: impressão ou cópia. */
+  categoria: CategoriaMaterial;
+
   formato: FormatoPapel;
   ativo: boolean;
   ordem: number;
