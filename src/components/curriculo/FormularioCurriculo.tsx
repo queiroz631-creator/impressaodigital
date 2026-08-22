@@ -473,65 +473,72 @@ export function FormularioCurriculo({
               )}
               {escolaridadeTemCurso(escolaridade) && (
                 <div className="space-y-3">
-                  <Label className="text-sm font-semibold">Outras formações (opcional)</Label>
-                  {formacoes.map((f, i) => (
+                  <Label className="text-sm font-semibold">Outras graduações (opcional)</Label>
+                  {listaFormacoes.map((f, i) => (
                     <div
                       key={i}
-                      className={`grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_100px_auto] ${
-                        f.nome_curso.trim() ? "border-primary/40 bg-primary/5" : ""
+                      className={`space-y-2 rounded-lg border p-3 ${
+                        (f.nivel ?? "").trim() ? "border-primary/40 bg-primary/5" : ""
                       }`}
                     >
-                      <div>
-                        <Label>Curso</Label>
-                        <Input
-                          value={f.nome_curso}
-                          onChange={(e) =>
-                            setFormacoes((a) =>
-                              a.map((v, j) => (j === i ? { ...v, nome_curso: e.target.value } : v)),
-                            )
-                          }
-                        />
+                      <div className="flex items-end gap-2">
+                        <div className="flex-1">
+                          <Label>Escolaridade</Label>
+                          <Select
+                            value={f.nivel ?? ""}
+                            onValueChange={(v) => atualizarFormacao(i, { nivel: v })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {NIVEIS_FORMACAO.map((v) => (
+                                <SelectItem key={v} value={v}>
+                                  {v}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {i < formacoes.length && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setFormacoes((a) => a.filter((_, j) => j !== i))}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
-                      <div>
-                        <Label>Instituição</Label>
-                        <Input
-                          value={f.instituicao ?? ""}
-                          onChange={(e) =>
-                            setFormacoes((a) =>
-                              a.map((v, j) => (j === i ? { ...v, instituicao: e.target.value } : v)),
-                            )
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label>Ano</Label>
-                        <Input
-                          value={f.ano ?? ""}
-                          onChange={(e) =>
-                            setFormacoes((a) =>
-                              a.map((v, j) => (j === i ? { ...v, ano: e.target.value } : v)),
-                            )
-                          }
-                          placeholder="2024"
-                        />
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="self-end"
-                        onClick={() => setFormacoes((a) => a.filter((_, j) => j !== i))}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+
+                      {(f.nivel ?? "").trim() && (
+                        <div className="grid gap-2 sm:grid-cols-[1fr_1fr_100px]">
+                          <div>
+                            <Label>Nome do curso</Label>
+                            <Input
+                              value={f.nome_curso}
+                              onChange={(e) => atualizarFormacao(i, { nome_curso: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label>Instituição</Label>
+                            <Input
+                              value={f.instituicao ?? ""}
+                              onChange={(e) => atualizarFormacao(i, { instituicao: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label>Ano</Label>
+                            <Input
+                              value={f.ano ?? ""}
+                              onChange={(e) => atualizarFormacao(i, { ano: e.target.value })}
+                              placeholder="2024"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => setFormacoes((a) => [...a, { nome_curso: "", instituicao: "", ano: "" }])}
-                  >
-                    <Plus className="mr-1 h-4 w-4" /> Adicionar formação
-                  </Button>
                 </div>
               )}
             </>
