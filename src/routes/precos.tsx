@@ -277,6 +277,25 @@ function Precos() {
                         </td>
                         <td className="px-2 py-2">
                           <Select
+                            value={m.categoria ?? "impressao"}
+                            onValueChange={(v) =>
+                              atualizar(m.id, "categoria", v as CategoriaMaterial)
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CATEGORIAS_MATERIAL.map((c) => (
+                                <SelectItem key={c.valor} value={c.valor}>
+                                  {c.rotulo}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-2 py-2">
+                          <Select
                             value={m.tipo_impressao ?? "simples"}
                             onValueChange={(v) => atualizar(m.id, "tipo_impressao", v as TipoServico)}
                           >
@@ -289,6 +308,7 @@ function Precos() {
                             </SelectContent>
                           </Select>
                         </td>
+
                         <td className="px-2 py-2">
                           <Select
                             value={m.formato ?? "A4"}
