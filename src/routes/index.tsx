@@ -159,7 +159,7 @@ const ESTADO_INICIAL: EstadoRascunho = {
   selecao: {},
   frenteVerso: false,
   formato: FORMATO_PADRAO,
-  usarFaixaCopiaManual: false,
+  
   copiasAdicionais: 0,
   decisaoPix: "",
   incluirPix: false,
