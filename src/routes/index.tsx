@@ -665,8 +665,21 @@ function Calculadora() {
   }
 
 
+  /** Há arquivos no pedido cuja contagem de páginas foi lida automaticamente. */
+  const leituraAutomaticaPedido =
+    leituraAutomatica ||
+    (itensPedido ?? []).some((o) =>
+      (((o as unknown as { arquivos?: ArquivoDoc[] }).arquivos ?? []) as ArquivoDoc[]).some(
+        (a) => a.paginasManuais !== true && Number(a.paginas || 0) > 0,
+      ),
+    );
+
   function documentoParaGerar() {
-    return { ...documentoDoPedido(), mostrarTotal: incluirTotal };
+    return {
+      ...documentoDoPedido(),
+      mostrarTotal: incluirTotal,
+      leituraAutomatica: leituraAutomaticaPedido,
+    };
   }
 
   function validarDadosOrcamento() {
