@@ -289,9 +289,10 @@ export function gerarOrcamentoImagem(d: DadosDocumento, baixar = true) {
       linhas.push({
         texto: parte,
         tipo: linha.tipo,
-        valor: i === 0 ? linha.valor : undefined,
+        ...(i === 0 && linha.valor ? { valor: linha.valor } : {}),
       });
     });
+
   }
 
   const altura = topo + linhas.length * alturaLinha + 110;
