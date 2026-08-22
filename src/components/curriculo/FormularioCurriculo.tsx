@@ -121,6 +121,36 @@ export function FormularioCurriculo({
   // Etapa 8
   const [exibirData, setExibirData] = useState(c.exibir_data_atualizacao);
 
+  // Navegação a partir da revisão
+  const [origemRevisao, setOrigemRevisao] = useState(false);
+
+  // Mostrar/ocultar o campo de atividades por experiência
+  const [atividadesVisiveis, setAtividadesVisiveis] = useState<Record<number, boolean>>(() =>
+    Object.fromEntries(dados.experiencias.map((e, i) => [i, !!e.atividades?.trim()])),
+  );
+  const mostrarAtividades = (i: number) => atividadesVisiveis[i] ?? false;
+  const definirAtividades = (i: number, valor: boolean) => {
+    setAtividadesVisiveis((a) => ({ ...a, [i]: valor }));
+    if (!valor) {
+      setExperiencias((a) => a.map((v, j) => (j === i ? { ...v, atividades: "" } : v)));
+    }
+  };
+
+  // Graduações adicionais: sempre exibe um card vazio no fim
+  const ultimaFormacao = formacoes[formacoes.length - 1];
+  const listaFormacoes: FormacaoItem[] =
+    formacoes.length === 0 || (ultimaFormacao?.nivel ?? "").trim()
+      ? [...formacoes, { nome_curso: "", instituicao: "", ano: "", nivel: "" }]
+      : formacoes;
+
+  const atualizarFormacao = (i: number, patch: Partial<FormacaoItem>) => {
+    setFormacoes((a) => {
+      const base = i >= a.length ? [...a, { nome_curso: "", instituicao: "", ano: "", nivel: "" }] : [...a];
+      base[i] = { ...base[i]!, ...patch };
+      return base;
+    });
+  };
+
   const marcada = (descricao: string) =>
     habilidades.some((h) => h.descricao.toLowerCase() === descricao.toLowerCase());
 
