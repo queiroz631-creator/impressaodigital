@@ -176,7 +176,10 @@ function Precos() {
           .eq("id", m.id);
         if (error) throw error;
       }
-      const { error } = await supabase.from("materiais").insert({ nome: "Novo material", descricao: "", ordem: 1 });
+      const { error } = await supabase
+        .from("materiais")
+        .insert({ nome: "Novo material", descricao: "", ordem: 1, categoria: "impressao" });
+
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["materiais"] });
       toast.success("Material adicionado no início.");
