@@ -47,16 +47,21 @@ export function gerarOrcamentoPdf(d: DadosDocumento, baixar = true) {
     doc.text(`${item.titulo} — ${item.material}`, 40, y);
     y += 10;
 
+    const totalImpressao =
+      Number(item.quantidadeArquivos || 0) +
+      Number(item.paginasAdicionais || 0) +
+      Number(item.copiasAdicionais || 0);
+
     const resumo: string[][] = [
       ["Material utilizado", item.material],
       ["Tipo de impressão", item.tipoImpressao],
-      ["Quantidade de arquivos", String(item.quantidadeArquivos)],
-      ["Páginas adicionais", String(item.paginasAdicionais)],
-      ["Cópias adicionais", String(item.copiasAdicionais)],
     ];
+    if (Number(item.quantidadeArquivos) > 0) {
+      resumo.push(["Quantidade de arquivos", String(item.quantidadeArquivos)]);
+    }
+    resumo.push(["Total p/ impressão", String(totalImpressao)]);
     if (item.tamanho) resumo.push(["Formato", item.tamanho]);
     if (item.frenteVerso) resumo.push(["Frente e verso", "Sim"]);
-    if (item.copiaManual) resumo.push(["Cópia manual", "Sim"]);
 
     autoTable(doc, {
       startY: y,
