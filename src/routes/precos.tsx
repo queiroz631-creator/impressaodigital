@@ -21,10 +21,13 @@ import {
   faixasParaTexto,
   textoParaFaixas,
   FORMATOS,
+  CATEGORIAS_MATERIAL,
   type Material,
   type TipoServico,
   type FormatoPapel,
+  type CategoriaMaterial,
 } from "@/lib/calc";
+
 
 export const Route = createFileRoute("/precos")({
   component: () => (
