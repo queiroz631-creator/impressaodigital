@@ -294,7 +294,9 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
     let fator = 1;
     aplicarFator(fator);
     for (let i = 0; i < 12; i += 1) {
-      const altura = medirAltura() * fator;
+      // Com zoom, o retângulo medido já está na escala aplicada.
+      const altura = medirAltura();
+
       if (altura <= alturaUtil - 2) break;
       const proximo = Math.max(0.5, fator * ((alturaUtil - 4) / altura));
       if (Math.abs(proximo - fator) < 0.005) {
