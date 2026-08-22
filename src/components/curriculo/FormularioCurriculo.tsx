@@ -893,15 +893,15 @@ export function FormularioCurriculo({
                 {escolaridadeTemCurso(escolaridade) && !escolaridadeTemPos(escolaridade) && cursoSuperior && (
                   <p className="text-muted-foreground">{cursoSuperior}</p>
                 )}
-                {formacoes.length > 0 && (
+                {formacoes.filter((f) => (f.nivel ?? "").trim() || f.nome_curso.trim()).length > 0 && (
                   <div className="mt-1 space-y-0.5">
-                    {formacoes.map((f, i) => (
-                      <p key={i} className="text-muted-foreground">
-                        {f.nome_curso}
-                        {f.instituicao ? ` — ${f.instituicao}` : ""}
-                        {f.ano ? ` (${f.ano})` : ""}
-                      </p>
-                    ))}
+                    {formacoes
+                      .filter((f) => (f.nivel ?? "").trim() || f.nome_curso.trim())
+                      .map((f, i) => (
+                        <p key={i} className="text-muted-foreground">
+                          {formacaoLinha(f)}
+                        </p>
+                      ))}
                   </div>
                 )}
               </ResumoLinha>
