@@ -655,17 +655,37 @@ export function FormularioCurriculo({
                       />
                     </div>
                   </div>
-                  <div>
-                    <Label>Atividades</Label>
-                    <Textarea
-                      rows={3}
-                      value={exp.atividades ?? ""}
-                      onChange={(e) =>
-                        setExperiencias((a) =>
-                          a.map((v, j) => (j === i ? { ...v, atividades: e.target.value } : v)),
-                        )
-                      }
-                    />
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Label className="mb-0">Informar atividades?</Label>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={mostrarAtividades(i) ? "default" : "outline"}
+                        onClick={() => definirAtividades(i, true)}
+                      >
+                        Sim
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={!mostrarAtividades(i) ? "default" : "outline"}
+                        onClick={() => definirAtividades(i, false)}
+                      >
+                        Não
+                      </Button>
+                    </div>
+                    {mostrarAtividades(i) && (
+                      <Textarea
+                        rows={3}
+                        value={exp.atividades ?? ""}
+                        onChange={(e) =>
+                          setExperiencias((a) =>
+                            a.map((v, j) => (j === i ? { ...v, atividades: e.target.value } : v)),
+                          )
+                        }
+                      />
+                    )}
                   </div>
                   <Button
                     variant="ghost"
