@@ -217,12 +217,10 @@ function montarLinhas(d: DadosDocumento): Linha[] {
  *   apenas gera a imagem e retorna o Data URL.
  */
 export function gerarOrcamentoImagem(d: DadosDocumento, baixar = true) {
-  const linhas = montarLinhas(d);
+  const linhasBase = montarLinhas(d);
 
   const alturaLinha = 30;
   const topo = 190;
-
-  const altura = topo + linhas.length * alturaLinha + 110;
 
   // ============================================================
   // CANVAS
@@ -232,17 +230,79 @@ export function gerarOrcamentoImagem(d: DadosDocumento, baixar = true) {
 
   const escala = 2;
 
-  canvas.width = LARGURA * escala;
-
-  canvas.height = altura * escala;
-
   const ctx = canvas.getContext("2d");
 
   if (!ctx) {
     throw new Error("Não foi possível gerar a imagem.");
   }
 
+  // ============================================================
+  // QUEBRA AUTOMÁTICA DE TEXTO
+  // ============================================================
+
+  const fonteDe = (tipo: Linha["tipo"], negrito = false) => {
+    if (tipo === "sub" || tipo === "total") {
+      return "bold 17px Helvetica, Arial, sans-serif";
+    }
+    return `${negrito ? "bold " : ""}15px Helvetica, Arial, sans-serif`;
+  };
+
+  const quebrar = (texto: string, largura: number) => {
+    const palavras = texto.split(/\s+/).filter(Boolean);
+    const saida: string[] = [];
+    let atual = "";
+
+    for (const palavra of palavras) {
+      const teste = atual ? `${atual} ${palavra}` : palavra;
+      if (ctx.measureText(teste).width <= largura || !atual) {
+        atual = teste;
+      } else {
+        saida.push(atual);
+        atual = palavra;
+      }
+    }
+
+    if (atual) saida.push(atual);
+    return saida.length ? saida : [""];
+  };
+
+  const linhas: Linha[] = [];
+
+  for (const linha of linhasBase) {
+    if (linha.tipo === "sep") {
+      linhas.push(linha);
+      continue;
+    }
+
+    let disponivel = LARGURA - MARGEM * 2;
+
+    if (linha.valor) {
+      ctx.font = fonteDe(linha.tipo, true);
+      disponivel -= ctx.measureText(linha.valor).width + 12;
+    }
+
+    ctx.font = fonteDe(linha.tipo);
+
+    const partes = quebrar(linha.texto, Math.max(disponivel, 60));
+
+    partes.forEach((parte, i) => {
+      linhas.push({
+        texto: parte,
+        tipo: linha.tipo,
+        ...(i === 0 && linha.valor ? { valor: linha.valor } : {}),
+      });
+    });
+
+  }
+
+  const altura = topo + linhas.length * alturaLinha + 110;
+
+  canvas.width = LARGURA * escala;
+
+  canvas.height = altura * escala;
+
   ctx.scale(escala, escala);
+
 
   // ============================================================
   // FUNDO
