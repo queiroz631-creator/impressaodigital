@@ -79,7 +79,7 @@ function DetalheCurriculo() {
         supabase.from("curriculos").select(CAMPOS).eq("id", id).maybeSingle(),
         supabase.from("curriculo_telefones").select("telefone").eq("curriculo_id", id).order("ordem"),
         supabase.from("curriculo_cursos").select("nome_curso, instituicao, ano").eq("curriculo_id", id).order("ordem"),
-        supabase.from("curriculo_formacoes").select("nome_curso, instituicao, ano").eq("curriculo_id", id).order("ordem"),
+        supabase.from("curriculo_formacoes").select("nome_curso, instituicao, ano, nivel").eq("curriculo_id", id).order("ordem"),
         supabase
           .from("curriculo_experiencias")
           .select("empresa, cargo, periodo, atividades")
