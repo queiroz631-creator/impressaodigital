@@ -19,6 +19,15 @@ export const rotuloFormato: Record<FormatoPapel, string> = {
 
 export const FORMATO_PADRAO: FormatoPapel = "A4";
 
+/** Categoria do material: usada para separar impressão de cópia. */
+export type CategoriaMaterial = "impressao" | "copia";
+
+export const CATEGORIAS_MATERIAL: { valor: CategoriaMaterial; rotulo: string }[] = [
+  { valor: "impressao", rotulo: "Impressão" },
+  { valor: "copia", rotulo: "Cópia" },
+];
+
+
 export const rotuloTipoServico: Record<TipoServicoAcabamento, string> = {
   simples: "Impressão Simples",
   especial: "Impressão Especial",
