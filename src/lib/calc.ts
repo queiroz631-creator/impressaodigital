@@ -103,27 +103,10 @@ export function normalizarFaixas(valor: unknown): FaixaPreco[] {
 }
 
 /**
- * Preço unitário das páginas.
- *
- * Em cópia manual:
- * - se usarFaixaCopiaManual = false:
- *   utiliza somente preco_pb;
- *
- * - se usarFaixaCopiaManual = true:
- *   utiliza as faixas por páginas.
+ * Preço unitário das páginas, considerando as faixas por quantidade.
  */
-export function precoPorQuantidade(
-  material: Material,
-  quantidade: number,
-  copiaManual = false,
-  usarFaixaCopiaManual = false,
-) {
+export function precoPorQuantidade(material: Material, quantidade: number) {
   const base = Number(material.preco_pb) || 0;
-
-  // Cópia manual sem utilização das faixas.
-  if (copiaManual && !usarFaixaCopiaManual) {
-    return base;
-  }
 
   let preco = base;
 
@@ -135,6 +118,7 @@ export function precoPorQuantidade(
 
   return preco;
 }
+
 
 /**
  * Retorna o preço aplicável aos arquivos excedentes.
