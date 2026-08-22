@@ -279,17 +279,36 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
 
   const limpar = () => window.setTimeout(() => frame.remove(), 500);
 
-  const ajustarEscala = () => {
+  const medirAltura = () => clone.getBoundingClientRect().height || clone.scrollHeight;
+
+  const aplicarFator = (fator: number) => {
+    // Usa zoom (e não transform) para o texto refluir e ocupar toda a largura útil,
+    // igual à visualização e ao PDF.
+    wrapper.style.width = `${larguraUtil / fator}px`;
+    (wrapper.style as unknown as Record<string, string>)["zoom"] = String(fator);
     wrapper.style.transform = "none";
     wrapper.style.height = "auto";
-    const alturaConteudo = clone.getBoundingClientRect().height || clone.scrollHeight;
-    if (alturaConteudo > alturaUtil) {
-      const fator = Math.max(0.5, (alturaUtil - 2) / alturaConteudo);
-      wrapper.style.transform = `scale(${fator})`;
-      // Evita que o espaço do conteúdo original gere uma segunda folha.
-      wrapper.style.height = `${alturaConteudo * fator}px`;
+  };
+
+  const ajustarEscala = () => {
+    let fator = 1;
+    aplicarFator(fator);
+    for (let i = 0; i < 12; i += 1) {
+      // Com zoom, o retângulo medido já está na escala aplicada.
+      const altura = medirAltura();
+
+      if (altura <= alturaUtil - 2) break;
+      const proximo = Math.max(0.5, fator * ((alturaUtil - 4) / altura));
+      if (Math.abs(proximo - fator) < 0.005) {
+        fator = proximo;
+        aplicarFator(fator);
+        break;
+      }
+      fator = proximo;
+      aplicarFator(fator);
     }
   };
+
 
   const disparar = () => {
     ajustarEscala();
