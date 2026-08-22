@@ -190,6 +190,8 @@ function Calculadora() {
   const [salvandoItem, setSalvandoItem] = useState(false);
   const [dialogAberto, setDialogAberto] = useState(false);
   const [incluirTotal, setIncluirTotal] = useState(true);
+  /** Decisão obrigatória sobre mostrar o total no documento. */
+  const [decisaoTotal, setDecisaoTotal] = useState<"" | "sim" | "nao">("");
   const [downloadDialogAberto, setDownloadDialogAberto] = useState(false);
   const [tipoGeracao, setTipoGeracao] = useState<"pdf" | "imagem" | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
