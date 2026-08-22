@@ -104,14 +104,14 @@ function renderizar(
 
   centrado((c.nome_completo || "").toUpperCase(), 15, true, NAVY);
 
-  // Espaço maior entre o nome e os telefones
-  y += 12 * escala;
+  // Espaço reduzido entre o nome e os telefones
+  y += 4 * escala;
 
   const telefones = [
     c.telefone_principal ? formatarTelefone(c.telefone_principal) : "",
     ...dados.telefones.map((t) => formatarTelefone(t.telefone)),
   ].filter(Boolean);
-  if (telefones.length) centrado(telefones.join("  •  "), 10);
+  if (telefones.length) centrado(telefones.join("  •  "), 12);
   if (c.email) centrado(c.email, 10);
 
   y += 6 * escala;
