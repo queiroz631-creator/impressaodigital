@@ -1622,8 +1622,13 @@ function Calculadora() {
 
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => set("clienteNome", "CLIENTE PADRÃO")}
+                  variant={estado.clienteNome === "CLIENTE PADRÃO" ? "default" : "outline"}
+                  onClick={() =>
+                    set(
+                      "clienteNome",
+                      estado.clienteNome === "CLIENTE PADRÃO" ? "" : "CLIENTE PADRÃO",
+                    )
+                  }
                 >
                   Cliente Padrão
                 </Button>
