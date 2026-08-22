@@ -128,6 +128,10 @@ interface EstadoRascunho {
   materialId: string;
   selecao: Record<string, SelecaoAcabamento>;
   frenteVerso: boolean;
+  /** Decisão obrigatória sobre frente e verso (vazio = não respondido). */
+  decisaoFrenteVerso: "" | "sim" | "nao";
+  /** Decisão obrigatória sobre usar acabamento (vazio = não respondido). */
+  decisaoAcabamento: "" | "sim" | "nao";
   formato: FormatoPapel;
   
   copiasAdicionais: number;
