@@ -979,9 +979,9 @@ function Calculadora() {
                             </ConfirmarExclusao>
                           </div>
 
-                          {a.paginasManuais && (
-                            <p className="mt-2 text-xs font-semibold text-magenta-ink">
-                              Arquivo Word adicionado. Informe a quantidade de páginas.
+                          {pendente && (
+                            <p className="mt-2 text-xs font-bold text-destructive">
+                              Informe a quantidade de páginas deste arquivo.
                             </p>
                           )}
                         </div>
