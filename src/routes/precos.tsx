@@ -67,6 +67,8 @@ function Precos() {
         ...m,
         faixas_por_arquivo: m.faixas_por_arquivo ?? [],
         faixas_por_copia_adicional: m.faixas_por_copia_adicional ?? [],
+        categoria: (m.categoria ?? "impressao") as CategoriaMaterial,
+
         quantidade_arquivos_fixo: m.quantidade_arquivos_fixo ?? 3,
         preco_arquivos_fixo: m.preco_arquivos_fixo ?? 0,
       })),
