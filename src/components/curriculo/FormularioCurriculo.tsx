@@ -21,6 +21,7 @@ import {
 import {
   CATEGORIAS_HABILITACAO,
   ESCOLARIDADES,
+  NIVEIS_FORMACAO,
   ESTADOS_CIVIS,
   capitalizarTexto,
   escolaridadeTemCurso,
@@ -847,7 +848,7 @@ export function FormularioCurriculo({
 
           {etapa === 8 && (
             <div className="space-y-4 text-sm">
-              <ResumoLinha titulo="Dados pessoais" etapa={1} ir={setEtapa}>
+              <ResumoLinha titulo="Dados pessoais" etapa={1} ir={irParaEtapa}>
                 <p>{nome || "-"}</p>
                 <p className="text-muted-foreground">
                   {[telefone, ...telefones].filter(Boolean).join(" • ")}
@@ -863,7 +864,7 @@ export function FormularioCurriculo({
                 )}
               </ResumoLinha>
 
-              <ResumoLinha titulo="Documentação" etapa={2} ir={setEtapa}>
+              <ResumoLinha titulo="Documentação" etapa={2} ir={irParaEtapa}>
                 <p>
                   {documentacao === "" ? "Não informado" : documentacao === "sim" ? "Documentação completa" : "Documentação incompleta"}
                 </p>
@@ -872,7 +873,7 @@ export function FormularioCurriculo({
                 </p>
               </ResumoLinha>
 
-              <ResumoLinha titulo="Escolaridade" etapa={3} ir={setEtapa}>
+              <ResumoLinha titulo="Escolaridade" etapa={3} ir={irParaEtapa}>
                 <p>{escolaridade || "-"}</p>
                 {escolaridadeTemPos(escolaridade) && posGraduacaoNome && (
                   <p className="text-muted-foreground">{posGraduacaoNome}</p>
@@ -893,7 +894,7 @@ export function FormularioCurriculo({
                 )}
               </ResumoLinha>
 
-              <ResumoLinha titulo="Cursos complementares" etapa={4} ir={setEtapa}>
+              <ResumoLinha titulo="Cursos complementares" etapa={4} ir={irParaEtapa}>
                 {cursos.length === 0 ? (
                   <p className="text-muted-foreground">Nenhum</p>
                 ) : (
@@ -907,7 +908,7 @@ export function FormularioCurriculo({
                 )}
               </ResumoLinha>
 
-              <ResumoLinha titulo="Experiência profissional" etapa={5} ir={setEtapa}>
+              <ResumoLinha titulo="Experiência profissional" etapa={5} ir={irParaEtapa}>
                 {experiencias.length === 0 ? (
                   <p className="text-muted-foreground">Nenhuma</p>
                 ) : (
@@ -917,11 +918,11 @@ export function FormularioCurriculo({
                 )}
               </ResumoLinha>
 
-              <ResumoLinha titulo="Objetivo" etapa={6} ir={setEtapa}>
+              <ResumoLinha titulo="Objetivo" etapa={6} ir={irParaEtapa}>
                 <p>{objetivoTipo === "nao_informar" ? "Não informado" : objetivoTexto || "-"}</p>
               </ResumoLinha>
 
-              <ResumoLinha titulo="Habilidades" etapa={7} ir={setEtapa}>
+              <ResumoLinha titulo="Habilidades" etapa={7} ir={irParaEtapa}>
                 {habilidades.length === 0 ? (
                   <p className="text-muted-foreground">Nenhuma</p>
                 ) : (
