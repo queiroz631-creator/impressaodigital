@@ -49,7 +49,7 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
             {c.nome_completo || "Currículo"}
           </h1>
           {telefones.length > 0 && (
-            <p className="mt-3 text-[10.5pt]">{telefones.join("  •  ")}</p>
+            <p className="mt-1 text-[12pt]">{telefones.join("  •  ")}</p>
           )}
           {c.email && <p className="text-[10.5pt]">{c.email}</p>}
         </header>
