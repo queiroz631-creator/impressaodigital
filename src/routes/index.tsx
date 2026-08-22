@@ -767,8 +767,156 @@ function Calculadora() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-            {/* ---------- COLUNA ESQUERDA: CONFIGURAÇÃO ---------- */}
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+            {/* ---------- COLUNA ESQUERDA: ARQUIVOS ---------- */}
+            <div className="space-y-3">
+              <input
+                ref={inputArquivos}
+                type="file"
+                multiple
+                accept="application/pdf,image/*,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+                onChange={(e) => anexar(e.target.files)}
+              />
+              <Button
+                variant="outline"
+                className="w-full"
+                disabled={lendoArquivos}
+                onClick={() => inputArquivos.current?.click()}
+              >
+                <Paperclip className="h-4 w-4" />
+                {lendoArquivos ? "Lendo arquivos..." : "Anexar PDFs / Imagens / Word"}
+              </Button>
+
+              <p className="text-xs text-muted-foreground">
+                As páginas dos PDFs são contadas automaticamente; cada arquivo já inclui 1 página e
+                o excedente vira páginas adicionais. Em arquivos Word, quando a contagem não for
+                confiável, informe as páginas manualmente.
+              </p>
+
+              <div className="rounded-xl border border-border p-3">
+                <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">
+                  ARQUIVOS ANEXADOS
+                </p>
+
+                {estado.arquivosLista.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    Nenhum arquivo anexado.
+                  </p>
+                ) : (
+                  <div className="max-h-[430px] space-y-2 overflow-y-auto pr-1">
+                    {estado.arquivosLista.map((a, i) => {
+                      const copias = Math.max(1, a.copias ?? 1);
+                      return (
+                        <div
+                          key={`${a.nome}-${i}`}
+                          className="rounded-lg border border-border bg-accent/30 p-2.5"
+                        >
+                          <p className="text-sm font-semibold break-all">{a.nome}</p>
+
+                          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <span>{a.tipo}</span>
+                            <span>·</span>
+                            <span>{numeroBR(a.paginas)} página(s)</span>
+                          </div>
+
+                          <div className="mt-2 flex flex-wrap items-center gap-3">
+                            {/* PÁGINAS (editável) */}
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs font-semibold">Páginas:</Label>
+                              <Input
+                                type="number"
+                                min="1"
+                                inputMode="numeric"
+                                className="h-8 w-16"
+                                value={a.paginas}
+                                onChange={(e) =>
+                                  atualizarArquivo(i, {
+                                    paginas: Math.max(1, num(e.target.value) || 1),
+                                    paginasManuais: false,
+                                  })
+                                }
+                              />
+                            </div>
+
+                            {/* CÓPIAS */}
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs font-semibold">Cópias:</Label>
+                              <div className="flex h-8 items-center overflow-hidden rounded-md border border-input">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  className="h-full rounded-none px-2"
+                                  onClick={() =>
+                                    atualizarArquivo(i, { copias: Math.max(1, copias - 1) })
+                                  }
+                                >
+                                  −
+                                </Button>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  inputMode="numeric"
+                                  value={copias}
+                                  onChange={(e) =>
+                                    atualizarArquivo(i, {
+                                      copias: Math.max(1, num(e.target.value) || 1),
+                                    })
+                                  }
+                                  className="h-full w-12 rounded-none border-0 text-center font-bold focus-visible:ring-0"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  className="h-full rounded-none px-2"
+                                  onClick={() => atualizarArquivo(i, { copias: copias + 1 })}
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* FRENTE E VERSO */}
+                            <label className="flex items-center gap-2 text-xs font-medium">
+                              <Checkbox
+                                checked={a.frenteVerso ?? false}
+                                onCheckedChange={(v) =>
+                                  atualizarArquivo(i, { frenteVerso: v === true })
+                                }
+                              />
+                              Frente e verso
+                            </label>
+
+                            <ConfirmarExclusao
+                              titulo="Remover arquivo"
+                              descricao="Tem certeza que deseja remover este arquivo do orçamento?"
+                              rotuloConfirmar="Remover"
+                              onConfirmar={() => removerArquivo(i)}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="ml-auto text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" /> Remover
+                              </Button>
+                            </ConfirmarExclusao>
+                          </div>
+
+                          {a.paginasManuais && (
+                            <p className="mt-2 text-xs font-semibold text-magenta-ink">
+                              Arquivo Word adicionado. Informe a quantidade de páginas.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ---------- COLUNA DIREITA: CONFIGURAÇÃO ---------- */}
             <div className="space-y-4">
               <Campo
                 icon={<Files className="h-4 w-4 text-cyan-ink" />}
@@ -935,154 +1083,6 @@ function Calculadora() {
                   Selecione o tipo de impressão para ver os valores automaticamente.
                 </p>
               )}
-            </div>
-
-            {/* ---------- COLUNA DIREITA: ARQUIVOS ---------- */}
-            <div className="space-y-3">
-              <input
-                ref={inputArquivos}
-                type="file"
-                multiple
-                accept="application/pdf,image/*,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                className="hidden"
-                onChange={(e) => anexar(e.target.files)}
-              />
-              <Button
-                variant="outline"
-                className="w-full"
-                disabled={lendoArquivos}
-                onClick={() => inputArquivos.current?.click()}
-              >
-                <Paperclip className="h-4 w-4" />
-                {lendoArquivos ? "Lendo arquivos..." : "Anexar PDFs / Imagens / Word"}
-              </Button>
-
-              <p className="text-xs text-muted-foreground">
-                As páginas dos PDFs são contadas automaticamente; cada arquivo já inclui 1 página e
-                o excedente vira páginas adicionais. Em arquivos Word, quando a contagem não for
-                confiável, informe as páginas manualmente.
-              </p>
-
-              <div className="rounded-xl border border-border p-3">
-                <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">
-                  ARQUIVOS ANEXADOS
-                </p>
-
-                {estado.arquivosLista.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">
-                    Nenhum arquivo anexado.
-                  </p>
-                ) : (
-                  <div className="max-h-[430px] space-y-2 overflow-y-auto pr-1">
-                    {estado.arquivosLista.map((a, i) => {
-                      const copias = Math.max(1, a.copias ?? 1);
-                      return (
-                        <div
-                          key={`${a.nome}-${i}`}
-                          className="rounded-lg border border-border bg-accent/30 p-2.5"
-                        >
-                          <p className="text-sm font-semibold break-all">{a.nome}</p>
-
-                          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <span>{a.tipo}</span>
-                            <span>·</span>
-                            <span>{numeroBR(a.paginas)} página(s)</span>
-                          </div>
-
-                          <div className="mt-2 flex flex-wrap items-center gap-3">
-                            {/* PÁGINAS (editável) */}
-                            <div className="flex items-center gap-2">
-                              <Label className="text-xs font-semibold">Páginas:</Label>
-                              <Input
-                                type="number"
-                                min="1"
-                                inputMode="numeric"
-                                className="h-8 w-16"
-                                value={a.paginas}
-                                onChange={(e) =>
-                                  atualizarArquivo(i, {
-                                    paginas: Math.max(1, num(e.target.value) || 1),
-                                    paginasManuais: false,
-                                  })
-                                }
-                              />
-                            </div>
-
-                            {/* CÓPIAS */}
-                            <div className="flex items-center gap-2">
-                              <Label className="text-xs font-semibold">Cópias:</Label>
-                              <div className="flex h-8 items-center overflow-hidden rounded-md border border-input">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="h-full rounded-none px-2"
-                                  onClick={() =>
-                                    atualizarArquivo(i, { copias: Math.max(1, copias - 1) })
-                                  }
-                                >
-                                  −
-                                </Button>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  inputMode="numeric"
-                                  value={copias}
-                                  onChange={(e) =>
-                                    atualizarArquivo(i, {
-                                      copias: Math.max(1, num(e.target.value) || 1),
-                                    })
-                                  }
-                                  className="h-full w-12 rounded-none border-0 text-center font-bold focus-visible:ring-0"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="h-full rounded-none px-2"
-                                  onClick={() => atualizarArquivo(i, { copias: copias + 1 })}
-                                >
-                                  +
-                                </Button>
-                              </div>
-                            </div>
-
-                            {/* FRENTE E VERSO */}
-                            <label className="flex items-center gap-2 text-xs font-medium">
-                              <Checkbox
-                                checked={a.frenteVerso ?? false}
-                                onCheckedChange={(v) =>
-                                  atualizarArquivo(i, { frenteVerso: v === true })
-                                }
-                              />
-                              Frente e verso
-                            </label>
-
-                            <ConfirmarExclusao
-                              titulo="Remover arquivo"
-                              descricao="Tem certeza que deseja remover este arquivo do orçamento?"
-                              rotuloConfirmar="Remover"
-                              onConfirmar={() => removerArquivo(i)}
-                            >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="ml-auto text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" /> Remover
-                              </Button>
-                            </ConfirmarExclusao>
-                          </div>
-
-                          {a.paginasManuais && (
-                            <p className="mt-2 text-xs font-semibold text-magenta-ink">
-                              Arquivo Word adicionado. Informe a quantidade de páginas.
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </CardContent>
