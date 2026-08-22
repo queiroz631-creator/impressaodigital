@@ -115,6 +115,52 @@ function Precos() {
     });
   }
 
+  /** Persiste um material e devolve as faixas já normalizadas. */
+  async function salvarMaterial(m: Material) {
+    if (Number(m.preco_pb) < 0) {
+      throw new Error("Preços não podem ser negativos.");
+    }
+    const faixas = textoParaFaixas(faixasTexto[m.id] ?? "");
+    const faixasArquivos = textoParaFaixas(faixasArquivosTexto[m.id] ?? "");
+    const faixasCopias = textoParaFaixas(faixasCopiasTexto[m.id] ?? "");
+    const { error } = await supabase
+      .from("materiais")
+      .update({
+        nome: m.nome,
+        descricao: m.descricao,
+
+        preco_pb: Number(m.preco_pb),
+
+        preco_por_arquivo: Number(m.preco_por_arquivo) || 0,
+        quantidade_arquivos_fixo: Math.max(0, Number(m.quantidade_arquivos_fixo) || 0),
+
+        preco_arquivos_fixo: Math.max(0, Number(m.preco_arquivos_fixo) || 0),
+
+        faixas: faixas as unknown as never,
+
+        faixas_por_arquivo: faixasArquivos as unknown as never,
+
+        faixas_por_copia_adicional: faixasCopias as unknown as never,
+
+        tipo_impressao: m.tipo_impressao ?? "simples",
+
+        categoria: m.categoria ?? "impressao",
+
+        formato: m.formato ?? "A4",
+
+
+        ativo: m.ativo,
+        ordem: m.ordem,
+      })
+      .eq("id", m.id);
+    if (error) throw error;
+    return {
+      faixas: faixasParaTexto(faixas),
+      faixasArquivos: faixasParaTexto(faixasArquivos),
+      faixasCopias: faixasParaTexto(faixasCopias),
+    };
+  }
+
   async function salvar() {
     setSalvando(true);
     try {
@@ -122,46 +168,10 @@ function Precos() {
       const faixasArquivosNormalizadas: Record<string, string> = {};
       const faixasCopiasNormalizadas: Record<string, string> = {};
       for (const m of linhas) {
-        if (Number(m.preco_pb) < 0) {
-          throw new Error("Preços não podem ser negativos.");
-        }
-        const faixas = textoParaFaixas(faixasTexto[m.id] ?? "");
-        const faixasArquivos = textoParaFaixas(faixasArquivosTexto[m.id] ?? "");
-        const faixasCopias = textoParaFaixas(faixasCopiasTexto[m.id] ?? "");
-        const { error } = await supabase
-          .from("materiais")
-          .update({
-            nome: m.nome,
-            descricao: m.descricao,
-
-            preco_pb: Number(m.preco_pb),
-
-            preco_por_arquivo: Number(m.preco_por_arquivo) || 0,
-            quantidade_arquivos_fixo: Math.max(0, Number(m.quantidade_arquivos_fixo) || 0),
-
-            preco_arquivos_fixo: Math.max(0, Number(m.preco_arquivos_fixo) || 0),
-
-            faixas: faixas as unknown as never,
-
-            faixas_por_arquivo: faixasArquivos as unknown as never,
-
-            faixas_por_copia_adicional: faixasCopias as unknown as never,
-
-            tipo_impressao: m.tipo_impressao ?? "simples",
-
-            categoria: m.categoria ?? "impressao",
-
-            formato: m.formato ?? "A4",
-
-
-            ativo: m.ativo,
-            ordem: m.ordem,
-          })
-          .eq("id", m.id);
-        if (error) throw error;
-        faixasNormalizadas[m.id] = faixasParaTexto(faixas);
-        faixasArquivosNormalizadas[m.id] = faixasParaTexto(faixasArquivos);
-        faixasCopiasNormalizadas[m.id] = faixasParaTexto(faixasCopias);
+        const normalizado = await salvarMaterial(m);
+        faixasNormalizadas[m.id] = normalizado.faixas;
+        faixasArquivosNormalizadas[m.id] = normalizado.faixasArquivos;
+        faixasCopiasNormalizadas[m.id] = normalizado.faixasCopias;
       }
       setFaixasTexto(faixasNormalizadas);
       setFaixasArquivosTexto(faixasArquivosNormalizadas);
@@ -172,6 +182,24 @@ function Precos() {
     } catch (e) {
       console.error("ERRO AO SALVAR MATERIAL:", e);
 
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  /** Salva apenas o material aberto no modal de valores/faixas. */
+  async function salvarUm(m: Material) {
+    setSalvando(true);
+    try {
+      const normalizado = await salvarMaterial(m);
+      setFaixasTexto((f) => ({ ...f, [m.id]: normalizado.faixas }));
+      setFaixasArquivosTexto((f) => ({ ...f, [m.id]: normalizado.faixasArquivos }));
+      setFaixasCopiasTexto((f) => ({ ...f, [m.id]: normalizado.faixasCopias }));
+      queryClient.invalidateQueries({ queryKey: ["materiais"] });
+      toast.success("Valores do material atualizados.");
+      setEditandoId(null);
+    } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao salvar.");
     } finally {
       setSalvando(false);
