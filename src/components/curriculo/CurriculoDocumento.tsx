@@ -76,9 +76,7 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
           <Secao titulo="Formação">
             {formacao && <p>{formacao}</p>}
             {dados.formacoes.map((f, i) => (
-              <p key={i}>
-                {[f.nome_curso, f.instituicao, f.ano].filter(Boolean).join(" — ")}
-              </p>
+              <p key={i}>{formacaoLinha(f)}</p>
             ))}
           </Secao>
         )}
