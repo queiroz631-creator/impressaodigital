@@ -123,6 +123,22 @@ export const ESCOLARIDADES = [
 
 export const CATEGORIAS_HABILITACAO = ["A", "B", "AB", "C", "D", "E"];
 
+/** Níveis permitidos ao informar uma graduação adicional. */
+export const NIVEIS_FORMACAO = [
+  "Ensino Superior Incompleto",
+  "Ensino Superior Cursando",
+  "Ensino Superior Completo",
+  "Pós-graduação",
+];
+
+/** Texto de uma formação adicional (nível — curso — instituição — ano). */
+export function formacaoLinha(f: FormacaoItem) {
+  return [f.nivel || "", f.nome_curso, f.instituicao ?? "", f.ano ?? ""]
+    .map((v) => (v ?? "").trim())
+    .filter(Boolean)
+    .join(" — ");
+}
+
 export function escolaridadeTemCurso(valor?: string | null) {
   return !!valor && valor.startsWith("Ensino Superior");
 }
