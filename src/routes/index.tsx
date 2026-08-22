@@ -1668,6 +1668,15 @@ function Calculadora() {
               Informe os dados do cliente para gerar o documento do pedido.
             </DialogDescription>
           </DialogHeader>
+
+          {leituraAutomaticaPedido && (
+            <div className="rounded-lg border-2 border-yellow-ink bg-yellow-ink/15 p-3">
+              <p className="text-sm font-bold text-foreground">
+                Quantidade de páginas foi lida automaticamente, favor verificar se há divergência!
+              </p>
+            </div>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>
