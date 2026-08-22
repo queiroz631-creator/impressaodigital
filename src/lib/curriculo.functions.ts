@@ -14,6 +14,12 @@ const camposSchema = z
     categoria_habilitacao: z.string().max(4).nullish(),
     escolaridade: z.string().max(120).nullish(),
     curso_superior: z.string().max(160).nullish(),
+    pos_graduacao_nome: z.string().max(200).nullish(),
+    endereco: z.string().max(200).nullish(),
+    bairro: z.string().max(120).nullish(),
+    cidade: z.string().max(120).nullish(),
+    uf: z.string().max(2).nullish(),
+    cep: z.string().max(12).nullish(),
     objetivo_tipo: z.enum(["sugerido", "personalizado", "nao_informar"]).optional(),
     objetivo_texto: z.string().max(1000).nullish(),
     exibir_data_atualizacao: z.boolean().optional(),
@@ -24,9 +30,26 @@ const payloadSchema = z.object({
   campos: camposSchema.optional(),
   telefones: z.array(z.object({ telefone: z.string().max(30) })).max(10).optional(),
   cursos: z
-    .array(z.object({ nome_curso: z.string().max(200), instituicao: z.string().max(200).nullish() }))
+    .array(
+      z.object({
+        nome_curso: z.string().max(200),
+        instituicao: z.string().max(200).nullish(),
+        ano: z.string().max(10).nullish(),
+      }),
+    )
     .max(30)
     .optional(),
+  formacoes: z
+    .array(
+      z.object({
+        nome_curso: z.string().max(200),
+        instituicao: z.string().max(200).nullish(),
+        ano: z.string().max(10).nullish(),
+      }),
+    )
+    .max(30)
+    .optional(),
+
   experiencias: z
     .array(
       z.object({
