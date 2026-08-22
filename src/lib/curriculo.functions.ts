@@ -45,6 +45,7 @@ const payloadSchema = z.object({
         nome_curso: z.string().max(200),
         instituicao: z.string().max(200).nullish(),
         ano: z.string().max(10).nullish(),
+        nivel: z.string().max(120).nullish(),
       }),
     )
     .max(30)
