@@ -162,6 +162,8 @@ const ESTADO_INICIAL: EstadoRascunho = {
   materialId: "",
   selecao: {},
   frenteVerso: false,
+  decisaoFrenteVerso: "",
+  decisaoAcabamento: "",
   formato: FORMATO_PADRAO,
   
   copiasAdicionais: 0,
