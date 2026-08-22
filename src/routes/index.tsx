@@ -332,7 +332,20 @@ function Calculadora() {
     estado.decisaoAcabamento === "nao" ||
     (estado.decisaoAcabamento === "sim" && linhasAcabamento.length > 0);
   const frenteVersoOk = estado.decisaoFrenteVerso !== "";
-  const mostrarTabela = !precisaSelecionar && !semQuantidade && acabamentoOk && frenteVersoOk;
+  /** Arquivos Word aguardando a quantidade de páginas informada manualmente. */
+  const arquivosPendentes = estado.arquivosLista.filter(
+    (a) => a.paginasManuais === true || Number(a.paginas || 0) < 1,
+  );
+  /** Existe ao menos um arquivo cuja contagem foi feita automaticamente. */
+  const leituraAutomatica = estado.arquivosLista.some(
+    (a) => a.paginasManuais !== true && Number(a.paginas || 0) > 0,
+  );
+  const mostrarTabela =
+    !precisaSelecionar &&
+    !semQuantidade &&
+    acabamentoOk &&
+    frenteVersoOk &&
+    arquivosPendentes.length === 0;
 
   const materialSelecionado =
     linhasFinais.find((l) => l.material.id === estado.materialId) ?? null;
