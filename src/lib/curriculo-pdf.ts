@@ -285,7 +285,7 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
     // Usa zoom (e não transform) para o texto refluir e ocupar toda a largura útil,
     // igual à visualização e ao PDF.
     wrapper.style.width = `${larguraUtil / fator}px`;
-    (wrapper.style as unknown as Record<string, string>).zoom = String(fator);
+    (wrapper.style as unknown as Record<string, string>)["zoom"] = String(fator);
     wrapper.style.transform = "none";
     wrapper.style.height = "auto";
   };
