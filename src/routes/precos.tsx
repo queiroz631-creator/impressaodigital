@@ -388,6 +388,132 @@ function Precos() {
           <AcabamentosTabela />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!editandoId} onOpenChange={(aberto) => !aberto && setEditandoId(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {(() => {
+            const m = linhas.find((l) => l.id === editandoId);
+            if (!m) return null;
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>Valores — {m.nome}</DialogTitle>
+                  <DialogDescription>
+                    Faixas: uma por linha no formato{" "}
+                    <span className="font-mono">quantidade = valor</span>.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>Formato</Label>
+                    <Select
+                      value={m.formato ?? "A4"}
+                      onValueChange={(v) => atualizar(m.id, "formato", v as FormatoPapel)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FORMATOS.map((f) => (
+                          <SelectItem key={f.valor} value={f.valor}>
+                            {f.rotulo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Preço uni.</Label>
+                    <Input
+                      inputMode="decimal"
+                      value={String(m.preco_pb ?? 0)}
+                      onChange={(e) => atualizar(m.id, "preco_pb", parsePreco(e.target.value))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Qtd. fixa de arquivos</Label>
+                    <Input
+                      inputMode="numeric"
+                      value={String(m.quantidade_arquivos_fixo ?? 0)}
+                      onChange={(e) =>
+                        atualizar(
+                          m.id,
+                          "quantidade_arquivos_fixo",
+                          Math.max(0, Number(e.target.value.replace(/\D/g, "")) || 0),
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Valor fixo</Label>
+                    <Input
+                      inputMode="decimal"
+                      value={String(m.preco_arquivos_fixo ?? 0)}
+                      onChange={(e) =>
+                        atualizar(m.id, "preco_arquivos_fixo", parsePreco(e.target.value))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Preço por arquivo excedente</Label>
+                    <Input
+                      inputMode="decimal"
+                      value={String(m.preco_por_arquivo ?? 0)}
+                      onChange={(e) =>
+                        atualizar(m.id, "preco_por_arquivo", parsePreco(e.target.value))
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Faixas por páginas</Label>
+                    <Textarea
+                      rows={4}
+                      value={faixasTexto[m.id] ?? ""}
+                      onChange={(e) =>
+                        setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))
+                      }
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Faixas por arquivos excedentes</Label>
+                    <Textarea
+                      rows={4}
+                      value={faixasArquivosTexto[m.id] ?? ""}
+                      onChange={(e) =>
+                        setFaixasArquivosTexto((f) => ({ ...f, [m.id]: e.target.value }))
+                      }
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Faixas por cópias adicionais</Label>
+                    <Textarea
+                      rows={4}
+                      value={faixasCopiasTexto[m.id] ?? ""}
+                      onChange={(e) =>
+                        setFaixasCopiasTexto((f) => ({ ...f, [m.id]: e.target.value }))
+                      }
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditandoId(null)}>
+                    Cancelar
+                  </Button>
+                  <Button disabled={salvando} onClick={() => salvarUm(m)}>
+                    <Save className="h-4 w-4" /> Salvar
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
