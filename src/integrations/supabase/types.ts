@@ -379,6 +379,7 @@ export type Database = {
           curriculo_id: string
           id: string
           instituicao: string | null
+          nivel: string | null
           nome_curso: string
           ordem: number
           updated_at: string
@@ -389,6 +390,7 @@ export type Database = {
           curriculo_id: string
           id?: string
           instituicao?: string | null
+          nivel?: string | null
           nome_curso: string
           ordem?: number
           updated_at?: string
@@ -399,6 +401,7 @@ export type Database = {
           curriculo_id?: string
           id?: string
           instituicao?: string | null
+          nivel?: string | null
           nome_curso?: string
           ordem?: number
           updated_at?: string
