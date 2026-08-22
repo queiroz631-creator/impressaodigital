@@ -248,7 +248,9 @@ function Precos() {
                     <tr className="border-b border-border text-left text-xs font-bold tracking-wider text-muted-foreground">
                       <th className="px-2 py-3">TIPO</th>
                       <th className="px-2 py-3">DESCRIÇÃO</th>
+                      <th className="px-2 py-3 w-40">IMPRESSÃO / CÓPIA</th>
                       <th className="px-2 py-3 w-44">TIPO DE IMPRESSÃO</th>
+
                       <th className="px-2 py-3 w-44">FORMATO</th>
                       <th className="px-2 py-3 w-32">PREÇO UNI</th>
                       <th className="px-2 py-3 w-32">QTD. FIXA</th>
