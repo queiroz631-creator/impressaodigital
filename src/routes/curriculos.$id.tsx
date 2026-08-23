@@ -411,7 +411,7 @@ function DetalheCurriculo() {
             <AlertDialogDescription>
               O currículo de {data.curriculo.nome_completo || "cliente"} e todos os dados vinculados
               (telefones, cursos, formações, experiências, habilidades e links) serão excluídos
-              permanentemente. Esta ação não pode ser desfeita.
+              permanentemente. O cadastro do cliente será mantido. Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
