@@ -16,7 +16,7 @@ import {
   criarCurriculoPublico,
   salvarCurriculoPublico,
 } from "@/lib/curriculo.functions";
-import { cpfValido, formatarTelefone, somenteNumeros, type CurriculoCompleto, type PayloadEtapa } from "@/lib/curriculo";
+import { cpfValido, formatarCpf, formatarTelefone, somenteNumeros, type CurriculoCompleto, type PayloadEtapa } from "@/lib/curriculo";
 
 export const Route = createFileRoute("/curriculo/publico/$token")({
   head: () => ({
