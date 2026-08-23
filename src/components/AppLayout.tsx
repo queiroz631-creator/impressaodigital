@@ -14,6 +14,7 @@ const itens = [
   { to: "/precos", label: "Configurar Preços", icon: DollarSign, adminOnly: true },
   { to: "/orcamentos", label: "Orçamentos", icon: FileText },
   { to: "/curriculos", label: "Currículo Vitae", icon: FileUser },
+  { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle, badge: true },
   { to: "/historico", label: "Histórico", icon: History },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
