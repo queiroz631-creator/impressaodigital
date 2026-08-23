@@ -79,6 +79,24 @@ function DetalheCurriculo() {
   const [telefoneEnvio, setTelefoneEnvio] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [excluirAberto, setExcluirAberto] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
+
+  const excluirCurriculo = async () => {
+    setExcluindo(true);
+    try {
+      const { error } = await supabase.from("curriculos").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+      toast.success("Currículo excluído.");
+      setExcluirAberto(false);
+      await queryClient.invalidateQueries({ queryKey: ["curriculos"] });
+      navigate({ to: "/curriculos" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível excluir o currículo.");
+    } finally {
+      setExcluindo(false);
+    }
+  };
 
   const gerarLink = useServerFn(gerarLinkCurriculo);
   const enviarWhats = useServerFn(enviarCurriculoWhatsapp);
