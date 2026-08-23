@@ -260,6 +260,9 @@ function Curriculos() {
           <Button onClick={() => setNovoAberto(true)}>
             <Plus className="mr-1 h-4 w-4" /> NOVO CURRÍCULO
           </Button>
+          <Button variant="outline" onClick={abrirLinkNovoCurriculo} disabled={gerandoLink}>
+            <Link2 className="mr-1 h-4 w-4" /> LINK PARA NOVO CURRÍCULO
+          </Button>
         </CardContent>
       </Card>
 
