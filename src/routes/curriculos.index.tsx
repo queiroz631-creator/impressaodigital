@@ -32,6 +32,7 @@ import {
 import { cpfValido, formatarCpf, formatarTelefone, somenteNumeros } from "@/lib/curriculo";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import { dataBR, dataHoraBR } from "@/lib/format";
+import { gerarLinkNovoCurriculo } from "@/lib/curriculo.functions";
 
 export const Route = createFileRoute("/curriculos/")({
   head: () => ({
