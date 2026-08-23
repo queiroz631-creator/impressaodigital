@@ -89,6 +89,26 @@ export const salvarCurriculoPublico = createServerFn({ method: "POST" })
     return salvarPublico(data.token, data.payload as Parameters<typeof salvarPublico>[1]);
   });
 
+export const criarCurriculoPublico = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        token: tokenSchema,
+        nome: z.string().trim().min(2).max(200),
+        cpf: z.string().min(8).max(20),
+        telefone: z.string().min(8).max(30),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { criarPublico } = await import("@/lib/curriculo.server");
+    return criarPublico(data.token, {
+      nome: data.nome,
+      cpf: data.cpf,
+      telefone: data.telefone,
+    });
+  });
+
 /* -------------------------------------------------------- administrativo */
 
 export const gerarLinkCurriculo = createServerFn({ method: "POST" })
