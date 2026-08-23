@@ -7,6 +7,7 @@ const CAMPOS =
   "id, cliente_id, status, nome_completo, cpf, telefone_principal, data_nascimento, estado_civil, email, documentacao_completa, habilitacao, categoria_habilitacao, escolaridade, curso_superior, pos_graduacao_nome, endereco, bairro, cidade, uf, cep, objetivo_tipo, objetivo_texto, exibir_data_atualizacao, created_at, updated_at, completed_at";
 
 export interface DadosPublicos {
+  novo?: false;
   curriculo: Omit<CurriculoCompleto["curriculo"], "cpf"> & { cpf: string };
   telefones: CurriculoCompleto["telefones"];
   cursos: CurriculoCompleto["cursos"];
@@ -15,6 +16,13 @@ export interface DadosPublicos {
   habilidades: CurriculoCompleto["habilidades"];
   catalogoHabilidades: { id: string; descricao: string }[];
   objetivosSugeridos: { id: string; texto: string }[];
+  empresaNome: string;
+  expiraEm: string;
+}
+
+/** Resposta de um link de criação (sem currículo atrelado ainda). */
+export interface DadosPublicosNovo {
+  novo: true;
   empresaNome: string;
   expiraEm: string;
 }
