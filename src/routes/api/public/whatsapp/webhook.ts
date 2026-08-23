@@ -87,12 +87,33 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
 
         if (corpo.fromMe || corpo.isStatusReply) return Response.json({ ok: true, ignorado: true });
 
+        // A Z-API envia vários tipos de callback (entrega, status, presença).
+        // Só o "ReceivedCallback" é mensagem de cliente; o resto causaria laço.
+        if (corpo.type && corpo.type !== "ReceivedCallback") {
+          return Response.json({ ok: true, ignorado: true, motivo: corpo.type });
+        }
+
         const telefone = normalizarTelefone(corpo.phone);
         if (!telefone) return Response.json({ ok: true, ignorado: true });
 
         const nomeContato = corpo.senderName || corpo.chatName || null;
         const conteudo = extrair(corpo);
         const agora = new Date().toISOString();
+
+        // Callback sem conteúdo reconhecível não deve acionar o bot.
+        if (conteudo.tipo === "desconhecido") {
+          return Response.json({ ok: true, ignorado: true, motivo: "sem_conteudo" });
+        }
+
+        // Evita reprocessar a mesma mensagem quando a Z-API reenvia o callback.
+        if (corpo.messageId) {
+          const { data: jaExiste } = await supabaseAdmin
+            .from("whatsapp_mensagens")
+            .select("id")
+            .eq("whatsapp_message_id", corpo.messageId)
+            .maybeSingle();
+          if (jaExiste?.id) return Response.json({ ok: true, ignorado: true, motivo: "duplicada" });
+        }
 
         // Cliente
         const { data: clienteExistente } = await supabaseAdmin
