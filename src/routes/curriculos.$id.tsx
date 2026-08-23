@@ -403,6 +403,31 @@ function DetalheCurriculo() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={excluirAberto} onOpenChange={setExcluirAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir currículo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O currículo de {data.curriculo.nome_completo || "cliente"} e todos os dados vinculados
+              (telefones, cursos, formações, experiências, habilidades e links) serão excluídos
+              permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={excluindo}
+              onClick={(e) => {
+                e.preventDefault();
+                void excluirCurriculo();
+              }}
+            >
+              {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
