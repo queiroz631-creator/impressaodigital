@@ -41,7 +41,7 @@ function CurriculoPublico() {
   const queryClient = useQueryClient();
   const [concluido, setConcluido] = useState(false);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["curriculo-publico", token],
     retry: false,
     queryFn: () => carregar({ data: { token } }),
@@ -51,14 +51,29 @@ function CurriculoPublico() {
     if (isLoading) return <Skeleton className="h-72 w-full" />;
 
     if (error || !data) {
+      const msg = error instanceof Error ? error.message : "";
+      const expirado = msg.includes("LINK_EXPIRADO");
+      const invalido = msg.includes("LINK_INVALIDO");
       return (
         <Card>
-          <CardContent className="p-8 text-center">
-            <p className="font-medium">Este link expirou. Solicite um novo link ao atendimento.</p>
+          <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
+            <p className="font-medium">
+              {expirado
+                ? "Este link expirou. Solicite um novo link ao atendimento."
+                : invalido
+                  ? "Link inválido. Confira o endereço ou solicite um novo link ao atendimento."
+                  : "Não foi possível carregar o formulário agora. Tente novamente em instantes."}
+            </p>
+            {!expirado && !invalido && (
+              <Button onClick={() => void refetch()} disabled={isFetching}>
+                Tentar novamente
+              </Button>
+            )}
           </CardContent>
         </Card>
       );
     }
+
 
     if (concluido) {
       return (
