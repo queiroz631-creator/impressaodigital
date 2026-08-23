@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, FileDown, Link2, MessageCircle, Pencil, Printer } from "lucide-react";
+import { ArrowLeft, Copy, FileDown, Link2, MessageCircle, Pencil, Printer, Trash2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -24,6 +24,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import {
   formatarCpf,
@@ -69,6 +79,24 @@ function DetalheCurriculo() {
   const [telefoneEnvio, setTelefoneEnvio] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [excluirAberto, setExcluirAberto] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
+
+  const excluirCurriculo = async () => {
+    setExcluindo(true);
+    try {
+      const { error } = await supabase.from("curriculos").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+      toast.success("Currículo excluído.");
+      setExcluirAberto(false);
+      await queryClient.invalidateQueries({ queryKey: ["curriculos"] });
+      navigate({ to: "/curriculos" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível excluir o currículo.");
+    } finally {
+      setExcluindo(false);
+    }
+  };
 
   const gerarLink = useServerFn(gerarLinkCurriculo);
   const enviarWhats = useServerFn(enviarCurriculoWhatsapp);
@@ -290,6 +318,9 @@ function DetalheCurriculo() {
           >
             <Link2 className="mr-1 h-4 w-4" /> Gerar link
           </Button>
+          <Button variant="destructive" size="sm" onClick={() => setExcluirAberto(true)}>
+            <Trash2 className="mr-1 h-4 w-4" /> Excluir
+          </Button>
         </div>
       </div>
 
@@ -372,6 +403,31 @@ function DetalheCurriculo() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={excluirAberto} onOpenChange={setExcluirAberto}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir currículo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O currículo de {data.curriculo.nome_completo || "cliente"} e todos os dados vinculados
+              (telefones, cursos, formações, experiências, habilidades e links) serão excluídos
+              permanentemente. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindo}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={excluindo}
+              onClick={(e) => {
+                e.preventDefault();
+                void excluirCurriculo();
+              }}
+            >
+              {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
