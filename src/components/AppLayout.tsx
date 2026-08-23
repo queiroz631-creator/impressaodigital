@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Printer, DollarSign, FileText, History, Settings, LogOut, Menu, X, MessageCircle, FileUser } from "lucide-react";
+import { LayoutDashboard, Printer, DollarSign, FileText, History, Settings, LogOut, Menu, X, MessageCircle, FileUser, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
