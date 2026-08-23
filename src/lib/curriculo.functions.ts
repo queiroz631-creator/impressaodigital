@@ -89,6 +89,26 @@ export const salvarCurriculoPublico = createServerFn({ method: "POST" })
     return salvarPublico(data.token, data.payload as Parameters<typeof salvarPublico>[1]);
   });
 
+export const criarCurriculoPublico = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        token: tokenSchema,
+        nome: z.string().trim().min(2).max(200),
+        cpf: z.string().min(8).max(20),
+        telefone: z.string().min(8).max(30),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { criarPublico } = await import("@/lib/curriculo.server");
+    return criarPublico(data.token, {
+      nome: data.nome,
+      cpf: data.cpf,
+      telefone: data.telefone,
+    });
+  });
+
 /* -------------------------------------------------------- administrativo */
 
 export const gerarLinkCurriculo = createServerFn({ method: "POST" })
@@ -102,6 +122,21 @@ export const gerarLinkCurriculo = createServerFn({ method: "POST" })
       usuario_id: context.userId,
       acao: "curriculo_link_gerado",
       detalhe: `Currículo ${data.curriculoId}`,
+    });
+    return r;
+  });
+
+/** Gera um link de criação (sem currículo) para o cliente criar o próprio currículo. */
+export const gerarLinkNovoCurriculo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { gerarLinkNovo } = await import("@/lib/curriculo.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const r = await gerarLinkNovo();
+    await supabaseAdmin.from("whatsapp_auditoria").insert({
+      usuario_id: context.userId,
+      acao: "curriculo_link_novo_gerado",
+      detalhe: "Link para novo currículo (autoatendimento)",
     });
     return r;
   });

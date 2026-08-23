@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { FileUser, Plus, Search } from "lucide-react";
+import { FileUser, Link2, Plus, Search } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
@@ -31,6 +32,7 @@ import {
 import { cpfValido, formatarCpf, formatarTelefone, somenteNumeros } from "@/lib/curriculo";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import { dataBR, dataHoraBR } from "@/lib/format";
+import { gerarLinkNovoCurriculo } from "@/lib/curriculo.functions";
 
 export const Route = createFileRoute("/curriculos/")({
   head: () => ({
@@ -66,6 +68,28 @@ function Curriculos() {
   const [cpf, setCpf] = useState("");
   const [telefone, setTelefone] = useState("");
   const [criando, setCriando] = useState(false);
+
+  const gerarNovoLink = useServerFn(gerarLinkNovoCurriculo);
+  const [linkNovoAberto, setLinkNovoAberto] = useState(false);
+  const [linkNovoUrl, setLinkNovoUrl] = useState("");
+  const [linkNovoExpira, setLinkNovoExpira] = useState("");
+  const [gerandoLink, setGerandoLink] = useState(false);
+
+  async function abrirLinkNovoCurriculo() {
+    setGerandoLink(true);
+    try {
+      const r = await gerarNovoLink();
+      setLinkNovoUrl(r.url);
+      setLinkNovoExpira(r.expiraEm);
+      setLinkNovoAberto(true);
+      await navigator.clipboard.writeText(r.url);
+      toast.success("Link copiado!");
+    } catch {
+      toast.error("Não foi possível gerar o link.");
+    } finally {
+      setGerandoLink(false);
+    }
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["curriculos", busca, filtro, ordem, pagina],
@@ -236,6 +260,9 @@ function Curriculos() {
           <Button onClick={() => setNovoAberto(true)}>
             <Plus className="mr-1 h-4 w-4" /> NOVO CURRÍCULO
           </Button>
+          <Button variant="outline" onClick={abrirLinkNovoCurriculo} disabled={gerandoLink}>
+            <Link2 className="mr-1 h-4 w-4" /> LINK PARA NOVO CURRÍCULO
+          </Button>
         </CardContent>
       </Card>
 
@@ -374,6 +401,38 @@ function Curriculos() {
             <Button onClick={criar} disabled={criando}>
               Criar currículo
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={linkNovoAberto} onOpenChange={setLinkNovoAberto}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Link para novo currículo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Envie este link ao cliente. Ao abrir, ele informa nome, CPF e telefone e preenche o
+              currículo sozinho.
+            </p>
+            <div className="rounded-md border bg-muted/40 p-3">
+              <p className="break-all text-sm font-medium">{linkNovoUrl}</p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Válido até {linkNovoExpira ? new Date(linkNovoExpira).toLocaleString("pt-BR") : ""}.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                await navigator.clipboard.writeText(linkNovoUrl);
+                toast.success("Link copiado!");
+              }}
+            >
+              Copiar link
+            </Button>
+            <Button onClick={() => setLinkNovoAberto(false)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
