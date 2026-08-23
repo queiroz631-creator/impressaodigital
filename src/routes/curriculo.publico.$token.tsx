@@ -125,7 +125,7 @@ function CurriculoPublico() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/40 py-8">
+    <div className="notranslate min-h-screen bg-muted/40 py-8" translate="no">
       <div className="mx-auto w-full max-w-3xl px-4">
         <header className="mb-6 text-center">
           <p className="text-sm uppercase tracking-widest text-muted-foreground">
