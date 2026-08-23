@@ -310,6 +310,7 @@ export async function criarPublico(
 
 export async function salvarPublico(token: string, payload: PayloadEtapa) {
   const link = await lerLink(token);
+  if (!link.curriculo_id) throw new Error("LINK_INVALIDO");
   await gravarEtapa(link.curriculo_id, payload);
   await supabaseAdmin
     .from("curriculo_links")
