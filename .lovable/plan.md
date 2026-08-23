@@ -1,24 +1,42 @@
-# Link de preenchimento para o cliente
+# Botão "Link para novo currículo" (autoatendimento do cliente)
 
-Objetivo: facilitar o envio do link em que o cliente apenas preenche o currículo, sem as ações internas (editar, imprimir, PDF, WhatsApp).
+Objetivo: na tela **Currículo Vitae**, um botão gera um link que o cliente abre e **cria sozinho** um currículo novo — digitando ele mesmo nome, CPF e telefone, e depois preenchendo o restante pelo formulário. O link público continua sem as ações internas (editar, imprimir, PDF, WhatsApp).
 
-## 1. Lista de currículos (tela Currículo Vitae)
+Hoje não é possível porque todo link público exige um currículo já criado (`curriculo_links.curriculo_id` é `NOT NULL` e `curriculos.cpf` é `NOT NULL`/único). Precisamos de uma pequena mudança no banco.
 
-- Nova ação "Link do cliente" em cada linha da lista.
-- Ao clicar: gera o link (mesma função já usada no detalhe), copia para a área de transferência e mostra um aviso com a validade.
-- Pequeno diálogo com o link em texto e botão "Copiar", para quem preferir copiar manualmente.
+## 1. Migração (banco)
 
-## 2. Tela do currículo (detalhe)
+Tornar `curriculo_links.curriculo_id` anulável, para permitir um link de "criação" sem currículo atrelado:
 
-- Mantém o botão existente "Gerar link", apenas com rótulo mais claro ("Link do cliente") e o mesmo diálogo/aviso de validade da lista.
-- Nenhuma outra ação da tela é alterada.
+```sql
+ALTER TABLE public.curriculo_links ALTER COLUMN curriculo_id DROP NOT NULL;
+```
 
-## 3. Página que o cliente abre
+Sem novas tabelas, sem novas policies (a tabela já tem RLS e grants para `authenticated`/`service_role`). O `service_role` (usado pelas server functions) continua acessando normalmente.
 
-- Permanece somente com o formulário de preenchimento em etapas, sem editar, imprimir, PDF ou WhatsApp (comportamento atual mantido).
+## 2. Server functions (`src/lib/curriculo.functions.ts`)
 
-## Notas técnicas
+- `gerarLinkNovoCurriculo` (POST, `requireSupabaseAuth`): insere uma linha em `curriculo_links` com `curriculo_id = NULL`, token novo, validade 24h. Retorna `{ url, expiraEm }`. Registra em `whatsapp_auditoria`.
+- `criarCurriculoPublico` (POST, público): valida `{ token, nome, cpf, telefone }` com Zod + `cpfValido`. Verifica unicidade do CPF; se já existir, devolve erro amigável. Cria o `clientes` (se necessário) e o `curriculo` (status `rascunho`) e atualiza o link para apontar `curriculo_id` ao novo registro. Retorna os `DadosPublicos` para o formulário continuar.
 
-- Reutiliza `gerarLinkCurriculo` de `src/lib/curriculo.functions.ts`; nenhuma mudança no banco de dados e nenhuma migração.
-- Arquivos tocados: `src/routes/curriculos.index.tsx` (botão + diálogo de link) e `src/routes/curriculos.$id.tsx` (rótulo e diálogo de link).
-- Nenhuma alteração em cálculo, pedidos, PDF ou demais módulos.
+## 3. Lógica de servidor (`src/lib/curriculo.server.ts`)
+
+- `gerarLinkNovo()`: mesma lógica de `gerarLink`, mas com `curriculo_id` NULL.
+- `carregarPublico(token)`: quando o link tiver `curriculo_id` NULL, retorna `{ novo: true, empresaNome, expiraEm }` (sem dados do currículo). Continua retornando os dados normais quando já houver `curriculo_id`.
+- `criarPublico(token, { nome, cpf, telefone })`: cria cliente/currículo, valida CPF, atualiza o link e devolve `DadosPublicos`.
+
+## 4. Página pública (`src/routes/curriculo.publico.$token.tsx`)
+
+- Quando `data.novo === true`, exibe uma etapa de **identificação** (nome, CPF, telefone) com validação cliente + server.
+- Ao confirmar, chama `criarCurriculoPublico`; em sucesso, carrega o `FormularioCurriculo` (modo `publico`) com os dados retornados e segue o fluxo existente.
+- Em CPF duplicado, mostra o erro sem criar nada.
+
+## 5. Tela Currículo Vitae (`src/routes/curriculos.index.tsx`)
+
+- Novo botão **"Link para novo currículo"** no cabeçalho (ao lado de "Novo currículo").
+- Ao clicar: chama `gerarLinkNovoCurriculo`, copia o link para a área de transferência e abre um diálogo com o link + validade (mesmo padrão do "Gerar link" do detalhe).
+
+## Fora de escopo
+
+- Sem alterar calculadora, pedidos, PDF, WhatsApp ou demais módulos.
+- A tela de detalhe (`curriculos.$id.tsx`) mantém o botão "Gerar link" existente (que continua gerando link para o currículo em edição).
