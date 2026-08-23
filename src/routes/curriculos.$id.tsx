@@ -318,6 +318,9 @@ function DetalheCurriculo() {
           >
             <Link2 className="mr-1 h-4 w-4" /> Gerar link
           </Button>
+          <Button variant="destructive" size="sm" onClick={() => setExcluirAberto(true)}>
+            <Trash2 className="mr-1 h-4 w-4" /> Excluir
+          </Button>
         </div>
       </div>
 
