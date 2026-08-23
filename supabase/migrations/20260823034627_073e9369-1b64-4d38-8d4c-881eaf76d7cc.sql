@@ -1,0 +1,1 @@
+ALTER TABLE public.curriculo_links ALTER COLUMN curriculo_id DROP NOT NULL;

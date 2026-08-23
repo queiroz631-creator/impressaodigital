@@ -462,7 +462,7 @@ export type Database = {
         Row: {
           ativo: boolean
           created_at: string
-          curriculo_id: string
+          curriculo_id: string | null
           expires_at: string
           id: string
           token: string
@@ -471,7 +471,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           created_at?: string
-          curriculo_id: string
+          curriculo_id?: string | null
           expires_at: string
           id?: string
           token: string
@@ -480,7 +480,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           created_at?: string
-          curriculo_id?: string
+          curriculo_id?: string | null
           expires_at?: string
           id?: string
           token?: string
