@@ -187,7 +187,7 @@ function CurriculoPublico() {
               <Input
                 id="cpf"
                 value={cpf}
-                onChange={(e) => setCpf(formatarTelefone(e.target.value))}
+                onChange={(e) => setCpf(formatarCpf(e.target.value))}
                 placeholder="000.000.000-00"
                 inputMode="numeric"
               />
