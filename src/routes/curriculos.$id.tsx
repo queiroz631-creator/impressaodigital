@@ -33,6 +33,7 @@ import {
 } from "@/lib/curriculo";
 import { baixarCurriculoPdf, curriculoPdfBase64, imprimirCurriculo, nomeArquivoCurriculo } from "@/lib/curriculo-pdf";
 import { enviarCurriculoWhatsapp, gerarLinkCurriculo } from "@/lib/curriculo.functions";
+import { urlPublica } from "@/lib/link-publico";
 import { dataHoraBR } from "@/lib/format";
 
 export const Route = createFileRoute("/curriculos/$id")({
