@@ -69,6 +69,28 @@ function Curriculos() {
   const [telefone, setTelefone] = useState("");
   const [criando, setCriando] = useState(false);
 
+  const gerarNovoLink = useServerFn(gerarLinkNovoCurriculo);
+  const [linkNovoAberto, setLinkNovoAberto] = useState(false);
+  const [linkNovoUrl, setLinkNovoUrl] = useState("");
+  const [linkNovoExpira, setLinkNovoExpira] = useState("");
+  const [gerandoLink, setGerandoLink] = useState(false);
+
+  async function abrirLinkNovoCurriculo() {
+    setGerandoLink(true);
+    try {
+      const r = await gerarNovoLink();
+      setLinkNovoUrl(r.url);
+      setLinkNovoExpira(r.expiraEm);
+      setLinkNovoAberto(true);
+      await navigator.clipboard.writeText(r.url);
+      toast.success("Link copiado!");
+    } catch {
+      toast.error("Não foi possível gerar o link.");
+    } finally {
+      setGerandoLink(false);
+    }
+  }
+
   const { data, isLoading } = useQuery({
     queryKey: ["curriculos", busca, filtro, ordem, pagina],
     queryFn: async () => {
