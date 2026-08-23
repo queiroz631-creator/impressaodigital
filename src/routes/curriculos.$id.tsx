@@ -278,8 +278,9 @@ function DetalheCurriculo() {
             onClick={async () => {
               try {
                 const r = await gerarLink({ data: { curriculoId: id } });
-                setLinkGerado({ url: r.url, expiraEm: r.expiraEm });
-                await navigator.clipboard?.writeText(r.url).catch(() => undefined);
+                const url = urlPublica(r.url);
+                setLinkGerado({ url, expiraEm: r.expiraEm });
+                await navigator.clipboard?.writeText(url).catch(() => undefined);
                 toast.success("Link gerado e copiado.");
               } catch (e) {
                 toast.error(e instanceof Error ? e.message : "Não foi possível gerar o link.");
