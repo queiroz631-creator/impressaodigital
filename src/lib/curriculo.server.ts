@@ -197,21 +197,41 @@ export async function gerarLink(curriculoId: string) {
   return { token, url: `${urlBase()}/curriculo/publico/${token}`, expiraEm };
 }
 
-export async function carregarPublico(token: string): Promise<DadosPublicos> {
-  const link = await lerLink(token);
-  const completo = await carregarCurriculo(link.curriculo_id);
+/** Link de criação: sem currículo atrelado — o cliente se identifica ao abrir. */
+export async function gerarLinkNovo() {
+  const token = novoToken();
+  const expiraEm = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await supabaseAdmin
+    .from("curriculo_links")
+    .insert({ curriculo_id: null, token, expires_at: expiraEm });
+  if (error) throw new Error(error.message);
 
-  const [cat, obj, cfg] = await Promise.all([
+  return { token, url: `${urlBase()}/curriculo/publico/${token}`, expiraEm };
+}
+
+export async function carregarPublico(token: string): Promise<DadosPublicos | DadosPublicosNovo> {
+  const link = await lerLink(token);
+
+  const cfg = await supabaseAdmin.from("configuracoes").select("empresa_nome").limit(1).maybeSingle();
+  const empresaNome = cfg.data?.empresa_nome ?? "Currículo";
+
+  // Link de criação: ainda não há currículo atrelado.
+  if (!link.curriculo_id) {
+    return { novo: true, empresaNome, expiraEm: link.expires_at };
+  }
+
+  const completo = await carregarCurriculo(link.curriculo_id);
+  const [cat, obj] = await Promise.all([
     supabaseAdmin
       .from("habilidades_curriculo")
       .select("id, descricao")
       .eq("ativo", true)
       .order("ordem"),
     supabaseAdmin.from("objetivos_curriculo").select("id, texto").eq("ativo", true).order("ordem"),
-    supabaseAdmin.from("configuracoes").select("empresa_nome").limit(1).maybeSingle(),
   ]);
 
   return {
+    novo: false,
     // CPF nunca sai para o link público.
     curriculo: { ...completo.curriculo, cpf: "" },
     telefones: completo.telefones,
@@ -221,9 +241,71 @@ export async function carregarPublico(token: string): Promise<DadosPublicos> {
     habilidades: completo.habilidades,
     catalogoHabilidades: cat.data ?? [],
     objetivosSugeridos: obj.data ?? [],
-    empresaNome: cfg.data?.empresa_nome ?? "Currículo",
+    empresaNome,
     expiraEm: link.expires_at,
   };
+}
+
+/** Cria o currículo a partir de um link de criação (autoatendimento do cliente). */
+export async function criarPublico(
+  token: string,
+  { nome, cpf, telefone }: { nome: string; cpf: string; telefone: string },
+): Promise<DadosPublicos> {
+  const link = await lerLink(token);
+  if (link.curriculo_id) throw new Error("Este link já foi utilizado.");
+
+  const cpfNumeros = somenteNumeros(cpf);
+  if (!cpfValido(cpfNumeros)) throw new Error("CPF inválido.");
+
+  const { data: existente } = await supabaseAdmin
+    .from("curriculos")
+    .select("id")
+    .eq("cpf", cpfNumeros)
+    .maybeSingle();
+  if (existente) throw new Error("Já existe um currículo cadastrado com este CPF.");
+
+  const telNormalizado = normalizarTelefone(telefone);
+  if (telNormalizado.length < 10) throw new Error("Telefone inválido.");
+
+  // Cria/reaproveita o cliente pelo telefone normalizado.
+  let clienteId: string | null = null;
+  const { data: cliente } = await supabaseAdmin
+    .from("clientes")
+    .select("id")
+    .eq("telefone_normalizado", telNormalizado)
+    .maybeSingle();
+  if (cliente) {
+    clienteId = cliente.id;
+  } else {
+    const { data: novoCliente, error: erroCliente } = await supabaseAdmin
+      .from("clientes")
+      .insert({
+        nome: nome.trim(),
+        telefone: formatarTelefone(telefone),
+        telefone_normalizado: telNormalizado,
+      })
+      .select("id")
+      .single();
+    if (erroCliente) throw new Error(erroCliente.message);
+    clienteId = novoCliente.id;
+  }
+
+  const { data: curriculo, error } = await supabaseAdmin
+    .from("curriculos")
+    .insert({
+      cliente_id: clienteId,
+      cpf: cpfNumeros,
+      nome_completo: nome.trim(),
+      telefone_principal: formatarTelefone(telefone),
+      status: "rascunho",
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  await supabaseAdmin.from("curriculo_links").update({ curriculo_id: curriculo.id }).eq("id", link.id);
+
+  return (await carregarPublico(token)) as DadosPublicos;
 }
 
 export async function salvarPublico(token: string, payload: PayloadEtapa) {
