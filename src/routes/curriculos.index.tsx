@@ -404,6 +404,38 @@ function Curriculos() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={linkNovoAberto} onOpenChange={setLinkNovoAberto}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Link para novo currículo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Envie este link ao cliente. Ao abrir, ele informa nome, CPF e telefone e preenche o
+              currículo sozinho.
+            </p>
+            <div className="rounded-md border bg-muted/40 p-3">
+              <p className="break-all text-sm font-medium">{linkNovoUrl}</p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Válido até {linkNovoExpira ? new Date(linkNovoExpira).toLocaleString("pt-BR") : ""}.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                await navigator.clipboard.writeText(linkNovoUrl);
+                toast.success("Link copiado!");
+              }}
+            >
+              Copiar link
+            </Button>
+            <Button onClick={() => setLinkNovoAberto(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
