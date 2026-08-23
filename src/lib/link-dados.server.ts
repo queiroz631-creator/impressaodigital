@@ -292,15 +292,20 @@ export async function confirmarPorToken(token: string): Promise<DadosLink> {
   return montar(token);
 }
 
-/** Monta a URL pública a partir da requisição atual. */
+const HOSTS_LOCAIS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
+
+/** Monta a URL pública a partir da requisição atual, ignorando origens locais. */
 export function urlBase(): string {
   try {
     const req = getRequest();
-    if (req?.url) return new URL(req.url).origin;
+    if (req?.url) {
+      const origem = new URL(req.url);
+      if (!HOSTS_LOCAIS.has(origem.hostname)) return origem.origin;
+    }
   } catch {
     /* fora de um contexto de requisição */
   }
-  return process.env["SITE_URL"] ?? "";
+  return process.env["SITE_URL"] ?? "https://calculadoraimpressao.lovable.app";
 }
 
 export async function gerarParaOrcamento(orcamentoId: string, enviarWhatsapp: boolean) {
