@@ -257,12 +257,19 @@ export async function criarPublico(
   const cpfNumeros = somenteNumeros(cpf);
   if (!cpfValido(cpfNumeros)) throw new Error("CPF inválido.");
 
+  // Se já existe currículo com este CPF, o link passa a editar o currículo existente.
   const { data: existente } = await supabaseAdmin
     .from("curriculos")
     .select("id")
     .eq("cpf", cpfNumeros)
     .maybeSingle();
-  if (existente) throw new Error("Já existe um currículo cadastrado com este CPF.");
+  if (existente) {
+    await supabaseAdmin
+      .from("curriculo_links")
+      .update({ curriculo_id: existente.id })
+      .eq("id", link.id);
+    return (await carregarPublico(token)) as DadosPublicos;
+  }
 
   const telNormalizado = normalizarTelefone(telefone);
   if (telNormalizado.length < 10) throw new Error("Telefone inválido.");
