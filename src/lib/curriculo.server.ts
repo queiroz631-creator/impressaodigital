@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { urlBase } from "@/lib/link-dados.server";
-import type { CurriculoCompleto, PayloadEtapa } from "@/lib/curriculo";
+import { cpfValido, formatarTelefone, somenteNumeros, type CurriculoCompleto, type PayloadEtapa } from "@/lib/curriculo";
+import { normalizarTelefone } from "@/lib/whatsapp-comum";
 
 const CAMPOS =
   "id, cliente_id, status, nome_completo, cpf, telefone_principal, data_nascimento, estado_civil, email, documentacao_completa, habilitacao, categoria_habilitacao, escolaridade, curso_superior, pos_graduacao_nome, endereco, bairro, cidade, uf, cep, objetivo_tipo, objetivo_texto, exibir_data_atualizacao, created_at, updated_at, completed_at";
