@@ -65,6 +65,8 @@ interface ContextoBot {
   pendenteId?: string | null;
   /** Estado do fluxo configurável em execução. */
   fluxo?: EstadoFluxo | null;
+  /** Resposta automática aguardando confirmação do cliente (triagem). */
+  triagem?: string | null;
 }
 
 interface ConversaBot {
