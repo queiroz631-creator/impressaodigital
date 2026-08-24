@@ -99,7 +99,7 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
             {dados.experiencias.map((exp, i) => (
               <div key={i} className="mb-2">
                 {exp.empresa && <p className="cv-empresa font-bold text-navy">{exp.empresa}</p>}
-                {exp.cargo && <p className="font-medium">{exp.cargo}</p>}
+                {exp.cargo && <p className="font-medium">Cargo/Função: {exp.cargo}</p>}
                 {exp.periodo && (
                   <p className="text-[9.5pt] text-muted-foreground">Período: {exp.periodo}</p>
                 )}

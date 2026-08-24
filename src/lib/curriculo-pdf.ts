@@ -160,7 +160,7 @@ function renderizar(
     secao("Experiência profissional");
     for (const exp of dados.experiencias) {
       if (exp.empresa) texto(exp.empresa, MARGEM, 11, true, NAVY);
-      if (exp.cargo) texto(exp.cargo, MARGEM, 10);
+      if (exp.cargo) texto(`Cargo/Função: ${exp.cargo}`, MARGEM, 10);
       if (exp.periodo) texto(`Período: ${exp.periodo}`, MARGEM, 9);
       if (exp.atividades) paragrafo(exp.atividades, MARGEM, util, 10);
       y += 6 * escala + espacamentoExtra / 2;
