@@ -298,11 +298,16 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           })
           .eq("id", conversaId);
 
-        // Atendimento automático: responde apenas quando o bot está ativo
-        // e a conversa continua no modo automático.
+        // Atendimento automático: responde apenas quando o bot está ativo,
+        // a conversa continua no modo automático e não é o próprio número da loja.
+        if (ehProprioNumero) {
+          return Response.json({ ok: true, bot: false, motivo: "proprio_numero" });
+        }
+
         try {
           const { processarBot } = await import("@/lib/bot.server");
           await processarBot(conversaId, { tipo: conteudo.tipo, texto: conteudo.texto });
+
         } catch (e) {
           await supabaseAdmin.from("whatsapp_auditoria").insert({
             conversa_id: conversaId,
