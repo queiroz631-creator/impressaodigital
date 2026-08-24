@@ -470,9 +470,23 @@ function Configuracoes() {
 
         </TabsContent>
 
-        <TabsContent value="whatsapp">
+        <TabsContent value="whatsapp" className="grid gap-4">
           <CardWhatsapp />
+          <Card className="shadow-card">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+              <div>
+                <p className="text-sm font-semibold">Atendimento automático (bot)</p>
+                <p className="text-xs text-muted-foreground">
+                  Horários, menu, respostas automáticas, mensagens e simulador.
+                </p>
+              </div>
+              <Button asChild variant="outline">
+                <Link to="/bot">Abrir Configuração do Bot</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
+
 
         <TabsContent value="link">
           <CardLinkPublico />
