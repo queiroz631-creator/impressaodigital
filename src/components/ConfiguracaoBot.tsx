@@ -644,7 +644,7 @@ function RespostasAutomaticas({ respostas, palavras }: { respostas: Resposta[]; 
 interface Bolha {
   de: "cliente" | "bot";
   texto: string;
-  botoes?: string[];
+  botoes?: string[] | undefined;
 }
 
 /** Simulador de conversa usando as configurações já salvas. */
@@ -654,8 +654,8 @@ function Simulador() {
   const [texto, setTexto] = useState("");
   const [estado, setEstado] = useState<{
     etapa: string;
-    pendenteTipo?: "opcao" | "resposta" | null;
-    pendenteId?: string | null;
+    pendenteTipo?: "opcao" | "resposta" | null | undefined;
+    pendenteId?: string | null | undefined;
   }>({ etapa: "inicio" });
   const [ocupado, setOcupado] = useState(false);
   const fim = useRef<HTMLDivElement | null>(null);
