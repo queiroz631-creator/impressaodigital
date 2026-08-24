@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, Bot, Clock, MessageSquare, Plus, Save, Send, Trash2, User } from "lucide-react";
+import { Bot, Clock, MessageSquare, Save, Send, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { simularBot } from "@/lib/bot.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { FluxosPainel } from "@/components/bot/FluxosPainel";
 import { RespostasPainel } from "@/components/bot/RespostasPainel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -106,21 +105,6 @@ interface Opcao {
   permitir_palavra_chave: boolean;
 }
 
-interface Resposta {
-  id: string;
-  titulo: string;
-  resposta: string;
-  ordem: number;
-  ativo: boolean;
-}
-
-interface Palavra {
-  id: string;
-  texto: string;
-  opcao_id: string | null;
-  resposta_id: string | null;
-}
-
 function hhmm(valor: string) {
   return String(valor ?? "").slice(0, 5);
 }
@@ -155,24 +139,6 @@ export function ConfiguracaoBot() {
       const { data, error } = await supabase.from("bot_menu_opcoes").select("*").order("ordem");
       if (error) throw error;
       return (data ?? []) as Opcao[];
-    },
-  });
-
-  const respostas = useQuery({
-    queryKey: ["bot-respostas"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("bot_respostas").select("*").order("ordem");
-      if (error) throw error;
-      return (data ?? []) as Resposta[];
-    },
-  });
-
-  const palavras = useQuery({
-    queryKey: ["bot-palavras"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("bot_palavras_chave").select("*");
-      if (error) throw error;
-      return (data ?? []) as Palavra[];
     },
   });
 
@@ -498,40 +464,6 @@ function Alternar({
       </span>
       <Switch checked={valor} onCheckedChange={ao} />
     </label>
-  );
-}
-
-/** Editor das palavras-chave de uma opção ou resposta. */
-function CampoPalavras({
-  palavras,
-  onSalvar,
-}: {
-  palavras: Palavra[];
-  onSalvar: (lista: string[]) => Promise<void>;
-}) {
-  const inicial = useMemo(() => palavras.map((p) => p.texto).join(", "), [palavras]);
-  const [texto, setTexto] = useState(inicial);
-
-  useEffect(() => setTexto(inicial), [inicial]);
-
-  return (
-    <div className="grid gap-1">
-      <Label className="text-xs">Palavras-chave (separadas por vírgula)</Label>
-      <Input
-        value={texto}
-        placeholder="orçamento, preço, quanto custa"
-        onChange={(e) => setTexto(e.target.value)}
-        onBlur={() => {
-          if (texto === inicial) return;
-          void onSalvar(
-            texto
-              .split(",")
-              .map((t) => t.trim())
-              .filter(Boolean),
-          );
-        }}
-      />
-    </div>
   );
 }
 

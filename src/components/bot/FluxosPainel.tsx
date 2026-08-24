@@ -22,10 +22,18 @@ interface FormFluxo {
   descricao: string;
   icone: string;
   mensagem_inicial: string;
+  mensagem_retorno_dia: string;
   ativo: boolean;
 }
 
-const VAZIO: FormFluxo = { nome: "", descricao: "", icone: "bot", mensagem_inicial: "", ativo: true };
+const VAZIO: FormFluxo = {
+  nome: "",
+  descricao: "",
+  icone: "bot",
+  mensagem_inicial: "",
+  mensagem_retorno_dia: "",
+  ativo: true,
+};
 
 /** Aba FLUXOS: cadastro e administração das conversas que o bot conduz. */
 export function FluxosPainel() {
@@ -127,6 +135,16 @@ export function FluxosPainel() {
     await recarregar();
   }
 
+  async function definirArquivos(id: string) {
+    const atual = lista.find((f) => f.fluxo_arquivos);
+    if (atual?.id === id) return;
+    if (atual) await supabase.from("bot_fluxos").update({ fluxo_arquivos: false }).eq("id", atual.id);
+    const { error } = await supabase.from("bot_fluxos").update({ fluxo_arquivos: true }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Fluxo de arquivos atualizado.");
+    await recarregar();
+  }
+
   async function duplicar(f: Fluxo) {
     const ordem = Math.max(0, ...lista.map((x) => x.ordem)) + 1;
     const { data: novo, error } = await supabase
@@ -136,9 +154,11 @@ export function FluxosPainel() {
         descricao: f.descricao,
         icone: f.icone,
         mensagem_inicial: f.mensagem_inicial,
+        mensagem_retorno_dia: f.mensagem_retorno_dia,
         ativo: f.ativo,
         ordem,
         inicial: false,
+        fluxo_arquivos: false,
       })
       .select("id")
       .single();
@@ -246,6 +266,22 @@ export function FluxosPainel() {
           <p className="text-xs text-muted-foreground">
             Fluxo iniciado automaticamente quando o cliente entra em contato.
           </p>
+
+          <Label className="mt-3">Fluxo para quem envia apenas arquivos</Label>
+          <Select
+            value={lista.find((f) => f.fluxo_arquivos)?.id ?? ""}
+            onValueChange={(v) => void definirArquivos(v)}
+          >
+            <SelectTrigger><SelectValue placeholder="Selecione o fluxo" /></SelectTrigger>
+            <SelectContent>
+              {lista.filter((f) => f.ativo).map((f) => (
+                <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Usado quando o primeiro contato do cliente é só um arquivo ou imagem.
+          </p>
         </CardContent>
       </Card>
 
@@ -259,6 +295,7 @@ export function FluxosPainel() {
                   <span className="text-lg">{emojiIcone(f.icone)}</span>
                   <strong className="uppercase">{f.nome}</strong>
                   {f.inicial && <Badge variant="secondary">Fluxo inicial</Badge>}
+                  {f.fluxo_arquivos && <Badge variant="secondary">Recebe arquivos</Badge>}
                   <Badge variant={f.ativo ? "default" : "outline"}>{f.ativo ? "Ativo" : "Inativo"}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">{f.descricao}</p>
@@ -278,6 +315,7 @@ export function FluxosPainel() {
                         descricao: f.descricao,
                         icone: f.icone,
                         mensagem_inicial: f.mensagem_inicial,
+                        mensagem_retorno_dia: f.mensagem_retorno_dia ?? "",
                         ativo: f.ativo,
                       });
                     }}
@@ -342,6 +380,15 @@ export function FluxosPainel() {
                   onChange={(e) => setForm({ ...form, mensagem_inicial: e.target.value })}
                 />
                 <p className="text-xs text-muted-foreground">Use {"{nome}"}, {"{telefone}"} e {"{saudacao}"}.</p>
+              </div>
+              <div className="grid gap-1">
+                <Label>Mensagem 2 — demais conversas do mesmo dia</Label>
+                <Textarea
+                  rows={3}
+                  value={form.mensagem_retorno_dia}
+                  onChange={(e) => setForm({ ...form, mensagem_retorno_dia: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">Se ficar em branco, o bot usa a mensagem inicial.</p>
               </div>
               <label className="flex items-center justify-between gap-4 text-sm">
                 <strong>Ativo</strong>
