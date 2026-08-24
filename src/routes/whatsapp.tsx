@@ -91,6 +91,8 @@ function useConversas() {
       if (error) throw error;
       return (data ?? []) as unknown as Conversa[];
     },
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
   });
 }
 
