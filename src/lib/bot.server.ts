@@ -30,7 +30,7 @@ import {
   todosNumeros,
 } from "@/lib/bot-parse";
 import { interpretarOpcao, interpretarQuantidade, interpretarSimNao } from "@/lib/ia.server";
-import { carregarDadosBot } from "@/lib/bot-dados.server";
+import { carregarDadosBot, carregarFluxos } from "@/lib/bot-dados.server";
 import {
   ETAPAS_MENU,
   aplicarVariaveis,
@@ -38,6 +38,15 @@ import {
   processarMenu,
   type AcaoBot,
 } from "@/lib/bot-motor";
+import type { DadosFluxos } from "@/lib/bot-fluxos";
+import {
+  avancar,
+  fluxoInicial,
+  iniciar as iniciarFluxo,
+  processarFluxo,
+  type EstadoFluxo,
+  type SaidaFluxo,
+} from "@/lib/bot-fluxos-motor";
 
 interface ContextoBot {
   nome?: string;
