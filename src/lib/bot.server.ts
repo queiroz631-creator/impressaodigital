@@ -774,6 +774,16 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
     return;
   }
 
+  // Fluxos configuráveis (aba Fluxos): assumem quando existe um fluxo inicial ativo.
+  if (conversa.etapa === "fluxo" || ETAPAS_MENU.has(conversa.etapa) || conversa.etapa === "finalizado") {
+    const fluxos = await carregarFluxos();
+    const raiz = fluxoInicial(fluxos);
+    if (raiz) {
+      await rodarFluxo(conversa, config, ctx, fluxos, raiz.id, entrada, agora);
+      return;
+    }
+  }
+
   // Etapas de saudação, menu, palavras-chave e respostas automáticas.
   if (ETAPAS_MENU.has(conversa.etapa) || conversa.etapa === "finalizado") {
     const dados = await carregarDadosBot();
