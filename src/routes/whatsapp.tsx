@@ -323,6 +323,8 @@ function Conversa({
       if (error) throw error;
       return (data ?? []) as unknown as Mensagem[];
     },
+    refetchInterval: 4000,
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
