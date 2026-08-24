@@ -95,6 +95,20 @@ export const ACOES_OPCAO: { valor: string; rotulo: string }[] = [
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
 ];
 
+/** Ações possíveis após o cliente responder SIM ou NÃO a uma resposta automática. */
+export const ACOES_RESPOSTA: { valor: string; rotulo: string }[] = [
+  { valor: "aguardar", rotulo: "Aguardar a próxima mensagem" },
+  { valor: "iniciar_fluxo", rotulo: "Iniciar um fluxo" },
+  { valor: "fluxo_inicial", rotulo: "Iniciar o fluxo inicial" },
+  { valor: "resposta", rotulo: "Enviar outra resposta automática" },
+  { valor: "atendente", rotulo: "Transferir para atendente" },
+  { valor: "finalizar", rotulo: "Finalizar atendimento" },
+];
+
+export function rotuloAcaoResposta(valor: string) {
+  return ACOES_RESPOSTA.find((a) => a.valor === valor)?.rotulo ?? valor;
+}
+
 /** Ações da etapa que são executadas por módulos do sistema. */
 export const ACOES_SISTEMA = new Set([
   "iniciar_orcamento",
