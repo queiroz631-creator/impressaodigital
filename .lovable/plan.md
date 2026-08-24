@@ -12,7 +12,7 @@
 
 1. **Enviar sempre texto simples.** O bot deixa de usar lista de botões e passa a mandar a pergunta com as opções escritas na própria mensagem (ex.: "Responda *SIM* ou *NÃO*", ou opções numeradas 1, 2, 3). O motor de fluxos já entende respostas por texto e por número.
 2. **Confirmar a entrega de verdade.** Guardar o identificador que a API devolve em cada envio e só marcar "enviada" quando ele vier; sem identificador, marcar como erro com o detalhe retornado — assim o problema fica visível na conversa em vez de silencioso.
-3. **Ignorar o próprio número.** O webhook passa a descartar mensagens cujo remetente é o número da própria loja, evitando conversas e respostas para si mesmo.
+3. **Mensagens do próprio número: receber, mas não responder.** A mensagem continua sendo registrada normalmente na conversa (fica visível no atendimento), porém o bot não dispara nenhuma resposta automática para ela.
 4. Testar enviando uma mensagem real e conferindo se a resposta do bot chega ao celular do cliente.
 
 ## Detalhes técnicos
