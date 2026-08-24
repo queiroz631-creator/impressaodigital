@@ -63,6 +63,7 @@ interface Conversa {
   pedido_id: string | null;
   orcamento_id: string | null;
   created_at: string;
+  atendimento_numero: number;
 }
 
 interface Mensagem {
