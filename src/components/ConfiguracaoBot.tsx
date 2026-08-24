@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { FluxosPainel } from "@/components/bot/FluxosPainel";
+import { RespostasPainel } from "@/components/bot/RespostasPainel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -42,30 +43,49 @@ interface FormBot {
   exigir_revisao_humana: boolean;
   enviar_msg_finalizacao: boolean;
   finalizacao_uma_vez_dia: boolean;
-  inatividade_minutos: number;
-  msg_boas_vindas: string;
-  msg_retorno_dia: string;
-  msg_menu: string;
+  inatividade1_minutos: number;
+  inatividade2_minutos: number;
+  inatividade_status: string;
+  msg_inatividade1: string;
+  msg_inatividade_pendente: string;
+  msg_inatividade_aguardando: string;
+  msg_inatividade_em_atendimento: string;
+  msg_inatividade_finalizado: string;
   msg_fora_horario: string;
-  msg_nao_entendi: string;
+  msg_fora_horario_ativo: boolean;
   msg_transferencia: string;
+  msg_transferencia_ativo: boolean;
   msg_finalizacao: string;
+  msg_finalizacao_ativo: boolean;
   msg_orcamento_gerado: string;
+  msg_orcamento_gerado_ativo: boolean;
   msg_revisao: string;
+  msg_revisao_ativo: boolean;
   msg_orcamento_confirmado: string;
+  msg_orcamento_confirmado_ativo: boolean;
 }
 
-const CAMPOS: { chave: keyof FormBot; rotulo: string; ajuda: string }[] = [
-  { chave: "msg_boas_vindas", rotulo: "Boas-vindas (1º contato do dia)", ajuda: "Use {saudacao} e {nome}." },
-  { chave: "msg_retorno_dia", rotulo: "Retorno no mesmo dia", ajuda: "Quando o cliente volta a falar no mesmo dia." },
-  { chave: "msg_menu", rotulo: "Texto antes do menu", ajuda: "As opções ativas são listadas logo abaixo." },
-  { chave: "msg_fora_horario", rotulo: "Fora do horário", ajuda: "Enviada quando está fora do horário de atendimento." },
-  { chave: "msg_nao_entendi", rotulo: "Não entendi", ajuda: "Quando o bot não identifica o que o cliente quer." },
-  { chave: "msg_transferencia", rotulo: "Transferência para atendente", ajuda: "Ao encaminhar para a fila humana." },
-  { chave: "msg_finalizacao", rotulo: "Finalização", ajuda: "Ao encerrar o atendimento." },
-  { chave: "msg_orcamento_gerado", rotulo: "Orçamento gerado", ajuda: "Texto antes do resumo do orçamento." },
-  { chave: "msg_revisao", rotulo: "Em revisão", ajuda: "Quando o orçamento aguarda revisão da equipe." },
-  { chave: "msg_orcamento_confirmado", rotulo: "Orçamento confirmado", ajuda: "Quando o cliente confirma o pedido." },
+const STATUS_INATIVIDADE: { valor: string; rotulo: string }[] = [
+  { valor: "pendente", rotulo: "Pendente" },
+  { valor: "aguardando", rotulo: "Aguardando" },
+  { valor: "em_atendimento", rotulo: "Em atendimento" },
+  { valor: "finalizado", rotulo: "Finalizado" },
+];
+
+const MSG_STATUS: { valor: string; chave: keyof FormBot }[] = [
+  { valor: "pendente", chave: "msg_inatividade_pendente" },
+  { valor: "aguardando", chave: "msg_inatividade_aguardando" },
+  { valor: "em_atendimento", chave: "msg_inatividade_em_atendimento" },
+  { valor: "finalizado", chave: "msg_inatividade_finalizado" },
+];
+
+const CAMPOS: { chave: keyof FormBot; ativo: keyof FormBot; rotulo: string; ajuda: string }[] = [
+  { chave: "msg_fora_horario", ativo: "msg_fora_horario_ativo", rotulo: "Fora do horário", ajuda: "Enviada quando está fora do horário de atendimento." },
+  { chave: "msg_transferencia", ativo: "msg_transferencia_ativo", rotulo: "Transferência para atendente", ajuda: "Ao encaminhar para a fila humana." },
+  { chave: "msg_finalizacao", ativo: "msg_finalizacao_ativo", rotulo: "Finalização", ajuda: "Ao encerrar o atendimento." },
+  { chave: "msg_orcamento_gerado", ativo: "msg_orcamento_gerado_ativo", rotulo: "Orçamento gerado", ajuda: "Texto antes do resumo do orçamento." },
+  { chave: "msg_revisao", ativo: "msg_revisao_ativo", rotulo: "Em revisão", ajuda: "Quando o orçamento aguarda revisão da equipe." },
+  { chave: "msg_orcamento_confirmado", ativo: "msg_orcamento_confirmado_ativo", rotulo: "Orçamento confirmado", ajuda: "Quando o cliente confirma o pedido." },
 ];
 
 interface Horario {
@@ -167,17 +187,26 @@ export function ConfiguracaoBot() {
       exigir_revisao_humana: Boolean(d.exigir_revisao_humana),
       enviar_msg_finalizacao: Boolean(d.enviar_msg_finalizacao),
       finalizacao_uma_vez_dia: Boolean(d.finalizacao_uma_vez_dia),
-      inatividade_minutos: Number(d.inatividade_minutos ?? 5),
-      msg_boas_vindas: d.msg_boas_vindas ?? "",
-      msg_retorno_dia: d.msg_retorno_dia ?? "",
-      msg_menu: d.msg_menu ?? "",
+      inatividade1_minutos: Number(d.inatividade1_minutos ?? 5),
+      inatividade2_minutos: Number(d.inatividade2_minutos ?? 10),
+      inatividade_status: d.inatividade_status ?? "finalizado",
+      msg_inatividade1: d.msg_inatividade1 ?? "",
+      msg_inatividade_pendente: d.msg_inatividade_pendente ?? "",
+      msg_inatividade_aguardando: d.msg_inatividade_aguardando ?? "",
+      msg_inatividade_em_atendimento: d.msg_inatividade_em_atendimento ?? "",
+      msg_inatividade_finalizado: d.msg_inatividade_finalizado ?? "",
       msg_fora_horario: d.msg_fora_horario ?? "",
-      msg_nao_entendi: d.msg_nao_entendi ?? "",
+      msg_fora_horario_ativo: d.msg_fora_horario_ativo !== false,
       msg_transferencia: d.msg_transferencia ?? "",
+      msg_transferencia_ativo: d.msg_transferencia_ativo !== false,
       msg_finalizacao: d.msg_finalizacao ?? "",
+      msg_finalizacao_ativo: d.msg_finalizacao_ativo !== false,
       msg_orcamento_gerado: d.msg_orcamento_gerado ?? "",
+      msg_orcamento_gerado_ativo: d.msg_orcamento_gerado_ativo !== false,
       msg_revisao: d.msg_revisao ?? "",
+      msg_revisao_ativo: d.msg_revisao_ativo !== false,
       msg_orcamento_confirmado: d.msg_orcamento_confirmado ?? "",
+      msg_orcamento_confirmado_ativo: d.msg_orcamento_confirmado_ativo !== false,
     });
   }, [config.data, form]);
 
@@ -318,10 +347,20 @@ export function ConfiguracaoBot() {
             </CardHeader>
             <CardContent className="grid gap-4">
               {CAMPOS.map((campo) => (
-                <div key={campo.chave} className="grid gap-1">
-                  <Label>{campo.rotulo}</Label>
+                <div key={campo.chave} className="grid gap-1 rounded-lg border p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label>{campo.rotulo}</Label>
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                      {form[campo.ativo] ? "Ativo" : "Desativado"}
+                      <Switch
+                        checked={Boolean(form[campo.ativo])}
+                        onCheckedChange={(v) => setForm({ ...form, [campo.ativo]: v })}
+                      />
+                    </label>
+                  </div>
                   <Textarea
                     rows={2}
+                    disabled={!form[campo.ativo]}
                     value={String(form[campo.chave] ?? "")}
                     onChange={(e) => setForm({ ...form, [campo.chave]: e.target.value })}
                   />
@@ -340,7 +379,7 @@ export function ConfiguracaoBot() {
 
         {/* ---------- Respostas automáticas ---------- */}
         <TabsContent value="respostas">
-          <RespostasAutomaticas respostas={respostas.data ?? []} palavras={palavras.data ?? []} />
+          <RespostasPainel />
         </TabsContent>
 
         {/* ---------- Inatividade e finalização ---------- */}
@@ -350,18 +389,69 @@ export function ConfiguracaoBot() {
               <CardTitle className="text-base">Inatividade e finalização</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
-              <div className="grid gap-1 sm:max-w-xs">
-                <Label>Encerrar por inatividade (minutos)</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={form.inatividade_minutos}
-                  onChange={(e) => setForm({ ...form, inatividade_minutos: Number(e.target.value || 1) })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  O bot avisa uma vez e, se não houver resposta, encerra o atendimento.
-                </p>
+              <p className="text-xs text-muted-foreground">
+                A inatividade só é contada nas conversas da aba <strong>Automático</strong> em que o bot está
+                aguardando a resposta do cliente.
+              </p>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-1">
+                  <Label>1ª inatividade (minutos)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={form.inatividade1_minutos}
+                    onChange={(e) => setForm({ ...form, inatividade1_minutos: Number(e.target.value || 1) })}
+                  />
+                </div>
+                <div className="grid gap-1">
+                  <Label>2ª inatividade (minutos)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={form.inatividade2_minutos}
+                    onChange={(e) => setForm({ ...form, inatividade2_minutos: Number(e.target.value || 1) })}
+                  />
+                </div>
               </div>
+
+              <div className="grid gap-1">
+                <Label>Mensagem da 1ª inatividade</Label>
+                <Textarea
+                  rows={2}
+                  value={form.msg_inatividade1}
+                  onChange={(e) => setForm({ ...form, msg_inatividade1: e.target.value })}
+                />
+              </div>
+
+              <div className="grid gap-1 sm:max-w-xs">
+                <Label>Na 2ª inatividade, mover para</Label>
+                <Select
+                  value={form.inatividade_status}
+                  onValueChange={(v) => setForm({ ...form, inatividade_status: v })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STATUS_INATIVIDADE.map((s) => (
+                      <SelectItem key={s.valor} value={s.valor}>{s.rotulo}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {MSG_STATUS.map((m) => {
+                const rotulo = STATUS_INATIVIDADE.find((s) => s.valor === m.valor)?.rotulo ?? m.valor;
+                return (
+                  <div key={m.valor} className="grid gap-1">
+                    <Label className="text-xs">Mensagem ao mover para {rotulo}</Label>
+                    <Textarea
+                      rows={2}
+                      value={String(form[m.chave] ?? "")}
+                      onChange={(e) => setForm({ ...form, [m.chave]: e.target.value })}
+                    />
+                  </div>
+                );
+              })}
 
               <Alternar
                 titulo="Enviar mensagem de finalização"
@@ -442,101 +532,6 @@ function CampoPalavras({
         }}
       />
     </div>
-  );
-}
-
-function RespostasAutomaticas({ respostas, palavras }: { respostas: Resposta[]; palavras: Palavra[] }) {
-  const queryClient = useQueryClient();
-
-  async function recarregar() {
-    await queryClient.invalidateQueries({ queryKey: ["bot-respostas"] });
-    await queryClient.invalidateQueries({ queryKey: ["bot-palavras"] });
-  }
-
-  async function atualizar(r: Resposta, dados: Partial<Resposta>) {
-    const { error } = await supabase.from("bot_respostas").update(dados).eq("id", r.id);
-    if (error) { toast.error(error.message); return; }
-    await recarregar();
-  }
-
-  async function adicionar() {
-    const ordem = Math.max(0, ...respostas.map((r) => r.ordem)) + 1;
-    const { error } = await supabase
-      .from("bot_respostas")
-      .insert({ titulo: "Nova resposta", resposta: "", ordem });
-    if (error) { toast.error(error.message); return; }
-    await recarregar();
-  }
-
-  async function excluir(r: Resposta) {
-    const { error } = await supabase.from("bot_respostas").delete().eq("id", r.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Resposta removida.");
-    await recarregar();
-  }
-
-  async function salvarPalavras(r: Resposta, lista: string[]) {
-    await supabase.from("bot_palavras_chave").delete().eq("resposta_id", r.id);
-    if (lista.length > 0) {
-      const { error } = await supabase
-        .from("bot_palavras_chave")
-        .insert(lista.map((texto) => ({ texto, resposta_id: r.id })));
-      if (error) { toast.error(error.message); return; }
-    }
-    toast.success("Palavras-chave atualizadas.");
-    await recarregar();
-  }
-
-  return (
-    <Card className="shadow-card">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Respostas automáticas</CardTitle>
-        <Button size="sm" variant="outline" onClick={adicionar}>
-          <Plus className="h-4 w-4" /> Adicionar
-        </Button>
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        {respostas.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            Cadastre perguntas frequentes (horário, endereço, formas de pagamento).
-          </p>
-        )}
-
-        {respostas.map((r) => (
-          <div key={r.id} className="grid gap-3 rounded-lg border p-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                className="min-w-40 flex-1"
-                value={r.titulo}
-                onChange={(e) => void atualizar(r, { titulo: e.target.value })}
-              />
-              <label className="flex items-center gap-2 text-xs">
-                <Switch checked={r.ativo} onCheckedChange={(v) => void atualizar(r, { ativo: v })} /> Ativa
-              </label>
-              <ConfirmarExclusao
-                titulo="Remover resposta"
-                descricao={`A resposta "${r.titulo}" será excluída.`}
-                onConfirmar={() => excluir(r)}
-              >
-                <Button size="icon" variant="ghost">
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </ConfirmarExclusao>
-            </div>
-
-            <CampoPalavras
-              palavras={palavras.filter((p) => p.resposta_id === r.id)}
-              onSalvar={(lista) => salvarPalavras(r, lista)}
-            />
-
-            <div className="grid gap-1">
-              <Label className="text-xs">Resposta enviada</Label>
-              <Textarea rows={2} value={r.resposta} onChange={(e) => void atualizar(r, { resposta: e.target.value })} />
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
   );
 }
 
