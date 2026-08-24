@@ -406,7 +406,16 @@ function Conversa({
               <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma mensagem nesta conversa.</p>
             )}
 
-            {(mensagens ?? []).map((m) => (
+            {(mensagens ?? []).map((m) =>
+              m.tipo === "sistema" ? (
+                <div key={m.id} className="flex items-center gap-2 py-2">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {m.texto ?? "Novo atendimento"}
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+              ) : (
               <div key={m.id} className={cn("flex", m.direcao === "saida" ? "justify-end" : "justify-start")}>
                 <div
                   className={cn(
