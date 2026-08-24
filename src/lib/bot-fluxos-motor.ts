@@ -197,7 +197,8 @@ function aplicarAcaoEtapa(
   return seguir();
 }
 
-function avancar(
+/** Avança para a etapa seguinte (usado também após uma ação de sistema). */
+export function avancar(
   dados: DadosFluxos,
   etapa: FluxoEtapa,
   estado: EstadoFluxo,
