@@ -117,6 +117,17 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         const conteudo = extrair(corpo);
         const agora = new Date().toISOString();
 
+        // Mensagem vinda do próprio número da loja: registra, mas não aciona o bot.
+        const { data: cfgLoja } = await supabaseAdmin
+          .from("configuracoes")
+          .select("whatsapp, telefone")
+          .limit(1)
+          .maybeSingle();
+        const numeroLoja =
+          normalizarTelefone(cfgLoja?.whatsapp ?? "") || normalizarTelefone(cfgLoja?.telefone ?? "");
+        const ehProprioNumero = Boolean(numeroLoja) && numeroLoja === telefone;
+
+
         // Callback sem conteúdo reconhecível não deve acionar o bot.
         if (conteudo.tipo === "desconhecido") {
           return Response.json({ ok: true, ignorado: true, motivo: "sem_conteudo" });
@@ -287,11 +298,16 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           })
           .eq("id", conversaId);
 
-        // Atendimento automático: responde apenas quando o bot está ativo
-        // e a conversa continua no modo automático.
+        // Atendimento automático: responde apenas quando o bot está ativo,
+        // a conversa continua no modo automático e não é o próprio número da loja.
+        if (ehProprioNumero) {
+          return Response.json({ ok: true, bot: false, motivo: "proprio_numero" });
+        }
+
         try {
           const { processarBot } = await import("@/lib/bot.server");
           await processarBot(conversaId, { tipo: conteudo.tipo, texto: conteudo.texto });
+
         } catch (e) {
           await supabaseAdmin.from("whatsapp_auditoria").insert({
             conversa_id: conversaId,
