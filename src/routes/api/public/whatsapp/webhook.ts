@@ -117,6 +117,17 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         const conteudo = extrair(corpo);
         const agora = new Date().toISOString();
 
+        // Mensagem vinda do próprio número da loja: registra, mas não aciona o bot.
+        const { data: cfgLoja } = await supabaseAdmin
+          .from("configuracoes")
+          .select("whatsapp, telefone")
+          .limit(1)
+          .maybeSingle();
+        const numeroLoja =
+          normalizarTelefone(cfgLoja?.whatsapp ?? "") || normalizarTelefone(cfgLoja?.telefone ?? "");
+        const ehProprioNumero = Boolean(numeroLoja) && numeroLoja === telefone;
+
+
         // Callback sem conteúdo reconhecível não deve acionar o bot.
         if (conteudo.tipo === "desconhecido") {
           return Response.json({ ok: true, ignorado: true, motivo: "sem_conteudo" });
