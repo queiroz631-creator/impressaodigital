@@ -4,33 +4,33 @@ import { normalizarTelefone } from "@/lib/whatsapp-comum";
 
 const corpoSchema = z
   .object({
-    phone: z.string().optional(),
-    connectedPhone: z.string().optional(),
-    senderName: z.string().optional(),
-    chatName: z.string().optional(),
-    messageId: z.string().optional(),
-    fromMe: z.boolean().optional(),
-    isGroup: z.boolean().optional(),
-    participantPhone: z.string().optional(),
-    chatLid: z.string().optional(),
-    isStatusReply: z.boolean().optional(),
-    type: z.string().optional(),
-    text: z.object({ message: z.string().optional() }).partial().optional(),
-    image: z.object({ imageUrl: z.string().optional(), caption: z.string().optional(), mimeType: z.string().optional() }).partial().optional(),
+    phone: z.string().nullish(),
+    connectedPhone: z.string().nullish(),
+    senderName: z.string().nullish(),
+    chatName: z.string().nullish(),
+    messageId: z.string().nullish(),
+    fromMe: z.boolean().nullish(),
+    isGroup: z.boolean().nullish(),
+    participantPhone: z.string().nullish(),
+    chatLid: z.string().nullish(),
+    isStatusReply: z.boolean().nullish(),
+    type: z.string().nullish(),
+    text: z.object({ message: z.string().optional() }).partial().nullish(),
+    image: z.object({ imageUrl: z.string().nullish(), caption: z.string().nullish(), mimeType: z.string().optional() }).partial().nullish(),
     document: z
       .object({
-        documentUrl: z.string().optional(),
-        fileName: z.string().optional(),
-        mimeType: z.string().optional(),
-        caption: z.string().optional(),
-        pageCount: z.number().optional(),
+        documentUrl: z.string().nullish(),
+        fileName: z.string().nullish(),
+        mimeType: z.string().nullish(),
+        caption: z.string().nullish(),
+        pageCount: z.number().nullish(),
       })
       .partial()
-      .optional(),
-    audio: z.object({ audioUrl: z.string().optional(), mimeType: z.string().optional() }).partial().optional(),
-    location: z.object({ latitude: z.number().optional(), longitude: z.number().optional(), address: z.string().optional() }).partial().optional(),
-    buttonsResponseMessage: z.object({ message: z.string().optional(), buttonId: z.string().optional() }).partial().optional(),
-    listResponseMessage: z.object({ message: z.string().optional(), title: z.string().optional() }).partial().optional(),
+      .nullish(),
+    audio: z.object({ audioUrl: z.string().nullish(), mimeType: z.string().optional() }).partial().nullish(),
+    location: z.object({ latitude: z.number().nullish(), longitude: z.number().nullish(), address: z.string().optional() }).partial().nullish(),
+    buttonsResponseMessage: z.object({ message: z.string().nullish(), buttonId: z.string().optional() }).partial().nullish(),
+    listResponseMessage: z.object({ message: z.string().nullish(), title: z.string().optional() }).partial().nullish(),
   })
   .passthrough();
 
@@ -81,12 +81,18 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           return new Response("Token inválido", { status: 401 });
         }
 
-        let corpo: z.infer<typeof corpoSchema>;
+        let bruto: unknown;
         try {
-          corpo = corpoSchema.parse(await request.json());
+          bruto = await request.json();
         } catch {
           return new Response("Payload inválido", { status: 400 });
         }
+        // A Z-API manda campos com null e formatos novos sem aviso: nunca
+        // rejeitamos o callback por causa do schema, só normalizamos.
+        const analise = corpoSchema.safeParse(bruto);
+        const corpo: z.infer<typeof corpoSchema> = analise.success
+          ? analise.data
+          : ((bruto ?? {}) as z.infer<typeof corpoSchema>);
 
         if (corpo.fromMe || corpo.isStatusReply) return Response.json({ ok: true, ignorado: true });
 
