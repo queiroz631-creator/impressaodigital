@@ -431,7 +431,8 @@ function Conversa({
                   </p>
                 </div>
               </div>
-            ))}
+              ),
+            )}
             <div ref={fim} />
           </div>
 
