@@ -1204,11 +1204,44 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
   const agora = new Date();
   const limite = new Date(agora.getTime() - min1 * 60_000).toISOString();
 
+  const CAMPOS =
+    "id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, inatividade_avisada, ultima_mensagem_em, finalizacao_em";
+
+  // Nada reconhecido: depois do tempo configurado, o bot inicia o fluxo inicial.
+  const minFallback = Math.max(0, Number(dados.config.fallback_inicial_minutos ?? 0));
+  if (minFallback > 0) {
+    const limiteFallback = new Date(agora.getTime() - minFallback * 60_000).toISOString();
+    const { data: paradas } = await supabaseAdmin
+      .from("whatsapp_conversas")
+      .select(CAMPOS)
+      .eq("status", "automatico")
+      .eq("etapa", "inicio")
+      .lt("ultima_mensagem_em", limiteFallback)
+      .limit(50);
+
+    const fluxos = await carregarFluxos();
+    const raiz = fluxoInicial(fluxos);
+
+    if (raiz) {
+      for (const linha of paradas ?? []) {
+        const conversa = linha as unknown as ConversaBot;
+        const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
+        // Fluxo em andamento ou confirmação SIM/NÃO pendente seguem a inatividade normal.
+        if (ctx.fluxo || ctx.triagem) continue;
+
+        const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
+        const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
+        const saida = iniciarFluxo(fluxos, raiz.id, {}, vars, 0, primeiraDoDia);
+        await entregarFluxo(conversa, config, { ...ctx, triagem: null }, fluxos, saida, vars);
+        await salvar(conversa, { saudacao_em: agora.toISOString(), inatividade_avisada: false });
+        await auditar(conversa.id, "bot_fluxo_inicial", `${minFallback} min sem reconhecimento`);
+      }
+    }
+  }
+
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
-    .select(
-      "id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, inatividade_avisada, ultima_mensagem_em, finalizacao_em",
-    )
+    .select(CAMPOS)
     .eq("status", "automatico")
     .lt("ultima_mensagem_em", limite)
     .limit(50);
