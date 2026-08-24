@@ -2,6 +2,22 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { BotConfig, BotDados, BotHorario, BotOpcao, BotResposta } from "@/lib/bot-motor";
+import type { DadosFluxos, Fluxo, FluxoEtapa, FluxoOpcao } from "@/lib/bot-fluxos";
+
+/** Carrega os fluxos, etapas e opções cadastrados. */
+export async function carregarFluxos(): Promise<DadosFluxos> {
+  const [f, e, o] = await Promise.all([
+    supabaseAdmin.from("bot_fluxos").select("*").order("ordem"),
+    supabaseAdmin.from("bot_fluxo_etapas").select("*").order("ordem"),
+    supabaseAdmin.from("bot_fluxo_opcoes").select("*").order("ordem"),
+  ]);
+
+  return {
+    fluxos: (f.data ?? []) as unknown as Fluxo[],
+    etapas: (e.data ?? []) as unknown as FluxoEtapa[],
+    opcoes: (o.data ?? []) as unknown as FluxoOpcao[],
+  };
+}
 
 export async function carregarDadosBot(): Promise<BotDados | null> {
   const [cfg, hor, opc, resp, pal] = await Promise.all([

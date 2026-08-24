@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
+import { FluxosPainel } from "@/components/bot/FluxosPainel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -213,7 +214,7 @@ export function ConfiguracaoBot() {
           <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="horarios">Horários</TabsTrigger>
           <TabsTrigger value="mensagens">Mensagens</TabsTrigger>
-          <TabsTrigger value="menu">Menu principal</TabsTrigger>
+          <TabsTrigger value="menu">Fluxos</TabsTrigger>
           <TabsTrigger value="respostas">Respostas automáticas</TabsTrigger>
           <TabsTrigger value="inatividade">Inatividade</TabsTrigger>
           <TabsTrigger value="simulador">Simulador</TabsTrigger>
@@ -331,10 +332,11 @@ export function ConfiguracaoBot() {
           </Card>
         </TabsContent>
 
-        {/* ---------- Menu principal ---------- */}
+        {/* ---------- Fluxos ---------- */}
         <TabsContent value="menu">
-          <OpcoesMenu opcoes={opcoes.data ?? []} palavras={palavras.data ?? []} />
+          <FluxosPainel />
         </TabsContent>
+
 
         {/* ---------- Respostas automáticas ---------- */}
         <TabsContent value="respostas">
@@ -440,146 +442,6 @@ function CampoPalavras({
         }}
       />
     </div>
-  );
-}
-
-function OpcoesMenu({ opcoes, palavras }: { opcoes: Opcao[]; palavras: Palavra[] }) {
-  const queryClient = useQueryClient();
-
-  async function recarregar() {
-    await queryClient.invalidateQueries({ queryKey: ["bot-opcoes"] });
-    await queryClient.invalidateQueries({ queryKey: ["bot-palavras"] });
-  }
-
-  async function atualizar(o: Opcao, dados: Partial<Opcao>) {
-    const { error } = await supabase.from("bot_menu_opcoes").update(dados).eq("id", o.id);
-    if (error) { toast.error(error.message); return; }
-    await recarregar();
-  }
-
-  async function mover(indice: number, direcao: -1 | 1) {
-    const atual = opcoes[indice];
-    const outro = opcoes[indice + direcao];
-    if (!atual || !outro) return;
-    await supabase.from("bot_menu_opcoes").update({ ordem: outro.ordem }).eq("id", atual.id);
-    await supabase.from("bot_menu_opcoes").update({ ordem: atual.ordem }).eq("id", outro.id);
-    await recarregar();
-  }
-
-  async function adicionar() {
-    const ordem = Math.max(0, ...opcoes.map((o) => o.ordem)) + 1;
-    const { error } = await supabase
-      .from("bot_menu_opcoes")
-      .insert({ nome: "Nova opção", acao: "mensagem", mensagem: "", ordem });
-    if (error) { toast.error(error.message); return; }
-    await recarregar();
-  }
-
-  async function excluir(o: Opcao) {
-    const { error } = await supabase.from("bot_menu_opcoes").delete().eq("id", o.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Opção removida.");
-    await recarregar();
-  }
-
-  async function salvarPalavras(o: Opcao, lista: string[]) {
-    await supabase.from("bot_palavras_chave").delete().eq("opcao_id", o.id);
-    if (lista.length > 0) {
-      const { error } = await supabase
-        .from("bot_palavras_chave")
-        .insert(lista.map((texto) => ({ texto, opcao_id: o.id })));
-      if (error) { toast.error(error.message); return; }
-    }
-    toast.success("Palavras-chave atualizadas.");
-    await recarregar();
-  }
-
-  return (
-    <Card className="shadow-card">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Opções do menu</CardTitle>
-        <Button size="sm" variant="outline" onClick={adicionar}>
-          <Plus className="h-4 w-4" /> Adicionar
-        </Button>
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        {opcoes.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma opção cadastrada.</p>}
-
-        {opcoes.map((o, i) => (
-          <div key={o.id} className="grid gap-3 rounded-lg border p-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">{i + 1}</Badge>
-              <Input
-                className="min-w-40 flex-1"
-                value={o.nome}
-                onChange={(e) => void atualizar(o, { nome: e.target.value })}
-              />
-              <Button size="icon" variant="ghost" disabled={i === 0} onClick={() => void mover(i, -1)}>
-                <ArrowUp className="h-4 w-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                disabled={i === opcoes.length - 1}
-                onClick={() => void mover(i, 1)}
-              >
-                <ArrowDown className="h-4 w-4" />
-              </Button>
-              <ConfirmarExclusao
-                titulo="Remover opção"
-                descricao={`A opção "${o.nome}" deixará de aparecer no menu.`}
-                onConfirmar={() => excluir(o)}
-              >
-                <Button size="icon" variant="ghost">
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </ConfirmarExclusao>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-1">
-                <Label className="text-xs">O que essa opção faz</Label>
-                <Select value={o.acao} onValueChange={(v) => void atualizar(o, { acao: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ACOES.map((a) => (
-                      <SelectItem key={a.valor} value={a.valor}>
-                        {a.rotulo}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <CampoPalavras
-                palavras={palavras.filter((p) => p.opcao_id === o.id)}
-                onSalvar={(lista) => salvarPalavras(o, lista)}
-              />
-            </div>
-
-            <div className="grid gap-1">
-              <Label className="text-xs">Mensagem enviada ao escolher</Label>
-              <Textarea rows={2} value={o.mensagem} onChange={(e) => void atualizar(o, { mensagem: e.target.value })} />
-            </div>
-
-            <div className="flex flex-wrap gap-4">
-              <label className="flex items-center gap-2 text-xs">
-                <Switch checked={o.ativo} onCheckedChange={(v) => void atualizar(o, { ativo: v })} /> Ativa
-              </label>
-              <label className="flex items-center gap-2 text-xs">
-                <Switch
-                  checked={o.permitir_palavra_chave}
-                  onCheckedChange={(v) => void atualizar(o, { permitir_palavra_chave: v })}
-                />
-                Aceitar palavras-chave
-              </label>
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
   );
 }
 
