@@ -26,6 +26,36 @@ import {
 
 const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
+/** Mostra quando a rotina automática do bot agiu pela última vez. */
+function UltimaRotina() {
+  const { data } = useQuery({
+    queryKey: ["bot-ultima-rotina"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_auditoria")
+        .select("acao, created_at")
+        .in("acao", ["bot_inatividade", "bot_inatividade2", "bot_fluxo_inicial"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 60_000,
+  });
+
+  return (
+    <p className="text-xs text-muted-foreground">
+      Rotina automática:{" "}
+      {data?.created_at
+        ? `última ação em ${new Date(data.created_at).toLocaleString("pt-BR")}`
+        : "ainda sem ações registradas"}
+      .
+    </p>
+  );
+}
+
+
 const ACOES: { valor: string; rotulo: string }[] = [
   { valor: "orcamento", rotulo: "Fazer orçamento" },
   { valor: "consultar_pedido", rotulo: "Consultar pedido" },
@@ -361,6 +391,8 @@ export function ConfiguracaoBot() {
                 A inatividade só é contada nas conversas da aba <strong>Automático</strong> em que o bot está
                 aguardando a resposta do cliente.
               </p>
+              <UltimaRotina />
+
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="grid gap-1">
