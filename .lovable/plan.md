@@ -25,4 +25,7 @@ Nada mais muda: horários, menu, orçamento, currículo, pedidos, mensagens ativ
 - `src/lib/bot-dados.server.ts`: carregar o novo campo.
 - `src/lib/bot.server.ts`: em `verificarInatividade`, antes das etapas de aviso, tratar conversas em `status = automatico`, etapa `inicio`, sem fluxo ativo e sem confirmação pendente no contexto, paradas há mais que o tempo configurado — disparar `entregarFluxo` do fluxo inicial e registrar auditoria. Conversas com etapa `triagem` (confirmação SIM/NÃO pendente) ficam de fora e seguem o caminho atual de 1ª/2ª inatividade.
 - `src/components/bot/FluxosPainel.tsx`: campo numérico no card de configuração, salvando em `whatsapp_config`.
+- Migração: coluna `atendimento_numero` (integer, padrão 1) em `whatsapp_conversas`; mensagem de sistema do divisor gravada em `whatsapp_mensagens` com `tipo = "sistema"` (sem novas tabelas).
+- `src/lib/bot.server.ts`: ao reabrir um atendimento (conversa finalizada/pendente que volta a receber mensagem do cliente), incrementar `atendimento_numero` e gravar o divisor, em vez de tratar como conversa nova.
+- `src/routes/whatsapp.tsx`: selo "Atendimento N" na lista e divisor no histórico de mensagens.
 - Sem alterações em cálculo, currículo, pedidos, Z-API ou qualquer outro código.
