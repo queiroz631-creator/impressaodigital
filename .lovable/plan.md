@@ -16,6 +16,6 @@ Nada mais muda: horários, menu, orçamento, currículo, pedidos, mensagens ativ
 
 - Migração: nova coluna `fallback_inicial_minutos` (integer, padrão 2) em `whatsapp_config`. Nenhuma outra tabela é alterada.
 - `src/lib/bot-dados.server.ts`: carregar o novo campo.
-- `src/lib/bot.server.ts`: em `verificarInatividade`, antes das etapas de aviso, tratar conversas em `status = automatico` com etapa `inicio` ou `triagem` (sem fluxo ativo no contexto) e paradas há mais que o tempo configurado — disparar `entregarFluxo` do fluxo inicial, limpar `triagem` do contexto e registrar auditoria. A conversa então segue o ciclo normal do fluxo.
+- `src/lib/bot.server.ts`: em `verificarInatividade`, antes das etapas de aviso, tratar conversas em `status = automatico`, etapa `inicio`, sem fluxo ativo e sem confirmação pendente no contexto, paradas há mais que o tempo configurado — disparar `entregarFluxo` do fluxo inicial e registrar auditoria. Conversas com etapa `triagem` (confirmação SIM/NÃO pendente) ficam de fora e seguem o caminho atual de 1ª/2ª inatividade.
 - `src/components/bot/FluxosPainel.tsx`: campo numérico no card de configuração, salvando em `whatsapp_config`.
 - Sem alterações em cálculo, currículo, pedidos, Z-API ou qualquer outro código.
