@@ -54,7 +54,7 @@ Ordem de análise da mensagem:
 - `src/lib/bot-fluxos.ts`: novos campos nos tipos `Fluxo`.
 - `src/lib/bot-motor.ts`: tipo `BotResposta` com os textos e ações de SIM/NÃO; deixa de depender de boas-vindas/menu/não entendi.
 - `src/lib/bot-fluxos-motor.ts`: `iniciar()` recebe se é a primeira conversa do dia e escolhe a mensagem inicial correspondente.
-- `src/lib/bot.server.ts`: triagem na entrada (arquivo → fluxo de arquivos; texto → resposta automática com confirmação SIM/NÃO e execução da ação vinculada; nada reconhecido → aguarda). A confirmação pendente fica no contexto da conversa, junto do estado de fluxo já existente. Envio de cada mensagem passa a respeitar o respectivo ativo/desativado.
+- `src/lib/bot.server.ts`: triagem na entrada (arquivo → fluxo de arquivos; texto → resposta automática com confirmação SIM/NÃO e execução da ação vinculada; nada reconhecido → aguarda). A confirmação pendente fica no contexto da conversa, junto do estado de fluxo já existente. Envio de cada mensagem passa a respeitar o respectivo ativo/desativado. `verificarInatividade` passa a usar os dois tempos, só considera conversas em atendimento aguardando o cliente e move para o status configurado.
 - `src/lib/bot-dados.server.ts`: carrega os novos campos.
 - `src/components/ConfiguracaoBot.tsx` e `src/components/bot/FluxosPainel.tsx`: ajustes de interface.
 - Sem alterações em cálculo de orçamento, currículo, pedidos, Z-API ou qualquer código sem ligação com essa triagem.
