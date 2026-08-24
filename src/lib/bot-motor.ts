@@ -229,10 +229,9 @@ export function opcoesAtivas(dados: BotDados) {
 const NUMEROS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
 
 export function textoMenu(dados: BotDados) {
-  const lista = opcoesAtivas(dados)
+  return opcoesAtivas(dados)
     .map((o, i) => `${NUMEROS[i] ?? `${i + 1}.`} ${o.nome}`)
     .join("\n\n");
-  return `${dados.config.msg_menu}\n\n${lista}`;
 }
 
 const SIM_NAO = ["SIM", "NÃO"];
