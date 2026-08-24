@@ -331,10 +331,11 @@ export function ConfiguracaoBot() {
           </Card>
         </TabsContent>
 
-        {/* ---------- Menu principal ---------- */}
+        {/* ---------- Fluxos ---------- */}
         <TabsContent value="menu">
-          <OpcoesMenu opcoes={opcoes.data ?? []} palavras={palavras.data ?? []} />
+          <FluxosPainel />
         </TabsContent>
+
 
         {/* ---------- Respostas automáticas ---------- */}
         <TabsContent value="respostas">
