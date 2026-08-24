@@ -607,6 +607,142 @@ async function executarAcaoMenu(
   }
 }
 
+// ---------- Fluxos configuráveis ----------
+
+/** Executa a ação de sistema pedida pela etapa. Devolve true quando o fluxo continua. */
+async function executarAcaoFluxo(
+  conversa: ConversaBot,
+  config: ConfigBot,
+  ctx: ContextoBot,
+  acao: string,
+): Promise<boolean> {
+  switch (acao) {
+    case "iniciar_orcamento":
+    case "receber_arquivo":
+    case "analisar_arquivos":
+    case "contar_paginas":
+    case "enviar_orcamento":
+      await executarAcaoMenu(conversa, config, ctx, "orcamento");
+      return false;
+
+    case "consultar_pedido":
+      await acaoConsultarPedido(conversa);
+      return true;
+
+    case "iniciar_curriculo":
+    case "gerar_link":
+      await acaoCurriculo(conversa);
+      return true;
+
+    case "transferir_atendente":
+      await transferir(conversa, config, "fluxo do bot encaminhou para atendimento");
+      return false;
+
+    case "criar_pendente":
+      await salvar(conversa, {
+        status: "pendente",
+        etapa: "aguardando_atendente",
+        motivo_pendencia: "fluxo do bot",
+      });
+      await auditar(conversa.id, "bot_criou_pendencia");
+      return false;
+
+    default:
+      return true;
+  }
+}
+
+/** Envia as mensagens do fluxo, grava o estado e executa as ações de sistema. */
+async function entregarFluxo(
+  conversa: ConversaBot,
+  config: ConfigBot,
+  ctx: ContextoBot,
+  dados: DadosFluxos,
+  inicial: SaidaFluxo,
+  vars: { nome: string; telefone: string; agora: Date },
+) {
+  let atual = inicial;
+
+  for (let volta = 0; volta < 6; volta += 1) {
+    if (atual.naoEntendi) {
+      const cfg = await carregarDadosBot();
+      const texto = cfg?.config.msg_nao_entendi?.trim();
+      if (texto) await responder(conversa, texto);
+    }
+
+    for (const m of atual.mensagens) await responder(conversa, m.texto, m.botoes);
+
+    if (atual.finalizar) {
+      const cfg = await carregarDadosBot();
+      const despedida = cfg?.config.msg_finalizacao?.trim();
+      if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
+      await salvarContexto(conversa, { ...ctx, fluxo: null }, "finalizado");
+      await salvar(conversa, {
+        status: "finalizado",
+        data_finalizacao: vars.agora.toISOString(),
+        finalizacao_em: vars.agora.toISOString(),
+      });
+      await auditar(conversa.id, "bot_finalizou", "fluxo finalizado");
+      return;
+    }
+
+    if (atual.estado) {
+      await salvarContexto(conversa, { ...ctx, fluxo: atual.estado }, "fluxo");
+    } else if (!atual.transferir && !atual.pendente) {
+      await salvarContexto(conversa, { ...ctx, fluxo: null }, "inicio");
+    }
+
+    if (!atual.acao && !atual.transferir && !atual.pendente) return;
+
+    const acao = atual.acao ?? (atual.transferir ? "transferir_atendente" : "criar_pendente");
+    const continuar = await executarAcaoFluxo(conversa, config, ctx, acao);
+    if (!continuar || !atual.etapaAcao || !atual.estado) return;
+
+    atual = avancar(dados, atual.etapaAcao, atual.estado, vars);
+  }
+}
+
+/** Roda o fluxo configurado para a conversa (início ou continuação). */
+async function rodarFluxo(
+  conversa: ConversaBot,
+  config: ConfigBot,
+  ctx: ContextoBot,
+  dados: DadosFluxos,
+  raizId: string,
+  entrada: EntradaBot,
+  agora: Date,
+) {
+  const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
+  const estado = conversa.etapa === "fluxo" ? (ctx.fluxo ?? null) : null;
+
+  if (!estado) {
+    const cfg = await carregarDadosBot();
+    if (cfg) {
+      if (!dentroDoHorario(cfg, agora) && cfg.config.msg_fora_horario.trim()) {
+        await responder(conversa, aplicarVariaveis(cfg.config.msg_fora_horario, vars));
+      }
+      const modelo = mesmoDia(conversa.saudacao_em, agora)
+        ? cfg.config.msg_retorno_dia
+        : cfg.config.msg_boas_vindas;
+      const saudacao = aplicarVariaveis(modelo, vars).trim();
+      if (saudacao) await responder(conversa, saudacao);
+    }
+    await salvar(conversa, { saudacao_em: agora.toISOString() });
+
+    const saida = iniciarFluxo(dados, raizId, {}, vars);
+    await entregarFluxo(conversa, config, ctx, dados, saida, vars);
+    return;
+  }
+
+  const saida = processarFluxo(
+    dados,
+    estado,
+    { texto: entrada.texto ?? "", tipo: entrada.tipo, nome: vars.nome, telefone: vars.telefone },
+    agora,
+  );
+  await entregarFluxo(conversa, config, ctx, dados, saida, vars);
+}
+
 // ---------- Máquina de estados ----------
 
 export async function processarBot(conversaId: string, entrada: EntradaBot): Promise<void> {
