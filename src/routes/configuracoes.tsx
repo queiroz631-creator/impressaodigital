@@ -20,7 +20,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { listarImpressoras, qzDisponivel, testarImpressora } from "@/lib/impressora";
 import { PIX_MENSAGEM_PADRAO, PRAZO_MENSAGEM_PADRAO } from "@/lib/orcamento-extras";
 import { Switch } from "@/components/ui/switch";
-import { ConfiguracaoBot } from "@/components/ConfiguracaoBot";
 
 
 export const Route = createFileRoute("/configuracoes")({
@@ -195,7 +194,6 @@ function Configuracoes() {
           <TabsTrigger value="pix">PIX e prazo</TabsTrigger>
           <TabsTrigger value="impressao">Impressão</TabsTrigger>
           <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
-          <TabsTrigger value="bot">Bot</TabsTrigger>
           <TabsTrigger value="link">Link do orçamento</TabsTrigger>
         </TabsList>
 
@@ -476,10 +474,6 @@ function Configuracoes() {
           <CardWhatsapp />
         </TabsContent>
 
-        <TabsContent value="bot">
-          <CardBot />
-        </TabsContent>
-
         <TabsContent value="link">
           <CardLinkPublico />
         </TabsContent>
@@ -691,7 +685,4 @@ function CardWhatsapp() {
   );
 }
 
-/** Atendimento automático (bot) do WhatsApp. */
-function CardBot() {
-  return <ConfiguracaoBot />;
-}
+
