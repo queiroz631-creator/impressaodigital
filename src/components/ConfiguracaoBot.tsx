@@ -156,6 +156,7 @@ export function ConfiguracaoBot() {
       finalizacao_uma_vez_dia: Boolean(d.finalizacao_uma_vez_dia),
       inatividade1_minutos: Number(d.inatividade1_minutos ?? 5),
       inatividade2_minutos: Number(d.inatividade2_minutos ?? 10),
+      fallback_inicial_minutos: Number(d.fallback_inicial_minutos ?? 2),
       inatividade_status: d.inatividade_status ?? "finalizado",
       msg_inatividade1: d.msg_inatividade1 ?? "",
       msg_inatividade_pendente: d.msg_inatividade_pendente ?? "",
