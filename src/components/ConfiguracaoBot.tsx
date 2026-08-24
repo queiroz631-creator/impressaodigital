@@ -391,6 +391,8 @@ export function ConfiguracaoBot() {
                 A inatividade só é contada nas conversas da aba <strong>Automático</strong> em que o bot está
                 aguardando a resposta do cliente.
               </p>
+              <UltimaRotina />
+
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="grid gap-1">
