@@ -204,10 +204,12 @@ export type Database = {
           ativo: boolean
           created_at: string
           descricao: string
+          fluxo_arquivos: boolean
           icone: string
           id: string
           inicial: boolean
           mensagem_inicial: string
+          mensagem_retorno_dia: string
           nome: string
           ordem: number
           updated_at: string
@@ -216,10 +218,12 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string
+          fluxo_arquivos?: boolean
           icone?: string
           id?: string
           inicial?: boolean
           mensagem_inicial?: string
+          mensagem_retorno_dia?: string
           nome: string
           ordem?: number
           updated_at?: string
@@ -228,10 +232,12 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string
+          fluxo_arquivos?: boolean
           icone?: string
           id?: string
           inicial?: boolean
           mensagem_inicial?: string
+          mensagem_retorno_dia?: string
           nome?: string
           ordem?: number
           updated_at?: string
@@ -345,33 +351,83 @@ export type Database = {
       }
       bot_respostas: {
         Row: {
+          acao_nao: string
+          acao_sim: string
           ativo: boolean
           created_at: string
+          destino_nao_fluxo_id: string | null
+          destino_nao_resposta_id: string | null
+          destino_sim_fluxo_id: string | null
+          destino_sim_resposta_id: string | null
           id: string
           ordem: number
           resposta: string
+          resposta_retorno_dia: string
           titulo: string
           updated_at: string
         }
         Insert: {
+          acao_nao?: string
+          acao_sim?: string
           ativo?: boolean
           created_at?: string
+          destino_nao_fluxo_id?: string | null
+          destino_nao_resposta_id?: string | null
+          destino_sim_fluxo_id?: string | null
+          destino_sim_resposta_id?: string | null
           id?: string
           ordem?: number
           resposta?: string
+          resposta_retorno_dia?: string
           titulo: string
           updated_at?: string
         }
         Update: {
+          acao_nao?: string
+          acao_sim?: string
           ativo?: boolean
           created_at?: string
+          destino_nao_fluxo_id?: string | null
+          destino_nao_resposta_id?: string | null
+          destino_sim_fluxo_id?: string | null
+          destino_sim_resposta_id?: string | null
           id?: string
           ordem?: number
           resposta?: string
+          resposta_retorno_dia?: string
           titulo?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bot_respostas_destino_nao_fluxo_id_fkey"
+            columns: ["destino_nao_fluxo_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_respostas_destino_nao_resposta_id_fkey"
+            columns: ["destino_nao_resposta_id"]
+            isOneToOne: false
+            referencedRelation: "bot_respostas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_respostas_destino_sim_fluxo_id_fkey"
+            columns: ["destino_sim_fluxo_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_respostas_destino_sim_resposta_id_fkey"
+            columns: ["destino_sim_resposta_id"]
+            isOneToOne: false
+            referencedRelation: "bot_respostas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calculo_itens: {
         Row: {
@@ -1530,6 +1586,9 @@ export type Database = {
           finalizacao_uma_vez_dia: boolean
           id: string
           inatividade_minutos: number
+          inatividade_status: string
+          inatividade1_minutos: number
+          inatividade2_minutos: number
           link_exigir_telefone: boolean
           link_permitir_acabamento: boolean
           link_permitir_confirmacao: boolean
@@ -1542,15 +1601,26 @@ export type Database = {
           mostrar_precos_link: boolean
           msg_boas_vindas: string
           msg_finalizacao: string
+          msg_finalizacao_ativo: boolean
           msg_fora_horario: string
+          msg_fora_horario_ativo: boolean
+          msg_inatividade_aguardando: string
+          msg_inatividade_em_atendimento: string
+          msg_inatividade_finalizado: string
+          msg_inatividade_pendente: string
+          msg_inatividade1: string
           msg_inicial: string
           msg_menu: string
           msg_nao_entendi: string
           msg_orcamento_confirmado: string
+          msg_orcamento_confirmado_ativo: boolean
           msg_orcamento_gerado: string
+          msg_orcamento_gerado_ativo: boolean
           msg_retorno_dia: string
           msg_revisao: string
+          msg_revisao_ativo: boolean
           msg_transferencia: string
+          msg_transferencia_ativo: boolean
           permitir_link: boolean
           permitir_orcamento_automatico: boolean
           reabrir_mesmo_dia: boolean
@@ -1568,6 +1638,9 @@ export type Database = {
           finalizacao_uma_vez_dia?: boolean
           id?: string
           inatividade_minutos?: number
+          inatividade_status?: string
+          inatividade1_minutos?: number
+          inatividade2_minutos?: number
           link_exigir_telefone?: boolean
           link_permitir_acabamento?: boolean
           link_permitir_confirmacao?: boolean
@@ -1580,15 +1653,26 @@ export type Database = {
           mostrar_precos_link?: boolean
           msg_boas_vindas?: string
           msg_finalizacao?: string
+          msg_finalizacao_ativo?: boolean
           msg_fora_horario?: string
+          msg_fora_horario_ativo?: boolean
+          msg_inatividade_aguardando?: string
+          msg_inatividade_em_atendimento?: string
+          msg_inatividade_finalizado?: string
+          msg_inatividade_pendente?: string
+          msg_inatividade1?: string
           msg_inicial?: string
           msg_menu?: string
           msg_nao_entendi?: string
           msg_orcamento_confirmado?: string
+          msg_orcamento_confirmado_ativo?: boolean
           msg_orcamento_gerado?: string
+          msg_orcamento_gerado_ativo?: boolean
           msg_retorno_dia?: string
           msg_revisao?: string
+          msg_revisao_ativo?: boolean
           msg_transferencia?: string
+          msg_transferencia_ativo?: boolean
           permitir_link?: boolean
           permitir_orcamento_automatico?: boolean
           reabrir_mesmo_dia?: boolean
@@ -1606,6 +1690,9 @@ export type Database = {
           finalizacao_uma_vez_dia?: boolean
           id?: string
           inatividade_minutos?: number
+          inatividade_status?: string
+          inatividade1_minutos?: number
+          inatividade2_minutos?: number
           link_exigir_telefone?: boolean
           link_permitir_acabamento?: boolean
           link_permitir_confirmacao?: boolean
@@ -1618,15 +1705,26 @@ export type Database = {
           mostrar_precos_link?: boolean
           msg_boas_vindas?: string
           msg_finalizacao?: string
+          msg_finalizacao_ativo?: boolean
           msg_fora_horario?: string
+          msg_fora_horario_ativo?: boolean
+          msg_inatividade_aguardando?: string
+          msg_inatividade_em_atendimento?: string
+          msg_inatividade_finalizado?: string
+          msg_inatividade_pendente?: string
+          msg_inatividade1?: string
           msg_inicial?: string
           msg_menu?: string
           msg_nao_entendi?: string
           msg_orcamento_confirmado?: string
+          msg_orcamento_confirmado_ativo?: boolean
           msg_orcamento_gerado?: string
+          msg_orcamento_gerado_ativo?: boolean
           msg_retorno_dia?: string
           msg_revisao?: string
+          msg_revisao_ativo?: boolean
           msg_transferencia?: string
+          msg_transferencia_ativo?: boolean
           permitir_link?: boolean
           permitir_orcamento_automatico?: boolean
           reabrir_mesmo_dia?: boolean
@@ -1648,6 +1746,7 @@ export type Database = {
           finalizacao_em: string | null
           id: string
           inatividade_avisada: boolean
+          inatividade_etapa: number
           inicio_atendimento: string | null
           motivo_encaminhamento: string | null
           motivo_finalizacao: string | null
@@ -1675,6 +1774,7 @@ export type Database = {
           finalizacao_em?: string | null
           id?: string
           inatividade_avisada?: boolean
+          inatividade_etapa?: number
           inicio_atendimento?: string | null
           motivo_encaminhamento?: string | null
           motivo_finalizacao?: string | null
@@ -1702,6 +1802,7 @@ export type Database = {
           finalizacao_em?: string | null
           id?: string
           inatividade_avisada?: boolean
+          inatividade_etapa?: number
           inicio_atendimento?: string | null
           motivo_encaminhamento?: string | null
           motivo_finalizacao?: string | null

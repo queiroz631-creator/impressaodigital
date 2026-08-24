@@ -36,11 +36,15 @@ import {
   aplicarVariaveis,
   dentroDoHorario,
   processarMenu,
+  reconhecerResposta,
   type AcaoBot,
+  type BotDados,
+  type BotResposta,
 } from "@/lib/bot-motor";
 import type { DadosFluxos } from "@/lib/bot-fluxos";
 import {
   avancar,
+  fluxoDeArquivos,
   fluxoInicial,
   iniciar as iniciarFluxo,
   processarFluxo,
@@ -61,6 +65,8 @@ interface ContextoBot {
   pendenteId?: string | null;
   /** Estado do fluxo configurável em execução. */
   fluxo?: EstadoFluxo | null;
+  /** Resposta automática aguardando confirmação do cliente (triagem). */
+  triagem?: string | null;
 }
 
 interface ConversaBot {
@@ -83,6 +89,7 @@ interface ConfigBot {
   msg_inicial: string;
   msg_boas_vindas: string;
   msg_transferencia: string;
+  msg_transferencia_ativo: boolean;
   msg_orcamento_gerado: string;
   msg_revisao: string;
   msg_orcamento_confirmado: string;
@@ -176,7 +183,8 @@ async function auditar(conversaId: string, acao: string, detalhe?: string) {
 
 /** Passa a conversa para a fila humana. */
 async function transferir(conversa: ConversaBot, config: ConfigBot, motivo: string, mensagem?: string) {
-  await responder(conversa, mensagem ?? config.msg_transferencia);
+  const aviso = mensagem ?? (config.msg_transferencia_ativo !== false ? config.msg_transferencia : "");
+  if (aviso.trim()) await responder(conversa, aviso);
   await salvar(conversa, {
     status: "aguardando",
     etapa: "aguardando_atendente",
@@ -664,17 +672,11 @@ async function entregarFluxo(
   let atual = inicial;
 
   for (let volta = 0; volta < 6; volta += 1) {
-    if (atual.naoEntendi) {
-      const cfg = await carregarDadosBot();
-      const texto = cfg?.config.msg_nao_entendi?.trim();
-      if (texto) await responder(conversa, texto);
-    }
-
     for (const m of atual.mensagens) await responder(conversa, m.texto, m.botoes);
 
     if (atual.finalizar) {
       const cfg = await carregarDadosBot();
-      const despedida = cfg?.config.msg_finalizacao?.trim();
+      const despedida = cfg?.config.msg_finalizacao_ativo ? cfg.config.msg_finalizacao.trim() : "";
       if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
       await salvarContexto(conversa, { ...ctx, fluxo: null }, "finalizado");
       await salvar(conversa, {
@@ -702,35 +704,189 @@ async function entregarFluxo(
   }
 }
 
+// ---------- Triagem do primeiro contato ----------
+
+type Vars = { nome: string; telefone: string; agora: Date };
+
+/** Texto da resposta automática conforme seja o 1º contato do dia ou um retorno. */
+function textoResposta(resposta: BotResposta, primeiraDoDia: boolean) {
+  const retorno = (resposta.resposta_retorno_dia ?? "").trim();
+  return !primeiraDoDia && retorno ? retorno : resposta.resposta;
+}
+
+/** Executa a ação configurada para o SIM ou o NÃO de uma resposta automática. */
+async function executarAcaoResposta(
+  conversa: ConversaBot,
+  config: ConfigBot,
+  ctx: ContextoBot,
+  cfg: BotDados,
+  fluxos: DadosFluxos,
+  acao: string,
+  destinoFluxoId: string | null,
+  destinoRespostaId: string | null,
+  primeiraDoDia: boolean,
+  vars: Vars,
+  profundidade = 0,
+): Promise<void> {
+  if (profundidade > 3) return;
+
+  switch (acao) {
+    case "iniciar_fluxo":
+    case "fluxo_inicial": {
+      const alvo =
+        acao === "iniciar_fluxo" && destinoFluxoId
+          ? fluxos.fluxos.find((f) => f.id === destinoFluxoId && f.ativo)
+          : fluxoInicial(fluxos);
+      if (!alvo) return;
+      const saida = iniciarFluxo(fluxos, alvo.id, {}, vars, 0, primeiraDoDia);
+      await entregarFluxo(conversa, config, { ...ctx, triagem: null }, fluxos, saida, vars);
+      return;
+    }
+
+    case "resposta": {
+      const outra = cfg.respostas.find((r) => r.id === destinoRespostaId && r.ativo);
+      if (!outra) return;
+      await responder(conversa, aplicarVariaveis(textoResposta(outra, primeiraDoDia), vars));
+      await executarAcaoResposta(
+        conversa,
+        config,
+        ctx,
+        cfg,
+        fluxos,
+        outra.acao_sim,
+        outra.destino_sim_fluxo_id,
+        outra.destino_sim_resposta_id,
+        primeiraDoDia,
+        vars,
+        profundidade + 1,
+      );
+      return;
+    }
+
+    case "atendente":
+      await transferir(conversa, config, "resposta automática encaminhou para atendimento");
+      return;
+
+    case "finalizar": {
+      const despedida = cfg.config.msg_finalizacao_ativo ? cfg.config.msg_finalizacao.trim() : "";
+      if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
+      await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: null }, "finalizado");
+      await salvar(conversa, { status: "finalizado", data_finalizacao: vars.agora.toISOString() });
+      await auditar(conversa.id, "bot_finalizou", "resposta automática finalizou o atendimento");
+      return;
+    }
+
+    default:
+      // "aguardar": o bot fica em silêncio esperando a próxima mensagem.
+      await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: null }, "inicio");
+  }
+}
+
+/**
+ * Analisa o primeiro contato: arquivos vão para o fluxo de orçamento, textos
+ * procuram uma resposta automática e, sem reconhecimento, o bot aguarda.
+ */
+async function triagem(
+  conversa: ConversaBot,
+  config: ConfigBot,
+  ctx: ContextoBot,
+  fluxos: DadosFluxos,
+  entrada: EntradaBot,
+  primeiraDoDia: boolean,
+  vars: Vars,
+) {
+  const cfg = await carregarDadosBot();
+  if (!cfg) return;
+
+  if (!dentroDoHorario(cfg, vars.agora) && cfg.config.msg_fora_horario_ativo && cfg.config.msg_fora_horario.trim()) {
+    await responder(conversa, aplicarVariaveis(cfg.config.msg_fora_horario, vars));
+  }
+  await salvar(conversa, { saudacao_em: vars.agora.toISOString() });
+
+  // 1) Só arquivos → fluxo marcado para arquivos (ou o fluxo inicial).
+  if (entrada.tipo === "documento" || entrada.tipo === "imagem") {
+    const alvo = fluxoDeArquivos(fluxos) ?? fluxoInicial(fluxos);
+    if (!alvo) return;
+    const saida = iniciarFluxo(fluxos, alvo.id, {}, vars, 0, primeiraDoDia);
+    await entregarFluxo(conversa, config, { ...ctx, triagem: null }, fluxos, saida, vars);
+    return;
+  }
+
+  // 2) Texto → procura uma resposta automática e confirma com o cliente.
+  const texto = (entrada.texto ?? "").trim();
+  const encontrada = texto ? reconhecerResposta(cfg, texto) : null;
+  if (encontrada) {
+    await responder(conversa, `Você quer falar sobre *${encontrada.titulo}*?`, ["SIM", "NÃO"]);
+    await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: encontrada.id }, "triagem");
+    return;
+  }
+
+  // 3) Nada reconhecido: aguarda a próxima mensagem do cliente.
+  await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: null }, "inicio");
+}
+
+/** Trata a confirmação (SIM/NÃO) da resposta automática sugerida na triagem. */
+async function resolverTriagem(
+  conversa: ConversaBot,
+  config: ConfigBot,
+  ctx: ContextoBot,
+  fluxos: DadosFluxos,
+  entrada: EntradaBot,
+  primeiraDoDia: boolean,
+  vars: Vars,
+) {
+  const cfg = await carregarDadosBot();
+  const resposta = cfg?.respostas.find((r) => r.id === ctx.triagem);
+  if (!cfg || !resposta) {
+    await triagem(conversa, config, ctx, fluxos, entrada, primeiraDoDia, vars);
+    return;
+  }
+
+  const escolha = simOuNao(entrada.texto ?? "");
+  if (escolha === null) {
+    // Não confirmou nem negou: trata como uma nova mensagem de triagem.
+    await triagem(conversa, config, { ...ctx, triagem: null }, fluxos, entrada, primeiraDoDia, vars);
+    return;
+  }
+
+  if (escolha) await responder(conversa, aplicarVariaveis(textoResposta(resposta, primeiraDoDia), vars));
+
+  await salvarContexto(conversa, { ...ctx, triagem: null }, "inicio");
+  await executarAcaoResposta(
+    conversa,
+    config,
+    { ...ctx, triagem: null },
+    cfg,
+    fluxos,
+    escolha ? resposta.acao_sim : resposta.acao_nao,
+    escolha ? resposta.destino_sim_fluxo_id : resposta.destino_nao_fluxo_id,
+    escolha ? resposta.destino_sim_resposta_id : resposta.destino_nao_resposta_id,
+    primeiraDoDia,
+    vars,
+  );
+}
+
 /** Roda o fluxo configurado para a conversa (início ou continuação). */
 async function rodarFluxo(
   conversa: ConversaBot,
   config: ConfigBot,
   ctx: ContextoBot,
   dados: DadosFluxos,
-  raizId: string,
+  _raizId: string,
   entrada: EntradaBot,
   agora: Date,
 ) {
-  const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
+  const vars: Vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
   const estado = conversa.etapa === "fluxo" ? (ctx.fluxo ?? null) : null;
+  const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
+
+  if (conversa.etapa === "triagem") {
+    await resolverTriagem(conversa, config, ctx, dados, entrada, primeiraDoDia, vars);
+    return;
+  }
 
   if (!estado) {
-    const cfg = await carregarDadosBot();
-    if (cfg) {
-      if (!dentroDoHorario(cfg, agora) && cfg.config.msg_fora_horario.trim()) {
-        await responder(conversa, aplicarVariaveis(cfg.config.msg_fora_horario, vars));
-      }
-      const modelo = mesmoDia(conversa.saudacao_em, agora)
-        ? cfg.config.msg_retorno_dia
-        : cfg.config.msg_boas_vindas;
-      const saudacao = aplicarVariaveis(modelo, vars).trim();
-      if (saudacao) await responder(conversa, saudacao);
-    }
-    await salvar(conversa, { saudacao_em: agora.toISOString() });
-
-    const saida = iniciarFluxo(dados, raizId, {}, vars);
-    await entregarFluxo(conversa, config, ctx, dados, saida, vars);
+    await triagem(conversa, config, ctx, dados, entrada, primeiraDoDia, vars);
     return;
   }
 
@@ -775,7 +931,12 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
   }
 
   // Fluxos configuráveis (aba Fluxos): assumem quando existe um fluxo inicial ativo.
-  if (conversa.etapa === "fluxo" || ETAPAS_MENU.has(conversa.etapa) || conversa.etapa === "finalizado") {
+  if (
+    conversa.etapa === "fluxo" ||
+    conversa.etapa === "triagem" ||
+    ETAPAS_MENU.has(conversa.etapa) ||
+    conversa.etapa === "finalizado"
+  ) {
     const fluxos = await carregarFluxos();
     const raiz = fluxoInicial(fluxos);
     if (raiz) {
@@ -792,7 +953,7 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
     const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
     const etapaAtual = conversa.etapa === "finalizado" ? "inicio" : conversa.etapa;
 
-    if (etapaAtual === "inicio" && !dentroDoHorario(dados, agora) && dados.config.msg_fora_horario.trim()) {
+    if (etapaAtual === "inicio" && !dentroDoHorario(dados, agora) && dados.config.msg_fora_horario_ativo && dados.config.msg_fora_horario.trim()) {
       await responder(
         conversa,
         aplicarVariaveis(dados.config.msg_fora_horario, {
@@ -819,10 +980,6 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
       },
       agora,
     );
-
-    if (saida.mensagens.length === 0 && etapaAtual !== "inicio" && texto && dados.config.msg_nao_entendi.trim()) {
-      await responder(conversa, dados.config.msg_nao_entendi);
-    }
 
     for (const m of saida.mensagens) await responder(conversa, m.texto, m.botoes);
 
@@ -1018,9 +1175,21 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
 
 // ---------- Inatividade ----------
 
+/** Mensagem configurada para o status de destino da 2ª inatividade. */
+function msgDoStatus(cfg: BotDados["config"], status: string) {
+  const mapa: Record<string, string> = {
+    pendente: cfg.msg_inatividade_pendente,
+    aguardando: cfg.msg_inatividade_aguardando,
+    em_atendimento: cfg.msg_inatividade_em_atendimento,
+    finalizado: cfg.msg_inatividade_finalizado,
+  };
+  return (mapa[status] ?? "").trim();
+}
+
 /**
- * Encerra conversas paradas: avisa uma vez e, se o cliente continuar sem
- * responder, envia a mensagem de finalização e fecha o atendimento.
+ * Controla a inatividade em duas etapas: a 1ª envia um aviso e a 2ª move a
+ * conversa para o status escolhido. Só vale para conversas no modo automático
+ * em que o bot está aguardando a resposta do cliente.
  */
 export async function verificarInatividade(): Promise<{ avisadas: number; finalizadas: number }> {
   const config = await lerConfig();
@@ -1029,13 +1198,17 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
   const dados = await carregarDadosBot();
   if (!dados) return { avisadas: 0, finalizadas: 0 };
 
-  const minutos = Math.max(1, Number(dados.config.inatividade_minutos ?? 5));
+  const min1 = Math.max(1, Number(dados.config.inatividade1_minutos ?? 5));
+  const min2 = Math.max(min1, Number(dados.config.inatividade2_minutos ?? min1 * 2));
+  const destino = dados.config.inatividade_status || "finalizado";
   const agora = new Date();
-  const limite = new Date(agora.getTime() - minutos * 60_000).toISOString();
+  const limite = new Date(agora.getTime() - min1 * 60_000).toISOString();
 
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
-    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, inatividade_avisada, ultima_mensagem_em, finalizacao_em")
+    .select(
+      "id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, inatividade_avisada, ultima_mensagem_em, finalizacao_em",
+    )
     .eq("status", "automatico")
     .lt("ultima_mensagem_em", limite)
     .limit(50);
@@ -1045,41 +1218,41 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
 
   for (const linha of data ?? []) {
     const conversa = linha as unknown as ConversaBot;
+    const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
+    const parado = agora.getTime() - new Date(linha.ultima_mensagem_em ?? agora).getTime();
 
+    // 1ª inatividade: apenas o aviso.
     if (!linha.inatividade_avisada) {
-      await responder(conversa, "Ainda está por aí? 😊 Se precisar de algo, é só me chamar.");
+      const aviso = (dados.config.msg_inatividade1 ?? "").trim();
+      if (aviso) await responder(conversa, aplicarVariaveis(aviso, vars));
       await supabaseAdmin.from("whatsapp_conversas").update({ inatividade_avisada: true }).eq("id", conversa.id);
       avisadas += 1;
       continue;
     }
 
-    const podeFinalizar =
-      dados.config.enviar_msg_finalizacao &&
-      (!dados.config.finalizacao_uma_vez_dia || !mesmoDia(linha.finalizacao_em, agora));
+    // 2ª inatividade: só depois do tempo configurado.
+    if (parado < min2 * 60_000) continue;
 
-    if (podeFinalizar) {
-      await responder(
-        conversa,
-        aplicarVariaveis(dados.config.msg_finalizacao, {
-          nome: conversa.nome_contato ?? "",
-          telefone: conversa.telefone,
-          agora,
-        }),
-      );
-    }
+    const texto = msgDoStatus(dados.config, destino);
+    if (texto) await responder(conversa, aplicarVariaveis(texto, vars));
 
+    const encerrando = destino === "finalizado";
     await supabaseAdmin
       .from("whatsapp_conversas")
       .update({
-        status: "finalizado",
-        etapa: "finalizado",
-        data_finalizacao: agora.toISOString(),
-        finalizacao_em: agora.toISOString(),
-        motivo_finalizacao: "inatividade do cliente",
+        status: destino,
+        etapa: encerrando ? "finalizado" : conversa.etapa,
+        ...(encerrando
+          ? {
+              data_finalizacao: agora.toISOString(),
+              finalizacao_em: agora.toISOString(),
+              motivo_finalizacao: "inatividade do cliente",
+            }
+          : { motivo_pendencia: "inatividade do cliente" }),
       })
       .eq("id", conversa.id);
 
-    await auditar(conversa.id, "bot_finalizou_inatividade", `${minutos} min sem resposta`);
+    await auditar(conversa.id, "bot_inatividade", `${min2} min sem resposta — status ${destino}`);
     finalizadas += 1;
   }
 

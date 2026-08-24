@@ -34,26 +34,40 @@ export interface BotResposta {
   id: string;
   titulo: string;
   resposta: string;
+  /** Texto usado quando o cliente já falou hoje (vazio = usa o principal). */
+  resposta_retorno_dia: string;
   ordem: number;
   ativo: boolean;
   palavras: string[];
+  acao_sim: string;
+  destino_sim_fluxo_id: string | null;
+  destino_sim_resposta_id: string | null;
+  acao_nao: string;
+  destino_nao_fluxo_id: string | null;
+  destino_nao_resposta_id: string | null;
 }
 
 export interface BotConfig {
   bot_ativo: boolean;
   bot_24h: boolean;
   usar_ia: boolean;
-  inatividade_minutos: number;
+  inatividade1_minutos: number;
+  inatividade2_minutos: number;
+  inatividade_status: string;
+  msg_inatividade1: string;
+  msg_inatividade_pendente: string;
+  msg_inatividade_aguardando: string;
+  msg_inatividade_em_atendimento: string;
+  msg_inatividade_finalizado: string;
   permitir_orcamento_automatico: boolean;
   enviar_msg_finalizacao: boolean;
   finalizacao_uma_vez_dia: boolean;
-  msg_boas_vindas: string;
-  msg_retorno_dia: string;
-  msg_menu: string;
   msg_fora_horario: string;
-  msg_nao_entendi: string;
+  msg_fora_horario_ativo: boolean;
   msg_transferencia: string;
+  msg_transferencia_ativo: boolean;
   msg_finalizacao: string;
+  msg_finalizacao_ativo: boolean;
 }
 
 export interface BotDados {
@@ -215,10 +229,9 @@ export function opcoesAtivas(dados: BotDados) {
 const NUMEROS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
 
 export function textoMenu(dados: BotDados) {
-  const lista = opcoesAtivas(dados)
+  return opcoesAtivas(dados)
     .map((o, i) => `${NUMEROS[i] ?? `${i + 1}.`} ${o.nome}`)
     .join("\n\n");
-  return `${dados.config.msg_menu}\n\n${lista}`;
 }
 
 const SIM_NAO = ["SIM", "NÃO"];
@@ -277,17 +290,16 @@ export async function processarMenu(
   const texto = (entrada.texto ?? "").trim();
   const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
 
-  // Primeiro contato do dia / retorno no mesmo dia.
+  // Primeiro contato: envia o menu (as saudações vivem nos fluxos/respostas).
   if (estado.etapa === "inicio") {
-    const modelo = entrada.primeiraDoDia ? dados.config.msg_boas_vindas : dados.config.msg_retorno_dia;
-    const mensagens: MensagemBot[] = [{ texto: aplicarVariaveis(modelo, vars), botoes: SIM_NAO }];
-
     if (ehArquivo) {
-      mensagens.push({ texto: "Vi que você enviou um arquivo. É para fazer um orçamento?", botoes: SIM_NAO });
-      return { mensagens, estado: { etapa: "confirmar_arquivo" } };
+      return {
+        mensagens: [{ texto: "Vi que você enviou um arquivo. É para fazer um orçamento?", botoes: SIM_NAO }],
+        estado: { etapa: "confirmar_arquivo" },
+      };
     }
 
-    return { mensagens, estado: { etapa: "saudacao" } };
+    return { mensagens: [menu(dados)], estado: { etapa: "menu" } };
   }
 
   // Cliente enviou arquivo em qualquer etapa de menu.

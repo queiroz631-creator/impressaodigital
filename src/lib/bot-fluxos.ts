@@ -9,9 +9,13 @@ export interface Fluxo {
   descricao: string;
   icone: string;
   mensagem_inicial: string;
+  /** Mensagem inicial usada quando o cliente já falou hoje. */
+  mensagem_retorno_dia: string;
   ativo: boolean;
   ordem: number;
   inicial: boolean;
+  /** Fluxo iniciado quando o cliente manda apenas arquivos. */
+  fluxo_arquivos: boolean;
 }
 
 export interface FluxoEtapa {
@@ -90,6 +94,20 @@ export const ACOES_OPCAO: { valor: string; rotulo: string }[] = [
   { valor: "voltar_inicio_fluxo", rotulo: "Voltar ao início do fluxo" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
 ];
+
+/** Ações possíveis após o cliente responder SIM ou NÃO a uma resposta automática. */
+export const ACOES_RESPOSTA: { valor: string; rotulo: string }[] = [
+  { valor: "aguardar", rotulo: "Aguardar a próxima mensagem" },
+  { valor: "iniciar_fluxo", rotulo: "Iniciar um fluxo" },
+  { valor: "fluxo_inicial", rotulo: "Iniciar o fluxo inicial" },
+  { valor: "resposta", rotulo: "Enviar outra resposta automática" },
+  { valor: "atendente", rotulo: "Transferir para atendente" },
+  { valor: "finalizar", rotulo: "Finalizar atendimento" },
+];
+
+export function rotuloAcaoResposta(valor: string) {
+  return ACOES_RESPOSTA.find((a) => a.valor === valor)?.rotulo ?? valor;
+}
 
 /** Ações da etapa que são executadas por módulos do sistema. */
 export const ACOES_SISTEMA = new Set([
