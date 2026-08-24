@@ -18,7 +18,7 @@
 ## Detalhes técnicos
 
 - `src/lib/bot.server.ts` → função `responder`: remove a tentativa `send-button-list` e envia sempre `send-text` com as opções no texto; grava `whatsapp_message_id` a partir da resposta da Z-API e define `status`/`erro` conforme o retorno.
-- `src/routes/api/public/whatsapp/webhook.ts`: descarta callbacks cujo telefone é o número conectado da própria instância.
+- `src/routes/api/public/whatsapp/webhook.ts`: quando o telefone for o número conectado da própria instância, grava a mensagem e atualiza a conversa, mas pula a chamada ao motor do bot.
 - Nenhuma mudança nos fluxos, respostas automáticas, inatividade ou telas.
 
 ## Fora do escopo
