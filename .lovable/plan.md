@@ -7,7 +7,7 @@ Hoje, quando o cliente escreve algo que o bot não reconhece (nenhuma resposta a
 - Na aba **Fluxos**, ao lado do seletor "Fluxo inicial", entra um campo **Iniciar fluxo inicial após (minutos)** — padrão 2 minutos, 0 desativa a regra.
 - Quando o bot não reconhece a mensagem, a conversa continua aguardando (comportamento atual). A partir da última mensagem do cliente, se passar o tempo configurado e nada tiver sido reconhecido, o bot envia o fluxo inicial (usando a mensagem de 1ª conversa do dia ou a de retorno, como já acontece).
 - Se o cliente mandar outra mensagem antes, a contagem reinicia e o bot volta a tentar reconhecer resposta automática ou fluxo.
-- Vale também para a confirmação SIM/NÃO pendente da triagem que ficou sem resposta.
+- Quando o bot já perguntou "É sobre isso que você quer falar?" (SIM/NÃO) e o cliente não responde, **não** entra essa regra: valem as regras normais de 1ª e 2ª inatividade (aviso e depois mudança de status), como já hoje.
 - A verificação usa a mesma rotina periódica já existente da inatividade, e roda **antes** dela: uma conversa que ainda está só aguardando reconhecimento entra primeiro no fluxo inicial; só depois, se continuar parada, seguem os avisos de 1ª e 2ª inatividade normalmente.
 
 Nada mais muda: horários, menu, orçamento, currículo, pedidos, mensagens ativas/desativadas, simulador e a inatividade em duas etapas continuam exatamente como estão.
