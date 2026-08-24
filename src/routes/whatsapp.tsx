@@ -337,43 +337,12 @@ function Conversa({
     }
   }, [conversa.id, conversa.nao_lidas, queryClient]);
 
-  async function auditar(acao: string, detalhe?: string) {
-    await supabase.from("whatsapp_auditoria").insert({
-      conversa_id: conversa.id,
-      usuario_id: atendenteId,
-      usuario_nome: atendente,
-      acao,
-      detalhe: detalhe ?? null,
-    });
-  }
-
   async function alterarStatus(status: StatusConversa, acao: string) {
-    const extra: {
-      status: string;
-      atendente_id?: string | null;
-      atendente_nome?: string | null;
-      inicio_atendimento?: string;
-      data_finalizacao?: string;
-    } = { status };
-    if (status === "em_atendimento") {
-      extra.atendente_id = atendenteId;
-      extra.atendente_nome = atendente;
-      extra.inicio_atendimento = new Date().toISOString();
-    }
-    if (status === "finalizado") extra.data_finalizacao = new Date().toISOString();
-    if (status === "automatico") {
-      extra.atendente_id = null;
-      extra.atendente_nome = null;
-    }
-
-    const { error } = await supabase.from("whatsapp_conversas").update(extra).eq("id", conversa.id);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    await auditar(acao);
+    const ok = await alterarStatusConversa(conversa.id, status, acao, atendente, atendenteId);
+    if (!ok) return;
     await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
-    toast.success("Conversa atualizada.");
+    // Assumir mantém a conversa aberta; as demais voltam para a lista.
+    if (status !== "em_atendimento") onVoltar();
   }
 
   const envio = useMutation({
