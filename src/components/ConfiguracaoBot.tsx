@@ -213,7 +213,7 @@ export function ConfiguracaoBot() {
           <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="horarios">Horários</TabsTrigger>
           <TabsTrigger value="mensagens">Mensagens</TabsTrigger>
-          <TabsTrigger value="menu">Menu principal</TabsTrigger>
+          <TabsTrigger value="menu">Fluxos</TabsTrigger>
           <TabsTrigger value="respostas">Respostas automáticas</TabsTrigger>
           <TabsTrigger value="inatividade">Inatividade</TabsTrigger>
           <TabsTrigger value="simulador">Simulador</TabsTrigger>
