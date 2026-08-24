@@ -62,6 +62,182 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_fluxo_etapas: {
+        Row: {
+          acao: string
+          ativo: boolean
+          configuracao: Json
+          created_at: string
+          destino_fluxo_id: string | null
+          fluxo_id: string
+          id: string
+          mensagem: string
+          nome: string
+          ordem: number
+          proxima_etapa_id: string | null
+          tipo_resposta: string
+          updated_at: string
+        }
+        Insert: {
+          acao?: string
+          ativo?: boolean
+          configuracao?: Json
+          created_at?: string
+          destino_fluxo_id?: string | null
+          fluxo_id: string
+          id?: string
+          mensagem?: string
+          nome: string
+          ordem?: number
+          proxima_etapa_id?: string | null
+          tipo_resposta?: string
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          ativo?: boolean
+          configuracao?: Json
+          created_at?: string
+          destino_fluxo_id?: string | null
+          fluxo_id?: string
+          id?: string
+          mensagem?: string
+          nome?: string
+          ordem?: number
+          proxima_etapa_id?: string | null
+          tipo_resposta?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_fluxo_etapas_destino_fluxo_id_fkey"
+            columns: ["destino_fluxo_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_fluxo_etapas_fluxo_id_fkey"
+            columns: ["fluxo_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_fluxo_etapas_proxima_etapa_id_fkey"
+            columns: ["proxima_etapa_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxo_etapas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bot_fluxo_opcoes: {
+        Row: {
+          acao: string
+          ativo: boolean
+          configuracao: Json
+          created_at: string
+          destino_etapa_id: string | null
+          destino_fluxo_id: string | null
+          etapa_id: string
+          id: string
+          ordem: number
+          titulo: string
+          updated_at: string
+          valor: string
+        }
+        Insert: {
+          acao?: string
+          ativo?: boolean
+          configuracao?: Json
+          created_at?: string
+          destino_etapa_id?: string | null
+          destino_fluxo_id?: string | null
+          etapa_id: string
+          id?: string
+          ordem?: number
+          titulo: string
+          updated_at?: string
+          valor?: string
+        }
+        Update: {
+          acao?: string
+          ativo?: boolean
+          configuracao?: Json
+          created_at?: string
+          destino_etapa_id?: string | null
+          destino_fluxo_id?: string | null
+          etapa_id?: string
+          id?: string
+          ordem?: number
+          titulo?: string
+          updated_at?: string
+          valor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_fluxo_opcoes_destino_etapa_id_fkey"
+            columns: ["destino_etapa_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxo_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_fluxo_opcoes_destino_fluxo_id_fkey"
+            columns: ["destino_fluxo_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_fluxo_opcoes_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxo_etapas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bot_fluxos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string
+          icone: string
+          id: string
+          inicial: boolean
+          mensagem_inicial: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          icone?: string
+          id?: string
+          inicial?: boolean
+          mensagem_inicial?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string
+          icone?: string
+          id?: string
+          inicial?: boolean
+          mensagem_inicial?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bot_horarios: {
         Row: {
           abre: string
