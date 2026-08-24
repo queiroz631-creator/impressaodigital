@@ -1,0 +1,2 @@
+ALTER TABLE public.whatsapp_config ADD COLUMN IF NOT EXISTS fallback_inicial_minutos integer NOT NULL DEFAULT 2;
+ALTER TABLE public.whatsapp_conversas ADD COLUMN IF NOT EXISTS atendimento_numero integer NOT NULL DEFAULT 1;

@@ -1583,6 +1583,7 @@ export type Database = {
           conexao_nome: string
           enviar_msg_finalizacao: boolean
           exigir_revisao_humana: boolean
+          fallback_inicial_minutos: number
           finalizacao_uma_vez_dia: boolean
           id: string
           inatividade_minutos: number
@@ -1635,6 +1636,7 @@ export type Database = {
           conexao_nome?: string
           enviar_msg_finalizacao?: boolean
           exigir_revisao_humana?: boolean
+          fallback_inicial_minutos?: number
           finalizacao_uma_vez_dia?: boolean
           id?: string
           inatividade_minutos?: number
@@ -1687,6 +1689,7 @@ export type Database = {
           conexao_nome?: string
           enviar_msg_finalizacao?: boolean
           exigir_revisao_humana?: boolean
+          fallback_inicial_minutos?: number
           finalizacao_uma_vez_dia?: boolean
           id?: string
           inatividade_minutos?: number
@@ -1738,6 +1741,7 @@ export type Database = {
         Row: {
           atendente_id: string | null
           atendente_nome: string | null
+          atendimento_numero: number
           cliente_id: string | null
           contexto: Json
           created_at: string
@@ -1766,6 +1770,7 @@ export type Database = {
         Insert: {
           atendente_id?: string | null
           atendente_nome?: string | null
+          atendimento_numero?: number
           cliente_id?: string | null
           contexto?: Json
           created_at?: string
@@ -1794,6 +1799,7 @@ export type Database = {
         Update: {
           atendente_id?: string | null
           atendente_nome?: string | null
+          atendimento_numero?: number
           cliente_id?: string | null
           contexto?: Json
           created_at?: string
