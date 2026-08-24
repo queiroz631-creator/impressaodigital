@@ -79,11 +79,27 @@ const TIPOS: { valor: TipoServico; rotulo: string }[] = [
 ];
 
 /** Envia a mensagem pelo WhatsApp e registra na conversa. */
-async function responder(conversa: ConversaBot, texto: string) {
-  const r = await chamarZapi("send-text", {
-    metodo: "POST",
-    corpo: { phone: conversa.telefone, message: texto },
-  });
+async function responder(conversa: ConversaBot, texto: string, botoes?: string[]) {
+  let r = { ok: false, erro: "Falha no envio" } as { ok: boolean; erro?: string | null };
+
+  if (botoes && botoes.length > 0) {
+    r = await chamarZapi("send-button-list", {
+      metodo: "POST",
+      corpo: {
+        phone: conversa.telefone,
+        message: texto,
+        buttonList: { buttons: botoes.map((b, i) => ({ id: String(i + 1), label: b })) },
+      },
+    });
+  }
+
+  if (!r.ok) {
+    const complemento = botoes && botoes.length > 0 ? `\n\n_Responda: ${botoes.join(" ou ")}_` : "";
+    r = await chamarZapi("send-text", {
+      metodo: "POST",
+      corpo: { phone: conversa.telefone, message: `${texto}${complemento}` },
+    });
+  }
 
   await supabaseAdmin.from("whatsapp_mensagens").insert({
     conversa_id: conversa.id,
@@ -100,6 +116,7 @@ async function responder(conversa: ConversaBot, texto: string) {
     .update({ ultima_mensagem: texto.slice(0, 300), ultima_mensagem_em: new Date().toISOString() })
     .eq("id", conversa.id);
 }
+
 
 type AtualizacaoConversa = Partial<{
   status: string;
