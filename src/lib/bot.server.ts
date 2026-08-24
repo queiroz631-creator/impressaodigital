@@ -858,3 +858,73 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
       return;
   }
 }
+
+// ---------- Inatividade ----------
+
+/**
+ * Encerra conversas paradas: avisa uma vez e, se o cliente continuar sem
+ * responder, envia a mensagem de finalização e fecha o atendimento.
+ */
+export async function verificarInatividade(): Promise<{ avisadas: number; finalizadas: number }> {
+  const config = await lerConfig();
+  if (!config?.bot_ativo) return { avisadas: 0, finalizadas: 0 };
+
+  const dados = await carregarDadosBot();
+  if (!dados) return { avisadas: 0, finalizadas: 0 };
+
+  const minutos = Math.max(1, Number(dados.config.inatividade_minutos ?? 5));
+  const agora = new Date();
+  const limite = new Date(agora.getTime() - minutos * 60_000).toISOString();
+
+  const { data } = await supabaseAdmin
+    .from("whatsapp_conversas")
+    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, inatividade_avisada, ultima_mensagem_em, finalizacao_em")
+    .eq("status", "automatico")
+    .lt("ultima_mensagem_em", limite)
+    .limit(50);
+
+  let avisadas = 0;
+  let finalizadas = 0;
+
+  for (const linha of data ?? []) {
+    const conversa = linha as unknown as ConversaBot;
+
+    if (!linha.inatividade_avisada) {
+      await responder(conversa, "Ainda está por aí? 😊 Se precisar de algo, é só me chamar.");
+      await supabaseAdmin.from("whatsapp_conversas").update({ inatividade_avisada: true }).eq("id", conversa.id);
+      avisadas += 1;
+      continue;
+    }
+
+    const podeFinalizar =
+      dados.config.enviar_msg_finalizacao &&
+      (!dados.config.finalizacao_uma_vez_dia || !mesmoDia(linha.finalizacao_em, agora));
+
+    if (podeFinalizar) {
+      await responder(
+        conversa,
+        aplicarVariaveis(dados.config.msg_finalizacao, {
+          nome: conversa.nome_contato ?? "",
+          telefone: conversa.telefone,
+          agora,
+        }),
+      );
+    }
+
+    await supabaseAdmin
+      .from("whatsapp_conversas")
+      .update({
+        status: "finalizado",
+        etapa: "finalizado",
+        data_finalizacao: agora.toISOString(),
+        finalizacao_em: agora.toISOString(),
+        motivo_finalizacao: "inatividade do cliente",
+      })
+      .eq("id", conversa.id);
+
+    await auditar(conversa.id, "bot_finalizou_inatividade", `${minutos} min sem resposta`);
+    finalizadas += 1;
+  }
+
+  return { avisadas, finalizadas };
+}
