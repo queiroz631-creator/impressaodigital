@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -200,155 +201,191 @@ export function ConfiguracaoBot() {
   }
 
   return (
-    <div className="grid max-w-4xl gap-6">
-      {/* ---------- Ativação ---------- */}
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Bot className="h-4 w-4" /> Atendimento automático
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          <Alternar
-            titulo="Bot ativo"
-            ajuda="Responde automaticamente as conversas na aba Automático."
-            valor={form.bot_ativo}
-            ao={(v) => setForm({ ...form, bot_ativo: v })}
-          />
-          <Alternar
-            titulo="Orçamento automático"
-            ajuda="O bot coleta arquivos e opções e calcula com os preços cadastrados."
-            valor={form.permitir_orcamento_automatico}
-            ao={(v) => setForm({ ...form, permitir_orcamento_automatico: v })}
-          />
-          <Alternar
-            titulo="Exigir revisão humana"
-            ajuda="O orçamento gerado aguarda revisão antes da confirmação do cliente."
-            valor={form.exigir_revisao_humana}
-            ao={(v) => setForm({ ...form, exigir_revisao_humana: v })}
-          />
-          <Alternar
-            titulo="Usar inteligência artificial"
-            ajuda="Ajuda a entender mensagens escritas de forma diferente das palavras-chave."
-            valor={form.usar_ia}
-            ao={(v) => setForm({ ...form, usar_ia: v })}
-          />
-
-          <div className="grid gap-1 sm:max-w-xs">
-            <Label>Encerrar por inatividade (minutos)</Label>
-            <Input
-              type="number"
-              min={1}
-              value={form.inatividade_minutos}
-              onChange={(e) => setForm({ ...form, inatividade_minutos: Number(e.target.value || 1) })}
-            />
-            <p className="text-xs text-muted-foreground">
-              O bot avisa uma vez e, se não houver resposta, encerra o atendimento.
-            </p>
-          </div>
-
-          <Alternar
-            titulo="Enviar mensagem de finalização"
-            ajuda="Mensagem de despedida ao encerrar a conversa."
-            valor={form.enviar_msg_finalizacao}
-            ao={(v) => setForm({ ...form, enviar_msg_finalizacao: v })}
-          />
-          <Alternar
-            titulo="Finalizar apenas uma vez por dia"
-            ajuda="Evita repetir a despedida várias vezes no mesmo dia."
-            valor={form.finalizacao_uma_vez_dia}
-            ao={(v) => setForm({ ...form, finalizacao_uma_vez_dia: v })}
-          />
-        </CardContent>
-      </Card>
-
-      {/* ---------- Horários ---------- */}
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Clock className="h-4 w-4" /> Horário de atendimento
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          <Alternar
-            titulo="Atender 24 horas"
-            ajuda="Quando ativo, o bot responde a qualquer hora e ignora os horários abaixo."
-            valor={form.bot_24h}
-            ao={(v) => setForm({ ...form, bot_24h: v })}
-          />
-
-          {!form.bot_24h && (
-            <div className="grid gap-2">
-              {(horarios.data ?? []).map((h) => (
-                <div key={h.id} className="flex flex-wrap items-center gap-3 rounded-lg border p-2">
-                  <span className="w-24 text-sm font-semibold">{DIAS[h.dia_semana]}</span>
-                  <Switch
-                    checked={!h.fechado}
-                    onCheckedChange={(v) => void salvarHorario(h, { fechado: !v })}
-                  />
-                  <span className="text-xs text-muted-foreground">{h.fechado ? "Fechado" : "Aberto"}</span>
-                  {!h.fechado && (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="time"
-                        className="w-28"
-                        value={hhmm(h.abre)}
-                        onChange={(e) => void salvarHorario(h, { abre: e.target.value })}
-                      />
-                      <span className="text-xs">até</span>
-                      <Input
-                        type="time"
-                        className="w-28"
-                        value={hhmm(h.fecha)}
-                        onChange={(e) => void salvarHorario(h, { fecha: e.target.value })}
-                      />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* ---------- Opções do menu ---------- */}
-      <OpcoesMenu opcoes={opcoes.data ?? []} palavras={palavras.data ?? []} />
-
-      {/* ---------- Respostas automáticas ---------- */}
-      <RespostasAutomaticas respostas={respostas.data ?? []} palavras={palavras.data ?? []} />
-
-      {/* ---------- Mensagens ---------- */}
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <MessageSquare className="h-4 w-4" /> Mensagens
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          {CAMPOS.map((campo) => (
-            <div key={campo.chave} className="grid gap-1">
-              <Label>{campo.rotulo}</Label>
-              <Textarea
-                rows={2}
-                value={String(form[campo.chave] ?? "")}
-                onChange={(e) => setForm({ ...form, [campo.chave]: e.target.value })}
-              />
-              <p className="text-xs text-muted-foreground">{campo.ajuda}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
+    <div className="grid max-w-4xl gap-4">
       <div className="flex justify-end">
         <Button onClick={salvarConfig} disabled={salvando}>
           <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar configurações do bot"}
         </Button>
       </div>
 
-      <Simulador />
+      <Tabs defaultValue="geral">
+        <TabsList className="mb-4 flex h-auto flex-wrap justify-start gap-1">
+          <TabsTrigger value="geral">Geral</TabsTrigger>
+          <TabsTrigger value="horarios">Horários</TabsTrigger>
+          <TabsTrigger value="mensagens">Mensagens</TabsTrigger>
+          <TabsTrigger value="menu">Menu principal</TabsTrigger>
+          <TabsTrigger value="respostas">Respostas automáticas</TabsTrigger>
+          <TabsTrigger value="inatividade">Inatividade</TabsTrigger>
+          <TabsTrigger value="simulador">Simulador</TabsTrigger>
+        </TabsList>
+
+        {/* ---------- Geral ---------- */}
+        <TabsContent value="geral">
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Bot className="h-4 w-4" /> Atendimento automático
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <Alternar
+                titulo="Bot ativo"
+                ajuda="Responde automaticamente as conversas na aba Automático."
+                valor={form.bot_ativo}
+                ao={(v) => setForm({ ...form, bot_ativo: v })}
+              />
+              <Alternar
+                titulo="Orçamento automático"
+                ajuda="O bot coleta arquivos e opções e calcula com os preços cadastrados."
+                valor={form.permitir_orcamento_automatico}
+                ao={(v) => setForm({ ...form, permitir_orcamento_automatico: v })}
+              />
+              <Alternar
+                titulo="Exigir revisão humana"
+                ajuda="O orçamento gerado aguarda revisão antes da confirmação do cliente."
+                valor={form.exigir_revisao_humana}
+                ao={(v) => setForm({ ...form, exigir_revisao_humana: v })}
+              />
+              <Alternar
+                titulo="Usar inteligência artificial"
+                ajuda="Ajuda a entender mensagens escritas de forma diferente das palavras-chave."
+                valor={form.usar_ia}
+                ao={(v) => setForm({ ...form, usar_ia: v })}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ---------- Horários ---------- */}
+        <TabsContent value="horarios">
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Clock className="h-4 w-4" /> Horário de atendimento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <Alternar
+                titulo="Atender 24 horas"
+                ajuda="Quando ativo, o bot responde a qualquer hora e ignora os horários abaixo."
+                valor={form.bot_24h}
+                ao={(v) => setForm({ ...form, bot_24h: v })}
+              />
+
+              {!form.bot_24h && (
+                <div className="grid gap-2">
+                  {(horarios.data ?? []).map((h) => (
+                    <div key={h.id} className="flex flex-wrap items-center gap-3 rounded-lg border p-2">
+                      <span className="w-24 text-sm font-semibold">{DIAS[h.dia_semana]}</span>
+                      <Switch
+                        checked={!h.fechado}
+                        onCheckedChange={(v) => void salvarHorario(h, { fechado: !v })}
+                      />
+                      <span className="text-xs text-muted-foreground">{h.fechado ? "Fechado" : "Aberto"}</span>
+                      {!h.fechado && (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="time"
+                            className="w-28"
+                            value={hhmm(h.abre)}
+                            onChange={(e) => void salvarHorario(h, { abre: e.target.value })}
+                          />
+                          <span className="text-xs">até</span>
+                          <Input
+                            type="time"
+                            className="w-28"
+                            value={hhmm(h.fecha)}
+                            onChange={(e) => void salvarHorario(h, { fecha: e.target.value })}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ---------- Mensagens ---------- */}
+        <TabsContent value="mensagens">
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MessageSquare className="h-4 w-4" /> Mensagens
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              {CAMPOS.map((campo) => (
+                <div key={campo.chave} className="grid gap-1">
+                  <Label>{campo.rotulo}</Label>
+                  <Textarea
+                    rows={2}
+                    value={String(form[campo.chave] ?? "")}
+                    onChange={(e) => setForm({ ...form, [campo.chave]: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">{campo.ajuda}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ---------- Menu principal ---------- */}
+        <TabsContent value="menu">
+          <OpcoesMenu opcoes={opcoes.data ?? []} palavras={palavras.data ?? []} />
+        </TabsContent>
+
+        {/* ---------- Respostas automáticas ---------- */}
+        <TabsContent value="respostas">
+          <RespostasAutomaticas respostas={respostas.data ?? []} palavras={palavras.data ?? []} />
+        </TabsContent>
+
+        {/* ---------- Inatividade e finalização ---------- */}
+        <TabsContent value="inatividade">
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-base">Inatividade e finalização</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <div className="grid gap-1 sm:max-w-xs">
+                <Label>Encerrar por inatividade (minutos)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={form.inatividade_minutos}
+                  onChange={(e) => setForm({ ...form, inatividade_minutos: Number(e.target.value || 1) })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  O bot avisa uma vez e, se não houver resposta, encerra o atendimento.
+                </p>
+              </div>
+
+              <Alternar
+                titulo="Enviar mensagem de finalização"
+                ajuda="Mensagem de despedida ao encerrar a conversa."
+                valor={form.enviar_msg_finalizacao}
+                ao={(v) => setForm({ ...form, enviar_msg_finalizacao: v })}
+              />
+              <Alternar
+                titulo="Finalizar apenas uma vez por dia"
+                ajuda="Evita repetir a despedida várias vezes no mesmo dia."
+                valor={form.finalizacao_uma_vez_dia}
+                ao={(v) => setForm({ ...form, finalizacao_uma_vez_dia: v })}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ---------- Simulador ---------- */}
+        <TabsContent value="simulador">
+          <Simulador />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
+
 
 function Alternar({
   titulo,

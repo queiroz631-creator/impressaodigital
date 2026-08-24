@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { statusInstanciaZapi } from "@/lib/whatsapp.functions";
@@ -20,7 +20,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { listarImpressoras, qzDisponivel, testarImpressora } from "@/lib/impressora";
 import { PIX_MENSAGEM_PADRAO, PRAZO_MENSAGEM_PADRAO } from "@/lib/orcamento-extras";
 import { Switch } from "@/components/ui/switch";
-import { ConfiguracaoBot } from "@/components/ConfiguracaoBot";
 
 
 export const Route = createFileRoute("/configuracoes")({
@@ -195,7 +194,6 @@ function Configuracoes() {
           <TabsTrigger value="pix">PIX e prazo</TabsTrigger>
           <TabsTrigger value="impressao">Impressão</TabsTrigger>
           <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
-          <TabsTrigger value="bot">Bot</TabsTrigger>
           <TabsTrigger value="link">Link do orçamento</TabsTrigger>
         </TabsList>
 
@@ -472,13 +470,23 @@ function Configuracoes() {
 
         </TabsContent>
 
-        <TabsContent value="whatsapp">
+        <TabsContent value="whatsapp" className="grid gap-4">
           <CardWhatsapp />
+          <Card className="shadow-card">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+              <div>
+                <p className="text-sm font-semibold">Atendimento automático (bot)</p>
+                <p className="text-xs text-muted-foreground">
+                  Horários, menu, respostas automáticas, mensagens e simulador.
+                </p>
+              </div>
+              <Button asChild variant="outline">
+                <Link to="/bot">Abrir Configuração do Bot</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="bot">
-          <CardBot />
-        </TabsContent>
 
         <TabsContent value="link">
           <CardLinkPublico />
@@ -691,7 +699,4 @@ function CardWhatsapp() {
   );
 }
 
-/** Atendimento automático (bot) do WhatsApp. */
-function CardBot() {
-  return <ConfiguracaoBot />;
-}
+

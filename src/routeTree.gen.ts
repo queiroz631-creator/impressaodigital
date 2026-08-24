@@ -11,10 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BotRouteImport } from './routes/bot'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as HistoricoRouteImport } from './routes/historico'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as PrecosRouteImport } from './routes/precos'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
@@ -35,6 +35,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BotRoute = BotRouteImport.update({
+  id: '/bot',
+  path: '/bot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientesRoute = ClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
@@ -48,11 +53,6 @@ const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HistoricoRoute = HistoricoRouteImport.update({
-  id: '/historico',
-  path: '/historico',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrcamentosRoute = OrcamentosRouteImport.update({
@@ -106,10 +106,10 @@ const ApiPublicWhatsappWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
-  '/historico': typeof HistoricoRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -123,10 +123,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
-  '/historico': typeof HistoricoRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -141,10 +141,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
-  '/historico': typeof HistoricoRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -160,10 +160,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/bot'
     | '/clientes'
     | '/configuracoes'
     | '/dashboard'
-    | '/historico'
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
@@ -177,10 +177,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/bot'
     | '/clientes'
     | '/configuracoes'
     | '/dashboard'
-    | '/historico'
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
@@ -194,10 +194,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/bot'
     | '/clientes'
     | '/configuracoes'
     | '/dashboard'
-    | '/historico'
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
@@ -212,10 +212,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  BotRoute: typeof BotRoute
   ClientesRoute: typeof ClientesRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   DashboardRoute: typeof DashboardRoute
-  HistoricoRoute: typeof HistoricoRoute
   OrcamentosRoute: typeof OrcamentosRoute
   PrecosRoute: typeof PrecosRoute
   WhatsappRoute: typeof WhatsappRoute
@@ -243,6 +243,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bot': {
+      id: '/bot'
+      path: '/bot'
+      fullPath: '/bot'
+      preLoaderRoute: typeof BotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clientes': {
       id: '/clientes'
       path: '/clientes'
@@ -262,13 +269,6 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/historico': {
-      id: '/historico'
-      path: '/historico'
-      fullPath: '/historico'
-      preLoaderRoute: typeof HistoricoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orcamentos': {
@@ -340,10 +340,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  BotRoute: BotRoute,
   ClientesRoute: ClientesRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   DashboardRoute: DashboardRoute,
-  HistoricoRoute: HistoricoRoute,
   OrcamentosRoute: OrcamentosRoute,
   PrecosRoute: PrecosRoute,
   WhatsappRoute: WhatsappRoute,

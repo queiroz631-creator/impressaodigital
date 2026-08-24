@@ -3,13 +3,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Bot, CheckCircle2, Send, UserCheck } from "lucide-react";
+import { ArrowLeft, Bot, CheckCircle2, ChevronDown, Search, Send, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -87,12 +94,73 @@ function useConversas() {
   });
 }
 
+/** Texto sem acento, minúsculo, para busca. */
+function normalizar(texto: string) {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+/** Atualiza o status da conversa e registra a auditoria. */
+async function alterarStatusConversa(
+  conversaId: string,
+  status: StatusConversa,
+  acao: string,
+  atendente: string,
+  atendenteId: string | null,
+) {
+  const extra: {
+    status: string;
+    atendente_id?: string | null;
+    atendente_nome?: string | null;
+    inicio_atendimento?: string;
+    data_finalizacao?: string;
+  } = { status };
+  if (status === "em_atendimento") {
+    extra.atendente_id = atendenteId;
+    extra.atendente_nome = atendente;
+    extra.inicio_atendimento = new Date().toISOString();
+  }
+  if (status === "finalizado") extra.data_finalizacao = new Date().toISOString();
+  if (status === "automatico") {
+    extra.atendente_id = null;
+    extra.atendente_nome = null;
+  }
+
+  const { error } = await supabase.from("whatsapp_conversas").update(extra).eq("id", conversaId);
+  if (error) {
+    toast.error(error.message);
+    return false;
+  }
+
+  await supabase.from("whatsapp_auditoria").insert({
+    conversa_id: conversaId,
+    usuario_id: atendenteId,
+    usuario_nome: atendente,
+    acao,
+    detalhe: null,
+  });
+
+  toast.success("Conversa atualizada.");
+  return true;
+}
+
+const ACOES_STATUS: { status: StatusConversa; acao: string; rotulo: string }[] = [
+  { status: "em_atendimento", acao: "assumiu", rotulo: "Assumir" },
+  { status: "automatico", acao: "devolveu_bot", rotulo: "Devolver ao bot" },
+  { status: "pendente", acao: "marcou_pendente", rotulo: "Pendente" },
+  { status: "finalizado", acao: "finalizou", rotulo: "Finalizar" },
+];
+
+
 function Atendimento() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: conversas, isLoading } = useConversas();
   const [aba, setAba] = useState<StatusConversa>("automatico");
   const [abertaId, setAbertaId] = useState<string | null>(null);
+  const [busca, setBusca] = useState("");
 
   useEffect(() => {
     const canal = supabase
@@ -118,8 +186,20 @@ function Atendimento() {
     return base;
   }, [conversas]);
 
-  const lista = (conversas ?? []).filter((c) => c.status === aba);
+  const termo = normalizar(busca.trim());
+  const lista = (conversas ?? []).filter((c) => {
+    if (c.status !== aba) return false;
+    if (!termo) return true;
+    const nome = normalizar(c.nome_contato ?? "");
+    const telefone = (c.telefone ?? "").replace(/\D/g, "");
+    return nome.includes(termo) || telefone.includes(termo.replace(/\D/g, "")) || formatarTelefone(c.telefone).includes(busca.trim());
+  });
   const aberta = (conversas ?? []).find((c) => c.id === abertaId) ?? null;
+
+  async function mudarStatus(conversaId: string, status: StatusConversa, acao: string) {
+    const ok = await alterarStatusConversa(conversaId, status, acao, user?.email ?? "Atendente", user?.id ?? null);
+    if (ok) await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+  }
 
   if (aberta) {
     return (
@@ -135,6 +215,16 @@ function Atendimento() {
   return (
     <>
       <PageHeader titulo="Atendimento WhatsApp" subtitulo="Conversas recebidas pelo WhatsApp da loja" />
+
+      <div className="relative mb-3">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Pesquisar por nome ou telefone..."
+          className="pl-9"
+        />
+      </div>
 
       <Tabs value={aba} onValueChange={(v) => setAba(v as StatusConversa)}>
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
@@ -153,36 +243,54 @@ function Atendimento() {
         {!isLoading && lista.length === 0 && (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              Nenhuma conversa nesta aba.
+              {termo ? "Nenhuma conversa encontrada." : "Nenhuma conversa nesta aba."}
             </CardContent>
           </Card>
         )}
 
         {lista.map((c) => (
-          <button key={c.id} onClick={() => setAbertaId(c.id)} className="block w-full text-left">
-            <Card className="transition-colors hover:border-primary">
-              <CardContent className="flex flex-wrap items-center gap-3 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {c.nome_contato || formatarTelefone(c.telefone)}
-                    <span className="ml-2 font-normal text-muted-foreground">{formatarTelefone(c.telefone)}</span>
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">{c.ultima_mensagem ?? "Sem mensagens"}</p>
-                </div>
+          <Card key={c.id} className="transition-colors hover:border-primary">
+            <CardContent className="flex flex-wrap items-center gap-3 py-3">
+              <button onClick={() => setAbertaId(c.id)} className="min-w-0 flex-1 text-left">
+                <p className="truncate text-sm font-semibold">
+                  {c.nome_contato || formatarTelefone(c.telefone)}
+                  <span className="ml-2 font-normal text-muted-foreground">{formatarTelefone(c.telefone)}</span>
+                </p>
+                <p className="truncate text-xs text-muted-foreground">{c.ultima_mensagem ?? "Sem mensagens"}</p>
+              </button>
 
-                <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs">
-                  <Badge variant="outline">{rotuloEtapa[c.etapa] ?? c.etapa}</Badge>
-                  <Badge variant="secondary">{c.total_mensagens} msg</Badge>
-                  {c.nao_lidas > 0 && <Badge>{c.nao_lidas} nova(s)</Badge>}
-                  {c.pedido_id && <Badge variant="outline">Pedido vinculado</Badge>}
-                  <span className="text-muted-foreground">{dataHoraCurta(c.ultima_mensagem_em ?? c.created_at)}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </button>
+              <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs">
+                <Badge variant="outline">{rotuloEtapa[c.etapa] ?? c.etapa}</Badge>
+                <Badge variant="secondary">{c.total_mensagens} msg</Badge>
+                {c.nao_lidas > 0 && <Badge>{c.nao_lidas} nova(s)</Badge>}
+                {c.pedido_id && <Badge variant="outline">Pedido vinculado</Badge>}
+                <span className="text-muted-foreground">{dataHoraCurta(c.ultima_mensagem_em ?? c.created_at)}</span>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" className="gap-1">
+                      Status <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {ACOES_STATUS.map((a) => (
+                      <DropdownMenuItem
+                        key={a.status}
+                        disabled={c.status === a.status}
+                        onSelect={() => void mudarStatus(c.id, a.status, a.acao)}
+                      >
+                        {a.rotulo}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </>
+
   );
 }
 
@@ -229,43 +337,12 @@ function Conversa({
     }
   }, [conversa.id, conversa.nao_lidas, queryClient]);
 
-  async function auditar(acao: string, detalhe?: string) {
-    await supabase.from("whatsapp_auditoria").insert({
-      conversa_id: conversa.id,
-      usuario_id: atendenteId,
-      usuario_nome: atendente,
-      acao,
-      detalhe: detalhe ?? null,
-    });
-  }
-
   async function alterarStatus(status: StatusConversa, acao: string) {
-    const extra: {
-      status: string;
-      atendente_id?: string | null;
-      atendente_nome?: string | null;
-      inicio_atendimento?: string;
-      data_finalizacao?: string;
-    } = { status };
-    if (status === "em_atendimento") {
-      extra.atendente_id = atendenteId;
-      extra.atendente_nome = atendente;
-      extra.inicio_atendimento = new Date().toISOString();
-    }
-    if (status === "finalizado") extra.data_finalizacao = new Date().toISOString();
-    if (status === "automatico") {
-      extra.atendente_id = null;
-      extra.atendente_nome = null;
-    }
-
-    const { error } = await supabase.from("whatsapp_conversas").update(extra).eq("id", conversa.id);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    await auditar(acao);
+    const ok = await alterarStatusConversa(conversa.id, status, acao, atendente, atendenteId);
+    if (!ok) return;
     await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
-    toast.success("Conversa atualizada.");
+    // Assumir mantém a conversa aberta; as demais voltam para a lista.
+    if (status !== "em_atendimento") onVoltar();
   }
 
   const envio = useMutation({

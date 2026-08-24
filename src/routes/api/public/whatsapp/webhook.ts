@@ -10,6 +10,9 @@ const corpoSchema = z
     chatName: z.string().optional(),
     messageId: z.string().optional(),
     fromMe: z.boolean().optional(),
+    isGroup: z.boolean().optional(),
+    participantPhone: z.string().optional(),
+    chatLid: z.string().optional(),
     isStatusReply: z.boolean().optional(),
     type: z.string().optional(),
     text: z.object({ message: z.string().optional() }).partial().optional(),
@@ -92,6 +95,14 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         if (corpo.type && corpo.type !== "ReceivedCallback") {
           return Response.json({ ok: true, ignorado: true, motivo: corpo.type });
         }
+
+        // Mensagens de grupo não são atendidas: não gravamos nem respondemos.
+        const ehGrupo =
+          corpo.isGroup === true ||
+          Boolean(corpo.participantPhone) ||
+          /@g\.us$/i.test(corpo.phone ?? "") ||
+          String(corpo.phone ?? "").replace(/\D/g, "").length > 15;
+        if (ehGrupo) return Response.json({ ok: true, ignorado: true, motivo: "grupo" });
 
         const telefone = normalizarTelefone(corpo.phone);
         if (!telefone) return Response.json({ ok: true, ignorado: true });
