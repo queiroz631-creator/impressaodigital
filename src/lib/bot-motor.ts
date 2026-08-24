@@ -54,6 +54,8 @@ export interface BotConfig {
   inatividade1_minutos: number;
   inatividade2_minutos: number;
   inatividade_status: string;
+  /** Minutos sem reconhecimento até o bot iniciar o fluxo inicial (0 = desativado). */
+  fallback_inicial_minutos: number;
   msg_inatividade1: string;
   msg_inatividade_pendente: string;
   msg_inatividade_aguardando: string;
