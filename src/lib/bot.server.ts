@@ -50,6 +50,8 @@ interface ContextoBot {
   observacao?: string;
   pendenteTipo?: "opcao" | "resposta" | null;
   pendenteId?: string | null;
+  /** Estado do fluxo configurável em execução. */
+  fluxo?: EstadoFluxo | null;
 }
 
 interface ConversaBot {
