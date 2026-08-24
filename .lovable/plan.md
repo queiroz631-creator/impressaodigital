@@ -37,13 +37,13 @@ Ordem de análise da mensagem:
 
 - Dois tempos configuráveis: **1ª inatividade** (ex.: 5 min) e **2ª inatividade** (ex.: 10 min), contados desde a última mensagem.
 - Na **1ª**, o bot envia a mensagem de aviso configurada. Na **2ª**, a conversa é movida para o **status escolhido** (Aguardando resposta / Pendente / Em atendimento / Finalizado), com a mensagem configurada **para aquele status** — cada status tem seu próprio texto, e o texto só é enviado se estiver preenchido.
-- A contagem só acontece quando a conversa está na aba **Em atendimento** e o bot está **aguardando resposta do cliente**. Se quem deve responder é a loja (última mensagem foi do cliente), a conversa nunca entra em inatividade.
+- A contagem só acontece com a conversa na aba **Automático** (bot atendendo) e enquanto o bot está **aguardando resposta do cliente**. Conversas em atendimento humano, pendentes ou finalizadas nunca entram em inatividade; se quem deve responder é a loja, também não conta.
 - Qualquer mensagem do cliente zera a contagem e os avisos.
 
 ## Tela do Bot
 
 - Aba **Fluxos**: no formulário de novo/editar fluxo, dois campos de mensagem inicial (1ª conversa do dia / demais do dia). No cabeçalho, ao lado de "Fluxo inicial", um seletor **Fluxo para arquivos**.
-- Aba **Respostas automáticas**: em cada resposta, os dois textos e dois blocos de destino — **Se SIM** e **Se NÃO** — com o tipo de ação e, quando aplicável, o fluxo ou a resposta de destino.
+- Aba **Respostas automáticas**: mesmo formato em cards da aba Fluxos — cabeçalho com botão **+ ADICIONAR RESPOSTA**, um card por resposta (título, prévia do texto, quantidade de palavras-chave, selo Ativo/Inativo) e botões EDITAR, DUPLICAR, ATIVAR/DESATIVAR e EXCLUIR. A edição abre em diálogo com: título, texto da 1ª conversa do dia, texto das demais conversas do dia, palavras-chave e os blocos **Se SIM** / **Se NÃO** (tipo de ação e destino: fluxo, atendente, outra resposta, fluxo inicial, finalizar ou aguardar).
 - Aba **Mensagens**: lista reduzida, cada card com switch Ativo/Desativado.
 - Aba **Inatividade**: minutos da 1ª e da 2ª, mensagem da 1ª, seletor do status de destino e um campo de mensagem para cada status.
 
@@ -54,7 +54,8 @@ Ordem de análise da mensagem:
 - `src/lib/bot-fluxos.ts`: novos campos nos tipos `Fluxo`.
 - `src/lib/bot-motor.ts`: tipo `BotResposta` com os textos e ações de SIM/NÃO; deixa de depender de boas-vindas/menu/não entendi.
 - `src/lib/bot-fluxos-motor.ts`: `iniciar()` recebe se é a primeira conversa do dia e escolhe a mensagem inicial correspondente.
-- `src/lib/bot.server.ts`: triagem na entrada (arquivo → fluxo de arquivos; texto → resposta automática com confirmação SIM/NÃO e execução da ação vinculada; nada reconhecido → aguarda). A confirmação pendente fica no contexto da conversa, junto do estado de fluxo já existente. Envio de cada mensagem passa a respeitar o respectivo ativo/desativado. `verificarInatividade` passa a usar os dois tempos, só considera conversas em atendimento aguardando o cliente e move para o status configurado.
+- `src/lib/bot.server.ts`: triagem na entrada (arquivo → fluxo de arquivos; texto → resposta automática com confirmação SIM/NÃO e execução da ação vinculada; nada reconhecido → aguarda). A confirmação pendente fica no contexto da conversa, junto do estado de fluxo já existente. Envio de cada mensagem passa a respeitar o respectivo ativo/desativado. `verificarInatividade` passa a usar os dois tempos, só considera conversas na aba Automático aguardando o cliente e move para o status configurado.
+- Novos componentes `src/components/bot/RespostasPainel.tsx` e `RespostaDialog.tsx`, no mesmo padrão visual de `FluxosPainel.tsx`.
 - `src/lib/bot-dados.server.ts`: carrega os novos campos.
 - `src/components/ConfiguracaoBot.tsx` e `src/components/bot/FluxosPainel.tsx`: ajustes de interface.
 - Sem alterações em cálculo de orçamento, currículo, pedidos, Z-API ou qualquer código sem ligação com essa triagem.
