@@ -16,7 +16,7 @@ const itens = [
   { to: "/curriculos", label: "Currículo Vitae", icon: FileUser },
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle, badge: true },
-  { to: "/historico", label: "Histórico", icon: History },
+  { to: "/bot", label: "Bot", icon: Bot },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
