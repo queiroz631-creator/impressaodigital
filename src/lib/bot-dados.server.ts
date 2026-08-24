@@ -34,12 +34,12 @@ export async function carregarDadosBot(): Promise<BotDados | null> {
     msg_finalizacao: d.msg_finalizacao ?? "",
   };
 
-  const opcoes: BotOpcao[] = ((opc.data ?? []) as BotOpcao[]).map((o) => ({
+  const opcoes: BotOpcao[] = ((opc.data ?? []) as Omit<BotOpcao, "palavras">[]).map((o) => ({
     ...o,
     palavras: palavras.filter((p) => p.opcao_id === o.id).map((p) => p.texto),
   }));
 
-  const respostas: BotResposta[] = ((resp.data ?? []) as BotResposta[]).map((r) => ({
+  const respostas: BotResposta[] = ((resp.data ?? []) as Omit<BotResposta, "palavras">[]).map((r) => ({
     ...r,
     palavras: palavras.filter((p) => p.resposta_id === r.id).map((p) => p.texto),
   }));

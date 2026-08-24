@@ -21,9 +21,7 @@ import {
   type TipoServico,
 } from "@/lib/calc";
 import {
-  aplicarModelo,
   escolherOpcao,
-  extrairNome,
   moeda,
   pediuAtendente,
   primeiroNumero,
@@ -32,6 +30,14 @@ import {
   todosNumeros,
 } from "@/lib/bot-parse";
 import { interpretarOpcao, interpretarQuantidade, interpretarSimNao } from "@/lib/ia.server";
+import { carregarDadosBot } from "@/lib/bot-dados.server";
+import {
+  ETAPAS_MENU,
+  aplicarVariaveis,
+  dentroDoHorario,
+  processarMenu,
+  type AcaoBot,
+} from "@/lib/bot-motor";
 
 interface ContextoBot {
   nome?: string;
@@ -42,6 +48,8 @@ interface ContextoBot {
   frenteVerso?: boolean;
   acabamentos?: string[];
   observacao?: string;
+  pendenteTipo?: "opcao" | "resposta" | null;
+  pendenteId?: string | null;
 }
 
 interface ConversaBot {
@@ -53,6 +61,7 @@ interface ConversaBot {
   etapa: string;
   contexto: unknown;
   pedido_id: string | null;
+  saudacao_em?: string | null;
 }
 
 interface ConfigBot {
@@ -128,6 +137,9 @@ type AtualizacaoConversa = Partial<{
   motivo_encaminhamento: string | null;
   motivo_pendencia: string | null;
   motivo_finalizacao: string | null;
+  saudacao_em: string | null;
+  data_finalizacao: string | null;
+  inatividade_avisada: boolean;
   ultima_mensagem: string;
   ultima_mensagem_em: string;
 }>;
@@ -473,15 +485,115 @@ async function calcularOrcamento(conversa: ConversaBot, ctx: ContextoBot) {
 // ---------- Leitura de configuração ----------
 
 async function lerConfig(): Promise<ConfigBot | null> {
-  const { data } = await supabaseAdmin
-    .from("whatsapp_config")
-    .select(
-      "bot_ativo, permitir_orcamento_automatico, exigir_revisao_humana, permitir_link, msg_inicial, msg_boas_vindas, msg_transferencia, msg_orcamento_gerado, msg_revisao, msg_orcamento_confirmado",
-    )
-    .limit(1)
-    .maybeSingle();
-
+  const { data } = await supabaseAdmin.from("whatsapp_config").select("*").limit(1).maybeSingle();
   return (data ?? null) as ConfigBot | null;
+}
+
+function mesmoDia(valor: string | null | undefined, agora: Date) {
+  if (!valor) return false;
+  const f = (d: Date) => d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  return f(new Date(valor)) === f(agora);
+}
+
+// ---------- Ações do menu ----------
+
+async function acaoConsultarPedido(conversa: ConversaBot) {
+  const { data } = await supabaseAdmin
+    .from("pedidos")
+    .select("numero, status, valor_total, valor_pago, created_at")
+    .eq("cliente_telefone", conversa.telefone)
+    .order("created_at", { ascending: false })
+    .limit(3);
+
+  const pedidos = data ?? [];
+  if (pedidos.length === 0) {
+    await responder(conversa, "Não encontrei nenhum pedido para este número. 😕");
+    return;
+  }
+
+  const linhas = pedidos.map((p) => {
+    const restante = Number(p.valor_total ?? 0) - Number(p.valor_pago ?? 0);
+    return [
+      `*Pedido:* ${p.numero}`,
+      `*Situação:* ${rotuloStatus(p.status)}`,
+      `*Total:* ${moeda(Number(p.valor_total ?? 0))}`,
+      restante > 0 ? `*Restante:* ${moeda(restante)}` : "*Pagamento:* quitado",
+    ].join("\n");
+  });
+
+  await responder(conversa, `Encontrei estes pedidos:\n\n${linhas.join("\n\n")}`);
+}
+
+function rotuloStatus(status: string) {
+  const mapa: Record<string, string> = {
+    pendente_envio: "Aguardando envio",
+    enviado: "Enviado",
+    aprovado: "Aprovado",
+    em_producao: "Em produção",
+    pendente_pagamento: "Aguardando pagamento",
+    finalizado: "Finalizado",
+    cancelado: "Cancelado",
+  };
+  return mapa[status] ?? status;
+}
+
+async function acaoCurriculo(conversa: ConversaBot) {
+  try {
+    const { gerarLinkNovo } = await import("@/lib/curriculo.server");
+    const { url } = await gerarLinkNovo();
+    await responder(conversa, `Para montar seu currículo, é só preencher por aqui:\n${url}\n\nO link vale por 24 horas.`);
+  } catch {
+    await responder(conversa, "Não consegui gerar o link do currículo agora. Vou chamar um atendente. 😊");
+  }
+}
+
+/** Executa a ação escolhida no menu e devolve true quando o fluxo continua em outra etapa. */
+async function executarAcaoMenu(
+  conversa: ConversaBot,
+  config: ConfigBot,
+  ctx: ContextoBot,
+  acao: AcaoBot,
+): Promise<boolean> {
+  switch (acao) {
+    case "orcamento": {
+      if (!config.permitir_orcamento_automatico) {
+        await transferir(conversa, config, "orçamento automático desativado");
+        return true;
+      }
+      const arquivos = await arquivosDaConversa(conversa.id);
+      await salvarContexto(conversa, { ...ctx, nome: ctx.nome || conversa.nome_contato || "" });
+      if (arquivos.length > 0) {
+        await responder(conversa, `Já tenho *${arquivos.length}* arquivo(s) seu(s). Envie mais ou escreva *PRONTO*.`);
+        await salvar(conversa, { etapa: "aguardando_arquivos" });
+        conversa.etapa = "aguardando_arquivos";
+      } else {
+        await perguntarArquivos(conversa);
+      }
+      return true;
+    }
+
+    case "consultar_pedido": {
+      await acaoConsultarPedido(conversa);
+      await responder(conversa, "Posso ajudar em algo mais?", ["SIM", "NÃO"]);
+      await salvar(conversa, { etapa: "pos_resposta" });
+      return true;
+    }
+
+    case "curriculo": {
+      await acaoCurriculo(conversa);
+      await responder(conversa, "Posso ajudar em algo mais?", ["SIM", "NÃO"]);
+      await salvar(conversa, { etapa: "pos_resposta" });
+      return true;
+    }
+
+    case "atendente": {
+      await transferir(conversa, config, "cliente escolheu falar com atendente");
+      return true;
+    }
+
+    default:
+      return false;
+  }
 }
 
 // ---------- Máquina de estados ----------
@@ -492,7 +604,7 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
 
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
-    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id")
+    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em")
     .eq("id", conversaId)
     .maybeSingle();
 
@@ -505,44 +617,80 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
   const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
   const texto = (entrada.texto ?? "").trim();
   const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
+  const agora = new Date();
+
+  // Qualquer mensagem do cliente reinicia o controle de inatividade.
+  await supabaseAdmin.from("whatsapp_conversas").update({ inatividade_avisada: false }).eq("id", conversa.id);
 
   if (texto && pediuAtendente(texto)) {
     await transferir(conversa, config, "cliente pediu atendimento humano");
     return;
   }
 
+  // Etapas de saudação, menu, palavras-chave e respostas automáticas.
+  if (ETAPAS_MENU.has(conversa.etapa) || conversa.etapa === "finalizado") {
+    const dados = await carregarDadosBot();
+    if (!dados) return;
+
+    const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
+    const etapaAtual = conversa.etapa === "finalizado" ? "inicio" : conversa.etapa;
+
+    if (etapaAtual === "inicio" && !dentroDoHorario(dados, agora) && dados.config.msg_fora_horario.trim()) {
+      await responder(
+        conversa,
+        aplicarVariaveis(dados.config.msg_fora_horario, {
+          nome: conversa.nome_contato ?? "",
+          telefone: conversa.telefone,
+          agora,
+        }),
+      );
+    }
+
+    const saida = await processarMenu(
+      dados,
+      { etapa: etapaAtual, pendenteTipo: ctx.pendenteTipo ?? null, pendenteId: ctx.pendenteId ?? null },
+      {
+        texto,
+        tipo: entrada.tipo,
+        nome: conversa.nome_contato ?? "",
+        telefone: conversa.telefone,
+        primeiraDoDia,
+      },
+      {
+        opcao: (pergunta, resposta, opcoes) => interpretarOpcao(pergunta, resposta, opcoes),
+        simNao: (pergunta, resposta) => interpretarSimNao(pergunta, resposta),
+      },
+      agora,
+    );
+
+    if (saida.mensagens.length === 0 && etapaAtual !== "inicio" && texto && dados.config.msg_nao_entendi.trim()) {
+      await responder(conversa, dados.config.msg_nao_entendi);
+    }
+
+    for (const m of saida.mensagens) await responder(conversa, m.texto, m.botoes);
+
+    await salvarContexto(
+      conversa,
+      { ...ctx, pendenteTipo: saida.estado.pendenteTipo ?? null, pendenteId: saida.estado.pendenteId ?? null },
+      saida.estado.etapa,
+    );
+
+    if (etapaAtual === "inicio") {
+      await salvar(conversa, { saudacao_em: agora.toISOString() });
+    }
+
+    if (saida.estado.etapa === "finalizado") {
+      await salvar(conversa, { status: "finalizado", data_finalizacao: agora.toISOString() });
+      await auditar(conversa.id, "bot_finalizou", "cliente não precisava de mais nada");
+      return;
+    }
+
+    if (saida.acao) await executarAcaoMenu(conversa, config, ctx, saida.acao);
+    return;
+  }
+
   switch (conversa.etapa) {
-    case "inicio": {
-      await responder(conversa, config.msg_inicial);
-      await salvar(conversa, { etapa: "aguardando_nome" });
-      return;
-    }
 
-    case "aguardando_nome": {
-      const nome = extrairNome(texto) || conversa.nome_contato || "";
-      if (!nome) {
-        await responder(conversa, "Não consegui identificar seu nome. Pode me informar, por favor?");
-        return;
-      }
-
-      const novoCtx: ContextoBot = { ...ctx, nome };
-      await salvarContexto(conversa, novoCtx);
-      await salvar(conversa, { nome_contato: nome });
-
-      if (conversa.cliente_id) {
-        await supabaseAdmin.from("clientes").update({ nome }).eq("id", conversa.cliente_id);
-      }
-
-      await responder(conversa, aplicarModelo(config.msg_boas_vindas, { nome }));
-
-      if (!config.permitir_orcamento_automatico) {
-        await transferir(conversa, config, "orçamento automático desativado");
-        return;
-      }
-
-      await perguntarArquivos(conversa);
-      return;
-    }
 
     case "aguardando_arquivos": {
       if (ehArquivo) {
@@ -709,4 +857,74 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
       // Etapas em espera humana (revisão/atendente/finalizado): o bot não responde.
       return;
   }
+}
+
+// ---------- Inatividade ----------
+
+/**
+ * Encerra conversas paradas: avisa uma vez e, se o cliente continuar sem
+ * responder, envia a mensagem de finalização e fecha o atendimento.
+ */
+export async function verificarInatividade(): Promise<{ avisadas: number; finalizadas: number }> {
+  const config = await lerConfig();
+  if (!config?.bot_ativo) return { avisadas: 0, finalizadas: 0 };
+
+  const dados = await carregarDadosBot();
+  if (!dados) return { avisadas: 0, finalizadas: 0 };
+
+  const minutos = Math.max(1, Number(dados.config.inatividade_minutos ?? 5));
+  const agora = new Date();
+  const limite = new Date(agora.getTime() - minutos * 60_000).toISOString();
+
+  const { data } = await supabaseAdmin
+    .from("whatsapp_conversas")
+    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, inatividade_avisada, ultima_mensagem_em, finalizacao_em")
+    .eq("status", "automatico")
+    .lt("ultima_mensagem_em", limite)
+    .limit(50);
+
+  let avisadas = 0;
+  let finalizadas = 0;
+
+  for (const linha of data ?? []) {
+    const conversa = linha as unknown as ConversaBot;
+
+    if (!linha.inatividade_avisada) {
+      await responder(conversa, "Ainda está por aí? 😊 Se precisar de algo, é só me chamar.");
+      await supabaseAdmin.from("whatsapp_conversas").update({ inatividade_avisada: true }).eq("id", conversa.id);
+      avisadas += 1;
+      continue;
+    }
+
+    const podeFinalizar =
+      dados.config.enviar_msg_finalizacao &&
+      (!dados.config.finalizacao_uma_vez_dia || !mesmoDia(linha.finalizacao_em, agora));
+
+    if (podeFinalizar) {
+      await responder(
+        conversa,
+        aplicarVariaveis(dados.config.msg_finalizacao, {
+          nome: conversa.nome_contato ?? "",
+          telefone: conversa.telefone,
+          agora,
+        }),
+      );
+    }
+
+    await supabaseAdmin
+      .from("whatsapp_conversas")
+      .update({
+        status: "finalizado",
+        etapa: "finalizado",
+        data_finalizacao: agora.toISOString(),
+        finalizacao_em: agora.toISOString(),
+        motivo_finalizacao: "inatividade do cliente",
+      })
+      .eq("id", conversa.id);
+
+    await auditar(conversa.id, "bot_finalizou_inatividade", `${minutos} min sem resposta`);
+    finalizadas += 1;
+  }
+
+  return { avisadas, finalizadas };
 }
