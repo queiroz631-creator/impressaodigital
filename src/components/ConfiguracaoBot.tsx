@@ -44,6 +44,7 @@ interface FormBot {
   finalizacao_uma_vez_dia: boolean;
   inatividade1_minutos: number;
   inatividade2_minutos: number;
+  fallback_inicial_minutos: number;
   inatividade_status: string;
   msg_inatividade1: string;
   msg_inatividade_pendente: string;
