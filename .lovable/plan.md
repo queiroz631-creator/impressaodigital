@@ -10,6 +10,13 @@ Hoje, quando o cliente escreve algo que o bot não reconhece (nenhuma resposta a
 - Quando o bot já perguntou "É sobre isso que você quer falar?" (SIM/NÃO) e o cliente não responde, **não** entra essa regra: valem as regras normais de 1ª e 2ª inatividade (aviso e depois mudança de status), como já hoje.
 - A verificação usa a mesma rotina periódica já existente da inatividade, e roda **antes** dela: uma conversa que ainda está só aguardando reconhecimento entra primeiro no fluxo inicial; só depois, se continuar parada, seguem os avisos de 1ª e 2ª inatividade normalmente.
 
+## Atendimentos numerados no lugar de conversas separadas
+
+- A conversa do cliente deixa de ser encerrada e recriada a cada atendimento: continua sendo **uma única conversa por telefone**, com todo o histórico junto.
+- Cada vez que um novo atendimento começa (cliente volta a falar depois de finalizado/inatividade, ou o bot inicia um novo fluxo depois de encerrar o anterior), o contador sobe e o sistema marca no histórico um divisor **"ATENDIMENTO 2 — 24/08 14:30"**, e assim por diante.
+- Na lista de conversas da tela WhatsApp, ao lado do nome, aparece um selo **Atendimento N** indicando em qual atendimento o cliente está.
+- A finalização continua existindo (fecha o atendimento atual e volta o status), mas não separa a conversa: a próxima mensagem do cliente abre o **Atendimento N+1** na mesma tela.
+
 Nada mais muda: horários, menu, orçamento, currículo, pedidos, mensagens ativas/desativadas, simulador e a inatividade em duas etapas continuam exatamente como estão.
 
 ## Detalhes técnicos
