@@ -149,12 +149,11 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           clienteId = novo?.id ?? null;
         }
 
-        // Conversa aberta
+        // Conversa do cliente (única por telefone: atendimentos são numerados dentro dela).
         const { data: conversaAberta } = await supabaseAdmin
           .from("whatsapp_conversas")
-          .select("id, total_mensagens, nao_lidas")
+          .select("id, total_mensagens, nao_lidas, status, atendimento_numero")
           .eq("telefone", telefone)
-          .neq("status", "finalizado")
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -178,6 +177,36 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           conversaId = nova?.id ?? null;
           totalMensagens = 0;
           naoLidas = 0;
+        } else if (conversaAberta?.status === "finalizado") {
+          // Atendimento anterior encerrado: abre o próximo na mesma conversa.
+          const numero = Number(conversaAberta.atendimento_numero ?? 1) + 1;
+          await supabaseAdmin
+            .from("whatsapp_conversas")
+            .update({
+              status: "automatico",
+              etapa: "inicio",
+              atendimento_numero: numero,
+              contexto: {} as never,
+              data_finalizacao: null,
+              motivo_finalizacao: null,
+              motivo_pendencia: null,
+              motivo_encaminhamento: null,
+              atendente_id: null,
+              atendente_nome: null,
+              inatividade_avisada: false,
+              inatividade_etapa: 0,
+            })
+            .eq("id", conversaId);
+
+          await supabaseAdmin.from("whatsapp_mensagens").insert({
+            conversa_id: conversaId,
+            direcao: "saida",
+            tipo: "sistema",
+            texto: `ATENDIMENTO ${numero}`,
+            autor: "Sistema",
+            status: "enviada",
+            data_hora: agora,
+          });
         }
 
         if (!conversaId) return new Response("Falha ao registrar a conversa", { status: 500 });
