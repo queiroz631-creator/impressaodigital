@@ -154,7 +154,8 @@ function executar(
     return { mensagens, estado: { ...base, aguardando: true } };
   }
 
-  return { ...aplicarAcaoEtapa(dados, etapa, base, vars, profundidade), mensagens: [...mensagens, ...aplicarAcaoEtapa(dados, etapa, base, vars, profundidade).mensagens] };
+  const saida = aplicarAcaoEtapa(dados, etapa, base, vars, profundidade);
+  return { ...saida, mensagens: [...mensagens, ...saida.mensagens] };
 }
 
 /** Aplica a ação configurada na etapa (depois de já ter respondido o cliente). */
