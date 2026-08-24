@@ -1178,9 +1178,21 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
 
 // ---------- Inatividade ----------
 
+/** Mensagem configurada para o status de destino da 2ª inatividade. */
+function msgDoStatus(cfg: BotDados["config"], status: string) {
+  const mapa: Record<string, string> = {
+    pendente: cfg.msg_inatividade_pendente,
+    aguardando: cfg.msg_inatividade_aguardando,
+    em_atendimento: cfg.msg_inatividade_em_atendimento,
+    finalizado: cfg.msg_inatividade_finalizado,
+  };
+  return (mapa[status] ?? "").trim();
+}
+
 /**
- * Encerra conversas paradas: avisa uma vez e, se o cliente continuar sem
- * responder, envia a mensagem de finalização e fecha o atendimento.
+ * Controla a inatividade em duas etapas: a 1ª envia um aviso e a 2ª move a
+ * conversa para o status escolhido. Só vale para conversas no modo automático
+ * em que o bot está aguardando a resposta do cliente.
  */
 export async function verificarInatividade(): Promise<{ avisadas: number; finalizadas: number }> {
   const config = await lerConfig();
@@ -1189,13 +1201,17 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
   const dados = await carregarDadosBot();
   if (!dados) return { avisadas: 0, finalizadas: 0 };
 
-  const minutos = Math.max(1, Number(dados.config.inatividade_minutos ?? 5));
+  const min1 = Math.max(1, Number(dados.config.inatividade1_minutos ?? 5));
+  const min2 = Math.max(min1, Number(dados.config.inatividade2_minutos ?? min1 * 2));
+  const destino = dados.config.inatividade_status || "finalizado";
   const agora = new Date();
-  const limite = new Date(agora.getTime() - minutos * 60_000).toISOString();
+  const limite = new Date(agora.getTime() - min1 * 60_000).toISOString();
 
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
-    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, inatividade_avisada, ultima_mensagem_em, finalizacao_em")
+    .select(
+      "id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, inatividade_avisada, ultima_mensagem_em, finalizacao_em",
+    )
     .eq("status", "automatico")
     .lt("ultima_mensagem_em", limite)
     .limit(50);
@@ -1205,41 +1221,41 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
 
   for (const linha of data ?? []) {
     const conversa = linha as unknown as ConversaBot;
+    const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
+    const parado = agora.getTime() - new Date(linha.ultima_mensagem_em ?? agora).getTime();
 
+    // 1ª inatividade: apenas o aviso.
     if (!linha.inatividade_avisada) {
-      await responder(conversa, "Ainda está por aí? 😊 Se precisar de algo, é só me chamar.");
+      const aviso = (dados.config.msg_inatividade1 ?? "").trim();
+      if (aviso) await responder(conversa, aplicarVariaveis(aviso, vars));
       await supabaseAdmin.from("whatsapp_conversas").update({ inatividade_avisada: true }).eq("id", conversa.id);
       avisadas += 1;
       continue;
     }
 
-    const podeFinalizar =
-      dados.config.enviar_msg_finalizacao &&
-      (!dados.config.finalizacao_uma_vez_dia || !mesmoDia(linha.finalizacao_em, agora));
+    // 2ª inatividade: só depois do tempo configurado.
+    if (parado < min2 * 60_000) continue;
 
-    if (podeFinalizar) {
-      await responder(
-        conversa,
-        aplicarVariaveis(dados.config.msg_finalizacao, {
-          nome: conversa.nome_contato ?? "",
-          telefone: conversa.telefone,
-          agora,
-        }),
-      );
-    }
+    const texto = msgDoStatus(dados.config, destino);
+    if (texto) await responder(conversa, aplicarVariaveis(texto, vars));
 
+    const encerrando = destino === "finalizado";
     await supabaseAdmin
       .from("whatsapp_conversas")
       .update({
-        status: "finalizado",
-        etapa: "finalizado",
-        data_finalizacao: agora.toISOString(),
-        finalizacao_em: agora.toISOString(),
-        motivo_finalizacao: "inatividade do cliente",
+        status: destino,
+        etapa: encerrando ? "finalizado" : conversa.etapa,
+        ...(encerrando
+          ? {
+              data_finalizacao: agora.toISOString(),
+              finalizacao_em: agora.toISOString(),
+              motivo_finalizacao: "inatividade do cliente",
+            }
+          : { motivo_pendencia: "inatividade do cliente" }),
       })
       .eq("id", conversa.id);
 
-    await auditar(conversa.id, "bot_finalizou_inatividade", `${minutos} min sem resposta`);
+    await auditar(conversa.id, "bot_inatividade", `${min2} min sem resposta — status ${destino}`);
     finalizadas += 1;
   }
 
