@@ -217,12 +217,17 @@ export function iniciar(
   estado: Partial<EstadoFluxo>,
   vars: { nome: string; telefone: string; agora: Date },
   profundidade = 0,
+  primeiraDoDia = true,
 ): SaidaFluxo {
   const fluxo = fluxoPorId(dados, fluxoId);
   if (!fluxo) return { mensagens: [], estado: null };
 
   const mensagens: MensagemBot[] = [];
-  const inicial = aplicarVariaveis(fluxo.mensagem_inicial, vars).trim();
+  const modelo =
+    !primeiraDoDia && (fluxo.mensagem_retorno_dia ?? "").trim()
+      ? fluxo.mensagem_retorno_dia
+      : fluxo.mensagem_inicial;
+  const inicial = aplicarVariaveis(modelo, vars).trim();
   if (inicial) mensagens.push({ texto: inicial });
 
   const primeira = etapasDoFluxo(dados, fluxo.id)[0];
@@ -237,6 +242,11 @@ export function iniciar(
     profundidade + 1,
   );
   return { ...saida, mensagens: [...mensagens, ...saida.mensagens] };
+}
+
+/** Fluxo marcado para receber os clientes que enviam apenas arquivos. */
+export function fluxoDeArquivos(dados: DadosFluxos) {
+  return dados.fluxos.find((f) => f.fluxo_arquivos && f.ativo) ?? null;
 }
 
 /** Processa a resposta do cliente na etapa em que a conversa parou. */
