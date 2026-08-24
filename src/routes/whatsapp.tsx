@@ -264,6 +264,7 @@ function Atendimento() {
 
               <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs">
                 <Badge variant="outline">{rotuloEtapa[c.etapa] ?? c.etapa}</Badge>
+                <Badge variant="secondary">Atendimento {c.atendimento_numero ?? 1}</Badge>
                 <Badge variant="secondary">{c.total_mensagens} msg</Badge>
                 {c.nao_lidas > 0 && <Badge>{c.nao_lidas} nova(s)</Badge>}
                 {c.pedido_id && <Badge variant="outline">Pedido vinculado</Badge>}
