@@ -103,7 +103,7 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
                 {exp.periodo && (
                   <p className="text-[9.5pt] text-muted-foreground">Período: {exp.periodo}</p>
                 )}
-                {exp.atividades && <p className="mt-0.5">{exp.atividades}</p>}
+                {exp.atividades && <p className="mt-0.5">Atividade(s): {exp.atividades}</p>}
               </div>
             ))}
           </Secao>
