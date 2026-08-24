@@ -383,6 +383,21 @@ export function ConfiguracaoBot() {
                 </div>
               </div>
 
+              <div className="grid gap-1 sm:max-w-xs">
+                <Label>Iniciar fluxo inicial após (minutos)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.fallback_inicial_minutos}
+                  onChange={(e) => setForm({ ...form, fallback_inicial_minutos: Number(e.target.value || 0) })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Quando o bot não reconhece nenhum fluxo ou resposta automática, ele inicia o fluxo inicial após
+                  esse tempo. Use 0 para desativar. Conversas aguardando confirmação Sim/Não seguem a regra de
+                  inatividade.
+                </p>
+              </div>
+
               <div className="grid gap-1">
                 <Label>Mensagem da 1ª inatividade</Label>
                 <Textarea
