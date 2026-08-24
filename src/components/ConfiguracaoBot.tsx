@@ -188,14 +188,14 @@ export function ConfiguracaoBot() {
     setSalvando(true);
     const { error } = await supabase.from("whatsapp_config").update(form).eq("id", id);
     setSalvando(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Atendimento automático atualizado.");
     await queryClient.invalidateQueries({ queryKey: ["whatsapp-config-bot"] });
   }
 
   async function salvarHorario(h: Horario, dados: Partial<Horario>) {
     const { error } = await supabase.from("bot_horarios").update(dados).eq("id", h.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await queryClient.invalidateQueries({ queryKey: ["bot-horarios"] });
   }
 
@@ -416,7 +416,7 @@ function OpcoesMenu({ opcoes, palavras }: { opcoes: Opcao[]; palavras: Palavra[]
 
   async function atualizar(o: Opcao, dados: Partial<Opcao>) {
     const { error } = await supabase.from("bot_menu_opcoes").update(dados).eq("id", o.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await recarregar();
   }
 
@@ -434,13 +434,13 @@ function OpcoesMenu({ opcoes, palavras }: { opcoes: Opcao[]; palavras: Palavra[]
     const { error } = await supabase
       .from("bot_menu_opcoes")
       .insert({ nome: "Nova opção", acao: "mensagem", mensagem: "", ordem });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await recarregar();
   }
 
   async function excluir(o: Opcao) {
     const { error } = await supabase.from("bot_menu_opcoes").delete().eq("id", o.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Opção removida.");
     await recarregar();
   }
@@ -451,7 +451,7 @@ function OpcoesMenu({ opcoes, palavras }: { opcoes: Opcao[]; palavras: Palavra[]
       const { error } = await supabase
         .from("bot_palavras_chave")
         .insert(lista.map((texto) => ({ texto, opcao_id: o.id })));
-      if (error) return toast.error(error.message);
+      if (error) { toast.error(error.message); return; }
     }
     toast.success("Palavras-chave atualizadas.");
     await recarregar();
@@ -556,7 +556,7 @@ function RespostasAutomaticas({ respostas, palavras }: { respostas: Resposta[]; 
 
   async function atualizar(r: Resposta, dados: Partial<Resposta>) {
     const { error } = await supabase.from("bot_respostas").update(dados).eq("id", r.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await recarregar();
   }
 
@@ -565,13 +565,13 @@ function RespostasAutomaticas({ respostas, palavras }: { respostas: Resposta[]; 
     const { error } = await supabase
       .from("bot_respostas")
       .insert({ titulo: "Nova resposta", resposta: "", ordem });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await recarregar();
   }
 
   async function excluir(r: Resposta) {
     const { error } = await supabase.from("bot_respostas").delete().eq("id", r.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Resposta removida.");
     await recarregar();
   }
@@ -582,7 +582,7 @@ function RespostasAutomaticas({ respostas, palavras }: { respostas: Resposta[]; 
       const { error } = await supabase
         .from("bot_palavras_chave")
         .insert(lista.map((texto) => ({ texto, resposta_id: r.id })));
-      if (error) return toast.error(error.message);
+      if (error) { toast.error(error.message); return; }
     }
     toast.success("Palavras-chave atualizadas.");
     await recarregar();
