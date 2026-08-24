@@ -63,6 +63,7 @@ interface Conversa {
   pedido_id: string | null;
   orcamento_id: string | null;
   created_at: string;
+  atendimento_numero: number;
 }
 
 interface Mensagem {
@@ -263,6 +264,7 @@ function Atendimento() {
 
               <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs">
                 <Badge variant="outline">{rotuloEtapa[c.etapa] ?? c.etapa}</Badge>
+                <Badge variant="secondary">Atendimento {c.atendimento_numero ?? 1}</Badge>
                 <Badge variant="secondary">{c.total_mensagens} msg</Badge>
                 {c.nao_lidas > 0 && <Badge>{c.nao_lidas} nova(s)</Badge>}
                 {c.pedido_id && <Badge variant="outline">Pedido vinculado</Badge>}
@@ -404,7 +406,16 @@ function Conversa({
               <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma mensagem nesta conversa.</p>
             )}
 
-            {(mensagens ?? []).map((m) => (
+            {(mensagens ?? []).map((m) =>
+              m.tipo === "sistema" ? (
+                <div key={m.id} className="flex items-center gap-2 py-2">
+                  <span className="h-px flex-1 bg-border" />
+                  <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {m.texto ?? "Novo atendimento"}
+                  </span>
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+              ) : (
               <div key={m.id} className={cn("flex", m.direcao === "saida" ? "justify-end" : "justify-start")}>
                 <div
                   className={cn(
@@ -420,7 +431,8 @@ function Conversa({
                   </p>
                 </div>
               </div>
-            ))}
+              ),
+            )}
             <div ref={fim} />
           </div>
 

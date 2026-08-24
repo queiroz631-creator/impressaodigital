@@ -44,6 +44,7 @@ interface FormBot {
   finalizacao_uma_vez_dia: boolean;
   inatividade1_minutos: number;
   inatividade2_minutos: number;
+  fallback_inicial_minutos: number;
   inatividade_status: string;
   msg_inatividade1: string;
   msg_inatividade_pendente: string;
@@ -155,6 +156,7 @@ export function ConfiguracaoBot() {
       finalizacao_uma_vez_dia: Boolean(d.finalizacao_uma_vez_dia),
       inatividade1_minutos: Number(d.inatividade1_minutos ?? 5),
       inatividade2_minutos: Number(d.inatividade2_minutos ?? 10),
+      fallback_inicial_minutos: Number(d.fallback_inicial_minutos ?? 2),
       inatividade_status: d.inatividade_status ?? "finalizado",
       msg_inatividade1: d.msg_inatividade1 ?? "",
       msg_inatividade_pendente: d.msg_inatividade_pendente ?? "",
@@ -379,6 +381,21 @@ export function ConfiguracaoBot() {
                     onChange={(e) => setForm({ ...form, inatividade2_minutos: Number(e.target.value || 1) })}
                   />
                 </div>
+              </div>
+
+              <div className="grid gap-1 sm:max-w-xs">
+                <Label>Iniciar fluxo inicial após (minutos)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.fallback_inicial_minutos}
+                  onChange={(e) => setForm({ ...form, fallback_inicial_minutos: Number(e.target.value || 0) })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Quando o bot não reconhece nenhum fluxo ou resposta automática, ele inicia o fluxo inicial após
+                  esse tempo. Use 0 para desativar. Conversas aguardando confirmação Sim/Não seguem a regra de
+                  inatividade.
+                </p>
               </div>
 
               <div className="grid gap-1">
