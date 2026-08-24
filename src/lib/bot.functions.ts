@@ -27,7 +27,7 @@ export const simularBot = createServerFn({ method: "POST" })
     const agora = new Date();
     const mensagens: { texto: string; botoes?: string[] }[] = [];
 
-    if (data.etapa === "inicio" && !dentroDoHorario(dados, agora) && dados.config.msg_fora_horario.trim()) {
+    if (data.etapa === "inicio" && !dentroDoHorario(dados, agora) && dados.config.msg_fora_horario_ativo && dados.config.msg_fora_horario.trim()) {
       mensagens.push({ texto: dados.config.msg_fora_horario });
     }
 
@@ -45,9 +45,6 @@ export const simularBot = createServerFn({ method: "POST" })
       agora,
     );
 
-    if (saida.mensagens.length === 0 && data.etapa !== "inicio" && data.texto && dados.config.msg_nao_entendi.trim()) {
-      mensagens.push({ texto: dados.config.msg_nao_entendi });
-    }
     mensagens.push(...saida.mensagens);
 
     const descricao: Record<string, string> = {

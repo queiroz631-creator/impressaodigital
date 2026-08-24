@@ -89,6 +89,7 @@ interface ConfigBot {
   msg_inicial: string;
   msg_boas_vindas: string;
   msg_transferencia: string;
+  msg_transferencia_ativo: boolean;
   msg_orcamento_gerado: string;
   msg_revisao: string;
   msg_orcamento_confirmado: string;
@@ -182,7 +183,8 @@ async function auditar(conversaId: string, acao: string, detalhe?: string) {
 
 /** Passa a conversa para a fila humana. */
 async function transferir(conversa: ConversaBot, config: ConfigBot, motivo: string, mensagem?: string) {
-  await responder(conversa, mensagem ?? config.msg_transferencia);
+  const aviso = mensagem ?? (config.msg_transferencia_ativo !== false ? config.msg_transferencia : "");
+  if (aviso.trim()) await responder(conversa, aviso);
   await salvar(conversa, {
     status: "aguardando",
     etapa: "aguardando_atendente",
@@ -670,17 +672,11 @@ async function entregarFluxo(
   let atual = inicial;
 
   for (let volta = 0; volta < 6; volta += 1) {
-    if (atual.naoEntendi) {
-      const cfg = await carregarDadosBot();
-      const texto = cfg?.config.msg_nao_entendi?.trim();
-      if (texto) await responder(conversa, texto);
-    }
-
     for (const m of atual.mensagens) await responder(conversa, m.texto, m.botoes);
 
     if (atual.finalizar) {
       const cfg = await carregarDadosBot();
-      const despedida = cfg?.config.msg_finalizacao?.trim();
+      const despedida = cfg?.config.msg_finalizacao_ativo ? cfg.config.msg_finalizacao.trim() : "";
       if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
       await salvarContexto(conversa, { ...ctx, fluxo: null }, "finalizado");
       await salvar(conversa, {
@@ -935,7 +931,12 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
   }
 
   // Fluxos configuráveis (aba Fluxos): assumem quando existe um fluxo inicial ativo.
-  if (conversa.etapa === "fluxo" || ETAPAS_MENU.has(conversa.etapa) || conversa.etapa === "finalizado") {
+  if (
+    conversa.etapa === "fluxo" ||
+    conversa.etapa === "triagem" ||
+    ETAPAS_MENU.has(conversa.etapa) ||
+    conversa.etapa === "finalizado"
+  ) {
     const fluxos = await carregarFluxos();
     const raiz = fluxoInicial(fluxos);
     if (raiz) {
@@ -952,7 +953,7 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
     const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
     const etapaAtual = conversa.etapa === "finalizado" ? "inicio" : conversa.etapa;
 
-    if (etapaAtual === "inicio" && !dentroDoHorario(dados, agora) && dados.config.msg_fora_horario.trim()) {
+    if (etapaAtual === "inicio" && !dentroDoHorario(dados, agora) && dados.config.msg_fora_horario_ativo && dados.config.msg_fora_horario.trim()) {
       await responder(
         conversa,
         aplicarVariaveis(dados.config.msg_fora_horario, {
@@ -979,10 +980,6 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
       },
       agora,
     );
-
-    if (saida.mensagens.length === 0 && etapaAtual !== "inicio" && texto && dados.config.msg_nao_entendi.trim()) {
-      await responder(conversa, dados.config.msg_nao_entendi);
-    }
 
     for (const m of saida.mensagens) await responder(conversa, m.texto, m.botoes);
 
