@@ -107,26 +107,16 @@ const TIPOS: { valor: TipoServico; rotulo: string }[] = [
 
 /** Envia a mensagem pelo WhatsApp e registra na conversa. */
 async function responder(conversa: ConversaBot, texto: string, botoes?: string[]) {
-  let r = { ok: false, erro: "Falha no envio" } as { ok: boolean; erro?: string | null };
+  // Texto simples sempre: listas de botões não são entregues de forma confiável.
+  const complemento = botoes && botoes.length > 0 ? `\n\n_Responda: ${botoes.join(" ou ")}_` : "";
+  const r = await chamarZapi("send-text", {
+    metodo: "POST",
+    corpo: { phone: conversa.telefone, message: `${texto}${complemento}` },
+  });
 
-  if (botoes && botoes.length > 0) {
-    r = await chamarZapi("send-button-list", {
-      metodo: "POST",
-      corpo: {
-        phone: conversa.telefone,
-        message: texto,
-        buttonList: { buttons: botoes.map((b, i) => ({ id: String(i + 1), label: b })) },
-      },
-    });
-  }
-
-  if (!r.ok) {
-    const complemento = botoes && botoes.length > 0 ? `\n\n_Responda: ${botoes.join(" ou ")}_` : "";
-    r = await chamarZapi("send-text", {
-      metodo: "POST",
-      corpo: { phone: conversa.telefone, message: `${texto}${complemento}` },
-    });
-  }
+  const dados = (r.dados ?? {}) as { messageId?: unknown; zaapId?: unknown; error?: unknown };
+  const idMensagem = dados.messageId ?? dados.zaapId ?? null;
+  const entregue = r.ok && Boolean(idMensagem);
 
   await supabaseAdmin.from("whatsapp_mensagens").insert({
     conversa_id: conversa.id,
@@ -134,9 +124,13 @@ async function responder(conversa: ConversaBot, texto: string, botoes?: string[]
     tipo: "texto",
     texto,
     autor: "Bot",
-    status: r.ok ? "enviada" : "erro",
-    erro: r.ok ? null : (r.erro ?? "Falha no envio"),
+    whatsapp_message_id: idMensagem ? String(idMensagem) : null,
+    status: entregue ? "enviada" : "erro",
+    erro: entregue
+      ? null
+      : (r.erro ?? (dados.error ? String(dados.error) : "A operadora não confirmou o envio.")),
   });
+
 
   await supabaseAdmin
     .from("whatsapp_conversas")
