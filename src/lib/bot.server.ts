@@ -21,9 +21,7 @@ import {
   type TipoServico,
 } from "@/lib/calc";
 import {
-  aplicarModelo,
   escolherOpcao,
-  extrairNome,
   moeda,
   pediuAtendente,
   primeiroNumero,
@@ -32,6 +30,14 @@ import {
   todosNumeros,
 } from "@/lib/bot-parse";
 import { interpretarOpcao, interpretarQuantidade, interpretarSimNao } from "@/lib/ia.server";
+import { carregarDadosBot } from "@/lib/bot-dados.server";
+import {
+  ETAPAS_MENU,
+  aplicarVariaveis,
+  dentroDoHorario,
+  processarMenu,
+  type AcaoBot,
+} from "@/lib/bot-motor";
 
 interface ContextoBot {
   nome?: string;
@@ -42,6 +48,8 @@ interface ContextoBot {
   frenteVerso?: boolean;
   acabamentos?: string[];
   observacao?: string;
+  pendenteTipo?: "opcao" | "resposta" | null;
+  pendenteId?: string | null;
 }
 
 interface ConversaBot {
@@ -53,6 +61,7 @@ interface ConversaBot {
   etapa: string;
   contexto: unknown;
   pedido_id: string | null;
+  saudacao_em?: string | null;
 }
 
 interface ConfigBot {
@@ -128,6 +137,9 @@ type AtualizacaoConversa = Partial<{
   motivo_encaminhamento: string | null;
   motivo_pendencia: string | null;
   motivo_finalizacao: string | null;
+  saudacao_em: string | null;
+  data_finalizacao: string | null;
+  inatividade_avisada: boolean;
   ultima_mensagem: string;
   ultima_mensagem_em: string;
 }>;
