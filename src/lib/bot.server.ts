@@ -680,7 +680,7 @@ async function entregarFluxo(
       await salvar(conversa, {
         status: "finalizado",
         data_finalizacao: vars.agora.toISOString(),
-        finalizacao_em: vars.agora.toISOString(),
+        
       });
       await auditar(conversa.id, "bot_finalizou", "fluxo finalizado");
       return;
