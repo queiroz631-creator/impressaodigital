@@ -62,6 +62,141 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_horarios: {
+        Row: {
+          abre: string
+          created_at: string
+          dia_semana: number
+          fecha: string
+          fechado: boolean
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          abre?: string
+          created_at?: string
+          dia_semana: number
+          fecha?: string
+          fechado?: boolean
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          abre?: string
+          created_at?: string
+          dia_semana?: number
+          fecha?: string
+          fechado?: boolean
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bot_menu_opcoes: {
+        Row: {
+          acao: string
+          ativo: boolean
+          created_at: string
+          id: string
+          mensagem: string
+          nome: string
+          ordem: number
+          permitir_palavra_chave: boolean
+          updated_at: string
+        }
+        Insert: {
+          acao?: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          mensagem?: string
+          nome: string
+          ordem?: number
+          permitir_palavra_chave?: boolean
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          mensagem?: string
+          nome?: string
+          ordem?: number
+          permitir_palavra_chave?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bot_palavras_chave: {
+        Row: {
+          created_at: string
+          id: string
+          opcao_id: string | null
+          resposta_id: string | null
+          texto: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opcao_id?: string | null
+          resposta_id?: string | null
+          texto: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opcao_id?: string | null
+          resposta_id?: string | null
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_palavras_chave_opcao_id_fkey"
+            columns: ["opcao_id"]
+            isOneToOne: false
+            referencedRelation: "bot_menu_opcoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_palavras_chave_resposta_id_fkey"
+            columns: ["resposta_id"]
+            isOneToOne: false
+            referencedRelation: "bot_respostas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bot_respostas: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          ordem: number
+          resposta: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          ordem?: number
+          resposta?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          ordem?: number
+          resposta?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       calculo_itens: {
         Row: {
           calculo_id: string
@@ -1211,10 +1346,14 @@ export type Database = {
       whatsapp_config: {
         Row: {
           base_url: string
+          bot_24h: boolean
           bot_ativo: boolean
           conexao_nome: string
+          enviar_msg_finalizacao: boolean
           exigir_revisao_humana: boolean
+          finalizacao_uma_vez_dia: boolean
           id: string
+          inatividade_minutos: number
           link_exigir_telefone: boolean
           link_permitir_acabamento: boolean
           link_permitir_confirmacao: boolean
@@ -1227,23 +1366,32 @@ export type Database = {
           mostrar_precos_link: boolean
           msg_boas_vindas: string
           msg_finalizacao: string
+          msg_fora_horario: string
           msg_inicial: string
+          msg_menu: string
+          msg_nao_entendi: string
           msg_orcamento_confirmado: string
           msg_orcamento_gerado: string
+          msg_retorno_dia: string
           msg_revisao: string
           msg_transferencia: string
           permitir_link: boolean
           permitir_orcamento_automatico: boolean
           reabrir_mesmo_dia: boolean
           updated_at: string
+          usar_ia: boolean
           webhook_token: string
         }
         Insert: {
           base_url?: string
+          bot_24h?: boolean
           bot_ativo?: boolean
           conexao_nome?: string
+          enviar_msg_finalizacao?: boolean
           exigir_revisao_humana?: boolean
+          finalizacao_uma_vez_dia?: boolean
           id?: string
+          inatividade_minutos?: number
           link_exigir_telefone?: boolean
           link_permitir_acabamento?: boolean
           link_permitir_confirmacao?: boolean
@@ -1256,23 +1404,32 @@ export type Database = {
           mostrar_precos_link?: boolean
           msg_boas_vindas?: string
           msg_finalizacao?: string
+          msg_fora_horario?: string
           msg_inicial?: string
+          msg_menu?: string
+          msg_nao_entendi?: string
           msg_orcamento_confirmado?: string
           msg_orcamento_gerado?: string
+          msg_retorno_dia?: string
           msg_revisao?: string
           msg_transferencia?: string
           permitir_link?: boolean
           permitir_orcamento_automatico?: boolean
           reabrir_mesmo_dia?: boolean
           updated_at?: string
+          usar_ia?: boolean
           webhook_token?: string
         }
         Update: {
           base_url?: string
+          bot_24h?: boolean
           bot_ativo?: boolean
           conexao_nome?: string
+          enviar_msg_finalizacao?: boolean
           exigir_revisao_humana?: boolean
+          finalizacao_uma_vez_dia?: boolean
           id?: string
+          inatividade_minutos?: number
           link_exigir_telefone?: boolean
           link_permitir_acabamento?: boolean
           link_permitir_confirmacao?: boolean
@@ -1285,15 +1442,20 @@ export type Database = {
           mostrar_precos_link?: boolean
           msg_boas_vindas?: string
           msg_finalizacao?: string
+          msg_fora_horario?: string
           msg_inicial?: string
+          msg_menu?: string
+          msg_nao_entendi?: string
           msg_orcamento_confirmado?: string
           msg_orcamento_gerado?: string
+          msg_retorno_dia?: string
           msg_revisao?: string
           msg_transferencia?: string
           permitir_link?: boolean
           permitir_orcamento_automatico?: boolean
           reabrir_mesmo_dia?: boolean
           updated_at?: string
+          usar_ia?: boolean
           webhook_token?: string
         }
         Relationships: []
@@ -1307,7 +1469,9 @@ export type Database = {
           created_at: string
           data_finalizacao: string | null
           etapa: string
+          finalizacao_em: string | null
           id: string
+          inatividade_avisada: boolean
           inicio_atendimento: string | null
           motivo_encaminhamento: string | null
           motivo_finalizacao: string | null
@@ -1316,6 +1480,7 @@ export type Database = {
           nome_contato: string | null
           orcamento_id: string | null
           pedido_id: string | null
+          saudacao_em: string | null
           status: string
           telefone: string
           total_mensagens: number
@@ -1331,7 +1496,9 @@ export type Database = {
           created_at?: string
           data_finalizacao?: string | null
           etapa?: string
+          finalizacao_em?: string | null
           id?: string
+          inatividade_avisada?: boolean
           inicio_atendimento?: string | null
           motivo_encaminhamento?: string | null
           motivo_finalizacao?: string | null
@@ -1340,6 +1507,7 @@ export type Database = {
           nome_contato?: string | null
           orcamento_id?: string | null
           pedido_id?: string | null
+          saudacao_em?: string | null
           status?: string
           telefone: string
           total_mensagens?: number
@@ -1355,7 +1523,9 @@ export type Database = {
           created_at?: string
           data_finalizacao?: string | null
           etapa?: string
+          finalizacao_em?: string | null
           id?: string
+          inatividade_avisada?: boolean
           inicio_atendimento?: string | null
           motivo_encaminhamento?: string | null
           motivo_finalizacao?: string | null
@@ -1364,6 +1534,7 @@ export type Database = {
           nome_contato?: string | null
           orcamento_id?: string | null
           pedido_id?: string | null
+          saudacao_em?: string | null
           status?: string
           telefone?: string
           total_mensagens?: number
