@@ -178,8 +178,20 @@ function Atendimento() {
     return base;
   }, [conversas]);
 
-  const lista = (conversas ?? []).filter((c) => c.status === aba);
+  const termo = normalizar(busca.trim());
+  const lista = (conversas ?? []).filter((c) => {
+    if (c.status !== aba) return false;
+    if (!termo) return true;
+    const nome = normalizar(c.nome_contato ?? "");
+    const telefone = (c.telefone ?? "").replace(/\D/g, "");
+    return nome.includes(termo) || telefone.includes(termo.replace(/\D/g, "")) || formatarTelefone(c.telefone).includes(busca.trim());
+  });
   const aberta = (conversas ?? []).find((c) => c.id === abertaId) ?? null;
+
+  async function mudarStatus(conversaId: string, status: StatusConversa, acao: string) {
+    const ok = await alterarStatusConversa(conversaId, status, acao, user?.email ?? "Atendente", user?.id ?? null);
+    if (ok) await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+  }
 
   if (aberta) {
     return (
@@ -195,6 +207,16 @@ function Atendimento() {
   return (
     <>
       <PageHeader titulo="Atendimento WhatsApp" subtitulo="Conversas recebidas pelo WhatsApp da loja" />
+
+      <div className="relative mb-3">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Pesquisar por nome ou telefone..."
+          className="pl-9"
+        />
+      </div>
 
       <Tabs value={aba} onValueChange={(v) => setAba(v as StatusConversa)}>
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
@@ -213,36 +235,54 @@ function Atendimento() {
         {!isLoading && lista.length === 0 && (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              Nenhuma conversa nesta aba.
+              {termo ? "Nenhuma conversa encontrada." : "Nenhuma conversa nesta aba."}
             </CardContent>
           </Card>
         )}
 
         {lista.map((c) => (
-          <button key={c.id} onClick={() => setAbertaId(c.id)} className="block w-full text-left">
-            <Card className="transition-colors hover:border-primary">
-              <CardContent className="flex flex-wrap items-center gap-3 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {c.nome_contato || formatarTelefone(c.telefone)}
-                    <span className="ml-2 font-normal text-muted-foreground">{formatarTelefone(c.telefone)}</span>
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">{c.ultima_mensagem ?? "Sem mensagens"}</p>
-                </div>
+          <Card key={c.id} className="transition-colors hover:border-primary">
+            <CardContent className="flex flex-wrap items-center gap-3 py-3">
+              <button onClick={() => setAbertaId(c.id)} className="min-w-0 flex-1 text-left">
+                <p className="truncate text-sm font-semibold">
+                  {c.nome_contato || formatarTelefone(c.telefone)}
+                  <span className="ml-2 font-normal text-muted-foreground">{formatarTelefone(c.telefone)}</span>
+                </p>
+                <p className="truncate text-xs text-muted-foreground">{c.ultima_mensagem ?? "Sem mensagens"}</p>
+              </button>
 
-                <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs">
-                  <Badge variant="outline">{rotuloEtapa[c.etapa] ?? c.etapa}</Badge>
-                  <Badge variant="secondary">{c.total_mensagens} msg</Badge>
-                  {c.nao_lidas > 0 && <Badge>{c.nao_lidas} nova(s)</Badge>}
-                  {c.pedido_id && <Badge variant="outline">Pedido vinculado</Badge>}
-                  <span className="text-muted-foreground">{dataHoraCurta(c.ultima_mensagem_em ?? c.created_at)}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </button>
+              <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs">
+                <Badge variant="outline">{rotuloEtapa[c.etapa] ?? c.etapa}</Badge>
+                <Badge variant="secondary">{c.total_mensagens} msg</Badge>
+                {c.nao_lidas > 0 && <Badge>{c.nao_lidas} nova(s)</Badge>}
+                {c.pedido_id && <Badge variant="outline">Pedido vinculado</Badge>}
+                <span className="text-muted-foreground">{dataHoraCurta(c.ultima_mensagem_em ?? c.created_at)}</span>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" className="gap-1">
+                      Status <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {ACOES_STATUS.map((a) => (
+                      <DropdownMenuItem
+                        key={a.status}
+                        disabled={c.status === a.status}
+                        onSelect={() => void mudarStatus(c.id, a.status, a.acao)}
+                      >
+                        {a.rotulo}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </>
+
   );
 }
 
