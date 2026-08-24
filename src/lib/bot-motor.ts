@@ -290,17 +290,16 @@ export async function processarMenu(
   const texto = (entrada.texto ?? "").trim();
   const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
 
-  // Primeiro contato do dia / retorno no mesmo dia.
+  // Primeiro contato: envia o menu (as saudações vivem nos fluxos/respostas).
   if (estado.etapa === "inicio") {
-    const modelo = entrada.primeiraDoDia ? dados.config.msg_boas_vindas : dados.config.msg_retorno_dia;
-    const mensagens: MensagemBot[] = [{ texto: aplicarVariaveis(modelo, vars), botoes: SIM_NAO }];
-
     if (ehArquivo) {
-      mensagens.push({ texto: "Vi que você enviou um arquivo. É para fazer um orçamento?", botoes: SIM_NAO });
-      return { mensagens, estado: { etapa: "confirmar_arquivo" } };
+      return {
+        mensagens: [{ texto: "Vi que você enviou um arquivo. É para fazer um orçamento?", botoes: SIM_NAO }],
+        estado: { etapa: "confirmar_arquivo" },
+      };
     }
 
-    return { mensagens, estado: { etapa: "saudacao" } };
+    return { mensagens: [menu(dados)], estado: { etapa: "menu" } };
   }
 
   // Cliente enviou arquivo em qualquer etapa de menu.
