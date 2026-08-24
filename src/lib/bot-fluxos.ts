@@ -9,9 +9,13 @@ export interface Fluxo {
   descricao: string;
   icone: string;
   mensagem_inicial: string;
+  /** Mensagem inicial usada quando o cliente já falou hoje. */
+  mensagem_retorno_dia: string;
   ativo: boolean;
   ordem: number;
   inicial: boolean;
+  /** Fluxo iniciado quando o cliente manda apenas arquivos. */
+  fluxo_arquivos: boolean;
 }
 
 export interface FluxoEtapa {
