@@ -34,26 +34,40 @@ export interface BotResposta {
   id: string;
   titulo: string;
   resposta: string;
+  /** Texto usado quando o cliente já falou hoje (vazio = usa o principal). */
+  resposta_retorno_dia: string;
   ordem: number;
   ativo: boolean;
   palavras: string[];
+  acao_sim: string;
+  destino_sim_fluxo_id: string | null;
+  destino_sim_resposta_id: string | null;
+  acao_nao: string;
+  destino_nao_fluxo_id: string | null;
+  destino_nao_resposta_id: string | null;
 }
 
 export interface BotConfig {
   bot_ativo: boolean;
   bot_24h: boolean;
   usar_ia: boolean;
-  inatividade_minutos: number;
+  inatividade1_minutos: number;
+  inatividade2_minutos: number;
+  inatividade_status: string;
+  msg_inatividade1: string;
+  msg_inatividade_pendente: string;
+  msg_inatividade_aguardando: string;
+  msg_inatividade_em_atendimento: string;
+  msg_inatividade_finalizado: string;
   permitir_orcamento_automatico: boolean;
   enviar_msg_finalizacao: boolean;
   finalizacao_uma_vez_dia: boolean;
-  msg_boas_vindas: string;
-  msg_retorno_dia: string;
-  msg_menu: string;
   msg_fora_horario: string;
-  msg_nao_entendi: string;
+  msg_fora_horario_ativo: boolean;
   msg_transferencia: string;
+  msg_transferencia_ativo: boolean;
   msg_finalizacao: string;
+  msg_finalizacao_ativo: boolean;
 }
 
 export interface BotDados {
