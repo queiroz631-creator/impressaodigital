@@ -36,11 +36,15 @@ import {
   aplicarVariaveis,
   dentroDoHorario,
   processarMenu,
+  reconhecerResposta,
   type AcaoBot,
+  type BotDados,
+  type BotResposta,
 } from "@/lib/bot-motor";
 import type { DadosFluxos } from "@/lib/bot-fluxos";
 import {
   avancar,
+  fluxoDeArquivos,
   fluxoInicial,
   iniciar as iniciarFluxo,
   processarFluxo,
