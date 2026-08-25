@@ -68,11 +68,18 @@ function renderizar(
     y += (tamanho + 4) * escala;
   };
 
-  const paragrafo = (str: string, x: number, larguraDisp: number, tamanho: number, negrito = false) => {
+  const paragrafo = (
+    str: string,
+    x: number,
+    larguraDisp: number,
+    tamanho: number,
+    negrito = false,
+    cor: [number, number, number] = TEXTO,
+  ) => {
     setFont(negrito, tamanho);
-    doc.setTextColor(...TEXTO);
+    doc.setTextColor(...cor);
     for (const linha of doc.splitTextToSize(str, larguraDisp) as string[]) {
-      texto(linha, x, tamanho, negrito);
+      texto(linha, x, tamanho, negrito, cor);
     }
   };
 
