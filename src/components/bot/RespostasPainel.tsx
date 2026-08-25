@@ -347,7 +347,22 @@ function RespostaDialog({
               })
             }
           />
+
+          <div className="grid gap-1">
+            <Label>Aguardar antes da ação (segundos)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={60}
+              value={String(form.delay_acao_segundos ?? 0)}
+              onChange={(e) => setForm({ ...form, delay_acao_segundos: Number(e.target.value) })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Tempo de espera depois que o cliente responde SIM ou NÃO, antes do bot executar a ação. 0 = imediato.
+            </p>
+          </div>
         </div>
+
 
         <DialogFooter>
           <Button variant="outline" onClick={onFechar}>Cancelar</Button>
