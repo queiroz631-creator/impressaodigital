@@ -396,6 +396,16 @@ function Conversa({
         <Button size="sm" onClick={() => alterarStatus("finalizado", "finalizou")}>
           <CheckCircle2 className="mr-1 h-4 w-4" /> Finalizar
         </Button>
+        <Button
+          size="sm"
+          variant={botLiberado ? "outline" : "destructive"}
+          onClick={() => void alternarBotNumero()}
+          title="Liga ou desliga o atendimento automático para este número"
+        >
+          {botLiberado ? <BotIcon className="mr-1 h-4 w-4" /> : <BotOff className="mr-1 h-4 w-4" />}
+          {botLiberado ? "Bot ligado" : "Bot desligado"}
+        </Button>
+
       </div>
 
       <Card className="flex min-h-0 flex-1 flex-col">
