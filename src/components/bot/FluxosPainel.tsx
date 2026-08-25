@@ -159,6 +159,8 @@ export function FluxosPainel() {
         mensagem_inicial: f.mensagem_inicial,
         mensagem_retorno_dia: f.mensagem_retorno_dia,
         ativo: f.ativo,
+        mensagem_unica: f.mensagem_unica !== false,
+
         ordem,
         inicial: false,
         fluxo_arquivos: false,
