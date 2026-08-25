@@ -343,7 +343,49 @@ function Conversa({
     }
   }, [conversa.id, conversa.nao_lidas, queryClient]);
 
+  // Regra do bot para este número (BOT > Números).
+  const regraBot = useQuery({
+    queryKey: ["bot-numero", conversa.telefone],
+    queryFn: async () => {
+      const [cfg, regra] = await Promise.all([
+        supabase.from("whatsapp_config").select("modo_numeros").limit(1).maybeSingle(),
+        supabase
+          .from("bot_numeros")
+          .select("id, permitido, ativo")
+          .eq("telefone", conversa.telefone)
+          .maybeSingle(),
+      ]);
+      return {
+        modo: cfg.data?.modo_numeros ?? "todos",
+        regra: regra.data?.ativo ? regra.data : null,
+      };
+    },
+  });
+
+  const botLiberado =
+    regraBot.data?.modo === "somente_liberados"
+      ? Boolean(regraBot.data?.regra?.permitido)
+      : regraBot.data?.regra
+        ? regraBot.data.regra.permitido
+        : true;
+
+  async function alternarBotNumero() {
+    const { error } = await supabase.from("bot_numeros").upsert(
+      {
+        telefone: conversa.telefone,
+        nome: conversa.nome_contato ?? null,
+        permitido: !botLiberado,
+        ativo: true,
+      },
+      { onConflict: "telefone" },
+    );
+    if (error) { toast.error(error.message); return; }
+    toast.success(!botLiberado ? "Bot ligado para este número." : "Bot desligado para este número.");
+    await queryClient.invalidateQueries({ queryKey: ["bot-numero", conversa.telefone] });
+  }
+
   async function alterarStatus(status: StatusConversa, acao: string) {
+
     const ok = await alterarStatusConversa(conversa.id, status, acao, atendente, atendenteId);
     if (!ok) return;
     await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
