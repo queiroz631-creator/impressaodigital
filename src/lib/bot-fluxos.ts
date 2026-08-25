@@ -16,7 +16,10 @@ export interface Fluxo {
   inicial: boolean;
   /** Fluxo iniciado quando o cliente manda apenas arquivos. */
   fluxo_arquivos: boolean;
+  /** Envia o texto do fluxo, da etapa e as opções em uma única mensagem. */
+  mensagem_unica: boolean;
 }
+
 
 export interface FluxoEtapa {
   id: string;

@@ -42,9 +42,28 @@ export interface SaidaFluxo {
 
 const LIMITE_ENCADEAMENTO = 12;
 
+/**
+ * Junta as mensagens de texto do mesmo turno em um único envio, preservando os
+ * botões da última mensagem. Usado quando o fluxo está com "mensagem única".
+ */
+function unirMensagens(mensagens: MensagemBot[]): MensagemBot[] {
+  const textos = mensagens.map((m) => (m.texto ?? "").trim()).filter(Boolean);
+  if (textos.length <= 1) return mensagens;
+  const botoes = [...mensagens].reverse().find((m) => (m.botoes ?? []).length > 0)?.botoes;
+  return [{ texto: textos.join("\n\n"), ...(botoes ? { botoes } : {}) }];
+}
+
+/** Aplica a mensagem única quando o fluxo de origem estiver configurado assim. */
+function unirSaida(dados: DadosFluxos, saida: SaidaFluxo, fluxoId: string | null | undefined): SaidaFluxo {
+  const fluxo = fluxoPorId(dados, fluxoId);
+  if (!fluxo || fluxo.mensagem_unica === false) return saida;
+  return { ...saida, mensagens: unirMensagens(saida.mensagens) };
+}
+
 export function fluxoInicial(dados: DadosFluxos) {
   return dados.fluxos.find((f) => f.inicial && f.ativo) ?? null;
 }
+
 
 export function fluxoPorId(dados: DadosFluxos, id: string | null | undefined) {
   return dados.fluxos.find((f) => f.id === id) ?? null;

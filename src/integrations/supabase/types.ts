@@ -210,6 +210,7 @@ export type Database = {
           inicial: boolean
           mensagem_inicial: string
           mensagem_retorno_dia: string
+          mensagem_unica: boolean
           nome: string
           ordem: number
           updated_at: string
@@ -224,6 +225,7 @@ export type Database = {
           inicial?: boolean
           mensagem_inicial?: string
           mensagem_retorno_dia?: string
+          mensagem_unica?: boolean
           nome: string
           ordem?: number
           updated_at?: string
@@ -238,6 +240,7 @@ export type Database = {
           inicial?: boolean
           mensagem_inicial?: string
           mensagem_retorno_dia?: string
+          mensagem_unica?: boolean
           nome?: string
           ordem?: number
           updated_at?: string
@@ -388,6 +391,7 @@ export type Database = {
           acao_sim: string
           ativo: boolean
           created_at: string
+          delay_acao_segundos: number
           destino_nao_fluxo_id: string | null
           destino_nao_resposta_id: string | null
           destino_sim_fluxo_id: string | null
@@ -404,6 +408,7 @@ export type Database = {
           acao_sim?: string
           ativo?: boolean
           created_at?: string
+          delay_acao_segundos?: number
           destino_nao_fluxo_id?: string | null
           destino_nao_resposta_id?: string | null
           destino_sim_fluxo_id?: string | null
@@ -420,6 +425,7 @@ export type Database = {
           acao_sim?: string
           ativo?: boolean
           created_at?: string
+          delay_acao_segundos?: number
           destino_nao_fluxo_id?: string | null
           destino_nao_resposta_id?: string | null
           destino_sim_fluxo_id?: string | null
