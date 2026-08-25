@@ -308,11 +308,12 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           })
           .eq("id", conversaId);
 
-        // Atendimento automático: responde apenas quando o bot está ativo,
-        // a conversa continua no modo automático e não é o próprio número da loja.
-        if (ehProprioNumero) {
-          return Response.json({ ok: true, bot: false, motivo: "proprio_numero" });
+        // A mensagem fica registrada na conversa mesmo quando o bot não pode
+        // responder ao número (configuração em BOT > Números).
+        if (!botLiberadoParaNumero) {
+          return Response.json({ ok: true, bot: false, motivo: "numero_desativado" });
         }
+
 
         try {
           const { processarBot } = await import("@/lib/bot.server");
