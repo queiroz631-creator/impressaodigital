@@ -68,11 +68,18 @@ function renderizar(
     y += (tamanho + 4) * escala;
   };
 
-  const paragrafo = (str: string, x: number, larguraDisp: number, tamanho: number, negrito = false) => {
+  const paragrafo = (
+    str: string,
+    x: number,
+    larguraDisp: number,
+    tamanho: number,
+    negrito = false,
+    cor: [number, number, number] = TEXTO,
+  ) => {
     setFont(negrito, tamanho);
-    doc.setTextColor(...TEXTO);
+    doc.setTextColor(...cor);
     for (const linha of doc.splitTextToSize(str, larguraDisp) as string[]) {
-      texto(linha, x, tamanho, negrito);
+      texto(linha, x, tamanho, negrito, cor);
     }
   };
 
@@ -174,19 +181,25 @@ function renderizar(
   }
 
   // ===== Habilidades =====
-  const obsHabilidades = observacaoHabilidades(c);
-  if (dados.habilidades.length || obsHabilidades) {
+  if (dados.habilidades.length) {
     secao("Habilidades");
     for (const h of dados.habilidades) paragrafo(`• ${h.descricao}`, MARGEM, util, 10);
-    if (obsHabilidades) paragrafo(`OBS.: ${obsHabilidades}`, MARGEM, util, 10);
     y += 4 * escala + espacamentoExtra / 2;
   }
 
-  // ===== Objetivo (por último) =====
+  // ===== Objetivo =====
   const objetivo = objetivoFinal(c);
   if (objetivo) {
     secao("Objetivo");
     paragrafo(objetivo, MARGEM, util, 10);
+    y += 4 * escala + espacamentoExtra / 2;
+  }
+
+  // ===== Observação (destaque final) =====
+  const obsHabilidades = observacaoHabilidades(c);
+  if (obsHabilidades) {
+    secao("Observação");
+    paragrafo(obsHabilidades, MARGEM, util, 12, true, NAVY);
   }
 
   if (c.exibir_data_atualizacao) {
