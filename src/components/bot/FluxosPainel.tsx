@@ -24,6 +24,7 @@ interface FormFluxo {
   mensagem_inicial: string;
   mensagem_retorno_dia: string;
   ativo: boolean;
+  mensagem_unica: boolean;
 }
 
 const VAZIO: FormFluxo = {
@@ -33,7 +34,9 @@ const VAZIO: FormFluxo = {
   mensagem_inicial: "",
   mensagem_retorno_dia: "",
   ativo: true,
+  mensagem_unica: true,
 };
+
 
 /** Aba FLUXOS: cadastro e administração das conversas que o bot conduz. */
 export function FluxosPainel() {
