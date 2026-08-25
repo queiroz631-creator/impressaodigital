@@ -117,15 +117,25 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         const conteudo = extrair(corpo);
         const agora = new Date().toISOString();
 
-        // Mensagem vinda do próprio número da loja: registra, mas não aciona o bot.
-        const { data: cfgLoja } = await supabaseAdmin
-          .from("configuracoes")
-          .select("whatsapp, telefone")
-          .limit(1)
-          .maybeSingle();
-        const numeroLoja =
-          normalizarTelefone(cfgLoja?.whatsapp ?? "") || normalizarTelefone(cfgLoja?.telefone ?? "");
-        const ehProprioNumero = Boolean(numeroLoja) && numeroLoja === telefone;
+        // Quais números o bot atende é definido na tela BOT > Números.
+        // "todos": responde a todos, menos os bloqueados.
+        // "somente_liberados": responde apenas aos liberados e ativos.
+        const [{ data: cfgBot }, { data: regraNumero }] = await Promise.all([
+          supabaseAdmin.from("whatsapp_config").select("modo_numeros").limit(1).maybeSingle(),
+          supabaseAdmin
+            .from("bot_numeros")
+            .select("permitido, ativo")
+            .eq("telefone", telefone)
+            .maybeSingle(),
+        ]);
+        const modoNumeros = cfgBot?.modo_numeros ?? "todos";
+        const regraValida = regraNumero?.ativo ? regraNumero : null;
+        const botLiberadoParaNumero =
+          modoNumeros === "somente_liberados"
+            ? Boolean(regraValida?.permitido)
+            : regraValida ? regraValida.permitido : true;
+
+
 
 
         // Callback sem conteúdo reconhecível não deve acionar o bot.
