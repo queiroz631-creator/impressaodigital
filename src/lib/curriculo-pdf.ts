@@ -3,8 +3,10 @@ import {
   enderecoLinhas,
   formacaoFinal,
   formatarTelefone,
+  fraseSemExperiencia,
   informacoesAdicionais,
   objetivoFinal,
+  observacaoHabilidades,
   type CurriculoCompleto,
   type FormacaoItem,
 } from "./curriculo";
