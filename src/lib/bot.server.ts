@@ -67,6 +67,8 @@ interface ContextoBot {
   fluxo?: EstadoFluxo | null;
   /** Resposta automática aguardando confirmação do cliente (triagem). */
   triagem?: string | null;
+  /** Fluxo iniciado automaticamente pelo tempo de fallback (nada reconhecido). */
+  fluxoFallback?: boolean | null;
 }
 
 interface ConversaBot {
