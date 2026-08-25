@@ -133,7 +133,7 @@ function renderizar(
   if (pessoais.length) {
     secao("Dados pessoais");
     for (const p of pessoais) paragrafo(p, MARGEM, util, 10);
-    y += 4 * escala + espacamentoExtra / 2;
+    y += 8 * escala + espacamentoExtra / 2;
   }
 
   // ===== Informações adicionais =====
@@ -141,7 +141,7 @@ function renderizar(
   if (adicionais.length) {
     secao("Informações adicionais");
     for (const linha of adicionais) paragrafo(`• ${linha}`, MARGEM, util, 10);
-    y += 4 * escala + espacamentoExtra / 2;
+    y += 8 * escala + espacamentoExtra / 2;
   }
 
   // ===== Formação =====
@@ -152,7 +152,7 @@ function renderizar(
     for (const f of dados.formacoes) {
       paragrafo(formatarFormacao(f), MARGEM, util, 10);
     }
-    y += 4 * escala + espacamentoExtra / 2;
+    y += 8 * escala + espacamentoExtra / 2;
   }
 
   // ===== Cursos complementares =====
@@ -161,14 +161,14 @@ function renderizar(
     for (const curso of dados.cursos) {
       paragrafo(formatarCurso(curso), MARGEM, util, 10);
     }
-    y += 4 * escala + espacamentoExtra / 2;
+    y += 8 * escala + espacamentoExtra / 2;
   }
 
   // ===== Experiência profissional =====
   if (!c.experiencia_possui) {
     secao("Experiência profissional");
     texto(fraseSemExperiencia(c), MARGEM, 12, true, NAVY);
-    y += 4 * escala + espacamentoExtra / 2;
+    y += 8 * escala + espacamentoExtra / 2;
   } else if (dados.experiencias.length) {
     secao("Experiência profissional");
     for (const exp of dados.experiencias) {
@@ -184,7 +184,7 @@ function renderizar(
   if (dados.habilidades.length) {
     secao("Habilidades");
     for (const h of dados.habilidades) paragrafo(`• ${h.descricao}`, MARGEM, util, 10);
-    y += 4 * escala + espacamentoExtra / 2;
+    y += 8 * escala + espacamentoExtra / 2;
   }
 
   // ===== Objetivo =====
@@ -192,7 +192,7 @@ function renderizar(
   if (objetivo) {
     secao("Objetivo");
     paragrafo(objetivo, MARGEM, util, 10);
-    y += 4 * escala + espacamentoExtra / 2;
+    y += 8 * escala + espacamentoExtra / 2;
   }
 
   // ===== Observação (destaque final) =====
