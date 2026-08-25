@@ -398,11 +398,25 @@ export function FluxosPainel() {
                 <p className="text-xs text-muted-foreground">Se ficar em branco, o bot usa a mensagem inicial.</p>
               </div>
               <label className="flex items-center justify-between gap-4 text-sm">
+              <div className="grid gap-1 rounded-lg border p-3">
+                <label className="flex items-center justify-between gap-4 text-sm">
+                  <strong>Enviar tudo em uma única mensagem</strong>
+                  <Switch
+                    checked={form.mensagem_unica}
+                    onCheckedChange={(v) => setForm({ ...form, mensagem_unica: v })}
+                  />
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Junta a mensagem do fluxo, o texto da etapa e a lista de opções em um só envio.
+                </p>
+              </div>
+              <label className="flex items-center justify-between gap-4 text-sm">
                 <strong>Ativo</strong>
                 <Switch checked={form.ativo} onCheckedChange={(v) => setForm({ ...form, ativo: v })} />
               </label>
             </div>
           )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => { setForm(null); setEditando(null); }}>CANCELAR</Button>
             <Button onClick={() => void salvarFluxo()}>{editando ? "SALVAR" : "CRIAR FLUXO"}</Button>
