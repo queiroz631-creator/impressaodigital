@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { FluxosPainel } from "@/components/bot/FluxosPainel";
 import { RespostasPainel } from "@/components/bot/RespostasPainel";
+import { NumerosPainel } from "@/components/bot/NumerosPainel";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
