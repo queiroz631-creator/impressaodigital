@@ -11,12 +11,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { carregarCurriculoPublico, criarCurriculoPublico, salvarCurriculoPublico } from "@/lib/curriculo.functions";
 import {
-  carregarCurriculoPublico,
-  criarCurriculoPublico,
-  salvarCurriculoPublico,
-} from "@/lib/curriculo.functions";
-import { cpfValido, formatarCpf, formatarTelefone, somenteNumeros, type CurriculoCompleto, type PayloadEtapa } from "@/lib/curriculo";
+  cpfValido,
+  formatarCpf,
+  formatarTelefone,
+  somenteNumeros,
+  type CurriculoCompleto,
+  type PayloadEtapa,
+} from "@/lib/curriculo";
 
 export const Route = createFileRoute("/curriculo/publico/$token")({
   head: () => ({
@@ -74,7 +77,6 @@ function CurriculoPublico() {
       );
     }
 
-
     if (concluido) {
       return (
         <Card>
@@ -82,7 +84,7 @@ function CurriculoPublico() {
             <CheckCircle2 className="h-10 w-10 text-primary" />
             <p className="text-lg font-semibold">Currículo enviado com sucesso!</p>
             <p className="text-sm text-muted-foreground">
-              Obrigado. Nossa equipe já pode preparar a impressão do seu currículo.
+              Obrigado. Entre em contato com nossa equipe para preparar a impressão do seu currículo.
             </p>
           </CardContent>
         </Card>
@@ -128,9 +130,7 @@ function CurriculoPublico() {
     <div className="notranslate min-h-screen bg-muted/40 py-8" translate="no">
       <div className="mx-auto w-full max-w-3xl px-4">
         <header className="mb-6 text-center">
-          <p className="text-sm uppercase tracking-widest text-muted-foreground">
-            {data?.empresaNome ?? ""}
-          </p>
+          <p className="text-sm uppercase tracking-widest text-muted-foreground">{data?.empresaNome ?? ""}</p>
           <h1 className="text-2xl font-extrabold">Preencha seu currículo</h1>
         </header>
         {conteudo()}
