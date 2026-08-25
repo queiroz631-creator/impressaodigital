@@ -174,19 +174,25 @@ function renderizar(
   }
 
   // ===== Habilidades =====
-  const obsHabilidades = observacaoHabilidades(c);
-  if (dados.habilidades.length || obsHabilidades) {
+  if (dados.habilidades.length) {
     secao("Habilidades");
     for (const h of dados.habilidades) paragrafo(`• ${h.descricao}`, MARGEM, util, 10);
-    if (obsHabilidades) paragrafo(`OBS.: ${obsHabilidades}`, MARGEM, util, 10);
     y += 4 * escala + espacamentoExtra / 2;
   }
 
-  // ===== Objetivo (por último) =====
+  // ===== Objetivo =====
   const objetivo = objetivoFinal(c);
   if (objetivo) {
     secao("Objetivo");
     paragrafo(objetivo, MARGEM, util, 10);
+    y += 4 * escala + espacamentoExtra / 2;
+  }
+
+  // ===== Observação (destaque final) =====
+  const obsHabilidades = observacaoHabilidades(c);
+  if (obsHabilidades) {
+    secao("Observação");
+    paragrafo(obsHabilidades, MARGEM, util, 12, true);
   }
 
   if (c.exibir_data_atualizacao) {

@@ -116,22 +116,25 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
           </Secao>
         )}
 
-        {(dados.habilidades.length > 0 || observacao) && (
+        {dados.habilidades.length > 0 && (
           <Secao titulo="Habilidades">
-            {dados.habilidades.length > 0 && (
-              <ul className="list-disc pl-5">
-                {dados.habilidades.map((h, i) => (
-                  <li key={i}>{h.descricao}</li>
-                ))}
-              </ul>
-            )}
-            {observacao && <p className="mt-1">OBS.: {observacao}</p>}
+            <ul className="list-disc pl-5">
+              {dados.habilidades.map((h, i) => (
+                <li key={i}>{h.descricao}</li>
+              ))}
+            </ul>
           </Secao>
         )}
 
         {objetivo && (
           <Secao titulo="Objetivo">
             <p>{objetivo}</p>
+          </Secao>
+        )}
+
+        {observacao && (
+          <Secao titulo="Observação">
+            <p className="text-[12pt] font-bold text-navy">{observacao}</p>
           </Secao>
         )}
 
