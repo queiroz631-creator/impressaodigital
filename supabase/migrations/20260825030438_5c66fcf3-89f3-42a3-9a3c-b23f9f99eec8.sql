@@ -1,0 +1,2 @@
+ALTER TABLE public.bot_respostas ADD COLUMN IF NOT EXISTS delay_acao_segundos integer NOT NULL DEFAULT 0;
+ALTER TABLE public.bot_fluxos ADD COLUMN IF NOT EXISTS mensagem_unica boolean NOT NULL DEFAULT true;
