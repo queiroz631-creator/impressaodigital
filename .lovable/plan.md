@@ -1,18 +1,26 @@
-# Tempo de espera nas respostas automáticas
+# Fluxo: mensagem única e opções na mesma tela
 
-Adicionar, em cada resposta automática, um campo de tempo (em segundos) aplicado depois que o cliente responde SIM ou NÃO, antes do bot executar a ação configurada.
+## 1. Enviar texto e ações numa só mensagem
 
-## Como vai funcionar
+Hoje o bot envia a mensagem inicial do fluxo em um envio e a mensagem da etapa (com a lista de opções) em outro, então o cliente recebe duas mensagens seguidas.
 
-- Novo campo "Aguardar antes da ação (segundos)" no formulário de resposta automática, logo abaixo dos blocos de ação SIM/NÃO.
-- Valor padrão 0 (sem espera). Aceita números inteiros de 0 a 60.
-- Um único tempo por resposta, valendo tanto para o SIM quanto para o NÃO.
-- Após a confirmação do cliente, o bot envia o texto da resposta (quando for SIM), aguarda o tempo configurado e só então executa a ação (abrir fluxo, outra resposta, atendente etc.).
-- O simulador respeita o mesmo intervalo.
+- Novo ajuste "Enviar tudo em uma única mensagem" no cadastro do fluxo (ligado por padrão).
+- Com ele ligado, todas as mensagens de texto geradas no mesmo turno — mensagem inicial/retorno do fluxo, texto da etapa e a lista numerada de opções — são unidas em um único envio, separadas por linha em branco.
+- Os botões (SIM/NÃO ou as três primeiras opções) continuam anexados a essa mensagem única.
+- Desligado, o comportamento atual de mensagens separadas é mantido.
+- O simulador de teste do fluxo mostra exatamente o mesmo agrupamento.
+
+## 2. Configurar opções na mesma tela da etapa
+
+- O diálogo de etapa passa a ter uma seção "Opções de resposta" com a lista das opções da etapa.
+- Dá para adicionar, editar (título, valor, ação, destino), reordenar (setas) e excluir sem sair do diálogo da etapa.
+- Ao criar uma etapa nova, as opções adicionadas são salvas junto quando a etapa é gravada.
+- O diálogo separado de opção deixa de existir; na listagem de etapas as opções continuam visíveis, e "Editar" abre a etapa já com a seção de opções.
 
 ## Detalhes técnicos
 
-- Banco: nova coluna `delay_acao_segundos` (integer, NOT NULL, default 0) em `bot_respostas`.
-- `src/lib/bot-motor.ts`: incluir o campo no tipo `BotResposta`.
-- `src/lib/bot.server.ts`: em `resolverTriagem`, aguardar o intervalo entre o envio da resposta e a chamada de `executarAcaoResposta`.
-- `src/components/bot/RespostasPainel.tsx`: campo numérico no formulário, incluído na carga e no salvamento.
+- Banco: nova coluna `mensagem_unica` (boolean, NOT NULL, default true) em `bot_fluxos`.
+- `src/lib/bot-fluxos-motor.ts`: função para consolidar `SaidaFluxo.mensagens` — junta textos consecutivos e preserva os `botoes` da última mensagem; aplicada em `iniciar`, `executar` e `processarFluxo` quando o fluxo tiver `mensagem_unica`.
+- `src/lib/bot-fluxos.ts`: incluir o campo no tipo `Fluxo`.
+- `src/components/bot/FluxosPainel.tsx`: switch no formulário do fluxo.
+- `src/components/bot/FluxoConfigurador.tsx`: mover o formulário de opção para dentro do diálogo da etapa (estado local + gravação em `bot_fluxo_opcoes` após salvar a etapa) e remover o diálogo separado.
