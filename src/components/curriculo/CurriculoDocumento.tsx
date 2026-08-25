@@ -94,7 +94,11 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
           </Secao>
         )}
 
-        {dados.experiencias.length > 0 && (
+        {!c.experiencia_possui ? (
+          <Secao titulo="Experiência profissional">
+            <p className="cv-empresa text-[12pt] font-bold text-navy">{fraseSemExperiencia(c)}</p>
+          </Secao>
+        ) : dados.experiencias.length > 0 && (
           <Secao titulo="Experiência profissional">
             {dados.experiencias.map((exp, i) => (
               <div key={i} className="mb-2">
