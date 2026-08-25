@@ -22,8 +22,10 @@ export function gerarCurriculoPdf(dados: CurriculoCompleto): jsPDF {
   const altura = doc.internal.pageSize.getHeight();
   const util = largura - MARGEM * 2;
 
-  // Primeira passagem: mede a altura total do conteúdo com escala 1.
-  const medida = renderizar(doc, dados, largura, altura, util, 1, { cabecalho: 0, secao: 0 });
+  // Primeira passagem: mede a altura total do conteúdo (documento descartável).
+  const rascunho = new jsPDF({ unit: "pt", format: "a4" });
+  const medida = renderizar(rascunho, dados, largura, altura, util, 1, { cabecalho: 0, secao: 0 });
+
   const disponivel = altura - MARGEM * 2;
   let escala = 1;
   if (medida.total > disponivel) {
