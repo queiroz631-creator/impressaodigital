@@ -117,8 +117,10 @@ export function RespostasPainel() {
         acao_nao: r.acao_nao,
         destino_nao_fluxo_id: r.destino_nao_fluxo_id,
         destino_nao_resposta_id: r.destino_nao_resposta_id,
+        delay_acao_segundos: r.delay_acao_segundos ?? 0,
         ordem,
       })
+
       .select("id")
       .maybeSingle();
     if (error) { toast.error(error.message); return; }
