@@ -199,7 +199,7 @@ function renderizar(
   const obsHabilidades = observacaoHabilidades(c);
   if (obsHabilidades) {
     secao("Observação");
-    paragrafo(obsHabilidades, MARGEM, util, 12, true);
+    paragrafo(obsHabilidades, MARGEM, util, 12, true, NAVY);
   }
 
   if (c.exibir_data_atualizacao) {
