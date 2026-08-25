@@ -23,24 +23,37 @@ export function gerarCurriculoPdf(dados: CurriculoCompleto): jsPDF {
   const util = largura - MARGEM * 2;
 
   // Primeira passagem: mede a altura total do conteúdo com escala 1.
-  const medida = renderizar(doc, dados, largura, altura, util, 1, 0);
+  const medida = renderizar(doc, dados, largura, altura, util, 1, { cabecalho: 0, secao: 0 });
   const disponivel = altura - MARGEM * 2;
   let escala = 1;
   if (medida.total > disponivel) {
     escala = Math.max(0.7, disponivel / medida.total);
   }
-  const espacamentoExtra = medida.total < disponivel * 0.6 && escala === 1
-    ? (disponivel - medida.total) / Math.max(1, medida.secoes)
-    : 0;
+
+  // Distribui a folga da folha entre cabeçalho e respiros das seções.
+  const sobra = Math.max(0, disponivel - medida.total);
+  // 3 respiros no cabeçalho + 2 por seção (antes e depois do conteúdo).
+  const pontos = 3 + medida.secoes * 2;
+  const unidade = escala === 1 ? Math.min(18, sobra / Math.max(1, pontos)) : 0;
+  const folga: Folga = {
+    // O topo é o ponto mais comprimido: recebe uma fatia maior.
+    cabecalho: Math.min(26, unidade * 1.4),
+    secao: unidade,
+  };
 
   // Segunda passagem: desenha com a escala calculada.
-  renderizar(doc, dados, largura, altura, util, escala, espacamentoExtra);
+  renderizar(doc, dados, largura, altura, util, escala, folga);
   return doc;
 }
 
 interface RenderResult {
   total: number;
   secoes: number;
+}
+
+interface Folga {
+  cabecalho: number;
+  secao: number;
 }
 
 function renderizar(
@@ -50,8 +63,9 @@ function renderizar(
   altura: number,
   util: number,
   escala: number,
-  espacamentoExtra: number,
+  folga: Folga,
 ): RenderResult {
+
   const c = dados.curriculo;
   let y = MARGEM;
   let secoes = 0;
