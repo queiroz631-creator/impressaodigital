@@ -123,12 +123,12 @@ function renderizar(
   setFont(true, 16);
   doc.setTextColor(255, 255, 255);
   doc.text("CURRÍCULO VITAE", centro, y + hFaixa - 8 * escala, { align: "center" });
-  y += hFaixa + 16 * escala;
+  y += hFaixa + 16 * escala + folga.cabecalho;
 
   centrado((c.nome_completo || "").toUpperCase(), 15, true, NAVY);
 
-  // Espaço reduzido entre o nome e os telefones
-  y += 4 * escala;
+  // Espaço entre o nome e os telefones
+  y += 4 * escala + folga.cabecalho;
 
   const telefones = [
     c.telefone_principal ? formatarTelefone(c.telefone_principal) : "",
@@ -137,7 +137,8 @@ function renderizar(
   if (telefones.length) centrado(telefones.join("  •  "), 12);
   if (c.email) centrado(c.email, 10);
 
-  y += 6 * escala;
+  y += 6 * escala + folga.cabecalho;
+
 
   // ===== Dados pessoais =====
   const pessoais: string[] = [];
