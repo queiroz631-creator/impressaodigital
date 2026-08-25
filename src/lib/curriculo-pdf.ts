@@ -22,25 +22,40 @@ export function gerarCurriculoPdf(dados: CurriculoCompleto): jsPDF {
   const altura = doc.internal.pageSize.getHeight();
   const util = largura - MARGEM * 2;
 
-  // Primeira passagem: mede a altura total do conteúdo com escala 1.
-  const medida = renderizar(doc, dados, largura, altura, util, 1, 0);
+  // Primeira passagem: mede a altura total do conteúdo (documento descartável).
+  const rascunho = new jsPDF({ unit: "pt", format: "a4" });
+  const medida = renderizar(rascunho, dados, largura, altura, util, 1, { cabecalho: 0, secao: 0 });
+
   const disponivel = altura - MARGEM * 2;
   let escala = 1;
   if (medida.total > disponivel) {
     escala = Math.max(0.7, disponivel / medida.total);
   }
-  const espacamentoExtra = medida.total < disponivel * 0.6 && escala === 1
-    ? (disponivel - medida.total) / Math.max(1, medida.secoes)
-    : 0;
+
+  // Distribui a folga da folha entre cabeçalho e respiros das seções.
+  const sobra = Math.max(0, disponivel - medida.total);
+  // 3 respiros no cabeçalho + 2 por seção (antes e depois do conteúdo).
+  const pontos = 3 + medida.secoes * 2;
+  const unidade = escala === 1 ? Math.min(18, sobra / Math.max(1, pontos)) : 0;
+  const folga: Folga = {
+    // O topo é o ponto mais comprimido: recebe uma fatia maior.
+    cabecalho: Math.min(26, unidade * 1.4),
+    secao: unidade,
+  };
 
   // Segunda passagem: desenha com a escala calculada.
-  renderizar(doc, dados, largura, altura, util, escala, espacamentoExtra);
+  renderizar(doc, dados, largura, altura, util, escala, folga);
   return doc;
 }
 
 interface RenderResult {
   total: number;
   secoes: number;
+}
+
+interface Folga {
+  cabecalho: number;
+  secao: number;
 }
 
 function renderizar(
@@ -50,8 +65,9 @@ function renderizar(
   altura: number,
   util: number,
   escala: number,
-  espacamentoExtra: number,
+  folga: Folga,
 ): RenderResult {
+
   const c = dados.curriculo;
   let y = MARGEM;
   let secoes = 0;
@@ -91,7 +107,7 @@ function renderizar(
     setFont(true, 11);
     doc.setTextColor(255, 255, 255);
     doc.text(titulo.toUpperCase(), MARGEM + 8, y + h - 5);
-    y += h + 8 * escala + espacamentoExtra / 2;
+    y += h + 8 * escala + folga.secao;
   };
 
   const centro = largura / 2;
@@ -109,12 +125,12 @@ function renderizar(
   setFont(true, 16);
   doc.setTextColor(255, 255, 255);
   doc.text("CURRÍCULO VITAE", centro, y + hFaixa - 8 * escala, { align: "center" });
-  y += hFaixa + 16 * escala;
+  y += hFaixa + 16 * escala + folga.cabecalho;
 
   centrado((c.nome_completo || "").toUpperCase(), 15, true, NAVY);
 
-  // Espaço reduzido entre o nome e os telefones
-  y += 4 * escala;
+  // Espaço entre o nome e os telefones
+  y += 4 * escala + folga.cabecalho;
 
   const telefones = [
     c.telefone_principal ? formatarTelefone(c.telefone_principal) : "",
@@ -123,7 +139,8 @@ function renderizar(
   if (telefones.length) centrado(telefones.join("  •  "), 12);
   if (c.email) centrado(c.email, 10);
 
-  y += 6 * escala;
+  y += 6 * escala + folga.cabecalho;
+
 
   // ===== Dados pessoais =====
   const pessoais: string[] = [];
@@ -133,7 +150,7 @@ function renderizar(
   if (pessoais.length) {
     secao("Dados pessoais");
     for (const p of pessoais) paragrafo(p, MARGEM, util, 10);
-    y += 8 * escala + espacamentoExtra / 2;
+    y += 8 * escala + folga.secao;
   }
 
   // ===== Informações adicionais =====
@@ -141,7 +158,7 @@ function renderizar(
   if (adicionais.length) {
     secao("Informações adicionais");
     for (const linha of adicionais) paragrafo(`• ${linha}`, MARGEM, util, 10);
-    y += 8 * escala + espacamentoExtra / 2;
+    y += 8 * escala + folga.secao;
   }
 
   // ===== Formação =====
@@ -152,7 +169,7 @@ function renderizar(
     for (const f of dados.formacoes) {
       paragrafo(formatarFormacao(f), MARGEM, util, 10);
     }
-    y += 8 * escala + espacamentoExtra / 2;
+    y += 8 * escala + folga.secao;
   }
 
   // ===== Cursos complementares =====
@@ -161,14 +178,14 @@ function renderizar(
     for (const curso of dados.cursos) {
       paragrafo(formatarCurso(curso), MARGEM, util, 10);
     }
-    y += 8 * escala + espacamentoExtra / 2;
+    y += 8 * escala + folga.secao;
   }
 
   // ===== Experiência profissional =====
   if (!c.experiencia_possui) {
     secao("Experiência profissional");
     texto(fraseSemExperiencia(c), MARGEM, 12, true, NAVY);
-    y += 8 * escala + espacamentoExtra / 2;
+    y += 8 * escala + folga.secao;
   } else if (dados.experiencias.length) {
     secao("Experiência profissional");
     for (const exp of dados.experiencias) {
@@ -176,7 +193,7 @@ function renderizar(
       if (exp.cargo) texto(`Cargo/Função: ${exp.cargo}`, MARGEM, 10);
       if (exp.periodo) texto(`Período: ${exp.periodo}`, MARGEM, 9);
       if (exp.atividades) paragrafo(`Atividade(s): ${exp.atividades}`, MARGEM, util, 10);
-      y += 6 * escala + espacamentoExtra / 2;
+      y += 6 * escala + folga.secao;
     }
   }
 
@@ -184,7 +201,7 @@ function renderizar(
   if (dados.habilidades.length) {
     secao("Habilidades");
     for (const h of dados.habilidades) paragrafo(`• ${h.descricao}`, MARGEM, util, 10);
-    y += 8 * escala + espacamentoExtra / 2;
+    y += 8 * escala + folga.secao;
   }
 
   // ===== Objetivo =====
@@ -192,18 +209,19 @@ function renderizar(
   if (objetivo) {
     secao("Objetivo");
     paragrafo(objetivo, MARGEM, util, 10);
-    y += 8 * escala + espacamentoExtra / 2;
+    y += 8 * escala + folga.secao;
   }
 
-  // ===== Observação (destaque final) =====
+  // ===== Observação (destaque final, sem barra de seção) =====
   const obsHabilidades = observacaoHabilidades(c);
   if (obsHabilidades) {
-    secao("Observação");
-    paragrafo(obsHabilidades, MARGEM, util, 12, true, NAVY);
+    y += folga.secao;
+    paragrafo(`OBS.: ${obsHabilidades}`, MARGEM, util, 12, true, NAVY);
   }
 
+
   if (c.exibir_data_atualizacao) {
-    y += 16 * escala + espacamentoExtra / 2;
+    y += 16 * escala + folga.secao;
     setFont(false, 9);
     doc.setTextColor(110, 110, 120);
     doc.text(`Atualizado em ${dataBR(c.updated_at)}`, MARGEM, y);
