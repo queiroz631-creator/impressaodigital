@@ -397,8 +397,8 @@ export function FluxosPainel() {
                 />
                 <p className="text-xs text-muted-foreground">Se ficar em branco, o bot usa a mensagem inicial.</p>
               </div>
-              <label className="flex items-center justify-between gap-4 text-sm">
               <div className="grid gap-1 rounded-lg border p-3">
+
                 <label className="flex items-center justify-between gap-4 text-sm">
                   <strong>Enviar tudo em uma única mensagem</strong>
                   <Switch
