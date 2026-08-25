@@ -105,7 +105,7 @@ function renderizar(
     setFont(true, 11);
     doc.setTextColor(255, 255, 255);
     doc.text(titulo.toUpperCase(), MARGEM + 8, y + h - 5);
-    y += h + 8 * escala + espacamentoExtra / 2;
+    y += h + 8 * escala + folga.secao;
   };
 
   const centro = largura / 2;
