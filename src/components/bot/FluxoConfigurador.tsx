@@ -464,8 +464,94 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
                 <strong>Etapa ativa</strong>
                 <Switch checked={formEtapa.ativo} onCheckedChange={(v) => setFormEtapa({ ...formEtapa, ativo: v })} />
               </label>
+
+              {/* Opções de resposta editadas na mesma tela da etapa */}
+              <div className="grid gap-2 rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <strong className="text-sm">Opções de resposta</strong>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setOpcoesInline([
+                        ...opcoesInline,
+                        {
+                          etapa_id: formEtapa.id ?? "",
+                          titulo: "",
+                          valor: "",
+                          acao: "proxima_etapa",
+                          destino_fluxo_id: NENHUM,
+                          destino_etapa_id: NENHUM,
+                          ativo: true,
+                        },
+                      ])
+                    }
+                  >
+                    <Plus className="h-4 w-4" /> OPÇÃO
+                  </Button>
+                </div>
+
+                {opcoesInline.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Sem opções. O cliente responde livremente nesta etapa.
+                  </p>
+                )}
+
+                {opcoesInline.map((o, i) => {
+                  const alterar = (patch: Partial<FormOpcao>) =>
+                    setOpcoesInline(opcoesInline.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+                  return (
+                    <div key={o.id ?? `nova-${i}`} className="grid gap-2 rounded-md border p-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-muted-foreground">{i + 1}.</span>
+                        <Input
+                          placeholder="Título da opção"
+                          value={o.titulo}
+                          onChange={(e) => alterar({ titulo: e.target.value })}
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive"
+                          onClick={() => {
+                            if (o.id) setOpcoesRemovidas([...opcoesRemovidas, o.id]);
+                            setOpcoesInline(opcoesInline.filter((_, j) => j !== i));
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <Select value={o.acao} onValueChange={(v) => alterar({ acao: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {ACOES_OPCAO.map((a) => <SelectItem key={a.valor} value={a.valor}>{a.rotulo}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      {o.acao === "iniciar_fluxo" && (
+                        <Select value={o.destino_fluxo_id} onValueChange={(v) => alterar({ destino_fluxo_id: v })}>
+                          <SelectTrigger><SelectValue placeholder="Fluxo destino" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NENHUM}>Nenhum</SelectItem>
+                            {outrosFluxos.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {o.acao === "ir_para_etapa" && (
+                        <Select value={o.destino_etapa_id} onValueChange={(v) => alterar({ destino_etapa_id: v })}>
+                          <SelectTrigger><SelectValue placeholder="Etapa destino" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NENHUM}>Nenhuma</SelectItem>
+                            {ordenadas.map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormEtapa(null)}>CANCELAR</Button>
             <Button onClick={() => void salvarEtapa()}>SALVAR ETAPA</Button>
