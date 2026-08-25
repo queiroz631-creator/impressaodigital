@@ -96,6 +96,10 @@ export type CamposCurriculo = Partial<
     | "uf"
     | "cep"
     | "pos_graduacao_nome"
+    | "numero"
+    | "experiencia_possui"
+    | "experiencia_frase"
+    | "habilidades_observacao"
   >
 >;
 
