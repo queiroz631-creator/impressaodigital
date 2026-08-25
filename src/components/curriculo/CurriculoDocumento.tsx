@@ -14,7 +14,7 @@ import { dataBR } from "@/lib/format";
 
 function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <section className="mt-4">
+    <section className="mt-4 mb-4">
       <h2 className="cv-secao rounded bg-navy px-3 py-1.5 text-[11pt] font-bold uppercase tracking-wide text-navy-foreground">
         {titulo}
       </h2>
