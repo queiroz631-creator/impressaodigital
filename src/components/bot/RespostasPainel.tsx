@@ -256,7 +256,9 @@ function RespostaDialog({
         acao_nao: form.acao_nao,
         destino_nao_fluxo_id: form.destino_nao_fluxo_id,
         destino_nao_resposta_id: form.destino_nao_resposta_id,
+        delay_acao_segundos: Math.min(60, Math.max(0, Number(form.delay_acao_segundos) || 0)),
       })
+
       .eq("id", form.id);
 
     if (error) { setSalvando(false); toast.error(error.message); return; }
