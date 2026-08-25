@@ -76,9 +76,33 @@ const ETAPA_VAZIA: FormEtapa = {
 export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, recarregar }: Props) {
   const [formEtapa, setFormEtapa] = useState<FormEtapa | null>(null);
   const [formOpcao, setFormOpcao] = useState<FormOpcao | null>(null);
+  const [opcoesInline, setOpcoesInline] = useState<FormOpcao[]>([]);
+  const [opcoesRemovidas, setOpcoesRemovidas] = useState<string[]>([]);
 
   const ordenadas = [...etapas].sort((a, b) => a.ordem - b.ordem);
   const outrosFluxos = fluxos.filter((f) => f.ativo && f.id !== fluxo.id);
+
+  /** Abre o diálogo da etapa já com as opções dela carregadas para edição inline. */
+  function abrirEtapa(dados: FormEtapa) {
+    const lista = dados.id
+      ? opcoes
+          .filter((o) => o.etapa_id === dados.id)
+          .sort((a, b) => a.ordem - b.ordem)
+          .map((o) => ({
+            id: o.id,
+            etapa_id: o.etapa_id,
+            titulo: o.titulo,
+            valor: o.valor,
+            acao: o.acao,
+            destino_fluxo_id: o.destino_fluxo_id ?? NENHUM,
+            destino_etapa_id: o.destino_etapa_id ?? NENHUM,
+            ativo: o.ativo,
+          }))
+      : [];
+    setOpcoesInline(lista);
+    setOpcoesRemovidas([]);
+    setFormEtapa(dados);
+  }
 
   async function salvarEtapa() {
     if (!formEtapa) return;
@@ -94,19 +118,48 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
       destino_fluxo_id: formEtapa.destino_fluxo_id === NENHUM ? null : formEtapa.destino_fluxo_id,
     };
 
-    const { error } = formEtapa.id
-      ? await supabase.from("bot_fluxo_etapas").update(dados).eq("id", formEtapa.id)
-      : await supabase.from("bot_fluxo_etapas").insert({
-          ...dados,
-          fluxo_id: fluxo.id,
-          ordem: Math.max(0, ...ordenadas.map((e) => e.ordem)) + 1,
-        });
+    let etapaId = formEtapa.id ?? null;
+    if (etapaId) {
+      const { error } = await supabase.from("bot_fluxo_etapas").update(dados).eq("id", etapaId);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { data, error } = await supabase
+        .from("bot_fluxo_etapas")
+        .insert({ ...dados, fluxo_id: fluxo.id, ordem: Math.max(0, ...ordenadas.map((e) => e.ordem)) + 1 })
+        .select("id")
+        .single();
+      if (error || !data) { toast.error(error?.message ?? "Falha ao salvar etapa."); return; }
+      etapaId = data.id;
+    }
 
-    if (error) { toast.error(error.message); return; }
+    if (opcoesRemovidas.length > 0) {
+      await supabase.from("bot_fluxo_opcoes").delete().in("id", opcoesRemovidas);
+    }
+
+    for (const [i, o] of opcoesInline.entries()) {
+      if (!o.titulo.trim()) continue;
+      const dadosOpcao = {
+        titulo: o.titulo,
+        valor: o.valor || o.titulo,
+        acao: o.acao,
+        ativo: o.ativo,
+        ordem: i + 1,
+        destino_fluxo_id: o.destino_fluxo_id === NENHUM ? null : o.destino_fluxo_id,
+        destino_etapa_id: o.destino_etapa_id === NENHUM ? null : o.destino_etapa_id,
+      };
+      const { error } = o.id
+        ? await supabase.from("bot_fluxo_opcoes").update(dadosOpcao).eq("id", o.id)
+        : await supabase.from("bot_fluxo_opcoes").insert({ ...dadosOpcao, etapa_id: etapaId });
+      if (error) { toast.error(error.message); return; }
+    }
+
     toast.success("Etapa salva.");
     setFormEtapa(null);
+    setOpcoesInline([]);
+    setOpcoesRemovidas([]);
     await recarregar();
   }
+
 
   async function excluirEtapa(e: FluxoEtapa) {
     const { error } = await supabase.from("bot_fluxo_etapas").delete().eq("id", e.id);
