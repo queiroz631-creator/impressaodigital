@@ -889,7 +889,9 @@ async function rodarFluxo(
   // Fluxo iniciado automaticamente pelo tempo de fallback: uma palavra-chave
   // reconhecida interrompe esse fluxo e volta para a triagem. Fluxos escolhidos
   // pelo cliente nunca são interrompidos.
-  if (ctx.fluxoFallback) {
+  const raizAtual = fluxoInicial(dados);
+  const aindaNoFluxoInicial = Boolean(raizAtual && estado.fluxoId === raizAtual.id);
+  if (ctx.fluxoFallback && aindaNoFluxoInicial) {
     const cfg = await carregarDadosBot();
     const texto = (entrada.texto ?? "").trim();
     if (cfg && texto && reconhecerResposta(cfg, texto)) {
