@@ -41,6 +41,7 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
     const objetivo = objetivoFinal(c);
     const formacao = formacaoFinal(c);
     const adicionais = informacoesAdicionais(c);
+    const observacao = observacaoHabilidades(c);
 
     return (
       <div ref={ref} className="mx-auto w-full max-w-[210mm] bg-white p-8 text-foreground shadow-sm">
