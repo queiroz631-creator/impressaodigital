@@ -360,7 +360,7 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
           {ordenadas.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma etapa cadastrada.</p>}
 
           <div>
-            <Button onClick={() => setFormEtapa({ ...ETAPA_VAZIA })}>
+            <Button onClick={() => abrirEtapa({ ...ETAPA_VAZIA })}>
               <Plus className="h-4 w-4" /> ADICIONAR ETAPA
             </Button>
           </div>
