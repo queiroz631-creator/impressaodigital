@@ -133,10 +133,11 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
         )}
 
         {observacao && (
-          <Secao titulo="Observação">
-            <p className="text-[12pt] font-bold text-navy">{observacao}</p>
-          </Secao>
+          <p className="mt-4 mb-4 text-[12pt] font-bold leading-relaxed text-navy">
+            OBS.: {observacao}
+          </p>
         )}
+
 
         {c.exibir_data_atualizacao && (
           <p className="mt-6 text-[9pt] italic text-muted-foreground">
