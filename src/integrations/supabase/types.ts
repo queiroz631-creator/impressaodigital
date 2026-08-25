@@ -310,6 +310,39 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_numeros: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string | null
+          observacao: string | null
+          permitido: boolean
+          telefone: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string | null
+          observacao?: string | null
+          permitido?: boolean
+          telefone: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string | null
+          observacao?: string | null
+          permitido?: boolean
+          telefone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bot_palavras_chave: {
         Row: {
           created_at: string
@@ -1611,6 +1644,7 @@ export type Database = {
           link_permitir_material: boolean
           link_permitir_tipo: boolean
           link_permitir_upload: boolean
+          modo_numeros: string
           mostrar_precos_link: boolean
           msg_boas_vindas: string
           msg_finalizacao: string
@@ -1664,6 +1698,7 @@ export type Database = {
           link_permitir_material?: boolean
           link_permitir_tipo?: boolean
           link_permitir_upload?: boolean
+          modo_numeros?: string
           mostrar_precos_link?: boolean
           msg_boas_vindas?: string
           msg_finalizacao?: string
@@ -1717,6 +1752,7 @@ export type Database = {
           link_permitir_material?: boolean
           link_permitir_tipo?: boolean
           link_permitir_upload?: boolean
+          modo_numeros?: string
           mostrar_precos_link?: boolean
           msg_boas_vindas?: string
           msg_finalizacao?: string
