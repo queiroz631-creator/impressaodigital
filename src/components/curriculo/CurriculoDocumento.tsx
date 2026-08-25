@@ -4,8 +4,10 @@ import {
   formacaoFinal,
   formacaoLinha,
   formatarTelefone,
+  fraseSemExperiencia,
   informacoesAdicionais,
   objetivoFinal,
+  observacaoHabilidades,
   type CurriculoCompleto,
 } from "@/lib/curriculo";
 import { dataBR } from "@/lib/format";
