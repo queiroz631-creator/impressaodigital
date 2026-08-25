@@ -308,7 +308,8 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        setFormEtapa({
+                        abrirEtapa({
+
                           id: e.id,
                           nome: e.nome,
                           mensagem: e.mensagem,
