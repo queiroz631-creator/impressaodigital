@@ -23,6 +23,7 @@ import {
   ESCOLARIDADES,
   NIVEIS_FORMACAO,
   ESTADOS_CIVIS,
+  FRASE_SEM_EXPERIENCIA,
   capitalizarTexto,
   escolaridadeTemCurso,
   formacaoLinha,
@@ -68,7 +69,7 @@ export function FormularioCurriculo({
   onFinalizado,
 }: PropsFormularioCurriculo) {
   const c = dados.curriculo;
-  const totalEtapas = modo === "admin" ? 8 : 7;
+  const totalEtapas = 8;
 
   const [etapa, setEtapa] = useState(1);
   const [salvando, setSalvando] = useState(false);
@@ -84,8 +85,9 @@ export function FormularioCurriculo({
   const [email, setEmail] = useState(c.email ?? "");
   const [endereco, setEndereco] = useState(c.endereco ?? "");
   const [bairro, setBairro] = useState(c.bairro ?? "");
-  const [cidade, setCidade] = useState(c.cidade ?? "");
-  const [uf, setUf] = useState(c.uf ?? "");
+  const [cidade, setCidade] = useState(c.cidade ?? "Cariacica");
+  const [uf, setUf] = useState(c.uf ?? "ES");
+  const [numero, setNumero] = useState(c.numero ?? "");
   const [cep, setCep] = useState(c.cep ?? "");
 
   // Etapa 2
@@ -110,6 +112,10 @@ export function FormularioCurriculo({
 
   // Etapa 5
   const [experiencias, setExperiencias] = useState<ExperienciaItem[]>(dados.experiencias);
+  const [possuiExperiencia, setPossuiExperiencia] = useState(c.experiencia_possui !== false);
+  const [fraseExperiencia, setFraseExperiencia] = useState(
+    c.experiencia_frase ?? FRASE_SEM_EXPERIENCIA,
+  );
 
   // Etapa 6
   const [objetivoTipo, setObjetivoTipo] = useState(c.objetivo_tipo || "nao_informar");
@@ -119,6 +125,10 @@ export function FormularioCurriculo({
   const [habilidades, setHabilidades] = useState<HabilidadeItem[]>(dados.habilidades);
   const [catalogo, setCatalogo] = useState(catalogoHabilidades);
   const [novaHabilidade, setNovaHabilidade] = useState("");
+  const [usarObsHabilidades, setUsarObsHabilidades] = useState(
+    !!(c.habilidades_observacao ?? "").trim(),
+  );
+  const [obsHabilidades, setObsHabilidades] = useState(c.habilidades_observacao ?? "");
 
   // Etapa 8
   const [exibirData, setExibirData] = useState(c.exibir_data_atualizacao);
@@ -175,6 +185,7 @@ export function FormularioCurriculo({
             estado_civil: estadoCivil || null,
             email: email.trim() || null,
             endereco: capitalizarTexto(endereco) || null,
+            numero: numero.trim() || null,
             bairro: capitalizarTexto(bairro) || null,
             cidade: capitalizarTexto(cidade) || null,
             uf: uf.toUpperCase() || null,
@@ -216,12 +227,20 @@ export function FormularioCurriculo({
         };
       case 5:
         return {
-          experiencias: experiencias.map((exp) => ({
+          campos: {
+            experiencia_possui: possuiExperiencia,
+            experiencia_frase: possuiExperiencia
+              ? null
+              : fraseExperiencia.trim() || FRASE_SEM_EXPERIENCIA,
+          },
+          experiencias: possuiExperiencia
+            ? experiencias.map((exp) => ({
             empresa: capitalizarTexto(exp.empresa ?? "") || null,
             cargo: capitalizarTexto(exp.cargo ?? "") || null,
             periodo: exp.periodo?.trim() || null,
             atividades: exp.atividades?.trim() || null,
-          })),
+              }))
+            : [],
         };
       case 6:
         return {
@@ -231,7 +250,12 @@ export function FormularioCurriculo({
           },
         };
       case 7:
-        return { habilidades };
+        return {
+          habilidades,
+          campos: {
+            habilidades_observacao: usarObsHabilidades ? obsHabilidades.trim() || null : null,
+          },
+        };
       default:
         return { campos: { exibir_data_atualizacao: exibirData } };
     }
