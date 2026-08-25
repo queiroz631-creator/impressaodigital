@@ -226,8 +226,9 @@ export function avancar(
 ): SaidaFluxo {
   const proxima = proximaEtapa(dados, etapa);
   if (!proxima || profundidade >= LIMITE_ENCADEAMENTO) return { mensagens: [], estado: null };
-  return executar(dados, proxima, estado, vars, profundidade + 1);
+  return unirSaida(dados, executar(dados, proxima, estado, vars, profundidade + 1), proxima.fluxo_id);
 }
+
 
 /** Inicia um fluxo pelo id, enviando a mensagem inicial e a primeira etapa. */
 export function iniciar(
