@@ -674,7 +674,7 @@ async function entregarFluxo(
       const cfg = await carregarDadosBot();
       const despedida = cfg?.config.msg_finalizacao_ativo ? cfg.config.msg_finalizacao.trim() : "";
       if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
-      await salvarContexto(conversa, { ...ctx, fluxo: null }, "finalizado");
+      await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null }, "finalizado");
       await salvar(conversa, {
         status: "finalizado",
         data_finalizacao: vars.agora.toISOString(),
