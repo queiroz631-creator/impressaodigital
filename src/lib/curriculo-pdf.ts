@@ -156,7 +156,11 @@ function renderizar(
   }
 
   // ===== Experiência profissional =====
-  if (dados.experiencias.length) {
+  if (!c.experiencia_possui) {
+    secao("Experiência profissional");
+    texto(fraseSemExperiencia(c), MARGEM, 12, true, NAVY);
+    y += 4 * escala + espacamentoExtra / 2;
+  } else if (dados.experiencias.length) {
     secao("Experiência profissional");
     for (const exp of dados.experiencias) {
       if (exp.empresa) texto(exp.empresa, MARGEM, 11, true, NAVY);
