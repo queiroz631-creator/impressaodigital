@@ -8,6 +8,7 @@ import {
   objetivoFinal,
   observacaoHabilidades,
   type CurriculoCompleto,
+  type ExperienciaItem,
   type FormacaoItem,
 } from "./curriculo";
 import { dataBR } from "./format";
