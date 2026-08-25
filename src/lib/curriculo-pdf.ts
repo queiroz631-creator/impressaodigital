@@ -210,12 +210,13 @@ function renderizar(
     y += 8 * escala + folga.secao;
   }
 
-  // ===== Observação (destaque final) =====
+  // ===== Observação (destaque final, sem barra de seção) =====
   const obsHabilidades = observacaoHabilidades(c);
   if (obsHabilidades) {
-    secao("Observação");
-    paragrafo(obsHabilidades, MARGEM, util, 12, true, NAVY);
+    y += folga.secao;
+    paragrafo(`OBS.: ${obsHabilidades}`, MARGEM, util, 12, true, NAVY);
   }
+
 
   if (c.exibir_data_atualizacao) {
     y += 16 * escala + folga.secao;
