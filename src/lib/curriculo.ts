@@ -30,7 +30,14 @@ export interface CurriculoRegistro {
   uf: string | null;
   cep: string | null;
   pos_graduacao_nome: string | null;
+  numero: string | null;
+  experiencia_possui: boolean;
+  experiencia_frase: string | null;
+  habilidades_observacao: string | null;
 }
+
+/** Frase padrão quando o candidato não possui experiência profissional. */
+export const FRASE_SEM_EXPERIENCIA = "Em busca da 1ª oportunidade";
 
 export interface TelefoneItem {
   telefone: string;
@@ -89,6 +96,10 @@ export type CamposCurriculo = Partial<
     | "uf"
     | "cep"
     | "pos_graduacao_nome"
+    | "numero"
+    | "experiencia_possui"
+    | "experiencia_frase"
+    | "habilidades_observacao"
   >
 >;
 
@@ -230,10 +241,28 @@ export function formacaoFinal(c: CurriculoRegistro) {
   return c.escolaridade;
 }
 
+/** Rua com o número na frente, quando informado. */
+export function ruaComNumero(c: CurriculoRegistro): string {
+  const rua = (c.endereco ?? "").trim();
+  const numero = (c.numero ?? "").trim();
+  if (!rua) return numero;
+  return numero ? `${rua}, ${numero}` : rua;
+}
+
+/** Frase exibida quando o candidato não possui experiência profissional. */
+export function fraseSemExperiencia(c: CurriculoRegistro): string {
+  return (c.experiencia_frase ?? "").trim() || FRASE_SEM_EXPERIENCIA;
+}
+
+/** Observação livre exibida abaixo das habilidades. */
+export function observacaoHabilidades(c: CurriculoRegistro): string {
+  return (c.habilidades_observacao ?? "").trim();
+}
+
 /** Monta uma linha única com o endereço completo, quando houver. */
 export function enderecoCompleto(c: CurriculoRegistro): string {
   return [
-    c.endereco,
+    ruaComNumero(c),
     c.bairro,
     [c.cidade, c.uf].filter(Boolean).join(" - "),
     c.cep ? `CEP ${c.cep}` : "",
@@ -247,7 +276,7 @@ export function enderecoCompleto(c: CurriculoRegistro): string {
  * 1) rua/nº e bairro  2) cidade - UF e CEP.
  */
 export function enderecoLinhas(c: CurriculoRegistro): string[] {
-  const linha1 = [c.endereco, c.bairro].filter(Boolean).join(", ");
+  const linha1 = [ruaComNumero(c), c.bairro].filter(Boolean).join(", ");
   const linha2 = [[c.cidade, c.uf].filter(Boolean).join(" - "), c.cep ? `CEP ${c.cep}` : ""]
     .filter(Boolean)
     .join(" — ");

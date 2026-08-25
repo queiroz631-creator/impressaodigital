@@ -916,9 +916,13 @@ export type Database = {
           escolaridade: string | null
           estado_civil: string | null
           exibir_data_atualizacao: boolean
+          experiencia_frase: string | null
+          experiencia_possui: boolean
+          habilidades_observacao: string | null
           habilitacao: boolean
           id: string
           nome_completo: string
+          numero: string | null
           objetivo_texto: string | null
           objetivo_tipo: string
           pos_graduacao_nome: string | null
@@ -944,9 +948,13 @@ export type Database = {
           escolaridade?: string | null
           estado_civil?: string | null
           exibir_data_atualizacao?: boolean
+          experiencia_frase?: string | null
+          experiencia_possui?: boolean
+          habilidades_observacao?: string | null
           habilitacao?: boolean
           id?: string
           nome_completo?: string
+          numero?: string | null
           objetivo_texto?: string | null
           objetivo_tipo?: string
           pos_graduacao_nome?: string | null
@@ -972,9 +980,13 @@ export type Database = {
           escolaridade?: string | null
           estado_civil?: string | null
           exibir_data_atualizacao?: boolean
+          experiencia_frase?: string | null
+          experiencia_possui?: boolean
+          habilidades_observacao?: string | null
           habilitacao?: boolean
           id?: string
           nome_completo?: string
+          numero?: string | null
           objetivo_texto?: string | null
           objetivo_tipo?: string
           pos_graduacao_nome?: string | null

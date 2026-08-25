@@ -3,8 +3,10 @@ import {
   enderecoLinhas,
   formacaoFinal,
   formatarTelefone,
+  fraseSemExperiencia,
   informacoesAdicionais,
   objetivoFinal,
+  observacaoHabilidades,
   type CurriculoCompleto,
   type FormacaoItem,
 } from "./curriculo";
@@ -156,7 +158,11 @@ function renderizar(
   }
 
   // ===== Experiência profissional =====
-  if (dados.experiencias.length) {
+  if (!c.experiencia_possui) {
+    secao("Experiência profissional");
+    texto(fraseSemExperiencia(c), MARGEM, 12, true, NAVY);
+    y += 4 * escala + espacamentoExtra / 2;
+  } else if (dados.experiencias.length) {
     secao("Experiência profissional");
     for (const exp of dados.experiencias) {
       if (exp.empresa) texto(exp.empresa, MARGEM, 11, true, NAVY);
@@ -168,9 +174,11 @@ function renderizar(
   }
 
   // ===== Habilidades =====
-  if (dados.habilidades.length) {
+  const obsHabilidades = observacaoHabilidades(c);
+  if (dados.habilidades.length || obsHabilidades) {
     secao("Habilidades");
     for (const h of dados.habilidades) paragrafo(`• ${h.descricao}`, MARGEM, util, 10);
+    if (obsHabilidades) paragrafo(`OBS.: ${obsHabilidades}`, MARGEM, util, 10);
     y += 4 * escala + espacamentoExtra / 2;
   }
 

@@ -23,6 +23,7 @@ import {
   ESCOLARIDADES,
   NIVEIS_FORMACAO,
   ESTADOS_CIVIS,
+  FRASE_SEM_EXPERIENCIA,
   capitalizarTexto,
   escolaridadeTemCurso,
   formacaoLinha,
@@ -68,7 +69,7 @@ export function FormularioCurriculo({
   onFinalizado,
 }: PropsFormularioCurriculo) {
   const c = dados.curriculo;
-  const totalEtapas = modo === "admin" ? 8 : 7;
+  const totalEtapas = 8;
 
   const [etapa, setEtapa] = useState(1);
   const [salvando, setSalvando] = useState(false);
@@ -84,8 +85,9 @@ export function FormularioCurriculo({
   const [email, setEmail] = useState(c.email ?? "");
   const [endereco, setEndereco] = useState(c.endereco ?? "");
   const [bairro, setBairro] = useState(c.bairro ?? "");
-  const [cidade, setCidade] = useState(c.cidade ?? "");
-  const [uf, setUf] = useState(c.uf ?? "");
+  const [cidade, setCidade] = useState(c.cidade ?? "Cariacica");
+  const [uf, setUf] = useState(c.uf ?? "ES");
+  const [numero, setNumero] = useState(c.numero ?? "");
   const [cep, setCep] = useState(c.cep ?? "");
 
   // Etapa 2
@@ -110,6 +112,10 @@ export function FormularioCurriculo({
 
   // Etapa 5
   const [experiencias, setExperiencias] = useState<ExperienciaItem[]>(dados.experiencias);
+  const [possuiExperiencia, setPossuiExperiencia] = useState(c.experiencia_possui !== false);
+  const [fraseExperiencia, setFraseExperiencia] = useState(
+    c.experiencia_frase ?? FRASE_SEM_EXPERIENCIA,
+  );
 
   // Etapa 6
   const [objetivoTipo, setObjetivoTipo] = useState(c.objetivo_tipo || "nao_informar");
@@ -119,6 +125,10 @@ export function FormularioCurriculo({
   const [habilidades, setHabilidades] = useState<HabilidadeItem[]>(dados.habilidades);
   const [catalogo, setCatalogo] = useState(catalogoHabilidades);
   const [novaHabilidade, setNovaHabilidade] = useState("");
+  const [usarObsHabilidades, setUsarObsHabilidades] = useState(
+    !!(c.habilidades_observacao ?? "").trim(),
+  );
+  const [obsHabilidades, setObsHabilidades] = useState(c.habilidades_observacao ?? "");
 
   // Etapa 8
   const [exibirData, setExibirData] = useState(c.exibir_data_atualizacao);
@@ -175,6 +185,7 @@ export function FormularioCurriculo({
             estado_civil: estadoCivil || null,
             email: email.trim() || null,
             endereco: capitalizarTexto(endereco) || null,
+            numero: numero.trim() || null,
             bairro: capitalizarTexto(bairro) || null,
             cidade: capitalizarTexto(cidade) || null,
             uf: uf.toUpperCase() || null,
@@ -216,12 +227,20 @@ export function FormularioCurriculo({
         };
       case 5:
         return {
-          experiencias: experiencias.map((exp) => ({
+          campos: {
+            experiencia_possui: possuiExperiencia,
+            experiencia_frase: possuiExperiencia
+              ? null
+              : fraseExperiencia.trim() || FRASE_SEM_EXPERIENCIA,
+          },
+          experiencias: possuiExperiencia
+            ? experiencias.map((exp) => ({
             empresa: capitalizarTexto(exp.empresa ?? "") || null,
             cargo: capitalizarTexto(exp.cargo ?? "") || null,
             periodo: exp.periodo?.trim() || null,
             atividades: exp.atividades?.trim() || null,
-          })),
+              }))
+            : [],
         };
       case 6:
         return {
@@ -231,7 +250,12 @@ export function FormularioCurriculo({
           },
         };
       case 7:
-        return { habilidades };
+        return {
+          habilidades,
+          campos: {
+            habilidades_observacao: usarObsHabilidades ? obsHabilidades.trim() || null : null,
+          },
+        };
       default:
         return { campos: { exibir_data_atualizacao: exibirData } };
     }
@@ -284,7 +308,7 @@ export function FormularioCurriculo({
   };
 
   const concluir = async () => {
-    const ok = await gravar(modo === "admin" ? 8 : 7, {
+    const ok = await gravar(8, {
       campos: { exibir_data_atualizacao: exibirData },
       finalizar: true,
     });
@@ -368,12 +392,21 @@ export function FormularioCurriculo({
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2">
+                <div>
                   <Label htmlFor="endereco">Endereço</Label>
                   <Input
                     id="endereco"
                     value={endereco}
                     onChange={(e) => setEndereco(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="numero">Número</Label>
+                  <Input
+                    id="numero"
+                    value={numero}
+                    onChange={(e) => setNumero(e.target.value)}
+                    placeholder="Ex.: 123"
                   />
                 </div>
                 <div>
@@ -659,7 +692,39 @@ export function FormularioCurriculo({
 
           {etapa === 5 && (
             <div className="space-y-3">
-              {experiencias.map((exp, i) => (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border p-3">
+                <Label className="mb-0">Possui experiência profissional?</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={possuiExperiencia ? "default" : "outline"}
+                  onClick={() => setPossuiExperiencia(true)}
+                >
+                  Sim
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={!possuiExperiencia ? "default" : "outline"}
+                  onClick={() => setPossuiExperiencia(false)}
+                >
+                  Não
+                </Button>
+              </div>
+
+              {!possuiExperiencia && (
+                <div>
+                  <Label htmlFor="frase-exp">Frase exibida no currículo</Label>
+                  <Input
+                    id="frase-exp"
+                    value={fraseExperiencia}
+                    onChange={(e) => setFraseExperiencia(e.target.value)}
+                    placeholder={FRASE_SEM_EXPERIENCIA}
+                  />
+                </div>
+              )}
+
+              {possuiExperiencia && experiencias.map((exp, i) => (
                 <div
                   key={i}
                   className={`space-y-2 rounded-lg border p-3 ${
@@ -743,19 +808,21 @@ export function FormularioCurriculo({
                   </Button>
                 </div>
               ))}
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() =>
-                  setExperiencias((a) => [
-                    ...a,
-                    { empresa: "", cargo: "", periodo: "", atividades: "" },
-                  ])
-                }
-              >
-                <Plus className="mr-1 h-4 w-4" /> Adicionar experiência
-              </Button>
-              {experiencias.length === 0 && (
+              {possuiExperiencia && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() =>
+                    setExperiencias((a) => [
+                      ...a,
+                      { empresa: "", cargo: "", periodo: "", atividades: "" },
+                    ])
+                  }
+                >
+                  <Plus className="mr-1 h-4 w-4" /> Adicionar experiência
+                </Button>
+              )}
+              {possuiExperiencia && experiencias.length === 0 && (
                 <p className="text-sm text-muted-foreground">Nenhuma experiência informada.</p>
               )}
             </div>
@@ -856,6 +923,24 @@ export function FormularioCurriculo({
                   <Plus className="mr-1 h-4 w-4" /> Adicionar
                 </Button>
               </div>
+
+              <div className="space-y-2 border-t pt-3">
+                <label className="flex items-center gap-3 text-sm">
+                  <Checkbox
+                    checked={usarObsHabilidades}
+                    onCheckedChange={(v) => setUsarObsHabilidades(v === true)}
+                  />
+                  <span>Incluir observação no currículo</span>
+                </label>
+                {usarObsHabilidades && (
+                  <Textarea
+                    rows={3}
+                    value={obsHabilidades}
+                    onChange={(e) => setObsHabilidades(e.target.value)}
+                    placeholder="Texto exibido como OBS.: no currículo"
+                  />
+                )}
+              </div>
             </div>
           )}
 
@@ -872,7 +957,9 @@ export function FormularioCurriculo({
                 </p>
                 {(endereco || bairro || cidade || cep) && (
                   <p className="text-muted-foreground">
-                    {[endereco, bairro, cidade, uf, cep].filter(Boolean).join(" • ")}
+                    {[[endereco, numero].filter(Boolean).join(", "), bairro, cidade, uf, cep]
+                      .filter(Boolean)
+                      .join(" • ")}
                   </p>
                 )}
               </ResumoLinha>
@@ -922,7 +1009,11 @@ export function FormularioCurriculo({
               </ResumoLinha>
 
               <ResumoLinha titulo="Experiência profissional" etapa={5} ir={irParaEtapa}>
-                {experiencias.length === 0 ? (
+                {!possuiExperiencia ? (
+                  <p className="font-semibold">
+                    {fraseExperiencia.trim() || FRASE_SEM_EXPERIENCIA}
+                  </p>
+                ) : experiencias.length === 0 ? (
                   <p className="text-muted-foreground">Nenhuma</p>
                 ) : (
                   experiencias.map((x, i) => (
@@ -941,12 +1032,17 @@ export function FormularioCurriculo({
                 ) : (
                   habilidades.map((h, i) => <p key={i}>{h.descricao}</p>)
                 )}
+                {usarObsHabilidades && obsHabilidades.trim() && (
+                  <p className="mt-1 text-muted-foreground">OBS.: {obsHabilidades.trim()}</p>
+                )}
               </ResumoLinha>
 
-              <div className="flex items-center gap-3 border-t pt-4">
-                <Switch id="exibir-data" checked={exibirData} onCheckedChange={setExibirData} />
-                <Label htmlFor="exibir-data">Exibir data da última atualização no currículo</Label>
-              </div>
+              {modo === "admin" && (
+                <div className="flex items-center gap-3 border-t pt-4">
+                  <Switch id="exibir-data" checked={exibirData} onCheckedChange={setExibirData} />
+                  <Label htmlFor="exibir-data">Exibir data da última atualização no currículo</Label>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

@@ -4,8 +4,10 @@ import {
   formacaoFinal,
   formacaoLinha,
   formatarTelefone,
+  fraseSemExperiencia,
   informacoesAdicionais,
   objetivoFinal,
+  observacaoHabilidades,
   type CurriculoCompleto,
 } from "@/lib/curriculo";
 import { dataBR } from "@/lib/format";
@@ -39,6 +41,7 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
     const objetivo = objetivoFinal(c);
     const formacao = formacaoFinal(c);
     const adicionais = informacoesAdicionais(c);
+    const observacao = observacaoHabilidades(c);
 
     return (
       <div ref={ref} className="mx-auto w-full max-w-[210mm] bg-white p-8 text-foreground shadow-sm">
@@ -94,7 +97,11 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
           </Secao>
         )}
 
-        {dados.experiencias.length > 0 && (
+        {!c.experiencia_possui ? (
+          <Secao titulo="Experiência profissional">
+            <p className="cv-empresa text-[12pt] font-bold text-navy">{fraseSemExperiencia(c)}</p>
+          </Secao>
+        ) : dados.experiencias.length > 0 && (
           <Secao titulo="Experiência profissional">
             {dados.experiencias.map((exp, i) => (
               <div key={i} className="mb-2">
@@ -109,13 +116,16 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
           </Secao>
         )}
 
-        {dados.habilidades.length > 0 && (
+        {(dados.habilidades.length > 0 || observacao) && (
           <Secao titulo="Habilidades">
-            <ul className="list-disc pl-5">
-              {dados.habilidades.map((h, i) => (
-                <li key={i}>{h.descricao}</li>
-              ))}
-            </ul>
+            {dados.habilidades.length > 0 && (
+              <ul className="list-disc pl-5">
+                {dados.habilidades.map((h, i) => (
+                  <li key={i}>{h.descricao}</li>
+                ))}
+              </ul>
+            )}
+            {observacao && <p className="mt-1">OBS.: {observacao}</p>}
           </Secao>
         )}
 
