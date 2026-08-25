@@ -29,7 +29,9 @@ interface Resposta {
   acao_nao: string;
   destino_nao_fluxo_id: string | null;
   destino_nao_resposta_id: string | null;
+  delay_acao_segundos: number;
 }
+
 
 interface Palavra {
   id: string;
