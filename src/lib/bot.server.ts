@@ -847,7 +847,11 @@ async function resolverTriagem(
 
   if (escolha) await responder(conversa, aplicarVariaveis(textoResposta(resposta, primeiraDoDia), vars));
 
+  const espera = Math.min(60, Math.max(0, Number(resposta.delay_acao_segundos ?? 0)));
+  if (espera > 0) await new Promise((r) => setTimeout(r, espera * 1000));
+
   await salvarContexto(conversa, { ...ctx, triagem: null }, "inicio");
+
   await executarAcaoResposta(
     conversa,
     config,
