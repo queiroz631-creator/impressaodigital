@@ -3,7 +3,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Bot, CheckCircle2, ChevronDown, Search, Send, UserCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Bot,
+  Bot as BotIcon,
+  BotOff,
+  CheckCircle2,
+  ChevronDown,
+  Search,
+  Send,
+  UserCheck,
+} from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -343,7 +354,49 @@ function Conversa({
     }
   }, [conversa.id, conversa.nao_lidas, queryClient]);
 
+  // Regra do bot para este número (BOT > Números).
+  const regraBot = useQuery({
+    queryKey: ["bot-numero", conversa.telefone],
+    queryFn: async () => {
+      const [cfg, regra] = await Promise.all([
+        supabase.from("whatsapp_config").select("modo_numeros").limit(1).maybeSingle(),
+        supabase
+          .from("bot_numeros")
+          .select("id, permitido, ativo")
+          .eq("telefone", conversa.telefone)
+          .maybeSingle(),
+      ]);
+      return {
+        modo: cfg.data?.modo_numeros ?? "todos",
+        regra: regra.data?.ativo ? regra.data : null,
+      };
+    },
+  });
+
+  const botLiberado =
+    regraBot.data?.modo === "somente_liberados"
+      ? Boolean(regraBot.data?.regra?.permitido)
+      : regraBot.data?.regra
+        ? regraBot.data.regra.permitido
+        : true;
+
+  async function alternarBotNumero() {
+    const { error } = await supabase.from("bot_numeros").upsert(
+      {
+        telefone: conversa.telefone,
+        nome: conversa.nome_contato ?? null,
+        permitido: !botLiberado,
+        ativo: true,
+      },
+      { onConflict: "telefone" },
+    );
+    if (error) { toast.error(error.message); return; }
+    toast.success(!botLiberado ? "Bot ligado para este número." : "Bot desligado para este número.");
+    await queryClient.invalidateQueries({ queryKey: ["bot-numero", conversa.telefone] });
+  }
+
   async function alterarStatus(status: StatusConversa, acao: string) {
+
     const ok = await alterarStatusConversa(conversa.id, status, acao, atendente, atendenteId);
     if (!ok) return;
     await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
@@ -396,6 +449,16 @@ function Conversa({
         <Button size="sm" onClick={() => alterarStatus("finalizado", "finalizou")}>
           <CheckCircle2 className="mr-1 h-4 w-4" /> Finalizar
         </Button>
+        <Button
+          size="sm"
+          variant={botLiberado ? "outline" : "destructive"}
+          onClick={() => void alternarBotNumero()}
+          title="Liga ou desliga o atendimento automático para este número"
+        >
+          {botLiberado ? <BotIcon className="mr-1 h-4 w-4" /> : <BotOff className="mr-1 h-4 w-4" />}
+          {botLiberado ? "Bot ligado" : "Bot desligado"}
+        </Button>
+
       </div>
 
       <Card className="flex min-h-0 flex-1 flex-col">

@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { FluxosPainel } from "@/components/bot/FluxosPainel";
 import { RespostasPainel } from "@/components/bot/RespostasPainel";
+import { NumerosPainel } from "@/components/bot/NumerosPainel";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -244,7 +246,9 @@ export function ConfiguracaoBot() {
           <TabsTrigger value="menu">Fluxos</TabsTrigger>
           <TabsTrigger value="respostas">Respostas automáticas</TabsTrigger>
           <TabsTrigger value="inatividade">Inatividade</TabsTrigger>
+          <TabsTrigger value="numeros">Números</TabsTrigger>
           <TabsTrigger value="simulador">Simulador</TabsTrigger>
+
         </TabsList>
 
         {/* ---------- Geral ---------- */}
@@ -379,6 +383,12 @@ export function ConfiguracaoBot() {
         <TabsContent value="respostas">
           <RespostasPainel />
         </TabsContent>
+
+        {/* ---------- Números atendidos pelo bot ---------- */}
+        <TabsContent value="numeros">
+          <NumerosPainel />
+        </TabsContent>
+
 
         {/* ---------- Inatividade e finalização ---------- */}
         <TabsContent value="inatividade">
