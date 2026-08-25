@@ -172,9 +172,11 @@ function renderizar(
   }
 
   // ===== Habilidades =====
-  if (dados.habilidades.length) {
+  const obsHabilidades = observacaoHabilidades(c);
+  if (dados.habilidades.length || obsHabilidades) {
     secao("Habilidades");
     for (const h of dados.habilidades) paragrafo(`• ${h.descricao}`, MARGEM, util, 10);
+    if (obsHabilidades) paragrafo(`OBS.: ${obsHabilidades}`, MARGEM, util, 10);
     y += 4 * escala + espacamentoExtra / 2;
   }
 
