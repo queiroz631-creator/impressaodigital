@@ -30,7 +30,14 @@ export interface CurriculoRegistro {
   uf: string | null;
   cep: string | null;
   pos_graduacao_nome: string | null;
+  numero: string | null;
+  experiencia_possui: boolean;
+  experiencia_frase: string | null;
+  habilidades_observacao: string | null;
 }
+
+/** Frase padrão quando o candidato não possui experiência profissional. */
+export const FRASE_SEM_EXPERIENCIA = "Em busca da 1ª oportunidade";
 
 export interface TelefoneItem {
   telefone: string;
