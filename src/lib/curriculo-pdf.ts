@@ -8,6 +8,7 @@ import {
   objetivoFinal,
   observacaoHabilidades,
   type CurriculoCompleto,
+  type ExperienciaItem,
   type FormacaoItem,
 } from "./curriculo";
 import { dataBR } from "./format";
@@ -188,12 +189,62 @@ function renderizar(
     y += 8 * escala + folga.secao;
   } else if (dados.experiencias.length) {
     secao("Experiência profissional");
-    for (const exp of dados.experiencias) {
-      if (exp.empresa) texto(exp.empresa, MARGEM, 11, true, NAVY);
-      if (exp.cargo) texto(`Cargo/Função: ${exp.cargo}`, MARGEM, 10);
-      if (exp.periodo) texto(`Período: ${exp.periodo}`, MARGEM, 9);
-      if (exp.atividades) paragrafo(`Atividade(s): ${exp.atividades}`, MARGEM, util, 10);
-      y += 6 * escala + folga.secao;
+    if (dados.experiencias.length > 3) {
+      // Com mais de 3 empresas: distribui em duas colunas para ocupar menos altura.
+      const colW = util / 2 - 8;
+      const xDir = MARGEM + util / 2 + 8;
+      const metade = Math.ceil(dados.experiencias.length / 2);
+      const esq = dados.experiencias.slice(0, metade);
+      const dir = dados.experiencias.slice(metade);
+
+      const renderExp = (exp: ExperienciaItem, x: number, yStart: number, larg: number): number => {
+        let yi = yStart;
+        if (exp.empresa) {
+          setFont(true, 11);
+          doc.setTextColor(...NAVY);
+          doc.text(exp.empresa, x, yi);
+          yi += (11 + 4) * escala;
+        }
+        if (exp.cargo) {
+          setFont(false, 10);
+          doc.setTextColor(...TEXTO);
+          doc.text(`Cargo/Função: ${exp.cargo}`, x, yi);
+          yi += (10 + 4) * escala;
+        }
+        if (exp.periodo) {
+          setFont(false, 9);
+          doc.setTextColor(...TEXTO);
+          doc.text(`Período: ${exp.periodo}`, x, yi);
+          yi += (9 + 4) * escala;
+        }
+        if (exp.atividades) {
+          setFont(false, 10);
+          doc.setTextColor(...TEXTO);
+          for (const linha of doc.splitTextToSize(`Atividade(s): ${exp.atividades}`, larg) as string[]) {
+            doc.text(linha, x, yi);
+            yi += (10 + 4) * escala;
+          }
+        }
+        return yi;
+      };
+
+      let yEsq = y;
+      for (const exp of esq) {
+        yEsq = renderExp(exp, MARGEM, yEsq, colW) + 6 * escala + folga.secao;
+      }
+      let yDir = y;
+      for (const exp of dir) {
+        yDir = renderExp(exp, xDir, yDir, colW) + 6 * escala + folga.secao;
+      }
+      y = Math.max(yEsq, yDir) + 8 * escala + folga.secao;
+    } else {
+      for (const exp of dados.experiencias) {
+        if (exp.empresa) texto(exp.empresa, MARGEM, 11, true, NAVY);
+        if (exp.cargo) texto(`Cargo/Função: ${exp.cargo}`, MARGEM, 10);
+        if (exp.periodo) texto(`Período: ${exp.periodo}`, MARGEM, 9);
+        if (exp.atividades) paragrafo(`Atividade(s): ${exp.atividades}`, MARGEM, util, 10);
+        y += 6 * escala + folga.secao;
+      }
     }
   }
 

@@ -104,16 +104,18 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
           </Secao>
         ) : dados.experiencias.length > 0 && (
           <Secao titulo="Experiência profissional">
-            {dados.experiencias.map((exp, i) => (
-              <div key={i} className="mb-2">
-                {exp.empresa && <p className="cv-empresa font-bold text-navy">{exp.empresa}</p>}
-                {exp.cargo && <p className="font-medium">Cargo/Função: {exp.cargo}</p>}
-                {exp.periodo && (
-                  <p className="text-[9.5pt] text-muted-foreground">Período: {exp.periodo}</p>
-                )}
-                {exp.atividades && <p className="mt-0.5">Atividade(s): {exp.atividades}</p>}
-              </div>
-            ))}
+            <div className={dados.experiencias.length > 3 ? "grid grid-cols-2 gap-x-6 gap-y-2" : "space-y-2"}>
+              {dados.experiencias.map((exp, i) => (
+                <div key={i} className="mb-2">
+                  {exp.empresa && <p className="cv-empresa font-bold text-navy">{exp.empresa}</p>}
+                  {exp.cargo && <p className="font-medium">Cargo/Função: {exp.cargo}</p>}
+                  {exp.periodo && (
+                    <p className="text-[9.5pt] text-muted-foreground">Período: {exp.periodo}</p>
+                  )}
+                  {exp.atividades && <p className="mt-0.5">Atividade(s): {exp.atividades}</p>}
+                </div>
+              ))}
+            </div>
           </Secao>
         )}
 
