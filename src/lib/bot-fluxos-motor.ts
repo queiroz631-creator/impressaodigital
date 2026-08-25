@@ -289,15 +289,20 @@ export function processarFluxo(
   if (opcoes.length > 0) {
     const escolha = escolherOpcaoDaEtapa(entrada.texto, opcoes);
     if (!escolha) return { mensagens: [], estado, naoEntendi: true };
-    return aplicarOpcao(dados, etapa, escolha, estado, vars);
+    return unirSaida(dados, aplicarOpcao(dados, etapa, escolha, estado, vars), etapa.fluxo_id);
   }
 
   const valor = validarResposta(etapa.tipo_resposta, entrada);
   if (valor === null) return { mensagens: [], estado, naoEntendi: true };
 
   const respostas = { ...estado.respostas, [etapa.nome]: valor };
-  return aplicarAcaoEtapa(dados, etapa, { ...estado, respostas, aguardando: false }, vars);
+  return unirSaida(
+    dados,
+    aplicarAcaoEtapa(dados, etapa, { ...estado, respostas, aguardando: false }, vars),
+    etapa.fluxo_id,
+  );
 }
+
 
 function escolherOpcaoDaEtapa(texto: string, opcoes: FluxoOpcao[]): FluxoOpcao | null {
   const alvo = chave(texto);
