@@ -226,8 +226,9 @@ export function avancar(
 ): SaidaFluxo {
   const proxima = proximaEtapa(dados, etapa);
   if (!proxima || profundidade >= LIMITE_ENCADEAMENTO) return { mensagens: [], estado: null };
-  return executar(dados, proxima, estado, vars, profundidade + 1);
+  return unirSaida(dados, executar(dados, proxima, estado, vars, profundidade + 1), proxima.fluxo_id);
 }
+
 
 /** Inicia um fluxo pelo id, enviando a mensagem inicial e a primeira etapa. */
 export function iniciar(
@@ -251,7 +252,7 @@ export function iniciar(
 
   const primeira = etapasDoFluxo(dados, fluxo.id)[0];
   const respostas = estado.respostas ?? {};
-  if (!primeira) return { mensagens, estado: null };
+  if (!primeira) return unirSaida(dados, { mensagens, estado: null }, fluxo.id);
 
   const saida = executar(
     dados,
@@ -260,8 +261,9 @@ export function iniciar(
     vars,
     profundidade + 1,
   );
-  return { ...saida, mensagens: [...mensagens, ...saida.mensagens] };
+  return unirSaida(dados, { ...saida, mensagens: [...mensagens, ...saida.mensagens] }, fluxo.id);
 }
+
 
 /** Fluxo marcado para receber os clientes que enviam apenas arquivos. */
 export function fluxoDeArquivos(dados: DadosFluxos) {
@@ -287,15 +289,20 @@ export function processarFluxo(
   if (opcoes.length > 0) {
     const escolha = escolherOpcaoDaEtapa(entrada.texto, opcoes);
     if (!escolha) return { mensagens: [], estado, naoEntendi: true };
-    return aplicarOpcao(dados, etapa, escolha, estado, vars);
+    return unirSaida(dados, aplicarOpcao(dados, etapa, escolha, estado, vars), etapa.fluxo_id);
   }
 
   const valor = validarResposta(etapa.tipo_resposta, entrada);
   if (valor === null) return { mensagens: [], estado, naoEntendi: true };
 
   const respostas = { ...estado.respostas, [etapa.nome]: valor };
-  return aplicarAcaoEtapa(dados, etapa, { ...estado, respostas, aguardando: false }, vars);
+  return unirSaida(
+    dados,
+    aplicarAcaoEtapa(dados, etapa, { ...estado, respostas, aguardando: false }, vars),
+    etapa.fluxo_id,
+  );
 }
+
 
 function escolherOpcaoDaEtapa(texto: string, opcoes: FluxoOpcao[]): FluxoOpcao | null {
   const alvo = chave(texto);

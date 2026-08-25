@@ -76,9 +76,33 @@ const ETAPA_VAZIA: FormEtapa = {
 export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, recarregar }: Props) {
   const [formEtapa, setFormEtapa] = useState<FormEtapa | null>(null);
   const [formOpcao, setFormOpcao] = useState<FormOpcao | null>(null);
+  const [opcoesInline, setOpcoesInline] = useState<FormOpcao[]>([]);
+  const [opcoesRemovidas, setOpcoesRemovidas] = useState<string[]>([]);
 
   const ordenadas = [...etapas].sort((a, b) => a.ordem - b.ordem);
   const outrosFluxos = fluxos.filter((f) => f.ativo && f.id !== fluxo.id);
+
+  /** Abre o diálogo da etapa já com as opções dela carregadas para edição inline. */
+  function abrirEtapa(dados: FormEtapa) {
+    const lista = dados.id
+      ? opcoes
+          .filter((o) => o.etapa_id === dados.id)
+          .sort((a, b) => a.ordem - b.ordem)
+          .map((o) => ({
+            id: o.id,
+            etapa_id: o.etapa_id,
+            titulo: o.titulo,
+            valor: o.valor,
+            acao: o.acao,
+            destino_fluxo_id: o.destino_fluxo_id ?? NENHUM,
+            destino_etapa_id: o.destino_etapa_id ?? NENHUM,
+            ativo: o.ativo,
+          }))
+      : [];
+    setOpcoesInline(lista);
+    setOpcoesRemovidas([]);
+    setFormEtapa(dados);
+  }
 
   async function salvarEtapa() {
     if (!formEtapa) return;
@@ -94,19 +118,48 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
       destino_fluxo_id: formEtapa.destino_fluxo_id === NENHUM ? null : formEtapa.destino_fluxo_id,
     };
 
-    const { error } = formEtapa.id
-      ? await supabase.from("bot_fluxo_etapas").update(dados).eq("id", formEtapa.id)
-      : await supabase.from("bot_fluxo_etapas").insert({
-          ...dados,
-          fluxo_id: fluxo.id,
-          ordem: Math.max(0, ...ordenadas.map((e) => e.ordem)) + 1,
-        });
+    let etapaId = formEtapa.id ?? null;
+    if (etapaId) {
+      const { error } = await supabase.from("bot_fluxo_etapas").update(dados).eq("id", etapaId);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { data, error } = await supabase
+        .from("bot_fluxo_etapas")
+        .insert({ ...dados, fluxo_id: fluxo.id, ordem: Math.max(0, ...ordenadas.map((e) => e.ordem)) + 1 })
+        .select("id")
+        .single();
+      if (error || !data) { toast.error(error?.message ?? "Falha ao salvar etapa."); return; }
+      etapaId = data.id;
+    }
 
-    if (error) { toast.error(error.message); return; }
+    if (opcoesRemovidas.length > 0) {
+      await supabase.from("bot_fluxo_opcoes").delete().in("id", opcoesRemovidas);
+    }
+
+    for (const [i, o] of opcoesInline.entries()) {
+      if (!o.titulo.trim()) continue;
+      const dadosOpcao = {
+        titulo: o.titulo,
+        valor: o.valor || o.titulo,
+        acao: o.acao,
+        ativo: o.ativo,
+        ordem: i + 1,
+        destino_fluxo_id: o.destino_fluxo_id === NENHUM ? null : o.destino_fluxo_id,
+        destino_etapa_id: o.destino_etapa_id === NENHUM ? null : o.destino_etapa_id,
+      };
+      const { error } = o.id
+        ? await supabase.from("bot_fluxo_opcoes").update(dadosOpcao).eq("id", o.id)
+        : await supabase.from("bot_fluxo_opcoes").insert({ ...dadosOpcao, etapa_id: etapaId });
+      if (error) { toast.error(error.message); return; }
+    }
+
     toast.success("Etapa salva.");
     setFormEtapa(null);
+    setOpcoesInline([]);
+    setOpcoesRemovidas([]);
     await recarregar();
   }
+
 
   async function excluirEtapa(e: FluxoEtapa) {
     const { error } = await supabase.from("bot_fluxo_etapas").delete().eq("id", e.id);
@@ -255,7 +308,8 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        setFormEtapa({
+                        abrirEtapa({
+
                           id: e.id,
                           nome: e.nome,
                           mensagem: e.mensagem,
@@ -306,7 +360,7 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
           {ordenadas.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma etapa cadastrada.</p>}
 
           <div>
-            <Button onClick={() => setFormEtapa({ ...ETAPA_VAZIA })}>
+            <Button onClick={() => abrirEtapa({ ...ETAPA_VAZIA })}>
               <Plus className="h-4 w-4" /> ADICIONAR ETAPA
             </Button>
           </div>
@@ -410,8 +464,94 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
                 <strong>Etapa ativa</strong>
                 <Switch checked={formEtapa.ativo} onCheckedChange={(v) => setFormEtapa({ ...formEtapa, ativo: v })} />
               </label>
+
+              {/* Opções de resposta editadas na mesma tela da etapa */}
+              <div className="grid gap-2 rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <strong className="text-sm">Opções de resposta</strong>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setOpcoesInline([
+                        ...opcoesInline,
+                        {
+                          etapa_id: formEtapa.id ?? "",
+                          titulo: "",
+                          valor: "",
+                          acao: "proxima_etapa",
+                          destino_fluxo_id: NENHUM,
+                          destino_etapa_id: NENHUM,
+                          ativo: true,
+                        },
+                      ])
+                    }
+                  >
+                    <Plus className="h-4 w-4" /> OPÇÃO
+                  </Button>
+                </div>
+
+                {opcoesInline.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Sem opções. O cliente responde livremente nesta etapa.
+                  </p>
+                )}
+
+                {opcoesInline.map((o, i) => {
+                  const alterar = (patch: Partial<FormOpcao>) =>
+                    setOpcoesInline(opcoesInline.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+                  return (
+                    <div key={o.id ?? `nova-${i}`} className="grid gap-2 rounded-md border p-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-muted-foreground">{i + 1}.</span>
+                        <Input
+                          placeholder="Título da opção"
+                          value={o.titulo}
+                          onChange={(e) => alterar({ titulo: e.target.value })}
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive"
+                          onClick={() => {
+                            if (o.id) setOpcoesRemovidas([...opcoesRemovidas, o.id]);
+                            setOpcoesInline(opcoesInline.filter((_, j) => j !== i));
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <Select value={o.acao} onValueChange={(v) => alterar({ acao: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {ACOES_OPCAO.map((a) => <SelectItem key={a.valor} value={a.valor}>{a.rotulo}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      {o.acao === "iniciar_fluxo" && (
+                        <Select value={o.destino_fluxo_id} onValueChange={(v) => alterar({ destino_fluxo_id: v })}>
+                          <SelectTrigger><SelectValue placeholder="Fluxo destino" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NENHUM}>Nenhum</SelectItem>
+                            {outrosFluxos.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {o.acao === "ir_para_etapa" && (
+                        <Select value={o.destino_etapa_id} onValueChange={(v) => alterar({ destino_etapa_id: v })}>
+                          <SelectTrigger><SelectValue placeholder="Etapa destino" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NENHUM}>Nenhuma</SelectItem>
+                            {ordenadas.map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormEtapa(null)}>CANCELAR</Button>
             <Button onClick={() => void salvarEtapa()}>SALVAR ETAPA</Button>

@@ -29,7 +29,9 @@ interface Resposta {
   acao_nao: string;
   destino_nao_fluxo_id: string | null;
   destino_nao_resposta_id: string | null;
+  delay_acao_segundos: number;
 }
+
 
 interface Palavra {
   id: string;
@@ -115,8 +117,10 @@ export function RespostasPainel() {
         acao_nao: r.acao_nao,
         destino_nao_fluxo_id: r.destino_nao_fluxo_id,
         destino_nao_resposta_id: r.destino_nao_resposta_id,
+        delay_acao_segundos: r.delay_acao_segundos ?? 0,
         ordem,
       })
+
       .select("id")
       .maybeSingle();
     if (error) { toast.error(error.message); return; }
@@ -252,7 +256,9 @@ function RespostaDialog({
         acao_nao: form.acao_nao,
         destino_nao_fluxo_id: form.destino_nao_fluxo_id,
         destino_nao_resposta_id: form.destino_nao_resposta_id,
+        delay_acao_segundos: Math.min(60, Math.max(0, Number(form.delay_acao_segundos) || 0)),
       })
+
       .eq("id", form.id);
 
     if (error) { setSalvando(false); toast.error(error.message); return; }
@@ -341,7 +347,22 @@ function RespostaDialog({
               })
             }
           />
+
+          <div className="grid gap-1">
+            <Label>Aguardar antes da ação (segundos)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={60}
+              value={String(form.delay_acao_segundos ?? 0)}
+              onChange={(e) => setForm({ ...form, delay_acao_segundos: Number(e.target.value) })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Tempo de espera depois que o cliente responde SIM ou NÃO, antes do bot executar a ação. 0 = imediato.
+            </p>
+          </div>
         </div>
+
 
         <DialogFooter>
           <Button variant="outline" onClick={onFechar}>Cancelar</Button>

@@ -45,7 +45,10 @@ export interface BotResposta {
   acao_nao: string;
   destino_nao_fluxo_id: string | null;
   destino_nao_resposta_id: string | null;
+  /** Segundos de espera antes de executar a ação do SIM ou do NÃO. */
+  delay_acao_segundos: number;
 }
+
 
 export interface BotConfig {
   bot_ativo: boolean;

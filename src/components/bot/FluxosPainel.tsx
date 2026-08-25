@@ -24,6 +24,7 @@ interface FormFluxo {
   mensagem_inicial: string;
   mensagem_retorno_dia: string;
   ativo: boolean;
+  mensagem_unica: boolean;
 }
 
 const VAZIO: FormFluxo = {
@@ -33,7 +34,9 @@ const VAZIO: FormFluxo = {
   mensagem_inicial: "",
   mensagem_retorno_dia: "",
   ativo: true,
+  mensagem_unica: true,
 };
+
 
 /** Aba FLUXOS: cadastro e administração das conversas que o bot conduz. */
 export function FluxosPainel() {
@@ -156,6 +159,8 @@ export function FluxosPainel() {
         mensagem_inicial: f.mensagem_inicial,
         mensagem_retorno_dia: f.mensagem_retorno_dia,
         ativo: f.ativo,
+        mensagem_unica: f.mensagem_unica !== false,
+
         ordem,
         inicial: false,
         fluxo_arquivos: false,
@@ -317,6 +322,8 @@ export function FluxosPainel() {
                         mensagem_inicial: f.mensagem_inicial,
                         mensagem_retorno_dia: f.mensagem_retorno_dia ?? "",
                         ativo: f.ativo,
+                        mensagem_unica: f.mensagem_unica !== false,
+
                       });
                     }}
                   >
@@ -390,12 +397,26 @@ export function FluxosPainel() {
                 />
                 <p className="text-xs text-muted-foreground">Se ficar em branco, o bot usa a mensagem inicial.</p>
               </div>
+              <div className="grid gap-1 rounded-lg border p-3">
+
+                <label className="flex items-center justify-between gap-4 text-sm">
+                  <strong>Enviar tudo em uma única mensagem</strong>
+                  <Switch
+                    checked={form.mensagem_unica}
+                    onCheckedChange={(v) => setForm({ ...form, mensagem_unica: v })}
+                  />
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Junta a mensagem do fluxo, o texto da etapa e a lista de opções em um só envio.
+                </p>
+              </div>
               <label className="flex items-center justify-between gap-4 text-sm">
                 <strong>Ativo</strong>
                 <Switch checked={form.ativo} onCheckedChange={(v) => setForm({ ...form, ativo: v })} />
               </label>
             </div>
           )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => { setForm(null); setEditando(null); }}>CANCELAR</Button>
             <Button onClick={() => void salvarFluxo()}>{editando ? "SALVAR" : "CRIAR FLUXO"}</Button>
