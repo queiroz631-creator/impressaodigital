@@ -382,6 +382,12 @@ export function ConfiguracaoBot() {
           <RespostasPainel />
         </TabsContent>
 
+        {/* ---------- Números atendidos pelo bot ---------- */}
+        <TabsContent value="numeros">
+          <NumerosPainel />
+        </TabsContent>
+
+
         {/* ---------- Inatividade e finalização ---------- */}
         <TabsContent value="inatividade">
           <Card className="shadow-card">
