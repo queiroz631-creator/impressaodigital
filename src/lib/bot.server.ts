@@ -67,6 +67,8 @@ interface ContextoBot {
   fluxo?: EstadoFluxo | null;
   /** Resposta automática aguardando confirmação do cliente (triagem). */
   triagem?: string | null;
+  /** Fluxo iniciado automaticamente pelo tempo de fallback (nada reconhecido). */
+  fluxoFallback?: boolean | null;
 }
 
 interface ConversaBot {
@@ -672,7 +674,7 @@ async function entregarFluxo(
       const cfg = await carregarDadosBot();
       const despedida = cfg?.config.msg_finalizacao_ativo ? cfg.config.msg_finalizacao.trim() : "";
       if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
-      await salvarContexto(conversa, { ...ctx, fluxo: null }, "finalizado");
+      await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null }, "finalizado");
       await salvar(conversa, {
         status: "finalizado",
         data_finalizacao: vars.agora.toISOString(),
@@ -802,7 +804,7 @@ async function triagem(
     const alvo = fluxoDeArquivos(fluxos) ?? fluxoInicial(fluxos);
     if (!alvo) return;
     const saida = iniciarFluxo(fluxos, alvo.id, {}, vars, 0, primeiraDoDia);
-    await entregarFluxo(conversa, config, { ...ctx, triagem: null }, fluxos, saida, vars);
+    await entregarFluxo(conversa, config, { ...ctx, triagem: null, fluxoFallback: null }, fluxos, saida, vars);
     return;
   }
 
@@ -811,12 +813,12 @@ async function triagem(
   const encontrada = texto ? reconhecerResposta(cfg, texto) : null;
   if (encontrada) {
     await responder(conversa, `Você quer falar sobre *${encontrada.titulo}*?`, ["SIM", "NÃO"]);
-    await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: encontrada.id }, "triagem");
+    await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null, triagem: encontrada.id }, "triagem");
     return;
   }
 
   // 3) Nada reconhecido: aguarda a próxima mensagem do cliente.
-  await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: null }, "inicio");
+  await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null, triagem: null }, "inicio");
 }
 
 /** Trata a confirmação (SIM/NÃO) da resposta automática sugerida na triagem. */
@@ -882,6 +884,28 @@ async function rodarFluxo(
   if (!estado) {
     await triagem(conversa, config, ctx, dados, entrada, primeiraDoDia, vars);
     return;
+  }
+
+  // Fluxo iniciado automaticamente pelo tempo de fallback: uma palavra-chave
+  // reconhecida interrompe esse fluxo e volta para a triagem. Fluxos escolhidos
+  // pelo cliente nunca são interrompidos.
+  const raizAtual = fluxoInicial(dados);
+  const aindaNoFluxoInicial = Boolean(raizAtual && estado.fluxoId === raizAtual.id);
+  if (ctx.fluxoFallback && aindaNoFluxoInicial) {
+    const cfg = await carregarDadosBot();
+    const texto = (entrada.texto ?? "").trim();
+    if (cfg && texto && reconhecerResposta(cfg, texto)) {
+      await triagem(
+        conversa,
+        config,
+        { ...ctx, fluxo: null, fluxoFallback: null },
+        dados,
+        entrada,
+        primeiraDoDia,
+        vars,
+      );
+      return;
+    }
   }
 
   const saida = processarFluxo(
@@ -1221,12 +1245,14 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
         const conversa = linha as unknown as ConversaBot;
         const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
         // Fluxo em andamento ou confirmação SIM/NÃO pendente seguem a inatividade normal.
-        if (ctx.fluxo || ctx.triagem) continue;
+        // Fluxo em andamento, confirmação pendente ou fallback já disparado
+        // neste atendimento: não reinicia o fluxo inicial de novo.
+        if (ctx.fluxo || ctx.triagem || ctx.fluxoFallback) continue;
 
         const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
         const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
         const saida = iniciarFluxo(fluxos, raiz.id, {}, vars, 0, primeiraDoDia);
-        await entregarFluxo(conversa, config, { ...ctx, triagem: null }, fluxos, saida, vars);
+        await entregarFluxo(conversa, config, { ...ctx, triagem: null, fluxoFallback: true }, fluxos, saida, vars);
         await salvar(conversa, { saudacao_em: agora.toISOString(), inatividade_avisada: false });
         await auditar(conversa.id, "bot_fluxo_inicial", `${minFallback} min sem reconhecimento`);
       }
