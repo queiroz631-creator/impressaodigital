@@ -252,7 +252,7 @@ export function iniciar(
 
   const primeira = etapasDoFluxo(dados, fluxo.id)[0];
   const respostas = estado.respostas ?? {};
-  if (!primeira) return { mensagens, estado: null };
+  if (!primeira) return unirSaida(dados, { mensagens, estado: null }, fluxo.id);
 
   const saida = executar(
     dados,
@@ -261,8 +261,9 @@ export function iniciar(
     vars,
     profundidade + 1,
   );
-  return { ...saida, mensagens: [...mensagens, ...saida.mensagens] };
+  return unirSaida(dados, { ...saida, mensagens: [...mensagens, ...saida.mensagens] }, fluxo.id);
 }
+
 
 /** Fluxo marcado para receber os clientes que enviam apenas arquivos. */
 export function fluxoDeArquivos(dados: DadosFluxos) {
