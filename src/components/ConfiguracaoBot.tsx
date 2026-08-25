@@ -244,7 +244,9 @@ export function ConfiguracaoBot() {
           <TabsTrigger value="menu">Fluxos</TabsTrigger>
           <TabsTrigger value="respostas">Respostas automáticas</TabsTrigger>
           <TabsTrigger value="inatividade">Inatividade</TabsTrigger>
+          <TabsTrigger value="numeros">Números</TabsTrigger>
           <TabsTrigger value="simulador">Simulador</TabsTrigger>
+
         </TabsList>
 
         {/* ---------- Geral ---------- */}
