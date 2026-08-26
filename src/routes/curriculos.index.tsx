@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { FileUser, Link2, Plus, Search } from "lucide-react";
+import { FileText, FileUser, Link2, Plus, Search } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
