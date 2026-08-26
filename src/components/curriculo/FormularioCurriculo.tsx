@@ -325,6 +325,15 @@ export function FormularioCurriculo({
 
   return (
     <div className="space-y-4">
+      {avisoImportacao && (
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+          <p className="font-semibold">CURRÍCULO IMPORTADO</p>
+          <p className="text-muted-foreground">
+            As informações abaixo foram identificadas no arquivo enviado. Revise etapa por etapa
+            antes de salvar.
+          </p>
+        </div>
+      )}
       <div>
         <div className="flex items-center justify-between text-sm font-medium">
           <span>
