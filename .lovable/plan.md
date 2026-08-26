@@ -82,7 +82,8 @@ Código:
 - `src/lib/bot-fluxos.ts`: novos campos em `FluxoEtapa`, catálogo `TIPOS_MENSAGEM` e `MODOS_AVANCO`.
 - `src/lib/bot-motor.ts`: `MensagemBot` ganha `midia?: { tipo, url, nome }`.
 - `src/lib/bot-fluxos-motor.ts`: monta a mensagem conforme `tipo_mensagem`; `aguardaResposta`
-  passa a considerar `modo_avanco`; avanço automático devolve a espera na saída.
+  passa a considerar `modo_avanco`; avanço automático devolve a espera na saída; `iniciar`
+  deixa de emitir a mensagem inicial do fluxo e usa o texto (ou a mensagem 2) da 1ª etapa.
 - `src/lib/bot.server.ts`: `responder` passa a escolher `send-text`, `send-image`, `send-audio`,
   `send-video` ou `send-document` conforme a mídia; aplica a espera antes do envio seguinte.
 - `src/components/bot/FluxoConfigurador.tsx`: reescrito para a tela única com etapas e opções inline.
