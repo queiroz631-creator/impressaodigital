@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { FileUser, Link2, Plus, Search } from "lucide-react";
+import { FileText, FileUser, Link2, Plus, Search } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
@@ -34,6 +34,7 @@ import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import { dataBR, dataHoraBR } from "@/lib/format";
 import { gerarLinkNovoCurriculo } from "@/lib/curriculo.functions";
 import { urlPublica } from "@/lib/link-publico";
+import { ImportarCurriculo } from "@/components/curriculo/ImportarCurriculo";
 
 export const Route = createFileRoute("/curriculos/")({
   head: () => ({
@@ -75,6 +76,7 @@ function Curriculos() {
   const [linkNovoUrl, setLinkNovoUrl] = useState("");
   const [linkNovoExpira, setLinkNovoExpira] = useState("");
   const [gerandoLink, setGerandoLink] = useState(false);
+  const [importarAberto, setImportarAberto] = useState(false);
 
   async function abrirLinkNovoCurriculo() {
     setGerandoLink(true);
@@ -265,6 +267,9 @@ function Curriculos() {
           <Button variant="outline" onClick={abrirLinkNovoCurriculo} disabled={gerandoLink}>
             <Link2 className="mr-1 h-4 w-4" /> LINK PARA NOVO CURRÍCULO
           </Button>
+          <Button variant="outline" onClick={() => setImportarAberto(true)}>
+            <FileText className="mr-1 h-4 w-4" /> IMPORTAR CURRÍCULO
+          </Button>
         </CardContent>
       </Card>
 
@@ -438,6 +443,17 @@ function Curriculos() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ImportarCurriculo
+        aberto={importarAberto}
+        onFechar={() => setImportarAberto(false)}
+        onImportado={(id) => {
+          window.sessionStorage.setItem("curriculo-importado", id);
+          setImportarAberto(false);
+          queryClient.invalidateQueries({ queryKey: ["curriculos"] });
+          navigate({ to: "/curriculos/$id", params: { id } });
+        }}
+      />
     </>
   );
 }

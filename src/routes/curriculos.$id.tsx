@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -74,6 +74,17 @@ function DetalheCurriculo() {
   const documentoRef = useRef<HTMLDivElement>(null);
 
   const [modoEdicao, setModoEdicao] = useState(false);
+  const [avisoImportacao, setAvisoImportacao] = useState(false);
+
+  // Currículo recém-importado: abre direto na revisão do formulário.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.sessionStorage.getItem("curriculo-importado") === id) {
+      window.sessionStorage.removeItem("curriculo-importado");
+      setAvisoImportacao(true);
+      setModoEdicao(true);
+    }
+  }, [id]);
   const [linkGerado, setLinkGerado] = useState<{ url: string; expiraEm: string } | null>(null);
   const [whatsAberto, setWhatsAberto] = useState(false);
   const [telefoneEnvio, setTelefoneEnvio] = useState("");
@@ -349,6 +360,7 @@ function DetalheCurriculo() {
           catalogoHabilidades={data.catalogo}
           objetivosSugeridos={data.objetivos}
           modo="admin"
+          avisoImportacao={avisoImportacao}
           salvar={salvarEtapa}
           criarHabilidade={async (descricao) => {
             const { data: existente } = await supabase
