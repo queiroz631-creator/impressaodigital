@@ -151,7 +151,11 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
       })
       .filter((e) => e.empresa || e.cargo),
     habilidades: lista(obj["habilidades"])
-      .map((h) => texto(h, 300))
+      .map((h) =>
+        typeof h === "string"
+          ? texto(h, 300)
+          : texto((h as Record<string, unknown>)?.["descricao"] ?? (h as Record<string, unknown>)?.["nome"], 300),
+      )
       .filter(Boolean),
     confiancaBaixa: lista(obj["confianca_baixa"])
       .map((c) => texto(c, 60))
