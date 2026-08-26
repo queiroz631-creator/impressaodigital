@@ -74,6 +74,17 @@ function DetalheCurriculo() {
   const documentoRef = useRef<HTMLDivElement>(null);
 
   const [modoEdicao, setModoEdicao] = useState(false);
+  const [avisoImportacao, setAvisoImportacao] = useState(false);
+
+  // Currículo recém-importado: abre direto na revisão do formulário.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.sessionStorage.getItem("curriculo-importado") === id) {
+      window.sessionStorage.removeItem("curriculo-importado");
+      setAvisoImportacao(true);
+      setModoEdicao(true);
+    }
+  }, [id]);
   const [linkGerado, setLinkGerado] = useState<{ url: string; expiraEm: string } | null>(null);
   const [whatsAberto, setWhatsAberto] = useState(false);
   const [telefoneEnvio, setTelefoneEnvio] = useState("");
