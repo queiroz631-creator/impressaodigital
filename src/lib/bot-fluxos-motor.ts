@@ -96,29 +96,51 @@ function proximaEtapa(dados: DadosFluxos, etapa: FluxoEtapa): FluxoEtapa | null 
 
 const NUMEROS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
 
+/** Texto configurado na etapa (com a variante de retorno no mesmo dia). */
+function textoDaEtapa(etapa: FluxoEtapa, primeiraDoDia: boolean) {
+  const retorno = (etapa.mensagem_retorno_dia ?? "").trim();
+  return !primeiraDoDia && retorno ? retorno : (etapa.mensagem ?? "");
+}
+
+function midiaDaEtapa(etapa: FluxoEtapa) {
+  const tipo = etapa.tipo_mensagem ?? "texto";
+  if (tipo === "texto" || !etapa.midia_url) return undefined;
+  return { tipo, url: etapa.midia_url, nome: etapa.midia_nome ?? null };
+}
+
 function mensagemDaEtapa(
   dados: DadosFluxos,
   etapa: FluxoEtapa,
   vars: { nome: string; telefone: string; agora: Date },
+  primeiraDoDia = true,
 ): MensagemBot | null {
   const opcoes = opcoesDaEtapa(dados, etapa.id);
-  let texto = aplicarVariaveis(etapa.mensagem, vars).trim();
+  const midia = midiaDaEtapa(etapa);
+  const espera = etapa.modo_avanco === "automatico" ? Math.min(60, Math.max(0, etapa.espera_segundos ?? 0)) : 0;
+  const extras = { ...(midia ? { midia } : {}), ...(espera ? { espera } : {}) };
+  let texto = aplicarVariaveis(textoDaEtapa(etapa, primeiraDoDia), vars).trim();
 
   if (opcoes.length > 0) {
     const lista = opcoes.map((o, i) => `${NUMEROS[i] ?? `${i + 1}.`} ${o.titulo}`).join("\n");
     texto = texto ? `${texto}\n\n${lista}` : lista;
-    return { texto, botoes: opcoes.slice(0, 3).map((o) => o.titulo) };
+    return { texto, botoes: opcoes.slice(0, 3).map((o) => o.titulo), ...extras };
   }
 
   if (etapa.tipo_resposta === "sim_nao" || etapa.tipo_resposta === "confirmacao") {
-    return texto ? { texto, botoes: ["SIM", "NÃO"] } : null;
+    return texto ? { texto, botoes: ["SIM", "NÃO"], ...extras } : null;
   }
 
-  return texto ? { texto } : null;
+  if (!texto && !midia) return null;
+  return { texto, ...extras };
 }
 
 /** Espera resposta do cliente nesta etapa? */
 function aguardaResposta(dados: DadosFluxos, etapa: FluxoEtapa) {
+  const modo = etapa.modo_avanco;
+  if (modo === "automatico") return false;
+  if (modo === "opcao") return opcoesDaEtapa(dados, etapa.id).length > 0;
+  if (modo === "resposta") return true;
+  // Compatibilidade com etapas antigas, sem modo definido.
   if (opcoesDaEtapa(dados, etapa.id).length > 0) return true;
   if (etapa.acao === "aguardar_resposta") return true;
   return etapa.tipo_resposta !== "nenhuma";
