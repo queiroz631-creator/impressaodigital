@@ -203,12 +203,14 @@ async function habilidadesImportadas(descricoes: string[]) {
   });
 }
 
-function payloadDoImportado(dados: CurriculoImportado) {
+function payloadDoImportado(dados: CurriculoImportado): Required<
+  Pick<PayloadEtapa, "campos" | "telefones" | "cursos" | "formacoes" | "experiencias">
+> {
   const c = dados.campos;
   return {
     campos: {
-      nome_completo: c.nome_completo || undefined,
-      telefone_principal: c.telefone_principal || undefined,
+      ...(c.nome_completo ? { nome_completo: c.nome_completo } : {}),
+      ...(c.telefone_principal ? { telefone_principal: c.telefone_principal } : {}),
       data_nascimento: c.data_nascimento || null,
       estado_civil: c.estado_civil || null,
       email: c.email || null,
