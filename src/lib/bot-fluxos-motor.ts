@@ -256,7 +256,10 @@ export function avancar(
 }
 
 
-/** Inicia um fluxo pelo id, enviando a mensagem inicial e a primeira etapa. */
+/**
+ * Inicia um fluxo pelo id. O texto de abertura é o da primeira etapa (a
+ * mensagem inicial do fluxo deixou de existir como campo separado).
+ */
 export function iniciar(
   dados: DadosFluxos,
   fluxoId: string,
@@ -268,17 +271,9 @@ export function iniciar(
   const fluxo = fluxoPorId(dados, fluxoId);
   if (!fluxo) return { mensagens: [], estado: null };
 
-  const mensagens: MensagemBot[] = [];
-  const modelo =
-    !primeiraDoDia && (fluxo.mensagem_retorno_dia ?? "").trim()
-      ? fluxo.mensagem_retorno_dia
-      : fluxo.mensagem_inicial;
-  const inicial = aplicarVariaveis(modelo, vars).trim();
-  if (inicial) mensagens.push({ texto: inicial });
-
   const primeira = etapasDoFluxo(dados, fluxo.id)[0];
   const respostas = estado.respostas ?? {};
-  if (!primeira) return unirSaida(dados, { mensagens, estado: null }, fluxo.id);
+  if (!primeira) return { mensagens: [], estado: null };
 
   const saida = executar(
     dados,
@@ -286,8 +281,9 @@ export function iniciar(
     { fluxoId: fluxo.id, etapaId: primeira.id, aguardando: false, respostas },
     vars,
     profundidade + 1,
+    primeiraDoDia,
   );
-  return unirSaida(dados, { ...saida, mensagens: [...mensagens, ...saida.mensagens] }, fluxo.id);
+  return unirSaida(dados, saida, fluxo.id);
 }
 
 
