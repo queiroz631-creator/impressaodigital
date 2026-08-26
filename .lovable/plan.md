@@ -33,6 +33,11 @@ por cartão. O diálogo separado de opção deixa de existir.
 ## 3. Campos de cada etapa
 
 - Nome da etapa.
+- **Texto da etapa (único)**: a mensagem inicial do fluxo deixa de ser um campo separado.
+  O texto da 1ª etapa passa a ser o texto que o cliente recebe ao entrar no fluxo — um só campo,
+  sem duplicidade. Ao lado dele, um botão "+ Adicionar mensagem 2 (retorno no mesmo dia)"
+  revela um segundo campo opcional, usado quando o cliente já falou com a loja no mesmo dia;
+  em branco, usa sempre o texto único.
 - **Tipo de mensagem**: texto, imagem, áudio, vídeo ou documento.
   - texto: só o campo de texto.
   - imagem/áudio/vídeo/documento: campo de anexo (upload) + campo de texto/legenda.
