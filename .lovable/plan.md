@@ -18,8 +18,6 @@ Uma página única, sem abas de navegação separando o essencial:
 
 DADOS DO FLUXO (cartão editável, salva no mesmo lugar)
   nome · descrição · ícone · ativo
-  mensagem inicial · mensagem 2 (retorno no mesmo dia)
-  enviar tudo em uma única mensagem
 
 ETAPAS (cartões na ordem, com subir/descer/excluir)
   ETAPA 1 — Boas-vindas       [texto]      [expandir]
