@@ -74,9 +74,13 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
   const escolaridade = ESCOLARIDADES.includes(texto(obj["escolaridade"]))
     ? texto(obj["escolaridade"])
     : "";
-  const estadoCivil = ESTADOS_CIVIS.includes(texto(obj["estado_civil"]))
-    ? texto(obj["estado_civil"])
-    : "";
+  const civilBruto = texto(obj["estado_civil"]).toLowerCase();
+  const estadoCivil =
+    ESTADOS_CIVIS.find(
+      (e) =>
+        e.toLowerCase() === civilBruto ||
+        (civilBruto.length > 3 && e.toLowerCase().startsWith(civilBruto.slice(0, 5))),
+    ) ?? "";
   const categoria = CATEGORIAS_HABILITACAO.includes(texto(obj["categoria_habilitacao"]).toUpperCase())
     ? texto(obj["categoria_habilitacao"]).toUpperCase()
     : "";
@@ -118,9 +122,9 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
       .map((c) => {
         const o = (c ?? {}) as Record<string, unknown>;
         return {
-          nome_curso: capitalizarTexto(texto(o["nome_curso"], 200)),
-          instituicao: capitalizarTexto(texto(o["instituicao"], 200)),
-          ano: texto(o["ano"], 10),
+          nome_curso: capitalizarTexto(texto(o["nome_curso"] ?? o["nome"] ?? o["curso"], 200)),
+          instituicao: capitalizarTexto(texto(o["instituicao"] ?? o["escola"], 200)),
+          ano: texto(o["ano"] ?? o["ano_conclusao"], 10),
         };
       })
       .filter((c) => c.nome_curso),
@@ -129,9 +133,9 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
         const o = (f ?? {}) as Record<string, unknown>;
         return {
           nivel: texto(o["nivel"], 120),
-          nome_curso: capitalizarTexto(texto(o["nome_curso"], 200)),
-          instituicao: capitalizarTexto(texto(o["instituicao"], 200)),
-          ano: texto(o["ano"], 10),
+          nome_curso: capitalizarTexto(texto(o["nome_curso"] ?? o["nome"] ?? o["curso"], 200)),
+          instituicao: capitalizarTexto(texto(o["instituicao"] ?? o["escola"], 200)),
+          ano: texto(o["ano"] ?? o["ano_conclusao"], 10),
         };
       })
       .filter((f) => f.nome_curso || f.nivel),
@@ -140,9 +144,9 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
         const o = (e ?? {}) as Record<string, unknown>;
         return {
           empresa: capitalizarTexto(texto(o["empresa"], 200)),
-          cargo: capitalizarTexto(texto(o["cargo"], 200)),
-          periodo: texto(o["periodo"], 120),
-          atividades: texto(o["atividades"], 2000),
+          cargo: capitalizarTexto(texto(o["cargo"] ?? o["funcao"], 200)),
+          periodo: texto(o["periodo"] ?? o["ano"], 120),
+          atividades: texto(o["atividades"] ?? o["descricao"], 2000),
         };
       })
       .filter((e) => e.empresa || e.cargo),
