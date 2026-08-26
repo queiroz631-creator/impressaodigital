@@ -40,6 +40,7 @@ import {
   type AcaoBot,
   type BotDados,
   type BotResposta,
+  type MidiaBot,
 } from "@/lib/bot-motor";
 import type { DadosFluxos } from "@/lib/bot-fluxos";
 import {
