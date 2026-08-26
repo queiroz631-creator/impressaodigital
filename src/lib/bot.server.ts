@@ -40,6 +40,7 @@ import {
   type AcaoBot,
   type BotDados,
   type BotResposta,
+  type MidiaBot,
 } from "@/lib/bot-motor";
 import type { DadosFluxos } from "@/lib/bot-fluxos";
 import {
@@ -107,14 +108,62 @@ const TIPOS: { valor: TipoServico; rotulo: string }[] = [
   { valor: "especial", rotulo: "Impressão Especial" },
 ];
 
+/**
+ * Resolve o endereço público temporário do arquivo da etapa. Aceita URL
+ * completa (colada pelo usuário) ou caminho no bucket privado bot-midia.
+ */
+async function urlDaMidia(url: string): Promise<string | null> {
+  if (/^https?:\/\//i.test(url)) return url;
+  const { data } = await supabaseAdmin.storage.from("bot-midia").createSignedUrl(url, 60 * 60);
+  return data?.signedUrl ?? null;
+}
+
+/** Endpoint e corpo da Z-API conforme o tipo de arquivo. */
+function envioDeMidia(
+  telefone: string,
+  tipo: string,
+  url: string,
+  legenda: string,
+  nome: string | null | undefined,
+): { caminho: string; corpo: Record<string, unknown> } | null {
+  switch (tipo) {
+    case "imagem":
+      return { caminho: "send-image", corpo: { phone: telefone, image: url, caption: legenda } };
+    case "audio":
+      return { caminho: "send-audio", corpo: { phone: telefone, audio: url } };
+    case "video":
+      return { caminho: "send-video", corpo: { phone: telefone, video: url, caption: legenda } };
+    case "documento": {
+      const arquivo = nome || "documento.pdf";
+      const extensao = (arquivo.split(".").pop() || "pdf").toLowerCase();
+      return {
+        caminho: `send-document/${extensao}`,
+        corpo: { phone: telefone, document: url, fileName: arquivo, caption: legenda },
+      };
+    }
+    default:
+      return null;
+  }
+}
+
 /** Envia a mensagem pelo WhatsApp e registra na conversa. */
-async function responder(conversa: ConversaBot, texto: string, botoes?: string[]) {
+async function responder(conversa: ConversaBot, texto: string, botoes?: string[], midia?: MidiaBot) {
   // Texto simples sempre: listas de botões não são entregues de forma confiável.
   const complemento = botoes && botoes.length > 0 ? `\n\n_Responda: ${botoes.join(" ou ")}_` : "";
-  const r = await chamarZapi("send-text", {
-    metodo: "POST",
-    corpo: { phone: conversa.telefone, message: `${texto}${complemento}` },
-  });
+  const mensagem = `${texto}${complemento}`;
+
+  let envio: { caminho: string; corpo: Record<string, unknown> } | null = null;
+  if (midia?.url) {
+    const link = await urlDaMidia(midia.url);
+    if (link) envio = envioDeMidia(conversa.telefone, midia.tipo, link, mensagem, midia.nome);
+    // O áudio não aceita legenda: o texto vai em uma mensagem antes.
+    if (envio && midia.tipo === "audio" && mensagem.trim()) {
+      await responder(conversa, texto, botoes);
+    }
+  }
+  if (!envio) envio = { caminho: "send-text", corpo: { phone: conversa.telefone, message: mensagem } };
+
+  const r = await chamarZapi(envio.caminho, { metodo: "POST", corpo: envio.corpo });
 
   const dados = (r.dados ?? {}) as { messageId?: unknown; zaapId?: unknown; error?: unknown };
   const idMensagem = dados.messageId ?? dados.zaapId ?? null;
@@ -123,8 +172,9 @@ async function responder(conversa: ConversaBot, texto: string, botoes?: string[]
   await supabaseAdmin.from("whatsapp_mensagens").insert({
     conversa_id: conversa.id,
     direcao: "saida",
-    tipo: "texto",
+    tipo: envio.caminho === "send-text" ? "texto" : (midia?.tipo ?? "texto"),
     texto,
+    ...(midia?.nome ? { arquivo_nome: midia.nome } : {}),
     autor: "Bot",
     whatsapp_message_id: idMensagem ? String(idMensagem) : null,
     status: entregue ? "enviada" : "erro",
@@ -668,7 +718,12 @@ async function entregarFluxo(
   let atual = inicial;
 
   for (let volta = 0; volta < 6; volta += 1) {
-    for (const m of atual.mensagens) await responder(conversa, m.texto, m.botoes);
+    for (const m of atual.mensagens) {
+      await responder(conversa, m.texto, m.botoes, m.midia);
+      // Espera configurada na etapa antes de seguir automaticamente (teto de 60s).
+      const espera = Math.min(60, Math.max(0, m.espera ?? 0));
+      if (espera > 0) await new Promise((r) => setTimeout(r, espera * 1000));
+    }
 
     if (atual.finalizar) {
       const cfg = await carregarDadosBot();

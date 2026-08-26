@@ -1,13 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Pencil, Plus, Settings2, Trash2 } from "lucide-react";
+import { Copy, Plus, Settings2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -310,25 +309,6 @@ export function FluxosPainel() {
                   <Button size="sm" onClick={() => setConfigurando(f.id)}>
                     <Settings2 className="h-4 w-4" /> CONFIGURAR
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setEditando(f);
-                      setForm({
-                        nome: f.nome,
-                        descricao: f.descricao,
-                        icone: f.icone,
-                        mensagem_inicial: f.mensagem_inicial,
-                        mensagem_retorno_dia: f.mensagem_retorno_dia ?? "",
-                        ativo: f.ativo,
-                        mensagem_unica: f.mensagem_unica !== false,
-
-                      });
-                    }}
-                  >
-                    <Pencil className="h-4 w-4" /> EDITAR
-                  </Button>
                   <Button size="sm" variant="outline" onClick={() => void duplicar(f)}>
                     <Copy className="h-4 w-4" /> DUPLICAR
                   </Button>
@@ -379,25 +359,11 @@ export function FluxosPainel() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-1">
-                <Label>Mensagem inicial</Label>
-                <Textarea
-                  rows={3}
-                  value={form.mensagem_inicial}
-                  onChange={(e) => setForm({ ...form, mensagem_inicial: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">Use {"{nome}"}, {"{telefone}"} e {"{saudacao}"}.</p>
-              </div>
-              <div className="grid gap-1">
-                <Label>Mensagem 2 — demais conversas do mesmo dia</Label>
-                <Textarea
-                  rows={3}
-                  value={form.mensagem_retorno_dia}
-                  onChange={(e) => setForm({ ...form, mensagem_retorno_dia: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">Se ficar em branco, o bot usa a mensagem inicial.</p>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                Os textos das mensagens são configurados nas etapas, em CONFIGURAR.
+              </p>
               <div className="grid gap-1 rounded-lg border p-3">
+
 
                 <label className="flex items-center justify-between gap-4 text-sm">
                   <strong>Enviar tudo em uma única mensagem</strong>

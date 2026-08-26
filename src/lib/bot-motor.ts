@@ -82,9 +82,21 @@ export interface BotDados {
   respostas: BotResposta[];
 }
 
+export interface MidiaBot {
+  /** imagem | audio | video | documento */
+  tipo: string;
+  /** Caminho no bucket bot-midia ou URL completa. */
+  url: string;
+  nome?: string | null;
+}
+
 export interface MensagemBot {
   texto: string;
   botoes?: string[];
+  /** Arquivo enviado junto com o texto (legenda). */
+  midia?: MidiaBot;
+  /** Segundos de espera depois de enviar esta mensagem. */
+  espera?: number;
 }
 
 /** Etapas controladas pelo motor (as demais pertencem ao fluxo de orçamento). */

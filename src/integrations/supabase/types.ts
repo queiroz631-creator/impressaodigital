@@ -69,12 +69,18 @@ export type Database = {
           configuracao: Json
           created_at: string
           destino_fluxo_id: string | null
+          espera_segundos: number
           fluxo_id: string
           id: string
           mensagem: string
+          mensagem_retorno_dia: string
+          midia_nome: string | null
+          midia_url: string | null
+          modo_avanco: string
           nome: string
           ordem: number
           proxima_etapa_id: string | null
+          tipo_mensagem: string
           tipo_resposta: string
           updated_at: string
         }
@@ -84,12 +90,18 @@ export type Database = {
           configuracao?: Json
           created_at?: string
           destino_fluxo_id?: string | null
+          espera_segundos?: number
           fluxo_id: string
           id?: string
           mensagem?: string
+          mensagem_retorno_dia?: string
+          midia_nome?: string | null
+          midia_url?: string | null
+          modo_avanco?: string
           nome: string
           ordem?: number
           proxima_etapa_id?: string | null
+          tipo_mensagem?: string
           tipo_resposta?: string
           updated_at?: string
         }
@@ -99,12 +111,18 @@ export type Database = {
           configuracao?: Json
           created_at?: string
           destino_fluxo_id?: string | null
+          espera_segundos?: number
           fluxo_id?: string
           id?: string
           mensagem?: string
+          mensagem_retorno_dia?: string
+          midia_nome?: string | null
+          midia_url?: string | null
+          modo_avanco?: string
           nome?: string
           ordem?: number
           proxima_etapa_id?: string | null
+          tipo_mensagem?: string
           tipo_resposta?: string
           updated_at?: string
         }

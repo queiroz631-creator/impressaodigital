@@ -27,12 +27,47 @@ export interface FluxoEtapa {
   nome: string;
   ordem: number;
   mensagem: string;
+  /** Texto alternativo quando o cliente já falou com a loja no mesmo dia. */
+  mensagem_retorno_dia: string;
   tipo_resposta: string;
   acao: string;
   configuracao: Record<string, unknown>;
   proxima_etapa_id: string | null;
   destino_fluxo_id: string | null;
   ativo: boolean;
+  /** texto | imagem | audio | video | documento */
+  tipo_mensagem: string;
+  /** Caminho no armazenamento (bucket bot-midia) ou URL completa. */
+  midia_url: string | null;
+  midia_nome: string | null;
+  /** automatico | resposta | opcao */
+  modo_avanco: string;
+  /** Espera antes de seguir para a próxima etapa (modo automático). */
+  espera_segundos: number;
+}
+
+/** Tipos de mensagem que uma etapa pode enviar. */
+export const TIPOS_MENSAGEM: { valor: string; rotulo: string; aceita: string }[] = [
+  { valor: "texto", rotulo: "Texto", aceita: "" },
+  { valor: "imagem", rotulo: "Imagem", aceita: "image/*" },
+  { valor: "audio", rotulo: "Áudio", aceita: "audio/*" },
+  { valor: "video", rotulo: "Vídeo", aceita: "video/*" },
+  { valor: "documento", rotulo: "Documento", aceita: ".pdf,.doc,.docx,.xls,.xlsx,.txt" },
+];
+
+/** Como a conversa avança depois desta etapa. */
+export const MODOS_AVANCO: { valor: string; rotulo: string }[] = [
+  { valor: "automatico", rotulo: "Automaticamente (com tempo de espera)" },
+  { valor: "resposta", rotulo: "Após qualquer resposta do cliente" },
+  { valor: "opcao", rotulo: "Após o cliente escolher uma opção" },
+];
+
+export function rotuloTipoMensagem(valor: string) {
+  return TIPOS_MENSAGEM.find((t) => t.valor === valor)?.rotulo ?? "Texto";
+}
+
+export function rotuloModoAvanco(valor: string) {
+  return MODOS_AVANCO.find((m) => m.valor === valor)?.rotulo ?? valor;
 }
 
 export interface FluxoOpcao {
