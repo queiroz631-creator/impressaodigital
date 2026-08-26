@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronRight, Paperclip, Play, Plus, Send, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronRight, Paperclip, Pencil, Play, Plus, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { simularFluxo } from "@/lib/bot.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,8 +21,11 @@ import {
   TIPOS_MENSAGEM,
   TIPOS_RESPOSTA,
   emojiIcone,
+  rotuloAcaoEtapa,
+  rotuloAcaoOpcao,
   rotuloModoAvanco,
   rotuloTipoMensagem,
+  rotuloTipoResposta,
   type Fluxo,
   type FluxoEtapa,
   type FluxoOpcao,
@@ -407,6 +410,7 @@ function EditorEtapa({
 }) {
   const arquivoRef = useRef<HTMLInputElement>(null);
   const [enviando, setEnviando] = useState(false);
+  const [opcaoAberta, setOpcaoAberta] = useState<number | null>(null);
   const tipo = TIPOS_MENSAGEM.find((t) => t.valor === form.tipo_mensagem);
 
   async function subirArquivo(arquivo: File) {
@@ -591,91 +595,154 @@ function EditorEtapa({
         <Switch checked={form.ativo} onCheckedChange={(v) => setForm({ ...form, ativo: v })} />
       </label>
 
-      {/* Opções na mesma tela */}
-      <div className="grid gap-2 rounded-lg border p-3">
-        <div className="flex items-center justify-between gap-2">
-          <strong className="text-sm">Opções de resposta</strong>
+      {/* Opções na mesma tela, em lista compacta */}
+      <div className="grid gap-2">
+        <p className="text-xs text-muted-foreground">
+          Tipo: {rotuloTipoResposta(form.tipo_resposta)} · Ação: {rotuloAcaoEtapa(form.acao)}
+        </p>
+
+        {form.opcoes.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Sem opções. O cliente responde livremente nesta etapa.</p>
+        ) : (
+          <div className="grid divide-y rounded-lg border">
+            {form.opcoes.map((o, i) => {
+              const alterar = (patch: Partial<FormOpcao>) =>
+                setForm({ ...form, opcoes: form.opcoes.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
+              const mover = (d: number) => {
+                const j = i + d;
+                if (j < 0 || j >= form.opcoes.length) return;
+                const lista = [...form.opcoes];
+                const atual = lista[i]!;
+                lista[i] = lista[j]!;
+                lista[j] = atual;
+                setForm({ ...form, opcoes: lista });
+                setOpcaoAberta(opcaoAberta === i ? j : opcaoAberta === j ? i : opcaoAberta);
+              };
+              const destino =
+                o.acao === "iniciar_fluxo"
+                  ? outrosFluxos.find((f) => f.id === o.destino_fluxo_id)?.nome
+                  : o.acao === "ir_para_etapa"
+                    ? etapas.find((e) => e.id === o.destino_etapa_id)?.nome
+                    : undefined;
+              const aberta = opcaoAberta === i;
+              return (
+                <div key={o.id ?? `nova-${i}`} className="grid gap-2 p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-bold">
+                      {i + 1}. {o.titulo || "(sem título)"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {rotuloAcaoOpcao(o.acao)}
+                      {destino ? ` → ${destino}` : ""}
+                    </span>
+                    {!o.ativo && <Badge variant="outline">Inativa</Badge>}
+                    <span className="ml-auto flex items-center gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => mover(-1)}>
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => mover(1)}>
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => setOpcaoAberta(aberta ? null : i)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={() => {
+                          setForm({
+                            ...form,
+                            opcoes: form.opcoes.filter((_, j) => j !== i),
+                            removidas: o.id ? [...form.removidas, o.id] : form.removidas,
+                          });
+                          setOpcaoAberta(null);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </span>
+                  </div>
+
+                  {aberta && (
+                    <div className="grid gap-2">
+                      <Input
+                        placeholder="Título da opção"
+                        value={o.titulo}
+                        onChange={(e) => alterar({ titulo: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Texto que o cliente digita (igual ao título quando vazio)"
+                        value={o.valor}
+                        onChange={(e) => alterar({ valor: e.target.value })}
+                      />
+                      <Select value={o.acao} onValueChange={(v) => alterar({ acao: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {ACOES_OPCAO.map((a) => <SelectItem key={a.valor} value={a.valor}>{a.rotulo}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      {o.acao === "iniciar_fluxo" && (
+                        <Select value={o.destino_fluxo_id} onValueChange={(v) => alterar({ destino_fluxo_id: v })}>
+                          <SelectTrigger><SelectValue placeholder="Fluxo destino" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NENHUM}>Nenhum</SelectItem>
+                            {outrosFluxos.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {o.acao === "ir_para_etapa" && (
+                        <Select value={o.destino_etapa_id} onValueChange={(v) => alterar({ destino_etapa_id: v })}>
+                          <SelectTrigger><SelectValue placeholder="Etapa destino" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NENHUM}>Nenhuma</SelectItem>
+                            {etapas.map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <label className="flex items-center justify-between gap-4 text-xs">
+                        <span>Opção ativa</span>
+                        <Switch checked={o.ativo} onCheckedChange={(v) => alterar({ ativo: v })} />
+                      </label>
+                      <div>
+                        <Button size="sm" variant="outline" onClick={() => setOpcaoAberta(null)}>CONCLUIR</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
             variant="outline"
-            onClick={() =>
+            onClick={() => setOpcaoAberta(form.opcoes.length > 0 ? 0 : null)}
+            disabled={form.opcoes.length === 0}
+          >
+            <Pencil className="h-4 w-4" /> EDITAR
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
               setForm({
                 ...form,
                 opcoes: [
                   ...form.opcoes,
                   { titulo: "", valor: "", acao: "proxima_etapa", destino_fluxo_id: NENHUM, destino_etapa_id: NENHUM, ativo: true },
                 ],
-              })
-            }
+              });
+              setOpcaoAberta(form.opcoes.length);
+            }}
           >
             <Plus className="h-4 w-4" /> ADICIONAR OPÇÃO
           </Button>
         </div>
-
-        {form.opcoes.length === 0 && (
-          <p className="text-xs text-muted-foreground">Sem opções. O cliente responde livremente nesta etapa.</p>
-        )}
-
-        {form.opcoes.map((o, i) => {
-          const alterar = (patch: Partial<FormOpcao>) =>
-            setForm({ ...form, opcoes: form.opcoes.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
-          return (
-            <div key={o.id ?? `nova-${i}`} className="grid gap-2 rounded-md border p-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-muted-foreground">{i + 1}.</span>
-                <Input placeholder="Título da opção" value={o.titulo} onChange={(e) => alterar({ titulo: e.target.value })} />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-destructive"
-                  onClick={() =>
-                    setForm({
-                      ...form,
-                      opcoes: form.opcoes.filter((_, j) => j !== i),
-                      removidas: o.id ? [...form.removidas, o.id] : form.removidas,
-                    })
-                  }
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              <Input
-                placeholder="Texto que o cliente digita (igual ao título quando vazio)"
-                value={o.valor}
-                onChange={(e) => alterar({ valor: e.target.value })}
-              />
-              <Select value={o.acao} onValueChange={(v) => alterar({ acao: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {ACOES_OPCAO.map((a) => <SelectItem key={a.valor} value={a.valor}>{a.rotulo}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {o.acao === "iniciar_fluxo" && (
-                <Select value={o.destino_fluxo_id} onValueChange={(v) => alterar({ destino_fluxo_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Fluxo destino" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NENHUM}>Nenhum</SelectItem>
-                    {outrosFluxos.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-              {o.acao === "ir_para_etapa" && (
-                <Select value={o.destino_etapa_id} onValueChange={(v) => alterar({ destino_etapa_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Etapa destino" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NENHUM}>Nenhuma</SelectItem>
-                    {etapas.map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-              <label className="flex items-center justify-between gap-4 text-xs">
-                <span>Opção ativa</span>
-                <Switch checked={o.ativo} onCheckedChange={(v) => alterar({ ativo: v })} />
-              </label>
-            </div>
-          );
-        })}
       </div>
+
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={onSalvar}>SALVAR ETAPA</Button>
