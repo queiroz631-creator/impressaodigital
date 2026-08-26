@@ -156,6 +156,10 @@ async function responder(conversa: ConversaBot, texto: string, botoes?: string[]
   if (midia?.url) {
     const link = await urlDaMidia(midia.url);
     if (link) envio = envioDeMidia(conversa.telefone, midia.tipo, link, mensagem, midia.nome);
+    // O áudio não aceita legenda: o texto vai em uma mensagem antes.
+    if (envio && midia.tipo === "audio" && mensagem.trim()) {
+      await responder(conversa, texto, botoes);
+    }
   }
   if (!envio) envio = { caminho: "send-text", corpo: { phone: conversa.telefone, message: mensagem } };
 
