@@ -47,10 +47,13 @@ const LIMITE_ENCADEAMENTO = 12;
  * botões da última mensagem. Usado quando o fluxo está com "mensagem única".
  */
 function unirMensagens(mensagens: MensagemBot[]): MensagemBot[] {
+  // Mensagens com arquivo vão em envio próprio (com a legenda junto).
+  if (mensagens.some((m) => m.midia)) return mensagens;
   const textos = mensagens.map((m) => (m.texto ?? "").trim()).filter(Boolean);
   if (textos.length <= 1) return mensagens;
   const botoes = [...mensagens].reverse().find((m) => (m.botoes ?? []).length > 0)?.botoes;
-  return [{ texto: textos.join("\n\n"), ...(botoes ? { botoes } : {}) }];
+  const espera = mensagens.reduce((s, m) => s + (m.espera ?? 0), 0);
+  return [{ texto: textos.join("\n\n"), ...(botoes ? { botoes } : {}), ...(espera ? { espera } : {}) }];
 }
 
 /** Aplica a mensagem única quando o fluxo de origem estiver configurado assim. */
