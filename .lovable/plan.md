@@ -18,8 +18,6 @@ Uma página única, sem abas de navegação separando o essencial:
 
 DADOS DO FLUXO (cartão editável, salva no mesmo lugar)
   nome · descrição · ícone · ativo
-  mensagem inicial · mensagem 2 (retorno no mesmo dia)
-  enviar tudo em uma única mensagem
 
 ETAPAS (cartões na ordem, com subir/descer/excluir)
   ETAPA 1 — Boas-vindas       [texto]      [expandir]
@@ -35,6 +33,11 @@ por cartão. O diálogo separado de opção deixa de existir.
 ## 3. Campos de cada etapa
 
 - Nome da etapa.
+- **Texto da etapa (único)**: a mensagem inicial do fluxo deixa de ser um campo separado.
+  O texto da 1ª etapa passa a ser o texto que o cliente recebe ao entrar no fluxo — um só campo,
+  sem duplicidade. Ao lado dele, um botão "+ Adicionar mensagem 2 (retorno no mesmo dia)"
+  revela um segundo campo opcional, usado quando o cliente já falou com a loja no mesmo dia;
+  em branco, usa sempre o texto único.
 - **Tipo de mensagem**: texto, imagem, áudio, vídeo ou documento.
   - texto: só o campo de texto.
   - imagem/áudio/vídeo/documento: campo de anexo (upload) + campo de texto/legenda.
@@ -65,6 +68,12 @@ Banco (`bot_fluxo_etapas`), colunas novas com padrão compatível:
 - `midia_url text`, `midia_nome text`
 - `modo_avanco text not null default 'resposta'` (automatico | resposta | opcao)
 - `espera_segundos integer not null default 0`
+- `mensagem_retorno_dia text not null default ''` (a "mensagem 2" da etapa)
+
+Migração de dados: para cada fluxo, o conteúdo atual de `bot_fluxos.mensagem_inicial` e
+`mensagem_retorno_dia` é copiado para a 1ª etapa quando o texto dela estiver vazio; quando
+a etapa já tiver texto, os dois são unidos. Depois disso o motor deixa de usar os campos
+do fluxo (mantidos no banco por segurança, sem uso na tela).
 
 Storage: bucket público `bot-midia` para os anexos das etapas, com política de upload
 para usuários autenticados e leitura pública (a Z-API precisa baixar o arquivo por URL).
@@ -73,7 +82,8 @@ Código:
 - `src/lib/bot-fluxos.ts`: novos campos em `FluxoEtapa`, catálogo `TIPOS_MENSAGEM` e `MODOS_AVANCO`.
 - `src/lib/bot-motor.ts`: `MensagemBot` ganha `midia?: { tipo, url, nome }`.
 - `src/lib/bot-fluxos-motor.ts`: monta a mensagem conforme `tipo_mensagem`; `aguardaResposta`
-  passa a considerar `modo_avanco`; avanço automático devolve a espera na saída.
+  passa a considerar `modo_avanco`; avanço automático devolve a espera na saída; `iniciar`
+  deixa de emitir a mensagem inicial do fluxo e usa o texto (ou a mensagem 2) da 1ª etapa.
 - `src/lib/bot.server.ts`: `responder` passa a escolher `send-text`, `send-image`, `send-audio`,
   `send-video` ou `send-document` conforme a mídia; aplica a espera antes do envio seguinte.
 - `src/components/bot/FluxoConfigurador.tsx`: reescrito para a tela única com etapas e opções inline.
