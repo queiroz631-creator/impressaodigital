@@ -266,6 +266,9 @@ function Curriculos() {
           <Button variant="outline" onClick={abrirLinkNovoCurriculo} disabled={gerandoLink}>
             <Link2 className="mr-1 h-4 w-4" /> LINK PARA NOVO CURRÍCULO
           </Button>
+          <Button variant="outline" onClick={() => setImportarAberto(true)}>
+            <FileText className="mr-1 h-4 w-4" /> IMPORTAR CURRÍCULO
+          </Button>
         </CardContent>
       </Card>
 
