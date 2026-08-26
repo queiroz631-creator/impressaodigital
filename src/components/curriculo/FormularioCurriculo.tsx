@@ -46,6 +46,8 @@ export interface PropsFormularioCurriculo {
   salvar: (payload: PayloadEtapa) => Promise<void>;
   criarHabilidade?: (descricao: string) => Promise<{ id: string; descricao: string } | null>;
   onFinalizado?: () => void;
+  /** Exibe o aviso de currículo importado de arquivo. */
+  avisoImportacao?: boolean;
 }
 
 const TITULOS = [
