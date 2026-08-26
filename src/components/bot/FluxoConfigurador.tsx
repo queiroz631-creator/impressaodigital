@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronRight, Paperclip, Play, Plus, Send, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronRight, Paperclip, Pencil, Play, Plus, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { simularFluxo } from "@/lib/bot.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
