@@ -443,6 +443,17 @@ function Curriculos() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ImportarCurriculo
+        aberto={importarAberto}
+        onFechar={() => setImportarAberto(false)}
+        onImportado={(id) => {
+          window.sessionStorage.setItem("curriculo-importado", id);
+          setImportarAberto(false);
+          queryClient.invalidateQueries({ queryKey: ["curriculos"] });
+          navigate({ to: "/curriculos/$id", params: { id } });
+        }}
+      />
     </>
   );
 }
