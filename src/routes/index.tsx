@@ -43,13 +43,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { ConfirmarAcao } from "@/components/ConfirmarAcao";
 import {
@@ -90,14 +84,12 @@ export const Route = createFileRoute("/")({
       { title: "Calculadora de Impressão Digital" },
       {
         name: "description",
-        content:
-          "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
+        content: "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
       },
       { property: "og:title", content: "Calculadora de Impressão Digital" },
       {
         property: "og:description",
-        content:
-          "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
+        content: "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -133,7 +125,7 @@ interface EstadoRascunho {
   /** Decisão obrigatória sobre usar acabamento (vazio = não respondido). */
   decisaoAcabamento: "" | "sim" | "nao";
   formato: FormatoPapel;
-  
+
   copiasAdicionais: number;
   /** Decisão do usuário sobre incluir PIX (vazio = não respondido). */
   decisaoPix: "" | "sim" | "nao";
@@ -165,7 +157,7 @@ const ESTADO_INICIAL: EstadoRascunho = {
   decisaoFrenteVerso: "",
   decisaoAcabamento: "",
   formato: FORMATO_PADRAO,
-  
+
   copiasAdicionais: 0,
   decisaoPix: "",
   incluirPix: false,
@@ -174,7 +166,6 @@ const ESTADO_INICIAL: EstadoRascunho = {
   prazoTipo: "",
   prazoQuantidade: 0,
 };
-
 
 function Calculadora() {
   const { user } = useAuth();
@@ -213,10 +204,7 @@ function Calculadora() {
       const compat: Partial<EstadoRascunho> =
         salvo["paginasAdicionais"] == null && salvo["paginas"] != null
           ? {
-              paginasAdicionais: Math.max(
-                0,
-                Number(salvo["paginas"] ?? 0) - Number(salvo["arquivos"] ?? 0),
-              ),
+              paginasAdicionais: Math.max(0, Number(salvo["paginas"] ?? 0) - Number(salvo["arquivos"] ?? 0)),
             }
           : {};
       setEstado({ ...ESTADO_INICIAL, ...(salvo as unknown as EstadoRascunho), ...compat });
@@ -230,10 +218,7 @@ function Calculadora() {
     const timer = setTimeout(() => {
       void supabase
         .from("rascunhos")
-        .upsert(
-          { usuario_id: user.id, dados: estado as unknown as never },
-          { onConflict: "usuario_id" },
-        );
+        .upsert({ usuario_id: user.id, dados: estado as unknown as never }, { onConflict: "usuario_id" });
     }, 800);
     return () => clearTimeout(timer);
   }, [estado, hidratado, user?.id]);
@@ -292,15 +277,10 @@ function Calculadora() {
     ],
   );
 
-
   const linhas = useMemo(() => calcularLinhas(materiais ?? [], entrada), [materiais, entrada]);
 
   const acabamentosVisiveis = useMemo(
-    () =>
-      acabamentosDoTipo(
-        acabamentos ?? [],
-        (estado.tipoServico || undefined) as TipoServico | undefined,
-      ),
+    () => acabamentosDoTipo(acabamentos ?? [], (estado.tipoServico || undefined) as TipoServico | undefined),
     [acabamentos, estado.tipoServico],
   );
 
@@ -309,13 +289,7 @@ function Calculadora() {
       calcularAcabamentos(acabamentosVisiveis, estado.selecao, {
         paginas: estado.arquivos + estado.paginasAdicionais + estado.copiasAdicionais,
       }),
-    [
-      acabamentosVisiveis,
-      estado.selecao,
-      estado.arquivos,
-      estado.paginasAdicionais,
-      estado.copiasAdicionais,
-    ],
+    [acabamentosVisiveis, estado.selecao, estado.arquivos, estado.paginasAdicionais, estado.copiasAdicionais],
   );
   const valorAcabamento = totalAcabamentos(linhasAcabamento);
   const tamanhoFinal = estado.formato;
@@ -329,26 +303,16 @@ function Calculadora() {
   const semQuantidade = quantidadeTotal <= 0;
   /** Decisões obrigatórias antes de exibir valores/resumo. */
   const acabamentoOk =
-    estado.decisaoAcabamento === "nao" ||
-    (estado.decisaoAcabamento === "sim" && linhasAcabamento.length > 0);
+    estado.decisaoAcabamento === "nao" || (estado.decisaoAcabamento === "sim" && linhasAcabamento.length > 0);
   const frenteVersoOk = estado.decisaoFrenteVerso !== "";
   /** Arquivos Word aguardando a quantidade de páginas informada manualmente. */
-  const arquivosPendentes = estado.arquivosLista.filter(
-    (a) => a.paginasManuais === true || Number(a.paginas || 0) < 1,
-  );
+  const arquivosPendentes = estado.arquivosLista.filter((a) => a.paginasManuais === true || Number(a.paginas || 0) < 1);
   /** Existe ao menos um arquivo cuja contagem foi feita automaticamente. */
-  const leituraAutomatica = estado.arquivosLista.some(
-    (a) => a.paginasManuais !== true && Number(a.paginas || 0) > 0,
-  );
+  const leituraAutomatica = estado.arquivosLista.some((a) => a.paginasManuais !== true && Number(a.paginas || 0) > 0);
   const mostrarTabela =
-    !precisaSelecionar &&
-    !semQuantidade &&
-    acabamentoOk &&
-    frenteVersoOk &&
-    arquivosPendentes.length === 0;
+    !precisaSelecionar && !semQuantidade && acabamentoOk && frenteVersoOk && arquivosPendentes.length === 0;
 
-  const materialSelecionado =
-    linhasFinais.find((l) => l.material.id === estado.materialId) ?? null;
+  const materialSelecionado = linhasFinais.find((l) => l.material.id === estado.materialId) ?? null;
 
   const totalPedido = (itensPedido ?? []).reduce((acc, o) => acc + Number(o.valor_total ?? 0), 0);
 
@@ -415,10 +379,7 @@ function Calculadora() {
         incluso: true,
       }));
     const naoInclusos: AcabamentoDoc[] = acabamentosVisiveis
-      .filter(
-        (a) =>
-          a.mostrar_no_orcamento !== false && a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo,
-      )
+      .filter((a) => a.mostrar_no_orcamento !== false && a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo)
       .map((a) => ({ nome: a.nome, quantidade: 0, total: 0, incluso: false }));
     return [...selecionados, ...naoInclusos];
   }
@@ -426,11 +387,7 @@ function Calculadora() {
   async function garantirPedido() {
     if (estado.pedidoId) {
       // O pedido salvo no rascunho pode ter sido excluído — valida antes de reutilizar.
-      const { data: existente } = await supabase
-        .from("pedidos")
-        .select("id")
-        .eq("id", estado.pedidoId)
-        .maybeSingle();
+      const { data: existente } = await supabase.from("pedidos").select("id").eq("id", estado.pedidoId).maybeSingle();
       if (existente) return estado.pedidoId;
       set("pedidoId", null);
     }
@@ -491,10 +448,7 @@ function Calculadora() {
       };
 
       if (estado.editandoId) {
-        const { error } = await supabase
-          .from("orcamentos")
-          .update(registro)
-          .eq("id", estado.editandoId);
+        const { error } = await supabase.from("orcamentos").update(registro).eq("id", estado.editandoId);
         if (error) throw error;
         toast.success("Orçamento atualizado no pedido.");
       } else {
@@ -520,7 +474,8 @@ function Calculadora() {
       queryClient.invalidateQueries({ queryKey: ["pedido", pedidoId] });
     } catch (e) {
       const msg =
-        (e as { message?: string })?.message || (e instanceof Error ? e.message : "") ||
+        (e as { message?: string })?.message ||
+        (e instanceof Error ? e.message : "") ||
         "Não foi possível salvar o orçamento.";
       toast.error(msg);
     } finally {
@@ -529,13 +484,11 @@ function Calculadora() {
   }
 
   function editarItem(row: Record<string, unknown>) {
-    const arquivos = (Array.isArray(row["arquivos"]) ? (row["arquivos"] as ArquivoDoc[]) : []).map(
-      (a) => ({
-        ...a,
-        copias: Math.max(1, Number(a.copias ?? 1) || 1),
-        frenteVerso: a.frenteVerso === true,
-      }),
-    );
+    const arquivos = (Array.isArray(row["arquivos"]) ? (row["arquivos"] as ArquivoDoc[]) : []).map((a) => ({
+      ...a,
+      copias: Math.max(1, Number(a.copias ?? 1) || 1),
+      frenteVerso: a.frenteVerso === true,
+    }));
     const nomes = new Set(
       (Array.isArray(row["acabamentos"]) ? (row["acabamentos"] as AcabamentoDoc[]) : [])
         .filter((a) => a.incluso !== false)
@@ -553,11 +506,7 @@ function Calculadora() {
       paginasAdicionais:
         row["paginas_adicionais"] != null
           ? Number(row["paginas_adicionais"])
-          : Math.max(
-              0,
-              Number(row["paginas_total"] ?? 0) -
-                Number(row["quantidade_arquivos"] ?? arquivos.length),
-            ),
+          : Math.max(0, Number(row["paginas_total"] ?? 0) - Number(row["quantidade_arquivos"] ?? arquivos.length)),
       copiasAdicionais: Number(row["copias_adicionais"] ?? 0),
       tipoServico: (row["tipo_impressao"] as TipoServico) ?? "simples",
       copiaManual: Boolean(row["copia_manual"]),
@@ -610,10 +559,7 @@ function Calculadora() {
       queryClient.setQueryData(["rascunho", user.id], novo as unknown as Record<string, unknown>);
       void supabase
         .from("rascunhos")
-        .upsert(
-          { usuario_id: user.id, dados: novo as unknown as never },
-          { onConflict: "usuario_id" },
-        );
+        .upsert({ usuario_id: user.id, dados: novo as unknown as never }, { onConflict: "usuario_id" });
     }
   }
 
@@ -637,33 +583,25 @@ function Calculadora() {
   }
 
   /** Texto do PIX (vazio quando não incluído). */
-  const textoPix =
-    config?.pix_ativo && estado.incluirPix ? montarTextoPix(config) : "";
+  const textoPix = config?.pix_ativo && estado.incluirPix ? montarTextoPix(config) : "";
 
   /** Texto do prazo de entrega (vazio quando não informado). */
-  const textoPrazo = estado.precisaPrazo
-    ? montarTextoPrazo(config, estado.prazoTipo, estado.prazoQuantidade)
-    : "";
+  const textoPrazo = estado.precisaPrazo ? montarTextoPrazo(config, estado.prazoTipo, estado.prazoQuantidade) : "";
 
   function documentoDoPedido() {
     const validade = estado.validade || calcularValidadePadrao();
 
-    return documentoDeOrcamentos(
-      (itensPedido ?? []) as unknown as Record<string, unknown>[],
-      config,
-      {
-        numero: String(pedido?.numero ?? "-"),
-        data: String(pedido?.created_at ?? new Date().toISOString()),
-        clienteNome: estado.clienteNome,
-        clienteTelefone: estado.clienteTelefone,
-        validade: validade || null,
-        observacao: estado.observacao || null,
-        pix: textoPix || null,
-        prazoTexto: textoPrazo || null,
-      },
-    );
+    return documentoDeOrcamentos((itensPedido ?? []) as unknown as Record<string, unknown>[], config, {
+      numero: String(pedido?.numero ?? "-"),
+      data: String(pedido?.created_at ?? new Date().toISOString()),
+      clienteNome: estado.clienteNome,
+      clienteTelefone: estado.clienteTelefone,
+      validade: validade || null,
+      observacao: estado.observacao || null,
+      pix: textoPix || null,
+      prazoTexto: textoPrazo || null,
+    });
   }
-
 
   /** Há arquivos no pedido cuja contagem de páginas foi lida automaticamente. */
   const leituraAutomaticaPedido =
@@ -702,7 +640,6 @@ function Calculadora() {
       toast.error("Responda se deseja incluir os dados do PIX.");
       return false;
     }
-
 
     if (!estado.decisaoPrazo) {
       toast.error("Responda se deseja informar o prazo de entrega.");
@@ -747,7 +684,6 @@ function Calculadora() {
       queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
     }
   }
-
 
   return (
     <>
@@ -816,9 +752,7 @@ function Calculadora() {
           <ResumoItem rotulo="Material" valor={materialSelecionado?.material.nome ?? "—"} pequeno />
 
           <div className="col-span-2 rounded-lg border border-success/50 bg-success/15 px-3 py-2 sm:col-span-3 lg:col-span-1">
-            <p className="text-[10px] font-bold tracking-wider text-sidebar-foreground/70">
-              VALOR TOTAL
-            </p>
+            <p className="text-[10px] font-bold tracking-wider text-sidebar-foreground/70">VALOR TOTAL</p>
             <p className="truncate text-xl font-extrabold text-success">
               {materialSelecionado ? brl(materialSelecionado.total) : "—"}
             </p>
@@ -859,15 +793,13 @@ function Calculadora() {
               </Button>
 
               <p className="text-xs text-muted-foreground">
-                As páginas dos PDFs e imagens são contadas automaticamente; cada arquivo já inclui 1
-                página e o excedente vira páginas adicionais. Arquivos Word (.doc/.docx) sempre
-                exigem que a quantidade de páginas seja informada manualmente.
+                As páginas dos PDFs e imagens são contadas automaticamente; cada arquivo já inclui 1 página e o
+                excedente vira páginas adicionais. Arquivos Word (.doc/.docx) sempre exigem que a quantidade de páginas
+                seja informada manualmente.
               </p>
 
               <div className="rounded-xl border border-border p-3">
-                <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">
-                  ARQUIVOS ANEXADOS
-                </p>
+                <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">ARQUIVOS ANEXADOS</p>
 
                 {arquivosPendentes.length > 0 && (
                   <div className="mb-2 rounded-lg border-2 border-destructive bg-destructive/10 p-2.5">
@@ -881,9 +813,7 @@ function Calculadora() {
                 )}
 
                 {estado.arquivosLista.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">
-                    Nenhum arquivo anexado.
-                  </p>
+                  <p className="py-6 text-center text-sm text-muted-foreground">Nenhum arquivo anexado.</p>
                 ) : (
                   <div className="max-h-[430px] space-y-2 overflow-y-auto pr-1">
                     {estado.arquivosLista.map((a, i) => {
@@ -893,9 +823,7 @@ function Calculadora() {
                         <div
                           key={`${a.nome}-${i}`}
                           className={`rounded-lg border p-2.5 ${
-                            pendente
-                              ? "border-2 border-destructive bg-destructive/5"
-                              : "border-border bg-accent/30"
+                            pendente ? "border-2 border-destructive bg-destructive/5" : "border-border bg-accent/30"
                           }`}
                         >
                           <p className="text-sm font-semibold break-all">{a.nome}</p>
@@ -915,9 +843,7 @@ function Calculadora() {
                                 min="1"
                                 inputMode="numeric"
                                 placeholder="0"
-                                className={`h-8 w-16 ${
-                                  pendente ? "border-2 border-destructive font-bold" : ""
-                                }`}
+                                className={`h-8 w-16 ${pendente ? "border-2 border-destructive font-bold" : ""}`}
                                 value={a.paginas || ""}
                                 onChange={(e) =>
                                   atualizarArquivo(i, {
@@ -936,9 +862,7 @@ function Calculadora() {
                                   type="button"
                                   variant="ghost"
                                   className="h-full rounded-none px-2"
-                                  onClick={() =>
-                                    atualizarArquivo(i, { copias: Math.max(1, copias - 1) })
-                                  }
+                                  onClick={() => atualizarArquivo(i, { copias: Math.max(1, copias - 1) })}
                                 >
                                   −
                                 </Button>
@@ -969,9 +893,7 @@ function Calculadora() {
                             <label className="flex items-center gap-2 text-xs font-medium">
                               <Checkbox
                                 checked={a.frenteVerso ?? false}
-                                onCheckedChange={(v) =>
-                                  atualizarArquivo(i, { frenteVerso: v === true })
-                                }
+                                onCheckedChange={(v) => atualizarArquivo(i, { frenteVerso: v === true })}
                               />
                               Frente e verso
                             </label>
@@ -982,11 +904,7 @@ function Calculadora() {
                               rotuloConfirmar="Remover"
                               onConfirmar={() => removerArquivo(i)}
                             >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="ml-auto text-destructive"
-                              >
+                              <Button variant="ghost" size="sm" className="ml-auto text-destructive">
                                 <Trash2 className="h-4 w-4" /> Remover
                               </Button>
                             </ConfirmarExclusao>
@@ -1007,15 +925,12 @@ function Calculadora() {
 
             {/* ---------- COLUNA DIREITA: CONFIGURAÇÃO ---------- */}
             <div className="space-y-4">
-              <Campo
-                icon={<Files className="h-4 w-4 text-cyan-ink" />}
-                label="Quantidade de arquivos"
-              >
+              <Campo icon={<Files className="h-4 w-4 text-cyan-ink" />} label="Quantidade de arquivos">
                 <div className="flex h-8 overflow-hidden rounded-md border border-border bg-background">
                   <Button
                     type="button"
                     variant="ghost"
-                    className="h-full w-9 shrink-0 rounded-none border-r text-base"
+                    className="h-full w-4 shrink-0 rounded-none border-r text-base"
                     onClick={() => set("arquivos", Math.max(0, estado.arquivos - 1))}
                   >
                     −
@@ -1047,9 +962,7 @@ function Calculadora() {
                     type="button"
                     variant="ghost"
                     className="h-full w-9 shrink-0 rounded-none border-r text-base"
-                    onClick={() =>
-                      set("paginasAdicionais", Math.max(0, estado.paginasAdicionais - 1))
-                    }
+                    onClick={() => set("paginasAdicionais", Math.max(0, estado.paginasAdicionais - 1))}
                   >
                     −
                   </Button>
@@ -1114,9 +1027,7 @@ function Calculadora() {
               </Campo>
 
               <div className="space-y-2 rounded-lg border border-border p-3">
-                <Label className="text-xs font-semibold text-muted-foreground">
-                  Tipo de impressão *
-                </Label>
+                <Label className="text-xs font-semibold text-muted-foreground">Tipo de impressão *</Label>
                 <RadioGroup
                   value={estado.tipoServico}
                   onValueChange={(v) => set("tipoServico", v as TipoServico)}
@@ -1160,12 +1071,10 @@ function Calculadora() {
                   Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Ativado, mostra em valores de impressão apenas os materiais da categoria
-                  &quot;Cópia&quot;. Desativado, mostra os materiais da categoria
-                  &quot;Impressão&quot;.
+                  Ativado, mostra em valores de impressão apenas os materiais da categoria &quot;Cópia&quot;.
+                  Desativado, mostra os materiais da categoria &quot;Impressão&quot;.
                 </p>
               </div>
-
 
               {precisaSelecionar && (
                 <p className="rounded-lg border border-border bg-accent/60 p-3 text-sm font-semibold text-primary">
@@ -1180,379 +1089,349 @@ function Calculadora() {
       {/* ==================== 3 COLUNAS ==================== */}
       {!precisaSelecionar && (
         <div className="mb-6 grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {/* ==================== COLUNA 1 — ACABAMENTO ==================== */}
+          <Card className="shadow-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
+                <span className="rounded-lg bg-accent p-2 text-primary">
+                  <Scissors className="h-4 w-4" />
+                </span>
+                ACABAMENTO
+              </CardTitle>
+            </CardHeader>
 
-        {/* ==================== COLUNA 1 — ACABAMENTO ==================== */}
-        <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
-              <span className="rounded-lg bg-accent p-2 text-primary">
-                <Scissors className="h-4 w-4" />
-              </span>
-              ACABAMENTO
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent className="space-y-3">
-            {/* Decisão obrigatória: usar acabamento? */}
-            <div className="rounded-lg border border-border bg-accent/30 px-2.5 py-2">
-              <p className="mb-2 text-sm font-semibold">Deseja acabamento?</p>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={estado.decisaoAcabamento === "sim" ? "default" : "outline"}
-                  onClick={() => set("decisaoAcabamento", "sim")}
-                >
-                  Sim
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={estado.decisaoAcabamento === "nao" ? "default" : "outline"}
-                  onClick={() =>
-                    setEstado((p) => ({ ...p, decisaoAcabamento: "nao", selecao: {} }))
-                  }
-                >
-                  Não
-                </Button>
-              </div>
-              {estado.decisaoAcabamento === "sim" && linhasAcabamento.length === 0 && (
-                <p className="mt-2 text-[11px] font-semibold text-destructive">
-                  Selecione ao menos uma opção de acabamento.
-                </p>
-              )}
-            </div>
-
-            {estado.decisaoAcabamento === "sim" &&
-              (acabamentosVisiveis.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nenhum acabamento disponível para o tipo de impressão selecionado.
-              </p>
-            ) : (
-              <div className="space-y-1.5">
-                {acabamentosVisiveis.map((a) => {
-                  const sel = estado.selecao[a.id] ?? {
-                    ativo: false,
-                    quantidade: 1,
-                  };
-
-                  const linha = linhasAcabamento.find((l) => l.acabamento.id === a.id);
-
-                  return (
-                    <div
-                      key={a.id}
-                      className={`rounded-lg border px-2.5 py-2 transition-colors ${
-                        sel.ativo ? "border-primary bg-accent/50" : "border-border bg-card"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
-                          <Checkbox
-                            checked={sel.ativo}
-                            onCheckedChange={(v) =>
-                              set("selecao", {
-                                ...estado.selecao,
-                                [a.id]: {
-                                  ...sel,
-                                  ativo: v === true,
-                                },
-                              })
-                            }
-                          />
-
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold">{a.nome}</p>
-
-                            <p className="truncate text-[11px] text-muted-foreground">
-                              {rotuloCobranca[a.cobranca]} · {brl(Number(a.valor) || 0)}
-                              {a.cobranca === "bloco" ? ` a cada ${a.paginas_bloco} páginas` : ""}
-                            </p>
-                          </div>
-                        </label>
-
-                        {sel.ativo && a.cobranca === "quantidade" && (
-                          <div className="flex shrink-0 items-center overflow-hidden rounded-md border border-border bg-background">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 rounded-none border-r"
-                              onClick={() =>
-                                set("selecao", {
-                                  ...estado.selecao,
-                                  [a.id]: {
-                                    ...sel,
-                                    quantidade: Math.max(0, sel.quantidade - 1),
-                                  },
-                                })
-                              }
-                            >
-                              −
-                            </Button>
-
-                            <div className="flex h-7 min-w-8 items-center justify-center px-1 text-sm font-bold">
-                              {sel.quantidade}
-                            </div>
-
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 rounded-none border-l"
-                              onClick={() =>
-                                set("selecao", {
-                                  ...estado.selecao,
-                                  [a.id]: {
-                                    ...sel,
-                                    quantidade: sel.quantidade + 1,
-                                  },
-                                })
-                              }
-                            >
-                              +
-                            </Button>
-                          </div>
-                        )}
-
-                        {sel.ativo && (
-                          <span className="shrink-0 text-sm font-bold text-success">
-                            {brl(linha?.total ?? 0)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-
-            {/* Frente e verso — decisão obrigatória */}
-            <div className="rounded-lg border border-border bg-accent/30 px-2.5 py-2">
-              <p className="mb-2 text-sm font-semibold">Frente e verso?</p>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={estado.decisaoFrenteVerso === "sim" ? "default" : "outline"}
-                  onClick={() =>
-                    setEstado((p) => ({ ...p, decisaoFrenteVerso: "sim", frenteVerso: true }))
-                  }
-                >
-                  Sim
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={estado.decisaoFrenteVerso === "nao" ? "default" : "outline"}
-                  onClick={() =>
-                    setEstado((p) => ({ ...p, decisaoFrenteVerso: "nao", frenteVerso: false }))
-                  }
-                >
-                  Não
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ==================== COLUNA 2 — VALORES DE IMPRESSÃO ==================== */}
-        <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
-              <span className="rounded-lg bg-accent p-2 text-primary">
-                <Printer className="h-4 w-4" />
-              </span>
-              VALORES DE IMPRESSÃO
-            </CardTitle>
-
-            <div className="flex flex-wrap gap-2 pt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  queryClient.invalidateQueries({
-                    queryKey: ["materiais"],
-                  });
-
-                  toast.success("Cálculo atualizado com sucesso.");
-                }}
-              >
-                <RefreshCw className="h-4 w-4" />
-                Atualizar
-              </Button>
-
-              <Button
-                size="sm"
-                disabled={!mostrarTabela || salvandoItem}
-                onClick={adicionarAoPedido}
-              >
-                <Plus className="h-4 w-4" />
-
-                {estado.editandoId ? "Salvar alterações" : "Adicionar ao Pedido"}
-              </Button>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-3">
-            {isLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Skeleton key={i} className="h-11 w-full" />
-                ))}
-              </div>
-            ) : !mostrarTabela ? (
-              <div className="flex flex-col items-center gap-2 py-12 text-center">
-                <Printer className="h-10 w-10 text-muted-foreground" />
-
-                <p className="font-semibold">Nenhum cálculo realizado ainda</p>
-
-                <p className="text-sm text-muted-foreground">
-                  {precisaSelecionar
-                    ? "Selecione o tipo de impressão para ver os valores."
-                    : arquivosPendentes.length > 0
-                      ? `Informe a quantidade de páginas de: ${arquivosPendentes.map((a) => a.nome).join(", ")}.`
-                      : semQuantidade
-                        ? "Informe arquivos, páginas adicionais ou cópias adicionais para ver os valores."
-                        : !frenteVersoOk
-                          ? "Informe se o trabalho é frente e verso para ver os valores."
-                          : "Escolha se haverá acabamento (e selecione ao menos uma opção) para ver os valores."}
-                </p>
-              </div>
-            ) : (
-              <div className="max-h-[430px] space-y-1.5 overflow-y-auto pr-1">
-                {linhasFinais.map((l) => {
-                  const ativa = materialSelecionado?.material.id === l.material.id;
-
-                  return (
-                    <button
-                      type="button"
-                      key={l.material.id}
-                      onClick={() => set("materialId", l.material.id)}
-                      className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${
-                        ativa
-                          ? "border-primary bg-accent/50"
-                          : "border-border bg-card hover:bg-accent/30"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        className="h-4 w-4 shrink-0 accent-[var(--color-primary)]"
-                        checked={ativa}
-                        onChange={() => set("materialId", l.material.id)}
-                        aria-label={`Selecionar ${l.material.nome}`}
-                      />
-
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{l.material.nome}</p>
-                        <p className="truncate text-[11px] text-muted-foreground">
-                          {l.material.descricao} · Preço uni. {brl(l.valorUnitario)}
-                        </p>
-                      </div>
-
-                      <span className="shrink-0 text-sm font-extrabold text-success">
-                        {brl(l.total)}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            <p className="flex items-start gap-2 text-[11px] text-muted-foreground">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-              Valores baseados na configuração de preços.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* ==================== COLUNA 3 — RESUMO DO CÁLCULO ==================== */}
-        <Card className="shadow-card md:col-span-2 xl:col-span-1">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
-              <span className="rounded-lg bg-accent p-2 text-primary">
-                <Calculator className="h-4 w-4" />
-              </span>
-              RESUMO DO CÁLCULO
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            {!materialSelecionado ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                Informe os dados do trabalho para ver o resumo.
-              </p>
-            ) : (
-              <dl className="space-y-1.5 text-sm">
-                <div className="flex justify-between gap-2">
-                  <dt className="truncate text-muted-foreground">Material</dt>
-                  <dd className="truncate font-semibold">{materialSelecionado.material.nome}</dd>
+            <CardContent className="space-y-3">
+              {/* Decisão obrigatória: usar acabamento? */}
+              <div className="rounded-lg border border-border bg-accent/30 px-2.5 py-2">
+                <p className="mb-2 text-sm font-semibold">Deseja acabamento?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={estado.decisaoAcabamento === "sim" ? "default" : "outline"}
+                    onClick={() => set("decisaoAcabamento", "sim")}
+                  >
+                    Sim
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={estado.decisaoAcabamento === "nao" ? "default" : "outline"}
+                    onClick={() => setEstado((p) => ({ ...p, decisaoAcabamento: "nao", selecao: {} }))}
+                  >
+                    Não
+                  </Button>
                 </div>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-muted-foreground">Arquivos ({numeroBR(estado.arquivos)})</dt>
-                  <dd className="font-semibold">{brl(materialSelecionado.totalArquivos)}</dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-muted-foreground">
-                    Páginas adicionais ({numeroBR(paginasAdicionais)})
-                  </dt>
-                  <dd className="font-semibold">
-                    {brl(materialSelecionado.totalPaginasAdicionais)}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-muted-foreground">
-                    Cópias adicionais ({numeroBR(estado.copiasAdicionais)})
-                  </dt>
-                  <dd className="font-semibold">
-                    {brl(materialSelecionado.totalCopiasAdicionais)}
-                  </dd>
-                </div>
-
-                <div className="flex justify-between gap-2 border-t border-border pt-2">
-                  <dt className="font-semibold">Subtotal impressão</dt>
-                  <dd className="font-bold">
-                    {brl(
-                      materialSelecionado.totalArquivos +
-                        materialSelecionado.totalPaginasAdicionais +
-                        materialSelecionado.totalCopiasAdicionais,
-                    )}
-                  </dd>
-                </div>
-
-                {linhasAcabamento.length > 0 && (
-                  <div className="space-y-1 border-t border-border pt-2">
-                    <p className="text-[11px] font-bold tracking-wider text-muted-foreground">
-                      ACABAMENTOS
-                    </p>
-                    {linhasAcabamento.map((l) => (
-                      <div key={l.acabamento.id} className="flex justify-between gap-2">
-                        <dt className="truncate text-muted-foreground">
-                          {l.acabamento.nome} ({numeroBR(l.quantidade)})
-                        </dt>
-                        <dd className="font-semibold">{brl(l.total)}</dd>
-                      </div>
-                    ))}
-                  </div>
+                {estado.decisaoAcabamento === "sim" && linhasAcabamento.length === 0 && (
+                  <p className="mt-2 text-[11px] font-semibold text-destructive">
+                    Selecione ao menos uma opção de acabamento.
+                  </p>
                 )}
+              </div>
 
-                <div className="flex justify-between gap-2 border-t border-border pt-2">
-                  <dt className="font-semibold">Subtotal acabamentos</dt>
-                  <dd className="font-bold">{brl(valorAcabamento)}</dd>
-                </div>
+              {estado.decisaoAcabamento === "sim" &&
+                (acabamentosVisiveis.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum acabamento disponível para o tipo de impressão selecionado.
+                  </p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {acabamentosVisiveis.map((a) => {
+                      const sel = estado.selecao[a.id] ?? {
+                        ativo: false,
+                        quantidade: 1,
+                      };
 
-                <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-success/40 bg-success/10 px-3 py-3">
-                  <dt className="text-sm font-bold">TOTAL</dt>
-                  <dd className="text-2xl font-extrabold text-success">
-                    {brl(materialSelecionado.total)}
-                  </dd>
+                      const linha = linhasAcabamento.find((l) => l.acabamento.id === a.id);
+
+                      return (
+                        <div
+                          key={a.id}
+                          className={`rounded-lg border px-2.5 py-2 transition-colors ${
+                            sel.ativo ? "border-primary bg-accent/50" : "border-border bg-card"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
+                              <Checkbox
+                                checked={sel.ativo}
+                                onCheckedChange={(v) =>
+                                  set("selecao", {
+                                    ...estado.selecao,
+                                    [a.id]: {
+                                      ...sel,
+                                      ativo: v === true,
+                                    },
+                                  })
+                                }
+                              />
+
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold">{a.nome}</p>
+
+                                <p className="truncate text-[11px] text-muted-foreground">
+                                  {rotuloCobranca[a.cobranca]} · {brl(Number(a.valor) || 0)}
+                                  {a.cobranca === "bloco" ? ` a cada ${a.paginas_bloco} páginas` : ""}
+                                </p>
+                              </div>
+                            </label>
+
+                            {sel.ativo && a.cobranca === "quantidade" && (
+                              <div className="flex shrink-0 items-center overflow-hidden rounded-md border border-border bg-background">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 rounded-none border-r"
+                                  onClick={() =>
+                                    set("selecao", {
+                                      ...estado.selecao,
+                                      [a.id]: {
+                                        ...sel,
+                                        quantidade: Math.max(0, sel.quantidade - 1),
+                                      },
+                                    })
+                                  }
+                                >
+                                  −
+                                </Button>
+
+                                <div className="flex h-7 min-w-8 items-center justify-center px-1 text-sm font-bold">
+                                  {sel.quantidade}
+                                </div>
+
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 rounded-none border-l"
+                                  onClick={() =>
+                                    set("selecao", {
+                                      ...estado.selecao,
+                                      [a.id]: {
+                                        ...sel,
+                                        quantidade: sel.quantidade + 1,
+                                      },
+                                    })
+                                  }
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            )}
+
+                            {sel.ativo && (
+                              <span className="shrink-0 text-sm font-bold text-success">{brl(linha?.total ?? 0)}</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+
+              {/* Frente e verso — decisão obrigatória */}
+              <div className="rounded-lg border border-border bg-accent/30 px-2.5 py-2">
+                <p className="mb-2 text-sm font-semibold">Frente e verso?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={estado.decisaoFrenteVerso === "sim" ? "default" : "outline"}
+                    onClick={() => setEstado((p) => ({ ...p, decisaoFrenteVerso: "sim", frenteVerso: true }))}
+                  >
+                    Sim
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={estado.decisaoFrenteVerso === "nao" ? "default" : "outline"}
+                    onClick={() => setEstado((p) => ({ ...p, decisaoFrenteVerso: "nao", frenteVerso: false }))}
+                  >
+                    Não
+                  </Button>
                 </div>
-              </dl>
-            )}
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ==================== COLUNA 2 — VALORES DE IMPRESSÃO ==================== */}
+          <Card className="shadow-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
+                <span className="rounded-lg bg-accent p-2 text-primary">
+                  <Printer className="h-4 w-4" />
+                </span>
+                VALORES DE IMPRESSÃO
+              </CardTitle>
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    queryClient.invalidateQueries({
+                      queryKey: ["materiais"],
+                    });
+
+                    toast.success("Cálculo atualizado com sucesso.");
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Atualizar
+                </Button>
+
+                <Button size="sm" disabled={!mostrarTabela || salvandoItem} onClick={adicionarAoPedido}>
+                  <Plus className="h-4 w-4" />
+
+                  {estado.editandoId ? "Salvar alterações" : "Adicionar ao Pedido"}
+                </Button>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              {isLoading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-11 w-full" />
+                  ))}
+                </div>
+              ) : !mostrarTabela ? (
+                <div className="flex flex-col items-center gap-2 py-12 text-center">
+                  <Printer className="h-10 w-10 text-muted-foreground" />
+
+                  <p className="font-semibold">Nenhum cálculo realizado ainda</p>
+
+                  <p className="text-sm text-muted-foreground">
+                    {precisaSelecionar
+                      ? "Selecione o tipo de impressão para ver os valores."
+                      : arquivosPendentes.length > 0
+                        ? `Informe a quantidade de páginas de: ${arquivosPendentes.map((a) => a.nome).join(", ")}.`
+                        : semQuantidade
+                          ? "Informe arquivos, páginas adicionais ou cópias adicionais para ver os valores."
+                          : !frenteVersoOk
+                            ? "Informe se o trabalho é frente e verso para ver os valores."
+                            : "Escolha se haverá acabamento (e selecione ao menos uma opção) para ver os valores."}
+                  </p>
+                </div>
+              ) : (
+                <div className="max-h-[430px] space-y-1.5 overflow-y-auto pr-1">
+                  {linhasFinais.map((l) => {
+                    const ativa = materialSelecionado?.material.id === l.material.id;
+
+                    return (
+                      <button
+                        type="button"
+                        key={l.material.id}
+                        onClick={() => set("materialId", l.material.id)}
+                        className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${
+                          ativa ? "border-primary bg-accent/50" : "border-border bg-card hover:bg-accent/30"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          className="h-4 w-4 shrink-0 accent-[var(--color-primary)]"
+                          checked={ativa}
+                          onChange={() => set("materialId", l.material.id)}
+                          aria-label={`Selecionar ${l.material.nome}`}
+                        />
+
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">{l.material.nome}</p>
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            {l.material.descricao} · Preço uni. {brl(l.valorUnitario)}
+                          </p>
+                        </div>
+
+                        <span className="shrink-0 text-sm font-extrabold text-success">{brl(l.total)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <p className="flex items-start gap-2 text-[11px] text-muted-foreground">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                Valores baseados na configuração de preços.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* ==================== COLUNA 3 — RESUMO DO CÁLCULO ==================== */}
+          <Card className="shadow-card md:col-span-2 xl:col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base font-bold tracking-wide">
+                <span className="rounded-lg bg-accent p-2 text-primary">
+                  <Calculator className="h-4 w-4" />
+                </span>
+                RESUMO DO CÁLCULO
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              {!materialSelecionado ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  Informe os dados do trabalho para ver o resumo.
+                </p>
+              ) : (
+                <dl className="space-y-1.5 text-sm">
+                  <div className="flex justify-between gap-2">
+                    <dt className="truncate text-muted-foreground">Material</dt>
+                    <dd className="truncate font-semibold">{materialSelecionado.material.nome}</dd>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-muted-foreground">Arquivos ({numeroBR(estado.arquivos)})</dt>
+                    <dd className="font-semibold">{brl(materialSelecionado.totalArquivos)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-muted-foreground">Páginas adicionais ({numeroBR(paginasAdicionais)})</dt>
+                    <dd className="font-semibold">{brl(materialSelecionado.totalPaginasAdicionais)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <dt className="text-muted-foreground">Cópias adicionais ({numeroBR(estado.copiasAdicionais)})</dt>
+                    <dd className="font-semibold">{brl(materialSelecionado.totalCopiasAdicionais)}</dd>
+                  </div>
+
+                  <div className="flex justify-between gap-2 border-t border-border pt-2">
+                    <dt className="font-semibold">Subtotal impressão</dt>
+                    <dd className="font-bold">
+                      {brl(
+                        materialSelecionado.totalArquivos +
+                          materialSelecionado.totalPaginasAdicionais +
+                          materialSelecionado.totalCopiasAdicionais,
+                      )}
+                    </dd>
+                  </div>
+
+                  {linhasAcabamento.length > 0 && (
+                    <div className="space-y-1 border-t border-border pt-2">
+                      <p className="text-[11px] font-bold tracking-wider text-muted-foreground">ACABAMENTOS</p>
+                      {linhasAcabamento.map((l) => (
+                        <div key={l.acabamento.id} className="flex justify-between gap-2">
+                          <dt className="truncate text-muted-foreground">
+                            {l.acabamento.nome} ({numeroBR(l.quantidade)})
+                          </dt>
+                          <dd className="font-semibold">{brl(l.total)}</dd>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex justify-between gap-2 border-t border-border pt-2">
+                    <dt className="font-semibold">Subtotal acabamentos</dt>
+                    <dd className="font-bold">{brl(valorAcabamento)}</dd>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-success/40 bg-success/10 px-3 py-3">
+                    <dt className="text-sm font-bold">TOTAL</dt>
+                    <dd className="text-2xl font-extrabold text-success">{brl(materialSelecionado.total)}</dd>
+                  </div>
+                </dl>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
-
 
       {(itensPedido ?? []).length > 0 && (
         <Card className="mb-6 shadow-card">
@@ -1587,12 +1466,8 @@ function Calculadora() {
                     <td className="px-3 py-3">{o.material_nome}</td>
                     <td className="px-3 py-3 capitalize">{o.tipo_impressao}</td>
                     <td className="px-3 py-3">{o.tamanho}</td>
-                    <td className="px-3 py-3 text-right">
-                      {numeroBR(Number(o.paginas_adicionais ?? 0))}
-                    </td>
-                    <td className="px-3 py-3 text-right font-bold text-success">
-                      {brl(Number(o.valor_total))}
-                    </td>
+                    <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_adicionais ?? 0))}</td>
+                    <td className="px-3 py-3 text-right font-bold text-success">{brl(Number(o.valor_total))}</td>
                     <td className="px-3 py-3 text-right">
                       <Button
                         variant="ghost"
@@ -1615,9 +1490,7 @@ function Calculadora() {
                   <td colSpan={5} className="px-3 py-3 text-right font-bold">
                     TOTAL DO PEDIDO
                   </td>
-                  <td className="px-3 py-3 text-right text-lg font-extrabold text-success">
-                    {brl(totalPedido)}
-                  </td>
+                  <td className="px-3 py-3 text-right text-lg font-extrabold text-success">{brl(totalPedido)}</td>
                   <td />
                 </tr>
               </tfoot>
@@ -1664,9 +1537,7 @@ function Calculadora() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Gerar orçamento</DialogTitle>
-            <DialogDescription>
-              Informe os dados do cliente para gerar o documento do pedido.
-            </DialogDescription>
+            <DialogDescription>Informe os dados do cliente para gerar o documento do pedido.</DialogDescription>
           </DialogHeader>
 
           {leituraAutomaticaPedido && (
@@ -1694,12 +1565,7 @@ function Calculadora() {
                 <Button
                   type="button"
                   variant={estado.clienteNome === "CLIENTE PADRÃO" ? "default" : "outline"}
-                  onClick={() =>
-                    set(
-                      "clienteNome",
-                      estado.clienteNome === "CLIENTE PADRÃO" ? "" : "CLIENTE PADRÃO",
-                    )
-                  }
+                  onClick={() => set("clienteNome", estado.clienteNome === "CLIENTE PADRÃO" ? "" : "CLIENTE PADRÃO")}
                 >
                   Cliente Padrão
                 </Button>
@@ -1707,26 +1573,15 @@ function Calculadora() {
             </div>
             <div className="space-y-2">
               <Label>Telefone</Label>
-              <Input
-                value={estado.clienteTelefone}
-                onChange={(e) => set("clienteTelefone", e.target.value)}
-              />
+              <Input value={estado.clienteTelefone} onChange={(e) => set("clienteTelefone", e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Validade</Label>
-              <Input
-                type="date"
-                value={estado.validade}
-                onChange={(e) => set("validade", e.target.value)}
-              />
+              <Input type="date" value={estado.validade} onChange={(e) => set("validade", e.target.value)} />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label>Observação</Label>
-              <Textarea
-                rows={2}
-                value={estado.observacao}
-                onChange={(e) => set("observacao", e.target.value)}
-              />
+              <Textarea rows={2} value={estado.observacao} onChange={(e) => set("observacao", e.target.value)} />
             </div>
             <div className="rounded-xl border border-border p-3 sm:col-span-2">
               <div className="flex items-center justify-between gap-3">
@@ -1768,9 +1623,7 @@ function Calculadora() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold">Incluir pagamento via PIX? *</p>
-                    <p className="text-xs text-muted-foreground">
-                      Adiciona os dados do PIX no documento do orçamento.
-                    </p>
+                    <p className="text-xs text-muted-foreground">Adiciona os dados do PIX no documento do orçamento.</p>
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -1792,9 +1645,7 @@ function Calculadora() {
                   </div>
                 </div>
                 {estado.incluirPix && textoPix && (
-                  <pre className="mt-2 rounded-md bg-muted p-2 text-xs whitespace-pre-wrap">
-                    {textoPix}
-                  </pre>
+                  <pre className="mt-2 rounded-md bg-muted p-2 text-xs whitespace-pre-wrap">{textoPix}</pre>
                 )}
               </div>
             )}
@@ -1803,44 +1654,39 @@ function Calculadora() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold">Informar prazo de entrega? *</p>
-                  <p className="text-xs text-muted-foreground">
-                    Escolha entre horas ou dias e a quantidade.
-                  </p>
+                  <p className="text-xs text-muted-foreground">Escolha entre horas ou dias e a quantidade.</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={estado.decisaoPrazo === "sim" ? "default" : "outline"}
-                      onClick={() => setEstado((p) => ({ ...p, decisaoPrazo: "sim", precisaPrazo: true }))}
-                    >
-                      Sim
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={estado.decisaoPrazo === "nao" ? "default" : "outline"}
-                      onClick={() =>
-                        setEstado((p) => ({
-                          ...p,
-                          decisaoPrazo: "nao",
-                          precisaPrazo: false,
-                          prazoTipo: "",
-                          prazoQuantidade: 0,
-                        }))
-                      }
-                    >
-                      Não
-                    </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={estado.decisaoPrazo === "sim" ? "default" : "outline"}
+                    onClick={() => setEstado((p) => ({ ...p, decisaoPrazo: "sim", precisaPrazo: true }))}
+                  >
+                    Sim
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={estado.decisaoPrazo === "nao" ? "default" : "outline"}
+                    onClick={() =>
+                      setEstado((p) => ({
+                        ...p,
+                        decisaoPrazo: "nao",
+                        precisaPrazo: false,
+                        prazoTipo: "",
+                        prazoQuantidade: 0,
+                      }))
+                    }
+                  >
+                    Não
+                  </Button>
                 </div>
               </div>
 
               {estado.precisaPrazo && (
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  <Select
-                    value={estado.prazoTipo}
-                    onValueChange={(v) => set("prazoTipo", v as PrazoTipo)}
-                  >
+                  <Select value={estado.prazoTipo} onValueChange={(v) => set("prazoTipo", v as PrazoTipo)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Horas ou dias" />
                     </SelectTrigger>
@@ -1855,9 +1701,7 @@ function Calculadora() {
                     value={estado.prazoQuantidade ? String(estado.prazoQuantidade) : ""}
                     onChange={(e) => set("prazoQuantidade", num(e.target.value))}
                   />
-                  {textoPrazo && (
-                    <p className="text-xs text-muted-foreground sm:col-span-2">{textoPrazo}</p>
-                  )}
+                  {textoPrazo && <p className="text-xs text-muted-foreground sm:col-span-2">{textoPrazo}</p>}
                 </div>
               )}
             </div>
@@ -2011,9 +1855,7 @@ function ResumoItem({
 }) {
   return (
     <div className="min-w-0 rounded-lg border border-sidebar-border bg-sidebar-accent/60 px-3 py-2">
-      <p className="truncate text-[10px] font-bold tracking-wider text-sidebar-foreground/60">
-        {rotulo.toUpperCase()}
-      </p>
+      <p className="truncate text-[10px] font-bold tracking-wider text-sidebar-foreground/60">{rotulo.toUpperCase()}</p>
       <p
         className={`truncate font-extrabold ${pequeno ? "text-sm" : "text-lg"} ${
           destaque ? "text-success" : "text-sidebar-foreground"
