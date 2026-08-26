@@ -360,6 +360,7 @@ function DetalheCurriculo() {
           catalogoHabilidades={data.catalogo}
           objetivosSugeridos={data.objetivos}
           modo="admin"
+          avisoImportacao={avisoImportacao}
           salvar={salvarEtapa}
           criarHabilidade={async (descricao) => {
             const { data: existente } = await supabase
