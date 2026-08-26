@@ -19,8 +19,7 @@ export class ErroImportacao extends Error {}
 
 async function textoDePdf(file: File): Promise<string> {
   const pdfjs = await import("pdfjs-dist");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const worker = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+  const worker = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default as string;
   pdfjs.GlobalWorkerOptions.workerSrc = worker;
 
   const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
