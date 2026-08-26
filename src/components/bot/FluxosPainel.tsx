@@ -310,25 +310,6 @@ export function FluxosPainel() {
                   <Button size="sm" onClick={() => setConfigurando(f.id)}>
                     <Settings2 className="h-4 w-4" /> CONFIGURAR
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setEditando(f);
-                      setForm({
-                        nome: f.nome,
-                        descricao: f.descricao,
-                        icone: f.icone,
-                        mensagem_inicial: f.mensagem_inicial,
-                        mensagem_retorno_dia: f.mensagem_retorno_dia ?? "",
-                        ativo: f.ativo,
-                        mensagem_unica: f.mensagem_unica !== false,
-
-                      });
-                    }}
-                  >
-                    <Pencil className="h-4 w-4" /> EDITAR
-                  </Button>
                   <Button size="sm" variant="outline" onClick={() => void duplicar(f)}>
                     <Copy className="h-4 w-4" /> DUPLICAR
                   </Button>
