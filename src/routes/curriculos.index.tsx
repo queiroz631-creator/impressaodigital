@@ -34,6 +34,7 @@ import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import { dataBR, dataHoraBR } from "@/lib/format";
 import { gerarLinkNovoCurriculo } from "@/lib/curriculo.functions";
 import { urlPublica } from "@/lib/link-publico";
+import { ImportarCurriculo } from "@/components/curriculo/ImportarCurriculo";
 
 export const Route = createFileRoute("/curriculos/")({
   head: () => ({
