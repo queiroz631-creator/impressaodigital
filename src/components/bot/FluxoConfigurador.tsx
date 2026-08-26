@@ -612,7 +612,9 @@ function EditorEtapa({
                 const j = i + d;
                 if (j < 0 || j >= form.opcoes.length) return;
                 const lista = [...form.opcoes];
-                [lista[i], lista[j]] = [lista[j], lista[i]];
+                const atual = lista[i]!;
+                lista[i] = lista[j]!;
+                lista[j] = atual;
                 setForm({ ...form, opcoes: lista });
                 setOpcaoAberta(opcaoAberta === i ? j : opcaoAberta === j ? i : opcaoAberta);
               };
