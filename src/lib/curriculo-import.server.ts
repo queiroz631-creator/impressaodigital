@@ -12,6 +12,7 @@ import {
 } from "@/lib/curriculo";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import { gravarEtapa } from "@/lib/curriculo.server";
+import type { PayloadEtapa } from "@/lib/curriculo";
 import type { CurriculoImportado } from "@/lib/curriculo-import-tipos";
 
 const MODELO = "google/gemini-2.5-flash";
