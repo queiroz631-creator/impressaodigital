@@ -69,6 +69,7 @@ export function FormularioCurriculo({
   salvar,
   criarHabilidade,
   onFinalizado,
+  avisoImportacao,
 }: PropsFormularioCurriculo) {
   const c = dados.curriculo;
   const totalEtapas = 8;
