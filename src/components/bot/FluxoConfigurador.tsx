@@ -410,6 +410,7 @@ function EditorEtapa({
 }) {
   const arquivoRef = useRef<HTMLInputElement>(null);
   const [enviando, setEnviando] = useState(false);
+  const [opcaoAberta, setOpcaoAberta] = useState<number | null>(null);
   const tipo = TIPOS_MENSAGEM.find((t) => t.valor === form.tipo_mensagem);
 
   async function subirArquivo(arquivo: File) {
