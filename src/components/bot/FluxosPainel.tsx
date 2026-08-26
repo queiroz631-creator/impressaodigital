@@ -360,25 +360,11 @@ export function FluxosPainel() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-1">
-                <Label>Mensagem inicial</Label>
-                <Textarea
-                  rows={3}
-                  value={form.mensagem_inicial}
-                  onChange={(e) => setForm({ ...form, mensagem_inicial: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">Use {"{nome}"}, {"{telefone}"} e {"{saudacao}"}.</p>
-              </div>
-              <div className="grid gap-1">
-                <Label>Mensagem 2 — demais conversas do mesmo dia</Label>
-                <Textarea
-                  rows={3}
-                  value={form.mensagem_retorno_dia}
-                  onChange={(e) => setForm({ ...form, mensagem_retorno_dia: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">Se ficar em branco, o bot usa a mensagem inicial.</p>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                Os textos das mensagens são configurados nas etapas, em CONFIGURAR.
+              </p>
               <div className="grid gap-1 rounded-lg border p-3">
+
 
                 <label className="flex items-center justify-between gap-4 text-sm">
                   <strong>Enviar tudo em uma única mensagem</strong>
