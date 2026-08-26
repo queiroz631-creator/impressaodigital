@@ -718,7 +718,12 @@ async function entregarFluxo(
   let atual = inicial;
 
   for (let volta = 0; volta < 6; volta += 1) {
-    for (const m of atual.mensagens) await responder(conversa, m.texto, m.botoes);
+    for (const m of atual.mensagens) {
+      await responder(conversa, m.texto, m.botoes, m.midia);
+      // Espera configurada na etapa antes de seguir automaticamente (teto de 60s).
+      const espera = Math.min(60, Math.max(0, m.espera ?? 0));
+      if (espera > 0) await new Promise((r) => setTimeout(r, espera * 1000));
+    }
 
     if (atual.finalizar) {
       const cfg = await carregarDadosBot();
