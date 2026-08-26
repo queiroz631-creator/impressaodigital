@@ -68,6 +68,12 @@ Banco (`bot_fluxo_etapas`), colunas novas com padrão compatível:
 - `midia_url text`, `midia_nome text`
 - `modo_avanco text not null default 'resposta'` (automatico | resposta | opcao)
 - `espera_segundos integer not null default 0`
+- `mensagem_retorno_dia text not null default ''` (a "mensagem 2" da etapa)
+
+Migração de dados: para cada fluxo, o conteúdo atual de `bot_fluxos.mensagem_inicial` e
+`mensagem_retorno_dia` é copiado para a 1ª etapa quando o texto dela estiver vazio; quando
+a etapa já tiver texto, os dois são unidos. Depois disso o motor deixa de usar os campos
+do fluxo (mantidos no banco por segurança, sem uso na tela).
 
 Storage: bucket público `bot-midia` para os anexos das etapas, com política de upload
 para usuários autenticados e leitura pública (a Z-API precisa baixar o arquivo por URL).
