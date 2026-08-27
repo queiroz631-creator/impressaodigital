@@ -943,7 +943,12 @@ function Calculadora() {
                     onChange={(e) => setTagQuantidade(e.target.value)}
                   />
                 </div>
-                <Button size="sm" className="h-8" onClick={adicionarTagArquivo}>
+                <Button
+                  size="sm"
+                  className="h-8"
+                  disabled={!tagQuantidade || Number(tagQuantidade) <= 0}
+                  onClick={adicionarTagArquivo}
+                >
                   <Paperclip className="h-4 w-4" /> Adicionar arquivo
                 </Button>
                 <Button
