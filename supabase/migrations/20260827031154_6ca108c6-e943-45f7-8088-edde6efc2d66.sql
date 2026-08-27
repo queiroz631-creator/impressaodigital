@@ -1,0 +1,1 @@
+ALTER TABLE public.configuracoes ADD COLUMN IF NOT EXISTS areas_impressao jsonb NOT NULL DEFAULT '{"A3":{"largura":285,"altura":420},"A4":{"largura":204,"altura":292},"A5":{"largura":138,"altura":200}}'::jsonb;

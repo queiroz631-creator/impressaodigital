@@ -641,6 +641,7 @@ export type Database = {
       }
       configuracoes: {
         Row: {
+          areas_impressao: Json
           email: string | null
           empresa_nome: string
           endereco: string | null
@@ -664,6 +665,7 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          areas_impressao?: Json
           email?: string | null
           empresa_nome?: string
           endereco?: string | null
@@ -687,6 +689,7 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          areas_impressao?: Json
           email?: string | null
           empresa_nome?: string
           endereco?: string | null
