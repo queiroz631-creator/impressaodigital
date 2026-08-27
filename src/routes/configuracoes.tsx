@@ -377,7 +377,7 @@ function Configuracoes() {
 
         </TabsContent>
 
-        <TabsContent value="impressao">
+        <TabsContent value="impressao" className="grid gap-4">
         <Card className="max-w-3xl shadow-card">
         <CardHeader>
           <CardTitle className="text-base">Impressão</CardTitle>
