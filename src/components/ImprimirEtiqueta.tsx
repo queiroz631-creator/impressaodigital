@@ -329,9 +329,16 @@ export function ImprimirEtiqueta({
                 </Select>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Nenhuma impressora configurada. Será usada a impressora escolhida na janela do navegador.
+                  Nenhuma impressora configurada. Será usada a impressora escolhida na janela do
+                  navegador.
                 </p>
               )}
+
+              <p className="text-xs text-muted-foreground">
+                {qzAtivo
+                  ? "Impressão direta ativa (QZ Tray): a etiqueta sai direto na impressora."
+                  : "Impressão pela janela do navegador (QZ Tray não detectado)."}
+              </p>
             </div>
           </div>
 
