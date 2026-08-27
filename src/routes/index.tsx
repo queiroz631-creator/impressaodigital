@@ -414,6 +414,27 @@ function Calculadora() {
     [tagLargura, tagComprimento, areaFormato],
   );
 
+  /** Total de TAGs resultante do que foi informado (quantidade ou folhas). */
+  const tagTotal = useMemo(() => {
+    const qtd = Math.max(0, Number(tagQuantidade) || 0);
+    if (qtd <= 0) return 0;
+    return tagModo === "folhas" ? qtd * tagPorFolha : qtd;
+  }, [tagQuantidade, tagModo, tagPorFolha]);
+
+  /** Converte milímetros em centímetros no padrão brasileiro (ex.: 45 -> "4,5"). */
+  function mmParaCm(mm: number) {
+    return (mm / 10).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+  }
+
+  /** Zera os campos da funcionalidade TAG. */
+  function limparTag() {
+    setTagAtivo(false);
+    setTagLargura("");
+    setTagComprimento("");
+    setTagModo("tags");
+    setTagQuantidade("");
+  }
+
   function adicionarTagArquivo() {
     const largura = Number(tagLargura) || 0;
     const comprimento = Number(tagComprimento) || 0;
@@ -429,7 +450,7 @@ function Calculadora() {
     const folhas = tagModo === "folhas" ? qtd : Math.ceil(qtd / tagPorFolha);
     const qtdTags = tagModo === "folhas" ? folhas * tagPorFolha : qtd;
     const numero = estado.arquivosLista.filter((a) => a.origemTag).length + 1;
-    const nome = `TAG${numero} - TAMANHO: ${largura}x${comprimento} MM - QTD: ${qtdTags}`;
+    const nome = `TAG${numero} - TAMANHO: ${mmParaCm(largura)}x${mmParaCm(comprimento)} CM - QTD: ${qtdTags}`;
     aplicarArquivos([
       ...estado.arquivosLista,
       { nome, tipo: "TAG", paginas: 1, copias: folhas, frenteVerso: false, origemTag: true },
@@ -618,6 +639,7 @@ function Calculadora() {
         }
       : { ...ESTADO_INICIAL };
     setEstado(novo);
+    limparTag();
     if (!manterPedido) {
       // Descarta a lista de orçamentos que estava vinculada ao pedido anterior.
       setIncluirTotal(true);
@@ -882,6 +904,12 @@ function Calculadora() {
                   </p>
                 </div>
                 <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Total de TAGs</Label>
+                  <p className="flex h-8 items-center rounded-md border border-border bg-background px-3 text-sm font-bold">
+                    {tagTotal}
+                  </p>
+                </div>
+                <div className="space-y-1">
                   <Label className="text-xs font-semibold">Informar</Label>
                   <div className="flex h-8 overflow-hidden rounded-md border border-border">
                     <Button
@@ -922,12 +950,7 @@ function Calculadora() {
                   variant="ghost"
                   size="sm"
                   className="h-8"
-                  onClick={() => {
-                    setTagAtivo(false);
-                    setTagLargura("");
-                    setTagComprimento("");
-                    setTagQuantidade("");
-                  }}
+                  onClick={limparTag}
                 >
                   Cancelar
                 </Button>
