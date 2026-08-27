@@ -17,6 +17,23 @@ E, ao contrário do PrintBridge, o PrintNode cobre tudo que o sistema já usa ho
 | Funciona sem configurar o PC | não | parcial | sim |
 | Imprime de qualquer lugar (celular, outro PC) | não | não | sim |
 
+## E o JSPrintManager?
+
+O JSPrintManager (Neodynamic) é um concorrente direto do QZ Tray e, em recursos, dá para fazer tudo que o sistema precisa: comandos raw ESC/POS, impressão de PDF, duplex, bandeja (tray), cor, papel, listar impressoras — e ainda scan de documentos, que não usamos.
+
+| Ponto | QZ Tray | JSPrintManager |
+| --- | --- | --- |
+| Arquitetura | agente local + WebSocket `ws://localhost:8181` | agente local + WebSocket `ws://localhost:23443` |
+| O problema atual de conexão | ocorre aqui | **pode ocorrer igual** — mesmo modelo navegador→localhost |
+| Etiqueta térmica ESC/POS | sim | sim |
+| PDF com bandeja, duplex, cor, cópias, papel | sim | sim |
+| Custo | gratuito (assinatura opcional) | **licença paga** por site + por servidor (tem trial de avaliação) |
+| Licença no cliente | não precisa | não precisa (cliente é livre), mas a licença é por domínio do site |
+
+Conclusão: trocar QZ por JSPrintManager é trocar seis por meia dúzia **na arquitetura** — ambos dependem de WebSocket do navegador para o agente na máquina, que é exatamente o ponto que vem falhando. O que muda: JSPM é pago (licença por domínio/servidor) e tem suporte comercial; QZ é gratuito e open source. Não resolve a dor atual e ainda adiciona custo de licença.
+
+Por isso a recomendação continua sendo o **PrintNode**, cuja arquitetura (agente → nuvem → API HTTPS) elimina a classe inteira de problema que está acontecendo com o QZ Tray.
+
 Pontos de atenção honestos:
 - É **serviço pago** por assinatura (o primeiro mês é gratuito e ilimitado para testar). O QZ é gratuito.
 - Depende de internet. Sem internet, nem o sistema nem a impressão funcionam — na prática o sistema já é online, então não muda muito.
