@@ -190,6 +190,13 @@ function Calculadora() {
   const [tipoGeracao, setTipoGeracao] = useState<"pdf" | "imagem" | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
 
+  // ----- TAG -----
+  const [tagAtivo, setTagAtivo] = useState(false);
+  const [tagLargura, setTagLargura] = useState("");
+  const [tagComprimento, setTagComprimento] = useState("");
+  const [tagModo, setTagModo] = useState<"tags" | "folhas">("tags");
+  const [tagQuantidade, setTagQuantidade] = useState("");
+
   const set = useCallback(
     <K extends keyof EstadoRascunho>(campo: K, valor: EstadoRascunho[K]) =>
       setEstado((e) => ({ ...e, [campo]: valor })),
