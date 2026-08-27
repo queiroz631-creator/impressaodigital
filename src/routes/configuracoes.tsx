@@ -18,6 +18,7 @@ import { useConfiguracao } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
+  assinarQuedaQz,
   listarImpressoras,
   statusQz,
   testarImpressora,
