@@ -24,13 +24,15 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { AcabamentosTabela } from "@/components/AcabamentosTabela";
-import { useMateriais } from "@/hooks/useDados";
+import { useMateriais, useConfiguracao } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import {
   faixasParaTexto,
   textoParaFaixas,
   FORMATOS,
   CATEGORIAS_MATERIAL,
+  normalizarAreasImpressao,
+  type AreasImpressao,
   type Material,
   type TipoServico,
   type FormatoPapel,
@@ -68,6 +70,7 @@ function Precos() {
   const { user } = useAuth();
   const { data: isAdmin, isLoading: carregandoPapel } = useIsAdmin(user?.id);
   const { data: materiais, isLoading } = useMateriais();
+  const { data: configuracao } = useConfiguracao();
   const queryClient = useQueryClient();
   const [linhas, setLinhas] = useState<Material[]>([]);
   const [salvando, setSalvando] = useState(false);
@@ -75,6 +78,31 @@ function Precos() {
   const [faixasArquivosTexto, setFaixasArquivosTexto] = useState<Record<string, string>>({});
   const [faixasCopiasTexto, setFaixasCopiasTexto] = useState<Record<string, string>>({});
   const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [areas, setAreas] = useState<AreasImpressao | null>(null);
+  const [salvandoAreas, setSalvandoAreas] = useState(false);
+
+  useEffect(() => {
+    if (!configuracao || areas) return;
+    setAreas(normalizarAreasImpressao(configuracao.areas_impressao));
+  }, [configuracao, areas]);
+
+  async function salvarAreas() {
+    if (!configuracao || !areas) return;
+    setSalvandoAreas(true);
+    try {
+      const { error } = await supabase
+        .from("configuracoes")
+        .update({ areas_impressao: areas as unknown as never })
+        .eq("id", configuracao.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["configuracoes"] });
+      toast.success("Área de impressão salva.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar.");
+    } finally {
+      setSalvandoAreas(false);
+    }
+  }
 
   useEffect(() => {
     if (!materiais) return;
@@ -274,6 +302,7 @@ function Precos() {
         <TabsList className="mb-4">
           <TabsTrigger value="materiais">Materiais</TabsTrigger>
           <TabsTrigger value="acabamentos">Acabamentos</TabsTrigger>
+          <TabsTrigger value="area-impressao">Área de impressão</TabsTrigger>
         </TabsList>
         <TabsContent value="materiais">
           <p className="mb-4 text-xs text-muted-foreground">
@@ -411,6 +440,58 @@ function Precos() {
         </TabsContent>
         <TabsContent value="acabamentos">
           <AcabamentosTabela />
+        </TabsContent>
+        <TabsContent value="area-impressao">
+          <Card className="shadow-card">
+            <CardContent className="space-y-4 p-4">
+              <p className="text-xs text-muted-foreground">
+                Área imprimível (em mm) de cada formato. Usada no cálculo de TAGs da calculadora.
+              </p>
+              {areas &&
+                FORMATOS.map((f) => (
+                  <div key={f.valor} className="flex flex-wrap items-center gap-3">
+                    <Label className="w-32 text-sm font-bold">{f.rotulo}</Label>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs">Largura (mm)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        inputMode="numeric"
+                        className="w-24"
+                        value={areas[f.valor].largura || ""}
+                        onChange={(e) =>
+                          setAreas({
+                            ...areas,
+                            [f.valor]: { ...areas[f.valor], largura: Math.max(1, Number(e.target.value) || 0) },
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs">Altura (mm)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        inputMode="numeric"
+                        className="w-24"
+                        value={areas[f.valor].altura || ""}
+                        onChange={(e) =>
+                          setAreas({
+                            ...areas,
+                            [f.valor]: { ...areas[f.valor], altura: Math.max(1, Number(e.target.value) || 0) },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
+              <div>
+                <Button onClick={salvarAreas} disabled={salvandoAreas || !areas}>
+                  <Save className="h-4 w-4" /> {salvandoAreas ? "Salvando..." : "Salvar Área de Impressão"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

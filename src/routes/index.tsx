@@ -22,6 +22,7 @@ import {
   ShoppingCart,
   Copy,
   Image as ImageIcon,
+  Tag,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -62,6 +63,8 @@ import {
   resumoLinhas,
   rotuloCobranca,
   totalAcabamentos,
+  tagsPorFolha,
+  normalizarAreasImpressao,
   FORMATOS,
   FORMATO_PADRAO,
   type FormatoPapel,
@@ -187,6 +190,13 @@ function Calculadora() {
   const [tipoGeracao, setTipoGeracao] = useState<"pdf" | "imagem" | null>(null);
   const inputArquivos = useRef<HTMLInputElement>(null);
 
+  // ----- TAG -----
+  const [tagAtivo, setTagAtivo] = useState(false);
+  const [tagLargura, setTagLargura] = useState("");
+  const [tagComprimento, setTagComprimento] = useState("");
+  const [tagModo, setTagModo] = useState<"tags" | "folhas">("tags");
+  const [tagQuantidade, setTagQuantidade] = useState("");
+
   const set = useCallback(
     <K extends keyof EstadoRascunho>(campo: K, valor: EstadoRascunho[K]) =>
       setEstado((e) => ({ ...e, [campo]: valor })),
@@ -222,6 +232,31 @@ function Calculadora() {
     }, 800);
     return () => clearTimeout(timer);
   }, [estado, hidratado, user?.id]);
+
+  // ----- Ao sair da calculadora, descarta o rascunho (tela volta limpa) -----
+  const usuarioRef = useRef(user?.id);
+  usuarioRef.current = user?.id;
+  const pedidoRef = useRef(estado.pedidoId);
+  pedidoRef.current = estado.pedidoId;
+  useEffect(() => {
+    return () => {
+      const pedidoAnterior = pedidoRef.current;
+      if (pedidoAnterior) {
+        queryClient.removeQueries({ queryKey: ["orcamentos-pedido", pedidoAnterior] });
+        queryClient.removeQueries({ queryKey: ["pedido", pedidoAnterior] });
+      }
+      const usuarioId = usuarioRef.current;
+      if (usuarioId) {
+        queryClient.setQueryData(["rascunho", usuarioId], ESTADO_INICIAL as unknown as Record<string, unknown>);
+        void supabase
+          .from("rascunhos")
+          .upsert(
+            { usuario_id: usuarioId, dados: ESTADO_INICIAL as unknown as never },
+            { onConflict: "usuario_id" },
+          );
+      }
+    };
+  }, [queryClient]);
 
   useEffect(() => {
     if (!config?.validade_padrao_dias) return;
@@ -369,6 +404,45 @@ function Calculadora() {
     aplicarArquivos(estado.arquivosLista.filter((_, i) => i !== indice));
   }
 
+  // ----- TAG: quantas cabem na área de impressão do formato -----
+  const areaFormato = useMemo(
+    () => normalizarAreasImpressao(config?.areas_impressao)[estado.formato],
+    [config?.areas_impressao, estado.formato],
+  );
+  const tagPorFolha = useMemo(
+    () => tagsPorFolha(Number(tagLargura), Number(tagComprimento), areaFormato),
+    [tagLargura, tagComprimento, areaFormato],
+  );
+
+  function adicionarTagArquivo() {
+    const largura = Number(tagLargura) || 0;
+    const comprimento = Number(tagComprimento) || 0;
+    if (largura <= 0 || comprimento <= 0) {
+      toast.error("Informe a largura e o comprimento da TAG.");
+      return;
+    }
+    if (tagPorFolha < 1) {
+      toast.error("A TAG não cabe na área de impressão do formato selecionado.");
+      return;
+    }
+    const qtd = Math.max(1, Number(tagQuantidade) || 0);
+    const folhas = tagModo === "folhas" ? qtd : Math.ceil(qtd / tagPorFolha);
+    const qtdTags = tagModo === "folhas" ? folhas * tagPorFolha : qtd;
+    const numero = estado.arquivosLista.filter((a) => a.origemTag).length + 1;
+    const nome = `TAG${numero} - TAMANHO: ${largura}x${comprimento} MM - QTD: ${qtdTags}`;
+    aplicarArquivos([
+      ...estado.arquivosLista,
+      { nome, tipo: "TAG", paginas: 1, copias: folhas, frenteVerso: false, origemTag: true },
+    ]);
+    toast.success("TAG adicionada aos arquivos.");
+  }
+
+  /** Observação final do orçamento: nomes das TAGs + observação digitada. */
+  const observacaoComTags = useMemo(() => {
+    const tags = estado.arquivosLista.filter((a) => a.origemTag).map((a) => a.nome);
+    return [...tags, estado.observacao.trim()].filter(Boolean).join("\n");
+  }, [estado.arquivosLista, estado.observacao]);
+
   function acabamentosParaSalvar(): AcabamentoDoc[] {
     const selecionados: AcabamentoDoc[] = linhasAcabamento
       .filter((l) => l.acabamento.mostrar_no_orcamento !== false)
@@ -396,7 +470,7 @@ function Calculadora() {
       .insert({
         cliente_nome: estado.clienteNome,
         cliente_telefone: estado.clienteTelefone,
-        observacao: estado.observacao,
+        observacao: observacaoComTags,
         validade: estado.validade || null,
         status: "pendente_envio",
       })
@@ -442,7 +516,7 @@ function Calculadora() {
         valor_unitario: materialSelecionado.valorUnitario,
         valor_total: materialSelecionado.total,
         copia_manual: estado.copiaManual,
-        observacao: estado.observacao,
+        observacao: observacaoComTags,
         validade: estado.validade || null,
         status: "pendente_envio",
       };
@@ -463,7 +537,7 @@ function Calculadora() {
         .update({
           cliente_nome: estado.clienteNome,
           cliente_telefone: estado.clienteTelefone,
-          observacao: estado.observacao,
+          observacao: observacaoComTags,
           validade: estado.validade || null,
         })
         .eq("id", pedidoId);
@@ -597,7 +671,7 @@ function Calculadora() {
       clienteNome: estado.clienteNome,
       clienteTelefone: estado.clienteTelefone,
       validade: validade || null,
-      observacao: estado.observacao || null,
+      observacao: observacaoComTags || null,
       pix: textoPix || null,
       prazoTexto: textoPrazo || null,
     });
@@ -664,7 +738,7 @@ function Calculadora() {
       .update({
         cliente_nome: estado.clienteNome,
         cliente_telefone: estado.clienteTelefone,
-        observacao: estado.observacao,
+        observacao: observacaoComTags,
         validade: estado.validade || null,
         ...extras,
       })
@@ -675,7 +749,7 @@ function Calculadora() {
         .update({
           cliente_nome: estado.clienteNome,
           cliente_telefone: estado.clienteTelefone,
-          observacao: estado.observacao,
+          observacao: observacaoComTags,
           validade: estado.validade || null,
           ...extras,
         })
@@ -771,6 +845,96 @@ function Calculadora() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* ---------- TAG ---------- */}
+          <div className="mb-5">
+            {!tagAtivo ? (
+              <Button variant="outline" size="sm" onClick={() => setTagAtivo(true)}>
+                <Tag className="h-4 w-4" /> Adicionar TAG
+              </Button>
+            ) : (
+              <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-accent/30 p-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Largura (mm)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    className="h-8 w-24"
+                    value={tagLargura}
+                    onChange={(e) => setTagLargura(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Comprimento (mm)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    className="h-8 w-24"
+                    value={tagComprimento}
+                    onChange={(e) => setTagComprimento(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Tags por folha ({estado.formato})</Label>
+                  <p className="flex h-8 items-center rounded-md border border-border bg-background px-3 text-sm font-bold">
+                    {tagPorFolha}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Informar</Label>
+                  <div className="flex h-8 overflow-hidden rounded-md border border-border">
+                    <Button
+                      type="button"
+                      variant={tagModo === "tags" ? "default" : "ghost"}
+                      className="h-full rounded-none px-3 text-xs"
+                      onClick={() => setTagModo("tags")}
+                    >
+                      Qtd. de TAGs
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={tagModo === "folhas" ? "default" : "ghost"}
+                      className="h-full rounded-none px-3 text-xs"
+                      onClick={() => setTagModo("folhas")}
+                    >
+                      Qtd. de folhas
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">
+                    {tagModo === "tags" ? "Quantidade de TAGs" : "Quantidade de folhas"}
+                  </Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    className="h-8 w-24"
+                    value={tagQuantidade}
+                    onChange={(e) => setTagQuantidade(e.target.value)}
+                  />
+                </div>
+                <Button size="sm" className="h-8" onClick={adicionarTagArquivo}>
+                  <Paperclip className="h-4 w-4" /> Adicionar arquivo
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => {
+                    setTagAtivo(false);
+                    setTagLargura("");
+                    setTagComprimento("");
+                    setTagQuantidade("");
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            )}
+          </div>
+
           <div className="grid gap-5 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
             {/* ---------- COLUNA ESQUERDA: ARQUIVOS ---------- */}
             <div className="space-y-3">
@@ -819,6 +983,7 @@ function Calculadora() {
                     {estado.arquivosLista.map((a, i) => {
                       const copias = Math.max(1, a.copias ?? 1);
                       const pendente = a.paginasManuais === true || Number(a.paginas || 0) < 1;
+                      const bloqueado = a.origemTag === true;
                       return (
                         <div
                           key={`${a.nome}-${i}`}
@@ -835,68 +1000,86 @@ function Calculadora() {
                           </div>
 
                           <div className="mt-2 flex flex-wrap items-center gap-3">
-                            {/* PÁGINAS (editável) */}
+                            {/* PÁGINAS (editável; bloqueado para TAG) */}
                             <div className="flex items-center gap-2">
                               <Label className="text-xs font-semibold">Páginas:</Label>
-                              <Input
-                                type="number"
-                                min="1"
-                                inputMode="numeric"
-                                placeholder="0"
-                                className={`h-8 w-16 ${pendente ? "border-2 border-destructive font-bold" : ""}`}
-                                value={a.paginas || ""}
-                                onChange={(e) =>
-                                  atualizarArquivo(i, {
-                                    paginas: Math.max(1, num(e.target.value) || 1),
-                                    paginasManuais: false,
-                                  })
-                                }
-                              />
-                            </div>
-
-                            {/* CÓPIAS */}
-                            <div className="flex items-center gap-2">
-                              <Label className="text-xs font-semibold">Cópias:</Label>
-                              <div className="flex h-8 items-center overflow-hidden rounded-md border border-input">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="h-full rounded-none px-2"
-                                  onClick={() => atualizarArquivo(i, { copias: Math.max(1, copias - 1) })}
-                                >
-                                  −
-                                </Button>
+                              {bloqueado ? (
+                                <span className="flex h-8 w-20 items-center rounded-md border border-input bg-muted px-2 text-sm font-bold text-muted-foreground">
+                                  {numeroBR(a.paginas)}
+                                </span>
+                              ) : (
                                 <Input
                                   type="number"
                                   min="1"
                                   inputMode="numeric"
-                                  value={copias}
+                                  placeholder="0"
+                                  className={`h-8 w-20 ${pendente ? "border-2 border-destructive font-bold" : ""}`}
+                                  value={a.paginas || ""}
                                   onChange={(e) =>
                                     atualizarArquivo(i, {
-                                      copias: Math.max(1, num(e.target.value) || 1),
+                                      paginas: Math.max(1, num(e.target.value) || 1),
+                                      paginasManuais: false,
                                     })
                                   }
-                                  className="h-full w-12 rounded-none border-0 text-center font-bold focus-visible:ring-0"
                                 />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="h-full rounded-none px-2"
-                                  onClick={() => atualizarArquivo(i, { copias: copias + 1 })}
-                                >
-                                  +
-                                </Button>
-                              </div>
+                              )}
                             </div>
 
-                            {/* FRENTE E VERSO */}
-                            <label className="flex items-center gap-2 text-xs font-medium">
-                              <Checkbox
-                                checked={a.frenteVerso ?? false}
-                                onCheckedChange={(v) => atualizarArquivo(i, { frenteVerso: v === true })}
-                              />
-                              Frente e verso
-                            </label>
+                            {/* CÓPIAS (bloqueado para TAG) */}
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs font-semibold">Cópias:</Label>
+                              {bloqueado ? (
+                                <span className="flex h-8 w-16 items-center justify-center rounded-md border border-input bg-muted text-sm font-bold text-muted-foreground">
+                                  {copias}
+                                </span>
+                              ) : (
+                                <div className="flex h-8 items-center overflow-hidden rounded-md border border-input">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="h-full rounded-none px-2"
+                                    onClick={() => atualizarArquivo(i, { copias: Math.max(1, copias - 1) })}
+                                  >
+                                    −
+                                  </Button>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    inputMode="numeric"
+                                    value={copias}
+                                    onChange={(e) =>
+                                      atualizarArquivo(i, {
+                                        copias: Math.max(1, num(e.target.value) || 1),
+                                      })
+                                    }
+                                    className="h-full w-16 rounded-none border-0 text-center font-bold focus-visible:ring-0"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="h-full rounded-none px-2"
+                                    onClick={() => atualizarArquivo(i, { copias: copias + 1 })}
+                                  >
+                                    +
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* FRENTE E VERSO (bloqueado para TAG) */}
+                            {bloqueado ? (
+                              <span className="text-xs font-medium text-muted-foreground">
+                                Frente e verso: {a.frenteVerso ? "Sim" : "Não"}
+                              </span>
+                            ) : (
+                              <label className="flex items-center gap-2 text-xs font-medium">
+                                <Checkbox
+                                  checked={a.frenteVerso ?? false}
+                                  onCheckedChange={(v) => atualizarArquivo(i, { frenteVerso: v === true })}
+                                />
+                                Frente e verso
+                              </label>
+                            )}
 
                             <ConfirmarExclusao
                               titulo="Remover arquivo"

@@ -8,6 +8,8 @@ export interface ArquivoDoc {
   frenteVerso?: boolean;
   /** Indica que a contagem de páginas precisa ser informada manualmente. */
   paginasManuais?: boolean;
+  /** Arquivo gerado pela funcionalidade TAG: páginas/cópias/frente-verso bloqueados. */
+  origemTag?: boolean;
 }
 
 export interface AcabamentoDoc {
