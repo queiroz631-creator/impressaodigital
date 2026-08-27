@@ -62,11 +62,23 @@ function mensagemErro(erro: unknown): string {
   return "Falha desconhecida na comunicação com o QZ Tray.";
 }
 
-/**
- * Verifica se a conexão com o QZ Tray está ativa.
- */
+/** isActive() também é verdadeiro enquanto o socket ainda está conectando. */
 function conexaoPronta(api: any): boolean {
-  return !!api?.websocket?.isActive?.();
+  const conexao = api?.websocket?.connection;
+  return (
+    conexao?.readyState === WebSocket.OPEN &&
+    conexao?.established === true &&
+    typeof conexao?.sendData === "function"
+  );
+}
+
+async function aguardarTentativaAtual(api: any): Promise<boolean> {
+  for (let tentativa = 0; tentativa < 100; tentativa += 1) {
+    if (conexaoPronta(api)) return true;
+    if (!api?.websocket?.isActive?.()) return false;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return false;
 }
 
 /**
@@ -88,12 +100,16 @@ export async function conectarQz(): Promise<boolean> {
 
   conexaoEmAndamento = (async () => {
     try {
-      // QZ Tray 2.x connect() resolve quando a conexão é estabelecida.
-      // localhost.qz.io é essencial para conexões HTTPS.
+      // Uma tentativa anterior pode estar em CONNECTING. Não a considere
+      // pronta e não abra outro socket em paralelo.
+      if (api.websocket.isActive?.() && (await aguardarTentativaAtual(api))) {
+        ultimoErro = null;
+        return true;
+      }
+
+      // Usa os hosts e todas as portas oficiais padrão da biblioteca.
       await api.websocket.connect({
-        host: ["localhost", "localhost.qz.io"],
-        retries: 3,
-        delay: 1,
+        retries: 0,
       });
       
       if (conexaoPronta(api)) {
@@ -308,8 +324,13 @@ export async function testarImpressora(
   if (impressora && (await imprimirViaQz(texto, impressora))) {
     return { metodo: "qz", impressora };
   }
-  imprimirPeloNavegador(texto);
-  return { metodo: "navegador", impressora };
+  return {
+    metodo: "navegador",
+    impressora,
+    mensagem: impressora
+      ? await motivoFalhaQz(impressora)
+      : "Adicione uma impressora antes de realizar o teste.",
+  };
 }
 
 // ---------- Impressão de documentos com perfil ----------

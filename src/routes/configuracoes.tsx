@@ -435,7 +435,7 @@ function Configuracoes() {
                   `${impressorasDetectadas.length} impressora(s) encontrada(s). Impressão direta ativa.`}
                 {qz === "verificando" && "Aguarde enquanto a conexão é estabelecida."}
                 {qz === "agente_ausente" &&
-                  "Nenhuma resposta do agente nas portas 8181/8182 deste computador. Feche outras abas conectadas ao QZ Tray (ex.: demo.qz.io — clique em Disconnect lá), abra o QZ Tray na barra de tarefas e clique em Reconectar. Se o navegador estiver em outro computador, a impressão direta não funciona."}
+                  "Não foi possível concluir a conexão local. Confirme a solicitação de acesso exibida pelo QZ Tray e clique em Reconectar. Se o navegador estiver em outro computador, a impressão direta não funciona."}
                 {qz === "script_indisponivel" &&
                   "Não foi possível carregar o componente de impressão. Usando o navegador."}
               </p>
@@ -619,7 +619,11 @@ function Configuracoes() {
               variant="outline"
               onClick={async () => {
                 const resultado = await testarImpressora(form.impressoras_padrao[0] ?? null, 80);
-                if (resultado.metodo === "qz") toast.success("Teste enviado para a impressora.");
+                if (resultado.metodo === "qz") {
+                  toast.success("Teste enviado para a impressora.");
+                } else {
+                  toast.error(resultado.mensagem ?? "Não foi possível enviar o teste pelo QZ Tray.");
+                }
               }}
             >
               <Printer className="h-4 w-4" /> Testar impressão
