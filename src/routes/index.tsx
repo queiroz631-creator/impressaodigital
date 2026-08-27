@@ -226,6 +226,31 @@ function Calculadora() {
     return () => clearTimeout(timer);
   }, [estado, hidratado, user?.id]);
 
+  // ----- Ao sair da calculadora, descarta o rascunho (tela volta limpa) -----
+  const usuarioRef = useRef(user?.id);
+  usuarioRef.current = user?.id;
+  const pedidoRef = useRef(estado.pedidoId);
+  pedidoRef.current = estado.pedidoId;
+  useEffect(() => {
+    return () => {
+      const pedidoAnterior = pedidoRef.current;
+      if (pedidoAnterior) {
+        queryClient.removeQueries({ queryKey: ["orcamentos-pedido", pedidoAnterior] });
+        queryClient.removeQueries({ queryKey: ["pedido", pedidoAnterior] });
+      }
+      const usuarioId = usuarioRef.current;
+      if (usuarioId) {
+        queryClient.setQueryData(["rascunho", usuarioId], ESTADO_INICIAL as unknown as Record<string, unknown>);
+        void supabase
+          .from("rascunhos")
+          .upsert(
+            { usuario_id: usuarioId, dados: ESTADO_INICIAL as unknown as never },
+            { onConflict: "usuario_id" },
+          );
+      }
+    };
+  }, [queryClient]);
+
   useEffect(() => {
     if (!config?.validade_padrao_dias) return;
 
