@@ -904,6 +904,12 @@ function Calculadora() {
                   </p>
                 </div>
                 <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Total de TAGs</Label>
+                  <p className="flex h-8 items-center rounded-md border border-border bg-background px-3 text-sm font-bold">
+                    {tagTotal}
+                  </p>
+                </div>
+                <div className="space-y-1">
                   <Label className="text-xs font-semibold">Informar</Label>
                   <div className="flex h-8 overflow-hidden rounded-md border border-border">
                     <Button
