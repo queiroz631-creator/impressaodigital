@@ -95,6 +95,7 @@ function Configuracoes() {
   const [impressorasDetectadas, setImpressorasDetectadas] = useState<string[]>([]);
   const [novaImpressora, setNovaImpressora] = useState("");
   const [qz, setQz] = useState<StatusQz | "verificando">("verificando");
+  const [alteracoesPendentes, setAlteracoesPendentes] = useState(false);
   const impressaoDireta = qz === "conectado";
 
   async function verificarQz() {
