@@ -236,7 +236,7 @@ export function qzDisponivel(): boolean {
 
 /** Lista as impressoras instaladas (somente com agente local disponível). */
 export async function listarImpressoras(): Promise<string[]> {
-  if (!(await conectarQz())) return [];
+  if (!(await garantirConexao())) return [];
   try {
     const lista = await qz().printers.find();
     const nomes = Array.isArray(lista) ? lista.map(String) : [String(lista)];
@@ -275,7 +275,7 @@ const DADOS_CORTE = [{ type: "raw", format: "hex", data: "0A0A0A1D5600" }];
 
 async function imprimirViaQz(texto: string, impressora: string): Promise<boolean> {
   if (!texto.trim()) return false;
-  if (!(await conectarQz())) return false;
+  if (!(await garantirConexao())) return false;
   try {
     const api = qz();
     const config = api.configs.create(impressora);
@@ -476,7 +476,7 @@ export async function imprimirDocumentos(
     return { metodo: "navegador", impressora, mensagem: "Nenhum arquivo para imprimir." };
   }
 
-  if (!(await conectarQz())) {
+  if (!(await garantirConexao())) {
     return { metodo: "navegador", impressora, mensagem: await motivoFalhaQz(impressora) };
   }
 
@@ -515,7 +515,7 @@ export async function testarPerfil(
       mensagem: "Defina a impressora do perfil ou uma impressora padrão.",
     };
   }
-  if (!(await conectarQz())) {
+  if (!(await garantirConexao())) {
     return { metodo: "navegador", impressora, mensagem: await motivoFalhaQz(impressora) };
   }
   try {
