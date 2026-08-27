@@ -135,6 +135,22 @@ function Configuracoes() {
 
   useEffect(() => {
     void verificarQz();
+
+    const cancelar = assinarQuedaQz((motivo) => {
+      setQz("agente_ausente");
+      setImpressorasDetectadas([]);
+      setErroQz(motivo || "Conexão com o QZ Tray encerrada.");
+    });
+
+    const intervalo = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void statusQz().then((status) => setQz(status));
+    }, 20000);
+
+    return () => {
+      cancelar();
+      clearInterval(intervalo);
+    };
   }, []);
 
   useEffect(() => {
