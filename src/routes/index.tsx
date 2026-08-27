@@ -1000,68 +1000,86 @@ function Calculadora() {
                           </div>
 
                           <div className="mt-2 flex flex-wrap items-center gap-3">
-                            {/* PÁGINAS (editável) */}
+                            {/* PÁGINAS (editável; bloqueado para TAG) */}
                             <div className="flex items-center gap-2">
                               <Label className="text-xs font-semibold">Páginas:</Label>
-                              <Input
-                                type="number"
-                                min="1"
-                                inputMode="numeric"
-                                placeholder="0"
-                                className={`h-8 w-16 ${pendente ? "border-2 border-destructive font-bold" : ""}`}
-                                value={a.paginas || ""}
-                                onChange={(e) =>
-                                  atualizarArquivo(i, {
-                                    paginas: Math.max(1, num(e.target.value) || 1),
-                                    paginasManuais: false,
-                                  })
-                                }
-                              />
-                            </div>
-
-                            {/* CÓPIAS */}
-                            <div className="flex items-center gap-2">
-                              <Label className="text-xs font-semibold">Cópias:</Label>
-                              <div className="flex h-8 items-center overflow-hidden rounded-md border border-input">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="h-full rounded-none px-2"
-                                  onClick={() => atualizarArquivo(i, { copias: Math.max(1, copias - 1) })}
-                                >
-                                  −
-                                </Button>
+                              {bloqueado ? (
+                                <span className="flex h-8 w-20 items-center rounded-md border border-input bg-muted px-2 text-sm font-bold text-muted-foreground">
+                                  {numeroBR(a.paginas)}
+                                </span>
+                              ) : (
                                 <Input
                                   type="number"
                                   min="1"
                                   inputMode="numeric"
-                                  value={copias}
+                                  placeholder="0"
+                                  className={`h-8 w-20 ${pendente ? "border-2 border-destructive font-bold" : ""}`}
+                                  value={a.paginas || ""}
                                   onChange={(e) =>
                                     atualizarArquivo(i, {
-                                      copias: Math.max(1, num(e.target.value) || 1),
+                                      paginas: Math.max(1, num(e.target.value) || 1),
+                                      paginasManuais: false,
                                     })
                                   }
-                                  className="h-full w-12 rounded-none border-0 text-center font-bold focus-visible:ring-0"
                                 />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="h-full rounded-none px-2"
-                                  onClick={() => atualizarArquivo(i, { copias: copias + 1 })}
-                                >
-                                  +
-                                </Button>
-                              </div>
+                              )}
                             </div>
 
-                            {/* FRENTE E VERSO */}
-                            <label className="flex items-center gap-2 text-xs font-medium">
-                              <Checkbox
-                                checked={a.frenteVerso ?? false}
-                                onCheckedChange={(v) => atualizarArquivo(i, { frenteVerso: v === true })}
-                              />
-                              Frente e verso
-                            </label>
+                            {/* CÓPIAS (bloqueado para TAG) */}
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs font-semibold">Cópias:</Label>
+                              {bloqueado ? (
+                                <span className="flex h-8 w-16 items-center justify-center rounded-md border border-input bg-muted text-sm font-bold text-muted-foreground">
+                                  {copias}
+                                </span>
+                              ) : (
+                                <div className="flex h-8 items-center overflow-hidden rounded-md border border-input">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="h-full rounded-none px-2"
+                                    onClick={() => atualizarArquivo(i, { copias: Math.max(1, copias - 1) })}
+                                  >
+                                    −
+                                  </Button>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    inputMode="numeric"
+                                    value={copias}
+                                    onChange={(e) =>
+                                      atualizarArquivo(i, {
+                                        copias: Math.max(1, num(e.target.value) || 1),
+                                      })
+                                    }
+                                    className="h-full w-16 rounded-none border-0 text-center font-bold focus-visible:ring-0"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="h-full rounded-none px-2"
+                                    onClick={() => atualizarArquivo(i, { copias: copias + 1 })}
+                                  >
+                                    +
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* FRENTE E VERSO (bloqueado para TAG) */}
+                            {bloqueado ? (
+                              <span className="text-xs font-medium text-muted-foreground">
+                                Frente e verso: {a.frenteVerso ? "Sim" : "Não"}
+                              </span>
+                            ) : (
+                              <label className="flex items-center gap-2 text-xs font-medium">
+                                <Checkbox
+                                  checked={a.frenteVerso ?? false}
+                                  onCheckedChange={(v) => atualizarArquivo(i, { frenteVerso: v === true })}
+                                />
+                                Frente e verso
+                              </label>
+                            )}
 
                             <ConfirmarExclusao
                               titulo="Remover arquivo"
