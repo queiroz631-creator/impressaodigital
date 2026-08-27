@@ -84,7 +84,8 @@ export const PERFIL_VAZIO: Omit<PerfilImpressao, "id"> = {
 };
 
 /** Resumo curto do perfil, exibido nas listagens. */
-export function resumoPerfil(p: PerfilImpressao) {
+export function resumoPerfil(p: PerfilImpressao | null | undefined) {
+  if (!p) return "Perfil não encontrado.";
   return [
     p.midia || "Papel padrão",
     `${p.tamanho}`,
