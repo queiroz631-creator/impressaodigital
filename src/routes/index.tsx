@@ -845,6 +845,96 @@ function Calculadora() {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* ---------- TAG ---------- */}
+          <div className="mb-5">
+            {!tagAtivo ? (
+              <Button variant="outline" size="sm" onClick={() => setTagAtivo(true)}>
+                <Tag className="h-4 w-4" /> Adicionar TAG
+              </Button>
+            ) : (
+              <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-accent/30 p-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Largura (mm)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    className="h-8 w-24"
+                    value={tagLargura}
+                    onChange={(e) => setTagLargura(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Comprimento (mm)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    className="h-8 w-24"
+                    value={tagComprimento}
+                    onChange={(e) => setTagComprimento(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Tags por folha ({estado.formato})</Label>
+                  <p className="flex h-8 items-center rounded-md border border-border bg-background px-3 text-sm font-bold">
+                    {tagPorFolha}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Informar</Label>
+                  <div className="flex h-8 overflow-hidden rounded-md border border-border">
+                    <Button
+                      type="button"
+                      variant={tagModo === "tags" ? "default" : "ghost"}
+                      className="h-full rounded-none px-3 text-xs"
+                      onClick={() => setTagModo("tags")}
+                    >
+                      Qtd. de TAGs
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={tagModo === "folhas" ? "default" : "ghost"}
+                      className="h-full rounded-none px-3 text-xs"
+                      onClick={() => setTagModo("folhas")}
+                    >
+                      Qtd. de folhas
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">
+                    {tagModo === "tags" ? "Quantidade de TAGs" : "Quantidade de folhas"}
+                  </Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    className="h-8 w-24"
+                    value={tagQuantidade}
+                    onChange={(e) => setTagQuantidade(e.target.value)}
+                  />
+                </div>
+                <Button size="sm" className="h-8" onClick={adicionarTagArquivo}>
+                  <Paperclip className="h-4 w-4" /> Adicionar arquivo
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => {
+                    setTagAtivo(false);
+                    setTagLargura("");
+                    setTagComprimento("");
+                    setTagQuantidade("");
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            )}
+          </div>
+
           <div className="grid gap-5 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
             {/* ---------- COLUNA ESQUERDA: ARQUIVOS ---------- */}
             <div className="space-y-3">
