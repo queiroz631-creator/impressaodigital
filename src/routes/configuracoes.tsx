@@ -17,7 +17,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useConfiguracao } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { listarImpressoras, statusQz, testarImpressora, type StatusQz } from "@/lib/impressora";
+import {
+  listarImpressoras,
+  statusQz,
+  testarImpressora,
+  ultimoErroQz,
+  type StatusQz,
+} from "@/lib/impressora";
 import { PIX_MENSAGEM_PADRAO, PRAZO_MENSAGEM_PADRAO } from "@/lib/orcamento-extras";
 import { PerfisImpressao } from "@/components/PerfisImpressao";
 import { Switch } from "@/components/ui/switch";
@@ -96,21 +102,36 @@ function Configuracoes() {
   const [impressorasDetectadas, setImpressorasDetectadas] = useState<string[]>([]);
   const [novaImpressora, setNovaImpressora] = useState("");
   const [qz, setQz] = useState<StatusQz | "verificando">("verificando");
+  const [erroQz, setErroQz] = useState<string | null>(null);
   const [alteracoesPendentes, setAlteracoesPendentes] = useState(false);
   const impressaoDireta = qz === "conectado";
 
   async function verificarQz() {
     setQz("verificando");
+    setErroQz(null);
     const status = await statusQz();
     setQz(status);
     if (status === "conectado") {
-      listarImpressoras()
-        .then(setImpressorasDetectadas)
-        .catch(() => setImpressorasDetectadas([]));
+      const lista = await listarImpressoras().catch(() => []);
+      setImpressorasDetectadas(lista);
+      if (lista.length === 0) setErroQz(ultimoErroQz());
     } else {
       setImpressorasDetectadas([]);
+      setErroQz(ultimoErroQz());
     }
   }
+
+  function adicionarImpressora(nome: string) {
+    const limpo = nome.trim();
+    if (!limpo) return;
+    if (form.impressoras_padrao.some((n) => n.toLowerCase() === limpo.toLowerCase())) {
+      toast.error("Essa impressora já está na lista.");
+      return;
+    }
+    set("impressoras_padrao", [...form.impressoras_padrao, limpo]);
+    toast.success(`"${limpo}" adicionada. Clique em Salvar Alterações.`);
+  }
+
 
   useEffect(() => {
     void verificarQz();
@@ -468,33 +489,71 @@ function Configuracoes() {
               )}
             </div>
 
-            {impressorasDetectadas.length > 0 && (
-              <div className="space-y-1 pt-2">
+            <div className="space-y-2 rounded-lg border border-border p-3">
+              <div className="flex items-center justify-between gap-2">
                 <Label className="text-xs">Impressoras encontradas no computador</Label>
-                <Select
-                  value=""
-                  onValueChange={(nome) => {
-                    if (form.impressoras_padrao.includes(nome)) {
-                      toast.error("Essa impressora já está na lista.");
-                      return;
-                    }
-                    set("impressoras_padrao", [...form.impressoras_padrao, nome]);
-                    toast.success(`"${nome}" adicionada. Clique em Salvar Alterações.`);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar impressora" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {impressorasDetectadas.map((nome) => (
-                      <SelectItem key={nome} value={nome}>
-                        {nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Button variant="outline" size="sm" onClick={() => void verificarQz()}>
+                  <RefreshCw className="h-4 w-4" /> Buscar
+                </Button>
               </div>
-            )}
+
+              {impressorasDetectadas.length > 0 ? (
+                <div className="flex flex-col gap-1">
+                  {impressorasDetectadas.map((nome) => {
+                    const jaAdicionada = form.impressoras_padrao.some(
+                      (n) => n.toLowerCase() === nome.toLowerCase(),
+                    );
+                    return (
+                      <div
+                        key={nome}
+                        className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-2 py-1.5"
+                      >
+                        <span className="truncate text-sm">{nome}</span>
+                        <Button
+                          variant={jaAdicionada ? "ghost" : "outline"}
+                          size="sm"
+                          disabled={jaAdicionada}
+                          onClick={() => adicionarImpressora(nome)}
+                        >
+                          <Plus className="h-4 w-4" />
+                          {jaAdicionada ? "Adicionada" : "Adicionar"}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-1 self-start"
+                    onClick={() => {
+                      const novas = impressorasDetectadas.filter(
+                        (nome) =>
+                          !form.impressoras_padrao.some(
+                            (n) => n.toLowerCase() === nome.toLowerCase(),
+                          ),
+                      );
+                      if (novas.length === 0) {
+                        toast.error("Todas já estão na lista.");
+                        return;
+                      }
+                      set("impressoras_padrao", [...form.impressoras_padrao, ...novas]);
+                      toast.success(`${novas.length} impressora(s) adicionada(s).`);
+                    }}
+                  >
+                    Adicionar todas
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {qz === "verificando"
+                    ? "Procurando impressoras..."
+                    : "Nenhuma impressora encontrada. Verifique se o QZ Tray está em execução e clique em Buscar."}
+                </p>
+              )}
+
+              {erroQz && <p className="text-xs text-amber-600">Detalhe técnico: {erroQz}</p>}
+            </div>
+
 
             <div className="flex items-center gap-2 pt-2">
               <Input
