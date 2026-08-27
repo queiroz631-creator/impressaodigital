@@ -587,6 +587,7 @@ function Precos() {
                     </p>
                   </div>
 
+                  <div className="space-y-1.5 sm:col-span-2">
                     <Label>Faixas por páginas</Label>
                     <Textarea
                       rows={4}
