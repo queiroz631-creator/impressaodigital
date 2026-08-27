@@ -357,8 +357,28 @@ function Calculadora() {
     if (!files || files.length === 0) return;
     setLendoArquivos(true);
     try {
-      const r = await contarPaginas(Array.from(files));
-      const lista = [...estado.arquivosLista, ...r.arquivos];
+      const originais = Array.from(files);
+      const r = await contarPaginas(originais);
+
+      /**
+       * Envia os PDFs para o storage para permitir a
+       * reimpressão do documento a partir do pedido.
+       */
+      const caminhos = new Map<string, string>();
+      await Promise.all(
+        originais
+          .filter((f) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"))
+          .map(async (f) => {
+            const caminho = `${user?.id ?? "anonimo"}/${Date.now()}-${crypto.randomUUID()}.pdf`;
+            const { error } = await supabase.storage
+              .from("orcamento-arquivos")
+              .upload(caminho, f, { contentType: "application/pdf", upsert: false });
+            if (!error) caminhos.set(f.name, caminho);
+          }),
+      );
+
+      const novos = r.arquivos.map((a) => ({ ...a, caminho: caminhos.get(a.nome) ?? null }));
+      const lista = [...estado.arquivosLista, ...novos];
       aplicarArquivos(lista);
       if (r.ignorados.length > 0) toast.warning(`Arquivos ignorados: ${r.ignorados.join(", ")}`);
       if (r.manuais.length > 0) {

@@ -1102,6 +1102,7 @@ export type Database = {
           id: string
           nome: string
           ordem: number
+          perfil_impressao_id: string | null
           preco_arquivos_fixo: number | null
           preco_color: number
           preco_pb: number
@@ -1122,6 +1123,7 @@ export type Database = {
           id?: string
           nome: string
           ordem?: number
+          perfil_impressao_id?: string | null
           preco_arquivos_fixo?: number | null
           preco_color?: number
           preco_pb?: number
@@ -1142,6 +1144,7 @@ export type Database = {
           id?: string
           nome?: string
           ordem?: number
+          perfil_impressao_id?: string | null
           preco_arquivos_fixo?: number | null
           preco_color?: number
           preco_pb?: number
@@ -1150,7 +1153,15 @@ export type Database = {
           tipo_impressao?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "materiais_perfil_impressao_id_fkey"
+            columns: ["perfil_impressao_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_impressao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       objetivos_curriculo: {
         Row: {
@@ -1462,6 +1473,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      perfis_impressao: {
+        Row: {
+          altura_mm: number
+          ativo: boolean
+          bandeja: string | null
+          copias: number
+          cor: string
+          created_at: string
+          duplex: string
+          id: string
+          impressora: string | null
+          largura_mm: number
+          midia: string
+          nome: string
+          ordem: number
+          orientacao: string
+          qualidade: string
+          tamanho: string
+          updated_at: string
+        }
+        Insert: {
+          altura_mm?: number
+          ativo?: boolean
+          bandeja?: string | null
+          copias?: number
+          cor?: string
+          created_at?: string
+          duplex?: string
+          id?: string
+          impressora?: string | null
+          largura_mm?: number
+          midia?: string
+          nome: string
+          ordem?: number
+          orientacao?: string
+          qualidade?: string
+          tamanho?: string
+          updated_at?: string
+        }
+        Update: {
+          altura_mm?: number
+          ativo?: boolean
+          bandeja?: string | null
+          copias?: number
+          cor?: string
+          created_at?: string
+          duplex?: string
+          id?: string
+          impressora?: string | null
+          largura_mm?: number
+          midia?: string
+          nome?: string
+          ordem?: number
+          orientacao?: string
+          qualidade?: string
+          tamanho?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

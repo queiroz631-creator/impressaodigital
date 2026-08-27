@@ -19,6 +19,7 @@ import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { listarImpressoras, statusQz, testarImpressora, type StatusQz } from "@/lib/impressora";
 import { PIX_MENSAGEM_PADRAO, PRAZO_MENSAGEM_PADRAO } from "@/lib/orcamento-extras";
+import { PerfisImpressao } from "@/components/PerfisImpressao";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -377,7 +378,7 @@ function Configuracoes() {
 
         </TabsContent>
 
-        <TabsContent value="impressao">
+        <TabsContent value="impressao" className="grid gap-4">
         <Card className="max-w-3xl shadow-card">
         <CardHeader>
           <CardTitle className="text-base">Impressão</CardTitle>
@@ -570,6 +571,11 @@ function Configuracoes() {
           </div>
         </CardContent>
       </Card>
+
+      <PerfisImpressao
+        impressorasDetectadas={impressorasDetectadas}
+        impressorasConfiguradas={form.impressoras_padrao}
+      />
 
         </TabsContent>
 

@@ -10,6 +10,8 @@ export interface ArquivoDoc {
   paginasManuais?: boolean;
   /** Arquivo gerado pela funcionalidade TAG: páginas/cópias/frente-verso bloqueados. */
   origemTag?: boolean;
+  /** Caminho no storage (bucket orcamento-arquivos) para reimpressão. */
+  caminho?: string | null;
 }
 
 export interface AcabamentoDoc {

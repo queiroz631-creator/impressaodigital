@@ -6,6 +6,8 @@
  * Fallback: impressão pelo navegador (window.print) com layout 80mm.
  */
 
+import { densidadeQualidade, resumoPerfil, type PerfilImpressao } from "./perfil-impressao";
+
 export type MetodoImpressao = "navegador" | "qz";
 
 export interface ResultadoImpressao {
@@ -254,3 +256,120 @@ export async function testarImpressora(
   imprimirPeloNavegador(texto);
   return { metodo: "navegador", impressora };
 }
+
+// ---------- Impressão de documentos com perfil ----------
+
+/** Documento (PDF) pronto para envio à impressora. */
+export interface DocumentoImpressao {
+  nome: string;
+  /** Conteúdo do PDF em base64 (sem o prefixo data:). */
+  base64: string;
+  /** Cópias adicionais do próprio arquivo (mínimo 1). */
+  copias?: number;
+}
+
+/** Converte o perfil nas opções aceitas pelo QZ Tray. */
+export function opcoesDoPerfil(perfil: PerfilImpressao, impressora: string) {
+  return {
+    colorType: perfil.cor,
+    duplex: perfil.duplex !== "nao",
+    duplexing: perfil.duplex === "longa" ? "duplex-long" : perfil.duplex === "curta" ? "duplex-short" : undefined,
+    orientation: perfil.orientacao === "paisagem" ? "landscape" : "portrait",
+    copies: Math.max(1, Number(perfil.copias) || 1),
+    density: densidadeQualidade[perfil.qualidade],
+    units: "mm",
+    size: { width: Number(perfil.largura_mm) || 210, height: Number(perfil.altura_mm) || 297 },
+    scaleContent: true,
+    rasterize: false,
+    printerTray: perfil.bandeja || undefined,
+    jobName: `${perfil.nome} — ${impressora}`,
+  };
+}
+
+/**
+ * Imprime documentos PDF aplicando o perfil (papel, qualidade, bandeja,
+ * tamanho, cor e frente e verso) diretamente pelo QZ Tray.
+ */
+export async function imprimirDocumentos(
+  perfil: PerfilImpressao,
+  documentos: DocumentoImpressao[],
+  impressoraPadrao?: string | null,
+): Promise<ResultadoImpressao> {
+  const impressora = (perfil.impressora || impressoraPadrao || "").trim();
+
+  if (!impressora) {
+    return {
+      metodo: "navegador",
+      impressora: null,
+      mensagem: "Nenhuma impressora definida no perfil nem nas configurações.",
+    };
+  }
+
+  if (documentos.length === 0) {
+    return { metodo: "navegador", impressora, mensagem: "Nenhum arquivo para imprimir." };
+  }
+
+  if (!(await conectarQz())) {
+    return { metodo: "navegador", impressora, mensagem: await motivoFalhaQz(impressora) };
+  }
+
+  try {
+    const api = qz();
+    const config = api.configs.create(impressora, opcoesDoPerfil(perfil, impressora));
+    const dados = documentos.flatMap((doc) =>
+      Array.from({ length: Math.max(1, doc.copias ?? 1) }, () => ({
+        type: "pixel",
+        format: "pdf",
+        flavor: "base64",
+        data: doc.base64,
+      })),
+    );
+    await api.print(config, dados);
+    return { metodo: "qz", impressora };
+  } catch (erro) {
+    return {
+      metodo: "navegador",
+      impressora,
+      mensagem: erro instanceof Error ? erro.message : await motivoFalhaQz(impressora),
+    };
+  }
+}
+
+/** Página de teste do perfil (usa o próprio perfil na impressora escolhida). */
+export async function testarPerfil(
+  perfil: PerfilImpressao,
+  impressoraPadrao?: string | null,
+): Promise<ResultadoImpressao> {
+  const impressora = (perfil.impressora || impressoraPadrao || "").trim();
+  if (!impressora) {
+    return {
+      metodo: "navegador",
+      impressora: null,
+      mensagem: "Defina a impressora do perfil ou uma impressora padrão.",
+    };
+  }
+  if (!(await conectarQz())) {
+    return { metodo: "navegador", impressora, mensagem: await motivoFalhaQz(impressora) };
+  }
+  try {
+    const api = qz();
+    const config = api.configs.create(impressora, opcoesDoPerfil(perfil, impressora));
+    await api.print(config, [
+      {
+        type: "pixel",
+        format: "html",
+        flavor: "plain",
+        data: `<h3 style="font-family:sans-serif">Teste — ${perfil.nome}</h3>
+<p style="font-family:sans-serif;font-size:12px">${resumoPerfil(perfil)}<br/>Impressora: ${impressora}<br/>${new Date().toLocaleString("pt-BR")}</p>`,
+      },
+    ]);
+    return { metodo: "qz", impressora };
+  } catch (erro) {
+    return {
+      metodo: "navegador",
+      impressora,
+      mensagem: erro instanceof Error ? erro.message : await motivoFalhaQz(impressora),
+    };
+  }
+}
+

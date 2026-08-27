@@ -24,7 +24,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { AcabamentosTabela } from "@/components/AcabamentosTabela";
-import { useMateriais, useConfiguracao } from "@/hooks/useDados";
+import { useMateriais, useConfiguracao, usePerfisImpressao } from "@/hooks/useDados";
+import { resumoPerfil } from "@/lib/perfil-impressao";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import {
   faixasParaTexto,
@@ -70,6 +71,7 @@ function Precos() {
   const { user } = useAuth();
   const { data: isAdmin, isLoading: carregandoPapel } = useIsAdmin(user?.id);
   const { data: materiais, isLoading } = useMateriais();
+  const { data: perfis } = usePerfisImpressao(true);
   const { data: configuracao } = useConfiguracao();
   const queryClient = useQueryClient();
   const [linhas, setLinhas] = useState<Material[]>([]);
@@ -182,6 +184,10 @@ function Precos() {
         categoria: m.categoria ?? "impressao",
 
         formato: m.formato ?? "A4",
+
+        perfil_impressao_id: m.perfil_impressao_id ?? null,
+
+
 
 
         ativo: m.ativo,
@@ -552,6 +558,35 @@ function Precos() {
                         atualizar(m.id, "preco_por_arquivo", parsePreco(e.target.value))
                       }
                     />
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Perfil de impressão</Label>
+                    <Select
+                      value={m.perfil_impressao_id ?? "nenhum"}
+                      onValueChange={(v) =>
+                        atualizar(m.id, "perfil_impressao_id", v === "nenhum" ? null : v)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Nenhum" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nenhum">Nenhum</SelectItem>
+                        {(perfis ?? []).map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {m.perfil_impressao_id
+                        ? resumoPerfil(
+                            (perfis ?? []).find((p) => p.id === m.perfil_impressao_id) ?? null,
+                          )
+                        : "Define papel, qualidade, bandeja, tamanho, cor e frente e verso ao imprimir."}
+                    </p>
                   </div>
 
                   <div className="space-y-1.5 sm:col-span-2">
