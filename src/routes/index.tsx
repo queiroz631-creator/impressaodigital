@@ -404,6 +404,45 @@ function Calculadora() {
     aplicarArquivos(estado.arquivosLista.filter((_, i) => i !== indice));
   }
 
+  // ----- TAG: quantas cabem na área de impressão do formato -----
+  const areaFormato = useMemo(
+    () => normalizarAreasImpressao(config?.areas_impressao)[estado.formato],
+    [config?.areas_impressao, estado.formato],
+  );
+  const tagPorFolha = useMemo(
+    () => tagsPorFolha(Number(tagLargura), Number(tagComprimento), areaFormato),
+    [tagLargura, tagComprimento, areaFormato],
+  );
+
+  function adicionarTagArquivo() {
+    const largura = Number(tagLargura) || 0;
+    const comprimento = Number(tagComprimento) || 0;
+    if (largura <= 0 || comprimento <= 0) {
+      toast.error("Informe a largura e o comprimento da TAG.");
+      return;
+    }
+    if (tagPorFolha < 1) {
+      toast.error("A TAG não cabe na área de impressão do formato selecionado.");
+      return;
+    }
+    const qtd = Math.max(1, Number(tagQuantidade) || 0);
+    const folhas = tagModo === "folhas" ? qtd : Math.ceil(qtd / tagPorFolha);
+    const qtdTags = tagModo === "folhas" ? folhas * tagPorFolha : qtd;
+    const numero = estado.arquivosLista.filter((a) => a.origemTag).length + 1;
+    const nome = `TAG${numero} - TAMANHO: ${largura}x${comprimento} MM - QTD: ${qtdTags}`;
+    aplicarArquivos([
+      ...estado.arquivosLista,
+      { nome, tipo: "TAG", paginas: 1, copias: folhas, frenteVerso: false, origemTag: true },
+    ]);
+    toast.success("TAG adicionada aos arquivos.");
+  }
+
+  /** Observação final do orçamento: nomes das TAGs + observação digitada. */
+  const observacaoComTags = useMemo(() => {
+    const tags = estado.arquivosLista.filter((a) => a.origemTag).map((a) => a.nome);
+    return [...tags, estado.observacao.trim()].filter(Boolean).join("\n");
+  }, [estado.arquivosLista, estado.observacao]);
+
   function acabamentosParaSalvar(): AcabamentoDoc[] {
     const selecionados: AcabamentoDoc[] = linhasAcabamento
       .filter((l) => l.acabamento.mostrar_no_orcamento !== false)
