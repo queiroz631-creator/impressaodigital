@@ -187,7 +187,8 @@ async function imprimirViaQz(texto: string, impressora: string): Promise<boolean
       ...DADOS_CORTE,
     ]);
     return true;
-  } catch {
+  } catch (erro) {
+    ultimoErro = mensagemErro(erro);
     return false;
   }
 }
