@@ -76,6 +76,9 @@ export interface Material {
   /** Categoria do material: impressão ou cópia. */
   categoria: CategoriaMaterial;
 
+  /** Perfil de impressão vinculado (papel, qualidade, bandeja, cor, duplex). */
+  perfil_impressao_id?: string | null;
+
   formato: FormatoPapel;
   ativo: boolean;
   ordem: number;
