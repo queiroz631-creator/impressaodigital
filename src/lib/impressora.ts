@@ -48,6 +48,34 @@ export function carregarQz(): Promise<any | null> {
   return carregamentoQz;
 }
 
+let conexaoEmAndamento: Promise<boolean> | null = null;
+let ultimoErro: string | null = null;
+
+/** Última falha registrada na comunicação com o QZ Tray. */
+export function ultimoErroQz(): string | null {
+  return ultimoErro;
+}
+
+function mensagemErro(erro: unknown): string {
+  if (erro instanceof Error) return erro.message;
+  if (typeof erro === "string") return erro;
+  return "Falha desconhecida na comunicação com o QZ Tray.";
+}
+
+/**
+ * O QZ Tray só define `connection.sendData` depois que o websocket abre.
+ * Chamar `print`/`printers.find()` antes disso gera o erro
+ * "websocket.connection.sendData is not a function".
+ */
+function conexaoPronta(api: any): boolean {
+  return (
+    !!api?.websocket?.isActive?.() &&
+    typeof api?.websocket?.connection?.sendData === "function"
+  );
+}
+
+const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /**
  * Conecta ao agente local do QZ Tray.
  *
@@ -58,14 +86,42 @@ export function carregarQz(): Promise<any | null> {
  */
 export async function conectarQz(): Promise<boolean> {
   const api = await carregarQz();
-  if (!api?.websocket) return false;
-  try {
-    if (api.websocket.isActive?.()) return true;
-    await api.websocket.connect({ retries: 2, delay: 1 });
-    return true;
-  } catch {
+  if (!api?.websocket) {
+    ultimoErro = "Componente de impressão direta indisponível.";
     return false;
   }
+  if (conexaoPronta(api)) return true;
+
+  if (!conexaoEmAndamento) {
+    const tentativa = (async () => {
+      try {
+        if (api.websocket.isActive?.()) {
+          try {
+            await api.websocket.disconnect();
+          } catch {
+            /* conexão já encerrada */
+          }
+        }
+        await api.websocket.connect({ retries: 2, delay: 1 });
+      } catch (erro) {
+        ultimoErro = mensagemErro(erro);
+      }
+      // aguarda o handshake terminar (sendData disponível)
+      for (let i = 0; i < 25 && !conexaoPronta(api); i++) await espera(100);
+      if (!conexaoPronta(api)) {
+        ultimoErro =
+          ultimoErro ?? "QZ Tray não respondeu. Verifique se o agente está em execução.";
+        return false;
+      }
+      ultimoErro = null;
+      return true;
+    })();
+    conexaoEmAndamento = tentativa;
+    tentativa.finally(() => {
+      conexaoEmAndamento = null;
+    });
+  }
+  return conexaoEmAndamento;
 }
 
 /** Diagnóstico da integração QZ Tray (para a tela de Configurações). */
@@ -78,7 +134,7 @@ export async function statusQz(): Promise<StatusQz> {
 /** Síncrono: verdadeiro apenas quando o agente já está carregado e conectado. */
 export function qzDisponivel(): boolean {
   const api = qz();
-  return !!api?.printers && !!api?.websocket?.isActive?.();
+  return !!api?.printers && conexaoPronta(api);
 }
 
 /** Lista as impressoras instaladas (somente com agente local disponível). */
@@ -86,11 +142,14 @@ export async function listarImpressoras(): Promise<string[]> {
   if (!(await conectarQz())) return [];
   try {
     const lista = await qz().printers.find();
-    return Array.isArray(lista) ? lista.map(String) : [String(lista)];
-  } catch {
+    const nomes = Array.isArray(lista) ? lista.map(String) : [String(lista)];
+    return nomes.filter((n) => n && n !== "undefined");
+  } catch (erro) {
+    ultimoErro = mensagemErro(erro);
     return [];
   }
 }
+
 
 /** Primeira impressora configurada que estiver realmente disponível. */
 export async function obterImpressoraPadrao(configuradas: string[]): Promise<string | null> {
