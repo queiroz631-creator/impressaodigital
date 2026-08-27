@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useConfiguracao } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { listarImpressoras, qzDisponivel, testarImpressora } from "@/lib/impressora";
+import { listarImpressoras, statusQz, testarImpressora, type StatusQz } from "@/lib/impressora";
 import { PIX_MENSAGEM_PADRAO, PRAZO_MENSAGEM_PADRAO } from "@/lib/orcamento-extras";
 import { Switch } from "@/components/ui/switch";
 
@@ -86,12 +86,24 @@ function Configuracoes() {
   const [salvando, setSalvando] = useState(false);
   const [impressorasDetectadas, setImpressorasDetectadas] = useState<string[]>([]);
   const [novaImpressora, setNovaImpressora] = useState("");
-  const impressaoDireta = qzDisponivel();
+  const [qz, setQz] = useState<StatusQz | "verificando">("verificando");
+  const impressaoDireta = qz === "conectado";
+
+  async function verificarQz() {
+    setQz("verificando");
+    const status = await statusQz();
+    setQz(status);
+    if (status === "conectado") {
+      listarImpressoras()
+        .then(setImpressorasDetectadas)
+        .catch(() => setImpressorasDetectadas([]));
+    } else {
+      setImpressorasDetectadas([]);
+    }
+  }
 
   useEffect(() => {
-    listarImpressoras()
-      .then(setImpressorasDetectadas)
-      .catch(() => setImpressorasDetectadas([]));
+    void verificarQz();
   }, []);
 
   useEffect(() => {
