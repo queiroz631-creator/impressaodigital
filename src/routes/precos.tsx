@@ -183,6 +183,10 @@ function Precos() {
 
         formato: m.formato ?? "A4",
 
+        perfil_impressao_id: m.perfil_impressao_id ?? null,
+
+
+
 
         ativo: m.ativo,
         ordem: m.ordem,
