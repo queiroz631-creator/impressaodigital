@@ -20,6 +20,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { listarImpressoras, statusQz, testarImpressora, type StatusQz } from "@/lib/impressora";
 import { PIX_MENSAGEM_PADRAO, PRAZO_MENSAGEM_PADRAO } from "@/lib/orcamento-extras";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 
 
 export const Route = createFileRoute("/configuracoes")({
