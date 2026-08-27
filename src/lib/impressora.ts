@@ -1,9 +1,9 @@
 /**
  * Camada de abstração de impressão (printerService).
  *
- * Hoje: impressão pelo navegador (window.print) com layout 80mm.
- * Futuro: impressão direta via QZ Tray — basta o agente local estar
- * disponível em window.qz; nenhuma tela precisa ser refeita.
+ * Impressão direta: QZ Tray (agente local instalado na máquina), carregado
+ * dinamicamente no navegador via pacote `qz-tray`.
+ * Fallback: impressão pelo navegador (window.print) com layout 80mm.
  */
 
 export type MetodoImpressao = "navegador" | "qz";
@@ -14,33 +14,74 @@ export interface ResultadoImpressao {
   mensagem?: string;
 }
 
+export type StatusQz = "conectado" | "agente_ausente" | "script_indisponivel";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 function qz(): any | null {
   if (typeof window === "undefined") return null;
   return (window as any).qz ?? null;
 }
 
-export function qzDisponivel(): boolean {
-  const api = qz();
-  return !!api?.printers && !!api?.websocket;
+let carregamentoQz: Promise<any | null> | null = null;
+
+/**
+ * Carrega o script do QZ Tray (somente no navegador) e expõe em window.qz.
+ * Retorna null quando o pacote não puder ser carregado.
+ */
+export function carregarQz(): Promise<any | null> {
+  if (typeof window === "undefined") return Promise.resolve(null);
+  const existente = qz();
+  if (existente) return Promise.resolve(existente);
+
+  if (!carregamentoQz) {
+    carregamentoQz = import("qz-tray")
+      .then((mod) => {
+        const api = (mod as any).default ?? mod;
+        (window as any).qz = api;
+        return api;
+      })
+      .catch(() => null);
+  }
+  return carregamentoQz;
 }
 
-async function garantirConexao(): Promise<boolean> {
-  const api = qz();
+/**
+ * Conecta ao agente local do QZ Tray.
+ *
+ * Sem certificado configurado, o QZ Tray exibe um aviso de "site não
+ * confiável" na primeira conexão — basta o usuário clicar em "Allow" e
+ * marcar "Remember this decision" (ou habilitar "Allow unsigned requests"
+ * nas opções avançadas do QZ Tray).
+ */
+export async function conectarQz(): Promise<boolean> {
+  const api = await carregarQz();
   if (!api?.websocket) return false;
   try {
     if (api.websocket.isActive?.()) return true;
-    await api.websocket.connect();
+    await api.websocket.connect({ retries: 2, delay: 1 });
     return true;
   } catch {
     return false;
   }
 }
 
+/** Diagnóstico da integração QZ Tray (para a tela de Configurações). */
+export async function statusQz(): Promise<StatusQz> {
+  const api = await carregarQz();
+  if (!api?.websocket || !api?.printers) return "script_indisponivel";
+  return (await conectarQz()) ? "conectado" : "agente_ausente";
+}
+
+/** Síncrono: verdadeiro apenas quando o agente já está carregado e conectado. */
+export function qzDisponivel(): boolean {
+  const api = qz();
+  return !!api?.printers && !!api?.websocket?.isActive?.();
+}
+
 /** Lista as impressoras instaladas (somente com agente local disponível). */
 export async function listarImpressoras(): Promise<string[]> {
-  if (!qzDisponivel()) return [];
-  if (!(await garantirConexao())) return [];
+  if (!(await conectarQz())) return [];
   try {
     const lista = await qz().printers.find();
     return Array.isArray(lista) ? lista.map(String) : [String(lista)];
@@ -61,13 +102,29 @@ export async function obterImpressoraPadrao(configuradas: string[]): Promise<str
   return achada ?? validas[0] ?? null;
 }
 
+/**
+ * Texto plano da etiqueta exibida no diálogo (#etiqueta-print).
+ * Usado para a impressão direta (raw) via QZ Tray.
+ */
+function textoDaEtiqueta(): string {
+  if (typeof document === "undefined") return "";
+  const origem = document.getElementById("etiqueta-print");
+  return (origem?.innerText ?? "").replace(/ /g, " ").trim();
+}
+
+/** Alimenta o papel e aciona a guilhotina (ESC/POS: GS V 0). */
+const DADOS_CORTE = [{ type: "raw", format: "hex", data: "0A0A0A1D5600" }];
+
 async function imprimirViaQz(texto: string, impressora: string): Promise<boolean> {
-  if (!qzDisponivel()) return false;
-  if (!(await garantirConexao())) return false;
+  if (!texto.trim()) return false;
+  if (!(await conectarQz())) return false;
   try {
     const api = qz();
     const config = api.configs.create(impressora);
-    await api.print(config, [{ type: "raw", format: "plain", data: `${texto}\n\n\n` }]);
+    await api.print(config, [
+      { type: "raw", format: "plain", data: `${texto}\n` },
+      ...DADOS_CORTE,
+    ]);
     return true;
   } catch {
     return false;
@@ -122,7 +179,8 @@ export async function imprimirEtiqueta(
   texto: string,
   impressora?: string | null,
 ): Promise<ResultadoImpressao> {
-  if (impressora && (await imprimirViaQz(texto, impressora))) {
+  const conteudo = texto.trim() || textoDaEtiqueta();
+  if (impressora && (await imprimirViaQz(conteudo, impressora))) {
     return { metodo: "qz", impressora };
   }
   imprimirPeloNavegador();
@@ -132,7 +190,7 @@ export async function imprimirEtiqueta(
     ...(impressora
       ? {
           mensagem:
-            "A seleção automática da impressora não está disponível neste navegador. Selecione a impressora configurada na janela de impressão.",
+            "Impressão direta indisponível (QZ Tray não detectado). Selecione a impressora configurada na janela de impressão.",
         }
       : {}),
   };
