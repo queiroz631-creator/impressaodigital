@@ -470,7 +470,7 @@ function Calculadora() {
       .insert({
         cliente_nome: estado.clienteNome,
         cliente_telefone: estado.clienteTelefone,
-        observacao: estado.observacao,
+        observacao: observacaoComTags,
         validade: estado.validade || null,
         status: "pendente_envio",
       })
@@ -537,7 +537,7 @@ function Calculadora() {
         .update({
           cliente_nome: estado.clienteNome,
           cliente_telefone: estado.clienteTelefone,
-          observacao: estado.observacao,
+          observacao: observacaoComTags,
           validade: estado.validade || null,
         })
         .eq("id", pedidoId);
@@ -671,7 +671,7 @@ function Calculadora() {
       clienteNome: estado.clienteNome,
       clienteTelefone: estado.clienteTelefone,
       validade: validade || null,
-      observacao: estado.observacao || null,
+      observacao: observacaoComTags || null,
       pix: textoPix || null,
       prazoTexto: textoPrazo || null,
     });
@@ -738,7 +738,7 @@ function Calculadora() {
       .update({
         cliente_nome: estado.clienteNome,
         cliente_telefone: estado.clienteTelefone,
-        observacao: estado.observacao,
+        observacao: observacaoComTags,
         validade: estado.validade || null,
         ...extras,
       })
@@ -749,7 +749,7 @@ function Calculadora() {
         .update({
           cliente_nome: estado.clienteNome,
           cliente_telefone: estado.clienteTelefone,
-          observacao: estado.observacao,
+          observacao: observacaoComTags,
           validade: estado.validade || null,
           ...extras,
         })
