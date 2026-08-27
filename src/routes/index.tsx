@@ -516,7 +516,7 @@ function Calculadora() {
         valor_unitario: materialSelecionado.valorUnitario,
         valor_total: materialSelecionado.total,
         copia_manual: estado.copiaManual,
-        observacao: estado.observacao,
+        observacao: observacaoComTags,
         validade: estado.validade || null,
         status: "pendente_envio",
       };
