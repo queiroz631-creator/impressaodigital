@@ -63,23 +63,14 @@ function mensagemErro(erro: unknown): string {
 }
 
 /**
- * O QZ Tray só define `connection.sendData` depois que o websocket abre.
- * Chamar `print`/`printers.find()` antes disso gera o erro
- * "websocket.connection.sendData is not a function".
+ * Verifica se a conexão com o QZ Tray está ativa.
  */
 function conexaoPronta(api: any): boolean {
   return !!api?.websocket?.isActive?.();
 }
 
-const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 /**
  * Conecta ao agente local do QZ Tray.
- *
- * Sem certificado configurado, o QZ Tray exibe um aviso de "site não
- * confiável" na primeira conexão — basta o usuário clicar em "Allow" e
- * marcar "Remember this decision" (ou habilitar "Allow unsigned requests"
- * nas opções avançadas do QZ Tray).
  */
 export async function conectarQz(): Promise<boolean> {
   const api = await carregarQz();
@@ -87,43 +78,39 @@ export async function conectarQz(): Promise<boolean> {
     ultimoErro = "Componente de impressão direta indisponível.";
     return false;
   }
-  if (conexaoPronta(api)) return true;
-
-  if (!conexaoEmAndamento) {
-    const tentativa = (async () => {
-      try {
-        if (api.websocket.isActive?.()) {
-          try {
-            await api.websocket.disconnect();
-          } catch {
-            /* conexão já encerrada */
-          }
-        }
-        // hosts alternativos: instalações recentes do QZ Tray usam
-        // localhost.qz.io (certificado válido) além de localhost.
-        await api.websocket.connect({
-          host: ["localhost", "localhost.qz.io", "127.0.0.1"],
-          retries: 3,
-          delay: 1,
-        });
-      } catch (erro) {
-        ultimoErro = mensagemErro(erro);
-      }
-      // aguarda o handshake terminar (sendData disponível)
-      for (let i = 0; i < 25 && !conexaoPronta(api); i++) await espera(100);
-      if (!conexaoPronta(api)) {
-        ultimoErro =
-          ultimoErro ?? "QZ Tray não respondeu. Verifique se o agente está em execução.";
-        return false;
-      }
-      ultimoErro = null;
-      return true;
-    })();
-    conexaoEmAndamento = tentativa;
-    tentativa.finally(() => {
-      conexaoEmAndamento = null;
-    });
+  
+  if (conexaoPronta(api)) {
+    ultimoErro = null;
+    return true;
   }
+
+  if (conexaoEmAndamento) return conexaoEmAndamento;
+
+  conexaoEmAndamento = (async () => {
+    try {
+      // QZ Tray 2.x connect() resolve quando a conexão é estabelecida.
+      // localhost.qz.io é essencial para conexões HTTPS.
+      await api.websocket.connect({
+        host: ["localhost", "localhost.qz.io"],
+        retries: 3,
+        delay: 1,
+      });
+      
+      if (conexaoPronta(api)) {
+        ultimoErro = null;
+        return true;
+      }
+      
+      ultimoErro = "Conexão estabelecida, mas o agente não respondeu como esperado.";
+      return false;
+    } catch (erro) {
+      ultimoErro = mensagemErro(erro);
+      return false;
+    } finally {
+      conexaoEmAndamento = null;
+    }
+  })();
+
   return conexaoEmAndamento;
 }
 
@@ -440,4 +427,3 @@ export async function testarPerfil(
     };
   }
 }
-
