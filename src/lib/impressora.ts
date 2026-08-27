@@ -180,21 +180,39 @@ export async function imprimirEtiqueta(
   impressora?: string | null,
 ): Promise<ResultadoImpressao> {
   const conteudo = texto.trim() || textoDaEtiqueta();
-  if (impressora && (await imprimirViaQz(conteudo, impressora))) {
-    return { metodo: "qz", impressora };
+
+  if (impressora) {
+    if (await imprimirViaQz(conteudo, impressora)) {
+      return { metodo: "qz", impressora };
+    }
+    imprimirPeloNavegador();
+    return {
+      metodo: "navegador",
+      impressora,
+      mensagem: await motivoFalhaQz(impressora),
+    };
   }
+
   imprimirPeloNavegador();
-  return {
-    metodo: "navegador",
-    impressora: impressora ?? null,
-    ...(impressora
-      ? {
-          mensagem:
-            "Impressão direta indisponível (QZ Tray não detectado). Selecione a impressora configurada na janela de impressão.",
-        }
-      : {}),
-  };
+  return { metodo: "navegador", impressora: null };
 }
+
+/** Explica por que a impressão direta não aconteceu. */
+export async function motivoFalhaQz(impressora: string): Promise<string> {
+  const status = await statusQz();
+  if (status === "script_indisponivel") {
+    return "Componente de impressão direta indisponível. Usando a janela do navegador.";
+  }
+  if (status === "agente_ausente") {
+    return "QZ Tray não conectado. Inicie o agente no computador para imprimir direto na térmica.";
+  }
+  const disponiveis = await listarImpressoras();
+  const existe = disponiveis.some((d) => d.toLowerCase() === impressora.toLowerCase());
+  return existe
+    ? `Falha ao enviar para "${impressora}". Verifique se a impressora está ligada.`
+    : `Impressora "${impressora}" não encontrada no computador. Ajuste em Configurações → Impressão.`;
+}
+
 
 /** Força a caixa de diálogo do navegador (permite escolher a impressora). */
 export function escolherImpressora(): ResultadoImpressao {
