@@ -62,23 +62,15 @@ function mensagemErro(erro: unknown): string {
   return "Falha desconhecida na comunicação com o QZ Tray.";
 }
 
-/** isActive() também é verdadeiro enquanto o socket ainda está conectando. */
-function conexaoPronta(api: any): boolean {
-  const conexao = api?.websocket?.connection;
-  return (
-    conexao?.readyState === WebSocket.OPEN &&
-    conexao?.established === true &&
-    typeof conexao?.sendData === "function"
-  );
-}
-
-async function aguardarTentativaAtual(api: any): Promise<boolean> {
-  for (let tentativa = 0; tentativa < 100; tentativa += 1) {
-    if (conexaoPronta(api)) return true;
-    if (!api?.websocket?.isActive?.()) return false;
-    await new Promise((resolve) => setTimeout(resolve, 100));
+/** Confirma o handshake por uma chamada pública, sem acessar internals do QZ. */
+async function conexaoPronta(api: any): Promise<boolean> {
+  if (!api?.websocket?.isActive?.()) return false;
+  try {
+    await api.api.getVersion();
+    return true;
+  } catch {
+    return false;
   }
-  return false;
 }
 
 /**
@@ -91,7 +83,7 @@ export async function conectarQz(): Promise<boolean> {
     return false;
   }
   
-  if (conexaoPronta(api)) {
+  if (await conexaoPronta(api)) {
     ultimoErro = null;
     return true;
   }
@@ -102,9 +94,15 @@ export async function conectarQz(): Promise<boolean> {
     try {
       // Uma tentativa anterior pode estar em CONNECTING. Não a considere
       // pronta e não abra outro socket em paralelo.
-      if (api.websocket.isActive?.() && (await aguardarTentativaAtual(api))) {
-        ultimoErro = null;
-        return true;
+      if (api.websocket.isActive?.()) {
+        for (let tentativa = 0; tentativa < 100; tentativa += 1) {
+          if (await conexaoPronta(api)) {
+            ultimoErro = null;
+            return true;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        throw new Error("A conexão local não concluiu o handshake com o QZ Tray.");
       }
 
       // Usa os hosts e todas as portas oficiais padrão da biblioteca.
@@ -112,7 +110,7 @@ export async function conectarQz(): Promise<boolean> {
         retries: 0,
       });
       
-      if (conexaoPronta(api)) {
+      if (await conexaoPronta(api)) {
         ultimoErro = null;
         return true;
       }
@@ -140,7 +138,7 @@ export async function statusQz(): Promise<StatusQz> {
 /** Síncrono: verdadeiro apenas quando o agente já está carregado e conectado. */
 export function qzDisponivel(): boolean {
   const api = qz();
-  return !!api?.printers && conexaoPronta(api);
+  return !!api?.printers && !!api?.websocket?.isActive?.();
 }
 
 /** Lista as impressoras instaladas (somente com agente local disponível). */
