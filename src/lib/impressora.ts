@@ -102,7 +102,13 @@ export async function conectarQz(): Promise<boolean> {
             /* conexão já encerrada */
           }
         }
-        await api.websocket.connect({ retries: 2, delay: 1 });
+        // hosts alternativos: instalações recentes do QZ Tray usam
+        // localhost.qz.io (certificado válido) além de localhost.
+        await api.websocket.connect({
+          host: ["localhost", "localhost.qz.io", "127.0.0.1"],
+          retries: 1,
+          delay: 1,
+        });
       } catch (erro) {
         ultimoErro = mensagemErro(erro);
       }
