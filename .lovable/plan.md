@@ -32,7 +32,7 @@ O JSPrintManager (Neodynamic) é um concorrente direto do QZ Tray e, em recursos
 
 Conclusão: trocar QZ por JSPrintManager é trocar seis por meia dúzia **na arquitetura** — ambos dependem de WebSocket do navegador para o agente na máquina, que é exatamente o ponto que vem falhando. O que muda: JSPM é pago (licença por domínio/servidor) e tem suporte comercial; QZ é gratuito e open source. Não resolve a dor atual e ainda adiciona custo de licença.
 
-O relatório enviado confirma esse risco no próprio JSPrintManager: a solicitação `connect` chegou ao cliente local, mas foi marcada como **Invalid Certificate**, com organização desconhecida, nome comum “An anonymous request”, site não confiável e sem validade/fingerprint reconhecidos. Isso mostra que a conexão navegador → agente local está funcionando, porém a confiança/autorização do site não está configurada. É o mesmo tipo de barreira de certificado que já está causando problemas com o QZ Tray; migrar para JSPM apenas mudaria o fornecedor sem eliminar a causa.
+O relatório enviado é do **QZ Tray**: a solicitação `connect` chegou ao agente local, mas foi marcada como **Invalid Certificate**, com organização desconhecida, nome comum “An anonymous request”, site não confiável e sem validade/fingerprint reconhecidos. Portanto, o QZ Tray está ativo e a conexão navegador → agente funciona; a falha atual está na assinatura digital/autorização do site. O JSPrintManager não foi testado por essa imagem, embora também utilize um agente local por WebSocket.
 
 Por isso a recomendação continua sendo o **PrintNode**, cuja arquitetura (agente → nuvem → API HTTPS) elimina a classe inteira de problema que está acontecendo com o QZ Tray.
 
