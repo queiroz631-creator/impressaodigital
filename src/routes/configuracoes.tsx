@@ -143,12 +143,20 @@ function Configuracoes() {
   }, [config]);
 
   function set<K extends keyof Form>(campo: K, valor: Form[K]) {
+    setAlteracoesPendentes(true);
     setForm((f) => ({ ...f, [campo]: valor }));
   }
 
   async function salvar() {
     if (!form.empresa_nome.trim()) {
       toast.error("Informe o nome da empresa.");
+      return;
+    }
+    const impressoras = form.impressoras_padrao.map((n) => n.trim()).filter(Boolean);
+    if (form.impressora_padrao_tipo === "qz" && impressoras.length === 0) {
+      toast.error(
+        "Adicione ao menos uma impressora para usar a impressão direta via QZ Tray.",
+      );
       return;
     }
     setSalvando(true);
@@ -161,10 +169,10 @@ function Configuracoes() {
       instagram: form.instagram || null,
       rodape_orcamento: form.rodape_orcamento,
       validade_padrao_dias: Number(form.validade_padrao_dias) || 7,
-      impressora_padrao_nome: form.impressoras_padrao[0] ?? null,
+      impressora_padrao_nome: impressoras[0] ?? null,
       impressora_padrao_tipo: form.impressora_padrao_tipo,
       impressora_padrao_largura: 80,
-      impressoras_padrao: form.impressoras_padrao,
+      impressoras_padrao: impressoras,
       pix_ativo: form.pix_ativo,
       pix_chave: form.pix_chave || null,
       pix_nome: form.pix_nome || null,
@@ -173,17 +181,23 @@ function Configuracoes() {
       mensagem_prazo_orcamento: form.mensagem_prazo_orcamento || PRAZO_MENSAGEM_PADRAO,
     };
 
-    const { error } = config
-      ? await supabase.from("configuracoes").update(payload).eq("id", config.id)
-      : await supabase.from("configuracoes").insert(payload);
+    const { data, error } = config
+      ? await supabase.from("configuracoes").update(payload).eq("id", config.id).select()
+      : await supabase.from("configuracoes").insert(payload).select();
     setSalvando(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    queryClient.invalidateQueries({ queryKey: ["configuracoes"] });
+    if (!data || data.length === 0) {
+      toast.error("Nada foi salvo: você não tem permissão para alterar as configurações.");
+      return;
+    }
+    setAlteracoesPendentes(false);
+    await queryClient.invalidateQueries({ queryKey: ["configuracoes"] });
     toast.success("Configurações salvas com sucesso.");
   }
+
 
   if (carregandoPapel || isLoading) return <Skeleton className="h-96 w-full" />;
 
