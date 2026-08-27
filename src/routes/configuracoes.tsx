@@ -17,7 +17,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useConfiguracao } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { listarImpressoras, statusQz, testarImpressora, type StatusQz } from "@/lib/impressora";
+import {
+  listarImpressoras,
+  statusQz,
+  testarImpressora,
+  ultimoErroQz,
+  type StatusQz,
+} from "@/lib/impressora";
 import { PIX_MENSAGEM_PADRAO, PRAZO_MENSAGEM_PADRAO } from "@/lib/orcamento-extras";
 import { PerfisImpressao } from "@/components/PerfisImpressao";
 import { Switch } from "@/components/ui/switch";
