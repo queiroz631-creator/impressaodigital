@@ -22,6 +22,7 @@ import {
   ShoppingCart,
   Copy,
   Image as ImageIcon,
+  Tag,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -62,6 +63,8 @@ import {
   resumoLinhas,
   rotuloCobranca,
   totalAcabamentos,
+  tagsPorFolha,
+  normalizarAreasImpressao,
   FORMATOS,
   FORMATO_PADRAO,
   type FormatoPapel,
