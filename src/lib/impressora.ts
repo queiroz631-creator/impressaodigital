@@ -68,10 +68,7 @@ function mensagemErro(erro: unknown): string {
  * "websocket.connection.sendData is not a function".
  */
 function conexaoPronta(api: any): boolean {
-  return (
-    !!api?.websocket?.isActive?.() &&
-    typeof api?.websocket?.connection?.sendData === "function"
-  );
+  return !!api?.websocket?.isActive?.();
 }
 
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
