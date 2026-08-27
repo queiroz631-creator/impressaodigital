@@ -62,27 +62,19 @@ function mensagemErro(erro: unknown): string {
   return "Falha desconhecida na comunicação com o QZ Tray.";
 }
 
-/**
- * O QZ Tray só define `connection.sendData` depois que o websocket abre.
- * Chamar `print`/`printers.find()` antes disso gera o erro
- * "websocket.connection.sendData is not a function".
- */
-function conexaoPronta(api: any): boolean {
-  return (
-    !!api?.websocket?.isActive?.() &&
-    typeof api?.websocket?.connection?.sendData === "function"
-  );
+/** Confirma o handshake por uma chamada pública, sem acessar internals do QZ. */
+async function conexaoPronta(api: any): Promise<boolean> {
+  if (!api?.websocket?.isActive?.()) return false;
+  try {
+    await api.api.getVersion();
+    return true;
+  } catch {
+    return false;
+  }
 }
-
-const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Conecta ao agente local do QZ Tray.
- *
- * Sem certificado configurado, o QZ Tray exibe um aviso de "site não
- * confiável" na primeira conexão — basta o usuário clicar em "Allow" e
- * marcar "Remember this decision" (ou habilitar "Allow unsigned requests"
- * nas opções avançadas do QZ Tray).
  */
 export async function conectarQz(): Promise<boolean> {
   const api = await carregarQz();
@@ -90,43 +82,49 @@ export async function conectarQz(): Promise<boolean> {
     ultimoErro = "Componente de impressão direta indisponível.";
     return false;
   }
-  if (conexaoPronta(api)) return true;
-
-  if (!conexaoEmAndamento) {
-    const tentativa = (async () => {
-      try {
-        if (api.websocket.isActive?.()) {
-          try {
-            await api.websocket.disconnect();
-          } catch {
-            /* conexão já encerrada */
-          }
-        }
-        // hosts alternativos: instalações recentes do QZ Tray usam
-        // localhost.qz.io (certificado válido) além de localhost.
-        await api.websocket.connect({
-          host: ["localhost", "localhost.qz.io", "127.0.0.1"],
-          retries: 3,
-          delay: 1,
-        });
-      } catch (erro) {
-        ultimoErro = mensagemErro(erro);
-      }
-      // aguarda o handshake terminar (sendData disponível)
-      for (let i = 0; i < 25 && !conexaoPronta(api); i++) await espera(100);
-      if (!conexaoPronta(api)) {
-        ultimoErro =
-          ultimoErro ?? "QZ Tray não respondeu. Verifique se o agente está em execução.";
-        return false;
-      }
-      ultimoErro = null;
-      return true;
-    })();
-    conexaoEmAndamento = tentativa;
-    tentativa.finally(() => {
-      conexaoEmAndamento = null;
-    });
+  
+  if (await conexaoPronta(api)) {
+    ultimoErro = null;
+    return true;
   }
+
+  if (conexaoEmAndamento) return conexaoEmAndamento;
+
+  conexaoEmAndamento = (async () => {
+    try {
+      // Uma tentativa anterior pode estar em CONNECTING. Não a considere
+      // pronta e não abra outro socket em paralelo.
+      if (api.websocket.isActive?.()) {
+        for (let tentativa = 0; tentativa < 100; tentativa += 1) {
+          if (await conexaoPronta(api)) {
+            ultimoErro = null;
+            return true;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        throw new Error("A conexão local não concluiu o handshake com o QZ Tray.");
+      }
+
+      // Usa os hosts e todas as portas oficiais padrão da biblioteca.
+      await api.websocket.connect({
+        retries: 0,
+      });
+      
+      if (await conexaoPronta(api)) {
+        ultimoErro = null;
+        return true;
+      }
+      
+      ultimoErro = "Conexão estabelecida, mas o agente não respondeu como esperado.";
+      return false;
+    } catch (erro) {
+      ultimoErro = mensagemErro(erro);
+      return false;
+    } finally {
+      conexaoEmAndamento = null;
+    }
+  })();
+
   return conexaoEmAndamento;
 }
 
@@ -140,7 +138,7 @@ export async function statusQz(): Promise<StatusQz> {
 /** Síncrono: verdadeiro apenas quando o agente já está carregado e conectado. */
 export function qzDisponivel(): boolean {
   const api = qz();
-  return !!api?.printers && conexaoPronta(api);
+  return !!api?.printers && !!api?.websocket?.isActive?.();
 }
 
 /** Lista as impressoras instaladas (somente com agente local disponível). */
@@ -324,8 +322,13 @@ export async function testarImpressora(
   if (impressora && (await imprimirViaQz(texto, impressora))) {
     return { metodo: "qz", impressora };
   }
-  imprimirPeloNavegador(texto);
-  return { metodo: "navegador", impressora };
+  return {
+    metodo: "navegador",
+    impressora,
+    mensagem: impressora
+      ? await motivoFalhaQz(impressora)
+      : "Adicione uma impressora antes de realizar o teste.",
+  };
 }
 
 // ---------- Impressão de documentos com perfil ----------
@@ -443,4 +446,3 @@ export async function testarPerfil(
     };
   }
 }
-
