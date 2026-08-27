@@ -6,6 +6,8 @@
  * Fallback: impressão pelo navegador (window.print) com layout 80mm.
  */
 
+import { densidadeQualidade, resumoPerfil, type PerfilImpressao } from "./perfil-impressao";
+
 export type MetodoImpressao = "navegador" | "qz";
 
 export interface ResultadoImpressao {
