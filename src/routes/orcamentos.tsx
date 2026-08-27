@@ -10,6 +10,7 @@ import {
   Trash2,
   Eye,
   Printer,
+  FileStack,
   Tags,
   Pencil,
   Link2 as LinkIcon,
