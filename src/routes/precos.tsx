@@ -441,6 +441,58 @@ function Precos() {
         <TabsContent value="acabamentos">
           <AcabamentosTabela />
         </TabsContent>
+        <TabsContent value="area-impressao">
+          <Card className="shadow-card">
+            <CardContent className="space-y-4 p-4">
+              <p className="text-xs text-muted-foreground">
+                Área imprimível (em mm) de cada formato. Usada no cálculo de TAGs da calculadora.
+              </p>
+              {areas &&
+                FORMATOS.map((f) => (
+                  <div key={f.valor} className="flex flex-wrap items-center gap-3">
+                    <Label className="w-32 text-sm font-bold">{f.rotulo}</Label>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs">Largura (mm)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        inputMode="numeric"
+                        className="w-24"
+                        value={areas[f.valor].largura || ""}
+                        onChange={(e) =>
+                          setAreas({
+                            ...areas,
+                            [f.valor]: { ...areas[f.valor], largura: Math.max(1, Number(e.target.value) || 0) },
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs">Altura (mm)</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        inputMode="numeric"
+                        className="w-24"
+                        value={areas[f.valor].altura || ""}
+                        onChange={(e) =>
+                          setAreas({
+                            ...areas,
+                            [f.valor]: { ...areas[f.valor], altura: Math.max(1, Number(e.target.value) || 0) },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
+              <div>
+                <Button onClick={salvarAreas} disabled={salvandoAreas || !areas}>
+                  <Save className="h-4 w-4" /> {salvandoAreas ? "Salvando..." : "Salvar Área de Impressão"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       <Dialog open={!!editandoId} onOpenChange={(aberto) => !aberto && setEditandoId(null)}>
