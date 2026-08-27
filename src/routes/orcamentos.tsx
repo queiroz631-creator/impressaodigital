@@ -174,7 +174,7 @@ function Orcamentos() {
    * vinculado ao material de cada item.
    */
   async function imprimirDocumentosPedido(pedido: PedidoAgrupado) {
-    const padrao = (configuracao?.impressora_padrao_nome ?? null) as string | null;
+    const padrao = (config?.impressora_padrao_nome ?? null) as string | null;
     let enviados = 0;
     let semArquivo = 0;
 
