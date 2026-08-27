@@ -20,6 +20,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { listarImpressoras, statusQz, testarImpressora, type StatusQz } from "@/lib/impressora";
 import { PIX_MENSAGEM_PADRAO, PRAZO_MENSAGEM_PADRAO } from "@/lib/orcamento-extras";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 
 
 export const Route = createFileRoute("/configuracoes")({
@@ -87,6 +95,7 @@ function Configuracoes() {
   const [impressorasDetectadas, setImpressorasDetectadas] = useState<string[]>([]);
   const [novaImpressora, setNovaImpressora] = useState("");
   const [qz, setQz] = useState<StatusQz | "verificando">("verificando");
+  const [alteracoesPendentes, setAlteracoesPendentes] = useState(false);
   const impressaoDireta = qz === "conectado";
 
   async function verificarQz() {
@@ -135,12 +144,20 @@ function Configuracoes() {
   }, [config]);
 
   function set<K extends keyof Form>(campo: K, valor: Form[K]) {
+    setAlteracoesPendentes(true);
     setForm((f) => ({ ...f, [campo]: valor }));
   }
 
   async function salvar() {
     if (!form.empresa_nome.trim()) {
       toast.error("Informe o nome da empresa.");
+      return;
+    }
+    const impressoras = form.impressoras_padrao.map((n) => n.trim()).filter(Boolean);
+    if (form.impressora_padrao_tipo === "qz" && impressoras.length === 0) {
+      toast.error(
+        "Adicione ao menos uma impressora para usar a impressão direta via QZ Tray.",
+      );
       return;
     }
     setSalvando(true);
@@ -153,10 +170,10 @@ function Configuracoes() {
       instagram: form.instagram || null,
       rodape_orcamento: form.rodape_orcamento,
       validade_padrao_dias: Number(form.validade_padrao_dias) || 7,
-      impressora_padrao_nome: form.impressoras_padrao[0] ?? null,
+      impressora_padrao_nome: impressoras[0] ?? null,
       impressora_padrao_tipo: form.impressora_padrao_tipo,
       impressora_padrao_largura: 80,
-      impressoras_padrao: form.impressoras_padrao,
+      impressoras_padrao: impressoras,
       pix_ativo: form.pix_ativo,
       pix_chave: form.pix_chave || null,
       pix_nome: form.pix_nome || null,
@@ -165,17 +182,23 @@ function Configuracoes() {
       mensagem_prazo_orcamento: form.mensagem_prazo_orcamento || PRAZO_MENSAGEM_PADRAO,
     };
 
-    const { error } = config
-      ? await supabase.from("configuracoes").update(payload).eq("id", config.id)
-      : await supabase.from("configuracoes").insert(payload);
+    const { data, error } = config
+      ? await supabase.from("configuracoes").update(payload).eq("id", config.id).select()
+      : await supabase.from("configuracoes").insert(payload).select();
     setSalvando(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    queryClient.invalidateQueries({ queryKey: ["configuracoes"] });
+    if (!data || data.length === 0) {
+      toast.error("Nada foi salvo: você não tem permissão para alterar as configurações.");
+      return;
+    }
+    setAlteracoesPendentes(false);
+    await queryClient.invalidateQueries({ queryKey: ["configuracoes"] });
     toast.success("Configurações salvas com sucesso.");
   }
+
 
   if (carregandoPapel || isLoading) return <Skeleton className="h-96 w-full" />;
 
@@ -444,22 +467,40 @@ function Configuracoes() {
               )}
             </div>
 
+            {impressorasDetectadas.length > 0 && (
+              <div className="space-y-1 pt-2">
+                <Label className="text-xs">Impressoras encontradas no computador</Label>
+                <Select
+                  value=""
+                  onValueChange={(nome) => {
+                    if (form.impressoras_padrao.includes(nome)) {
+                      toast.error("Essa impressora já está na lista.");
+                      return;
+                    }
+                    set("impressoras_padrao", [...form.impressoras_padrao, nome]);
+                    toast.success(`"${nome}" adicionada. Clique em Salvar Alterações.`);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar impressora" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {impressorasDetectadas.map((nome) => (
+                      <SelectItem key={nome} value={nome}>
+                        {nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 pt-2">
               <Input
-                list="impressoras-detectadas"
                 value={novaImpressora}
-                placeholder={
-                  impressorasDetectadas.length > 0
-                    ? "Selecionar impressora"
-                    : "Nome da impressora (ex.: POS-80)"
-                }
+                placeholder="Informar nome manualmente (ex.: POS-80)"
                 onChange={(e) => setNovaImpressora(e.target.value)}
               />
-              <datalist id="impressoras-detectadas">
-                {impressorasDetectadas.map((nome) => (
-                  <option key={nome} value={nome} />
-                ))}
-              </datalist>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -482,6 +523,12 @@ function Configuracoes() {
                 impressora manualmente, mas a seleção automática depende do QZ Tray em execução.
               </p>
             )}
+            {alteracoesPendentes && (
+              <p className="text-xs font-medium text-amber-600">
+                Há alterações não salvas. Clique em "Salvar Alterações" antes de sair da tela.
+              </p>
+            )}
+
           </div>
 
           <div className="space-y-2">

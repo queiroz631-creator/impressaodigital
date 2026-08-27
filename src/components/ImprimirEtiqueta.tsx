@@ -164,14 +164,27 @@ export function ImprimirEtiqueta({
     }
 
     /*
-     * Imprimir na impressora padrão.
+     * Imprimir na impressora padrão, respeitando o método configurado.
      */
-    const resultado = await imprimirEtiqueta("", impressora || null);
+    const metodoConfig = config?.impressora_padrao_tipo === "qz" ? "qz" : "navegador";
+
+    if (metodoConfig === "qz" && !impressora) {
+      toast.error(
+        "Nenhuma impressora configurada para a impressão direta. Ajuste em Configurações → Impressão.",
+      );
+      return;
+    }
+
+    const resultado = await imprimirEtiqueta(
+      "",
+      metodoConfig === "qz" ? impressora : null,
+    );
 
     if (resultado.mensagem) {
       toast.info(resultado.mensagem);
     }
   }
+
 
   return (
     <>
