@@ -18,6 +18,7 @@ import { useConfiguracao } from "@/hooks/useDados";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
+  assinarQuedaQz,
   listarImpressoras,
   statusQz,
   testarImpressora,
@@ -135,6 +136,22 @@ function Configuracoes() {
 
   useEffect(() => {
     void verificarQz();
+
+    const cancelar = assinarQuedaQz((motivo) => {
+      setQz("agente_ausente");
+      setImpressorasDetectadas([]);
+      setErroQz(motivo || "Conexão com o QZ Tray encerrada.");
+    });
+
+    const intervalo = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void statusQz().then((status) => setQz(status));
+    }, 20000);
+
+    return () => {
+      cancelar();
+      clearInterval(intervalo);
+    };
   }, []);
 
   useEffect(() => {

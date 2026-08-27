@@ -50,6 +50,29 @@ export function carregarQz(): Promise<any | null> {
 
 let conexaoEmAndamento: Promise<boolean> | null = null;
 let ultimoErro: string | null = null;
+let vigilanciaAtiva = false;
+let heartbeat: ReturnType<typeof setInterval> | null = null;
+let reconexoesAutomaticas = 0;
+
+/** Evento disparado quando a conexão com o agente cai. */
+export const EVENTO_QUEDA_QZ = "qz:desconectado";
+
+function avisarQueda(motivo: string) {
+  ultimoErro = motivo;
+  conexaoEmAndamento = null;
+  pararHeartbeat();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(EVENTO_QUEDA_QZ, { detail: motivo }));
+  }
+}
+
+/** Assina o evento de queda da conexão. Retorna a função de cancelamento. */
+export function assinarQuedaQz(ouvinte: (motivo: string) => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const handler = (e: Event) => ouvinte(String((e as CustomEvent).detail ?? ""));
+  window.addEventListener(EVENTO_QUEDA_QZ, handler);
+  return () => window.removeEventListener(EVENTO_QUEDA_QZ, handler);
+}
 
 /** Última falha registrada na comunicação com o QZ Tray. */
 export function ultimoErroQz(): string | null {
@@ -73,6 +96,64 @@ async function conexaoPronta(api: any): Promise<boolean> {
   }
 }
 
+function pararHeartbeat() {
+  if (heartbeat) {
+    clearInterval(heartbeat);
+    heartbeat = null;
+  }
+}
+
+/** Mantém a sessão viva enquanto a aba estiver visível. */
+function iniciarHeartbeat() {
+  if (typeof window === "undefined" || heartbeat) return;
+  heartbeat = setInterval(() => {
+    if (document.visibilityState !== "visible") return;
+    const api = qz();
+    if (!api?.websocket?.isActive?.()) {
+      avisarQueda("Conexão com o QZ Tray encerrada.");
+      void reconectarAutomatico();
+      return;
+    }
+    api.api.getVersion().catch(() => {
+      avisarQueda("O agente do QZ Tray parou de responder.");
+      void reconectarAutomatico();
+    });
+  }, 15000);
+}
+
+async function reconectarAutomatico() {
+  if (reconexoesAutomaticas >= 3) return;
+  reconexoesAutomaticas += 1;
+  await new Promise((r) => setTimeout(r, 1500 * reconexoesAutomaticas));
+  if (await conectarQz()) reconexoesAutomaticas = 0;
+}
+
+/** Reage a quedas do socket e à volta da aba para o primeiro plano. */
+function vigiarConexao(api: any) {
+  iniciarHeartbeat();
+  if (vigilanciaAtiva) return;
+  vigilanciaAtiva = true;
+
+  api.websocket.setClosedCallbacks?.(() => {
+    avisarQueda("O QZ Tray encerrou a conexão.");
+    void reconectarAutomatico();
+  });
+  api.websocket.setErrorCallbacks?.((erro: unknown) => {
+    avisarQueda(mensagemErro(erro));
+  });
+
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible") return;
+      iniciarHeartbeat();
+      if (!qz()?.websocket?.isActive?.()) {
+        reconexoesAutomaticas = 0;
+        void conectarQz();
+      }
+    });
+  }
+}
+
 /**
  * Conecta ao agente local do QZ Tray.
  */
@@ -85,6 +166,7 @@ export async function conectarQz(): Promise<boolean> {
   
   if (await conexaoPronta(api)) {
     ultimoErro = null;
+    vigiarConexao(api);
     return true;
   }
 
@@ -98,6 +180,7 @@ export async function conectarQz(): Promise<boolean> {
         for (let tentativa = 0; tentativa < 100; tentativa += 1) {
           if (await conexaoPronta(api)) {
             ultimoErro = null;
+            vigiarConexao(api);
             return true;
           }
           await new Promise((resolve) => setTimeout(resolve, 100));
@@ -112,6 +195,7 @@ export async function conectarQz(): Promise<boolean> {
       
       if (await conexaoPronta(api)) {
         ultimoErro = null;
+        vigiarConexao(api);
         return true;
       }
       
@@ -128,11 +212,20 @@ export async function conectarQz(): Promise<boolean> {
   return conexaoEmAndamento;
 }
 
+/** Garante socket pronto imediatamente antes de enviar um trabalho. */
+async function garantirConexao(): Promise<boolean> {
+  const api = qz();
+  if (api && (await conexaoPronta(api))) return true;
+  conexaoEmAndamento = null;
+  reconexoesAutomaticas = 0;
+  return conectarQz();
+}
+
 /** Diagnóstico da integração QZ Tray (para a tela de Configurações). */
 export async function statusQz(): Promise<StatusQz> {
   const api = await carregarQz();
   if (!api?.websocket || !api?.printers) return "script_indisponivel";
-  return (await conectarQz()) ? "conectado" : "agente_ausente";
+  return (await garantirConexao()) ? "conectado" : "agente_ausente";
 }
 
 /** Síncrono: verdadeiro apenas quando o agente já está carregado e conectado. */
@@ -143,7 +236,7 @@ export function qzDisponivel(): boolean {
 
 /** Lista as impressoras instaladas (somente com agente local disponível). */
 export async function listarImpressoras(): Promise<string[]> {
-  if (!(await conectarQz())) return [];
+  if (!(await garantirConexao())) return [];
   try {
     const lista = await qz().printers.find();
     const nomes = Array.isArray(lista) ? lista.map(String) : [String(lista)];
@@ -182,7 +275,7 @@ const DADOS_CORTE = [{ type: "raw", format: "hex", data: "0A0A0A1D5600" }];
 
 async function imprimirViaQz(texto: string, impressora: string): Promise<boolean> {
   if (!texto.trim()) return false;
-  if (!(await conectarQz())) return false;
+  if (!(await garantirConexao())) return false;
   try {
     const api = qz();
     const config = api.configs.create(impressora);
@@ -383,7 +476,7 @@ export async function imprimirDocumentos(
     return { metodo: "navegador", impressora, mensagem: "Nenhum arquivo para imprimir." };
   }
 
-  if (!(await conectarQz())) {
+  if (!(await garantirConexao())) {
     return { metodo: "navegador", impressora, mensagem: await motivoFalhaQz(impressora) };
   }
 
@@ -422,7 +515,7 @@ export async function testarPerfil(
       mensagem: "Defina a impressora do perfil ou uma impressora padrão.",
     };
   }
-  if (!(await conectarQz())) {
+  if (!(await garantirConexao())) {
     return { metodo: "navegador", impressora, mensagem: await motivoFalhaQz(impressora) };
   }
   try {
