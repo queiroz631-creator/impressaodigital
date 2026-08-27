@@ -36,6 +36,7 @@ export interface Configuracao {
   pix_banco: string | null;
   pix_mensagem: string;
   mensagem_prazo_orcamento: string;
+  areas_impressao: unknown;
 }
 
 

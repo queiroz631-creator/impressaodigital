@@ -623,6 +623,60 @@ export function totalAcabamentos(linhas: LinhaAcabamento[]) {
   return linhas.reduce((acc, l) => acc + l.total, 0);
 }
 
+// ---------- TAGs (imposição na área de impressão) ----------
+
+/** Área imprimível (mm) por formato de papel. */
+export interface AreaImpressao {
+  largura: number;
+  altura: number;
+}
+
+export type AreasImpressao = Record<FormatoPapel, AreaImpressao>;
+
+export const AREAS_IMPRESSAO_PADRAO: AreasImpressao = {
+  A3: { largura: 285, altura: 420 },
+  A4: { largura: 204, altura: 292 },
+  A5: { largura: 138, altura: 200 },
+};
+
+/** Normaliza as áreas de impressão vindas do banco, aplicando os padrões. */
+export function normalizarAreasImpressao(valor: unknown): AreasImpressao {
+  const resultado: AreasImpressao = {
+    A3: { ...AREAS_IMPRESSAO_PADRAO.A3 },
+    A4: { ...AREAS_IMPRESSAO_PADRAO.A4 },
+    A5: { ...AREAS_IMPRESSAO_PADRAO.A5 },
+  };
+  if (valor && typeof valor === "object") {
+    for (const formato of ["A3", "A4", "A5"] as FormatoPapel[]) {
+      const entrada = (valor as Record<string, unknown>)[formato] as Record<string, unknown> | undefined;
+      if (entrada) {
+        const largura = Number(entrada["largura"]);
+        const altura = Number(entrada["altura"]);
+        if (Number.isFinite(largura) && largura > 0) resultado[formato].largura = largura;
+        if (Number.isFinite(altura) && altura > 0) resultado[formato].altura = altura;
+      }
+    }
+  }
+  return resultado;
+}
+
+/**
+ * Quantidade de TAGs que cabem na área de impressão.
+ * Espaçamento de 1 mm entre peças (entra na conta de cada peça).
+ * Testa também a peça girada 90° e usa o melhor aproveitamento.
+ */
+export function tagsPorFolha(larguraTag: number, alturaTag: number, area: AreaImpressao, espacamento = 1) {
+  const l = Number(larguraTag) || 0;
+  const a = Number(alturaTag) || 0;
+  if (l <= 0 || a <= 0) return 0;
+
+  const calcular = (larguraPeca: number, alturaPeca: number) =>
+    Math.floor((area.largura + espacamento) / (larguraPeca + espacamento)) *
+    Math.floor((area.altura + espacamento) / (alturaPeca + espacamento));
+
+  return Math.max(calcular(l, a), calcular(a, l));
+}
+
 export const rotuloCobranca: Record<CobrancaAcabamento, string> = {
   quantidade: "Por unidade",
   bloco: "Por bloco de páginas",
