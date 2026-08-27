@@ -628,6 +628,15 @@ function Orcamentos() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            title="Imprimir documentos"
+                            onClick={() => void imprimirDocumentosPedido(pedido)}
+                          >
+                            <FileStack className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             title="Gerar PDF"
                             onClick={() => gerarOrcamentoPdf(documentoPedido(pedido))}
                           >
