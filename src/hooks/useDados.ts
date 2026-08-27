@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Acabamento, Material } from "@/lib/calc";
+import type { PerfilImpressao } from "@/lib/perfil-impressao";
 
 export function useMateriais(somenteAtivos = false) {
   return useQuery({
@@ -14,6 +15,21 @@ export function useMateriais(somenteAtivos = false) {
     },
   });
 }
+
+/** Perfis de impressão cadastrados (papel, qualidade, bandeja, cor, duplex). */
+export function usePerfisImpressao(somenteAtivos = false) {
+  return useQuery({
+    queryKey: ["perfis-impressao", somenteAtivos],
+    queryFn: async () => {
+      let query = supabase.from("perfis_impressao").select("*").order("ordem");
+      if (somenteAtivos) query = query.eq("ativo", true);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []) as unknown as PerfilImpressao[];
+    },
+  });
+}
+
 
 export interface Configuracao {
   id: string;
