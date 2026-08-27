@@ -559,6 +559,34 @@ function Precos() {
                   </div>
 
                   <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Perfil de impressão</Label>
+                    <Select
+                      value={m.perfil_impressao_id ?? "nenhum"}
+                      onValueChange={(v) =>
+                        atualizar(m.id, "perfil_impressao_id", v === "nenhum" ? null : v)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Nenhum" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nenhum">Nenhum</SelectItem>
+                        {(perfis ?? []).map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      {m.perfil_impressao_id
+                        ? resumoPerfil(
+                            (perfis ?? []).find((p) => p.id === m.perfil_impressao_id) ?? null,
+                          )
+                        : "Define papel, qualidade, bandeja, tamanho, cor e frente e verso ao imprimir."}
+                    </p>
+                  </div>
+
                     <Label>Faixas por páginas</Label>
                     <Textarea
                       rows={4}
