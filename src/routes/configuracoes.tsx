@@ -365,6 +365,51 @@ function Configuracoes() {
             térmicos de 80mm. A impressão usa a ordem da lista: a primeira disponível é escolhida.
           </p>
 
+          {/*
+           * STATUS DA CONEXÃO COM O QZ TRAY
+           */}
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border p-3">
+            <span
+              className={`inline-block h-2.5 w-2.5 rounded-full ${
+                qz === "conectado"
+                  ? "bg-green-500"
+                  : qz === "verificando"
+                    ? "bg-muted-foreground"
+                    : "bg-amber-500"
+              }`}
+            />
+            <div className="min-w-40 flex-1 text-sm">
+              <p className="font-medium">
+                {qz === "conectado" && "QZ Tray conectado"}
+                {qz === "verificando" && "Verificando QZ Tray..."}
+                {qz === "agente_ausente" && "QZ Tray não detectado"}
+                {qz === "script_indisponivel" && "Integração QZ Tray indisponível"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {qz === "conectado" &&
+                  `${impressorasDetectadas.length} impressora(s) encontrada(s). Impressão direta ativa.`}
+                {qz === "verificando" && "Aguarde enquanto a conexão é estabelecida."}
+                {qz === "agente_ausente" &&
+                  "Instale e inicie o QZ Tray neste computador para imprimir direto na térmica."}
+                {qz === "script_indisponivel" &&
+                  "Não foi possível carregar o componente de impressão. Usando o navegador."}
+              </p>
+              {qz === "agente_ausente" && (
+                <a
+                  href="https://qz.io/download/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium text-primary underline"
+                >
+                  Baixar o QZ Tray (gratuito)
+                </a>
+              )}
+            </div>
+            <Button variant="outline" size="sm" onClick={() => void verificarQz()}>
+              <RefreshCw className="h-4 w-4" /> Reconectar
+            </Button>
+          </div>
+
           <div className="space-y-2">
             <Label>Impressoras padrão</Label>
             <div className="flex flex-col gap-2">
@@ -434,8 +479,7 @@ function Configuracoes() {
             {!impressaoDireta && (
               <p className="text-xs text-muted-foreground">
                 Impressão direta não disponível neste computador. Você pode informar o nome da
-                impressora manualmente, mas a seleção automática depende da integração local (QZ
-                Tray).
+                impressora manualmente, mas a seleção automática depende do QZ Tray em execução.
               </p>
             )}
           </div>
