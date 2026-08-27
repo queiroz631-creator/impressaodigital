@@ -24,15 +24,8 @@ function montarLinhas(d: DadosDocumento): Linha[] {
   });
 
   linhas.push({
-    texto: "Nome",
-    tipo: "chave",
-    valor: d.clienteNome || "-",
-  });
-
-  linhas.push({
-    texto: "Telefone",
-    tipo: "chave",
-    valor: d.clienteTelefone || "-",
+    texto: `Nome: ${d.clienteNome || "-"} | ${d.clienteTelefone || "-"}`,
+    tipo: "texto",
   });
 
   if (d.validade) {
@@ -59,38 +52,25 @@ function montarLinhas(d: DadosDocumento): Linha[] {
     });
 
     linhas.push({
-      texto: "Material utilizado",
-      tipo: "chave",
-      valor: item.material,
-    });
-
-    linhas.push({
       texto: "Tipo de impressão",
       tipo: "chave",
       valor: item.tipoImpressao,
     });
 
-    if (item.tamanho) {
-      linhas.push({
-        texto: "Formato",
-        tipo: "chave",
-        valor: item.tamanho,
-      });
-    }
+    const formatoInfo: string[] = [];
 
-    if (item.frenteVerso) {
-      linhas.push({
-        texto: "Frente e verso",
-        tipo: "chave",
-        valor: "Sim",
-      });
+    if (item.tamanho) {
+      formatoInfo.push(`Formato: ${item.tamanho}`);
     }
 
     if (Number(item.quantidadeArquivos) > 0) {
+      formatoInfo.push(`Arquivos: ${item.quantidadeArquivos}`);
+    }
+
+    if (formatoInfo.length) {
       linhas.push({
-        texto: "Quantidade de arquivos",
-        tipo: "chave",
-        valor: String(item.quantidadeArquivos),
+        texto: formatoInfo.join(" | "),
+        tipo: "texto",
       });
     }
 
@@ -108,11 +88,27 @@ function montarLinhas(d: DadosDocumento): Linha[] {
     // ACABAMENTOS
     // ==========================================================
 
+    const acabInfo: string[] = [];
+
+    if (item.frenteVerso) {
+      acabInfo.push("Frente e Verso");
+    }
+
     for (const a of item.acabamentos) {
+      acabInfo.push(
+        `${a.nome}: ${a.incluso ? `${a.quantidade}x · Incluso` : "Não incluso"}`,
+      );
+    }
+
+    if (acabInfo.length) {
       linhas.push({
-        texto: `Acabamento: ${a.nome}`,
-        tipo: "chave",
-        valor: a.incluso ? `${a.quantidade}x · Incluso` : "Não incluso",
+        texto: "sep",
+        tipo: "sep",
+      });
+
+      linhas.push({
+        texto: acabInfo.join(" | "),
+        tipo: "texto",
       });
     }
 
