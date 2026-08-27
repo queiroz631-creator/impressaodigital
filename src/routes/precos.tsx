@@ -24,7 +24,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { AcabamentosTabela } from "@/components/AcabamentosTabela";
-import { useMateriais, useConfiguracao } from "@/hooks/useDados";
+import { useMateriais, useConfiguracao, usePerfisImpressao } from "@/hooks/useDados";
+import { resumoPerfil } from "@/lib/perfil-impressao";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import {
   faixasParaTexto,
