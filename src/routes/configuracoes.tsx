@@ -444,22 +444,40 @@ function Configuracoes() {
               )}
             </div>
 
+            {impressorasDetectadas.length > 0 && (
+              <div className="space-y-1 pt-2">
+                <Label className="text-xs">Impressoras encontradas no computador</Label>
+                <Select
+                  value=""
+                  onValueChange={(nome) => {
+                    if (form.impressoras_padrao.includes(nome)) {
+                      toast.error("Essa impressora já está na lista.");
+                      return;
+                    }
+                    set("impressoras_padrao", [...form.impressoras_padrao, nome]);
+                    toast.success(`"${nome}" adicionada. Clique em Salvar Alterações.`);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar impressora" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {impressorasDetectadas.map((nome) => (
+                      <SelectItem key={nome} value={nome}>
+                        {nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 pt-2">
               <Input
-                list="impressoras-detectadas"
                 value={novaImpressora}
-                placeholder={
-                  impressorasDetectadas.length > 0
-                    ? "Selecionar impressora"
-                    : "Nome da impressora (ex.: POS-80)"
-                }
+                placeholder="Informar nome manualmente (ex.: POS-80)"
                 onChange={(e) => setNovaImpressora(e.target.value)}
               />
-              <datalist id="impressoras-detectadas">
-                {impressorasDetectadas.map((nome) => (
-                  <option key={nome} value={nome} />
-                ))}
-              </datalist>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -482,6 +500,12 @@ function Configuracoes() {
                 impressora manualmente, mas a seleção automática depende do QZ Tray em execução.
               </p>
             )}
+            {alteracoesPendentes && (
+              <p className="text-xs font-medium text-amber-600">
+                Há alterações não salvas. Clique em "Salvar Alterações" antes de sair da tela.
+              </p>
+            )}
+
           </div>
 
           <div className="space-y-2">
