@@ -266,13 +266,18 @@ export async function motivoFalhaQz(impressora: string): Promise<string> {
     return "Componente de impressão direta indisponível. Usando a janela do navegador.";
   }
   if (status === "agente_ausente") {
-    return "QZ Tray não conectado. Inicie o agente no computador para imprimir direto na térmica.";
+    return ultimoErro
+      ? `QZ Tray não conectado (${ultimoErro}). Inicie o agente no computador.`
+      : "QZ Tray não conectado. Inicie o agente no computador para imprimir direto na térmica.";
   }
   const disponiveis = await listarImpressoras();
   const existe = disponiveis.some((d) => d.toLowerCase() === impressora.toLowerCase());
-  return existe
-    ? `Falha ao enviar para "${impressora}". Verifique se a impressora está ligada.`
-    : `Impressora "${impressora}" não encontrada no computador. Ajuste em Configurações → Impressão.`;
+  if (!existe) {
+    return `Impressora "${impressora}" não encontrada no computador. Ajuste em Configurações → Impressão.`;
+  }
+  return ultimoErro
+    ? `Falha ao enviar para "${impressora}": ${ultimoErro}`
+    : `Falha ao enviar para "${impressora}". Verifique se a impressora está ligada.`;
 }
 
 
