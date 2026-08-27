@@ -21,7 +21,7 @@ import { resumoDoPedido } from "@/lib/etiqueta";
 import { normalizarStatus, rotuloStatus } from "@/lib/status";
 import { useConfiguracao } from "@/hooks/useDados";
 import { useAuth } from "@/hooks/useAuth";
-import { escolherImpressora, imprimirEtiqueta, listarImpressoras } from "@/lib/impressora";
+import { escolherImpressora, imprimirEtiqueta, listarImpressoras, statusQz } from "@/lib/impressora";
 
 interface Props {
   children: ReactNode;
@@ -56,6 +56,7 @@ export function ImprimirEtiqueta({
   const [atendente, setAtendente] = useState("");
   const [impressora, setImpressora] = useState<string>("");
   const [disponiveis, setDisponiveis] = useState<string[]>([]);
+  const [qzAtivo, setQzAtivo] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
   const { user } = useAuth();
@@ -120,8 +121,13 @@ export function ImprimirEtiqueta({
 
     setAtendente((atual) => atual || nome || "");
 
-    listarImpressoras()
-      .then(setDisponiveis)
+    statusQz()
+      .then((status) => {
+        setQzAtivo(status === "conectado");
+        if (status !== "conectado") return [];
+        return listarImpressoras();
+      })
+      .then((lista) => setDisponiveis(lista ?? []))
       .catch(() => setDisponiveis([]));
   }, [aberto, valorPago, configuradas, user]);
 
@@ -323,9 +329,16 @@ export function ImprimirEtiqueta({
                 </Select>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Nenhuma impressora configurada. Será usada a impressora escolhida na janela do navegador.
+                  Nenhuma impressora configurada. Será usada a impressora escolhida na janela do
+                  navegador.
                 </p>
               )}
+
+              <p className="text-xs text-muted-foreground">
+                {qzAtivo
+                  ? "Impressão direta ativa (QZ Tray): a etiqueta sai direto na impressora."
+                  : "Impressão pela janela do navegador (QZ Tray não detectado)."}
+              </p>
             </div>
           </div>
 
