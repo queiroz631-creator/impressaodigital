@@ -435,7 +435,7 @@ function Configuracoes() {
                   `${impressorasDetectadas.length} impressora(s) encontrada(s). Impressão direta ativa.`}
                 {qz === "verificando" && "Aguarde enquanto a conexão é estabelecida."}
                 {qz === "agente_ausente" &&
-                  "Nenhuma resposta do agente nas portas 8181/8182 deste computador. Abra o QZ Tray (ícone na barra de tarefas) e clique em Reconectar. Se o navegador estiver em outro computador, a impressão direta não funciona."}
+                  "Nenhuma resposta do agente nas portas 8181/8182 deste computador. Feche outras abas conectadas ao QZ Tray (ex.: demo.qz.io — clique em Disconnect lá), abra o QZ Tray na barra de tarefas e clique em Reconectar. Se o navegador estiver em outro computador, a impressão direta não funciona."}
                 {qz === "script_indisponivel" &&
                   "Não foi possível carregar o componente de impressão. Usando o navegador."}
               </p>
