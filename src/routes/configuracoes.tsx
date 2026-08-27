@@ -571,6 +571,11 @@ function Configuracoes() {
         </CardContent>
       </Card>
 
+      <PerfisImpressao
+        impressorasDetectadas={impressorasDetectadas}
+        impressorasConfiguradas={form.impressoras_padrao}
+      />
+
         </TabsContent>
 
         <TabsContent value="whatsapp" className="grid gap-4">
