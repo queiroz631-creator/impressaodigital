@@ -983,6 +983,7 @@ function Calculadora() {
                     {estado.arquivosLista.map((a, i) => {
                       const copias = Math.max(1, a.copias ?? 1);
                       const pendente = a.paginasManuais === true || Number(a.paginas || 0) < 1;
+                      const bloqueado = a.origemTag === true;
                       return (
                         <div
                           key={`${a.nome}-${i}`}
