@@ -71,6 +71,7 @@ function Precos() {
   const { user } = useAuth();
   const { data: isAdmin, isLoading: carregandoPapel } = useIsAdmin(user?.id);
   const { data: materiais, isLoading } = useMateriais();
+  const { data: perfis } = usePerfisImpressao(true);
   const { data: configuracao } = useConfiguracao();
   const queryClient = useQueryClient();
   const [linhas, setLinhas] = useState<Material[]>([]);
