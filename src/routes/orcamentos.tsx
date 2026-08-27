@@ -98,6 +98,8 @@ function Orcamentos() {
   const { data: orcamentos, isLoading } = useOrcamentos();
   const { data: listaPedidos } = usePedidos();
   const { data: config } = useConfiguracao();
+  const { data: materiais } = useMateriais();
+  const { data: perfis } = usePerfisImpressao();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const navigate = useNavigate();
