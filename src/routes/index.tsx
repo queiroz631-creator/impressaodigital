@@ -944,12 +944,7 @@ function Calculadora() {
                   variant="ghost"
                   size="sm"
                   className="h-8"
-                  onClick={() => {
-                    setTagAtivo(false);
-                    setTagLargura("");
-                    setTagComprimento("");
-                    setTagQuantidade("");
-                  }}
+                  onClick={limparTag}
                 >
                   Cancelar
                 </Button>
