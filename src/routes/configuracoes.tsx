@@ -96,21 +96,36 @@ function Configuracoes() {
   const [impressorasDetectadas, setImpressorasDetectadas] = useState<string[]>([]);
   const [novaImpressora, setNovaImpressora] = useState("");
   const [qz, setQz] = useState<StatusQz | "verificando">("verificando");
+  const [erroQz, setErroQz] = useState<string | null>(null);
   const [alteracoesPendentes, setAlteracoesPendentes] = useState(false);
   const impressaoDireta = qz === "conectado";
 
   async function verificarQz() {
     setQz("verificando");
+    setErroQz(null);
     const status = await statusQz();
     setQz(status);
     if (status === "conectado") {
-      listarImpressoras()
-        .then(setImpressorasDetectadas)
-        .catch(() => setImpressorasDetectadas([]));
+      const lista = await listarImpressoras().catch(() => []);
+      setImpressorasDetectadas(lista);
+      if (lista.length === 0) setErroQz(ultimoErroQz());
     } else {
       setImpressorasDetectadas([]);
+      setErroQz(ultimoErroQz());
     }
   }
+
+  function adicionarImpressora(nome: string) {
+    const limpo = nome.trim();
+    if (!limpo) return;
+    if (form.impressoras_padrao.some((n) => n.toLowerCase() === limpo.toLowerCase())) {
+      toast.error("Essa impressora já está na lista.");
+      return;
+    }
+    set("impressoras_padrao", [...form.impressoras_padrao, limpo]);
+    toast.success(`"${limpo}" adicionada. Clique em Salvar Alterações.`);
+  }
+
 
   useEffect(() => {
     void verificarQz();
