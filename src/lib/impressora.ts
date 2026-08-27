@@ -106,7 +106,7 @@ export async function conectarQz(): Promise<boolean> {
         // localhost.qz.io (certificado válido) além de localhost.
         await api.websocket.connect({
           host: ["localhost", "localhost.qz.io", "127.0.0.1"],
-          retries: 1,
+          retries: 3,
           delay: 1,
         });
       } catch (erro) {
