@@ -25,7 +25,6 @@ const itens = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/", label: "Calculadora", icon: Printer },
   { to: "/orcamentos", label: "Orçamentos", icon: FileText },
-
   { to: "/curriculos", label: "Currículo Vitae", icon: FileUser },
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle, badge: true },
