@@ -64,6 +64,7 @@ import {
   rotuloCobranca,
   totalAcabamentos,
   tagsPorFolha,
+  tamanhoTagPorQuantidade,
   normalizarAreasImpressao,
   FORMATOS,
   FORMATO_PADRAO,
