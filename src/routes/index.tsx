@@ -1089,6 +1089,22 @@ function Calculadora() {
                   </div>
                 )}
 
+                {arquivosParaConfirmar.length > 0 && (
+                  <div className="mb-2 space-y-2 rounded-lg border-2 border-primary bg-primary/10 p-2.5">
+                    <p className="text-sm font-bold text-primary">Confirme a quantidade de páginas lida</p>
+                    <ul className="space-y-0.5 text-xs font-medium text-primary">
+                      {arquivosParaConfirmar.map((a, i) => (
+                        <li key={`conf-${a.nome}-${i}`} className="break-all">
+                          {a.nome} → {numeroBR(a.paginas)} página(s)
+                        </li>
+                      ))}
+                    </ul>
+                    <Button size="sm" className="h-8" onClick={confirmarPaginas}>
+                      Confirmar páginas
+                    </Button>
+                  </div>
+                )}
+
                 {estado.arquivosLista.length === 0 ? (
                   <p className="py-6 text-center text-sm text-muted-foreground">Nenhum arquivo anexado.</p>
                 ) : (
