@@ -23,6 +23,8 @@ REGRAS OBRIGATÓRIAS:
 - Reconheça variações de título: Celular/Contato/WhatsApp = telefone; Formação/Educação/Escolaridade = escolaridade; Experiência/Histórico Profissional/Atuação = experiências; Cursos/Qualificações/Capacitação = cursos; Habilidades/Competências = habilidades.
 - O documento pode não ter títulos, ter tabelas ou duas colunas.
 - escolaridade DEVE ser exatamente um destes valores ou "": ${ESCOLARIDADES.join(" | ")}
+- escolaridade é a formação PRINCIPAL (nível de ensino). NUNCA repita essa formação principal dentro de "formacoes".
+- "formacoes" recebe SOMENTE formações adicionais que tenham um curso próprio (ex.: graduação, técnico, pós) com nome_curso preenchido. Se a pessoa só tem o nível de ensino (fundamental/médio), "formacoes" deve ser [].
 - estado_civil DEVE ser exatamente um destes valores ou "": ${ESTADOS_CIVIS.join(" | ")}
 - categoria_habilitacao DEVE ser um destes ou "": ${CATEGORIAS_HABILITACAO.join(" | ")}
 - data_nascimento no formato AAAA-MM-DD ou "".
