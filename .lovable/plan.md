@@ -49,3 +49,4 @@ Correção:
 - `src/lib/calc.ts` (junto de `tagsPorFolha`): nova função `tamanhoTagPorQuantidade(qtdPorFolha, area)` que testa combinações de colunas x linhas e devolve o maior tamanho possível.
 - Novo `src/lib/precos-excel.ts` com a serialização/parse das planilhas (materiais e acabamentos) e conversão das faixas; usa a biblioteca `xlsx` (SheetJS), a ser instalada.
 - `src/routes/precos.tsx`: botões de exportar/importar por aba e diálogo de prévia da importação; gravação via `supabase.from("materiais"/"acabamentos").upsert`.
+- `src/lib/curriculo-import.server.ts`: ajuste do prompt (`SISTEMA`), filtro mais rígido de `formacoes` na normalização e deduplicação em `atualizarImportado`; migração de limpeza removendo formações sem curso cujo nível repete a escolaridade.
