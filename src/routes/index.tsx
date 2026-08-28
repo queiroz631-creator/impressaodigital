@@ -710,6 +710,7 @@ function Calculadora() {
       : { ...ESTADO_INICIAL };
     setEstado(novo);
     limparTag();
+    setPaginasConfirmadas([]);
     if (!manterPedido) {
       // Descarta a lista de orçamentos que estava vinculada ao pedido anterior.
       setIncluirTotal(true);
