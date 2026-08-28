@@ -464,12 +464,8 @@ function Calculadora() {
     return tagModo === "folhas" ? qtd * tagPorFolha : Math.ceil(qtd / tagPorFolha);
   }, [tagQuantidade, tagModo, tagPorFolha]);
 
-  /** Total de TAGs resultante do que foi informado (quantidade ou folhas). */
-  const tagTotal = useMemo(() => {
-    const qtd = Math.max(0, Number(tagQuantidade) || 0);
-    if (qtd <= 0) return 0;
-    return tagModo === "folhas" ? qtd * tagPorFolha : qtd;
-  }, [tagQuantidade, tagModo, tagPorFolha]);
+
+
 
   /** Converte milímetros em centímetros no padrão brasileiro (ex.: 45 -> "4,5"). */
   function mmParaCm(mm: number) {
