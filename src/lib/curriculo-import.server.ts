@@ -140,7 +140,14 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
           ano: texto(o["ano"] ?? o["ano_conclusao"], 10),
         };
       })
-      .filter((f) => f.nome_curso || f.nivel),
+      // Só entram formações adicionais com curso próprio; o nível principal fica em "escolaridade".
+      .filter((f) => {
+        if (!f.nome_curso) return false;
+        const chave = (t: string) => t.toLowerCase().replace(/\s+/g, " ").trim();
+        if (escolaridade && chave(f.nome_curso) === chave(escolaridade)) return false;
+        if (escolaridade && f.nivel && chave(f.nivel) === chave(escolaridade) && !f.instituicao) return false;
+        return true;
+      }),
     experiencias: lista(obj["experiencias"])
       .map((e) => {
         const o = (e ?? {}) as Record<string, unknown>;
