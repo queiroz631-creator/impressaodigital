@@ -948,6 +948,21 @@ function Calculadora() {
             ) : (
               <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-accent/30 p-3">
                 <div className="space-y-1">
+                  <Label className="text-xs font-semibold">TAGs por folha (desejado)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    className="h-8 w-28"
+                    placeholder="ex.: 8"
+                    value={tagPorFolhaDesejado}
+                    onChange={(e) => aplicarTagPorFolhaDesejado(e.target.value)}
+                  />
+                  {tagDistribuicao && (
+                    <p className="text-[11px] font-medium text-muted-foreground">{tagDistribuicao}</p>
+                  )}
+                </div>
+                <div className="space-y-1">
                   <Label className="text-xs font-semibold">Largura (mm)</Label>
                   <Input
                     type="number"
@@ -970,15 +985,17 @@ function Calculadora() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Tags por folha ({estado.formato})</Label>
-                  <p className="flex h-8 items-center rounded-md border border-border bg-background px-3 text-sm font-bold">
+                  <Label className="text-xs font-bold text-primary">Tags por folha ({estado.formato})</Label>
+                  <p className="flex h-9 items-center rounded-md border-2 border-primary bg-primary/10 px-3 text-base font-extrabold text-primary">
                     {tagPorFolha}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Total de TAGs</Label>
-                  <p className="flex h-8 items-center rounded-md border border-border bg-background px-3 text-sm font-bold">
-                    {tagTotal}
+                  <Label className="text-xs font-bold text-primary">
+                    {tagModo === "tags" ? "Total de folhas" : "Total de TAGs"}
+                  </Label>
+                  <p className="flex h-9 items-center rounded-md border-2 border-primary bg-primary/10 px-3 text-base font-extrabold text-primary">
+                    {tagResultado}
                   </p>
                 </div>
                 <div className="space-y-1">
