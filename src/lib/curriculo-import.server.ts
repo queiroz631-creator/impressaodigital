@@ -325,8 +325,25 @@ export async function atualizarImportado(
       supabaseAdmin.from("curriculo_telefones").select("telefone").eq("curriculo_id", curriculoId).order("ordem"),
     ]);
 
-    payload.cursos = [...(cur.data ?? []), ...payload.cursos];
-    payload.formacoes = [...(form.data ?? []), ...payload.formacoes];
+    const chave = (t?: string | null) => (t ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+    const cursosAtuais = cur.data ?? [];
+    const formacoesAtuais = form.data ?? [];
+
+    payload.cursos = [
+      ...cursosAtuais,
+      ...payload.cursos.filter(
+        (n) => !cursosAtuais.some((a) => chave(a.nome_curso) === chave(n.nome_curso)),
+      ),
+    ];
+    payload.formacoes = [
+      ...formacoesAtuais,
+      ...payload.formacoes.filter(
+        (n) =>
+          !formacoesAtuais.some(
+            (a) => chave(a.nome_curso) === chave(n.nome_curso) && chave(a.nivel) === chave(n.nivel),
+          ),
+      ),
+    ];
     payload.experiencias = [...(exp.data ?? []), ...payload.experiencias];
     payload.telefones = [...(tel.data ?? []), ...payload.telefones];
 
