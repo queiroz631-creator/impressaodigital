@@ -6,7 +6,7 @@ Hoje o modal "Novo perfil" tem campos digitados à mão (mídia, bandeja, tamanh
 
 Em Configurações → Impressão → Perfis de impressão, no modal do perfil:
 
-1. **Impressora** — lista das impressoras encontradas no PC. Ao selecionar, o sistema busca os detalhes do driver e mostra "Lendo opções da impressora..." e depois "Opções lidas do driver".
+1. **Impressora** — seletor com todas as impressoras encontradas no PC pelo QZ Tray (com botão "Buscar" para reler a lista). Ao selecionar, o sistema busca os detalhes do driver e mostra "Lendo opções da impressora..." e depois "Opções lidas do driver". Escolher a impressora aqui afeta somente este perfil: nada da impressora padrão nem das outras configurações é alterado.
 2. **Origem do documento (bandeja)** — vira lista com as bandejas informadas pelo driver (Bandeja 1, Manual, Automática...), com opção "Outra (digitar)".
 3. **Qualidade** — lista com as densidades/DPI reais suportadas pela impressora (ex.: 300 dpi, 600 dpi, 1200 dpi) em vez de Rascunho/Normal/Alta fixos; se o driver não informar, mantém os três níveis atuais.
 4. **Tamanho do documento** — lista de tamanhos com a área máxima que o driver aceita como limite; tamanhos maiores que a impressora suporta ficam marcados como indisponíveis. "Personalizado" continua, validando contra o limite do driver.
@@ -25,3 +25,7 @@ O QZ Tray expõe do driver apenas: nome do driver, conexão, **bandejas**, **den
 - `src/components/PerfisImpressao.tsx`: estado `detalhes` carregado ao trocar a impressora do rascunho; bandeja e qualidade viram `Select` com fallback para `Input`; badge de status da leitura; bloco de detalhes.
 - `src/lib/perfil-impressao.ts`: aceitar `qualidade` como DPI numérico opcional (`densidade_dpi`) além dos três níveis atuais, mantendo compatibilidade com perfis já salvos.
 - Migração: coluna `perfis_impressao.densidade_dpi integer null`.
+
+## Fora do escopo
+
+Nenhuma outra configuração é alterada: impressora padrão, método de impressão, etiqueta térmica, materiais e demais abas permanecem exatamente como estão.
