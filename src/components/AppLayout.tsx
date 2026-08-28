@@ -25,11 +25,12 @@ const itens = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/", label: "Calculadora", icon: Printer },
   { to: "/orcamentos", label: "Orçamentos", icon: FileText },
-  { to: "/precos", label: "Configurar Preços", icon: DollarSign, adminOnly: true },
+
   { to: "/curriculos", label: "Currículo Vitae", icon: FileUser },
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle, badge: true },
-  { to: "/bot", label: "Bot", icon: Bot },
+  { to: "/bot", label: "Configurar Bot", icon: Bot },
+  { to: "/precos", label: "Configurar Preços", icon: DollarSign, adminOnly: true },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
