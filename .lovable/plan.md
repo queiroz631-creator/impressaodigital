@@ -25,3 +25,7 @@ O QZ Tray expõe do driver apenas: nome do driver, conexão, **bandejas**, **den
 - `src/components/PerfisImpressao.tsx`: estado `detalhes` carregado ao trocar a impressora do rascunho; bandeja e qualidade viram `Select` com fallback para `Input`; badge de status da leitura; bloco de detalhes.
 - `src/lib/perfil-impressao.ts`: aceitar `qualidade` como DPI numérico opcional (`densidade_dpi`) além dos três níveis atuais, mantendo compatibilidade com perfis já salvos.
 - Migração: coluna `perfis_impressao.densidade_dpi integer null`.
+
+## Fora do escopo
+
+Nenhuma outra configuração é alterada: impressora padrão, método de impressão, etiqueta térmica, materiais e demais abas permanecem exatamente como estão.
