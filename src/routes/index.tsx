@@ -196,6 +196,11 @@ function Calculadora() {
   const [tagComprimento, setTagComprimento] = useState("");
   const [tagModo, setTagModo] = useState<"tags" | "folhas">("tags");
   const [tagQuantidade, setTagQuantidade] = useState("");
+  const [tagPorFolhaDesejado, setTagPorFolhaDesejado] = useState("");
+  const [tagDistribuicao, setTagDistribuicao] = useState("");
+
+  /** Confirmação das páginas lidas nos arquivos com mais de 1 página. */
+  const [paginasConfirmadas, setPaginasConfirmadas] = useState<string[]>([]);
 
   const set = useCallback(
     <K extends keyof EstadoRascunho>(campo: K, valor: EstadoRascunho[K]) =>
