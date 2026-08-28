@@ -24,6 +24,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { AcabamentosTabela } from "@/components/AcabamentosTabela";
+import { PrecosExcel } from "@/components/PrecosExcel";
 import { useMateriais, useConfiguracao, usePerfisImpressao } from "@/hooks/useDados";
 import { resumoPerfil } from "@/lib/perfil-impressao";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
@@ -323,6 +324,11 @@ function Precos() {
             <Button onClick={salvar} disabled={salvando}>
               <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
             </Button>
+            <PrecosExcel
+              tipo="materiais"
+              dados={materiais}
+              aoImportar={() => queryClient.invalidateQueries({ queryKey: ["materiais"] })}
+            />
           </div>
 
           <Card className="shadow-card">

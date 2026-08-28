@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAcabamentos } from "@/hooks/useDados";
+import { PrecosExcel } from "@/components/PrecosExcel";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import {
   faixasParaTexto,
@@ -123,6 +124,11 @@ export function AcabamentosTabela() {
         <Button onClick={salvar} disabled={salvando}>
           <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
         </Button>
+        <PrecosExcel
+          tipo="acabamentos"
+          dados={acabamentos}
+          aoImportar={() => queryClient.invalidateQueries({ queryKey: ["acabamentos"] })}
+        />
       </div>
 
       <Card className="shadow-card">
