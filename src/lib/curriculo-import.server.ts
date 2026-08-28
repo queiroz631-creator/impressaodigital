@@ -23,6 +23,8 @@ REGRAS OBRIGATÓRIAS:
 - Reconheça variações de título: Celular/Contato/WhatsApp = telefone; Formação/Educação/Escolaridade = escolaridade; Experiência/Histórico Profissional/Atuação = experiências; Cursos/Qualificações/Capacitação = cursos; Habilidades/Competências = habilidades.
 - O documento pode não ter títulos, ter tabelas ou duas colunas.
 - escolaridade DEVE ser exatamente um destes valores ou "": ${ESCOLARIDADES.join(" | ")}
+- escolaridade é a formação PRINCIPAL (nível de ensino). NUNCA repita essa formação principal dentro de "formacoes".
+- "formacoes" recebe SOMENTE formações adicionais que tenham um curso próprio (ex.: graduação, técnico, pós) com nome_curso preenchido. Se a pessoa só tem o nível de ensino (fundamental/médio), "formacoes" deve ser [].
 - estado_civil DEVE ser exatamente um destes valores ou "": ${ESTADOS_CIVIS.join(" | ")}
 - categoria_habilitacao DEVE ser um destes ou "": ${CATEGORIAS_HABILITACAO.join(" | ")}
 - data_nascimento no formato AAAA-MM-DD ou "".
@@ -138,7 +140,14 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
           ano: texto(o["ano"] ?? o["ano_conclusao"], 10),
         };
       })
-      .filter((f) => f.nome_curso || f.nivel),
+      // Só entram formações adicionais com curso próprio; o nível principal fica em "escolaridade".
+      .filter((f) => {
+        if (!f.nome_curso) return false;
+        const chave = (t: string) => t.toLowerCase().replace(/\s+/g, " ").trim();
+        if (escolaridade && chave(f.nome_curso) === chave(escolaridade)) return false;
+        if (escolaridade && f.nivel && chave(f.nivel) === chave(escolaridade) && !f.instituicao) return false;
+        return true;
+      }),
     experiencias: lista(obj["experiencias"])
       .map((e) => {
         const o = (e ?? {}) as Record<string, unknown>;
@@ -316,8 +325,25 @@ export async function atualizarImportado(
       supabaseAdmin.from("curriculo_telefones").select("telefone").eq("curriculo_id", curriculoId).order("ordem"),
     ]);
 
-    payload.cursos = [...(cur.data ?? []), ...payload.cursos];
-    payload.formacoes = [...(form.data ?? []), ...payload.formacoes];
+    const chave = (t?: string | null) => (t ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+    const cursosAtuais = cur.data ?? [];
+    const formacoesAtuais = form.data ?? [];
+
+    payload.cursos = [
+      ...cursosAtuais,
+      ...payload.cursos.filter(
+        (n) => !cursosAtuais.some((a) => chave(a.nome_curso) === chave(n.nome_curso)),
+      ),
+    ];
+    payload.formacoes = [
+      ...formacoesAtuais,
+      ...payload.formacoes.filter(
+        (n) =>
+          !formacoesAtuais.some(
+            (a) => chave(a.nome_curso) === chave(n.nome_curso) && chave(a.nivel) === chave(n.nivel),
+          ),
+      ),
+    ];
     payload.experiencias = [...(exp.data ?? []), ...payload.experiencias];
     payload.telefones = [...(tel.data ?? []), ...payload.telefones];
 

@@ -64,6 +64,7 @@ import {
   rotuloCobranca,
   totalAcabamentos,
   tagsPorFolha,
+  tamanhoTagPorQuantidade,
   normalizarAreasImpressao,
   FORMATOS,
   FORMATO_PADRAO,
@@ -196,6 +197,11 @@ function Calculadora() {
   const [tagComprimento, setTagComprimento] = useState("");
   const [tagModo, setTagModo] = useState<"tags" | "folhas">("tags");
   const [tagQuantidade, setTagQuantidade] = useState("");
+  const [tagPorFolhaDesejado, setTagPorFolhaDesejado] = useState("");
+  const [tagDistribuicao, setTagDistribuicao] = useState("");
+
+  /** Confirmação das páginas lidas nos arquivos com mais de 1 página. */
+  const [paginasConfirmadas, setPaginasConfirmadas] = useState<string[]>([]);
 
   const set = useCallback(
     <K extends keyof EstadoRascunho>(campo: K, valor: EstadoRascunho[K]) =>
@@ -424,6 +430,23 @@ function Calculadora() {
     aplicarArquivos(estado.arquivosLista.filter((_, i) => i !== indice));
   }
 
+  /** Chave de confirmação de um arquivo (muda se o nome ou as páginas mudarem). */
+  const chaveArquivo = (a: ArquivoDoc) => `${a.nome}|${a.paginas}`;
+
+  /** Arquivos com mais de 1 página que ainda aguardam confirmação da leitura. */
+  const arquivosParaConfirmar = useMemo(
+    () =>
+      estado.arquivosLista.filter(
+        (a) => !a.origemTag && Number(a.paginas || 0) > 1 && !paginasConfirmadas.includes(chaveArquivo(a)),
+      ),
+    [estado.arquivosLista, paginasConfirmadas],
+  );
+
+  function confirmarPaginas() {
+    setPaginasConfirmadas(estado.arquivosLista.map(chaveArquivo));
+    toast.success("Páginas confirmadas.");
+  }
+
   // ----- TAG: quantas cabem na área de impressão do formato -----
   const areaFormato = useMemo(
     () => normalizarAreasImpressao(config?.areas_impressao)[estado.formato],
@@ -434,16 +457,38 @@ function Calculadora() {
     [tagLargura, tagComprimento, areaFormato],
   );
 
-  /** Total de TAGs resultante do que foi informado (quantidade ou folhas). */
-  const tagTotal = useMemo(() => {
+  /** Resultado invertido: informando TAGs mostra folhas; informando folhas mostra TAGs. */
+  const tagResultado = useMemo(() => {
     const qtd = Math.max(0, Number(tagQuantidade) || 0);
-    if (qtd <= 0) return 0;
-    return tagModo === "folhas" ? qtd * tagPorFolha : qtd;
+    if (qtd <= 0 || tagPorFolha < 1) return 0;
+    return tagModo === "folhas" ? qtd * tagPorFolha : Math.ceil(qtd / tagPorFolha);
   }, [tagQuantidade, tagModo, tagPorFolha]);
+
+
+
 
   /** Converte milímetros em centímetros no padrão brasileiro (ex.: 45 -> "4,5"). */
   function mmParaCm(mm: number) {
     return (mm / 10).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+  }
+
+  /** Calcula o tamanho da TAG a partir da quantidade desejada por folha. */
+  function aplicarTagPorFolhaDesejado(valor: string) {
+    setTagPorFolhaDesejado(valor);
+    const alvo = Math.floor(Number(valor) || 0);
+    if (alvo < 1) {
+      setTagDistribuicao("");
+      return;
+    }
+    const medida = tamanhoTagPorQuantidade(alvo, areaFormato);
+    if (!medida) {
+      setTagDistribuicao("");
+      toast.error("Não é possível encaixar essa quantidade na área de impressão.");
+      return;
+    }
+    setTagLargura(String(medida.largura));
+    setTagComprimento(String(medida.altura));
+    setTagDistribuicao(`${medida.colunas} coluna(s) x ${medida.linhas} linha(s)`);
   }
 
   /** Zera os campos da funcionalidade TAG. */
@@ -453,6 +498,8 @@ function Calculadora() {
     setTagComprimento("");
     setTagModo("tags");
     setTagQuantidade("");
+    setTagPorFolhaDesejado("");
+    setTagDistribuicao("");
   }
 
   function adicionarTagArquivo() {
@@ -660,6 +707,7 @@ function Calculadora() {
       : { ...ESTADO_INICIAL };
     setEstado(novo);
     limparTag();
+    setPaginasConfirmadas([]);
     if (!manterPedido) {
       // Descarta a lista de orçamentos que estava vinculada ao pedido anterior.
       setIncluirTotal(true);
@@ -896,6 +944,21 @@ function Calculadora() {
             ) : (
               <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-accent/30 p-3">
                 <div className="space-y-1">
+                  <Label className="text-xs font-semibold">TAGs por folha (desejado)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                    className="h-8 w-28"
+                    placeholder="ex.: 8"
+                    value={tagPorFolhaDesejado}
+                    onChange={(e) => aplicarTagPorFolhaDesejado(e.target.value)}
+                  />
+                  {tagDistribuicao && (
+                    <p className="text-[11px] font-medium text-muted-foreground">{tagDistribuicao}</p>
+                  )}
+                </div>
+                <div className="space-y-1">
                   <Label className="text-xs font-semibold">Largura (mm)</Label>
                   <Input
                     type="number"
@@ -918,15 +981,17 @@ function Calculadora() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Tags por folha ({estado.formato})</Label>
-                  <p className="flex h-8 items-center rounded-md border border-border bg-background px-3 text-sm font-bold">
+                  <Label className="text-xs font-bold text-primary">Tags por folha ({estado.formato})</Label>
+                  <p className="flex h-9 items-center rounded-md border-2 border-primary bg-primary/10 px-3 text-base font-extrabold text-primary">
                     {tagPorFolha}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Total de TAGs</Label>
-                  <p className="flex h-8 items-center rounded-md border border-border bg-background px-3 text-sm font-bold">
-                    {tagTotal}
+                  <Label className="text-xs font-bold text-primary">
+                    {tagModo === "tags" ? "Total de folhas" : "Total de TAGs"}
+                  </Label>
+                  <p className="flex h-9 items-center rounded-md border-2 border-primary bg-primary/10 px-3 text-base font-extrabold text-primary">
+                    {tagResultado}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -1021,6 +1086,22 @@ function Calculadora() {
                     <p className="text-xs font-medium text-destructive">
                       O cálculo fica bloqueado até que todas as quantidades sejam informadas.
                     </p>
+                  </div>
+                )}
+
+                {arquivosParaConfirmar.length > 0 && (
+                  <div className="mb-2 space-y-2 rounded-lg border-2 border-primary bg-primary/10 p-2.5">
+                    <p className="text-sm font-bold text-primary">Confirme a quantidade de páginas lida</p>
+                    <ul className="space-y-0.5 text-xs font-medium text-primary">
+                      {arquivosParaConfirmar.map((a, i) => (
+                        <li key={`conf-${a.nome}-${i}`} className="break-all">
+                          {a.nome} → {numeroBR(a.paginas)} página(s)
+                        </li>
+                      ))}
+                    </ul>
+                    <Button size="sm" className="h-8" onClick={confirmarPaginas}>
+                      Confirmar páginas
+                    </Button>
                   </div>
                 )}
 
@@ -1259,9 +1340,15 @@ function Calculadora() {
 
               <div className="space-y-2 rounded-lg border border-border p-3">
                 <Label className="text-xs font-semibold text-muted-foreground">Tipo de impressão *</Label>
+                {arquivosParaConfirmar.length > 0 && (
+                  <p className="text-xs font-semibold text-destructive">
+                    Confirme a quantidade de páginas dos arquivos para liberar.
+                  </p>
+                )}
                 <RadioGroup
                   value={estado.tipoServico}
                   onValueChange={(v) => set("tipoServico", v as TipoServico)}
+                  disabled={arquivosParaConfirmar.length > 0}
                   className="gap-2"
                 >
                   <label className="flex items-center gap-2 text-sm font-medium">

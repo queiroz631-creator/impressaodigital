@@ -680,6 +680,29 @@ export function tagsPorFolha(larguraTag: number, alturaTag: number, area: AreaIm
   return Math.max(calcular(l, a), calcular(a, l));
 }
 
+/**
+ * Maior tamanho de TAG (mm) que permite encaixar `qtdPorFolha` peças na área de impressão.
+ * Testa todas as combinações de colunas x linhas e devolve a de maior área útil.
+ */
+export function tamanhoTagPorQuantidade(qtdPorFolha: number, area: AreaImpressao, espacamento = 1) {
+  const alvo = Math.floor(Number(qtdPorFolha) || 0);
+  if (alvo < 1) return null;
+
+  let melhor: { largura: number; altura: number; colunas: number; linhas: number } | null = null;
+
+  for (let colunas = 1; colunas <= alvo; colunas++) {
+    const linhas = Math.ceil(alvo / colunas);
+    const largura = Math.floor(((area.largura + espacamento) / colunas - espacamento) * 10) / 10;
+    const altura = Math.floor(((area.altura + espacamento) / linhas - espacamento) * 10) / 10;
+    if (largura <= 0 || altura <= 0) continue;
+    if (!melhor || largura * altura > melhor.largura * melhor.altura) {
+      melhor = { largura, altura, colunas, linhas };
+    }
+  }
+
+  return melhor;
+}
+
 export const rotuloCobranca: Record<CobrancaAcabamento, string> = {
   quantidade: "Por unidade",
   bloco: "Por bloco de páginas",
