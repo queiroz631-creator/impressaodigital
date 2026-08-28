@@ -31,9 +31,22 @@ Nas abas **Materiais** e **Acabamentos**, dois botões: **Exportar Excel** e **I
 - Importar lê o mesmo arquivo, mostra uma prévia com quantos registros serão criados, atualizados e quantas linhas têm erro, e só grava após a confirmação. A identificação é pelo `id` da planilha (linha sem id vira registro novo); nada é excluído pela importação.
 - Valores em vírgula decimal (padrão brasileiro) são aceitos na importação e usados na exportação.
 
+## 6. Corrigir formação duplicada na importação de currículo
+
+Confirmado nos dados: em currículos importados a mesma escolaridade aparece duas vezes — no campo principal e como formação adicional sem nome de curso (ex.: "Ensino Médio Completo" e "Ensino Fundamental").
+
+Causa: as instruções enviadas à IA pedem `escolaridade` e a lista de formações sem dizer que a lista é só para formações **extras**.
+
+Correção:
+- Instrução clara para a IA: escolaridade é a formação principal; a lista recebe apenas formações adicionais com curso próprio.
+- Descartar na importação formações sem nome de curso ou que só repitam a escolaridade principal.
+- Ao aplicar a importação sobre um currículo existente, ignorar formações/cursos idênticos aos já cadastrados.
+- Limpeza dos registros fantasma já criados.
+
 ## Detalhes técnicos
 
 - `src/routes/index.tsx`: estado `paginasConfirmadas` (chave por lista de arquivos) bloqueando o Select de tipo de impressão; novo campo `tagsPorFolhaDesejado` e função de dimensionamento; inversão do rótulo/valor do total; classes de destaque nos dois campos de resultado.
 - `src/lib/calc.ts` (junto de `tagsPorFolha`): nova função `tamanhoTagPorQuantidade(qtdPorFolha, area)` que testa combinações de colunas x linhas e devolve o maior tamanho possível.
 - Novo `src/lib/precos-excel.ts` com a serialização/parse das planilhas (materiais e acabamentos) e conversão das faixas; usa a biblioteca `xlsx` (SheetJS), a ser instalada.
 - `src/routes/precos.tsx`: botões de exportar/importar por aba e diálogo de prévia da importação; gravação via `supabase.from("materiais"/"acabamentos").upsert`.
+- `src/lib/curriculo-import.server.ts`: ajuste do prompt (`SISTEMA`), filtro mais rígido de `formacoes` na normalização e deduplicação em `atualizarImportado`; migração de limpeza removendo formações sem curso cujo nível repete a escolaridade.
