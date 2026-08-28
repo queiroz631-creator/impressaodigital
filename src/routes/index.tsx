@@ -456,6 +456,13 @@ function Calculadora() {
     [tagLargura, tagComprimento, areaFormato],
   );
 
+  /** Resultado invertido: informando TAGs mostra folhas; informando folhas mostra TAGs. */
+  const tagResultado = useMemo(() => {
+    const qtd = Math.max(0, Number(tagQuantidade) || 0);
+    if (qtd <= 0 || tagPorFolha < 1) return 0;
+    return tagModo === "folhas" ? qtd * tagPorFolha : Math.ceil(qtd / tagPorFolha);
+  }, [tagQuantidade, tagModo, tagPorFolha]);
+
   /** Total de TAGs resultante do que foi informado (quantidade ou folhas). */
   const tagTotal = useMemo(() => {
     const qtd = Math.max(0, Number(tagQuantidade) || 0);
@@ -468,6 +475,25 @@ function Calculadora() {
     return (mm / 10).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
   }
 
+  /** Calcula o tamanho da TAG a partir da quantidade desejada por folha. */
+  function aplicarTagPorFolhaDesejado(valor: string) {
+    setTagPorFolhaDesejado(valor);
+    const alvo = Math.floor(Number(valor) || 0);
+    if (alvo < 1) {
+      setTagDistribuicao("");
+      return;
+    }
+    const medida = tamanhoTagPorQuantidade(alvo, areaFormato);
+    if (!medida) {
+      setTagDistribuicao("");
+      toast.error("Não é possível encaixar essa quantidade na área de impressão.");
+      return;
+    }
+    setTagLargura(String(medida.largura));
+    setTagComprimento(String(medida.altura));
+    setTagDistribuicao(`${medida.colunas} coluna(s) x ${medida.linhas} linha(s)`);
+  }
+
   /** Zera os campos da funcionalidade TAG. */
   function limparTag() {
     setTagAtivo(false);
@@ -475,6 +501,8 @@ function Calculadora() {
     setTagComprimento("");
     setTagModo("tags");
     setTagQuantidade("");
+    setTagPorFolhaDesejado("");
+    setTagDistribuicao("");
   }
 
   function adicionarTagArquivo() {
