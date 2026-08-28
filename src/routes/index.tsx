@@ -429,6 +429,23 @@ function Calculadora() {
     aplicarArquivos(estado.arquivosLista.filter((_, i) => i !== indice));
   }
 
+  /** Chave de confirmação de um arquivo (muda se o nome ou as páginas mudarem). */
+  const chaveArquivo = (a: ArquivoDoc) => `${a.nome}|${a.paginas}`;
+
+  /** Arquivos com mais de 1 página que ainda aguardam confirmação da leitura. */
+  const arquivosParaConfirmar = useMemo(
+    () =>
+      estado.arquivosLista.filter(
+        (a) => !a.origemTag && Number(a.paginas || 0) > 1 && !paginasConfirmadas.includes(chaveArquivo(a)),
+      ),
+    [estado.arquivosLista, paginasConfirmadas],
+  );
+
+  function confirmarPaginas() {
+    setPaginasConfirmadas(estado.arquivosLista.map(chaveArquivo));
+    toast.success("Páginas confirmadas.");
+  }
+
   // ----- TAG: quantas cabem na área de impressão do formato -----
   const areaFormato = useMemo(
     () => normalizarAreasImpressao(config?.areas_impressao)[estado.formato],
