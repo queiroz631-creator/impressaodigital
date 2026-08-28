@@ -1,31 +1,25 @@
-# Perfil de impressão com opções vindas do driver
+# Corrigir formação duplicada na importação de currículo
 
-Hoje o modal "Novo perfil" tem campos digitados à mão (mídia, bandeja, tamanho). A ideia é: ao escolher a impressora, o sistema consulta o driver pelo QZ Tray e preenche as listas com o que aquela impressora realmente oferece.
+## O que está acontecendo (confirmado nos dados)
 
-## Como fica a tela
+Nos currículos importados, a mesma escolaridade aparece duas vezes:
 
-Em Configurações → Impressão → Perfis de impressão, no modal do perfil:
+- Currículo "Adriana Pereira Santos Sirqueira": escolaridade = "Ensino Médio Completo" **e** uma formação adicional com nível "Ensino Médio Completo" e curso vazio.
+- Currículo "Joyce Ananias Vieira": escolaridade = "Ensino Fundamental Completo" **e** uma formação adicional com nível "Ensino Fundamental" e curso vazio.
 
-1. **Impressora** — seletor com todas as impressoras encontradas no PC pelo QZ Tray (com botão "Buscar" para reler a lista). Ao selecionar, o sistema busca os detalhes do driver e mostra "Lendo opções da impressora..." e depois "Opções lidas do driver". Escolher a impressora aqui afeta somente este perfil: nada da impressora padrão nem das outras configurações é alterado.
-2. **Origem do documento (bandeja)** — vira lista com as bandejas informadas pelo driver (Bandeja 1, Manual, Automática...), com opção "Outra (digitar)".
-3. **Qualidade** — lista com as densidades/DPI reais suportadas pela impressora (ex.: 300 dpi, 600 dpi, 1200 dpi) em vez de Rascunho/Normal/Alta fixos; se o driver não informar, mantém os três níveis atuais.
-4. **Tamanho do documento** — lista de tamanhos com a área máxima que o driver aceita como limite; tamanhos maiores que a impressora suporta ficam marcados como indisponíveis. "Personalizado" continua, validando contra o limite do driver.
-5. **Tipo de papel / mídia, Cor, Frente e verso, Orientação** — continuam como listas de opções (o QZ Tray não enumera esses itens no driver), mas com um botão **"Imprimir teste"** já existente para conferir o resultado, e aviso na tela de que esses três são enviados ao driver no momento da impressão.
-6. **Botão "Recarregar opções do driver"** e um bloco recolhível "Detalhes do driver" mostrando nome do driver, conexão, bandejas, densidades e tamanho máximo, exatamente como o QZ Tray reporta.
+Causa: as instruções enviadas à IA pedem tanto o campo `escolaridade` quanto a lista `formacoes`, sem dizer que a lista é só para formações **extras**. A IA então repete a mesma linha nos dois lugares. Além disso, a importação aceita formações sem nome de curso (só o nível), que são exatamente essas linhas duplicadas.
 
-Sem QZ Tray conectado, o modal continua funcionando com os campos digitáveis de hoje e mostra o aviso de que as opções do driver não puderam ser lidas.
+## Correção
 
-## Observação honesta
-
-O QZ Tray expõe do driver apenas: nome do driver, conexão, **bandejas**, **densidades (DPI)** e **tamanho máximo do papel**. Tipos de papel/mídia, cor, duplex e orientação não são listáveis por API — nenhuma biblioteca de navegador consegue isso; elas continuam como opções fixas enviadas ao driver na hora de imprimir.
+1. **Instrução clara para a IA**: `escolaridade` é a formação principal (a mais alta); `formacoes` recebe apenas formações **adicionais**, com curso/instituição próprios, nunca repetindo a escolaridade principal nem entradas sem nome de curso.
+2. **Filtro na normalização**: descartar formações importadas que
+   - não tenham nome de curso, ou
+   - tenham nível equivalente à escolaridade principal e nenhum curso/instituição informados.
+3. **Sem duplicar na mesclagem**: ao aplicar a importação sobre um currículo existente mantendo as listas, ignorar formações e cursos idênticos aos já cadastrados (mesmo nível + curso + instituição + ano, sem diferenciar maiúsculas).
+4. **Limpeza dos registros já criados**: remover as formações fantasma existentes (sem nome de curso e com nível igual à escolaridade do currículo).
 
 ## Detalhes técnicos
 
-- `src/lib/impressora.ts`: nova função `detalhesImpressora(nome)` usando `qz.printers.detail(nome)` (QZ 2.2), normalizando `{ driver, connection, trays[], density[], size }` e reaproveitando `garantirConexao` + `ultimoErroQz` para erros.
-- `src/components/PerfisImpressao.tsx`: estado `detalhes` carregado ao trocar a impressora do rascunho; bandeja e qualidade viram `Select` com fallback para `Input`; badge de status da leitura; bloco de detalhes.
-- `src/lib/perfil-impressao.ts`: aceitar `qualidade` como DPI numérico opcional (`densidade_dpi`) além dos três níveis atuais, mantendo compatibilidade com perfis já salvos.
-- Migração: coluna `perfis_impressao.densidade_dpi integer null`.
-
-## Fora do escopo
-
-Nenhuma outra configuração é alterada: impressora padrão, método de impressão, etiqueta térmica, materiais e demais abas permanecem exatamente como estão.
+- `src/lib/curriculo-import.server.ts`: ajustar o texto `SISTEMA` (regra de escolaridade x formações), endurecer o filtro em `formacoes` dentro da normalização e adicionar deduplicação em `atualizarImportado` para `formacoes`, `cursos`, `experiencias` e `telefones`.
+- Migração de limpeza: `DELETE FROM curriculo_formacoes` para linhas com `nome_curso` vazio e `nivel` correspondente à `escolaridade` do currículo.
+- Nada mais do módulo de currículo é alterado.
