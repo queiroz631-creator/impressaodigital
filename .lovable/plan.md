@@ -1,25 +1,39 @@
-# Corrigir formação duplicada na importação de currículo
+# Calculadora (TAGs e confirmação de páginas) + Excel em Configurar Preços
 
-## O que está acontecendo (confirmado nos dados)
+## 1. Confirmar páginas dos arquivos com mais de 1 página
 
-Nos currículos importados, a mesma escolaridade aparece duas vezes:
+Ao anexar arquivos, se algum tiver mais de uma página, aparece um aviso na coluna de arquivos:
+"Confirme a quantidade de páginas lida" com a lista (arquivo → páginas detectadas) e o botão **Confirmar páginas**.
 
-- Currículo "Adriana Pereira Santos Sirqueira": escolaridade = "Ensino Médio Completo" **e** uma formação adicional com nível "Ensino Médio Completo" e curso vazio.
-- Currículo "Joyce Ananias Vieira": escolaridade = "Ensino Fundamental Completo" **e** uma formação adicional com nível "Ensino Fundamental" e curso vazio.
+Enquanto não confirmar, o campo **Tipo de impressão** fica bloqueado (e, por consequência, material, valores e resumo continuam ocultos como já acontece hoje). Editar a quantidade de páginas de um arquivo ou anexar novos arquivos com mais de 1 página pede a confirmação de novo. Arquivos gerados pela função TAG e arquivos de 1 página não exigem confirmação.
 
-Causa: as instruções enviadas à IA pedem tanto o campo `escolaridade` quanto a lista `formacoes`, sem dizer que a lista é só para formações **extras**. A IA então repete a mesma linha nos dois lugares. Além disso, a importação aceita formações sem nome de curso (só o nível), que são exatamente essas linhas duplicadas.
+## 2. Tamanho da TAG pela quantidade por folha
 
-## Correção
+No bloco TAG, novo campo **TAGs por folha (desejado)**. Ao informar, por exemplo, 8, o sistema calcula o tamanho de TAG que cabe nessa quantidade dentro da área de impressão do formato atual (respeitando o espaçamento de 1 mm) e preenche automaticamente Largura e Comprimento, mostrando a distribuição usada (ex.: "2 colunas x 4 linhas"). Largura e comprimento continuam editáveis manualmente — mexer neles recalcula "tags por folha" como hoje.
 
-1. **Instrução clara para a IA**: `escolaridade` é a formação principal (a mais alta); `formacoes` recebe apenas formações **adicionais**, com curso/instituição próprios, nunca repetindo a escolaridade principal nem entradas sem nome de curso.
-2. **Filtro na normalização**: descartar formações importadas que
-   - não tenham nome de curso, ou
-   - tenham nível equivalente à escolaridade principal e nenhum curso/instituição informados.
-3. **Sem duplicar na mesclagem**: ao aplicar a importação sobre um currículo existente mantendo as listas, ignorar formações e cursos idênticos aos já cadastrados (mesmo nível + curso + instituição + ano, sem diferenciar maiúsculas).
-4. **Limpeza dos registros já criados**: remover as formações fantasma existentes (sem nome de curso e com nível igual à escolaridade do currículo).
+## 3. Destaque visual
+
+Os campos **Tags por folha** e **Total de TAGs / Total de folhas** passam a ser exibidos em caixas destacadas (fundo e borda na cor de destaque do sistema, número em negrito maior), para diferenciá-los dos campos de digitação.
+
+## 4. Inversão do resultado do total
+
+O campo de resultado passa a mostrar o oposto do que foi informado:
+- informando **Quantidade de TAGs** → o resultado exibe **Total de folhas**;
+- informando **Quantidade de folhas** → o resultado exibe **Total de TAGs**.
+
+O arquivo gerado continua com o mesmo nome e a mesma quantidade de folhas de hoje.
+
+## 5. Exportar e importar Excel em Configurar Preços
+
+Nas abas **Materiais** e **Acabamentos**, dois botões: **Exportar Excel** e **Importar Excel**.
+
+- Exportar gera um `.xlsx` com uma planilha por aba, contendo todas as colunas configuráveis (materiais: nome, descrição, categoria, tipo de impressão, formato, preço uni, preço por arquivo, quantidade/preço de arquivos fixos, faixas, ativo, ordem; acabamentos: nome, tipo de impressão, cobrança, valor, páginas por bloco, faixas, exibições, ativo, ordem). As faixas vão em texto no formato "até 10 = 1,50; até 50 = 1,20".
+- Importar lê o mesmo arquivo, mostra uma prévia com quantos registros serão criados, atualizados e quantas linhas têm erro, e só grava após a confirmação. A identificação é pelo `id` da planilha (linha sem id vira registro novo); nada é excluído pela importação.
+- Valores em vírgula decimal (padrão brasileiro) são aceitos na importação e usados na exportação.
 
 ## Detalhes técnicos
 
-- `src/lib/curriculo-import.server.ts`: ajustar o texto `SISTEMA` (regra de escolaridade x formações), endurecer o filtro em `formacoes` dentro da normalização e adicionar deduplicação em `atualizarImportado` para `formacoes`, `cursos`, `experiencias` e `telefones`.
-- Migração de limpeza: `DELETE FROM curriculo_formacoes` para linhas com `nome_curso` vazio e `nivel` correspondente à `escolaridade` do currículo.
-- Nada mais do módulo de currículo é alterado.
+- `src/routes/index.tsx`: estado `paginasConfirmadas` (chave por lista de arquivos) bloqueando o Select de tipo de impressão; novo campo `tagsPorFolhaDesejado` e função de dimensionamento; inversão do rótulo/valor do total; classes de destaque nos dois campos de resultado.
+- `src/lib/calc.ts` (junto de `tagsPorFolha`): nova função `tamanhoTagPorQuantidade(qtdPorFolha, area)` que testa combinações de colunas x linhas e devolve o maior tamanho possível.
+- Novo `src/lib/precos-excel.ts` com a serialização/parse das planilhas (materiais e acabamentos) e conversão das faixas; usa a biblioteca `xlsx` (SheetJS), a ser instalada.
+- `src/routes/precos.tsx`: botões de exportar/importar por aba e diálogo de prévia da importação; gravação via `supabase.from("materiais"/"acabamentos").upsert`.
