@@ -1340,9 +1340,15 @@ function Calculadora() {
 
               <div className="space-y-2 rounded-lg border border-border p-3">
                 <Label className="text-xs font-semibold text-muted-foreground">Tipo de impressão *</Label>
+                {arquivosParaConfirmar.length > 0 && (
+                  <p className="text-xs font-semibold text-destructive">
+                    Confirme a quantidade de páginas dos arquivos para liberar.
+                  </p>
+                )}
                 <RadioGroup
                   value={estado.tipoServico}
                   onValueChange={(v) => set("tipoServico", v as TipoServico)}
+                  disabled={arquivosParaConfirmar.length > 0}
                   className="gap-2"
                 >
                   <label className="flex items-center gap-2 text-sm font-medium">
