@@ -80,8 +80,9 @@ export function FormularioCurriculo({
   // Etapa 1
   const [nome, setNome] = useState(c.nome_completo ?? "");
   const [telefone, setTelefone] = useState(formatarTelefone(c.telefone_principal ?? ""));
-  const [telefones, setTelefones] = useState<string[]>(
-    dados.telefones.map((t) => formatarTelefone(t.telefone)),
+  const [telefoneDescricao, setTelefoneDescricao] = useState(c.telefone_principal_descricao ?? "");
+  const [telefones, setTelefones] = useState<{ telefone: string; tipo: string }[]>(
+    dados.telefones.map((t) => ({ telefone: formatarTelefone(t.telefone), tipo: t.tipo ?? "" })),
   );
   const [nascimento, setNascimento] = useState(c.data_nascimento ?? "");
   const [estadoCivil, setEstadoCivil] = useState(c.estado_civil ?? "");

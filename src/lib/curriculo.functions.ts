@@ -6,6 +6,7 @@ const camposSchema = z
   .object({
     nome_completo: z.string().max(200).optional(),
     telefone_principal: z.string().max(30).optional(),
+    telefone_principal_descricao: z.string().max(60).nullish(),
     data_nascimento: z.string().max(20).nullish(),
     estado_civil: z.string().max(60).nullish(),
     email: z.string().max(160).nullish(),
@@ -32,7 +33,10 @@ const camposSchema = z
 
 const payloadSchema = z.object({
   campos: camposSchema.optional(),
-  telefones: z.array(z.object({ telefone: z.string().max(30) })).max(10).optional(),
+  telefones: z
+    .array(z.object({ telefone: z.string().max(30), tipo: z.string().max(60).nullish() }))
+    .max(10)
+    .optional(),
   cursos: z
     .array(
       z.object({
