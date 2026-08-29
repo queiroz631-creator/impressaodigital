@@ -29,6 +29,7 @@ import {
   formacaoLinha,
   escolaridadeTemPos,
   formatarTelefone,
+  telefoneComDescricao,
   type CurriculoCompleto,
   type CursoItem,
   type ExperienciaItem,

@@ -3,7 +3,6 @@ import {
   enderecoLinhas,
   formacaoFinal,
   formacaoLinha,
-  formatarTelefone,
   fraseSemExperiencia,
   informacoesAdicionais,
   objetivoFinal,
