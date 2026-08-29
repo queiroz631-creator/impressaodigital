@@ -128,7 +128,7 @@ export const ESCOLARIDADES = [
   "Pós-graduação",
 ];
 
-export const CATEGORIAS_HABILITACAO = ["A", "B", "AB", "C", "D", "E"];
+export const CATEGORIAS_HABILITACAO = ["A", "B", "C", "D", "E", "AB", "AC", "AD", "AE"];
 
 /** Níveis permitidos ao informar uma graduação adicional. */
 export const NIVEIS_FORMACAO = [
