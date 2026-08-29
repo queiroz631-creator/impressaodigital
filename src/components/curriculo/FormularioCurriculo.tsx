@@ -29,6 +29,7 @@ import {
   formacaoLinha,
   escolaridadeTemPos,
   formatarTelefone,
+  telefoneComDescricao,
   type CurriculoCompleto,
   type CursoItem,
   type ExperienciaItem,
@@ -80,8 +81,9 @@ export function FormularioCurriculo({
   // Etapa 1
   const [nome, setNome] = useState(c.nome_completo ?? "");
   const [telefone, setTelefone] = useState(formatarTelefone(c.telefone_principal ?? ""));
-  const [telefones, setTelefones] = useState<string[]>(
-    dados.telefones.map((t) => formatarTelefone(t.telefone)),
+  const [telefoneDescricao, setTelefoneDescricao] = useState(c.telefone_principal_descricao ?? "");
+  const [telefones, setTelefones] = useState<{ telefone: string; tipo: string }[]>(
+    dados.telefones.map((t) => ({ telefone: formatarTelefone(t.telefone), tipo: t.tipo ?? "" })),
   );
   const [nascimento, setNascimento] = useState(c.data_nascimento ?? "");
   const [estadoCivil, setEstadoCivil] = useState(c.estado_civil ?? "");
@@ -184,6 +186,7 @@ export function FormularioCurriculo({
           campos: {
             nome_completo: capitalizarTexto(nome),
             telefone_principal: telefone.trim(),
+            telefone_principal_descricao: capitalizarTexto(telefoneDescricao) || null,
             data_nascimento: nascimento || null,
             estado_civil: estadoCivil || null,
             email: email.trim() || null,
@@ -194,7 +197,9 @@ export function FormularioCurriculo({
             uf: uf.toUpperCase() || null,
             cep: cep.trim() || null,
           },
-          telefones: telefones.filter((t) => t.trim()).map((t) => ({ telefone: t.trim() })),
+          telefones: telefones
+            .filter((t) => t.telefone.trim())
+            .map((t) => ({ telefone: t.telefone.trim(), tipo: capitalizarTexto(t.tipo) || null })),
         };
       case 2:
         return {
@@ -361,12 +366,21 @@ export function FormularioCurriculo({
                 </div>
                 <div>
                   <Label htmlFor="tel">Telefone principal *</Label>
-                  <Input
-                    id="tel"
-                    value={telefone}
-                    onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
-                    placeholder="(00) 00000-0000"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="tel"
+                      value={telefone}
+                      onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
+                      placeholder="(00) 00000-0000"
+                    />
+                    <Input
+                      value={telefoneDescricao}
+                      onChange={(e) => setTelefoneDescricao(e.target.value)}
+                      placeholder="Descrição (opcional)"
+                      className="max-w-[180px]"
+                      maxLength={60}
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="email">E-mail</Label>
@@ -463,13 +477,26 @@ export function FormularioCurriculo({
                 {telefones.map((t, i) => (
                   <div key={i} className="flex gap-2">
                     <Input
-                      value={t}
+                      value={t.telefone}
                       onChange={(e) =>
                         setTelefones((a) =>
-                          a.map((v, j) => (j === i ? formatarTelefone(e.target.value) : v)),
+                          a.map((v, j) =>
+                            j === i ? { ...v, telefone: formatarTelefone(e.target.value) } : v,
+                          ),
                         )
                       }
                       placeholder="(00) 00000-0000"
+                    />
+                    <Input
+                      value={t.tipo}
+                      onChange={(e) =>
+                        setTelefones((a) =>
+                          a.map((v, j) => (j === i ? { ...v, tipo: e.target.value } : v)),
+                        )
+                      }
+                      placeholder="Descrição (opcional)"
+                      className="max-w-[180px]"
+                      maxLength={60}
                     />
                     <Button
                       variant="ghost"
@@ -480,7 +507,11 @@ export function FormularioCurriculo({
                     </Button>
                   </div>
                 ))}
-                <Button variant="default" size="sm" onClick={() => setTelefones((a) => [...a, ""])}>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setTelefones((a) => [...a, { telefone: "", tipo: "" }])}
+                >
                   <Plus className="mr-1 h-4 w-4" /> Adicionar telefone
                 </Button>
               </div>
@@ -961,7 +992,14 @@ export function FormularioCurriculo({
               <ResumoLinha titulo="Dados pessoais" etapa={1} ir={irParaEtapa}>
                 <p>{nome || "-"}</p>
                 <p className="text-muted-foreground">
-                  {[telefone, ...telefones].filter(Boolean).join(" • ")}
+                  {[
+                    telefoneComDescricao(telefone, telefoneDescricao),
+                    ...telefones
+                      .filter((t) => t.telefone.trim())
+                      .map((t) => telefoneComDescricao(t.telefone, t.tipo)),
+                  ]
+                    .filter((t) => t.replace(/\D/g, "").length >= 10)
+                    .join(" • ")}
                 </p>
                 <p className="text-muted-foreground">{email || "-"}</p>
                 <p className="text-muted-foreground">

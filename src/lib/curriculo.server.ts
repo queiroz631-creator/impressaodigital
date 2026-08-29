@@ -1,10 +1,10 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { urlBase } from "@/lib/link-dados.server";
-import { cpfValido, formatarTelefone, somenteNumeros, type CurriculoCompleto, type PayloadEtapa } from "@/lib/curriculo";
+import { capitalizarTexto, cpfValido, formatarTelefone, somenteNumeros, type CurriculoCompleto, type PayloadEtapa } from "@/lib/curriculo";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 
 const CAMPOS =
-  "id, cliente_id, status, nome_completo, cpf, telefone_principal, data_nascimento, estado_civil, email, documentacao_completa, habilitacao, categoria_habilitacao, escolaridade, curso_superior, pos_graduacao_nome, endereco, numero, bairro, cidade, uf, cep, objetivo_tipo, objetivo_texto, exibir_data_atualizacao, experiencia_possui, experiencia_frase, habilidades_observacao, created_at, updated_at, completed_at";
+  "id, cliente_id, status, nome_completo, cpf, telefone_principal, telefone_principal_descricao, data_nascimento, estado_civil, email, documentacao_completa, habilitacao, categoria_habilitacao, escolaridade, curso_superior, pos_graduacao_nome, endereco, numero, bairro, cidade, uf, cep, objetivo_tipo, objetivo_texto, exibir_data_atualizacao, experiencia_possui, experiencia_frase, habilidades_observacao, created_at, updated_at, completed_at";
 
 export interface DadosPublicos {
   novo?: false;
@@ -45,7 +45,7 @@ export async function carregarCurriculo(curriculoId: string): Promise<CurriculoC
     supabaseAdmin.from("curriculos").select(CAMPOS).eq("id", curriculoId).maybeSingle(),
     supabaseAdmin
       .from("curriculo_telefones")
-      .select("telefone")
+      .select("telefone, tipo")
       .eq("curriculo_id", curriculoId)
       .order("ordem"),
     supabaseAdmin
@@ -114,7 +114,9 @@ export async function gravarEtapa(curriculoId: string, payload: PayloadEtapa) {
   if (payload.telefones) {
     await trocarLista(
       "curriculo_telefones",
-      payload.telefones.filter((t) => t.telefone.trim()).map((t) => ({ telefone: t.telefone.trim() })),
+      payload.telefones
+        .filter((t) => t.telefone.trim())
+        .map((t) => ({ telefone: t.telefone.trim(), tipo: capitalizarTexto(t.tipo ?? "") || null })),
     );
   }
   if (payload.cursos) {

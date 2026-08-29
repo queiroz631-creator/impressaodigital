@@ -988,6 +988,7 @@ export type Database = {
           pos_graduacao_nome: string | null
           status: string
           telefone_principal: string
+          telefone_principal_descricao: string | null
           uf: string | null
           updated_at: string
         }
@@ -1020,6 +1021,7 @@ export type Database = {
           pos_graduacao_nome?: string | null
           status?: string
           telefone_principal?: string
+          telefone_principal_descricao?: string | null
           uf?: string | null
           updated_at?: string
         }
@@ -1052,6 +1054,7 @@ export type Database = {
           pos_graduacao_nome?: string | null
           status?: string
           telefone_principal?: string
+          telefone_principal_descricao?: string | null
           uf?: string | null
           updated_at?: string
         }

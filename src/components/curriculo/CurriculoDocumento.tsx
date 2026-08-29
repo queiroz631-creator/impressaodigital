@@ -3,11 +3,11 @@ import {
   enderecoLinhas,
   formacaoFinal,
   formacaoLinha,
-  formatarTelefone,
   fraseSemExperiencia,
   informacoesAdicionais,
   objetivoFinal,
   observacaoHabilidades,
+  telefoneComDescricao,
   type CurriculoCompleto,
 } from "@/lib/curriculo";
 import { dataBR } from "@/lib/format";
@@ -28,8 +28,8 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
   function CurriculoDocumento({ dados }, ref) {
     const c = dados.curriculo;
     const telefones = [
-      c.telefone_principal ? formatarTelefone(c.telefone_principal) : "",
-      ...dados.telefones.map((t) => formatarTelefone(t.telefone)),
+      c.telefone_principal ? telefoneComDescricao(c.telefone_principal, c.telefone_principal_descricao) : "",
+      ...dados.telefones.map((t) => telefoneComDescricao(t.telefone, t.tipo)),
     ].filter(Boolean);
 
     const pessoais = [
