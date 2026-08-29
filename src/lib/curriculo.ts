@@ -113,7 +113,7 @@ export interface PayloadEtapa {
   finalizar?: boolean;
 }
 
-export const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União estável"];
+export const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União estável", "Outros"];
 
 export const ESCOLARIDADES = [
   "Ensino Fundamental Incompleto",
