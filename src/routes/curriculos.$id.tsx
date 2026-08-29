@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import {
+  capitalizarTexto,
   formatarCpf,
   formatarTelefone,
   type CurriculoCompleto,
@@ -174,7 +175,12 @@ function DetalheCurriculo() {
     if (payload.telefones) {
       await trocar(
         "curriculo_telefones",
-        payload.telefones.filter((t) => t.telefone.trim()).map((t) => ({ telefone: t.telefone.trim() })),
+        payload.telefones
+          .filter((t) => t.telefone.trim())
+          .map((t) => ({
+            telefone: t.telefone.trim(),
+            tipo: capitalizarTexto(t.tipo ?? "") || null,
+          })),
       );
     }
     if (payload.cursos) {
