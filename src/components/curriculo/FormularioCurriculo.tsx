@@ -185,6 +185,7 @@ export function FormularioCurriculo({
           campos: {
             nome_completo: capitalizarTexto(nome),
             telefone_principal: telefone.trim(),
+            telefone_principal_descricao: capitalizarTexto(telefoneDescricao) || null,
             data_nascimento: nascimento || null,
             estado_civil: estadoCivil || null,
             email: email.trim() || null,
@@ -195,7 +196,9 @@ export function FormularioCurriculo({
             uf: uf.toUpperCase() || null,
             cep: cep.trim() || null,
           },
-          telefones: telefones.filter((t) => t.trim()).map((t) => ({ telefone: t.trim() })),
+          telefones: telefones
+            .filter((t) => t.telefone.trim())
+            .map((t) => ({ telefone: t.telefone.trim(), tipo: capitalizarTexto(t.tipo) || null })),
         };
       case 2:
         return {
