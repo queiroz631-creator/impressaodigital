@@ -1,0 +1,1 @@
+ALTER TABLE public.curriculos ADD COLUMN IF NOT EXISTS telefone_principal_descricao text;
