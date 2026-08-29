@@ -10,6 +10,7 @@ export interface CurriculoRegistro {
   nome_completo: string;
   cpf: string;
   telefone_principal: string;
+  telefone_principal_descricao: string | null;
   data_nascimento: string | null;
   estado_civil: string | null;
   email: string | null;
@@ -41,6 +42,7 @@ export const FRASE_SEM_EXPERIENCIA = "Em busca da 1ª oportunidade";
 
 export interface TelefoneItem {
   telefone: string;
+  tipo?: string | null;
 }
 export interface CursoItem {
   nome_curso: string;
@@ -79,6 +81,7 @@ export type CamposCurriculo = Partial<
     CurriculoRegistro,
     | "nome_completo"
     | "telefone_principal"
+    | "telefone_principal_descricao"
     | "data_nascimento"
     | "estado_civil"
     | "email"
@@ -214,6 +217,13 @@ export function formatarTelefone(v: string) {
   if (n.length <= 6) return `(${n.slice(0, 2)}) ${n.slice(2)}`;
   if (n.length <= 10) return `(${n.slice(0, 2)}) ${n.slice(2, 6)}-${n.slice(6)}`;
   return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}`;
+}
+
+/** Telefone formatado com descrição opcional na frente: "WhatsApp: (00) 00000-0000". */
+export function telefoneComDescricao(telefone: string, descricao?: string | null) {
+  const numero = formatarTelefone(telefone);
+  const desc = (descricao ?? "").trim();
+  return desc ? `${desc}: ${numero}` : numero;
 }
 
 /* ------------------------------------------------------ Vazios úteis */
