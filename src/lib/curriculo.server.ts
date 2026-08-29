@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { urlBase } from "@/lib/link-dados.server";
-import { cpfValido, formatarTelefone, somenteNumeros, type CurriculoCompleto, type PayloadEtapa } from "@/lib/curriculo";
+import { capitalizarTexto, cpfValido, formatarTelefone, somenteNumeros, type CurriculoCompleto, type PayloadEtapa } from "@/lib/curriculo";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 
 const CAMPOS =
@@ -45,7 +45,7 @@ export async function carregarCurriculo(curriculoId: string): Promise<CurriculoC
     supabaseAdmin.from("curriculos").select(CAMPOS).eq("id", curriculoId).maybeSingle(),
     supabaseAdmin
       .from("curriculo_telefones")
-      .select("telefone")
+      .select("telefone, tipo")
       .eq("curriculo_id", curriculoId)
       .order("ordem"),
     supabaseAdmin
@@ -114,7 +114,9 @@ export async function gravarEtapa(curriculoId: string, payload: PayloadEtapa) {
   if (payload.telefones) {
     await trocarLista(
       "curriculo_telefones",
-      payload.telefones.filter((t) => t.telefone.trim()).map((t) => ({ telefone: t.telefone.trim() })),
+      payload.telefones
+        .filter((t) => t.telefone.trim())
+        .map((t) => ({ telefone: t.telefone.trim(), tipo: capitalizarTexto(t.tipo ?? "") || null })),
     );
   }
   if (payload.cursos) {
