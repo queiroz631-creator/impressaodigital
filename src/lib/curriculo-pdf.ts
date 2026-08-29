@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import {
   enderecoLinhas,
   formacaoFinal,
-  formatarTelefone,
+  telefoneComDescricao,
   fraseSemExperiencia,
   informacoesAdicionais,
   objetivoFinal,
@@ -134,8 +134,8 @@ function renderizar(
   y += 4 * escala + folga.cabecalho;
 
   const telefones = [
-    c.telefone_principal ? formatarTelefone(c.telefone_principal) : "",
-    ...dados.telefones.map((t) => formatarTelefone(t.telefone)),
+    c.telefone_principal ? telefoneComDescricao(c.telefone_principal, c.telefone_principal_descricao) : "",
+    ...dados.telefones.map((t) => telefoneComDescricao(t.telefone, t.tipo)),
   ].filter(Boolean);
   if (telefones.length) centrado(telefones.join("  •  "), 12);
   if (c.email) centrado(c.email, 10);
