@@ -793,8 +793,8 @@ async function executarAcaoResposta(
           ? fluxos.fluxos.find((f) => f.id === destinoFluxoId && f.ativo)
           : fluxoInicial(fluxos);
       if (!alvo) return;
-      const saida = iniciarFluxo(fluxos, alvo.id, {}, vars, 0, primeiraDoDia);
-      await entregarFluxo(conversa, config, { ...ctx, triagem: null }, fluxos, saida, vars);
+      const saida = iniciarFluxo(fluxos, alvo.id, {}, vars, 0);
+      await entregarFluxo(conversa, config, { ...ctx, triagem: null, regra: null }, fluxos, saida, vars);
       return;
     }
 
