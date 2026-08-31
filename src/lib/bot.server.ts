@@ -1404,11 +1404,10 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
         // Fluxo em andamento ou confirmação SIM/NÃO pendente seguem a inatividade normal.
         // Fluxo em andamento, confirmação pendente ou fallback já disparado
         // neste atendimento: não reinicia o fluxo inicial de novo.
-        if (ctx.fluxo || ctx.triagem || ctx.fluxoFallback) continue;
+        if (ctx.fluxo || ctx.triagem || ctx.regra || ctx.fluxoFallback) continue;
 
         const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
-        const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
-        const saida = iniciarFluxo(fluxos, raiz.id, {}, vars, 0, primeiraDoDia);
+        const saida = iniciarFluxo(fluxos, raiz.id, {}, vars, 0);
         await entregarFluxo(conversa, config, { ...ctx, triagem: null, fluxoFallback: true }, fluxos, saida, vars);
         await salvar(conversa, { saudacao_em: agora.toISOString(), inatividade_avisada: false });
         await auditar(conversa.id, "bot_fluxo_inicial", `${minFallback} min sem reconhecimento`);
