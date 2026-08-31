@@ -73,7 +73,6 @@ export type Database = {
           fluxo_id: string
           id: string
           mensagem: string
-          mensagem_retorno_dia: string
           midia_nome: string | null
           midia_url: string | null
           modo_avanco: string
@@ -94,7 +93,6 @@ export type Database = {
           fluxo_id: string
           id?: string
           mensagem?: string
-          mensagem_retorno_dia?: string
           midia_nome?: string | null
           midia_url?: string | null
           modo_avanco?: string
@@ -115,7 +113,6 @@ export type Database = {
           fluxo_id?: string
           id?: string
           mensagem?: string
-          mensagem_retorno_dia?: string
           midia_nome?: string | null
           midia_url?: string | null
           modo_avanco?: string
@@ -227,7 +224,6 @@ export type Database = {
           id: string
           inicial: boolean
           mensagem_inicial: string
-          mensagem_retorno_dia: string
           mensagem_unica: boolean
           nome: string
           ordem: number
@@ -242,7 +238,6 @@ export type Database = {
           id?: string
           inicial?: boolean
           mensagem_inicial?: string
-          mensagem_retorno_dia?: string
           mensagem_unica?: boolean
           nome: string
           ordem?: number
@@ -257,7 +252,6 @@ export type Database = {
           id?: string
           inicial?: boolean
           mensagem_inicial?: string
-          mensagem_retorno_dia?: string
           mensagem_unica?: boolean
           nome?: string
           ordem?: number
@@ -397,6 +391,69 @@ export type Database = {
           {
             foreignKeyName: "bot_palavras_chave_resposta_id_fkey"
             columns: ["resposta_id"]
+            isOneToOne: false
+            referencedRelation: "bot_respostas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bot_primeiro_contato: {
+        Row: {
+          acao: string
+          ativo: boolean
+          condicao: string
+          created_at: string
+          delay_segundos: number
+          destino_fluxo_id: string | null
+          destino_resposta_id: string | null
+          id: string
+          mensagem: string
+          nome: string
+          ordem: number
+          palavras: string[]
+          updated_at: string
+        }
+        Insert: {
+          acao?: string
+          ativo?: boolean
+          condicao?: string
+          created_at?: string
+          delay_segundos?: number
+          destino_fluxo_id?: string | null
+          destino_resposta_id?: string | null
+          id?: string
+          mensagem?: string
+          nome?: string
+          ordem?: number
+          palavras?: string[]
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          ativo?: boolean
+          condicao?: string
+          created_at?: string
+          delay_segundos?: number
+          destino_fluxo_id?: string | null
+          destino_resposta_id?: string | null
+          id?: string
+          mensagem?: string
+          nome?: string
+          ordem?: number
+          palavras?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_primeiro_contato_destino_fluxo_id_fkey"
+            columns: ["destino_fluxo_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_primeiro_contato_destino_resposta_id_fkey"
+            columns: ["destino_resposta_id"]
             isOneToOne: false
             referencedRelation: "bot_respostas"
             referencedColumns: ["id"]

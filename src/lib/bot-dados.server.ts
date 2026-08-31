@@ -1,7 +1,14 @@
 /** Carrega as configurações do atendimento automático. Somente servidor. */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import type { BotConfig, BotDados, BotHorario, BotOpcao, BotResposta } from "@/lib/bot-motor";
+import type {
+  BotConfig,
+  BotDados,
+  BotHorario,
+  BotOpcao,
+  BotResposta,
+  RegraPrimeiroContato,
+} from "@/lib/bot-motor";
 import type { DadosFluxos, Fluxo, FluxoEtapa, FluxoOpcao } from "@/lib/bot-fluxos";
 
 /** Carrega os fluxos, etapas e opções cadastrados. */
@@ -20,12 +27,13 @@ export async function carregarFluxos(): Promise<DadosFluxos> {
 }
 
 export async function carregarDadosBot(): Promise<BotDados | null> {
-  const [cfg, hor, opc, resp, pal] = await Promise.all([
+  const [cfg, hor, opc, resp, pal, reg] = await Promise.all([
     supabaseAdmin.from("whatsapp_config").select("*").limit(1).maybeSingle(),
     supabaseAdmin.from("bot_horarios").select("*").order("dia_semana"),
     supabaseAdmin.from("bot_menu_opcoes").select("*").order("ordem"),
     supabaseAdmin.from("bot_respostas").select("*").order("ordem"),
     supabaseAdmin.from("bot_palavras_chave").select("*"),
+    supabaseAdmin.from("bot_primeiro_contato").select("*").order("ordem"),
   ]);
 
   const d = cfg.data;
@@ -74,5 +82,6 @@ export async function carregarDadosBot(): Promise<BotDados | null> {
     horarios: (hor.data ?? []) as BotHorario[],
     opcoes,
     respostas,
+    regras: (reg.data ?? []) as unknown as RegraPrimeiroContato[],
   };
 }

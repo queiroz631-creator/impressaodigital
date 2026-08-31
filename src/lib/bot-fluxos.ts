@@ -9,8 +9,6 @@ export interface Fluxo {
   descricao: string;
   icone: string;
   mensagem_inicial: string;
-  /** Mensagem inicial usada quando o cliente já falou hoje. */
-  mensagem_retorno_dia: string;
   ativo: boolean;
   ordem: number;
   inicial: boolean;
@@ -27,8 +25,6 @@ export interface FluxoEtapa {
   nome: string;
   ordem: number;
   mensagem: string;
-  /** Texto alternativo quando o cliente já falou com a loja no mesmo dia. */
-  mensagem_retorno_dia: string;
   tipo_resposta: string;
   acao: string;
   configuracao: Record<string, unknown>;
@@ -146,6 +142,36 @@ export const ACOES_RESPOSTA: { valor: string; rotulo: string }[] = [
 export function rotuloAcaoResposta(valor: string) {
   return ACOES_RESPOSTA.find((a) => a.valor === valor)?.rotulo ?? valor;
 }
+
+/** Condições de identificação da primeira mensagem do cliente. */
+export const CONDICOES_PRIMEIRO_CONTATO: { valor: string; rotulo: string; usaPalavras: boolean }[] = [
+  { valor: "saudacao", rotulo: "Só uma saudação (oi, olá, bom dia...)", usaPalavras: false },
+  { valor: "arquivo", rotulo: "Só arquivos (sem texto)", usaPalavras: false },
+  { valor: "arquivo_palavra", rotulo: "Arquivos + palavras-chave", usaPalavras: true },
+  { valor: "texto_palavra", rotulo: "Texto com palavras-chave", usaPalavras: true },
+  { valor: "qualquer", rotulo: "Qualquer mensagem", usaPalavras: false },
+];
+
+/** Ações possíveis em uma regra de primeiro contato. */
+export const ACOES_PRIMEIRO_CONTATO: { valor: string; rotulo: string }[] = [
+  { valor: "aguardar", rotulo: "Só enviar a mensagem e aguardar" },
+  { valor: "confirmar_fluxo", rotulo: "Perguntar SIM/NÃO e iniciar um fluxo" },
+  { valor: "iniciar_fluxo", rotulo: "Iniciar um fluxo" },
+  { valor: "fluxo_inicial", rotulo: "Iniciar o fluxo inicial" },
+  { valor: "resposta", rotulo: "Enviar uma resposta automática" },
+  { valor: "atendente", rotulo: "Transferir para atendente" },
+  { valor: "finalizar", rotulo: "Finalizar atendimento" },
+];
+
+export function rotuloCondicao(valor: string) {
+  return CONDICOES_PRIMEIRO_CONTATO.find((c) => c.valor === valor)?.rotulo ?? valor;
+}
+
+export function rotuloAcaoPrimeiroContato(valor: string) {
+  return ACOES_PRIMEIRO_CONTATO.find((a) => a.valor === valor)?.rotulo ?? valor;
+}
+
+
 
 /** Ações da etapa que são executadas por módulos do sistema. */
 export const ACOES_SISTEMA = new Set([

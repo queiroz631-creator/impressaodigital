@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { FluxosPainel } from "@/components/bot/FluxosPainel";
 import { RespostasPainel } from "@/components/bot/RespostasPainel";
 import { NumerosPainel } from "@/components/bot/NumerosPainel";
+import { PrimeiroContatoPainel } from "@/components/bot/PrimeiroContatoPainel";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -243,6 +244,7 @@ export function ConfiguracaoBot() {
           <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="horarios">Horários</TabsTrigger>
           <TabsTrigger value="mensagens">Mensagens</TabsTrigger>
+          <TabsTrigger value="primeiro">Primeiro contato</TabsTrigger>
           <TabsTrigger value="menu">Fluxos</TabsTrigger>
           <TabsTrigger value="respostas">Respostas automáticas</TabsTrigger>
           <TabsTrigger value="inatividade">Inatividade</TabsTrigger>
@@ -380,6 +382,10 @@ export function ConfiguracaoBot() {
 
 
         {/* ---------- Respostas automáticas ---------- */}
+        <TabsContent value="primeiro">
+          <PrimeiroContatoPainel />
+        </TabsContent>
+
         <TabsContent value="respostas">
           <RespostasPainel />
         </TabsContent>
