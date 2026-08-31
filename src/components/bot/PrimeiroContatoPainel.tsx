@@ -32,6 +32,7 @@ interface Regra {
   destino_fluxo_id: string | null;
   destino_resposta_id: string | null;
   delay_segundos: number;
+  enviar_mensagem: string;
   ordem: number;
   ativo: boolean;
 }
