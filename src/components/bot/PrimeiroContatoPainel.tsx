@@ -53,6 +53,7 @@ interface Form {
   destino_fluxo_id: string;
   destino_resposta_id: string;
   delay_segundos: number;
+  enviar_mensagem: string;
   ativo: boolean;
 }
 
@@ -65,6 +66,7 @@ const VAZIO: Form = {
   destino_fluxo_id: NENHUM,
   destino_resposta_id: NENHUM,
   delay_segundos: 0,
+  enviar_mensagem: "sempre",
   ativo: true,
 };
 
