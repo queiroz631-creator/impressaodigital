@@ -96,12 +96,6 @@ function proximaEtapa(dados: DadosFluxos, etapa: FluxoEtapa): FluxoEtapa | null 
 
 const NUMEROS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
 
-/** Texto configurado na etapa (com a variante de retorno no mesmo dia). */
-function textoDaEtapa(etapa: FluxoEtapa, primeiraDoDia: boolean) {
-  const retorno = (etapa.mensagem_retorno_dia ?? "").trim();
-  return !primeiraDoDia && retorno ? retorno : (etapa.mensagem ?? "");
-}
-
 function midiaDaEtapa(etapa: FluxoEtapa) {
   const tipo = etapa.tipo_mensagem ?? "texto";
   if (tipo === "texto" || !etapa.midia_url) return undefined;
@@ -112,13 +106,12 @@ function mensagemDaEtapa(
   dados: DadosFluxos,
   etapa: FluxoEtapa,
   vars: { nome: string; telefone: string; agora: Date },
-  primeiraDoDia = true,
 ): MensagemBot | null {
   const opcoes = opcoesDaEtapa(dados, etapa.id);
   const midia = midiaDaEtapa(etapa);
   const espera = etapa.modo_avanco === "automatico" ? Math.min(60, Math.max(0, etapa.espera_segundos ?? 0)) : 0;
   const extras = { ...(midia ? { midia } : {}), ...(espera ? { espera } : {}) };
-  let texto = aplicarVariaveis(textoDaEtapa(etapa, primeiraDoDia), vars).trim();
+  let texto = aplicarVariaveis(etapa.mensagem ?? "", vars).trim();
 
   if (opcoes.length > 0) {
     const lista = opcoes.map((o, i) => `${NUMEROS[i] ?? `${i + 1}.`} ${o.titulo}`).join("\n");
