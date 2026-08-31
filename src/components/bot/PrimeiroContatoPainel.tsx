@@ -151,6 +151,7 @@ export function PrimeiroContatoPainel() {
       destino_fluxo_id: usaFluxo && form.destino_fluxo_id !== NENHUM ? form.destino_fluxo_id : null,
       destino_resposta_id: usaResposta && form.destino_resposta_id !== NENHUM ? form.destino_resposta_id : null,
       delay_segundos: Math.min(60, Math.max(0, Number(form.delay_segundos) || 0)),
+      enviar_mensagem: form.enviar_mensagem,
       ativo: form.ativo,
     };
 
