@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ACOES_PRIMEIRO_CONTATO,
   CONDICOES_PRIMEIRO_CONTATO,
+  ENVIOS_PRIMEIRO_CONTATO,
   rotuloAcaoPrimeiroContato,
   rotuloCondicao,
 } from "@/lib/bot-fluxos";
@@ -31,6 +32,7 @@ interface Regra {
   destino_fluxo_id: string | null;
   destino_resposta_id: string | null;
   delay_segundos: number;
+  enviar_mensagem: string;
   ordem: number;
   ativo: boolean;
 }
@@ -51,6 +53,7 @@ interface Form {
   destino_fluxo_id: string;
   destino_resposta_id: string;
   delay_segundos: number;
+  enviar_mensagem: string;
   ativo: boolean;
 }
 
@@ -63,6 +66,7 @@ const VAZIO: Form = {
   destino_fluxo_id: NENHUM,
   destino_resposta_id: NENHUM,
   delay_segundos: 0,
+  enviar_mensagem: "sempre",
   ativo: true,
 };
 
@@ -114,6 +118,7 @@ export function PrimeiroContatoPainel() {
       destino_fluxo_id: editando.destino_fluxo_id ?? NENHUM,
       destino_resposta_id: editando.destino_resposta_id ?? NENHUM,
       delay_segundos: editando.delay_segundos ?? 0,
+      enviar_mensagem: editando.enviar_mensagem ?? "sempre",
       ativo: editando.ativo,
     });
   }, [editando]);
@@ -146,6 +151,7 @@ export function PrimeiroContatoPainel() {
       destino_fluxo_id: usaFluxo && form.destino_fluxo_id !== NENHUM ? form.destino_fluxo_id : null,
       destino_resposta_id: usaResposta && form.destino_resposta_id !== NENHUM ? form.destino_resposta_id : null,
       delay_segundos: Math.min(60, Math.max(0, Number(form.delay_segundos) || 0)),
+      enviar_mensagem: form.enviar_mensagem,
       ativo: form.ativo,
     };
 
@@ -227,6 +233,9 @@ export function PrimeiroContatoPainel() {
                     <MessageSquarePlus className="h-4 w-4 text-primary" />
                     {i + 1}. {r.nome}
                     <Badge variant={r.ativo ? "default" : "secondary"}>{r.ativo ? "Ativo" : "Inativo"}</Badge>
+                    {r.enviar_mensagem === "primeira_do_dia" && (
+                      <Badge variant="outline">1º contato do dia</Badge>
+                    )}
                   </CardTitle>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {rotuloCondicao(r.condicao)} → {rotuloAcaoPrimeiroContato(r.acao)}
@@ -322,6 +331,25 @@ export function PrimeiroContatoPainel() {
               <p className="text-xs text-muted-foreground">
                 Use {"{nome}"}, {"{telefone}"} e {"{saudacao}"}. Em branco, o bot não envia nada.
               </p>
+            </div>
+
+            <div className="grid gap-1">
+              <Label>Enviar a mensagem</Label>
+              <Select
+                value={form.enviar_mensagem}
+                onValueChange={(v) => setForm({ ...form, enviar_mensagem: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ENVIOS_PRIMEIRO_CONTATO.map((e) => (
+                    <SelectItem key={e.valor} value={e.valor}>
+                      {e.rotulo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid gap-1">

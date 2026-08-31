@@ -899,7 +899,8 @@ async function triagem(
   if (regra) {
     const mensagem = (regra.mensagem ?? "").trim();
     const confirmar = regra.acao === "confirmar_fluxo";
-    if (mensagem && (primeiraDoDia || confirmar)) {
+    const sempre = (regra.enviar_mensagem ?? "sempre") === "sempre";
+    if (mensagem && (sempre || primeiraDoDia || confirmar)) {
       await responder(conversa, aplicarVariaveis(mensagem, vars), confirmar ? ["SIM", "NÃO"] : undefined);
     }
 
