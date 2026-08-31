@@ -35,12 +35,14 @@ import {
   ETAPAS_MENU,
   aplicarVariaveis,
   dentroDoHorario,
+  escolherRegra,
   processarMenu,
   reconhecerResposta,
   type AcaoBot,
   type BotDados,
   type BotResposta,
   type MidiaBot,
+  type RegraPrimeiroContato,
 } from "@/lib/bot-motor";
 import type { DadosFluxos } from "@/lib/bot-fluxos";
 import {
