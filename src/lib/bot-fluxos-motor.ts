@@ -180,10 +180,9 @@ function executar(
   estado: EstadoFluxo,
   vars: { nome: string; telefone: string; agora: Date },
   profundidade = 0,
-  primeiraDoDia = true,
 ): SaidaFluxo {
   const mensagens: MensagemBot[] = [];
-  const msg = mensagemDaEtapa(dados, etapa, vars, primeiraDoDia);
+  const msg = mensagemDaEtapa(dados, etapa, vars);
   if (msg) mensagens.push(msg);
 
   const base: EstadoFluxo = { ...estado, fluxoId: etapa.fluxo_id, etapaId: etapa.id, aguardando: false };
