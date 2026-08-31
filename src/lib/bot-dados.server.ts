@@ -1,7 +1,14 @@
 /** Carrega as configurações do atendimento automático. Somente servidor. */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import type { BotConfig, BotDados, BotHorario, BotOpcao, BotResposta } from "@/lib/bot-motor";
+import type {
+  BotConfig,
+  BotDados,
+  BotHorario,
+  BotOpcao,
+  BotResposta,
+  RegraPrimeiroContato,
+} from "@/lib/bot-motor";
 import type { DadosFluxos, Fluxo, FluxoEtapa, FluxoOpcao } from "@/lib/bot-fluxos";
 
 /** Carrega os fluxos, etapas e opções cadastrados. */
