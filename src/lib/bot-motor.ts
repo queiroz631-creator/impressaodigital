@@ -75,11 +75,28 @@ export interface BotConfig {
   msg_finalizacao_ativo: boolean;
 }
 
+/** Regra de identificação da primeira mensagem do cliente. */
+export interface RegraPrimeiroContato {
+  id: string;
+  nome: string;
+  /** saudacao | arquivo | arquivo_palavra | texto_palavra | qualquer */
+  condicao: string;
+  palavras: string[];
+  mensagem: string;
+  acao: string;
+  destino_fluxo_id: string | null;
+  destino_resposta_id: string | null;
+  delay_segundos: number;
+  ordem: number;
+  ativo: boolean;
+}
+
 export interface BotDados {
   config: BotConfig;
   horarios: BotHorario[];
   opcoes: BotOpcao[];
   respostas: BotResposta[];
+  regras: RegraPrimeiroContato[];
 }
 
 export interface MidiaBot {
