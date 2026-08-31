@@ -406,6 +406,7 @@ export type Database = {
           delay_segundos: number
           destino_fluxo_id: string | null
           destino_resposta_id: string | null
+          enviar_mensagem: string
           id: string
           mensagem: string
           nome: string
@@ -421,6 +422,7 @@ export type Database = {
           delay_segundos?: number
           destino_fluxo_id?: string | null
           destino_resposta_id?: string | null
+          enviar_mensagem?: string
           id?: string
           mensagem?: string
           nome?: string
@@ -436,6 +438,7 @@ export type Database = {
           delay_segundos?: number
           destino_fluxo_id?: string | null
           destino_resposta_id?: string | null
+          enviar_mensagem?: string
           id?: string
           mensagem?: string
           nome?: string
