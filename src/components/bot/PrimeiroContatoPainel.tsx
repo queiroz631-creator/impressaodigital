@@ -233,6 +233,9 @@ export function PrimeiroContatoPainel() {
                     <MessageSquarePlus className="h-4 w-4 text-primary" />
                     {i + 1}. {r.nome}
                     <Badge variant={r.ativo ? "default" : "secondary"}>{r.ativo ? "Ativo" : "Inativo"}</Badge>
+                    {r.enviar_mensagem === "primeira_do_dia" && (
+                      <Badge variant="outline">1º contato do dia</Badge>
+                    )}
                   </CardTitle>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {rotuloCondicao(r.condicao)} → {rotuloAcaoPrimeiroContato(r.acao)}
