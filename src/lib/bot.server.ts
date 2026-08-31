@@ -837,9 +837,42 @@ async function executarAcaoResposta(
   }
 }
 
+/** Executa a ação configurada em uma regra de primeiro contato. */
+async function executarAcaoRegra(
+  conversa: ConversaBot,
+  config: ConfigBot,
+  ctx: ContextoBot,
+  cfg: BotDados,
+  fluxos: DadosFluxos,
+  regra: RegraPrimeiroContato,
+  primeiraDoDia: boolean,
+  vars: Vars,
+) {
+  const espera = Math.min(60, Math.max(0, Number(regra.delay_segundos ?? 0)));
+  if (espera > 0) await new Promise((r) => setTimeout(r, espera * 1000));
+
+  if (regra.acao === "aguardar") {
+    await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null, triagem: null, regra: null }, "inicio");
+    return;
+  }
+
+  await executarAcaoResposta(
+    conversa,
+    config,
+    { ...ctx, triagem: null, regra: null },
+    cfg,
+    fluxos,
+    regra.acao,
+    regra.destino_fluxo_id,
+    regra.destino_resposta_id,
+    primeiraDoDia,
+    vars,
+  );
+}
+
 /**
- * Analisa o primeiro contato: arquivos vão para o fluxo de orçamento, textos
- * procuram uma resposta automática e, sem reconhecimento, o bot aguarda.
+ * Analisa o primeiro contato: primeiro as regras configuradas (saudação,
+ * arquivos, arquivos + palavras-chave...), depois as respostas automáticas.
  */
 async function triagem(
   conversa: ConversaBot,
@@ -858,29 +891,64 @@ async function triagem(
   }
   await salvar(conversa, { saudacao_em: vars.agora.toISOString() });
 
-  // 1) Só arquivos → fluxo marcado para arquivos (ou o fluxo inicial).
-  if (entrada.tipo === "documento" || entrada.tipo === "imagem") {
-    const alvo = fluxoDeArquivos(fluxos) ?? fluxoInicial(fluxos);
-    if (!alvo) return;
-    const saida = iniciarFluxo(fluxos, alvo.id, {}, vars, 0, primeiraDoDia);
-    await entregarFluxo(conversa, config, { ...ctx, triagem: null, fluxoFallback: null }, fluxos, saida, vars);
+  const texto = (entrada.texto ?? "").trim();
+  const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
+
+  // 1) Regras de primeiro contato configuradas na aba "Primeiro contato".
+  const regra = escolherRegra(cfg.regras ?? [], { texto, ehArquivo });
+  if (regra) {
+    const mensagem = (regra.mensagem ?? "").trim();
+    const confirmar = regra.acao === "confirmar_fluxo";
+    if (mensagem && (primeiraDoDia || confirmar)) {
+      await responder(conversa, aplicarVariaveis(mensagem, vars), confirmar ? ["SIM", "NÃO"] : undefined);
+    }
+
+    if (confirmar) {
+      await salvarContexto(
+        conversa,
+        { ...ctx, fluxo: null, fluxoFallback: null, triagem: null, regra: regra.id },
+        "triagem",
+      );
+      return;
+    }
+
+    await executarAcaoRegra(conversa, config, ctx, cfg, fluxos, regra, primeiraDoDia, vars);
     return;
   }
 
-  // 2) Texto → procura uma resposta automática e confirma com o cliente.
-  const texto = (entrada.texto ?? "").trim();
+  // 2) Só arquivos → fluxo marcado para arquivos (ou o fluxo inicial).
+  if (ehArquivo) {
+    const alvo = fluxoDeArquivos(fluxos) ?? fluxoInicial(fluxos);
+    if (!alvo) return;
+    const saida = iniciarFluxo(fluxos, alvo.id, {}, vars, 0);
+    await entregarFluxo(
+      conversa,
+      config,
+      { ...ctx, triagem: null, regra: null, fluxoFallback: null },
+      fluxos,
+      saida,
+      vars,
+    );
+    return;
+  }
+
+  // 3) Texto → procura uma resposta automática e confirma com o cliente.
   const encontrada = texto ? reconhecerResposta(cfg, texto) : null;
   if (encontrada) {
     await responder(conversa, `Você quer falar sobre *${encontrada.titulo}*?`, ["SIM", "NÃO"]);
-    await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null, triagem: encontrada.id }, "triagem");
+    await salvarContexto(
+      conversa,
+      { ...ctx, fluxo: null, fluxoFallback: null, regra: null, triagem: encontrada.id },
+      "triagem",
+    );
     return;
   }
 
-  // 3) Nada reconhecido: aguarda a próxima mensagem do cliente.
-  await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null, triagem: null }, "inicio");
+  // 4) Nada reconhecido: aguarda a próxima mensagem do cliente.
+  await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null, triagem: null, regra: null }, "inicio");
 }
 
-/** Trata a confirmação (SIM/NÃO) da resposta automática sugerida na triagem. */
+/** Trata a confirmação (SIM/NÃO) da regra ou da resposta automática sugerida. */
 async function resolverTriagem(
   conversa: ConversaBot,
   config: ConfigBot,
@@ -891,6 +959,32 @@ async function resolverTriagem(
   vars: Vars,
 ) {
   const cfg = await carregarDadosBot();
+
+  // Confirmação de uma regra de primeiro contato.
+  if (cfg && ctx.regra) {
+    const regra = (cfg.regras ?? []).find((r) => r.id === ctx.regra);
+    const escolha = simOuNao(entrada.texto ?? "");
+    if (!regra || escolha === null) {
+      await triagem(conversa, config, { ...ctx, regra: null }, fluxos, entrada, primeiraDoDia, vars);
+      return;
+    }
+    if (!escolha) {
+      await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: null, regra: null }, "inicio");
+      return;
+    }
+    await executarAcaoRegra(
+      conversa,
+      config,
+      { ...ctx, regra: null },
+      cfg,
+      fluxos,
+      { ...regra, acao: "iniciar_fluxo" },
+      primeiraDoDia,
+      vars,
+    );
+    return;
+  }
+
   const resposta = cfg?.respostas.find((r) => r.id === ctx.triagem);
   if (!cfg || !resposta) {
     await triagem(conversa, config, ctx, fluxos, entrada, primeiraDoDia, vars);
