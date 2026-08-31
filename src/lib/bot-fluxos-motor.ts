@@ -258,7 +258,6 @@ export function iniciar(
   estado: Partial<EstadoFluxo>,
   vars: { nome: string; telefone: string; agora: Date },
   profundidade = 0,
-  primeiraDoDia = true,
 ): SaidaFluxo {
   const fluxo = fluxoPorId(dados, fluxoId);
   if (!fluxo) return { mensagens: [], estado: null };
@@ -273,7 +272,6 @@ export function iniciar(
     { fluxoId: fluxo.id, etapaId: primeira.id, aguardando: false, respostas },
     vars,
     profundidade + 1,
-    primeiraDoDia,
   );
   return unirSaida(dados, saida, fluxo.id);
 }
