@@ -331,6 +331,25 @@ export function PrimeiroContatoPainel() {
             </div>
 
             <div className="grid gap-1">
+              <Label>Enviar a mensagem</Label>
+              <Select
+                value={form.enviar_mensagem}
+                onValueChange={(v) => setForm({ ...form, enviar_mensagem: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ENVIOS_PRIMEIRO_CONTATO.map((e) => (
+                    <SelectItem key={e.valor} value={e.valor}>
+                      {e.rotulo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-1">
               <Label>O que o bot faz</Label>
               <Select value={form.acao} onValueChange={(v) => setForm({ ...form, acao: v })}>
                 <SelectTrigger>
