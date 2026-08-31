@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   ACOES_PRIMEIRO_CONTATO,
   CONDICOES_PRIMEIRO_CONTATO,
+  ENVIOS_PRIMEIRO_CONTATO,
   rotuloAcaoPrimeiroContato,
   rotuloCondicao,
 } from "@/lib/bot-fluxos";
