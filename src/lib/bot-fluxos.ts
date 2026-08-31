@@ -25,8 +25,6 @@ export interface FluxoEtapa {
   nome: string;
   ordem: number;
   mensagem: string;
-  /** Texto alternativo quando o cliente já falou com a loja no mesmo dia. */
-  mensagem_retorno_dia: string;
   tipo_resposta: string;
   acao: string;
   configuracao: Record<string, unknown>;
