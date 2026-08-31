@@ -254,6 +254,72 @@ export function reconhecerOpcao(dados: BotDados, texto: string): BotOpcao | null
   return melhor?.o ?? null;
 }
 
+// ---------- primeiro contato ----------
+
+const SAUDACOES = [
+  "oi",
+  "ola",
+  "olá",
+  "opa",
+  "eae",
+  "e ai",
+  "e aí",
+  "bom dia",
+  "boa tarde",
+  "boa noite",
+  "tudo bem",
+  "boas",
+  "hey",
+  "alo",
+  "alô",
+];
+
+/** A mensagem é apenas uma saudação, sem pedido? */
+export function ehSaudacao(texto: string): boolean {
+  const t = chave(texto)
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return false;
+  if (t.split(" ").length > 4) return false;
+  return SAUDACOES.some((s) => t === chave(s) || t.startsWith(`${chave(s)} `) || t.endsWith(` ${chave(s)}`));
+}
+
+/**
+ * Escolhe a primeira regra de primeiro contato que combina com a mensagem.
+ * Módulo puro: usado pelo bot e pelo simulador.
+ */
+export function escolherRegra(
+  regras: RegraPrimeiroContato[],
+  entrada: { texto: string; ehArquivo: boolean },
+): RegraPrimeiroContato | null {
+  const texto = (entrada.texto ?? "").trim();
+  const lista = regras.filter((r) => r.ativo).sort((a, b) => a.ordem - b.ordem);
+
+  for (const r of lista) {
+    const bateu = melhorPalavra(texto, r.palavras) >= LIMITE;
+    switch (r.condicao) {
+      case "saudacao":
+        if (!entrada.ehArquivo && ehSaudacao(texto)) return r;
+        break;
+      case "arquivo":
+        if (entrada.ehArquivo && !texto) return r;
+        break;
+      case "arquivo_palavra":
+        if (entrada.ehArquivo && texto && bateu) return r;
+        break;
+      case "texto_palavra":
+        if (!entrada.ehArquivo && texto && bateu) return r;
+        break;
+      case "qualquer":
+        return r;
+      default:
+        break;
+    }
+  }
+  return null;
+}
+
 // ---------- textos ----------
 
 export function opcoesAtivas(dados: BotDados) {
