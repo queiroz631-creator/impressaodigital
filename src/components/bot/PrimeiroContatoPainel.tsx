@@ -118,6 +118,7 @@ export function PrimeiroContatoPainel() {
       destino_fluxo_id: editando.destino_fluxo_id ?? NENHUM,
       destino_resposta_id: editando.destino_resposta_id ?? NENHUM,
       delay_segundos: editando.delay_segundos ?? 0,
+      enviar_mensagem: editando.enviar_mensagem ?? "sempre",
       ativo: editando.ativo,
     });
   }, [editando]);
