@@ -55,8 +55,6 @@ interface FormEtapa {
   id?: string;
   nome: string;
   mensagem: string;
-  mensagem_retorno_dia: string;
-  usar_retorno: boolean;
   tipo_mensagem: string;
   midia_url: string;
   midia_nome: string;
@@ -78,8 +76,6 @@ function formDaEtapa(e: FluxoEtapa, opcoes: FluxoOpcao[]): FormEtapa {
     id: e.id,
     nome: e.nome,
     mensagem: e.mensagem ?? "",
-    mensagem_retorno_dia: e.mensagem_retorno_dia ?? "",
-    usar_retorno: Boolean((e.mensagem_retorno_dia ?? "").trim()),
     tipo_mensagem: e.tipo_mensagem ?? "texto",
     midia_url: e.midia_url ?? "",
     midia_nome: e.midia_nome ?? "",
@@ -109,8 +105,6 @@ function formDaEtapa(e: FluxoEtapa, opcoes: FluxoOpcao[]): FormEtapa {
 const ETAPA_VAZIA: FormEtapa = {
   nome: "",
   mensagem: "",
-  mensagem_retorno_dia: "",
-  usar_retorno: false,
   tipo_mensagem: "texto",
   midia_url: "",
   midia_nome: "",
@@ -166,7 +160,6 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
     const dados = {
       nome: form.nome,
       mensagem: form.mensagem,
-      mensagem_retorno_dia: form.usar_retorno ? form.mensagem_retorno_dia : "",
       tipo_mensagem: form.tipo_mensagem,
       midia_url: form.tipo_mensagem === "texto" ? null : (form.midia_url || null),
       midia_nome: form.tipo_mensagem === "texto" ? null : (form.midia_nome || null),
@@ -486,36 +479,6 @@ function EditorEtapa({
         <Label>{form.tipo_mensagem === "texto" ? "Texto da etapa" : "Texto / legenda"}</Label>
         <Textarea rows={4} value={form.mensagem} onChange={(e) => setForm({ ...form, mensagem: e.target.value })} />
         <p className="text-xs text-muted-foreground">Use {"{nome}"}, {"{telefone}"} e {"{saudacao}"}.</p>
-        {!form.usar_retorno ? (
-          <Button
-            size="sm"
-            variant="outline"
-            className="justify-self-start"
-            onClick={() => setForm({ ...form, usar_retorno: true })}
-          >
-            <Plus className="h-4 w-4" /> ADICIONAR MENSAGEM 2 (RETORNO NO MESMO DIA)
-          </Button>
-        ) : (
-          <div className="grid gap-1">
-            <Label>Mensagem 2 — retorno no mesmo dia</Label>
-            <Textarea
-              rows={3}
-              value={form.mensagem_retorno_dia}
-              onChange={(e) => setForm({ ...form, mensagem_retorno_dia: e.target.value })}
-            />
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">Em branco, o bot usa sempre o texto acima.</p>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-destructive"
-                onClick={() => setForm({ ...form, usar_retorno: false, mensagem_retorno_dia: "" })}
-              >
-                REMOVER
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="grid gap-1">

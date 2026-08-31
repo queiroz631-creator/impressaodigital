@@ -21,7 +21,6 @@ interface FormFluxo {
   descricao: string;
   icone: string;
   mensagem_inicial: string;
-  mensagem_retorno_dia: string;
   ativo: boolean;
   mensagem_unica: boolean;
 }
@@ -31,7 +30,6 @@ const VAZIO: FormFluxo = {
   descricao: "",
   icone: "bot",
   mensagem_inicial: "",
-  mensagem_retorno_dia: "",
   ativo: true,
   mensagem_unica: true,
 };
@@ -156,7 +154,6 @@ export function FluxosPainel() {
         descricao: f.descricao,
         icone: f.icone,
         mensagem_inicial: f.mensagem_inicial,
-        mensagem_retorno_dia: f.mensagem_retorno_dia,
         ativo: f.ativo,
         mensagem_unica: f.mensagem_unica !== false,
 
