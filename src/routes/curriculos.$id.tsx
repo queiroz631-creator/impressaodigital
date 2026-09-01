@@ -360,6 +360,62 @@ function DetalheCurriculo() {
         </Card>
       )}
 
+      {!modoEdicao && (
+        <div className="mb-4 flex justify-end">
+          <Card>
+            <CardContent className="flex items-center gap-3 p-3">
+              <div className="flex h-[70px] w-[50px] items-center justify-center overflow-hidden rounded border bg-muted">
+                {dados.curriculo.foto_url ? (
+                  <img
+                    src={dados.curriculo.foto_url}
+                    alt="Foto do candidato"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">3x4</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  className="h-8 max-w-[220px] text-xs"
+                  onChange={async (e) => {
+                    const arquivo = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!arquivo) return;
+                    try {
+                      await atualizarFoto({ foto_url: await lerFotoCurriculo(arquivo) });
+                    } catch (erro) {
+                      toast.error(erro instanceof Error ? erro.message : "Imagem inválida.");
+                    }
+                  }}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={dados.curriculo.foto_exibir ? "default" : "outline"}
+                    disabled={!dados.curriculo.foto_url}
+                    onClick={() => atualizarFoto({ foto_exibir: !dados.curriculo.foto_exibir })}
+                  >
+                    Exibir no Currículo
+                  </Button>
+                  {dados.curriculo.foto_url && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => atualizarFoto({ foto_url: null, foto_exibir: false })}
+                    >
+                      Remover
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {modoEdicao ? (
         <FormularioCurriculo
           dados={dados}
