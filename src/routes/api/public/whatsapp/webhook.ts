@@ -276,39 +276,26 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           return new Response("Falha ao registrar a mensagem", { status: 500 });
         }
 
-        // Guarda o arquivo recebido no bucket privado.
+        // Registra imediatamente os metadados. Assim o bot pode considerar o
+        // arquivo sem esperar o download da mídia para o armazenamento privado.
+        let arquivoRecebidoId: string | null = null;
         if (conteudo.url && (conteudo.tipo === "documento" || conteudo.tipo === "imagem")) {
-          try {
-            const resposta = await fetch(conteudo.url);
-            if (resposta.ok) {
-              const bytes = new Uint8Array(await resposta.arrayBuffer());
-              const caminho = `${conversaId}/${Date.now()}-${(conteudo.nome ?? "arquivo").replace(/[^\w.-]+/g, "_")}`;
-              const { error: erroUpload } = await supabaseAdmin.storage
-                .from("whatsapp")
-                .upload(caminho, bytes, { contentType: conteudo.mime ?? "application/octet-stream", upsert: true });
-
-              if (!erroUpload) {
-                await supabaseAdmin
-                  .from("whatsapp_mensagens")
-                  .update({ arquivo_path: caminho })
-                  .eq("id", mensagem?.id ?? "");
-
-                await supabaseAdmin.from("whatsapp_arquivos").insert({
-                  conversa_id: conversaId,
-                  mensagem_id: mensagem?.id ?? null,
-                  cliente_id: clienteId,
-                  nome: conteudo.nome ?? "arquivo",
-                  tipo: (conteudo.nome ?? "").split(".").pop()?.toUpperCase() ?? conteudo.tipo.toUpperCase(),
-                  mime_type: conteudo.mime,
-                  storage_path: caminho,
-                  paginas: corpo.document?.pageCount ?? 1,
-                  paginas_manuais: conteudo.tipo === "documento" && !corpo.document?.pageCount,
-                });
-              }
-            }
-          } catch {
-            /* falha no download da mídia não invalida a mensagem */
-          }
+          const { data: arquivoRecebido } = await supabaseAdmin
+            .from("whatsapp_arquivos")
+            .insert({
+              conversa_id: conversaId,
+              mensagem_id: mensagem.id,
+              cliente_id: clienteId,
+              nome: conteudo.nome ?? "arquivo",
+              tipo: (conteudo.nome ?? "").split(".").pop()?.toUpperCase() ?? conteudo.tipo.toUpperCase(),
+              mime_type: conteudo.mime,
+              url: conteudo.url,
+              paginas: corpo.document?.pageCount ?? 1,
+              paginas_manuais: conteudo.tipo === "documento" && !corpo.document?.pageCount,
+            })
+            .select("id")
+            .maybeSingle();
+          arquivoRecebidoId = arquivoRecebido?.id ?? null;
         }
 
         const resumo =
@@ -355,6 +342,31 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
             acao: "bot_erro",
             detalhe: e instanceof Error ? e.message : "Falha no atendimento automático",
           });
+        }
+
+        // A cópia da mídia ocorre depois da resposta do bot, fora do caminho
+        // crítico do primeiro contato. A URL original permanece disponível se
+        // o provedor ou o armazenamento estiver temporariamente indisponível.
+        if (conteudo.url && arquivoRecebidoId) {
+          try {
+            const resposta = await fetch(conteudo.url);
+            if (resposta.ok) {
+              const bytes = new Uint8Array(await resposta.arrayBuffer());
+              const caminho = `${conversaId}/${Date.now()}-${(conteudo.nome ?? "arquivo").replace(/[^\w.-]+/g, "_")}`;
+              const { error: erroUpload } = await supabaseAdmin.storage
+                .from("whatsapp")
+                .upload(caminho, bytes, { contentType: conteudo.mime ?? "application/octet-stream", upsert: true });
+
+              if (!erroUpload) {
+                await Promise.all([
+                  supabaseAdmin.from("whatsapp_mensagens").update({ arquivo_path: caminho }).eq("id", mensagem.id),
+                  supabaseAdmin.from("whatsapp_arquivos").update({ storage_path: caminho }).eq("id", arquivoRecebidoId),
+                ]);
+              }
+            }
+          } catch {
+            /* falha no download da mídia não invalida a mensagem nem a resposta */
+          }
         }
 
         return Response.json({ ok: true });

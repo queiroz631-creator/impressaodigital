@@ -1211,14 +1211,26 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
           texto: ultima.texto ?? "",
         };
 
-        await supabaseAdmin
-          .from("whatsapp_conversas")
-          .update({ contexto: { ...ctxAtual, ultimaProcessada: ultima.id } as never })
-          .eq("id", conversaId);
       }
     }
 
     await processarBotInterno(conversaId, alvo);
+
+    // Só confirma depois que todo o tratamento terminou. Se a execução for
+    // interrompida durante uma espera ou envio, outro callback ainda poderá
+    // retomar esta mensagem em vez de descartá-la como já processada.
+    if (alvo.mensagemId) {
+      const { data: atual } = await supabaseAdmin
+        .from("whatsapp_conversas")
+        .select("contexto")
+        .eq("id", conversaId)
+        .maybeSingle();
+      const ctxAtual = ((atual?.contexto ?? {}) as ContextoBot) || {};
+      await supabaseAdmin
+        .from("whatsapp_conversas")
+        .update({ contexto: { ...ctxAtual, ultimaProcessada: alvo.mensagemId } as never })
+        .eq("id", conversaId);
+    }
   } finally {
     await destravar(conversaId);
   }
