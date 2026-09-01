@@ -327,49 +327,18 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         if (!botLiberadoParaNumero) {
           return Response.json({ ok: true, bot: false, motivo: "numero_desativado" });
         }
+        // O atendimento automático NÃO roda dentro desta requisição: as esperas
+        // configuradas (agrupamento, trava e atrasos da regra) ultrapassam o
+        // tempo que o provedor mantém a conexão aberta e a execução era
+        // interrompida antes do envio. Aqui apenas marcamos a conversa como
+        // pendente; a rotina da fila responde e guarda a mídia com segurança.
+        await supabaseAdmin
+          .from("whatsapp_conversas")
+          .update({ bot_pendente: true, bot_pendente_em: agora } as never)
+          .eq("id", conversaId);
 
+        void arquivoRecebidoId;
 
-        try {
-          const { processarBot } = await import("@/lib/bot.server");
-          await processarBot(conversaId, {
-            tipo: conteudo.tipo,
-            texto: conteudo.texto,
-            mensagemId: mensagem.id,
-          });
-
-        } catch (e) {
-          await supabaseAdmin.from("whatsapp_auditoria").insert({
-            conversa_id: conversaId,
-            usuario_nome: "Bot",
-            acao: "bot_erro",
-            detalhe: e instanceof Error ? e.message : "Falha no atendimento automático",
-          });
-        }
-
-        // A cópia da mídia ocorre depois da resposta do bot, fora do caminho
-        // crítico do primeiro contato. A URL original permanece disponível se
-        // o provedor ou o armazenamento estiver temporariamente indisponível.
-        if (conteudo.url && arquivoRecebidoId) {
-          try {
-            const resposta = await fetch(conteudo.url);
-            if (resposta.ok) {
-              const bytes = new Uint8Array(await resposta.arrayBuffer());
-              const caminho = `${conversaId}/${Date.now()}-${(conteudo.nome ?? "arquivo").replace(/[^\w.-]+/g, "_")}`;
-              const { error: erroUpload } = await supabaseAdmin.storage
-                .from("whatsapp")
-                .upload(caminho, bytes, { contentType: conteudo.mime ?? "application/octet-stream", upsert: true });
-
-              if (!erroUpload) {
-                await Promise.all([
-                  supabaseAdmin.from("whatsapp_mensagens").update({ arquivo_path: caminho }).eq("id", mensagem.id),
-                  supabaseAdmin.from("whatsapp_arquivos").update({ storage_path: caminho }).eq("id", arquivoRecebidoId),
-                ]);
-              }
-            }
-          } catch {
-            /* falha no download da mídia não invalida a mensagem nem a resposta */
-          }
-        }
 
         return Response.json({ ok: true });
       },
