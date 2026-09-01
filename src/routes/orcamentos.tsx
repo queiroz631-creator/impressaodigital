@@ -44,7 +44,10 @@ import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { ImprimirEtiqueta } from "@/components/ImprimirEtiqueta";
 
 import { useConfiguracao, useOrcamentos, usePedidos, useMateriais, usePerfisImpressao } from "@/hooks/useDados";
-import { imprimirDocumentos, type DocumentoImpressao } from "@/lib/impressora";
+import {
+  ImprimirDocumentosDialog,
+  type DocumentoParaImprimir,
+} from "@/components/impressao/ImprimirDocumentosDialog";
 import { PERFIL_VAZIO, type PerfilImpressao } from "@/lib/perfil-impressao";
 import type { ArquivoDoc } from "@/lib/documento";
 import { useAuth } from "@/hooks/useAuth";
@@ -123,6 +126,8 @@ function Orcamentos() {
   const [pedidoStatusAberto, setPedidoStatusAberto] = useState<PedidoAgrupado | null>(null);
   const [novoStatus, setNovoStatus] = useState<string>("pendente_envio");
   const [salvandoStatus, setSalvandoStatus] = useState(false);
+  const [impressaoAberta, setImpressaoAberta] = useState(false);
+  const [documentosImpressao, setDocumentosImpressao] = useState<DocumentoParaImprimir[]>([]);
 
   /* Dados do pedido (fonte principal do status e do pagamento). */
   const mapaPedidos = useMemo(() => {
@@ -171,56 +176,46 @@ function Orcamentos() {
   }, [orcamentos, mapaPedidos]);
 
   /**
-   * Imprime os PDFs anexados ao pedido usando o perfil de impressão
-   * vinculado ao material de cada item.
+   * Monta a lista de documentos do pedido (com o perfil de impressão do
+   * material de cada item) e abre o modal de impressão.
    */
-  async function imprimirDocumentosPedido(pedido: PedidoAgrupado) {
-    const padrao = (config?.impressora_padrao_nome ?? null) as string | null;
-    let enviados = 0;
+  function imprimirDocumentosPedido(pedido: PedidoAgrupado) {
+    const lista: DocumentoParaImprimir[] = [];
     let semArquivo = 0;
 
     for (const item of pedido.itens) {
       const arquivos = (Array.isArray(item["arquivos"]) ? item["arquivos"] : []) as ArquivoDoc[];
       const comCaminho = arquivos.filter((a) => !!a.caminho);
-      if (comCaminho.length === 0) {
-        semArquivo += arquivos.length;
-        continue;
-      }
+      semArquivo += arquivos.length - comCaminho.length;
+      if (comCaminho.length === 0) continue;
 
       const material = (materiais ?? []).find((m) => m.id === item["material_id"]);
       const perfil =
         (perfis ?? []).find((p) => p.id === material?.perfil_impressao_id) ??
         ({ ...PERFIL_VAZIO, id: "padrao", nome: "Padrão" } as PerfilImpressao);
 
-      const documentos: DocumentoImpressao[] = [];
       for (const arquivo of comCaminho) {
-        const { data, error } = await supabase.storage
-          .from("orcamento-arquivos")
-          .download(arquivo.caminho!);
-        if (error || !data) continue;
-        const buffer = new Uint8Array(await data.arrayBuffer());
-        let binario = "";
-        for (const byte of buffer) binario += String.fromCharCode(byte);
-        documentos.push({
+        lista.push({
           nome: arquivo.nome,
-          base64: btoa(binario),
+          caminho: arquivo.caminho ?? null,
+          paginas: Math.max(0, arquivo.paginas || 0),
           copias: Math.max(1, arquivo.copias ?? 1),
+          perfil,
         });
-      }
-
-      if (documentos.length === 0) continue;
-      const resultado = await imprimirDocumentos(perfil, documentos, padrao);
-      if (resultado.metodo === "qz") enviados += documentos.length;
-      else {
-        toast.error(resultado.mensagem ?? "Não foi possível imprimir os documentos.");
-        return;
       }
     }
 
-    if (enviados > 0) toast.success(`${enviados} documento(s) enviado(s) para a impressora.`);
-    else if (semArquivo > 0)
-      toast.error("Os arquivos deste pedido não foram salvos para reimpressão.");
-    else toast.error("Nenhum PDF anexado a este pedido.");
+    if (lista.length === 0) {
+      toast.error(
+        semArquivo > 0
+          ? "Os arquivos deste pedido não foram salvos para reimpressão."
+          : "Nenhum PDF anexado a este pedido.",
+      );
+      return;
+    }
+
+    setDocumentosImpressao(lista);
+    setImpressaoAberta(true);
   }
 
   /* ---------------- FILTRO POR DATA (fuso local) ---------------- */
@@ -807,7 +802,15 @@ function Orcamentos() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ImprimirDocumentosDialog
+        aberto={impressaoAberta}
+        onOpenChange={setImpressaoAberta}
+        documentos={documentosImpressao}
+        impressoraPadrao={(config?.impressora_padrao_nome ?? null) as string | null}
+      />
     </>
+
   );
 }
 

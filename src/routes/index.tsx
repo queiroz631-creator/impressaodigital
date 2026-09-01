@@ -53,8 +53,14 @@ import {
   useMateriais,
   useOrcamentosPedido,
   usePedido,
+  usePerfisImpressao,
   useRascunho,
 } from "@/hooks/useDados";
+import {
+  ImprimirDocumentosDialog,
+  type DocumentoParaImprimir,
+} from "@/components/impressao/ImprimirDocumentosDialog";
+import { PERFIL_VAZIO, type PerfilImpressao } from "@/lib/perfil-impressao";
 import { useAuth } from "@/hooks/useAuth";
 import {
   acabamentosDoTipo,
@@ -176,7 +182,9 @@ function Calculadora() {
   const { data: materiais, isLoading } = useMateriais(true);
   const { data: acabamentos } = useAcabamentos(true);
   const { data: config } = useConfiguracao();
+  const { data: perfis } = usePerfisImpressao();
   const { data: rascunhoSalvo, isFetched: rascunhoCarregado } = useRascunho(user?.id);
+  const [impressaoAberta, setImpressaoAberta] = useState(false);
   const queryClient = useQueryClient();
 
   const [estado, setEstado] = useState<EstadoRascunho>(ESTADO_INICIAL);
@@ -429,6 +437,37 @@ function Calculadora() {
   function removerArquivo(indice: number) {
     aplicarArquivos(estado.arquivosLista.filter((_, i) => i !== indice));
   }
+
+  /** Remove todos os arquivos e zera arquivos, páginas e cópias adicionais. */
+  function removerTodosArquivos() {
+    aplicarArquivos([]);
+    setPaginasConfirmadas([]);
+  }
+
+  /** Perfil de impressão do material selecionado (ou perfil padrão). */
+  const perfilAtual =
+    (perfis ?? []).find((p) => p.id === materialSelecionado?.material.perfil_impressao_id) ??
+    ({ ...PERFIL_VAZIO, id: "padrao", nome: "Padrão" } as PerfilImpressao);
+
+  /** Arquivos anexados prontos para o modal de impressão. */
+  const documentosImpressao: DocumentoParaImprimir[] = estado.arquivosLista
+    .filter((a) => !!a.caminho)
+    .map((a) => ({
+      nome: a.nome,
+      caminho: a.caminho ?? null,
+      paginas: Math.max(0, a.paginas || 0),
+      copias: Math.max(1, a.copias ?? 1),
+      perfil: perfilAtual,
+    }));
+
+  function abrirImpressaoArquivos() {
+    if (documentosImpressao.length === 0) {
+      toast.error("Nenhum arquivo anexado disponível para impressão.");
+      return;
+    }
+    setImpressaoAberta(true);
+  }
+
 
   /** Chave de confirmação de um arquivo (muda se o nome ou as páginas mudarem). */
   const chaveArquivo = (a: ArquivoDoc) => `${a.nome}|${a.paginas}`;
@@ -1076,7 +1115,37 @@ function Calculadora() {
               </p>
 
               <div className="rounded-xl border border-border p-3">
-                <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">ARQUIVOS ANEXADOS</p>
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-bold tracking-wider text-muted-foreground">ARQUIVOS ANEXADOS</p>
+
+                  <div className="ml-auto flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8"
+                      disabled={estado.arquivosLista.length === 0}
+                      onClick={abrirImpressaoArquivos}
+                    >
+                      <FileStack className="h-4 w-4" /> Imprimir documentos
+                    </Button>
+
+                    <ConfirmarExclusao
+                      titulo="Remover todos os arquivos"
+                      descricao="Isso remove todos os arquivos anexados e zera a quantidade de arquivos, as páginas adicionais e as cópias adicionais."
+                      rotuloConfirmar="Remover todos"
+                      onConfirmar={removerTodosArquivos}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-destructive"
+                        disabled={estado.arquivosLista.length === 0}
+                      >
+                        <Trash2 className="h-4 w-4" /> Remover todos
+                      </Button>
+                    </ConfirmarExclusao>
+                  </div>
+                </div>
 
                 {arquivosPendentes.length > 0 && (
                   <div className="mb-2 rounded-lg border-2 border-destructive bg-destructive/10 p-2.5">
@@ -2108,7 +2177,15 @@ function Calculadora() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ImprimirDocumentosDialog
+        aberto={impressaoAberta}
+        onOpenChange={setImpressaoAberta}
+        documentos={documentosImpressao}
+        impressoraPadrao={(config?.impressora_padrao_nome ?? null) as string | null}
+      />
     </>
+
   );
 }
 
