@@ -94,6 +94,7 @@ export function FormularioCurriculo({
   const [uf, setUf] = useState(c.uf ?? "ES");
   const [numero, setNumero] = useState(c.numero ?? "");
   const [cep, setCep] = useState(c.cep ?? "");
+  const [foto, setFoto] = useState(c.foto_url ?? "");
 
   // Etapa 2
   const [documentacao, setDocumentacao] = useState<string>(
