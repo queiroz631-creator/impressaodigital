@@ -374,7 +374,9 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
     body { width:auto !important; }
   }
   #cv-escala { width:${larguraUtil}px; transform-origin: top left; }
-  #cv-escala > .cv-print { width:100%; max-width:100%; margin:0; padding:0; box-shadow:none !important; border:0; background:#fff; }
+  /* Margem interna equivalente à do PDF (40pt), para que a faixa das seções
+     tenha exatamente a mesma largura na impressão e no PDF. */
+  #cv-escala > .cv-print { width:100%; max-width:100%; margin:0; padding:6mm 4.1mm; box-shadow:none !important; border:0; background:#fff; }
   .cv-secao { background:#1a1a5e !important; color:#fff !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
   .cv-empresa { color:#1a1a5e !important; font-weight:700 !important; }
   .cv-print, .cv-print * { color:#11111a; }
