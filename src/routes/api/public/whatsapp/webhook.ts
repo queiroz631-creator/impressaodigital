@@ -40,8 +40,10 @@ function extrair(corpo: z.infer<typeof corpoSchema>) {
     return { tipo: "imagem", texto: corpo.image.caption ?? "", url: corpo.image.imageUrl, nome: "imagem.jpg", mime: corpo.image.mimeType ?? "image/jpeg" };
   if (corpo.document?.documentUrl)
     return {
+      // O nome do arquivo não é texto escrito pelo cliente: sem legenda o
+      // documento precisa cair na regra "Somente arquivos".
       tipo: "documento",
-      texto: corpo.document.caption ?? corpo.document.fileName ?? "",
+      texto: corpo.document.caption ?? "",
       url: corpo.document.documentUrl,
       nome: corpo.document.fileName ?? "arquivo",
       mime: corpo.document.mimeType ?? "application/octet-stream",
@@ -276,26 +278,20 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           return new Response("Falha ao registrar a mensagem", { status: 500 });
         }
 
-        // Registra imediatamente os metadados. Assim o bot pode considerar o
-        // arquivo sem esperar o download da mídia para o armazenamento privado.
-        let arquivoRecebidoId: string | null = null;
+        // Registra imediatamente os metadados. A cópia da mídia para o
+        // armazenamento privado é feita depois, pela rotina da fila.
         if (conteudo.url && (conteudo.tipo === "documento" || conteudo.tipo === "imagem")) {
-          const { data: arquivoRecebido } = await supabaseAdmin
-            .from("whatsapp_arquivos")
-            .insert({
-              conversa_id: conversaId,
-              mensagem_id: mensagem.id,
-              cliente_id: clienteId,
-              nome: conteudo.nome ?? "arquivo",
-              tipo: (conteudo.nome ?? "").split(".").pop()?.toUpperCase() ?? conteudo.tipo.toUpperCase(),
-              mime_type: conteudo.mime,
-              url: conteudo.url,
-              paginas: corpo.document?.pageCount ?? 1,
-              paginas_manuais: conteudo.tipo === "documento" && !corpo.document?.pageCount,
-            })
-            .select("id")
-            .maybeSingle();
-          arquivoRecebidoId = arquivoRecebido?.id ?? null;
+          await supabaseAdmin.from("whatsapp_arquivos").insert({
+            conversa_id: conversaId,
+            mensagem_id: mensagem.id,
+            cliente_id: clienteId,
+            nome: conteudo.nome ?? "arquivo",
+            tipo: (conteudo.nome ?? "").split(".").pop()?.toUpperCase() ?? conteudo.tipo.toUpperCase(),
+            mime_type: conteudo.mime,
+            url: conteudo.url,
+            paginas: corpo.document?.pageCount ?? 1,
+            paginas_manuais: conteudo.tipo === "documento" && !corpo.document?.pageCount,
+          });
         }
 
         const resumo =
@@ -325,49 +321,16 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         if (!botLiberadoParaNumero) {
           return Response.json({ ok: true, bot: false, motivo: "numero_desativado" });
         }
+        // O atendimento automático NÃO roda dentro desta requisição: as esperas
+        // configuradas (agrupamento, trava e atrasos da regra) ultrapassam o
+        // tempo que o provedor mantém a conexão aberta e a execução era
+        // interrompida antes do envio. Aqui apenas marcamos a conversa como
+        // pendente; a rotina da fila responde e guarda a mídia com segurança.
+        await supabaseAdmin
+          .from("whatsapp_conversas")
+          .update({ bot_pendente: true, bot_pendente_em: agora } as never)
+          .eq("id", conversaId);
 
-
-        try {
-          const { processarBot } = await import("@/lib/bot.server");
-          await processarBot(conversaId, {
-            tipo: conteudo.tipo,
-            texto: conteudo.texto,
-            mensagemId: mensagem.id,
-          });
-
-        } catch (e) {
-          await supabaseAdmin.from("whatsapp_auditoria").insert({
-            conversa_id: conversaId,
-            usuario_nome: "Bot",
-            acao: "bot_erro",
-            detalhe: e instanceof Error ? e.message : "Falha no atendimento automático",
-          });
-        }
-
-        // A cópia da mídia ocorre depois da resposta do bot, fora do caminho
-        // crítico do primeiro contato. A URL original permanece disponível se
-        // o provedor ou o armazenamento estiver temporariamente indisponível.
-        if (conteudo.url && arquivoRecebidoId) {
-          try {
-            const resposta = await fetch(conteudo.url);
-            if (resposta.ok) {
-              const bytes = new Uint8Array(await resposta.arrayBuffer());
-              const caminho = `${conversaId}/${Date.now()}-${(conteudo.nome ?? "arquivo").replace(/[^\w.-]+/g, "_")}`;
-              const { error: erroUpload } = await supabaseAdmin.storage
-                .from("whatsapp")
-                .upload(caminho, bytes, { contentType: conteudo.mime ?? "application/octet-stream", upsert: true });
-
-              if (!erroUpload) {
-                await Promise.all([
-                  supabaseAdmin.from("whatsapp_mensagens").update({ arquivo_path: caminho }).eq("id", mensagem.id),
-                  supabaseAdmin.from("whatsapp_arquivos").update({ storage_path: caminho }).eq("id", arquivoRecebidoId),
-                ]);
-              }
-            }
-          } catch {
-            /* falha no download da mídia não invalida a mensagem nem a resposta */
-          }
-        }
 
         return Response.json({ ok: true });
       },
