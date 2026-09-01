@@ -53,8 +53,14 @@ import {
   useMateriais,
   useOrcamentosPedido,
   usePedido,
+  usePerfisImpressao,
   useRascunho,
 } from "@/hooks/useDados";
+import {
+  ImprimirDocumentosDialog,
+  type DocumentoParaImprimir,
+} from "@/components/impressao/ImprimirDocumentosDialog";
+import { PERFIL_VAZIO, type PerfilImpressao } from "@/lib/perfil-impressao";
 import { useAuth } from "@/hooks/useAuth";
 import {
   acabamentosDoTipo,
