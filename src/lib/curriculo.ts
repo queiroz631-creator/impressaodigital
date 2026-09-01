@@ -105,6 +105,8 @@ export type CamposCurriculo = Partial<
     | "experiencia_possui"
     | "experiencia_frase"
     | "habilidades_observacao"
+    | "foto_url"
+    | "foto_exibir"
   >
 >;
 
