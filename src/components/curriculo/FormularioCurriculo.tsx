@@ -357,6 +357,42 @@ export function FormularioCurriculo({
         <CardContent className="space-y-4 p-5">
           {etapa === 1 && (
             <>
+              <div className="flex items-center gap-4">
+                <div className="flex h-[70px] w-[50px] shrink-0 items-center justify-center overflow-hidden rounded border bg-muted">
+                  {foto ? (
+                    <img src={foto} alt="Foto do currículo" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground">3x4</span>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="foto">Foto de perfil (opcional)</Label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                      id="foto"
+                      type="file"
+                      accept="image/*"
+                      className="max-w-[260px]"
+                      onChange={async (e) => {
+                        const arquivo = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!arquivo) return;
+                        try {
+                          setFoto(await lerFotoCurriculo(arquivo));
+                        } catch (erro) {
+                          toast.error(erro instanceof Error ? erro.message : "Imagem inválida.");
+                        }
+                      }}
+                    />
+                    {foto && (
+                      <Button type="button" variant="outline" size="sm" onClick={() => setFoto("")}>
+                        Remover foto
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Label htmlFor="nome">Nome completo *</Label>
