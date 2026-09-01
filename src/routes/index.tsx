@@ -182,7 +182,9 @@ function Calculadora() {
   const { data: materiais, isLoading } = useMateriais(true);
   const { data: acabamentos } = useAcabamentos(true);
   const { data: config } = useConfiguracao();
+  const { data: perfis } = usePerfisImpressao();
   const { data: rascunhoSalvo, isFetched: rascunhoCarregado } = useRascunho(user?.id);
+  const [impressaoAberta, setImpressaoAberta] = useState(false);
   const queryClient = useQueryClient();
 
   const [estado, setEstado] = useState<EstadoRascunho>(ESTADO_INICIAL);
