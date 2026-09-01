@@ -171,34 +171,52 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         }
 
         // Conversa do cliente (única por telefone: atendimentos são numerados dentro dela).
-        const { data: conversaAberta } = await supabaseAdmin
-          .from("whatsapp_conversas")
-          .select("id, total_mensagens, nao_lidas, status, atendimento_numero")
-          .eq("telefone", telefone)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        // "telefone" tem UNIQUE constraint no banco: duas mensagens simultâneas do
+        // mesmo cliente não podem mais criar duas conversas em paralelo. Se o INSERT
+        // esbarrar na constraint (outra requisição criou a linha entre o SELECT e o
+        // INSERT), a busca abaixo recupera a linha já existente.
+        let conversaAberta: {
+          id: string;
+          total_mensagens: number | null;
+          nao_lidas: number | null;
+          status: string;
+          atendimento_numero: number | null;
+        } | null = null;
 
-        let conversaId = conversaAberta?.id ?? null;
+        for (let tentativa = 0; tentativa < 2 && !conversaAberta; tentativa += 1) {
+          const { data } = await supabaseAdmin
+            .from("whatsapp_conversas")
+            .select("id, total_mensagens, nao_lidas, status, atendimento_numero")
+            .eq("telefone", telefone)
+            .maybeSingle();
+
+          if (data) {
+            conversaAberta = data;
+            break;
+          }
+
+          const { error: erroNova } = await supabaseAdmin.from("whatsapp_conversas").insert({
+            telefone,
+            cliente_id: clienteId,
+            nome_contato: nomeContato,
+            status: "automatico",
+            etapa: "inicio",
+          });
+
+          // 23505 = unique_violation: outra requisição concorrente já criou a
+          // conversa deste telefone; a próxima volta do loop apenas a lê.
+          if (erroNova && erroNova.code !== "23505") {
+            return new Response("Falha ao registrar a conversa", { status: 500 });
+          }
+        }
+
+        const conversaId = conversaAberta?.id ?? null;
         let totalMensagens = conversaAberta?.total_mensagens ?? 0;
         let naoLidas = conversaAberta?.nao_lidas ?? 0;
 
-        if (!conversaId) {
-          const { data: nova } = await supabaseAdmin
-            .from("whatsapp_conversas")
-            .insert({
-              telefone,
-              cliente_id: clienteId,
-              nome_contato: nomeContato,
-              status: "automatico",
-              etapa: "inicio",
-            })
-            .select("id")
-            .maybeSingle();
-          conversaId = nova?.id ?? null;
-          totalMensagens = 0;
-          naoLidas = 0;
-        } else if (conversaAberta?.status === "finalizado") {
+        if (!conversaId) return new Response("Falha ao registrar a conversa", { status: 500 });
+
+        if (conversaAberta?.status === "finalizado") {
           // Atendimento anterior encerrado: abre o próximo na mesma conversa.
           const numero = Number(conversaAberta.atendimento_numero ?? 1) + 1;
           await supabaseAdmin
@@ -229,8 +247,6 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
             data_hora: agora,
           });
         }
-
-        if (!conversaId) return new Response("Falha ao registrar a conversa", { status: 500 });
 
         const { data: mensagem, error: erroMensagem } = await supabaseAdmin
           .from("whatsapp_mensagens")
