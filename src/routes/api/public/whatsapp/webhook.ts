@@ -278,26 +278,20 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           return new Response("Falha ao registrar a mensagem", { status: 500 });
         }
 
-        // Registra imediatamente os metadados. Assim o bot pode considerar o
-        // arquivo sem esperar o download da mídia para o armazenamento privado.
-        let arquivoRecebidoId: string | null = null;
+        // Registra imediatamente os metadados. A cópia da mídia para o
+        // armazenamento privado é feita depois, pela rotina da fila.
         if (conteudo.url && (conteudo.tipo === "documento" || conteudo.tipo === "imagem")) {
-          const { data: arquivoRecebido } = await supabaseAdmin
-            .from("whatsapp_arquivos")
-            .insert({
-              conversa_id: conversaId,
-              mensagem_id: mensagem.id,
-              cliente_id: clienteId,
-              nome: conteudo.nome ?? "arquivo",
-              tipo: (conteudo.nome ?? "").split(".").pop()?.toUpperCase() ?? conteudo.tipo.toUpperCase(),
-              mime_type: conteudo.mime,
-              url: conteudo.url,
-              paginas: corpo.document?.pageCount ?? 1,
-              paginas_manuais: conteudo.tipo === "documento" && !corpo.document?.pageCount,
-            })
-            .select("id")
-            .maybeSingle();
-          arquivoRecebidoId = arquivoRecebido?.id ?? null;
+          await supabaseAdmin.from("whatsapp_arquivos").insert({
+            conversa_id: conversaId,
+            mensagem_id: mensagem.id,
+            cliente_id: clienteId,
+            nome: conteudo.nome ?? "arquivo",
+            tipo: (conteudo.nome ?? "").split(".").pop()?.toUpperCase() ?? conteudo.tipo.toUpperCase(),
+            mime_type: conteudo.mime,
+            url: conteudo.url,
+            paginas: corpo.document?.pageCount ?? 1,
+            paginas_manuais: conteudo.tipo === "documento" && !corpo.document?.pageCount,
+          });
         }
 
         const resumo =
