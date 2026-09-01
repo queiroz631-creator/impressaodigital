@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, ImagePlus, MessageSquare, Pencil, Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ACOES_RESPOSTA } from "@/lib/bot-fluxos";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,11 @@ interface Resposta {
   destino_nao_fluxo_id: string | null;
   destino_nao_resposta_id: string | null;
   delay_acao_segundos: number;
+  pergunta_confirmacao: string;
+  /** texto | imagem */
+  tipo_midia: string;
+  midia_url: string | null;
+  midia_nome: string | null;
 }
 
 
@@ -118,6 +123,10 @@ export function RespostasPainel() {
         destino_nao_fluxo_id: r.destino_nao_fluxo_id,
         destino_nao_resposta_id: r.destino_nao_resposta_id,
         delay_acao_segundos: r.delay_acao_segundos ?? 0,
+        pergunta_confirmacao: r.pergunta_confirmacao ?? "",
+        tipo_midia: r.tipo_midia ?? "texto",
+        midia_url: r.midia_url,
+        midia_nome: r.midia_nome,
         ordem,
       })
 
@@ -239,8 +248,24 @@ function RespostaDialog({
   const [form, setForm] = useState<Resposta>(resposta);
   const [chaves, setChaves] = useState(palavras.map((p) => p.texto).join(", "));
   const [salvando, setSalvando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const arquivoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => setForm(resposta), [resposta]);
+
+  async function subirImagem(arquivo: File) {
+    setEnviando(true);
+    try {
+      const extensao = arquivo.name.split(".").pop() ?? "jpg";
+      const caminho = `respostas/${crypto.randomUUID()}.${extensao}`;
+      const { error } = await supabase.storage.from("bot-midia").upload(caminho, arquivo, { upsert: true });
+      if (error) { toast.error(error.message); return; }
+      setForm((f) => ({ ...f, tipo_midia: "imagem", midia_url: caminho, midia_nome: arquivo.name }));
+      toast.success("Imagem anexada.");
+    } finally {
+      setEnviando(false);
+    }
+  }
 
   async function salvar() {
     setSalvando(true);
@@ -257,6 +282,10 @@ function RespostaDialog({
         destino_nao_fluxo_id: form.destino_nao_fluxo_id,
         destino_nao_resposta_id: form.destino_nao_resposta_id,
         delay_acao_segundos: Math.min(60, Math.max(0, Number(form.delay_acao_segundos) || 0)),
+        pergunta_confirmacao: form.pergunta_confirmacao ?? "",
+        tipo_midia: form.tipo_midia ?? "texto",
+        midia_url: form.midia_url,
+        midia_nome: form.midia_nome,
       })
 
       .eq("id", form.id);
@@ -312,6 +341,59 @@ function RespostaDialog({
               onChange={(e) => setForm({ ...form, resposta_retorno_dia: e.target.value })}
             />
             <p className="text-xs text-muted-foreground">Se ficar em branco, o bot usa a resposta 1.</p>
+          </div>
+
+          <div className="grid gap-1">
+            <Label>Pergunta de confirmação</Label>
+            <Input
+              value={form.pergunta_confirmacao ?? ""}
+              placeholder="Você quer falar sobre *{titulo}*?"
+              onChange={(e) => setForm({ ...form, pergunta_confirmacao: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Enviada quando o bot reconhece a palavra-chave. Use {"{titulo}"} para o título da
+              resposta. Em branco, o bot usa a frase padrão.
+            </p>
+          </div>
+
+          <div className="grid gap-1">
+            <Label>Imagem da resposta (opcional)</Label>
+            {form.midia_url ? (
+              <div className="flex items-center gap-2 rounded-md border p-2 text-sm">
+                <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                <span className="flex-1 truncate">{form.midia_nome ?? form.midia_url}</span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setForm({ ...form, tipo_midia: "texto", midia_url: null, midia_nome: null })}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                disabled={enviando}
+                onClick={() => arquivoRef.current?.click()}
+              >
+                <ImagePlus className="mr-2 h-4 w-4" />
+                {enviando ? "Enviando..." : "Anexar imagem"}
+              </Button>
+            )}
+            <input
+              ref={arquivoRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const arquivo = e.target.files?.[0];
+                e.target.value = "";
+                if (arquivo) void subirImagem(arquivo);
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              A imagem é enviada junto com o texto da resposta.
+            </p>
           </div>
 
           <AcaoCampos

@@ -47,7 +47,7 @@ import {
 import type { DadosFluxos } from "@/lib/bot-fluxos";
 import {
   avancar,
-  fluxoDeArquivos,
+  
   fluxoInicial,
   iniciar as iniciarFluxo,
   processarFluxo,
@@ -753,7 +753,11 @@ async function entregarFluxo(
 
   for (let volta = 0; volta < 6; volta += 1) {
     for (const m of atual.mensagens) {
-      await responder(conversa, m.texto, m.botoes, m.midia);
+      const enviou = await responder(conversa, m.texto, m.botoes, m.midia);
+      // Envio não confirmado: mantém o estado anterior da conversa para que a
+      // próxima mensagem do cliente refaça este passo, em vez de avançar sem
+      // que ele tenha recebido nada.
+      if (!enviou) return;
       // Espera configurada na etapa antes de seguir automaticamente (teto de 60s).
       const espera = Math.min(60, Math.max(0, m.espera ?? 0));
       if (espera > 0) await new Promise((r) => setTimeout(r, espera * 1000));
@@ -799,6 +803,21 @@ function textoResposta(resposta: BotResposta, primeiraDoDia: boolean) {
   return !primeiraDoDia && retorno ? retorno : resposta.resposta;
 }
 
+/** Imagem opcional configurada na resposta automática. */
+function midiaResposta(resposta: BotResposta): MidiaBot | undefined {
+  const tipo = resposta.tipo_midia ?? "texto";
+  if (tipo === "texto" || !resposta.midia_url) return undefined;
+  return { tipo: "imagem", url: resposta.midia_url, nome: resposta.midia_nome ?? null };
+}
+
+/** Frase de confirmação da resposta automática (cada resposta pode ter a sua). */
+export const PERGUNTA_CONFIRMACAO_PADRAO = "Você quer falar sobre *{titulo}*?";
+
+function perguntaConfirmacao(resposta: BotResposta) {
+  const texto = (resposta.pergunta_confirmacao ?? "").trim() || PERGUNTA_CONFIRMACAO_PADRAO;
+  return texto.replace(/\{titulo\}/g, resposta.titulo);
+}
+
 /** Executa a ação configurada para o SIM ou o NÃO de uma resposta automática. */
 async function executarAcaoResposta(
   conversa: ConversaBot,
@@ -831,7 +850,13 @@ async function executarAcaoResposta(
     case "resposta": {
       const outra = cfg.respostas.find((r) => r.id === destinoRespostaId && r.ativo);
       if (!outra) return;
-      await responder(conversa, aplicarVariaveis(textoResposta(outra, primeiraDoDia), vars));
+      const enviou = await responder(
+        conversa,
+        aplicarVariaveis(textoResposta(outra, primeiraDoDia), vars),
+        undefined,
+        midiaResposta(outra),
+      );
+      if (!enviou) return;
       await executarAcaoResposta(
         conversa,
         config,
@@ -930,43 +955,48 @@ async function triagem(
     const mensagem = (regra.mensagem ?? "").trim();
     const confirmar = regra.acao === "confirmar_fluxo";
     const sempre = (regra.enviar_mensagem ?? "sempre") === "sempre";
-    if (mensagem && (sempre || primeiraDoDia || confirmar)) {
-      await responder(conversa, aplicarVariaveis(mensagem, vars), confirmar ? ["SIM", "NÃO"] : undefined);
+    // Uma mensagem por regra neste atendimento, mesmo que o cliente mande
+    // várias palavras-chave seguidas.
+    const jaEnviada = ctx.regraEnviada === regra.id;
+    let enviada = jaEnviada;
+
+    if (mensagem && !jaEnviada && (sempre || primeiraDoDia || confirmar)) {
+      // Espera configurada na regra antes de enviar a saudação.
+      const esperaMsg = Math.min(300, Math.max(0, Number(regra.delay_mensagem_segundos ?? 0)));
+      if (esperaMsg > 0) await new Promise((r) => setTimeout(r, esperaMsg * 1000));
+      enviada = await responder(
+        conversa,
+        aplicarVariaveis(mensagem, vars),
+        confirmar ? ["SIM", "NÃO"] : undefined,
+      );
+      if (!enviada) return;
     }
+
+    const ctxRegra: ContextoBot = { ...ctx, regraEnviada: enviada ? regra.id : (ctx.regraEnviada ?? null) };
 
     if (confirmar) {
       await salvarContexto(
         conversa,
-        { ...ctx, fluxo: null, fluxoFallback: null, triagem: null, regra: regra.id },
+        { ...ctxRegra, fluxo: null, fluxoFallback: null, triagem: null, regra: regra.id },
         "triagem",
       );
       return;
     }
 
-    await executarAcaoRegra(conversa, config, ctx, cfg, fluxos, regra, primeiraDoDia, vars);
+    await executarAcaoRegra(conversa, config, ctxRegra, cfg, fluxos, regra, primeiraDoDia, vars);
     return;
   }
 
-  // 2) Só arquivos → fluxo marcado para arquivos (ou o fluxo inicial).
-  if (ehArquivo) {
-    const alvo = fluxoDeArquivos(fluxos) ?? fluxoInicial(fluxos);
-    if (!alvo) return;
-    const saida = iniciarFluxo(fluxos, alvo.id, {}, vars, 0);
-    await entregarFluxo(
-      conversa,
-      config,
-      { ...ctx, triagem: null, regra: null, fluxoFallback: null },
-      fluxos,
-      saida,
-      vars,
-    );
-    return;
-  }
-
-  // 3) Texto → procura uma resposta automática e confirma com o cliente.
+  // 2) Texto → procura uma resposta automática e confirma com o cliente.
   const encontrada = texto ? reconhecerResposta(cfg, texto) : null;
   if (encontrada) {
-    await responder(conversa, `Você quer falar sobre *${encontrada.titulo}*?`, ["SIM", "NÃO"]);
+    const enviou = await responder(
+      conversa,
+      aplicarVariaveis(perguntaConfirmacao(encontrada), vars),
+      ["SIM", "NÃO"],
+      midiaResposta(encontrada),
+    );
+    if (!enviou) return;
     await salvarContexto(
       conversa,
       { ...ctx, fluxo: null, fluxoFallback: null, regra: null, triagem: encontrada.id },
@@ -1063,6 +1093,9 @@ async function rodarFluxo(
   const vars: Vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
   const estado = conversa.etapa === "fluxo" ? (ctx.fluxo ?? null) : null;
   const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
+  // Atendimento novo (conversa foi finalizada): a regra de primeiro contato
+  // pode enviar a mensagem de novo.
+  if (conversa.etapa === "finalizado") ctx.regraEnviada = null;
 
   if (conversa.etapa === "triagem") {
     await resolverTriagem(conversa, config, ctx, dados, entrada, primeiraDoDia, vars);

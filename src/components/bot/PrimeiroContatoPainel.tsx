@@ -32,6 +32,7 @@ interface Regra {
   destino_fluxo_id: string | null;
   destino_resposta_id: string | null;
   delay_segundos: number;
+  delay_mensagem_segundos: number;
   enviar_mensagem: string;
   ordem: number;
   ativo: boolean;
@@ -53,6 +54,7 @@ interface Form {
   destino_fluxo_id: string;
   destino_resposta_id: string;
   delay_segundos: number;
+  delay_mensagem_segundos: number;
   enviar_mensagem: string;
   ativo: boolean;
 }
@@ -66,6 +68,7 @@ const VAZIO: Form = {
   destino_fluxo_id: NENHUM,
   destino_resposta_id: NENHUM,
   delay_segundos: 0,
+  delay_mensagem_segundos: 0,
   enviar_mensagem: "sempre",
   ativo: true,
 };
@@ -118,6 +121,7 @@ export function PrimeiroContatoPainel() {
       destino_fluxo_id: editando.destino_fluxo_id ?? NENHUM,
       destino_resposta_id: editando.destino_resposta_id ?? NENHUM,
       delay_segundos: editando.delay_segundos ?? 0,
+      delay_mensagem_segundos: editando.delay_mensagem_segundos ?? 0,
       enviar_mensagem: editando.enviar_mensagem ?? "sempre",
       ativo: editando.ativo,
     });
@@ -151,6 +155,7 @@ export function PrimeiroContatoPainel() {
       destino_fluxo_id: usaFluxo && form.destino_fluxo_id !== NENHUM ? form.destino_fluxo_id : null,
       destino_resposta_id: usaResposta && form.destino_resposta_id !== NENHUM ? form.destino_resposta_id : null,
       delay_segundos: Math.min(60, Math.max(0, Number(form.delay_segundos) || 0)),
+      delay_mensagem_segundos: Math.min(300, Math.max(0, Number(form.delay_mensagem_segundos) || 0)),
       enviar_mensagem: form.enviar_mensagem,
       ativo: form.ativo,
     };
@@ -351,6 +356,24 @@ export function PrimeiroContatoPainel() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="grid gap-1">
+              <Label>Esperar antes de enviar (segundos)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={300}
+                value={form.delay_mensagem_segundos}
+                onChange={(e) =>
+                  setForm({ ...form, delay_mensagem_segundos: Number(e.target.value) })
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                0 envia imediatamente. Útil para aguardar o cliente terminar de enviar os arquivos.
+              </p>
+            </div>
+
+
 
             <div className="grid gap-1">
               <Label>O que o bot faz</Label>
