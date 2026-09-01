@@ -49,6 +49,7 @@ import {
   avancar,
   
   fluxoInicial,
+  fluxoPorId,
   iniciar as iniciarFluxo,
   processarFluxo,
   type EstadoFluxo,
@@ -1462,7 +1463,7 @@ export async function iniciarFinalizacao(conversaId: string): Promise<{ ok: bool
   const agora = new Date();
   const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
   const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
-  const saida = iniciar(fluxos, fluxoId, { respostas: ctx.fluxo?.respostas ?? {} }, vars);
+  const saida = iniciarFluxo(fluxos, fluxoId, { respostas: ctx.fluxo?.respostas ?? {} }, vars);
   await entregarFluxo(conversa, config, { ...ctx, fluxoFallback: null }, fluxos, saida, vars);
   return { ok: true, fluxo: true };
 }
