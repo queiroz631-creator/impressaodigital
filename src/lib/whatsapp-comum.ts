@@ -1,12 +1,19 @@
 /** Helpers do atendimento via WhatsApp usados no cliente e no servidor. */
 
-export type StatusConversa = "automatico" | "aguardando" | "em_atendimento" | "pendente" | "finalizado";
+export type StatusConversa =
+  | "automatico"
+  | "aguardando"
+  | "em_atendimento"
+  | "pendente"
+  | "aguardando_finalizacao"
+  | "finalizado";
 
 export const STATUS_CONVERSA: { valor: StatusConversa; rotulo: string }[] = [
   { valor: "automatico", rotulo: "Automático" },
   { valor: "aguardando", rotulo: "Aguardando Resposta" },
   { valor: "em_atendimento", rotulo: "Em Atendimento" },
   { valor: "pendente", rotulo: "Pendente" },
+  { valor: "aguardando_finalizacao", rotulo: "Aguardando Finalização" },
   { valor: "finalizado", rotulo: "Finalizado" },
 ];
 
@@ -15,6 +22,7 @@ export const rotuloStatusConversa: Record<string, string> = {
   aguardando: "Aguardando Resposta",
   em_atendimento: "Em Atendimento",
   pendente: "Pendente",
+  aguardando_finalizacao: "Aguardando Finalização",
   finalizado: "Finalizado",
 };
 
