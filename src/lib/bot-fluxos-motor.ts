@@ -323,6 +323,15 @@ function escolherOpcaoDaEtapa(texto: string, opcoes: FluxoOpcao[]): FluxoOpcao |
   if (!alvo) return null;
   const direto = opcoes.find((o) => chave(o.valor) === alvo || chave(o.titulo) === alvo);
   if (direto) return direto;
+
+  // Etapas SIM/NÃO: aceita as variações usuais além do número.
+  const sim = opcoes.find((o) => chave(o.valor) === "sim");
+  const nao = opcoes.find((o) => chave(o.valor) === "nao");
+  if (sim && nao) {
+    const r = simOuNao(texto);
+    if (r !== null) return r ? sim : nao;
+  }
+
   const i = escolherOpcao(texto, opcoes.map((o) => o.titulo));
   return i === null ? null : (opcoes[i] ?? null);
 }
