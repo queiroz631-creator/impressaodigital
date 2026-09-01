@@ -803,6 +803,21 @@ function textoResposta(resposta: BotResposta, primeiraDoDia: boolean) {
   return !primeiraDoDia && retorno ? retorno : resposta.resposta;
 }
 
+/** Imagem opcional configurada na resposta automática. */
+function midiaResposta(resposta: BotResposta): MidiaBot | undefined {
+  const tipo = resposta.tipo_midia ?? "texto";
+  if (tipo === "texto" || !resposta.midia_url) return undefined;
+  return { tipo: "imagem", url: resposta.midia_url, nome: resposta.midia_nome ?? null };
+}
+
+/** Frase de confirmação da resposta automática (cada resposta pode ter a sua). */
+export const PERGUNTA_CONFIRMACAO_PADRAO = "Você quer falar sobre *{titulo}*?";
+
+function perguntaConfirmacao(resposta: BotResposta) {
+  const texto = (resposta.pergunta_confirmacao ?? "").trim() || PERGUNTA_CONFIRMACAO_PADRAO;
+  return texto.replace(/\{titulo\}/g, resposta.titulo);
+}
+
 /** Executa a ação configurada para o SIM ou o NÃO de uma resposta automática. */
 async function executarAcaoResposta(
   conversa: ConversaBot,
