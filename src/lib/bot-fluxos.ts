@@ -153,7 +153,7 @@ export const ACOES_PRIMEIRO_CONTATO: { valor: string; rotulo: string }[] = [
   { valor: "aguardar", rotulo: "Só enviar a mensagem e aguardar" },
   { valor: "confirmar_fluxo", rotulo: "Perguntar SIM/NÃO e iniciar um fluxo" },
   { valor: "iniciar_fluxo", rotulo: "Iniciar um fluxo" },
-  { valor: "fluxo_inicial", rotulo: "Iniciar o fluxo inicial" },
+  
   { valor: "resposta", rotulo: "Enviar uma resposta automática" },
   { valor: "atendente", rotulo: "Transferir para atendente" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
