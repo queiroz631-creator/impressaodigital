@@ -132,7 +132,7 @@ export const ETAPAS_MENU = new Set([
   "saudacao",
   "menu",
   "confirmar_intencao",
-  "confirmar_arquivo",
+  
   "pos_resposta",
 ]);
 
