@@ -382,14 +382,25 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
   .cv-print, .cv-print * { color:#11111a; }
   .cv-secao, .cv-secao * { color:#fff !important; }
   .cv-print, .cv-print * { break-inside: avoid; page-break-inside: avoid; }
+  /* Fonte igual à do PDF (Helvetica), independente das folhas da página. */
+  html, body, .cv-print, .cv-print * { font-family: Helvetica, Arial, sans-serif !important; }
   /* A folha é reduzida por zoom para caber em 1 página; a foto compensa esse
      fator para sair sempre em 2,5cm x 3,5cm reais. */
   #cv-escala { --cv-zoom: 1; }
+  /* Posicionamento da foto no topo direito da faixa, sem depender do Tailwind. */
+  .cv-print header { position: relative !important; }
   .cv-foto {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    left: auto !important;
     width: calc(2.5cm / var(--cv-zoom)) !important;
     height: calc(3.5cm / var(--cv-zoom)) !important;
     object-fit: cover !important;
+    border: 1px solid #1a1a5e !important;
   }
+  .cv-header-com-foto { padding-right: calc(2.7cm / var(--cv-zoom)) !important; }
+
 </style></head><body><div id="cv-escala"></div></body></html>`);
   doc.close();
 
