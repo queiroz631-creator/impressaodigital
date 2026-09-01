@@ -352,6 +352,19 @@ function Conversa({
   const [texto, setTexto] = useState("");
   const fim = useRef<HTMLDivElement | null>(null);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
+  const finalizacao = useServerFn(enviarParaFinalizacao);
+
+  async function enviarFinalizacao() {
+    try {
+      const r = await finalizacao({ data: { conversaId: conversa.id, atendente: atendente } });
+      if (!r.ok) { toast.error(r.erro ?? "Falha ao enviar para finalização."); return; }
+      toast.success(r.fluxo ? "Conversa enviada para finalização." : "Conversa movida (nenhum fluxo de finalização configurado).");
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+      onVoltar();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao enviar para finalização.");
+    }
+  }
 
   const { data: mensagens, isLoading } = useQuery({
     queryKey: ["whatsapp-mensagens", conversa.id],
@@ -473,6 +486,14 @@ function Conversa({
         </Button>
         <Button size="sm" variant="outline" onClick={() => alterarStatus("pendente", "marcou_pendente")}>
           Pendente
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          title="Enviar para Aguardando Finalização"
+          onClick={() => void enviarFinalizacao()}
+        >
+          <Flag className="mr-1 h-4 w-4" /> Aguardando Finalização
         </Button>
         <Button size="sm" onClick={() => alterarStatus("finalizado", "finalizou")}>
           <CheckCircle2 className="mr-1 h-4 w-4" /> Finalizar
