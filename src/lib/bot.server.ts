@@ -1093,6 +1093,9 @@ async function rodarFluxo(
   const vars: Vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
   const estado = conversa.etapa === "fluxo" ? (ctx.fluxo ?? null) : null;
   const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
+  // Atendimento novo (conversa foi finalizada): a regra de primeiro contato
+  // pode enviar a mensagem de novo.
+  if (conversa.etapa === "finalizado") ctx.regraEnviada = null;
 
   if (conversa.etapa === "triagem") {
     await resolverTriagem(conversa, config, ctx, dados, entrada, primeiraDoDia, vars);
