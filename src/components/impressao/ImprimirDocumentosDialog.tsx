@@ -167,7 +167,9 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
           </DialogTitle>
           <DialogDescription>
             {imprimindo
-              ? `Enviando ${Math.min(atual + 1, documentos.length)} de ${documentos.length}...`
+              ? cancelando
+                ? "Cancelando... aguarde o envio do arquivo atual terminar."
+                : `Enviando ${Math.min(atual + 1, documentos.length)} de ${documentos.length}...`
               : "Confira os arquivos, o total de páginas e a impressora antes de iniciar."}
           </DialogDescription>
         </DialogHeader>
@@ -244,17 +246,22 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
         <DialogFooter>
           {concluido ? (
             <Button onClick={() => onOpenChange(false)}>Fechar</Button>
+          ) : imprimindo ? (
+            <Button variant="destructive" disabled={cancelando} onClick={cancelar}>
+              {cancelando ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+              {cancelando ? "Cancelando..." : "Cancelar impressão"}
+            </Button>
           ) : (
             <>
-              <Button variant="outline" disabled={imprimindo} onClick={() => onOpenChange(false)}>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
               <Button
-                disabled={imprimindo || documentos.length === 0 || !impressora}
+                disabled={documentos.length === 0 || !impressora}
                 onClick={() => void iniciar()}
               >
-                {imprimindo ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileStack className="h-4 w-4" />}
-                {imprimindo ? "Imprimindo..." : "Imprimir"}
+                <FileStack className="h-4 w-4" />
+                Imprimir
               </Button>
             </>
           )}
