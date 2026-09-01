@@ -410,6 +410,7 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
     (wrapper.style as unknown as Record<string, string>)["zoom"] = String(fator);
     wrapper.style.transform = "none";
     wrapper.style.height = "auto";
+    wrapper.style.setProperty("--cv-zoom", String(fator));
   };
 
   const ajustarEscala = () => {
