@@ -37,6 +37,7 @@ import {
   type HabilidadeItem,
   type PayloadEtapa,
 } from "@/lib/curriculo";
+import { lerFotoCurriculo } from "@/lib/curriculo-foto";
 import { dataBR } from "@/lib/format";
 
 export interface PropsFormularioCurriculo {
