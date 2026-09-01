@@ -1806,6 +1806,7 @@ export type Database = {
           exigir_revisao_humana: boolean
           fallback_inicial_minutos: number
           finalizacao_uma_vez_dia: boolean
+          fluxo_finalizacao_id: string | null
           id: string
           inatividade_minutos: number
           inatividade_status: string
@@ -1860,6 +1861,7 @@ export type Database = {
           exigir_revisao_humana?: boolean
           fallback_inicial_minutos?: number
           finalizacao_uma_vez_dia?: boolean
+          fluxo_finalizacao_id?: string | null
           id?: string
           inatividade_minutos?: number
           inatividade_status?: string
@@ -1914,6 +1916,7 @@ export type Database = {
           exigir_revisao_humana?: boolean
           fallback_inicial_minutos?: number
           finalizacao_uma_vez_dia?: boolean
+          fluxo_finalizacao_id?: string | null
           id?: string
           inatividade_minutos?: number
           inatividade_status?: string
@@ -1959,7 +1962,15 @@ export type Database = {
           usar_ia?: boolean
           webhook_token?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_config_fluxo_finalizacao_id_fkey"
+            columns: ["fluxo_finalizacao_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_conversas: {
         Row: {
