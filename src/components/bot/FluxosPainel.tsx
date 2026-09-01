@@ -295,8 +295,6 @@ export function FluxosPainel() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-lg">{emojiIcone(f.icone)}</span>
                   <strong className="uppercase">{f.nome}</strong>
-                  {f.inicial && <Badge variant="secondary">Fluxo inicial</Badge>}
-                  {f.fluxo_arquivos && <Badge variant="secondary">Recebe arquivos</Badge>}
                   <Badge variant={f.ativo ? "default" : "outline"}>{f.ativo ? "Ativo" : "Inativo"}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">{f.descricao}</p>
