@@ -438,10 +438,11 @@ function Calculadora() {
     aplicarArquivos(estado.arquivosLista.filter((_, i) => i !== indice));
   }
 
-  /** Remove todos os arquivos e zera arquivos, páginas e cópias adicionais. */
+  /** Remove todos os arquivos, zera arquivos, páginas e cópias adicionais e desmarca o tipo de impressão. */
   function removerTodosArquivos() {
     aplicarArquivos([]);
     setPaginasConfirmadas([]);
+    set("tipoServico", "");
   }
 
   /** Perfil de impressão do material selecionado (ou perfil padrão). */
