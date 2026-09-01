@@ -1141,9 +1141,48 @@ async function rodarFluxo(
 
 // ---------- Máquina de estados ----------
 
+const LOCK_EXPIRA_MS = 60_000;
+
+/** Garante que só uma mensagem por conversa seja processada de cada vez. */
+async function tentarTravar(conversaId: string): Promise<boolean> {
+  const limite = new Date(Date.now() - LOCK_EXPIRA_MS).toISOString();
+  const { data } = await supabaseAdmin
+    .from("whatsapp_conversas")
+    .update({ bot_lock_em: new Date().toISOString() } as never)
+    .eq("id", conversaId)
+    .or(`bot_lock_em.is.null,bot_lock_em.lt.${limite}`)
+    .select("id");
+  return Boolean(data && data.length > 0);
+}
+
+async function destravar(conversaId: string): Promise<void> {
+  await supabaseAdmin
+    .from("whatsapp_conversas")
+    .update({ bot_lock_em: null } as never)
+    .eq("id", conversaId);
+}
+
 export async function processarBot(conversaId: string, entrada: EntradaBot): Promise<void> {
+  // Vários arquivos/mensagens chegam juntos: cada callback espera a vez para
+  // não disparar respostas duplicadas ao mesmo tempo.
+  let travou = false;
+  for (let tentativa = 0; tentativa < 40 && !travou; tentativa += 1) {
+    travou = await tentarTravar(conversaId);
+    if (!travou) await new Promise((r) => setTimeout(r, 750));
+  }
+  if (!travou) return;
+
+  try {
+    await processarBotInterno(conversaId, entrada);
+  } finally {
+    await destravar(conversaId);
+  }
+}
+
+async function processarBotInterno(conversaId: string, entrada: EntradaBot): Promise<void> {
   const config = await lerConfig();
   if (!config?.bot_ativo) return;
+
 
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
