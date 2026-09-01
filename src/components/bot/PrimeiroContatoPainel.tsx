@@ -358,6 +358,24 @@ export function PrimeiroContatoPainel() {
             </div>
 
             <div className="grid gap-1">
+              <Label>Esperar antes de enviar (segundos)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={300}
+                value={form.delay_mensagem_segundos}
+                onChange={(e) =>
+                  setForm({ ...form, delay_mensagem_segundos: Number(e.target.value) })
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                0 envia imediatamente. Útil para aguardar o cliente terminar de enviar os arquivos.
+              </p>
+            </div>
+
+
+
+            <div className="grid gap-1">
               <Label>O que o bot faz</Label>
               <Select value={form.acao} onValueChange={(v) => setForm({ ...form, acao: v })}>
                 <SelectTrigger>
