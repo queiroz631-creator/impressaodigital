@@ -40,8 +40,10 @@ function extrair(corpo: z.infer<typeof corpoSchema>) {
     return { tipo: "imagem", texto: corpo.image.caption ?? "", url: corpo.image.imageUrl, nome: "imagem.jpg", mime: corpo.image.mimeType ?? "image/jpeg" };
   if (corpo.document?.documentUrl)
     return {
+      // O nome do arquivo não é texto escrito pelo cliente: sem legenda o
+      // documento precisa cair na regra "Somente arquivos".
       tipo: "documento",
-      texto: corpo.document.caption ?? corpo.document.fileName ?? "",
+      texto: corpo.document.caption ?? "",
       url: corpo.document.documentUrl,
       nome: corpo.document.fileName ?? "arquivo",
       mime: corpo.document.mimeType ?? "application/octet-stream",
