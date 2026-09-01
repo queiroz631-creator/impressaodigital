@@ -137,10 +137,7 @@ export function FluxosPainel() {
         mensagem_inicial: f.mensagem_inicial,
         ativo: f.ativo,
         mensagem_unica: f.mensagem_unica !== false,
-
         ordem,
-        inicial: false,
-        fluxo_arquivos: false,
       })
       .select("id")
       .single();
