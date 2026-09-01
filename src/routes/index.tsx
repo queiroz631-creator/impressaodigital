@@ -2177,7 +2177,15 @@ function Calculadora() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ImprimirDocumentosDialog
+        aberto={impressaoAberta}
+        onOpenChange={setImpressaoAberta}
+        documentos={documentosImpressao}
+        impressoraPadrao={(config?.impressora_padrao_nome ?? null) as string | null}
+      />
     </>
+
   );
 }
 
