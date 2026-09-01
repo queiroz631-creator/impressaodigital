@@ -508,7 +508,23 @@ function EditorEtapa({
       {form.modo_avanco === "resposta" && (
         <div className="grid gap-1">
           <Label>Tipo de resposta esperada</Label>
-          <Select value={form.tipo_resposta} onValueChange={(v) => setForm({ ...form, tipo_resposta: v })}>
+          <Select
+            value={form.tipo_resposta}
+            onValueChange={(v) => {
+              if (v === "sim_nao" && form.opcoes.length === 0) {
+                setForm({
+                  ...form,
+                  tipo_resposta: v,
+                  opcoes: [
+                    { titulo: "SIM", valor: "sim", acao: "proxima_etapa", destino_fluxo_id: NENHUM, destino_etapa_id: NENHUM, ativo: true },
+                    { titulo: "NÃO", valor: "nao", acao: "proxima_etapa", destino_fluxo_id: NENHUM, destino_etapa_id: NENHUM, ativo: true },
+                  ],
+                });
+                return;
+              }
+              setForm({ ...form, tipo_resposta: v });
+            }}
+          >
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               {TIPOS_RESPOSTA.map((t) => <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>)}
