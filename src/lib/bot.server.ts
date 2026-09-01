@@ -49,6 +49,7 @@ import {
   avancar,
   
   fluxoInicial,
+  fluxoPorId,
   iniciar as iniciarFluxo,
   processarFluxo,
   type EstadoFluxo,
@@ -1153,8 +1154,8 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
   const conversa = (data ?? null) as ConversaBot | null;
   if (!conversa) return;
 
-  // O bot só atua enquanto a conversa estiver no modo automático.
-  if (conversa.status !== "automatico") return;
+  // O bot só atua no modo automático ou durante o fluxo de finalização.
+  if (conversa.status !== "automatico" && conversa.status !== "aguardando_finalizacao") return;
 
   const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
   const texto = (entrada.texto ?? "").trim();
@@ -1430,6 +1431,43 @@ function msgDoStatus(cfg: BotDados["config"], status: string) {
  * conversa para o status escolhido. Só vale para conversas no modo automático
  * em que o bot está aguardando a resposta do cliente.
  */
+/**
+ * Coloca a conversa em "Aguardando Finalização" e inicia o fluxo de
+ * finalização configurado (aba Fluxos). Sem fluxo configurado, apenas
+ * troca o status.
+ */
+export async function iniciarFinalizacao(conversaId: string): Promise<{ ok: boolean; fluxo: boolean }> {
+  const { data } = await supabaseAdmin
+    .from("whatsapp_conversas")
+    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em")
+    .eq("id", conversaId)
+    .maybeSingle();
+
+  const conversa = (data ?? null) as ConversaBot | null;
+  if (!conversa) return { ok: false, fluxo: false };
+
+  await supabaseAdmin
+    .from("whatsapp_conversas")
+    .update({ status: "aguardando_finalizacao", inatividade_avisada: false })
+    .eq("id", conversa.id);
+  conversa.status = "aguardando_finalizacao";
+
+  const dadosBot = await carregarDadosBot();
+  const fluxoId = dadosBot?.config.fluxo_finalizacao_id ?? null;
+  const config = await lerConfig();
+  if (!fluxoId || !config) return { ok: true, fluxo: false };
+
+  const fluxos = await carregarFluxos();
+  if (!fluxoPorId(fluxos, fluxoId)) return { ok: true, fluxo: false };
+
+  const agora = new Date();
+  const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
+  const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
+  const saida = iniciarFluxo(fluxos, fluxoId, { respostas: ctx.fluxo?.respostas ?? {} }, vars);
+  await entregarFluxo(conversa, config, { ...ctx, fluxoFallback: null }, fluxos, saida, vars);
+  return { ok: true, fluxo: true };
+}
+
 export async function verificarInatividade(): Promise<{ avisadas: number; finalizadas: number }> {
   const config = await lerConfig();
   if (!config?.bot_ativo) return { avisadas: 0, finalizadas: 0 };
