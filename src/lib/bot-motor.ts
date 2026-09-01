@@ -398,37 +398,11 @@ export async function processarMenu(
 ): Promise<SaidaMotor> {
   const vars = { nome: entrada.nome, telefone: entrada.telefone, agora };
   const texto = (entrada.texto ?? "").trim();
-  const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
 
   // Primeiro contato: envia o menu (as saudações vivem nos fluxos/respostas).
+  // Arquivos recebidos aqui são tratados pelas regras de Primeiro contato.
   if (estado.etapa === "inicio") {
-    if (ehArquivo) {
-      return {
-        mensagens: [{ texto: "Vi que você enviou um arquivo. É para fazer um orçamento?", botoes: SIM_NAO }],
-        estado: { etapa: "confirmar_arquivo" },
-      };
-    }
-
     return { mensagens: [menu(dados)], estado: { etapa: "menu" } };
-  }
-
-  // Cliente enviou arquivo em qualquer etapa de menu.
-  if (ehArquivo && estado.etapa !== "confirmar_arquivo") {
-    return {
-      mensagens: [{ texto: "Vi que você enviou um arquivo. É para fazer um orçamento?", botoes: SIM_NAO }],
-      estado: { etapa: "confirmar_arquivo" },
-    };
-  }
-
-  if (estado.etapa === "confirmar_arquivo") {
-    const r = await decidirSimNao(texto, "É para fazer um orçamento?", dados, ia);
-    if (r === true) {
-      const opcao = opcoesAtivas(dados).find((o) => o.acao === "orcamento");
-      if (opcao) return executar(dados, opcao, entrada, agora);
-      return { mensagens: [menu(dados)], estado: { etapa: "menu" } };
-    }
-    if (r === false) return { mensagens: [menu(dados)], estado: { etapa: "menu" } };
-    return { mensagens: [], estado: { etapa: "confirmar_arquivo" } };
   }
 
   if (estado.etapa === "saudacao" || estado.etapa === "pos_resposta") {
