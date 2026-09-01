@@ -125,27 +125,8 @@ export function FluxosPainel() {
     await recarregar();
   }
 
-  async function definirInicial(id: string) {
-    const atual = lista.find((f) => f.inicial);
-    if (atual?.id === id) return;
-    if (atual) await supabase.from("bot_fluxos").update({ inicial: false }).eq("id", atual.id);
-    const { error } = await supabase.from("bot_fluxos").update({ inicial: true }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Fluxo inicial atualizado.");
-    await recarregar();
-  }
-
-  async function definirArquivos(id: string) {
-    const atual = lista.find((f) => f.fluxo_arquivos);
-    if (atual?.id === id) return;
-    if (atual) await supabase.from("bot_fluxos").update({ fluxo_arquivos: false }).eq("id", atual.id);
-    const { error } = await supabase.from("bot_fluxos").update({ fluxo_arquivos: true }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Fluxo de arquivos atualizado.");
-    await recarregar();
-  }
-
   async function duplicar(f: Fluxo) {
+
     const ordem = Math.max(0, ...lista.map((x) => x.ordem)) + 1;
     const { data: novo, error } = await supabase
       .from("bot_fluxos")
