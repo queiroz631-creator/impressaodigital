@@ -281,10 +281,8 @@ export function iniciar(
 }
 
 
-/** Fluxo marcado para receber os clientes que enviam apenas arquivos. */
-export function fluxoDeArquivos(dados: DadosFluxos) {
-  return dados.fluxos.find((f) => f.fluxo_arquivos && f.ativo) ?? null;
-}
+
+
 
 /** Processa a resposta do cliente na etapa em que a conversa parou. */
 export function processarFluxo(
