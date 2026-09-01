@@ -1115,7 +1115,37 @@ function Calculadora() {
               </p>
 
               <div className="rounded-xl border border-border p-3">
-                <p className="mb-2 text-xs font-bold tracking-wider text-muted-foreground">ARQUIVOS ANEXADOS</p>
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-bold tracking-wider text-muted-foreground">ARQUIVOS ANEXADOS</p>
+
+                  <div className="ml-auto flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8"
+                      disabled={estado.arquivosLista.length === 0}
+                      onClick={abrirImpressaoArquivos}
+                    >
+                      <FileStack className="h-4 w-4" /> Imprimir documentos
+                    </Button>
+
+                    <ConfirmarExclusao
+                      titulo="Remover todos os arquivos"
+                      descricao="Isso remove todos os arquivos anexados e zera a quantidade de arquivos, as páginas adicionais e as cópias adicionais."
+                      rotuloConfirmar="Remover todos"
+                      onConfirmar={removerTodosArquivos}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-destructive"
+                        disabled={estado.arquivosLista.length === 0}
+                      >
+                        <Trash2 className="h-4 w-4" /> Remover todos
+                      </Button>
+                    </ConfirmarExclusao>
+                  </div>
+                </div>
 
                 {arquivosPendentes.length > 0 && (
                   <div className="mb-2 rounded-lg border-2 border-destructive bg-destructive/10 p-2.5">
