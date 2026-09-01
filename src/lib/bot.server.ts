@@ -77,6 +77,8 @@ interface ContextoBot {
   fluxoFallback?: boolean | null;
   /** Regra de primeiro contato que já enviou a mensagem neste atendimento. */
   regraEnviada?: string | null;
+  /** Última mensagem de entrada já processada pelo bot (evita respostas repetidas). */
+  ultimaProcessada?: string | null;
 }
 
 interface ConversaBot {
