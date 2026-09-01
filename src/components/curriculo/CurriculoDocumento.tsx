@@ -53,16 +53,18 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
             <img
               src={c.foto_url}
               alt="Foto do candidato"
-              className="absolute right-0 top-0 h-[3.5cm] w-[2.5cm] rounded-sm border border-navy object-cover"
+              className="cv-foto absolute right-0 top-0 h-[3.5cm] w-[2.5cm] rounded-sm border border-navy object-cover"
             />
           )}
-          <h1 className="mt-5 text-[18pt] font-bold uppercase leading-tight text-navy">
-            {c.nome_completo || "Currículo"}
-          </h1>
-          {telefones.length > 0 && (
-            <p className="mt-2 text-[12pt]">{telefones.join("  •  ")}</p>
-          )}
-          {c.email && <p className="text-[10.5pt]">{c.email}</p>}
+          <div className={c.foto_exibir && c.foto_url ? "pr-[2.7cm]" : undefined}>
+            <h1 className="mt-5 text-[18pt] font-bold uppercase leading-tight text-navy">
+              {c.nome_completo || "Currículo"}
+            </h1>
+            {telefones.length > 0 && (
+              <p className="mt-2 text-[12pt]">{telefones.join("  •  ")}</p>
+            )}
+            {c.email && <p className="text-[10.5pt]">{c.email}</p>}
+          </div>
         </header>
 
 

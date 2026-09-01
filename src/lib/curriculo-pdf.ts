@@ -382,6 +382,14 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
   .cv-print, .cv-print * { color:#11111a; }
   .cv-secao, .cv-secao * { color:#fff !important; }
   .cv-print, .cv-print * { break-inside: avoid; page-break-inside: avoid; }
+  /* A folha é reduzida por zoom para caber em 1 página; a foto compensa esse
+     fator para sair sempre em 2,5cm x 3,5cm reais. */
+  #cv-escala { --cv-zoom: 1; }
+  .cv-foto {
+    width: calc(2.5cm / var(--cv-zoom)) !important;
+    height: calc(3.5cm / var(--cv-zoom)) !important;
+    object-fit: cover !important;
+  }
 </style></head><body><div id="cv-escala"></div></body></html>`);
   doc.close();
 
@@ -402,6 +410,7 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
     (wrapper.style as unknown as Record<string, string>)["zoom"] = String(fator);
     wrapper.style.transform = "none";
     wrapper.style.height = "auto";
+    wrapper.style.setProperty("--cv-zoom", String(fator));
   };
 
   const ajustarEscala = () => {
