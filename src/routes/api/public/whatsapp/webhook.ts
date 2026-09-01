@@ -331,8 +331,6 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           .update({ bot_pendente: true, bot_pendente_em: agora } as never)
           .eq("id", conversaId);
 
-        void arquivoRecebidoId;
-
 
         return Response.json({ ok: true });
       },
