@@ -1236,6 +1236,134 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
   }
 }
 
+/**
+ * Copia para o armazenamento privado as mídias recebidas que ainda não foram
+ * guardadas. Fica fora do webhook para não atrasar a resposta ao cliente.
+ */
+async function guardarMidiasPendentes(): Promise<void> {
+  const { data: arquivos } = await supabaseAdmin
+    .from("whatsapp_arquivos")
+    .select("id, conversa_id, mensagem_id, nome, mime_type, url, storage_path")
+    .is("storage_path", null)
+    .not("url", "is", null)
+    .order("created_at", { ascending: true })
+    .limit(5);
+
+  for (const arq of arquivos ?? []) {
+    if (!arq.url) continue;
+    try {
+      const resposta = await fetch(arq.url);
+      if (!resposta.ok) continue;
+      const bytes = new Uint8Array(await resposta.arrayBuffer());
+      const caminho = `${arq.conversa_id}/${Date.now()}-${(arq.nome ?? "arquivo").replace(/[^\w.-]+/g, "_")}`;
+      const { error: erroUpload } = await supabaseAdmin.storage
+        .from("whatsapp")
+        .upload(caminho, bytes, { contentType: arq.mime_type ?? "application/octet-stream", upsert: true });
+      if (erroUpload) continue;
+
+      await supabaseAdmin.from("whatsapp_arquivos").update({ storage_path: caminho }).eq("id", arq.id);
+      if (arq.mensagem_id) {
+        await supabaseAdmin
+          .from("whatsapp_mensagens")
+          .update({ arquivo_path: caminho })
+          .eq("id", arq.mensagem_id);
+      }
+    } catch {
+      /* falha no download não invalida a mensagem nem a resposta */
+    }
+  }
+}
+
+/**
+ * Processa as conversas marcadas como pendentes pelo webhook. Roda fora da
+ * requisição do provedor, então pode respeitar as esperas configuradas sem
+ * risco de a execução ser interrompida no meio.
+ */
+export async function drenarFilaBot(): Promise<{ processadas: number }> {
+  let processadas = 0;
+
+  for (let passada = 0; passada < 3; passada += 1) {
+    // Dá tempo para callbacks do mesmo envio chegarem juntos (vários arquivos).
+    await new Promise((r) => setTimeout(r, 1_500));
+
+    const { data: pendentes } = await supabaseAdmin
+      .from("whatsapp_conversas")
+      .select("id, bot_pendente_em")
+      .eq("bot_pendente", true)
+      .order("bot_pendente_em", { ascending: true })
+      .limit(5);
+
+    if (!pendentes || pendentes.length === 0) break;
+
+    for (const conversa of pendentes) {
+      const travou = await tentarTravar(conversa.id);
+      if (!travou) continue;
+
+      try {
+        const { data: ultima } = await supabaseAdmin
+          .from("whatsapp_mensagens")
+          .select("id, tipo, texto")
+          .eq("conversa_id", conversa.id)
+          .eq("direcao", "entrada")
+          .order("data_hora", { ascending: false })
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const { data: atual } = await supabaseAdmin
+          .from("whatsapp_conversas")
+          .select("contexto")
+          .eq("id", conversa.id)
+          .maybeSingle();
+        const ctxAtual = ((atual?.contexto ?? {}) as ContextoBot) || {};
+
+        if (ultima?.id && ctxAtual.ultimaProcessada !== ultima.id) {
+          await processarBotInterno(conversa.id, {
+            tipo: (ultima.tipo ?? "texto") as EntradaBot["tipo"],
+            texto: ultima.texto ?? "",
+            mensagemId: ultima.id,
+          });
+
+          const { data: depois } = await supabaseAdmin
+            .from("whatsapp_conversas")
+            .select("contexto")
+            .eq("id", conversa.id)
+            .maybeSingle();
+          const ctxDepois = ((depois?.contexto ?? {}) as ContextoBot) || {};
+          await supabaseAdmin
+            .from("whatsapp_conversas")
+            .update({ contexto: { ...ctxDepois, ultimaProcessada: ultima.id } as never })
+            .eq("id", conversa.id);
+          processadas += 1;
+        }
+
+        // Só desmarca se nenhuma mensagem nova chegou durante o processamento;
+        // caso contrário a conversa continua na fila para a próxima passada.
+        await supabaseAdmin
+          .from("whatsapp_conversas")
+          .update({ bot_pendente: false } as never)
+          .eq("id", conversa.id)
+          .eq("bot_pendente_em", conversa.bot_pendente_em as never);
+      } catch (e) {
+        await supabaseAdmin.from("whatsapp_auditoria").insert({
+          conversa_id: conversa.id,
+          usuario_nome: "Bot",
+          acao: "bot_erro",
+          detalhe: e instanceof Error ? e.message : "Falha no atendimento automático",
+        });
+        await supabaseAdmin
+          .from("whatsapp_conversas")
+          .update({ bot_pendente: false } as never)
+          .eq("id", conversa.id);
+      } finally {
+        await destravar(conversa.id);
+      }
+    }
+  }
+
+  await guardarMidiasPendentes();
+  return { processadas };
+
 async function processarBotInterno(conversaId: string, entrada: EntradaBot): Promise<void> {
   const config = await lerConfig();
   if (!config?.bot_ativo) return;
