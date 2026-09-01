@@ -77,6 +77,8 @@ interface ContextoBot {
   fluxoFallback?: boolean | null;
   /** Regra de primeiro contato que já enviou a mensagem neste atendimento. */
   regraEnviada?: string | null;
+  /** Última mensagem de entrada já processada pelo bot (evita respostas repetidas). */
+  ultimaProcessada?: string | null;
 }
 
 interface ConversaBot {
@@ -1164,24 +1166,27 @@ async function destravar(conversaId: string): Promise<void> {
 }
 
 export async function processarBot(conversaId: string, entrada: EntradaBot): Promise<void> {
-  // Dá tempo para callbacks do mesmo envio chegarem. Somente a mensagem mais
-  // recente do grupo segue para o bot; as anteriores ficam apenas no histórico.
+  // Dá tempo para callbacks do mesmo envio chegarem juntos (vários arquivos).
   if (entrada.mensagemId) {
     await new Promise((r) => setTimeout(r, 1_500));
   }
 
   let travou = false;
-  for (let tentativa = 0; tentativa < 40 && !travou; tentativa += 1) {
+  for (let tentativa = 0; tentativa < 20 && !travou; tentativa += 1) {
     travou = await tentarTravar(conversaId);
-    if (!travou) await new Promise((r) => setTimeout(r, 750));
+    if (!travou) await new Promise((r) => setTimeout(r, 500));
   }
   if (!travou) return;
 
   try {
+    let alvo = entrada;
+
     if (entrada.mensagemId) {
-      const { data: ultimaEntrada } = await supabaseAdmin
+      // Já com a trava: responde sempre a mensagem mais recente do grupo. Se
+      // ela já foi respondida por outro callback, este apenas encerra.
+      const { data: ultima } = await supabaseAdmin
         .from("whatsapp_mensagens")
-        .select("id")
+        .select("id, tipo, texto")
         .eq("conversa_id", conversaId)
         .eq("direcao", "entrada")
         .order("data_hora", { ascending: false })
@@ -1189,10 +1194,31 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
         .limit(1)
         .maybeSingle();
 
-      if (ultimaEntrada?.id !== entrada.mensagemId) return;
+      if (ultima?.id) {
+        const { data: atual } = await supabaseAdmin
+          .from("whatsapp_conversas")
+          .select("contexto")
+          .eq("id", conversaId)
+          .maybeSingle();
+
+        const ctxAtual = ((atual?.contexto ?? {}) as ContextoBot) || {};
+        if (ctxAtual.ultimaProcessada === ultima.id) return;
+
+        alvo = {
+          ...entrada,
+          mensagemId: ultima.id,
+          tipo: (ultima.tipo ?? entrada.tipo) as EntradaBot["tipo"],
+          texto: ultima.texto ?? "",
+        };
+
+        await supabaseAdmin
+          .from("whatsapp_conversas")
+          .update({ contexto: { ...ctxAtual, ultimaProcessada: ultima.id } as never })
+          .eq("id", conversaId);
+      }
     }
 
-    await processarBotInterno(conversaId, entrada);
+    await processarBotInterno(conversaId, alvo);
   } finally {
     await destravar(conversaId);
   }
