@@ -25,6 +25,8 @@ const camposSchema = z
     experiencia_possui: z.boolean().optional(),
     experiencia_frase: z.string().max(300).nullish(),
     habilidades_observacao: z.string().max(1000).nullish(),
+    foto_url: z.string().max(3_000_000).nullish(),
+    foto_exibir: z.boolean().optional(),
     objetivo_tipo: z.enum(["sugerido", "personalizado", "nao_informar"]).optional(),
     objetivo_texto: z.string().max(1000).nullish(),
     exibir_data_atualizacao: z.boolean().optional(),
