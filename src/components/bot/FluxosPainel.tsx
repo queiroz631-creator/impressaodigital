@@ -253,38 +253,6 @@ export function FluxosPainel() {
         </Button>
       </div>
 
-      <Card className="shadow-card">
-        <CardContent className="grid gap-1 pt-6 sm:max-w-md">
-          <Label>Fluxo inicial</Label>
-          <Select value={lista.find((f) => f.inicial)?.id ?? ""} onValueChange={(v) => void definirInicial(v)}>
-            <SelectTrigger><SelectValue placeholder="Selecione o fluxo" /></SelectTrigger>
-            <SelectContent>
-              {lista.filter((f) => f.ativo).map((f) => (
-                <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Fluxo iniciado automaticamente quando o cliente entra em contato.
-          </p>
-
-          <Label className="mt-3">Fluxo para quem envia apenas arquivos</Label>
-          <Select
-            value={lista.find((f) => f.fluxo_arquivos)?.id ?? ""}
-            onValueChange={(v) => void definirArquivos(v)}
-          >
-            <SelectTrigger><SelectValue placeholder="Selecione o fluxo" /></SelectTrigger>
-            <SelectContent>
-              {lista.filter((f) => f.ativo).map((f) => (
-                <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Usado quando o primeiro contato do cliente é só um arquivo ou imagem.
-          </p>
-        </CardContent>
-      </Card>
 
       <div className="grid gap-3">
         {lista.map((f) => {
