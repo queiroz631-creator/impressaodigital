@@ -197,6 +197,7 @@ export function FormularioCurriculo({
             cidade: capitalizarTexto(cidade) || null,
             uf: uf.toUpperCase() || null,
             cep: cep.trim() || null,
+            foto_url: foto || null,
           },
           telefones: telefones
             .filter((t) => t.telefone.trim())
