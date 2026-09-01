@@ -15,13 +15,10 @@ descritos abaixo mudam.
 
 ## 2. Respostas automáticas
 
-- **Texto da pergunta de confirmação**: hoje "Você quer falar sobre *X*?" está fixo no código.
-  Vira uma mensagem configurável na aba Mensagens (com `{titulo}` como variável), mantendo o texto
-  atual como padrão.
-- **Reconhecer a resposta depois de uma mensagem errada**: hoje, se o cliente responde algo que não
-  é SIM/NÃO, o bot descarta a pergunta e volta para a triagem. Passa a manter a pergunta pendente:
-  se a nova mensagem também não for SIM/NÃO nem casar com outra regra/resposta, o bot reenvia
-  (uma única vez) a pergunta pendente e continua aceitando o SIM/NÃO no turno seguinte.
+- **Texto da pergunta de confirmação por resposta**: hoje "Você quer falar sobre *X*?" está fixo no
+  código. Passa a ser um campo em **cada resposta automática**, já preenchido com a frase padrão
+  (`Você quer falar sobre *{titulo}*?`) e editável individualmente. Em branco, usa o padrão.
+- **Reconhecer a resposta depois de uma mensagem errada**: sem alteração, continua como está hoje.
 - **Resposta com imagem**: cada resposta automática ganha tipo (texto, imagem, texto + imagem),
   upload da imagem no mesmo bucket `bot-midia` já usado pelas etapas de fluxo, e envio pela Z-API
   com legenda — mesma mecânica das etapas.
@@ -31,10 +28,14 @@ esse nome). Se for outra coisa, é só avisar.
 
 ## 3. Fluxos
 
-- **Nunca ficar mudo**: quando a etapa não entende a resposta, o motor devolve "não entendi" sem
-  nenhuma mensagem e a entrega ignora isso — é o caso em que o bot fica calado. Passa a reenviar a
-  mensagem da etapa com as opções, precedida da mensagem "não entendi" já configurada. Também
-  quando uma etapa não tem texto nem mídia e não avança, o bot reenvia a etapa em vez de silenciar.
+- **Garantir que a mensagem saiu**: hoje o envio para a Z-API é disparado uma vez e, se a API
+  responde com erro ou falha de rede, a conversa segue em frente como se tivesse enviado — é aí que
+  o cliente fica sem receber a mensagem do fluxo ou da resposta automática. Passa a: conferir a
+  resposta da Z-API, tentar de novo (até 3 tentativas, com intervalo curto) quando falhar, marcar a
+  mensagem como erro no histórico e registrar na auditoria. O avanço da etapa/ação só acontece
+  depois que o envio foi confirmado; se todas as tentativas falharem, o bot não avança o estado,
+  para poder reenviar na próxima interação em vez de pular a etapa.
+
 - **Sim/Não com opção para cada resposta**: quando o tipo de resposta esperada for Sim/Não, o
   configurador passa a mostrar dois blocos fixos (SIM e NÃO), cada um com sua própria ação e
   destino (próxima etapa, etapa específica, outro fluxo, atendente, finalizar). São gravados como
@@ -60,19 +61,19 @@ com as opções da etapa.
 ## Detalhes técnicos
 
 - Migração: `bot_primeiro_contato.delay_mensagem_segundos` (int, default 0);
-  `bot_respostas.tipo_midia` (text default 'texto'), `midia_url`, `midia_nome`;
-  `whatsapp_config.msg_confirmar_resposta` (text, default "Você quer falar sobre *{titulo}*?");
+  `bot_respostas.tipo_midia` (text default 'texto'), `midia_url`, `midia_nome`,
+  `pergunta_confirmacao` (text, default '');
   `ALTER TABLE bot_fluxos DROP COLUMN inicial, DROP COLUMN fluxo_arquivos`.
-- `src/lib/bot.server.ts`: contexto ganha `regraEnviada` e `triagemRepetida`; `triagem` e
-  `resolverTriagem` aplicam o não-repetir, a espera antes da mensagem, a pergunta configurável e a
-  persistência da pergunta pendente; remoção dos ramos `fluxoInicial`/`fluxoDeArquivos`; envio de
-  mídia nas respostas automáticas reaproveita o `responder(..., midia)` existente.
-- `src/lib/bot-fluxos-motor.ts`: no caso `naoEntendi`, devolver de novo a mensagem da etapa;
-  `escolherOpcaoDaEtapa` reconhece sim/não via `simOuNao`; remoção de `fluxoInicial`/`fluxoDeArquivos`
-  e ajuste dos poucos pontos que os usavam (`fluxo_inicial` nas ações vira "iniciar fluxo" com
-  destino obrigatório).
+- `src/lib/bot.server.ts`: contexto ganha `regraEnviada`; `triagem` aplica o não-repetir e a espera
+  antes da mensagem; a pergunta de confirmação vem da própria resposta (fallback para a frase
+  padrão); envio de mídia nas respostas automáticas reaproveita o `responder(..., midia)`;
+  `enviarZap`/`responder` passam a checar o retorno da Z-API, repetir até 3 vezes e devolver
+  sucesso/falha, com a entrega do fluxo interrompendo o avanço quando o envio falhar.
+- `src/lib/bot-fluxos-motor.ts`: `escolherOpcaoDaEtapa` reconhece sim/não via `simOuNao`; remoção de
+  `fluxoInicial`/`fluxoDeArquivos` e ajuste dos pontos que os usavam (`fluxo_inicial` nas ações vira
+  "iniciar fluxo" com destino obrigatório).
 - `src/lib/bot-fluxos.ts` e `src/lib/bot-motor.ts`: tipos e catálogos correspondentes.
-- UI: `PrimeiroContatoPainel.tsx` (novo campo de espera), `RespostasPainel.tsx` (mídia),
-  `FluxosPainel.tsx` (remoção dos selos), `FluxoConfigurador.tsx` (blocos SIM/NÃO),
-  `ConfiguracaoBot.tsx` (campo da pergunta na aba Mensagens) — sem mudança de layout, só campos.
+- UI: `PrimeiroContatoPainel.tsx` (novo campo de espera), `RespostasPainel.tsx` (mídia e pergunta de
+  confirmação), `FluxosPainel.tsx` (remoção dos selos), `FluxoConfigurador.tsx` (blocos SIM/NÃO)
+  — sem mudança de layout, só campos.
 - Nada é alterado em calculadora, orçamentos, pedidos, currículo ou clientes.
