@@ -38,16 +38,22 @@ function extrair(corpo: z.infer<typeof corpoSchema>) {
   if (corpo.text?.message) return { tipo: "texto", texto: corpo.text.message, url: null as string | null, nome: null as string | null, mime: null as string | null };
   if (corpo.image?.imageUrl)
     return { tipo: "imagem", texto: corpo.image.caption ?? "", url: corpo.image.imageUrl, nome: "imagem.jpg", mime: corpo.image.mimeType ?? "image/jpeg" };
-  if (corpo.document?.documentUrl)
+  if (corpo.document?.documentUrl) {
+    const nome = (corpo.document.fileName ?? "arquivo").trim();
+    const legenda = (corpo.document.caption ?? "").trim();
+    // Alguns formatos do callback repetem o nome do documento em caption.
+    // Isso é metadado, não texto escrito pelo cliente.
+    const texto = legenda.localeCompare(nome, undefined, { sensitivity: "accent" }) === 0 ? "" : legenda;
     return {
       // O nome do arquivo não é texto escrito pelo cliente: sem legenda o
       // documento precisa cair na regra "Somente arquivos".
       tipo: "documento",
-      texto: corpo.document.caption ?? "",
+      texto,
       url: corpo.document.documentUrl,
-      nome: corpo.document.fileName ?? "arquivo",
+      nome,
       mime: corpo.document.mimeType ?? "application/octet-stream",
     };
+  }
   if (corpo.audio?.audioUrl) return { tipo: "audio", texto: "", url: corpo.audio.audioUrl, nome: "audio.ogg", mime: corpo.audio.mimeType ?? "audio/ogg" };
   if (corpo.location)
     return {
