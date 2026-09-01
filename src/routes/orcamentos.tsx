@@ -44,7 +44,10 @@ import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { ImprimirEtiqueta } from "@/components/ImprimirEtiqueta";
 
 import { useConfiguracao, useOrcamentos, usePedidos, useMateriais, usePerfisImpressao } from "@/hooks/useDados";
-import { imprimirDocumentos, type DocumentoImpressao } from "@/lib/impressora";
+import {
+  ImprimirDocumentosDialog,
+  type DocumentoParaImprimir,
+} from "@/components/impressao/ImprimirDocumentosDialog";
 import { PERFIL_VAZIO, type PerfilImpressao } from "@/lib/perfil-impressao";
 import type { ArquivoDoc } from "@/lib/documento";
 import { useAuth } from "@/hooks/useAuth";
