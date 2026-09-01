@@ -438,6 +438,37 @@ function Calculadora() {
     aplicarArquivos(estado.arquivosLista.filter((_, i) => i !== indice));
   }
 
+  /** Remove todos os arquivos e zera arquivos, páginas e cópias adicionais. */
+  function removerTodosArquivos() {
+    aplicarArquivos([]);
+    setPaginasConfirmadas([]);
+  }
+
+  /** Perfil de impressão do material selecionado (ou perfil padrão). */
+  const perfilAtual =
+    (perfis ?? []).find((p) => p.id === materialSelecionado?.material.perfil_impressao_id) ??
+    ({ ...PERFIL_VAZIO, id: "padrao", nome: "Padrão" } as PerfilImpressao);
+
+  /** Arquivos anexados prontos para o modal de impressão. */
+  const documentosImpressao: DocumentoParaImprimir[] = estado.arquivosLista
+    .filter((a) => !!a.caminho)
+    .map((a) => ({
+      nome: a.nome,
+      caminho: a.caminho ?? null,
+      paginas: Math.max(0, a.paginas || 0),
+      copias: Math.max(1, a.copias ?? 1),
+      perfil: perfilAtual,
+    }));
+
+  function abrirImpressaoArquivos() {
+    if (documentosImpressao.length === 0) {
+      toast.error("Nenhum arquivo anexado disponível para impressão.");
+      return;
+    }
+    setImpressaoAberta(true);
+  }
+
+
   /** Chave de confirmação de um arquivo (muda se o nome ou as páginas mudarem). */
   const chaveArquivo = (a: ArquivoDoc) => `${a.nome}|${a.paginas}`;
 
