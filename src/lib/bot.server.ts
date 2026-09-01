@@ -113,6 +113,39 @@ export interface EntradaBot {
   mensagemId?: string;
 }
 
+interface MensagemEntrada {
+  id: string;
+  tipo: string | null;
+  texto: string | null;
+  arquivo_nome: string | null;
+  payload: unknown;
+}
+
+/**
+ * Documentos sem legenda devem ser tratados como arquivo puro. Também cobre
+ * mensagens antigas gravadas quando o nome do PDF era salvo como texto.
+ */
+function entradaDaMensagem(mensagem: MensagemEntrada): EntradaBot {
+  let texto = (mensagem.texto ?? "").trim();
+
+  if (mensagem.tipo === "documento") {
+    const payload = mensagem.payload as { document?: { caption?: unknown; fileName?: unknown } } | null;
+    const legenda = typeof payload?.document?.caption === "string" ? payload.document.caption.trim() : "";
+    const nomePayload = typeof payload?.document?.fileName === "string" ? payload.document.fileName.trim() : "";
+    const nome = (mensagem.arquivo_nome ?? nomePayload).trim();
+
+    if (!legenda || (nome && texto.localeCompare(nome, undefined, { sensitivity: "accent" }) === 0)) {
+      texto = legenda;
+    }
+  }
+
+  return {
+    mensagemId: mensagem.id,
+    tipo: mensagem.tipo ?? "texto",
+    texto,
+  };
+}
+
 const TIPOS: { valor: TipoServico; rotulo: string }[] = [
   { valor: "simples", rotulo: "Impressão Simples" },
   { valor: "especial", rotulo: "Impressão Especial" },
@@ -1186,7 +1219,7 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
       // ela já foi respondida por outro callback, este apenas encerra.
       const { data: ultima } = await supabaseAdmin
         .from("whatsapp_mensagens")
-        .select("id, tipo, texto")
+        .select("id, tipo, texto, arquivo_nome, payload")
         .eq("conversa_id", conversaId)
         .eq("direcao", "entrada")
         .order("data_hora", { ascending: false })
@@ -1204,12 +1237,7 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
         const ctxAtual = ((atual?.contexto ?? {}) as ContextoBot) || {};
         if (ctxAtual.ultimaProcessada === ultima.id) return;
 
-        alvo = {
-          ...entrada,
-          mensagemId: ultima.id,
-          tipo: (ultima.tipo ?? entrada.tipo) as EntradaBot["tipo"],
-          texto: ultima.texto ?? "",
-        };
+        alvo = entradaDaMensagem(ultima as MensagemEntrada);
 
       }
     }
@@ -1302,7 +1330,7 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
       try {
         const { data: ultima } = await supabaseAdmin
           .from("whatsapp_mensagens")
-          .select("id, tipo, texto")
+          .select("id, tipo, texto, arquivo_nome, payload")
           .eq("conversa_id", conversa.id)
           .eq("direcao", "entrada")
           .order("data_hora", { ascending: false })
@@ -1318,11 +1346,7 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
         const ctxAtual = ((atual?.contexto ?? {}) as ContextoBot) || {};
 
         if (ultima?.id && ctxAtual.ultimaProcessada !== ultima.id) {
-          await processarBotInterno(conversa.id, {
-            tipo: (ultima.tipo ?? "texto") as EntradaBot["tipo"],
-            texto: ultima.texto ?? "",
-            mensagemId: ultima.id,
-          });
+          await processarBotInterno(conversa.id, entradaDaMensagem(ultima as MensagemEntrada));
 
           const { data: depois } = await supabaseAdmin
             .from("whatsapp_conversas")
