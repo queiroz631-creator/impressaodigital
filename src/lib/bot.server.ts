@@ -850,7 +850,13 @@ async function executarAcaoResposta(
     case "resposta": {
       const outra = cfg.respostas.find((r) => r.id === destinoRespostaId && r.ativo);
       if (!outra) return;
-      await responder(conversa, aplicarVariaveis(textoResposta(outra, primeiraDoDia), vars));
+      const enviou = await responder(
+        conversa,
+        aplicarVariaveis(textoResposta(outra, primeiraDoDia), vars),
+        undefined,
+        midiaResposta(outra),
+      );
+      if (!enviou) return;
       await executarAcaoResposta(
         conversa,
         config,
