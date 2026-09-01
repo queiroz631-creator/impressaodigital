@@ -1363,6 +1363,9 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
 
   await guardarMidiasPendentes();
   return { processadas };
+}
+
+
 
 async function processarBotInterno(conversaId: string, entrada: EntradaBot): Promise<void> {
   const config = await lerConfig();
