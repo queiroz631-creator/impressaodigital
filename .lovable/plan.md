@@ -15,13 +15,10 @@ descritos abaixo mudam.
 
 ## 2. Respostas automáticas
 
-- **Texto da pergunta de confirmação**: hoje "Você quer falar sobre *X*?" está fixo no código.
-  Vira uma mensagem configurável na aba Mensagens (com `{titulo}` como variável), mantendo o texto
-  atual como padrão.
-- **Reconhecer a resposta depois de uma mensagem errada**: hoje, se o cliente responde algo que não
-  é SIM/NÃO, o bot descarta a pergunta e volta para a triagem. Passa a manter a pergunta pendente:
-  se a nova mensagem também não for SIM/NÃO nem casar com outra regra/resposta, o bot reenvia
-  (uma única vez) a pergunta pendente e continua aceitando o SIM/NÃO no turno seguinte.
+- **Texto da pergunta de confirmação por resposta**: hoje "Você quer falar sobre *X*?" está fixo no
+  código. Passa a ser um campo em **cada resposta automática**, já preenchido com a frase padrão
+  (`Você quer falar sobre *{titulo}*?`) e editável individualmente. Em branco, usa o padrão.
+- **Reconhecer a resposta depois de uma mensagem errada**: sem alteração, continua como está hoje.
 - **Resposta com imagem**: cada resposta automática ganha tipo (texto, imagem, texto + imagem),
   upload da imagem no mesmo bucket `bot-midia` já usado pelas etapas de fluxo, e envio pela Z-API
   com legenda — mesma mecânica das etapas.
@@ -31,10 +28,14 @@ esse nome). Se for outra coisa, é só avisar.
 
 ## 3. Fluxos
 
-- **Nunca ficar mudo**: quando a etapa não entende a resposta, o motor devolve "não entendi" sem
-  nenhuma mensagem e a entrega ignora isso — é o caso em que o bot fica calado. Passa a reenviar a
-  mensagem da etapa com as opções, precedida da mensagem "não entendi" já configurada. Também
-  quando uma etapa não tem texto nem mídia e não avança, o bot reenvia a etapa em vez de silenciar.
+- **Garantir que a mensagem saiu**: hoje o envio para a Z-API é disparado uma vez e, se a API
+  responde com erro ou falha de rede, a conversa segue em frente como se tivesse enviado — é aí que
+  o cliente fica sem receber a mensagem do fluxo ou da resposta automática. Passa a: conferir a
+  resposta da Z-API, tentar de novo (até 3 tentativas, com intervalo curto) quando falhar, marcar a
+  mensagem como erro no histórico e registrar na auditoria. O avanço da etapa/ação só acontece
+  depois que o envio foi confirmado; se todas as tentativas falharem, o bot não avança o estado,
+  para poder reenviar na próxima interação em vez de pular a etapa.
+
 - **Sim/Não com opção para cada resposta**: quando o tipo de resposta esperada for Sim/Não, o
   configurador passa a mostrar dois blocos fixos (SIM e NÃO), cada um com sua própria ação e
   destino (próxima etapa, etapa específica, outro fluxo, atendente, finalizar). São gravados como
