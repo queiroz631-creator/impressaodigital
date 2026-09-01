@@ -126,6 +126,8 @@ function Orcamentos() {
   const [pedidoStatusAberto, setPedidoStatusAberto] = useState<PedidoAgrupado | null>(null);
   const [novoStatus, setNovoStatus] = useState<string>("pendente_envio");
   const [salvandoStatus, setSalvandoStatus] = useState(false);
+  const [impressaoAberta, setImpressaoAberta] = useState(false);
+  const [documentosImpressao, setDocumentosImpressao] = useState<DocumentoParaImprimir[]>([]);
 
   /* Dados do pedido (fonte principal do status e do pagamento). */
   const mapaPedidos = useMemo(() => {
