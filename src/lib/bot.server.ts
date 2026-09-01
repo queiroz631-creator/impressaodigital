@@ -74,6 +74,8 @@ interface ContextoBot {
   regra?: string | null;
   /** Fluxo iniciado automaticamente pelo tempo de fallback (nada reconhecido). */
   fluxoFallback?: boolean | null;
+  /** Regra de primeiro contato que já enviou a mensagem neste atendimento. */
+  regraEnviada?: string | null;
 }
 
 interface ConversaBot {
@@ -150,8 +152,20 @@ function envioDeMidia(
   }
 }
 
-/** Envia a mensagem pelo WhatsApp e registra na conversa. */
-async function responder(conversa: ConversaBot, texto: string, botoes?: string[], midia?: MidiaBot) {
+/** Tentativas de envio antes de desistir da mensagem. */
+const TENTATIVAS_ENVIO = 3;
+
+/**
+ * Envia a mensagem pelo WhatsApp e registra na conversa. Confere o retorno da
+ * operadora e tenta de novo quando o envio não é confirmado; devolve true
+ * somente quando a mensagem realmente saiu.
+ */
+async function responder(
+  conversa: ConversaBot,
+  texto: string,
+  botoes?: string[],
+  midia?: MidiaBot,
+): Promise<boolean> {
   // Texto simples sempre: listas de botões não são entregues de forma confiável.
   const complemento = botoes && botoes.length > 0 ? `\n\n_Responda: ${botoes.join(" ou ")}_` : "";
   const mensagem = `${texto}${complemento}`;
@@ -167,11 +181,19 @@ async function responder(conversa: ConversaBot, texto: string, botoes?: string[]
   }
   if (!envio) envio = { caminho: "send-text", corpo: { phone: conversa.telefone, message: mensagem } };
 
-  const r = await chamarZapi(envio.caminho, { metodo: "POST", corpo: envio.corpo });
+  let entregue = false;
+  let idMensagem: unknown = null;
+  let erro: string | null = null;
 
-  const dados = (r.dados ?? {}) as { messageId?: unknown; zaapId?: unknown; error?: unknown };
-  const idMensagem = dados.messageId ?? dados.zaapId ?? null;
-  const entregue = r.ok && Boolean(idMensagem);
+  for (let tentativa = 1; tentativa <= TENTATIVAS_ENVIO && !entregue; tentativa += 1) {
+    const r = await chamarZapi(envio.caminho, { metodo: "POST", corpo: envio.corpo });
+    const dados = (r.dados ?? {}) as { messageId?: unknown; zaapId?: unknown; error?: unknown };
+    idMensagem = dados.messageId ?? dados.zaapId ?? null;
+    entregue = r.ok && Boolean(idMensagem);
+    erro = entregue ? null : (r.erro ?? (dados.error ? String(dados.error) : "A operadora não confirmou o envio."));
+    // Espera curta antes de repetir (falha momentânea de rede ou da operadora).
+    if (!entregue && tentativa < TENTATIVAS_ENVIO) await new Promise((x) => setTimeout(x, 1500));
+  }
 
   await supabaseAdmin.from("whatsapp_mensagens").insert({
     conversa_id: conversa.id,
@@ -182,16 +204,24 @@ async function responder(conversa: ConversaBot, texto: string, botoes?: string[]
     autor: "Bot",
     whatsapp_message_id: idMensagem ? String(idMensagem) : null,
     status: entregue ? "enviada" : "erro",
-    erro: entregue
-      ? null
-      : (r.erro ?? (dados.error ? String(dados.error) : "A operadora não confirmou o envio.")),
+    erro,
   });
 
+  if (!entregue) {
+    await supabaseAdmin.from("whatsapp_auditoria").insert({
+      conversa_id: conversa.id,
+      usuario_nome: "Bot",
+      acao: "bot_falha_envio",
+      detalhe: `${TENTATIVAS_ENVIO} tentativas sem confirmação: ${erro ?? "erro desconhecido"}`,
+    });
+    return false;
+  }
 
   await supabaseAdmin
     .from("whatsapp_conversas")
     .update({ ultima_mensagem: texto.slice(0, 300), ultima_mensagem_em: new Date().toISOString() })
     .eq("id", conversa.id);
+  return true;
 }
 
 

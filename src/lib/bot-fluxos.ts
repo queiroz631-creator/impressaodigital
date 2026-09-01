@@ -11,9 +11,6 @@ export interface Fluxo {
   mensagem_inicial: string;
   ativo: boolean;
   ordem: number;
-  inicial: boolean;
-  /** Fluxo iniciado quando o cliente manda apenas arquivos. */
-  fluxo_arquivos: boolean;
   /** Envia o texto do fluxo, da etapa e as opções em uma única mensagem. */
   mensagem_unica: boolean;
 }
@@ -133,7 +130,6 @@ export const ACOES_OPCAO: { valor: string; rotulo: string }[] = [
 export const ACOES_RESPOSTA: { valor: string; rotulo: string }[] = [
   { valor: "aguardar", rotulo: "Aguardar a próxima mensagem" },
   { valor: "iniciar_fluxo", rotulo: "Iniciar um fluxo" },
-  { valor: "fluxo_inicial", rotulo: "Iniciar o fluxo inicial" },
   { valor: "resposta", rotulo: "Enviar outra resposta automática" },
   { valor: "atendente", rotulo: "Transferir para atendente" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
@@ -157,7 +153,7 @@ export const ACOES_PRIMEIRO_CONTATO: { valor: string; rotulo: string }[] = [
   { valor: "aguardar", rotulo: "Só enviar a mensagem e aguardar" },
   { valor: "confirmar_fluxo", rotulo: "Perguntar SIM/NÃO e iniciar um fluxo" },
   { valor: "iniciar_fluxo", rotulo: "Iniciar um fluxo" },
-  { valor: "fluxo_inicial", rotulo: "Iniciar o fluxo inicial" },
+  
   { valor: "resposta", rotulo: "Enviar uma resposta automática" },
   { valor: "atendente", rotulo: "Transferir para atendente" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },

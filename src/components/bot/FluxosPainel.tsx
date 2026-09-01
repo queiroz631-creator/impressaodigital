@@ -125,27 +125,8 @@ export function FluxosPainel() {
     await recarregar();
   }
 
-  async function definirInicial(id: string) {
-    const atual = lista.find((f) => f.inicial);
-    if (atual?.id === id) return;
-    if (atual) await supabase.from("bot_fluxos").update({ inicial: false }).eq("id", atual.id);
-    const { error } = await supabase.from("bot_fluxos").update({ inicial: true }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Fluxo inicial atualizado.");
-    await recarregar();
-  }
-
-  async function definirArquivos(id: string) {
-    const atual = lista.find((f) => f.fluxo_arquivos);
-    if (atual?.id === id) return;
-    if (atual) await supabase.from("bot_fluxos").update({ fluxo_arquivos: false }).eq("id", atual.id);
-    const { error } = await supabase.from("bot_fluxos").update({ fluxo_arquivos: true }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Fluxo de arquivos atualizado.");
-    await recarregar();
-  }
-
   async function duplicar(f: Fluxo) {
+
     const ordem = Math.max(0, ...lista.map((x) => x.ordem)) + 1;
     const { data: novo, error } = await supabase
       .from("bot_fluxos")
@@ -156,10 +137,7 @@ export function FluxosPainel() {
         mensagem_inicial: f.mensagem_inicial,
         ativo: f.ativo,
         mensagem_unica: f.mensagem_unica !== false,
-
         ordem,
-        inicial: false,
-        fluxo_arquivos: false,
       })
       .select("id")
       .single();
@@ -253,38 +231,6 @@ export function FluxosPainel() {
         </Button>
       </div>
 
-      <Card className="shadow-card">
-        <CardContent className="grid gap-1 pt-6 sm:max-w-md">
-          <Label>Fluxo inicial</Label>
-          <Select value={lista.find((f) => f.inicial)?.id ?? ""} onValueChange={(v) => void definirInicial(v)}>
-            <SelectTrigger><SelectValue placeholder="Selecione o fluxo" /></SelectTrigger>
-            <SelectContent>
-              {lista.filter((f) => f.ativo).map((f) => (
-                <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Fluxo iniciado automaticamente quando o cliente entra em contato.
-          </p>
-
-          <Label className="mt-3">Fluxo para quem envia apenas arquivos</Label>
-          <Select
-            value={lista.find((f) => f.fluxo_arquivos)?.id ?? ""}
-            onValueChange={(v) => void definirArquivos(v)}
-          >
-            <SelectTrigger><SelectValue placeholder="Selecione o fluxo" /></SelectTrigger>
-            <SelectContent>
-              {lista.filter((f) => f.ativo).map((f) => (
-                <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Usado quando o primeiro contato do cliente é só um arquivo ou imagem.
-          </p>
-        </CardContent>
-      </Card>
 
       <div className="grid gap-3">
         {lista.map((f) => {
@@ -295,8 +241,6 @@ export function FluxosPainel() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-lg">{emojiIcone(f.icone)}</span>
                   <strong className="uppercase">{f.nome}</strong>
-                  {f.inicial && <Badge variant="secondary">Fluxo inicial</Badge>}
-                  {f.fluxo_arquivos && <Badge variant="secondary">Recebe arquivos</Badge>}
                   <Badge variant={f.ativo ? "default" : "outline"}>{f.ativo ? "Ativo" : "Inativo"}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">{f.descricao}</p>

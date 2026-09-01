@@ -47,6 +47,12 @@ export interface BotResposta {
   destino_nao_resposta_id: string | null;
   /** Segundos de espera antes de executar a ação do SIM ou do NÃO. */
   delay_acao_segundos: number;
+  /** Pergunta de confirmação desta resposta (vazio = frase padrão). */
+  pergunta_confirmacao?: string;
+  /** texto | imagem */
+  tipo_midia?: string;
+  midia_url?: string | null;
+  midia_nome?: string | null;
 }
 
 
@@ -87,6 +93,8 @@ export interface RegraPrimeiroContato {
   destino_fluxo_id: string | null;
   destino_resposta_id: string | null;
   delay_segundos: number;
+  /** Espera antes de enviar a mensagem da regra. */
+  delay_mensagem_segundos?: number;
   /** sempre | primeira_do_dia */
   enviar_mensagem?: string;
   ordem: number;
