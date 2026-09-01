@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { CurriculoDocumento } from "@/components/curriculo/CurriculoDocumento";
 import { FormularioCurriculo } from "@/components/curriculo/FormularioCurriculo";
+import { lerFotoCurriculo } from "@/lib/curriculo-foto";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -146,6 +147,17 @@ function DetalheCurriculo() {
       };
     },
   });
+
+  /** Atualiza a foto de perfil (ou a exibição dela no documento). */
+  const atualizarFoto = async (patch: { foto_url?: string | null; foto_exibir?: boolean }) => {
+    const { error } = await supabase.from("curriculos").update(patch).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await queryClient.invalidateQueries({ queryKey: ["curriculo", id] });
+    await queryClient.invalidateQueries({ queryKey: ["curriculos"] });
+  };
 
   const salvarEtapa = async (payload: PayloadEtapa) => {
     if (payload.campos && Object.keys(payload.campos).length > 0) {
