@@ -10,6 +10,7 @@ import {
   BotOff,
   CheckCircle2,
   ChevronDown,
+  Flag,
   Search,
   Send,
   UserCheck,
@@ -31,7 +32,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
-import { enviarTextoWhatsapp } from "@/lib/whatsapp.functions";
+import { enviarParaFinalizacao, enviarTextoWhatsapp } from "@/lib/whatsapp.functions";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONVERSA,
@@ -164,6 +165,7 @@ const ACOES_STATUS: { status: StatusConversa; acao: string; rotulo: string }[] =
   { status: "em_atendimento", acao: "assumiu", rotulo: "Assumir" },
   { status: "automatico", acao: "devolveu_bot", rotulo: "Devolver ao bot" },
   { status: "pendente", acao: "marcou_pendente", rotulo: "Pendente" },
+  { status: "aguardando_finalizacao", acao: "aguardando_finalizacao", rotulo: "Aguardando Finalização" },
   { status: "finalizado", acao: "finalizou", rotulo: "Finalizar" },
 ];
 
@@ -175,6 +177,7 @@ function Atendimento() {
   const [aba, setAba] = useState<StatusConversa>("automatico");
   const [abertaId, setAbertaId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const finalizacao = useServerFn(enviarParaFinalizacao);
 
   useEffect(() => {
     const canal = supabase
@@ -211,8 +214,23 @@ function Atendimento() {
   const aberta = (conversas ?? []).find((c) => c.id === abertaId) ?? null;
 
   async function mudarStatus(conversaId: string, status: StatusConversa, acao: string) {
+    if (status === "aguardando_finalizacao") {
+      await enviarFinalizacao(conversaId);
+      return;
+    }
     const ok = await alterarStatusConversa(conversaId, status, acao, user?.email ?? "Atendente", user?.id ?? null);
     if (ok) await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+  }
+
+  async function enviarFinalizacao(conversaId: string) {
+    try {
+      const r = await finalizacao({ data: { conversaId, atendente: user?.email ?? "Atendente" } });
+      if (!r.ok) { toast.error(r.erro ?? "Falha ao enviar para finalização."); return; }
+      toast.success(r.fluxo ? "Conversa enviada para finalização." : "Conversa movida (nenhum fluxo de finalização configurado).");
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao enviar para finalização.");
+    }
   }
 
   if (aberta) {
@@ -280,6 +298,16 @@ function Atendimento() {
                 {c.nao_lidas > 0 && <Badge>{c.nao_lidas} nova(s)</Badge>}
                 {c.pedido_id && <Badge variant="outline">Pedido vinculado</Badge>}
                 <span className="text-muted-foreground">{dataHoraCurta(c.ultima_mensagem_em ?? c.created_at)}</span>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  title="Enviar para Aguardando Finalização"
+                  disabled={c.status === "aguardando_finalizacao"}
+                  onClick={() => void enviarFinalizacao(c.id)}
+                >
+                  <Flag className="h-4 w-4" />
+                </Button>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
