@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { FileStack, Loader2, CheckCircle2, XCircle } from "lucide-react";
 
@@ -52,10 +52,12 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
   const [impressoras, setImpressoras] = useState<string[]>([]);
   const [impressora, setImpressora] = useState("");
   const [imprimindo, setImprimindo] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
   const [concluido, setConcluido] = useState(false);
   const [situacoes, setSituacoes] = useState<Situacao[]>([]);
   const [erros, setErros] = useState<Record<number, string>>({});
   const [atual, setAtual] = useState(0);
+  const cancelarRef = useRef(false);
 
   // Ao abrir: zera o progresso e carrega as impressoras disponíveis.
   useEffect(() => {
