@@ -74,6 +74,8 @@ interface ContextoBot {
   regra?: string | null;
   /** Fluxo iniciado automaticamente pelo tempo de fallback (nada reconhecido). */
   fluxoFallback?: boolean | null;
+  /** Regra de primeiro contato que já enviou a mensagem neste atendimento. */
+  regraEnviada?: string | null;
 }
 
 interface ConversaBot {
