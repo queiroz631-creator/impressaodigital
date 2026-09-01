@@ -1978,6 +1978,8 @@ export type Database = {
           atendente_nome: string | null
           atendimento_numero: number
           bot_lock_em: string | null
+          bot_pendente: boolean
+          bot_pendente_em: string | null
           cliente_id: string | null
           contexto: Json
           created_at: string
@@ -2008,6 +2010,8 @@ export type Database = {
           atendente_nome?: string | null
           atendimento_numero?: number
           bot_lock_em?: string | null
+          bot_pendente?: boolean
+          bot_pendente_em?: string | null
           cliente_id?: string | null
           contexto?: Json
           created_at?: string
@@ -2038,6 +2042,8 @@ export type Database = {
           atendente_nome?: string | null
           atendimento_numero?: number
           bot_lock_em?: string | null
+          bot_pendente?: boolean
+          bot_pendente_em?: string | null
           cliente_id?: string | null
           contexto?: Json
           created_at?: string
