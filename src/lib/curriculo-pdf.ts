@@ -121,6 +121,7 @@ function renderizar(
 
   // ===== Cabeçalho: faixa azul com título centralizado =====
   const hFaixa = 26 * escala;
+  const topoFaixa = y;
   doc.setFillColor(...NAVY);
   doc.rect(MARGEM, y, util, hFaixa, "F");
   setFont(true, 16);
@@ -141,6 +142,18 @@ function renderizar(
   if (c.email) centrado(c.email, 10);
 
   y += 6 * escala + folga.cabecalho;
+
+  // Foto 2,5cm x 3,5cm alinhada ao topo e à direita da faixa do cabeçalho.
+  if (c.foto_exibir && c.foto_url) {
+    const fotoL = 70.87;
+    const fotoA = 99.21;
+    try {
+      doc.addImage(c.foto_url, "JPEG", MARGEM + util - fotoL, topoFaixa, fotoL, fotoA);
+    } catch {
+      /* imagem inválida: segue sem foto */
+    }
+    if (y < topoFaixa + fotoA + 8) y = topoFaixa + fotoA + 8;
+  }
 
 
   // ===== Dados pessoais =====
@@ -361,7 +374,9 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
     body { width:auto !important; }
   }
   #cv-escala { width:${larguraUtil}px; transform-origin: top left; }
-  #cv-escala > .cv-print { width:100%; max-width:100%; margin:0; padding:0; box-shadow:none !important; border:0; background:#fff; }
+  /* Margem interna equivalente à do PDF (40pt), para que a faixa das seções
+     tenha exatamente a mesma largura na impressão e no PDF. */
+  #cv-escala > .cv-print { width:100%; max-width:100%; margin:0; padding:6mm 4.1mm; box-shadow:none !important; border:0; background:#fff; }
   .cv-secao { background:#1a1a5e !important; color:#fff !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
   .cv-empresa { color:#1a1a5e !important; font-weight:700 !important; }
   .cv-print, .cv-print * { color:#11111a; }

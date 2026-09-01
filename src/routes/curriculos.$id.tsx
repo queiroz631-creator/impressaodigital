@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { CurriculoDocumento } from "@/components/curriculo/CurriculoDocumento";
 import { FormularioCurriculo } from "@/components/curriculo/FormularioCurriculo";
+import { lerFotoCurriculo } from "@/lib/curriculo-foto";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,7 +67,7 @@ export const Route = createFileRoute("/curriculos/$id")({
 });
 
 const CAMPOS =
-  "id, cliente_id, status, nome_completo, cpf, telefone_principal, telefone_principal_descricao, data_nascimento, estado_civil, email, documentacao_completa, habilitacao, categoria_habilitacao, escolaridade, curso_superior, pos_graduacao_nome, endereco, numero, bairro, cidade, uf, cep, objetivo_tipo, objetivo_texto, exibir_data_atualizacao, experiencia_possui, experiencia_frase, habilidades_observacao, created_at, updated_at, completed_at";
+  "id, cliente_id, status, nome_completo, cpf, telefone_principal, telefone_principal_descricao, data_nascimento, estado_civil, email, documentacao_completa, habilitacao, categoria_habilitacao, escolaridade, curso_superior, pos_graduacao_nome, endereco, numero, bairro, cidade, uf, cep, objetivo_tipo, objetivo_texto, exibir_data_atualizacao, experiencia_possui, experiencia_frase, habilidades_observacao, foto_url, foto_exibir, created_at, updated_at, completed_at";
 
 function DetalheCurriculo() {
   const { id } = Route.useParams();
@@ -146,6 +147,17 @@ function DetalheCurriculo() {
       };
     },
   });
+
+  /** Atualiza a foto de perfil (ou a exibição dela no documento). */
+  const atualizarFoto = async (patch: { foto_url?: string | null; foto_exibir?: boolean }) => {
+    const { error } = await supabase.from("curriculos").update(patch).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await queryClient.invalidateQueries({ queryKey: ["curriculo", id] });
+    await queryClient.invalidateQueries({ queryKey: ["curriculos"] });
+  };
 
   const salvarEtapa = async (payload: PayloadEtapa) => {
     if (payload.campos && Object.keys(payload.campos).length > 0) {
@@ -358,6 +370,62 @@ function DetalheCurriculo() {
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {!modoEdicao && (
+        <div className="mb-4 flex justify-end">
+          <Card>
+            <CardContent className="flex items-center gap-3 p-3">
+              <div className="flex h-[70px] w-[50px] items-center justify-center overflow-hidden rounded border bg-muted">
+                {dados.curriculo.foto_url ? (
+                  <img
+                    src={dados.curriculo.foto_url}
+                    alt="Foto do candidato"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-[10px] text-muted-foreground">3x4</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  className="h-8 max-w-[220px] text-xs"
+                  onChange={async (e) => {
+                    const arquivo = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!arquivo) return;
+                    try {
+                      await atualizarFoto({ foto_url: await lerFotoCurriculo(arquivo) });
+                    } catch (erro) {
+                      toast.error(erro instanceof Error ? erro.message : "Imagem inválida.");
+                    }
+                  }}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={dados.curriculo.foto_exibir ? "default" : "outline"}
+                    disabled={!dados.curriculo.foto_url}
+                    onClick={() => atualizarFoto({ foto_exibir: !dados.curriculo.foto_exibir })}
+                  >
+                    Exibir no Currículo
+                  </Button>
+                  {dados.curriculo.foto_url && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => atualizarFoto({ foto_url: null, foto_exibir: false })}
+                    >
+                      Remover
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {modoEdicao ? (

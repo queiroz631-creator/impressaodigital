@@ -1047,6 +1047,8 @@ export type Database = {
           exibir_data_atualizacao: boolean
           experiencia_frase: string | null
           experiencia_possui: boolean
+          foto_exibir: boolean
+          foto_url: string | null
           habilidades_observacao: string | null
           habilitacao: boolean
           id: string
@@ -1080,6 +1082,8 @@ export type Database = {
           exibir_data_atualizacao?: boolean
           experiencia_frase?: string | null
           experiencia_possui?: boolean
+          foto_exibir?: boolean
+          foto_url?: string | null
           habilidades_observacao?: string | null
           habilitacao?: boolean
           id?: string
@@ -1113,6 +1117,8 @@ export type Database = {
           exibir_data_atualizacao?: boolean
           experiencia_frase?: string | null
           experiencia_possui?: boolean
+          foto_exibir?: boolean
+          foto_url?: string | null
           habilidades_observacao?: string | null
           habilitacao?: boolean
           id?: string

@@ -100,7 +100,7 @@ function Curriculos() {
     queryFn: async () => {
       let q = supabase
         .from("curriculos")
-        .select("id, nome_completo, cpf, telefone_principal, data_nascimento, status, updated_at", {
+        .select("id, nome_completo, cpf, telefone_principal, data_nascimento, status, updated_at, foto_url", {
           count: "exact",
         });
 
@@ -119,6 +119,18 @@ function Curriculos() {
       const { data: linhas, count, error } = await q;
       if (error) throw error;
       return { linhas: linhas ?? [], total: count ?? 0 };
+    },
+  });
+
+  // Total de currículos cadastrados no sistema (sem filtros).
+  const { data: totalGeral } = useQuery({
+    queryKey: ["curriculos-total"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("curriculos")
+        .select("id", { count: "exact", head: true });
+      if (error) throw error;
+      return count ?? 0;
     },
   });
 
@@ -209,6 +221,13 @@ function Curriculos() {
       <PageHeader titulo="CURRÍCULO VITAE" subtitulo="Gerencie os currículos cadastrados dos clientes" />
 
       <Card className="mb-4">
+        <CardContent className="flex items-center justify-between p-4">
+          <span className="text-sm text-muted-foreground">Currículos cadastrados no sistema</span>
+          <span className="text-2xl font-bold text-primary">{totalGeral ?? "-"}</span>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-4">
         <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
           <div className="flex-1">
             <Label htmlFor="busca">Pesquisar</Label>
@@ -292,6 +311,7 @@ function Curriculos() {
               <table className="hidden w-full text-sm md:table">
                 <thead className="bg-muted/60 text-left text-xs uppercase text-muted-foreground">
                   <tr>
+                    <th className="p-3">Foto</th>
                     <th className="p-3">Nome</th>
                     <th className="p-3">Telefone</th>
                     <th className="p-3">Nascimento</th>
@@ -303,6 +323,19 @@ function Curriculos() {
                 <tbody>
                   {data?.linhas.map((c) => (
                     <tr key={c.id} className="border-t">
+                      <td className="p-3">
+                        <div className="flex h-11 w-8 items-center justify-center overflow-hidden rounded border bg-muted">
+                          {c.foto_url ? (
+                            <img
+                              src={c.foto_url}
+                              alt={c.nome_completo || "Foto"}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-[9px] text-muted-foreground">3x4</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="p-3 font-medium">{c.nome_completo || "-"}</td>
                       <td className="p-3">{c.telefone_principal || "-"}</td>
                       <td className="p-3">{dataBR(c.data_nascimento)}</td>
@@ -334,8 +367,17 @@ function Curriculos() {
                     onClick={() => navigate({ to: "/curriculos/$id", params: { id: c.id } })}
                     className="w-full rounded-lg border p-3 text-left"
                   >
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium">{c.nome_completo || "-"}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {c.foto_url && (
+                          <img
+                            src={c.foto_url}
+                            alt={c.nome_completo || "Foto"}
+                            className="h-11 w-8 rounded border object-cover"
+                          />
+                        )}
+                        <p className="font-medium">{c.nome_completo || "-"}</p>
+                      </div>
                       <Badge variant={c.status === "completo" ? "default" : "secondary"}>
                         {c.status === "completo" ? "Completo" : "Rascunho"}
                       </Badge>
