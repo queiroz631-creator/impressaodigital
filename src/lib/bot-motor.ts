@@ -63,6 +63,8 @@ export interface BotConfig {
   inatividade1_minutos: number;
   inatividade2_minutos: number;
   inatividade_status: string;
+  /** Fluxo usado quando a conversa vai para "Aguardando Finalização". */
+  fluxo_finalizacao_id: string | null;
   /** Minutos sem reconhecimento até o bot iniciar o fluxo inicial (0 = desativado). */
   fallback_inicial_minutos: number;
   msg_inatividade1: string;
