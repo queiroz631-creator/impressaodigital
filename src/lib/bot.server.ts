@@ -108,6 +108,7 @@ interface ConfigBot {
 export interface EntradaBot {
   tipo: string;
   texto: string;
+  mensagemId?: string;
 }
 
 const TIPOS: { valor: TipoServico; rotulo: string }[] = [
@@ -1163,8 +1164,12 @@ async function destravar(conversaId: string): Promise<void> {
 }
 
 export async function processarBot(conversaId: string, entrada: EntradaBot): Promise<void> {
-  // Vários arquivos/mensagens chegam juntos: cada callback espera a vez para
-  // não disparar respostas duplicadas ao mesmo tempo.
+  // Dá tempo para callbacks do mesmo envio chegarem. Somente a mensagem mais
+  // recente do grupo segue para o bot; as anteriores ficam apenas no histórico.
+  if (entrada.mensagemId) {
+    await new Promise((r) => setTimeout(r, 1_500));
+  }
+
   let travou = false;
   for (let tentativa = 0; tentativa < 40 && !travou; tentativa += 1) {
     travou = await tentarTravar(conversaId);
@@ -1173,6 +1178,20 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
   if (!travou) return;
 
   try {
+    if (entrada.mensagemId) {
+      const { data: ultimaEntrada } = await supabaseAdmin
+        .from("whatsapp_mensagens")
+        .select("id")
+        .eq("conversa_id", conversaId)
+        .eq("direcao", "entrada")
+        .order("data_hora", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (ultimaEntrada?.id !== entrada.mensagemId) return;
+    }
+
     await processarBotInterno(conversaId, entrada);
   } finally {
     await destravar(conversaId);
