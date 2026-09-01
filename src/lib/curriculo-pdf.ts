@@ -143,6 +143,18 @@ function renderizar(
 
   y += 6 * escala + folga.cabecalho;
 
+  // Foto 2,5cm x 3,5cm alinhada ao topo e à direita da faixa do cabeçalho.
+  if (c.foto_exibir && c.foto_url) {
+    const fotoL = 70.87;
+    const fotoA = 99.21;
+    try {
+      doc.addImage(c.foto_url, "JPEG", MARGEM + util - fotoL, topoFaixa, fotoL, fotoA);
+    } catch {
+      /* imagem inválida: segue sem foto */
+    }
+    if (y < topoFaixa + fotoA + 8) y = topoFaixa + fotoA + 8;
+  }
+
 
   // ===== Dados pessoais =====
   const pessoais: string[] = [];
