@@ -61,19 +61,19 @@ com as opções da etapa.
 ## Detalhes técnicos
 
 - Migração: `bot_primeiro_contato.delay_mensagem_segundos` (int, default 0);
-  `bot_respostas.tipo_midia` (text default 'texto'), `midia_url`, `midia_nome`;
-  `whatsapp_config.msg_confirmar_resposta` (text, default "Você quer falar sobre *{titulo}*?");
+  `bot_respostas.tipo_midia` (text default 'texto'), `midia_url`, `midia_nome`,
+  `pergunta_confirmacao` (text, default '');
   `ALTER TABLE bot_fluxos DROP COLUMN inicial, DROP COLUMN fluxo_arquivos`.
-- `src/lib/bot.server.ts`: contexto ganha `regraEnviada` e `triagemRepetida`; `triagem` e
-  `resolverTriagem` aplicam o não-repetir, a espera antes da mensagem, a pergunta configurável e a
-  persistência da pergunta pendente; remoção dos ramos `fluxoInicial`/`fluxoDeArquivos`; envio de
-  mídia nas respostas automáticas reaproveita o `responder(..., midia)` existente.
-- `src/lib/bot-fluxos-motor.ts`: no caso `naoEntendi`, devolver de novo a mensagem da etapa;
-  `escolherOpcaoDaEtapa` reconhece sim/não via `simOuNao`; remoção de `fluxoInicial`/`fluxoDeArquivos`
-  e ajuste dos poucos pontos que os usavam (`fluxo_inicial` nas ações vira "iniciar fluxo" com
-  destino obrigatório).
+- `src/lib/bot.server.ts`: contexto ganha `regraEnviada`; `triagem` aplica o não-repetir e a espera
+  antes da mensagem; a pergunta de confirmação vem da própria resposta (fallback para a frase
+  padrão); envio de mídia nas respostas automáticas reaproveita o `responder(..., midia)`;
+  `enviarZap`/`responder` passam a checar o retorno da Z-API, repetir até 3 vezes e devolver
+  sucesso/falha, com a entrega do fluxo interrompendo o avanço quando o envio falhar.
+- `src/lib/bot-fluxos-motor.ts`: `escolherOpcaoDaEtapa` reconhece sim/não via `simOuNao`; remoção de
+  `fluxoInicial`/`fluxoDeArquivos` e ajuste dos pontos que os usavam (`fluxo_inicial` nas ações vira
+  "iniciar fluxo" com destino obrigatório).
 - `src/lib/bot-fluxos.ts` e `src/lib/bot-motor.ts`: tipos e catálogos correspondentes.
-- UI: `PrimeiroContatoPainel.tsx` (novo campo de espera), `RespostasPainel.tsx` (mídia),
-  `FluxosPainel.tsx` (remoção dos selos), `FluxoConfigurador.tsx` (blocos SIM/NÃO),
-  `ConfiguracaoBot.tsx` (campo da pergunta na aba Mensagens) — sem mudança de layout, só campos.
+- UI: `PrimeiroContatoPainel.tsx` (novo campo de espera), `RespostasPainel.tsx` (mídia e pergunta de
+  confirmação), `FluxosPainel.tsx` (remoção dos selos), `FluxoConfigurador.tsx` (blocos SIM/NÃO)
+  — sem mudança de layout, só campos.
 - Nada é alterado em calculadora, orçamentos, pedidos, currículo ou clientes.
