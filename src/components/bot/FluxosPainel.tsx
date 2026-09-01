@@ -69,6 +69,30 @@ export function FluxosPainel() {
     },
   });
 
+  const config = useQuery({
+    queryKey: ["bot-config-finalizacao"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_config")
+        .select("id, fluxo_finalizacao_id")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as { id: string; fluxo_finalizacao_id: string | null } | null;
+    },
+  });
+
+  async function salvarFluxoFinalizacao(valor: string) {
+    if (!config.data) return;
+    const { error } = await supabase
+      .from("whatsapp_config")
+      .update({ fluxo_finalizacao_id: valor === "nenhum" ? null : valor })
+      .eq("id", config.data.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Fluxo de finalização salvo.");
+    await queryClient.invalidateQueries({ queryKey: ["bot-config-finalizacao"] });
+  }
+
   const lista = fluxos.data ?? [];
   const todasEtapas = etapas.data ?? [];
   const todasOpcoes = opcoes.data ?? [];
@@ -231,6 +255,28 @@ export function FluxosPainel() {
         </Button>
       </div>
 
+      <Card className="shadow-card">
+        <CardContent className="grid gap-2 pt-6">
+          <Label>Fluxo de finalização</Label>
+          <Select
+            value={config.data?.fluxo_finalizacao_id ?? "nenhum"}
+            onValueChange={(v) => void salvarFluxoFinalizacao(v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Nenhum" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="nenhum">Nenhum</SelectItem>
+              {lista.filter((f) => f.ativo).map((f) => (
+                <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Fluxo executado quando a conversa é enviada para a aba "Aguardando Finalização".
+          </p>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-3">
         {lista.map((f) => {
