@@ -380,6 +380,8 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
   .cv-secao { background:#1a1a5e !important; color:#fff !important; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
   /* Todas as faixas (inclusive a do cabeçalho) com a mesma largura e altura. */
   .cv-print .cv-secao { display:block !important; width:100% !important; box-sizing:border-box !important; margin:0 !important; padding:1.4mm 3mm !important; font-size:10.5pt !important; }
+  /* Centraliza somente o título "Currículo Vitae" do cabeçalho, igual ao PDF. */
+  .cv-print header .cv-secao { text-align:center !important; }
   .cv-empresa { color:#1a1a5e !important; font-weight:700 !important; }
   .cv-print, .cv-print * { color:#11111a; }
   .cv-secao, .cv-secao * { color:#fff !important; }
