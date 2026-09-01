@@ -56,7 +56,7 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
               className="cv-foto absolute right-0 top-0 h-[3.5cm] w-[2.5cm] rounded-sm border border-navy object-cover"
             />
           )}
-          <div className={c.foto_exibir && c.foto_url ? "pr-[2.7cm]" : undefined}>
+          <div className={c.foto_exibir && c.foto_url ? "cv-header-com-foto pr-[2.7cm]" : undefined}>
             <h1 className="mt-5 text-[18pt] font-bold uppercase leading-tight text-navy">
               {c.nome_completo || "Currículo"}
             </h1>
