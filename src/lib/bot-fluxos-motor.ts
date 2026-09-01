@@ -63,8 +63,12 @@ function unirSaida(dados: DadosFluxos, saida: SaidaFluxo, fluxoId: string | null
   return { ...saida, mensagens: unirMensagens(saida.mensagens) };
 }
 
+/**
+ * Fluxo usado quando nenhum destino foi informado: o primeiro fluxo ativo
+ * na ordem de cadastro (a marcação "fluxo inicial" deixou de existir).
+ */
 export function fluxoInicial(dados: DadosFluxos) {
-  return dados.fluxos.find((f) => f.inicial && f.ativo) ?? null;
+  return [...dados.fluxos].filter((f) => f.ativo).sort((a, b) => a.ordem - b.ordem)[0] ?? null;
 }
 
 
