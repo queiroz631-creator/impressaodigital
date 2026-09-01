@@ -35,6 +35,8 @@ export interface CurriculoRegistro {
   experiencia_possui: boolean;
   experiencia_frase: string | null;
   habilidades_observacao: string | null;
+  foto_url: string | null;
+  foto_exibir: boolean;
 }
 
 /** Frase padrão quando o candidato não possui experiência profissional. */
