@@ -130,3 +130,25 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
     if (!r.ok) return { ok: false as const, erro: r.erro ?? "Falha ao enviar o arquivo." };
     return { ok: true as const, erro: null };
   });
+
+/** Move a conversa para "Aguardando Finalização" e dispara o fluxo de finalização. */
+export const enviarParaFinalizacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ conversaId: z.string().uuid(), atendente: z.string().max(120).optional() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { iniciarFinalizacao } = await import("@/lib/bot.server");
+    const r = await iniciarFinalizacao(data.conversaId);
+    if (!r.ok) return { ok: false, fluxo: false, erro: "Conversa não encontrada." };
+
+    await context.supabase.from("whatsapp_auditoria").insert({
+      conversa_id: data.conversaId,
+      usuario_id: context.userId,
+      usuario_nome: data.atendente ?? null,
+      acao: "aguardando_finalizacao",
+      detalhe: r.fluxo ? "fluxo de finalização iniciado" : "sem fluxo de finalização configurado",
+    });
+
+    return { ok: true, fluxo: r.fluxo, erro: null as string | null };
+  });
