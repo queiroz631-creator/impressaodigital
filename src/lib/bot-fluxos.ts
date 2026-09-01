@@ -11,9 +11,6 @@ export interface Fluxo {
   mensagem_inicial: string;
   ativo: boolean;
   ordem: number;
-  inicial: boolean;
-  /** Fluxo iniciado quando o cliente manda apenas arquivos. */
-  fluxo_arquivos: boolean;
   /** Envia o texto do fluxo, da etapa e as opções em uma única mensagem. */
   mensagem_unica: boolean;
 }
