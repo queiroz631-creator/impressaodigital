@@ -18,9 +18,12 @@ export const Route = createFileRoute("/api/public/whatsapp/inatividade")({
           return new Response("Não autorizado", { status: 401 });
         }
 
-        const { verificarInatividade } = await import("@/lib/bot.server");
+        const { verificarInatividade, drenarFilaBot } = await import("@/lib/bot.server");
+        // Reforço: se algum acionamento imediato da fila falhou, as conversas
+        // pendentes são atendidas aqui na próxima rodada.
+        const fila = await drenarFilaBot();
         const r = await verificarInatividade();
-        return Response.json({ ok: true, ...r });
+        return Response.json({ ok: true, ...r, fila: fila.processadas });
       },
     },
   },
