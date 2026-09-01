@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { FileStack, Loader2, CheckCircle2, XCircle } from "lucide-react";
 
@@ -52,15 +52,19 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
   const [impressoras, setImpressoras] = useState<string[]>([]);
   const [impressora, setImpressora] = useState("");
   const [imprimindo, setImprimindo] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
   const [concluido, setConcluido] = useState(false);
   const [situacoes, setSituacoes] = useState<Situacao[]>([]);
   const [erros, setErros] = useState<Record<number, string>>({});
   const [atual, setAtual] = useState(0);
+  const cancelarRef = useRef(false);
 
   // Ao abrir: zera o progresso e carrega as impressoras disponíveis.
   useEffect(() => {
     if (!aberto) return;
     setImprimindo(false);
+    setCancelando(false);
+    cancelarRef.current = false;
     setConcluido(false);
     setErros({});
     setAtual(0);
@@ -115,14 +119,18 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
 
   async function iniciar() {
     setImprimindo(true);
+    setCancelando(false);
+    cancelarRef.current = false;
     setConcluido(false);
 
     for (let i = 0; i < documentos.length; i++) {
+      if (cancelarRef.current) break;
       const doc = documentos[i]!;
       setAtual(i);
 
       marcar(i, "baixando");
       const base64 = await conteudo(doc);
+      if (cancelarRef.current) break;
       if (!base64) {
         marcar(i, "erro", "Arquivo indisponível para reimpressão.");
         continue;
@@ -140,7 +148,14 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
     }
 
     setImprimindo(false);
+    setCancelando(false);
     setConcluido(true);
+  }
+
+  /** Solicita o cancelamento: o documento atual termina e os demais não são enviados. */
+  function cancelar() {
+    cancelarRef.current = true;
+    setCancelando(true);
   }
 
   return (
@@ -152,7 +167,9 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
           </DialogTitle>
           <DialogDescription>
             {imprimindo
-              ? `Enviando ${Math.min(atual + 1, documentos.length)} de ${documentos.length}...`
+              ? cancelando
+                ? "Cancelando... aguarde o envio do arquivo atual terminar."
+                : `Enviando ${Math.min(atual + 1, documentos.length)} de ${documentos.length}...`
               : "Confira os arquivos, o total de páginas e a impressora antes de iniciar."}
           </DialogDescription>
         </DialogHeader>
@@ -229,17 +246,22 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
         <DialogFooter>
           {concluido ? (
             <Button onClick={() => onOpenChange(false)}>Fechar</Button>
+          ) : imprimindo ? (
+            <Button variant="destructive" disabled={cancelando} onClick={cancelar}>
+              {cancelando ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+              {cancelando ? "Cancelando..." : "Cancelar impressão"}
+            </Button>
           ) : (
             <>
-              <Button variant="outline" disabled={imprimindo} onClick={() => onOpenChange(false)}>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
               <Button
-                disabled={imprimindo || documentos.length === 0 || !impressora}
+                disabled={documentos.length === 0 || !impressora}
                 onClick={() => void iniciar()}
               >
-                {imprimindo ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileStack className="h-4 w-4" />}
-                {imprimindo ? "Imprimindo..." : "Imprimir"}
+                <FileStack className="h-4 w-4" />
+                Imprimir
               </Button>
             </>
           )}
