@@ -232,7 +232,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
 
         if (!conversaId) return new Response("Falha ao registrar a conversa", { status: 500 });
 
-        const { data: mensagem } = await supabaseAdmin
+        const { data: mensagem, error: erroMensagem } = await supabaseAdmin
           .from("whatsapp_mensagens")
           .insert({
             conversa_id: conversaId,
@@ -250,6 +250,15 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           })
           .select("id")
           .maybeSingle();
+
+        // O índice único é a proteção definitiva contra callbacks repetidos
+        // que chegam em paralelo antes da consulta de deduplicação acima.
+        if (erroMensagem?.code === "23505") {
+          return Response.json({ ok: true, ignorado: true, motivo: "duplicada" });
+        }
+        if (erroMensagem || !mensagem?.id) {
+          return new Response("Falha ao registrar a mensagem", { status: 500 });
+        }
 
         // Guarda o arquivo recebido no bucket privado.
         if (conteudo.url && (conteudo.tipo === "documento" || conteudo.tipo === "imagem")) {
@@ -317,7 +326,11 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
 
         try {
           const { processarBot } = await import("@/lib/bot.server");
-          await processarBot(conversaId, { tipo: conteudo.tipo, texto: conteudo.texto });
+          await processarBot(conversaId, {
+            tipo: conteudo.tipo,
+            texto: conteudo.texto,
+            mensagemId: mensagem.id,
+          });
 
         } catch (e) {
           await supabaseAdmin.from("whatsapp_auditoria").insert({
