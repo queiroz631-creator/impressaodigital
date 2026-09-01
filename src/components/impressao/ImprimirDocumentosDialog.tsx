@@ -63,6 +63,8 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
   useEffect(() => {
     if (!aberto) return;
     setImprimindo(false);
+    setCancelando(false);
+    cancelarRef.current = false;
     setConcluido(false);
     setErros({});
     setAtual(0);
@@ -117,14 +119,18 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
 
   async function iniciar() {
     setImprimindo(true);
+    setCancelando(false);
+    cancelarRef.current = false;
     setConcluido(false);
 
     for (let i = 0; i < documentos.length; i++) {
+      if (cancelarRef.current) break;
       const doc = documentos[i]!;
       setAtual(i);
 
       marcar(i, "baixando");
       const base64 = await conteudo(doc);
+      if (cancelarRef.current) break;
       if (!base64) {
         marcar(i, "erro", "Arquivo indisponível para reimpressão.");
         continue;
@@ -142,7 +148,14 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
     }
 
     setImprimindo(false);
+    setCancelando(false);
     setConcluido(true);
+  }
+
+  /** Solicita o cancelamento: o documento atual termina e os demais não são enviados. */
+  function cancelar() {
+    cancelarRef.current = true;
+    setCancelando(true);
   }
 
   return (
