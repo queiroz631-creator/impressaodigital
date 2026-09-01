@@ -130,7 +130,6 @@ export const ACOES_OPCAO: { valor: string; rotulo: string }[] = [
 export const ACOES_RESPOSTA: { valor: string; rotulo: string }[] = [
   { valor: "aguardar", rotulo: "Aguardar a próxima mensagem" },
   { valor: "iniciar_fluxo", rotulo: "Iniciar um fluxo" },
-  { valor: "fluxo_inicial", rotulo: "Iniciar o fluxo inicial" },
   { valor: "resposta", rotulo: "Enviar outra resposta automática" },
   { valor: "atendente", rotulo: "Transferir para atendente" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
