@@ -219,10 +219,8 @@ export type Database = {
           ativo: boolean
           created_at: string
           descricao: string
-          fluxo_arquivos: boolean
           icone: string
           id: string
-          inicial: boolean
           mensagem_inicial: string
           mensagem_unica: boolean
           nome: string
@@ -233,10 +231,8 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string
-          fluxo_arquivos?: boolean
           icone?: string
           id?: string
-          inicial?: boolean
           mensagem_inicial?: string
           mensagem_unica?: boolean
           nome: string
@@ -247,10 +243,8 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string
-          fluxo_arquivos?: boolean
           icone?: string
           id?: string
-          inicial?: boolean
           mensagem_inicial?: string
           mensagem_unica?: boolean
           nome?: string
@@ -403,6 +397,7 @@ export type Database = {
           ativo: boolean
           condicao: string
           created_at: string
+          delay_mensagem_segundos: number
           delay_segundos: number
           destino_fluxo_id: string | null
           destino_resposta_id: string | null
@@ -419,6 +414,7 @@ export type Database = {
           ativo?: boolean
           condicao?: string
           created_at?: string
+          delay_mensagem_segundos?: number
           delay_segundos?: number
           destino_fluxo_id?: string | null
           destino_resposta_id?: string | null
@@ -435,6 +431,7 @@ export type Database = {
           ativo?: boolean
           condicao?: string
           created_at?: string
+          delay_mensagem_segundos?: number
           delay_segundos?: number
           destino_fluxo_id?: string | null
           destino_resposta_id?: string | null
@@ -475,9 +472,13 @@ export type Database = {
           destino_sim_fluxo_id: string | null
           destino_sim_resposta_id: string | null
           id: string
+          midia_nome: string | null
+          midia_url: string | null
           ordem: number
+          pergunta_confirmacao: string
           resposta: string
           resposta_retorno_dia: string
+          tipo_midia: string
           titulo: string
           updated_at: string
         }
@@ -492,9 +493,13 @@ export type Database = {
           destino_sim_fluxo_id?: string | null
           destino_sim_resposta_id?: string | null
           id?: string
+          midia_nome?: string | null
+          midia_url?: string | null
           ordem?: number
+          pergunta_confirmacao?: string
           resposta?: string
           resposta_retorno_dia?: string
+          tipo_midia?: string
           titulo: string
           updated_at?: string
         }
@@ -509,9 +514,13 @@ export type Database = {
           destino_sim_fluxo_id?: string | null
           destino_sim_resposta_id?: string | null
           id?: string
+          midia_nome?: string | null
+          midia_url?: string | null
           ordem?: number
+          pergunta_confirmacao?: string
           resposta?: string
           resposta_retorno_dia?: string
+          tipo_midia?: string
           titulo?: string
           updated_at?: string
         }
