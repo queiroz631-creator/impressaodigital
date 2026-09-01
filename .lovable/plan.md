@@ -1,45 +1,20 @@
-# Escolher o fluxo que inicia por inatividade
-
-Hoje a aba **Inatividade** já tem o campo "Iniciar fluxo inicial após (minutos)", mas o bot sempre
-dispara o **primeiro fluxo ativo na ordem de cadastro** — não dá para escolher qual.
+# Aba "Aguardando Finalização" no WhatsApp
 
 ## O que muda
 
-- Na aba **Inatividade**, ao lado do campo de minutos, entra um seletor **"Fluxo a iniciar"** com a
-  lista dos fluxos ativos.
-- Opção padrão "Primeiro fluxo ativo" mantém o comportamento atual, para quem não escolher nada.
-- Passado o tempo configurado sem o bot reconhecer nada, ele inicia exatamente o fluxo escolhido.
-- Se o fluxo escolhido for apagado ou desativado, o bot volta a usar o primeiro fluxo ativo.
+1. **Nova aba na tela WhatsApp**: "Aguardando Finalização", entre "Pendente" e "Finalizado", com a mesma contagem e o mesmo comportamento das outras abas.
+2. **Botão de atalho no card da conversa**: um botão com ícone (bandeira/check duplo) ao lado do menu Status, na lista, que move a conversa para essa aba sem abrir a conversa. A mesma ação também entra no menu Status (lista e dentro da conversa).
+3. **Fluxo de finalização**: em Configuração do Bot > aba Fluxos, um seletor no topo da tela "Fluxo de finalização", listando os fluxos ativos.
+4. **Ao entrar na aba**, o bot inicia imediatamente o fluxo escolhido e conduz a conversa por ele. Enquanto o fluxo roda, a conversa continua na aba "Aguardando Finalização". Quando o fluxo termina, a conversa passa para "Finalizado" (com data e motivo de finalização, como já acontece hoje). Se nenhum fluxo estiver selecionado, a conversa apenas fica na aba, sem mensagem automática.
 
-## Inatividade só conta quando o bot espera resposta
-
-- A 1ª e a 2ª inatividade passam a ser contadas **apenas** quando o bot está de fato aguardando algo
-  do cliente (etapa de fluxo que espera resposta, confirmação Sim/Não, aguardando arquivos). Conversa
-  em que o bot não espera nada não recebe aviso nem muda de status por inatividade.
-- O tempo é contado a partir da **última mensagem do cliente**, e não da última mensagem enviada
-  pelo bot.
-- **Arquivo recebido conta como resposta**: ao chegar um arquivo, a contagem reinicia (o aviso de
-  inatividade é zerado) e quem responde é a regra de arquivo — a etapa do fluxo que recebe arquivos
-  ou, no primeiro contato, a regra "só arquivos" / "arquivos + palavras-chave". O bot não trata o
-  arquivo como mensagem não reconhecida.
-
-Nada mais muda: mensagens de 1ª/2ª inatividade, status de destino, primeiro contato, respostas
-automáticas, fluxos, calculadora, currículo e pedidos ficam iguais.
+Nada mais muda: layout, demais abas, fluxos existentes, triagem, primeiro contato e inatividade continuam iguais.
 
 ## Detalhes técnicos
 
-- Migração: `whatsapp_config.fallback_fluxo_id` (uuid, nulo, `references bot_fluxos(id) on delete set null`).
-- `src/lib/bot-motor.ts` e `src/lib/bot-dados.server.ts`: novo campo em `BotConfig`.
-- `src/lib/bot.server.ts` (`verificarInatividade`): usar `fluxoPorId(fluxos, config.fallback_fluxo_id)`
-  quando definido e ativo; senão `fluxoInicial(fluxos)`. Auditoria registra o nome do fluxo.
-- Inatividade: parar de usar `ultima_mensagem_em` (que também é gravado nos envios do bot em
-  `responder`) como base do tempo e passar a usar a última mensagem de entrada do cliente
-  (`whatsapp_mensagens` com `direcao = 'entrada'`, guardada em coluna própria
-  `ultima_entrada_em` para evitar consulta por conversa). Só entram na varredura conversas cujo
-  estado indica espera: contexto com fluxo/etapa que aguarda resposta, `triagem` pendente ou etapa
-  `aguardando_arquivos`.
-- Recebimento de arquivo no webhook/`processarMensagem`: atualiza `ultima_entrada_em` e zera
-  `inatividade_avisada`, mantendo o roteamento atual pelas regras de arquivo.
-- `src/components/ConfiguracaoBot.tsx`: carregar/salvar o campo e renderizar o `Select` na aba
-  Inatividade, ao lado do campo de minutos — sem mudança de layout.
-
+- Banco: `ALTER TABLE whatsapp_config ADD COLUMN IF NOT EXISTS fluxo_finalizacao_id uuid REFERENCES bot_fluxos(id) ON DELETE SET NULL;` (sem outras alterações de schema; o novo status é apenas um valor de texto em `whatsapp_conversas.status`).
+- `src/lib/whatsapp-comum.ts`: novo valor `aguardando_finalizacao` em `StatusConversa`, em `STATUS_CONVERSA` (rótulo "Aguardando Finalização") e em `rotuloStatusConversa`.
+- `src/lib/bot-motor.ts` / `src/lib/bot-dados.server.ts`: incluir `fluxo_finalizacao_id` no tipo `BotConfig` e na leitura de `whatsapp_config`.
+- `src/components/bot/FluxosPainel.tsx`: `Select` no topo, lendo/gravando `whatsapp_config.fluxo_finalizacao_id` (opção "Nenhum").
+- `src/lib/whatsapp.functions.ts` (server fn nova, com a mesma autenticação usada hoje): ao marcar a conversa como `aguardando_finalizacao`, grava o status, registra a auditoria e dispara o fluxo de finalização em `src/lib/bot.server.ts` (nova função que reaproveita `iniciar`/`entregarFluxo` já existentes, gravando `etapa: "fluxo"` e o estado do fluxo no contexto).
+- `src/lib/bot.server.ts`: em `processarBot`, liberar o processamento também quando `status === "aguardando_finalizacao"` (hoje só `automatico`), mantendo todo o resto igual; ao final do fluxo de finalização, marcar `status: "finalizado"`.
+- `src/routes/whatsapp.tsx`: acrescentar a ação "Aguardando Finalização" em `ACOES_STATUS` e o botão de ícone no card, chamando a nova server fn em vez do update direto para esse status.
