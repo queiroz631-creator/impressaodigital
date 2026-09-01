@@ -121,6 +121,7 @@ function renderizar(
 
   // ===== Cabeçalho: faixa azul com título centralizado =====
   const hFaixa = 26 * escala;
+  const topoFaixa = y;
   doc.setFillColor(...NAVY);
   doc.rect(MARGEM, y, util, hFaixa, "F");
   setFont(true, 16);
