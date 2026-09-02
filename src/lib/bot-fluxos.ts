@@ -137,6 +137,7 @@ export const ACOES_RESPOSTA: { valor: string; rotulo: string }[] = [
   { valor: "resposta", rotulo: "Enviar outra resposta automática" },
   { valor: "atendente", rotulo: "Transferir para atendente" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
+  { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
 ];
 
 export function rotuloAcaoResposta(valor: string) {
