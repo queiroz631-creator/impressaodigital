@@ -1399,21 +1399,13 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
 
     await processarBotInterno(conversaId, alvo);
 
-    // Só confirma depois que todo o tratamento terminou. Se a execução for
-    // interrompida durante uma espera ou envio, outro callback ainda poderá
-    // retomar esta mensagem em vez de descartá-la como já processada.
+    // Só confirma depois que todo o tratamento terminou, marcando a última
+    // entrada existente agora: os arquivos que chegaram durante a espera fazem
+    // parte do mesmo lote e não devem gerar uma nova resposta.
     if (alvo.mensagemId) {
-      const { data: atual } = await supabaseAdmin
-        .from("whatsapp_conversas")
-        .select("contexto")
-        .eq("id", conversaId)
-        .maybeSingle();
-      const ctxAtual = ((atual?.contexto ?? {}) as ContextoBot) || {};
-      await supabaseAdmin
-        .from("whatsapp_conversas")
-        .update({ contexto: { ...ctxAtual, ultimaProcessada: alvo.mensagemId } as never })
-        .eq("id", conversaId);
+      await confirmarLoteProcessado(conversaId, alvo.mensagemId);
     }
+
   } finally {
     pararBatimento();
     await destravar(conversaId);
