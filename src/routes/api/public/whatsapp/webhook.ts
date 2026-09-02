@@ -311,7 +311,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
 
         // Registra imediatamente os metadados. A cópia da mídia para o
         // armazenamento privado é feita depois, pela rotina da fila.
-        if (conteudo.url && (conteudo.tipo === "documento" || conteudo.tipo === "imagem")) {
+        if (!ehSaidaPropria && conteudo.url && (conteudo.tipo === "documento" || conteudo.tipo === "imagem")) {
           await supabaseAdmin.from("whatsapp_arquivos").insert({
             conversa_id: conversaId,
             mensagem_id: mensagem.id,
