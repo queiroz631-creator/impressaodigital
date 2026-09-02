@@ -935,6 +935,17 @@ async function executarAcaoResposta(
   }
 }
 
+/** A regra deixa a janela aberta para outra regra diferente ser acionada? */
+function janelaAberta(acao: string) {
+  return acao === "aguardar" || acao === "resposta";
+}
+
+/** Lista de regras que já enviaram mensagem neste atendimento. */
+function regrasEnviadas(ctx: ContextoBot): string[] {
+  const lista = ctx.regrasEnviadas ?? (ctx.regraEnviada ? [ctx.regraEnviada] : []);
+  return Array.isArray(lista) ? lista : [];
+}
+
 /** Executa a ação configurada em uma regra de primeiro contato. */
 async function executarAcaoRegra(
   conversa: ConversaBot,
@@ -949,15 +960,25 @@ async function executarAcaoRegra(
   const espera = Math.min(60, Math.max(0, Number(regra.delay_segundos ?? 0)));
   if (espera > 0) await new Promise((r) => setTimeout(r, espera * 1000));
 
+  const base: ContextoBot = {
+    ...ctx,
+    ultimaRegra: regra.id,
+    janelaRegra: janelaAberta(regra.acao),
+  };
+
   if (regra.acao === "aguardar") {
-    await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null, triagem: null, regra: null }, "inicio");
+    await salvarContexto(
+      conversa,
+      { ...base, fluxo: null, fluxoFallback: null, triagem: null, regra: null },
+      "inicio",
+    );
     return;
   }
 
   await executarAcaoResposta(
     conversa,
     config,
-    { ...ctx, triagem: null, regra: null },
+    { ...base, triagem: null, regra: null },
     cfg,
     fluxos,
     regra.acao,
