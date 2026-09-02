@@ -384,7 +384,11 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           .from("whatsapp_conversas")
           .update({
             cliente_id: clienteId,
-            ...(nomeContato ? { nome_contato: nomeContato } : {}),
+            // Guarda o identificador interno do chat para casar as mensagens
+            // enviadas pelo celular com esta mesma conversa.
+            ...(lidNormalizado ? ({ chat_lid: lidNormalizado } as Record<string, string>) : {}),
+            // "…@lid" não é nome de contato: nunca sobrescreve o nome real.
+            ...(nomeContato && !/@lid$/i.test(nomeContato) ? { nome_contato: nomeContato } : {}),
             ultima_mensagem: resumo.slice(0, 300),
             ultima_mensagem_em: agora,
             total_mensagens: totalMensagens + 1,
