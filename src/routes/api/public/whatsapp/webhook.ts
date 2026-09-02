@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
+import { dentroDaJanela, ehMensagemCortesia, lerCfgCortesia } from "@/lib/whatsapp-cortesia";
 
 const corpoSchema = z
   .object({
@@ -129,7 +130,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         // "todos": responde a todos, menos os bloqueados.
         // "somente_liberados": responde apenas aos liberados e ativos.
         const [{ data: cfgBot }, { data: regraNumero }] = await Promise.all([
-          supabaseAdmin.from("whatsapp_config").select("modo_numeros").limit(1).maybeSingle(),
+          supabaseAdmin.from("whatsapp_config").select("modo_numeros, ignorar_agradecimentos").limit(1).maybeSingle(),
           supabaseAdmin
             .from("bot_numeros")
             .select("permitido, ativo")
@@ -189,12 +190,13 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           nao_lidas: number | null;
           status: string;
           atendimento_numero: number | null;
+          data_finalizacao: string | null;
         } | null = null;
 
         for (let tentativa = 0; tentativa < 2 && !conversaAberta; tentativa += 1) {
           const { data } = await supabaseAdmin
             .from("whatsapp_conversas")
-            .select("id, total_mensagens, nao_lidas, status, atendimento_numero")
+            .select("id, total_mensagens, nao_lidas, status, atendimento_numero, data_finalizacao")
             .eq("telefone", telefone)
             .maybeSingle();
 
@@ -224,7 +226,19 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
 
         if (!conversaId) return new Response("Falha ao registrar a conversa", { status: 500 });
 
-        if (conversaAberta?.status === "finalizado") {
+        // Agradecimento/despedida logo após finalizar: registra a mensagem,
+        // mas não reabre o atendimento nem aciona o bot (BOT > Inatividade).
+        const cfgCortesia = lerCfgCortesia(
+          (cfgBot as { ignorar_agradecimentos?: unknown } | null)?.ignorar_agradecimentos,
+        );
+        const cortesiaIgnorada =
+          conversaAberta?.status === "finalizado" &&
+          conteudo.tipo === "texto" &&
+          cfgCortesia.ativo &&
+          dentroDaJanela(conversaAberta?.data_finalizacao, cfgCortesia.janela_minutos, new Date()) &&
+          ehMensagemCortesia(conteudo.texto, cfgCortesia.frases);
+
+        if (conversaAberta?.status === "finalizado" && !cortesiaIgnorada) {
           // Atendimento anterior encerrado: abre o próximo na mesma conversa.
           const numero = Number(conversaAberta.atendimento_numero ?? 1) + 1;
           await supabaseAdmin
