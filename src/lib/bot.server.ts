@@ -1810,16 +1810,23 @@ export async function iniciarFinalizacao(conversaId: string): Promise<{ ok: bool
   const conversa = (data ?? null) as ConversaBot | null;
   if (!conversa) return { ok: false, fluxo: false };
 
+  const dadosBot = await carregarDadosBot();
+  const fluxoId = dadosBot?.config.fluxo_finalizacao_id ?? null;
+  const espera = Math.max(0, Number(dadosBot?.config.finalizacao_delay_minutos ?? 0));
+
   await supabaseAdmin
     .from("whatsapp_conversas")
-    .update({ status: "aguardando_finalizacao", inatividade_avisada: false })
+    .update({
+      status: "aguardando_finalizacao",
+      inatividade_avisada: false,
+      finalizacao_fluxo_em: fluxoId && espera > 0 ? new Date().toISOString() : null,
+    })
     .eq("id", conversa.id);
   conversa.status = "aguardando_finalizacao";
 
-  const dadosBot = await carregarDadosBot();
-  const fluxoId = dadosBot?.config.fluxo_finalizacao_id ?? null;
   const config = await lerConfig();
   if (!fluxoId || !config) return { ok: true, fluxo: false };
+  if (espera > 0) return { ok: true, fluxo: false };
 
   const fluxos = await carregarFluxos();
   if (!fluxoPorId(fluxos, fluxoId)) return { ok: true, fluxo: false };
