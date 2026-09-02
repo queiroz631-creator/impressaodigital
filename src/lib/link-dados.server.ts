@@ -294,19 +294,28 @@ export async function confirmarPorToken(token: string): Promise<DadosLink> {
 
 const HOSTS_LOCAIS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
 
-/** Monta a URL pública a partir da requisição atual, ignorando origens locais. */
+/** Endereços internos (preview/editor) que nunca devem ir para o cliente. */
+const HOSTS_INTERNOS = [/^id-preview--/i, /^project--/i, /-dev\.lovable\.app$/i, /\.lovableproject\.com$/i];
+
+function hostPublico(hostname: string): boolean {
+  if (HOSTS_LOCAIS.has(hostname)) return false;
+  return !HOSTS_INTERNOS.some((re) => re.test(hostname));
+}
+
+/** Monta a URL pública, ignorando origens locais e endereços internos da plataforma. */
 export function urlBase(): string {
   try {
     const req = getRequest();
     if (req?.url) {
       const origem = new URL(req.url);
-      if (!HOSTS_LOCAIS.has(origem.hostname)) return origem.origin;
+      if (hostPublico(origem.hostname)) return origem.origin;
     }
   } catch {
     /* fora de um contexto de requisição */
   }
   return process.env["SITE_URL"] ?? "https://calculadoraimpressao.lovable.app";
 }
+
 
 export async function gerarParaOrcamento(orcamentoId: string, enviarWhatsapp: boolean) {
   const orc = await lerOrcamento(orcamentoId);
