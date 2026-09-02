@@ -74,11 +74,13 @@ export function FluxosPainel() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("whatsapp_config")
-        .select("id, fluxo_finalizacao_id")
+        .select("id, fluxo_finalizacao_id, finalizacao_delay_minutos")
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return (data ?? null) as { id: string; fluxo_finalizacao_id: string | null } | null;
+      return (data ?? null) as
+        | { id: string; fluxo_finalizacao_id: string | null; finalizacao_delay_minutos: number }
+        | null;
     },
   });
 
@@ -90,6 +92,17 @@ export function FluxosPainel() {
       .eq("id", config.data.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Fluxo de finalização salvo.");
+    await queryClient.invalidateQueries({ queryKey: ["bot-config-finalizacao"] });
+  }
+
+  async function salvarEsperaFinalizacao(valor: number) {
+    if (!config.data) return;
+    const { error } = await supabase
+      .from("whatsapp_config")
+      .update({ finalizacao_delay_minutos: Math.max(0, Math.trunc(valor) || 0) })
+      .eq("id", config.data.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Tempo de espera salvo.");
     await queryClient.invalidateQueries({ queryKey: ["bot-config-finalizacao"] });
   }
 
