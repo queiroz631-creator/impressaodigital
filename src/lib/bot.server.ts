@@ -1436,6 +1436,7 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
       const travou = await tentarTravar(conversa.id);
       if (!travou) continue;
 
+      const pararBatimento = manterTravaViva(conversa.id);
       try {
         const { data: ultima } = await supabaseAdmin
           .from("whatsapp_mensagens")
