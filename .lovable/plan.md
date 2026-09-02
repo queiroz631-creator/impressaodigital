@@ -10,7 +10,7 @@ Na aba **Horários** da configuração do bot, um novo bloco:
 - Campo de texto com a mensagem (aceita `{nome}`, `{telefone}`, `{saudacao}`)
 - Botão restaurar padrão, com texto sugerido informando que o atendimento será respondido no próximo horário de funcionamento
 
-Comportamento: quando o bot transferir o atendimento para a fila humana (fluxo, resposta automática, menu, primeiro contato) e o momento estiver fora do horário configurado (respeitando o modo 24 h), o bot envia essa mensagem no lugar da mensagem normal de transferência. Isso vale também para as ações "Transferir para atendente (sem mensagem)": a transferência silenciosa passa a enviar somente a mensagem de fora do horário quando a regra estiver ligada; dentro do horário, a transferência silenciosa continua sem enviar nada. Com o switch desligado, tudo continua exatamente como está hoje.
+Comportamento: a mensagem é enviada **somente no momento da transferência**, junto com a mudança para a fila humana (fluxo, resposta automática, menu, primeiro contato), quando o instante da transferência estiver fora do horário configurado (respeitando o modo 24 h). Ela substitui a mensagem normal de transferência. Isso vale também para as ações "Transferir para atendente (sem mensagem)": a transferência silenciosa passa a enviar somente essa mensagem de fora do horário quando a regra estiver ligada; dentro do horário, a silenciosa continua sem enviar nada. Nenhuma mensagem de fora do horário é enviada antes da transferência. Com o switch desligado, tudo continua exatamente como está hoje.
 
 ## Detalhes técnicos
 
