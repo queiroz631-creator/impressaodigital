@@ -1526,19 +1526,10 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
 
         if (ultima?.id && ctxAtual.ultimaProcessada !== ultima.id) {
           await processarBotInterno(conversa.id, entradaDaMensagem(ultima as MensagemEntrada));
-
-          const { data: depois } = await supabaseAdmin
-            .from("whatsapp_conversas")
-            .select("contexto")
-            .eq("id", conversa.id)
-            .maybeSingle();
-          const ctxDepois = ((depois?.contexto ?? {}) as ContextoBot) || {};
-          await supabaseAdmin
-            .from("whatsapp_conversas")
-            .update({ contexto: { ...ctxDepois, ultimaProcessada: ultima.id } as never })
-            .eq("id", conversa.id);
+          await confirmarLoteProcessado(conversa.id, ultima.id);
           processadas += 1;
         }
+
 
         // Só desmarca se nenhuma mensagem nova chegou durante o processamento;
         // caso contrário a conversa continua na fila para a próxima passada.
