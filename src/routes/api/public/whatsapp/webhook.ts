@@ -103,7 +103,13 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           ? analise.data
           : ((bruto ?? {}) as z.infer<typeof corpoSchema>);
 
-        if (corpo.fromMe || corpo.isStatusReply) return Response.json({ ok: true, ignorado: true });
+        if (corpo.isStatusReply) return Response.json({ ok: true, ignorado: true });
+
+        // Mensagem enviada pelo próprio número (celular/WhatsApp Web, fora do
+        // sistema): é registrada como saída para o histórico ficar completo,
+        // mas nunca aciona o bot nem reabre atendimento.
+        const ehSaidaPropria = corpo.fromMe === true;
+
 
         // A Z-API envia vários tipos de callback (entrega, status, presença).
         // Só o "ReceivedCallback" é mensagem de cliente; o resto causaria laço.
@@ -122,7 +128,11 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         const telefone = normalizarTelefone(corpo.phone);
         if (!telefone) return Response.json({ ok: true, ignorado: true });
 
-        const nomeContato = corpo.senderName || corpo.chatName || null;
+        // Em mensagens enviadas pelo próprio número, "senderName" é a loja:
+        // o nome do contato é o do chat (o cliente).
+        const nomeContato = ehSaidaPropria
+          ? corpo.chatName || null
+          : corpo.senderName || corpo.chatName || null;
         const conteudo = extrair(corpo);
         const agora = new Date().toISOString();
 
@@ -232,13 +242,14 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           (cfgBot as { ignorar_agradecimentos?: unknown } | null)?.ignorar_agradecimentos,
         );
         const cortesiaIgnorada =
+          !ehSaidaPropria &&
           conversaAberta?.status === "finalizado" &&
           conteudo.tipo === "texto" &&
           cfgCortesia.ativo &&
           dentroDaJanela(conversaAberta?.data_finalizacao, cfgCortesia.janela_minutos, new Date()) &&
           ehMensagemCortesia(conteudo.texto, cfgCortesia.frases);
 
-        if (conversaAberta?.status === "finalizado" && !cortesiaIgnorada) {
+        if (!ehSaidaPropria && conversaAberta?.status === "finalizado" && !cortesiaIgnorada) {
           // Atendimento anterior encerrado: abre o próximo na mesma conversa.
           const numero = Number(conversaAberta.atendimento_numero ?? 1) + 1;
           await supabaseAdmin
@@ -275,15 +286,15 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           .insert({
             conversa_id: conversaId,
             whatsapp_message_id: corpo.messageId ?? null,
-            direcao: "entrada",
-            autor: nomeContato,
+            direcao: ehSaidaPropria ? "saida" : "entrada",
+            autor: ehSaidaPropria ? "Atendente (WhatsApp)" : nomeContato,
             tipo: conteudo.tipo,
             texto: conteudo.texto,
             arquivo_url: conteudo.url,
             arquivo_nome: conteudo.nome,
             mime_type: conteudo.mime,
             payload: JSON.parse(JSON.stringify(corpo)) as never,
-            status: "recebida",
+            status: ehSaidaPropria ? "enviada" : "recebida",
             data_hora: agora,
           })
           .select("id")
@@ -300,7 +311,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
 
         // Registra imediatamente os metadados. A cópia da mídia para o
         // armazenamento privado é feita depois, pela rotina da fila.
-        if (conteudo.url && (conteudo.tipo === "documento" || conteudo.tipo === "imagem")) {
+        if (!ehSaidaPropria && conteudo.url && (conteudo.tipo === "documento" || conteudo.tipo === "imagem")) {
           await supabaseAdmin.from("whatsapp_arquivos").insert({
             conversa_id: conversaId,
             mensagem_id: mensagem.id,
@@ -328,13 +339,20 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           .from("whatsapp_conversas")
           .update({
             cliente_id: clienteId,
-            nome_contato: nomeContato,
+            ...(nomeContato ? { nome_contato: nomeContato } : {}),
             ultima_mensagem: resumo.slice(0, 300),
             ultima_mensagem_em: agora,
             total_mensagens: totalMensagens + 1,
-            nao_lidas: naoLidas + 1,
+            // Resposta do atendente pelo celular não é mensagem não lida.
+            nao_lidas: ehSaidaPropria ? naoLidas : naoLidas + 1,
           })
           .eq("id", conversaId);
+
+        // Mensagem enviada fora do sistema: fica registrada no histórico e o
+        // bot não é acionado.
+        if (ehSaidaPropria) {
+          return Response.json({ ok: true, bot: false, motivo: "enviada_fora_do_sistema" });
+        }
 
         if (cortesiaIgnorada) {
           await supabaseAdmin.from("whatsapp_auditoria").insert({
