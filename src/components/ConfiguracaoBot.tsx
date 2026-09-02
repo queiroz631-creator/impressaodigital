@@ -90,6 +90,8 @@ interface FormBot {
   msg_fora_horario_ativo: boolean;
   msg_transferencia: string;
   msg_transferencia_ativo: boolean;
+  msg_transferencia_fora_horario: string;
+  msg_transferencia_fora_horario_ativo: boolean;
   msg_finalizacao: string;
   msg_finalizacao_ativo: boolean;
   msg_orcamento_gerado: string;
@@ -115,6 +117,9 @@ const MSG_STATUS: { valor: string; chave: keyof FormBot }[] = [
   { valor: "em_atendimento", chave: "msg_inatividade_em_atendimento" },
   { valor: "finalizado", chave: "msg_inatividade_finalizado" },
 ];
+
+const MSG_TRANSFERENCIA_FORA_HORARIO_PADRAO =
+  "No momento estamos fora do horário de atendimento. Sua mensagem foi encaminhada e responderemos assim que a loja abrir. 😊";
 
 const CAMPOS: { chave: keyof FormBot; ativo: keyof FormBot; rotulo: string; ajuda: string }[] = [
   { chave: "msg_fora_horario", ativo: "msg_fora_horario_ativo", rotulo: "Fora do horário", ajuda: "Enviada quando está fora do horário de atendimento." },
@@ -221,6 +226,12 @@ export function ConfiguracaoBot() {
       msg_fora_horario_ativo: d.msg_fora_horario_ativo !== false,
       msg_transferencia: d.msg_transferencia ?? "",
       msg_transferencia_ativo: d.msg_transferencia_ativo !== false,
+      msg_transferencia_fora_horario:
+        (d as { msg_transferencia_fora_horario?: string | null }).msg_transferencia_fora_horario ??
+        MSG_TRANSFERENCIA_FORA_HORARIO_PADRAO,
+      msg_transferencia_fora_horario_ativo: Boolean(
+        (d as { msg_transferencia_fora_horario_ativo?: boolean | null }).msg_transferencia_fora_horario_ativo,
+      ),
       msg_finalizacao: d.msg_finalizacao ?? "",
       msg_finalizacao_ativo: d.msg_finalizacao_ativo !== false,
       msg_orcamento_gerado: d.msg_orcamento_gerado ?? "",
@@ -377,6 +388,44 @@ export function ConfiguracaoBot() {
                   ))}
                 </div>
               )}
+
+              <div className="grid gap-2 rounded-lg border p-3">
+                <Alternar
+                  titulo="Mensagem ao transferir fora do horário"
+                  ajuda="Quando o bot encaminha o atendimento para um atendente fora do horário de funcionamento, envia esta mensagem no lugar da transferência normal — inclusive nas ações sem mensagem."
+                  valor={form.msg_transferencia_fora_horario_ativo}
+                  ao={(v) => setForm({ ...form, msg_transferencia_fora_horario_ativo: v })}
+                />
+                {form.msg_transferencia_fora_horario_ativo && (
+                  <>
+                    <Textarea
+                      rows={3}
+                      value={form.msg_transferencia_fora_horario}
+                      onChange={(e) =>
+                        setForm({ ...form, msg_transferencia_fora_horario: e.target.value })
+                      }
+                    />
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        Aceita {"{nome}"}, {"{telefone}"} e {"{saudacao}"}. Enviada somente no momento da
+                        transferência.
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          setForm({
+                            ...form,
+                            msg_transferencia_fora_horario: MSG_TRANSFERENCIA_FORA_HORARIO_PADRAO,
+                          })
+                        }
+                      >
+                        Restaurar padrão
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

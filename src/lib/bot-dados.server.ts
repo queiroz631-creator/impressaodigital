@@ -70,6 +70,11 @@ export async function carregarDadosBot(): Promise<BotDados | null> {
     msg_fora_horario_ativo: d.msg_fora_horario_ativo !== false,
     msg_transferencia: d.msg_transferencia ?? "",
     msg_transferencia_ativo: d.msg_transferencia_ativo !== false,
+    msg_transferencia_fora_horario:
+      (d as { msg_transferencia_fora_horario?: string | null }).msg_transferencia_fora_horario ?? "",
+    msg_transferencia_fora_horario_ativo: Boolean(
+      (d as { msg_transferencia_fora_horario_ativo?: boolean | null }).msg_transferencia_fora_horario_ativo,
+    ),
     msg_finalizacao: d.msg_finalizacao ?? "",
     msg_finalizacao_ativo: d.msg_finalizacao_ativo !== false,
   };

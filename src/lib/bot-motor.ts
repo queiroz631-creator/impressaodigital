@@ -83,6 +83,9 @@ export interface BotConfig {
   msg_fora_horario_ativo: boolean;
   msg_transferencia: string;
   msg_transferencia_ativo: boolean;
+  /** Enviada no momento da transferência quando fora do horário (inclusive silenciosa). */
+  msg_transferencia_fora_horario: string;
+  msg_transferencia_fora_horario_ativo: boolean;
   msg_finalizacao: string;
   msg_finalizacao_ativo: boolean;
 }
