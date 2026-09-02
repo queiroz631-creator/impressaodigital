@@ -519,6 +519,67 @@ export function ConfiguracaoBot() {
               />
             </CardContent>
           </Card>
+
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-base">Encerramento de atendimento</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <Alternar
+                titulo="Ignorar agradecimentos após finalizar"
+                ajuda="Mensagens de cortesia enviadas logo após o encerramento não reabrem o atendimento nem acionam o bot."
+                valor={form.ignorar_agradecimentos.ativo}
+                ao={(v) =>
+                  setForm({ ...form, ignorar_agradecimentos: { ...form.ignorar_agradecimentos, ativo: v } })
+                }
+              />
+
+              {form.ignorar_agradecimentos.ativo && (
+                <>
+                  <div className="grid gap-1 sm:max-w-xs">
+                    <Label>Janela de encerramento (minutos)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={form.ignorar_agradecimentos.janela_minutos}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          ignorar_agradecimentos: {
+                            ...form.ignorar_agradecimentos,
+                            janela_minutos: Number(e.target.value || 0),
+                          },
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Cortesias recebidas dentro desse tempo após a finalização são ignoradas. Depois dela, o
+                      cliente inicia um novo atendimento normalmente. Use 0 para desativar.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-1">
+                    <Label>Frases de cortesia ignoradas (uma por linha)</Label>
+                    <Textarea
+                      rows={6}
+                      value={form.ignorar_agradecimentos.frases}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          ignorar_agradecimentos: { ...form.ignorar_agradecimentos, frases: e.target.value },
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      A comparação ignora acentos, maiúsculas, pontuação e emojis — mas a mensagem precisa ser só a
+                      frase. Ex.: "obrigado" é ignorado; "obrigado, quanto fica 10 cópias?" reabre o atendimento.
+                      Arquivos nunca são ignorados.
+                    </p>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* ---------- Simulador ---------- */}
