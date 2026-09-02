@@ -27,9 +27,9 @@ export const simularBot = createServerFn({ method: "POST" })
     const agora = new Date();
     const mensagens: { texto: string; botoes?: string[] }[] = [];
 
-    if (data.etapa === "inicio" && !dentroDoHorario(dados, agora) && dados.config.msg_fora_horario_ativo && dados.config.msg_fora_horario.trim()) {
-      mensagens.push({ texto: dados.config.msg_fora_horario });
-    }
+    // A mensagem global "Fora do horário" foi desativada: o bot não a envia mais.
+
+
 
     const saida = await processarMenu(
       dados,

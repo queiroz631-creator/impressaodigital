@@ -122,7 +122,7 @@ const MSG_TRANSFERENCIA_FORA_HORARIO_PADRAO =
   "No momento estamos fora do horário de atendimento. Sua mensagem foi encaminhada e responderemos assim que a loja abrir. 😊";
 
 const CAMPOS: { chave: keyof FormBot; ativo: keyof FormBot; rotulo: string; ajuda: string }[] = [
-  { chave: "msg_fora_horario", ativo: "msg_fora_horario_ativo", rotulo: "Fora do horário", ajuda: "Enviada quando está fora do horário de atendimento." },
+  // "Fora do horário" foi descontinuada: o bot não envia mais essa mensagem.
   { chave: "msg_transferencia", ativo: "msg_transferencia_ativo", rotulo: "Transferência para atendente", ajuda: "Ao encaminhar para a fila humana." },
   { chave: "msg_finalizacao", ativo: "msg_finalizacao_ativo", rotulo: "Finalização", ajuda: "Ao encerrar o atendimento." },
   { chave: "msg_orcamento_gerado", ativo: "msg_orcamento_gerado_ativo", rotulo: "Orçamento gerado", ajuda: "Texto antes do resumo do orçamento." },
