@@ -161,7 +161,9 @@ export const ACOES_PRIMEIRO_CONTATO: { valor: string; rotulo: string }[] = [
   
   { valor: "resposta", rotulo: "Enviar uma resposta automática" },
   { valor: "atendente", rotulo: "Transferir para atendente" },
+  { valor: "transferir_silencioso", rotulo: "Transferir para atendente (sem mensagem)" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
+  { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
 ];
 
 export function rotuloCondicao(valor: string) {
