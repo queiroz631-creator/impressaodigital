@@ -36,6 +36,8 @@ export interface SaidaFluxo {
   transferir?: boolean;
   pendente?: boolean;
   finalizar?: boolean;
+  /** true quando a finalização não deve enviar a mensagem de despedida. */
+  silencioso?: boolean;
   /** true quando a mensagem não foi entendida na etapa atual. */
   naoEntendi?: boolean;
 }
