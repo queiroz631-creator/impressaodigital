@@ -809,7 +809,10 @@ async function entregarFluxo(
       if (!enviou) return;
       // Espera configurada na etapa antes de seguir automaticamente (teto de 60s).
       const espera = Math.min(60, Math.max(0, m.espera ?? 0));
-      if (espera > 0) await new Promise((r) => setTimeout(r, espera * 1000));
+      if (espera > 0) {
+        await enviarPresencaDigitando(conversa.telefone, espera * 1000);
+        await new Promise((r) => setTimeout(r, espera * 1000));
+      }
     }
 
     if (atual.finalizar) {
@@ -964,7 +967,10 @@ async function executarAcaoRegra(
   vars: Vars,
 ) {
   const espera = Math.min(60, Math.max(0, Number(regra.delay_segundos ?? 0)));
-  if (espera > 0) await new Promise((r) => setTimeout(r, espera * 1000));
+  if (espera > 0) {
+    await enviarPresencaDigitando(conversa.telefone, espera * 1000);
+    await new Promise((r) => setTimeout(r, espera * 1000));
+  }
 
   const base: ContextoBot = {
     ...ctx,
@@ -1036,7 +1042,10 @@ async function triagem(
     if (mensagem && !jaEnviada && podeEnviar) {
       // Espera configurada na regra antes de enviar a saudação.
       const esperaMsg = Math.min(300, Math.max(0, Number(regra.delay_mensagem_segundos ?? 0)));
-      if (esperaMsg > 0) await new Promise((r) => setTimeout(r, esperaMsg * 1000));
+      if (esperaMsg > 0) {
+        await enviarPresencaDigitando(conversa.telefone, esperaMsg * 1000);
+        await new Promise((r) => setTimeout(r, esperaMsg * 1000));
+      }
       enviada = await responder(
         conversa,
         aplicarVariaveis(mensagem, vars),
@@ -1147,7 +1156,10 @@ async function resolverTriagem(
   if (escolha) await responder(conversa, aplicarVariaveis(textoResposta(resposta, primeiraDoDia), vars));
 
   const espera = Math.min(60, Math.max(0, Number(resposta.delay_acao_segundos ?? 0)));
-  if (espera > 0) await new Promise((r) => setTimeout(r, espera * 1000));
+  if (espera > 0) {
+    await enviarPresencaDigitando(conversa.telefone, espera * 1000);
+    await new Promise((r) => setTimeout(r, espera * 1000));
+  }
 
   await salvarContexto(conversa, { ...ctx, triagem: null }, "inicio");
 
