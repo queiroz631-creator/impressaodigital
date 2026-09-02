@@ -1641,16 +1641,7 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
     const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
     const etapaAtual = conversa.etapa === "finalizado" ? "inicio" : conversa.etapa;
 
-    if (etapaAtual === "inicio" && !dentroDoHorario(dados, agora) && dados.config.msg_fora_horario_ativo && dados.config.msg_fora_horario.trim()) {
-      await responder(
-        conversa,
-        aplicarVariaveis(dados.config.msg_fora_horario, {
-          nome: conversa.nome_contato ?? "",
-          telefone: conversa.telefone,
-          agora,
-        }),
-      );
-    }
+    // A mensagem global "Fora do horário" foi desativada e não é mais enviada.
 
     const saida = await processarMenu(
       dados,
