@@ -241,6 +241,9 @@ export function PrimeiroContatoPainel() {
                     {r.enviar_mensagem === "primeira_do_dia" && (
                       <Badge variant="outline">1º contato do dia</Badge>
                     )}
+                    {r.enviar_mensagem === "uma_vez_atendimento" && (
+                      <Badge variant="outline">1x por atendimento</Badge>
+                    )}
                   </CardTitle>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {rotuloCondicao(r.condicao)} → {rotuloAcaoPrimeiroContato(r.acao)}
