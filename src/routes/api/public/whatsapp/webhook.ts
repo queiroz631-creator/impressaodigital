@@ -282,15 +282,15 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           .insert({
             conversa_id: conversaId,
             whatsapp_message_id: corpo.messageId ?? null,
-            direcao: "entrada",
-            autor: nomeContato,
+            direcao: ehSaidaPropria ? "saida" : "entrada",
+            autor: ehSaidaPropria ? "Atendente (WhatsApp)" : nomeContato,
             tipo: conteudo.tipo,
             texto: conteudo.texto,
             arquivo_url: conteudo.url,
             arquivo_nome: conteudo.nome,
             mime_type: conteudo.mime,
             payload: JSON.parse(JSON.stringify(corpo)) as never,
-            status: "recebida",
+            status: ehSaidaPropria ? "enviada" : "recebida",
             data_hora: agora,
           })
           .select("id")
