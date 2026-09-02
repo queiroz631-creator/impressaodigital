@@ -114,6 +114,7 @@ export const ACOES_ETAPA: { valor: string; rotulo: string }[] = [
   { valor: "iniciar_fluxo", rotulo: "Iniciar outro fluxo" },
   { valor: "voltar_inicio_fluxo", rotulo: "Voltar ao início do fluxo" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
+  { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
 ];
 
 /** Ações possíveis em uma opção de etapa. */
@@ -124,6 +125,7 @@ export const ACOES_OPCAO: { valor: string; rotulo: string }[] = [
   { valor: "transferir_atendente", rotulo: "Transferir para atendente" },
   { valor: "voltar_inicio_fluxo", rotulo: "Voltar ao início do fluxo" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
+  { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
 ];
 
 /** Ações possíveis após o cliente responder SIM ou NÃO a uma resposta automática. */
