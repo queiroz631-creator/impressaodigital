@@ -336,6 +336,16 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           })
           .eq("id", conversaId);
 
+        if (cortesiaIgnorada) {
+          await supabaseAdmin.from("whatsapp_auditoria").insert({
+            conversa_id: conversaId,
+            usuario_nome: "Bot",
+            acao: "cortesia_ignorada",
+            detalhe: `Agradecimento/despedida ignorado após finalização: "${conteudo.texto.slice(0, 120)}"`,
+          });
+          return Response.json({ ok: true, bot: false, motivo: "cortesia_ignorada" });
+        }
+
         // A mensagem fica registrada na conversa mesmo quando o bot não pode
         // responder ao número (configuração em BOT > Números).
         if (!botLiberadoParaNumero) {
