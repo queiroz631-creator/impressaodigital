@@ -1808,6 +1808,7 @@ export type Database = {
           finalizacao_uma_vez_dia: boolean
           fluxo_finalizacao_id: string | null
           id: string
+          ignorar_agradecimentos: Json
           inatividade_minutos: number
           inatividade_status: string
           inatividade1_minutos: number
@@ -1863,6 +1864,7 @@ export type Database = {
           finalizacao_uma_vez_dia?: boolean
           fluxo_finalizacao_id?: string | null
           id?: string
+          ignorar_agradecimentos?: Json
           inatividade_minutos?: number
           inatividade_status?: string
           inatividade1_minutos?: number
@@ -1918,6 +1920,7 @@ export type Database = {
           finalizacao_uma_vez_dia?: boolean
           fluxo_finalizacao_id?: string | null
           id?: string
+          ignorar_agradecimentos?: Json
           inatividade_minutos?: number
           inatividade_status?: string
           inatividade1_minutos?: number

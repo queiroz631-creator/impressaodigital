@@ -17,6 +17,7 @@ import { FluxosPainel } from "@/components/bot/FluxosPainel";
 import { RespostasPainel } from "@/components/bot/RespostasPainel";
 import { NumerosPainel } from "@/components/bot/NumerosPainel";
 import { PrimeiroContatoPainel } from "@/components/bot/PrimeiroContatoPainel";
+import { lerCfgCortesia } from "@/lib/whatsapp-cortesia";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -96,6 +97,8 @@ interface FormBot {
   msg_revisao_ativo: boolean;
   msg_orcamento_confirmado: string;
   msg_orcamento_confirmado_ativo: boolean;
+  /** Frases de cortesia separadas por quebra de linha (convertido ao salvar). */
+  ignorar_agradecimentos: { ativo: boolean; janela_minutos: number; frases: string };
 }
 
 const STATUS_INATIVIDADE: { valor: string; rotulo: string }[] = [
@@ -208,6 +211,10 @@ export function ConfiguracaoBot() {
       msg_revisao_ativo: d.msg_revisao_ativo !== false,
       msg_orcamento_confirmado: d.msg_orcamento_confirmado ?? "",
       msg_orcamento_confirmado_ativo: d.msg_orcamento_confirmado_ativo !== false,
+      ignorar_agradecimentos: (() => {
+        const c = lerCfgCortesia((d as { ignorar_agradecimentos?: unknown }).ignorar_agradecimentos);
+        return { ativo: c.ativo, janela_minutos: c.janela_minutos, frases: c.frases.join("\n") };
+      })(),
     });
   }, [config.data, form]);
 
@@ -218,7 +225,21 @@ export function ConfiguracaoBot() {
   async function salvarConfig() {
     if (!id || !form) return;
     setSalvando(true);
-    const { error } = await supabase.from("whatsapp_config").update(form).eq("id", id);
+    const { ignorar_agradecimentos, ...restante } = form;
+    const { error } = await supabase
+      .from("whatsapp_config")
+      .update({
+        ...restante,
+        ignorar_agradecimentos: {
+          ativo: ignorar_agradecimentos.ativo,
+          janela_minutos: Math.max(0, Number(ignorar_agradecimentos.janela_minutos) || 0),
+          frases: ignorar_agradecimentos.frases
+            .split("\n")
+            .map((f) => f.trim())
+            .filter(Boolean),
+        },
+      } as never)
+      .eq("id", id);
     setSalvando(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Atendimento automático atualizado.");
@@ -496,6 +517,67 @@ export function ConfiguracaoBot() {
                 valor={form.finalizacao_uma_vez_dia}
                 ao={(v) => setForm({ ...form, finalizacao_uma_vez_dia: v })}
               />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-base">Encerramento de atendimento</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <Alternar
+                titulo="Ignorar agradecimentos após finalizar"
+                ajuda="Mensagens de cortesia enviadas logo após o encerramento não reabrem o atendimento nem acionam o bot."
+                valor={form.ignorar_agradecimentos.ativo}
+                ao={(v) =>
+                  setForm({ ...form, ignorar_agradecimentos: { ...form.ignorar_agradecimentos, ativo: v } })
+                }
+              />
+
+              {form.ignorar_agradecimentos.ativo && (
+                <>
+                  <div className="grid gap-1 sm:max-w-xs">
+                    <Label>Janela de encerramento (minutos)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={form.ignorar_agradecimentos.janela_minutos}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          ignorar_agradecimentos: {
+                            ...form.ignorar_agradecimentos,
+                            janela_minutos: Number(e.target.value || 0),
+                          },
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Cortesias recebidas dentro desse tempo após a finalização são ignoradas. Depois dela, o
+                      cliente inicia um novo atendimento normalmente. Use 0 para desativar.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-1">
+                    <Label>Frases de cortesia ignoradas (uma por linha)</Label>
+                    <Textarea
+                      rows={6}
+                      value={form.ignorar_agradecimentos.frases}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          ignorar_agradecimentos: { ...form.ignorar_agradecimentos, frases: e.target.value },
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      A comparação ignora acentos, maiúsculas, pontuação e emojis — mas a mensagem precisa ser só a
+                      frase. Ex.: "obrigado" é ignorado; "obrigado, quanto fica 10 cópias?" reabre o atendimento.
+                      Arquivos nunca são ignorados.
+                    </p>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
