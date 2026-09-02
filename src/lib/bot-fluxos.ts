@@ -170,6 +170,7 @@ export function rotuloAcaoPrimeiroContato(valor: string) {
 /** Quando a mensagem da regra de primeiro contato é enviada. */
 export const ENVIOS_PRIMEIRO_CONTATO: { valor: string; rotulo: string }[] = [
   { valor: "sempre", rotulo: "Sempre que a regra combinar" },
+  { valor: "uma_vez_atendimento", rotulo: "Uma vez por atendimento" },
   { valor: "primeira_do_dia", rotulo: "Somente no 1º contato do dia" },
 ];
 

@@ -1,0 +1,2 @@
+ALTER TABLE public.bot_primeiro_contato DROP CONSTRAINT IF EXISTS bot_primeiro_contato_enviar_mensagem_check;
+ALTER TABLE public.bot_primeiro_contato ADD CONSTRAINT bot_primeiro_contato_enviar_mensagem_check CHECK (enviar_mensagem = ANY (ARRAY['sempre'::text, 'uma_vez_atendimento'::text, 'primeira_do_dia'::text]));

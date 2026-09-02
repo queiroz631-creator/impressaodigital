@@ -97,7 +97,7 @@ export interface RegraPrimeiroContato {
   delay_segundos: number;
   /** Espera antes de enviar a mensagem da regra. */
   delay_mensagem_segundos?: number;
-  /** sempre | primeira_do_dia */
+  /** sempre | uma_vez_atendimento | primeira_do_dia */
   enviar_mensagem?: string;
   ordem: number;
   ativo: boolean;
@@ -299,14 +299,19 @@ export function ehSaudacao(texto: string): boolean {
 
 /**
  * Escolhe a primeira regra de primeiro contato que combina com a mensagem.
+ * `ignorarId` permite excluir a última regra acionada, para que uma mensagem
+ * seguinte só acione uma regra diferente.
  * Módulo puro: usado pelo bot e pelo simulador.
  */
 export function escolherRegra(
   regras: RegraPrimeiroContato[],
   entrada: { texto: string; ehArquivo: boolean },
+  ignorarId?: string | null,
 ): RegraPrimeiroContato | null {
   const texto = (entrada.texto ?? "").trim();
-  const lista = regras.filter((r) => r.ativo).sort((a, b) => a.ordem - b.ordem);
+  const lista = regras
+    .filter((r) => r.ativo && (!ignorarId || r.id !== ignorarId))
+    .sort((a, b) => a.ordem - b.ordem);
 
   for (const r of lista) {
     const bateu = melhorPalavra(texto, r.palavras) >= LIMITE;

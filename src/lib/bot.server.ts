@@ -75,8 +75,14 @@ interface ContextoBot {
   regra?: string | null;
   /** Fluxo iniciado automaticamente pelo tempo de fallback (nada reconhecido). */
   fluxoFallback?: boolean | null;
-  /** Regra de primeiro contato que já enviou a mensagem neste atendimento. */
+  /** Regras de primeiro contato que já enviaram a mensagem neste atendimento. */
+  regrasEnviadas?: string[] | null;
+  /** Compatibilidade com atendimentos gravados antes da lista acima. */
   regraEnviada?: string | null;
+  /** Última regra de primeiro contato acionada (não pode repetir em sequência). */
+  ultimaRegra?: string | null;
+  /** Janela em que uma regra diferente ainda pode ser acionada. */
+  janelaRegra?: boolean | null;
   /** Última mensagem de entrada já processada pelo bot (evita respostas repetidas). */
   ultimaProcessada?: string | null;
 }
@@ -929,6 +935,17 @@ async function executarAcaoResposta(
   }
 }
 
+/** A regra deixa a janela aberta para outra regra diferente ser acionada? */
+function janelaAberta(acao: string) {
+  return acao === "aguardar" || acao === "resposta";
+}
+
+/** Lista de regras que já enviaram mensagem neste atendimento. */
+function regrasEnviadas(ctx: ContextoBot): string[] {
+  const lista = ctx.regrasEnviadas ?? (ctx.regraEnviada ? [ctx.regraEnviada] : []);
+  return Array.isArray(lista) ? lista : [];
+}
+
 /** Executa a ação configurada em uma regra de primeiro contato. */
 async function executarAcaoRegra(
   conversa: ConversaBot,
@@ -943,15 +960,25 @@ async function executarAcaoRegra(
   const espera = Math.min(60, Math.max(0, Number(regra.delay_segundos ?? 0)));
   if (espera > 0) await new Promise((r) => setTimeout(r, espera * 1000));
 
+  const base: ContextoBot = {
+    ...ctx,
+    ultimaRegra: regra.id,
+    janelaRegra: janelaAberta(regra.acao),
+  };
+
   if (regra.acao === "aguardar") {
-    await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null, triagem: null, regra: null }, "inicio");
+    await salvarContexto(
+      conversa,
+      { ...base, fluxo: null, fluxoFallback: null, triagem: null, regra: null },
+      "inicio",
+    );
     return;
   }
 
   await executarAcaoResposta(
     conversa,
     config,
-    { ...ctx, triagem: null, regra: null },
+    { ...base, triagem: null, regra: null },
     cfg,
     fluxos,
     regra.acao,
@@ -987,17 +1014,20 @@ async function triagem(
   const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
 
   // 1) Regras de primeiro contato configuradas na aba "Primeiro contato".
-  const regra = escolherRegra(cfg.regras ?? [], { texto, ehArquivo });
+  // Dentro da janela de sequência, a última regra acionada não repete.
+  const ignorar = ctx.janelaRegra ? (ctx.ultimaRegra ?? null) : null;
+  const regra = escolherRegra(cfg.regras ?? [], { texto, ehArquivo }, ignorar);
   if (regra) {
     const mensagem = (regra.mensagem ?? "").trim();
     const confirmar = regra.acao === "confirmar_fluxo";
-    const sempre = (regra.enviar_mensagem ?? "sempre") === "sempre";
-    // Uma mensagem por regra neste atendimento, mesmo que o cliente mande
-    // várias palavras-chave seguidas.
-    const jaEnviada = ctx.regraEnviada === regra.id;
+    const modo = regra.enviar_mensagem ?? "sempre";
+    const enviadas = regrasEnviadas(ctx);
+    // "Uma vez por atendimento": a regra só fala na primeira vez que combinar.
+    const jaEnviada = modo === "uma_vez_atendimento" && enviadas.includes(regra.id);
+    const podeEnviar = modo !== "primeira_do_dia" || primeiraDoDia || confirmar;
     let enviada = jaEnviada;
 
-    if (mensagem && !jaEnviada && (sempre || primeiraDoDia || confirmar)) {
+    if (mensagem && !jaEnviada && podeEnviar) {
       // Espera configurada na regra antes de enviar a saudação.
       const esperaMsg = Math.min(300, Math.max(0, Number(regra.delay_mensagem_segundos ?? 0)));
       if (esperaMsg > 0) await new Promise((r) => setTimeout(r, esperaMsg * 1000));
@@ -1009,12 +1039,24 @@ async function triagem(
       if (!enviada) return;
     }
 
-    const ctxRegra: ContextoBot = { ...ctx, regraEnviada: enviada ? regra.id : (ctx.regraEnviada ?? null) };
+    const ctxRegra: ContextoBot = {
+      ...ctx,
+      regraEnviada: null,
+      regrasEnviadas: enviada && !enviadas.includes(regra.id) ? [...enviadas, regra.id] : enviadas,
+    };
 
     if (confirmar) {
       await salvarContexto(
         conversa,
-        { ...ctxRegra, fluxo: null, fluxoFallback: null, triagem: null, regra: regra.id },
+        {
+          ...ctxRegra,
+          fluxo: null,
+          fluxoFallback: null,
+          triagem: null,
+          regra: regra.id,
+          ultimaRegra: regra.id,
+          janelaRegra: true,
+        },
         "triagem",
       );
       return;
@@ -1130,9 +1172,39 @@ async function rodarFluxo(
   const vars: Vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
   const estado = conversa.etapa === "fluxo" ? (ctx.fluxo ?? null) : null;
   const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
-  // Atendimento novo (conversa foi finalizada): a regra de primeiro contato
-  // pode enviar a mensagem de novo.
-  if (conversa.etapa === "finalizado") ctx.regraEnviada = null;
+  // Atendimento novo (conversa foi finalizada): as regras de primeiro contato
+  // podem enviar a mensagem de novo.
+  if (conversa.etapa === "finalizado") {
+    ctx.regraEnviada = null;
+    ctx.regrasEnviadas = [];
+    ctx.ultimaRegra = null;
+    ctx.janelaRegra = null;
+  }
+
+  // Janela de sequência: logo depois de uma regra de primeiro contato, uma
+  // mensagem seguinte (por exemplo um arquivo) pode acionar uma regra
+  // diferente, em vez de cair na confirmação pendente ou na etapa do fluxo.
+  if (ctx.janelaRegra) {
+    const texto = (entrada.texto ?? "").trim();
+    const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
+    const respondeuSimNao = conversa.etapa === "triagem" && simOuNao(texto) !== null;
+    if (!respondeuSimNao) {
+      const cfg = await carregarDadosBot();
+      const outra = cfg ? escolherRegra(cfg.regras ?? [], { texto, ehArquivo }, ctx.ultimaRegra ?? null) : null;
+      if (outra) {
+        await triagem(
+          conversa,
+          config,
+          { ...ctx, fluxo: null, fluxoFallback: null, triagem: null, regra: null },
+          dados,
+          entrada,
+          primeiraDoDia,
+          vars,
+        );
+        return;
+      }
+    }
+  }
 
   if (conversa.etapa === "triagem") {
     await resolverTriagem(conversa, config, ctx, dados, entrada, primeiraDoDia, vars);
