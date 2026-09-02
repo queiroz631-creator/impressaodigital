@@ -233,6 +233,7 @@ export function ConfiguracaoBot() {
       .from("whatsapp_config")
       .update({
         ...restante,
+        fallback_fluxo_id: restante.fallback_fluxo_id === "inicial" ? null : restante.fallback_fluxo_id,
         ignorar_agradecimentos: {
           ativo: ignorar_agradecimentos.ativo,
           janela_minutos: Math.max(0, Number(ignorar_agradecimentos.janela_minutos) || 0),
