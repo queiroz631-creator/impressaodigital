@@ -339,13 +339,20 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           .from("whatsapp_conversas")
           .update({
             cliente_id: clienteId,
-            nome_contato: nomeContato,
+            ...(nomeContato ? { nome_contato: nomeContato } : {}),
             ultima_mensagem: resumo.slice(0, 300),
             ultima_mensagem_em: agora,
             total_mensagens: totalMensagens + 1,
-            nao_lidas: naoLidas + 1,
+            // Resposta do atendente pelo celular não é mensagem não lida.
+            nao_lidas: ehSaidaPropria ? naoLidas : naoLidas + 1,
           })
           .eq("id", conversaId);
+
+        // Mensagem enviada fora do sistema: fica registrada no histórico e o
+        // bot não é acionado.
+        if (ehSaidaPropria) {
+          return Response.json({ ok: true, bot: false, motivo: "enviada_fora_do_sistema" });
+        }
 
         if (cortesiaIgnorada) {
           await supabaseAdmin.from("whatsapp_auditoria").insert({
