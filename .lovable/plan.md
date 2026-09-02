@@ -16,6 +16,6 @@ Comportamento: quando o bot transferir o atendimento para a fila humana (fluxo, 
 
 - Migração em `whatsapp_config`: `msg_transferencia_fora_horario text not null default '...'` e `msg_transferencia_fora_horario_ativo boolean not null default false`.
 - `src/lib/bot-dados.server.ts` e `src/lib/bot-motor.ts`: carregar/tipar os dois campos.
-- `src/lib/bot.server.ts`: `transferir()` passa a receber os dados completos do bot (config + horários) ou o resultado de `dentroDoHorario`, e escolhe a mensagem: silencioso → nada; fora do horário e flag ligada e texto preenchido → nova mensagem; senão → comportamento atual.
+- `src/lib/bot.server.ts`: `transferir()` passa a receber os dados completos do bot (config + horários) ou o resultado de `dentroDoHorario`, e escolhe a mensagem: fora do horário e flag ligada e texto preenchido → nova mensagem (inclusive nas transferências silenciosas); silencioso dentro do horário → nada; senão → comportamento atual.
 - `src/components/ConfiguracaoBot.tsx`: novo bloco na seção Horários, salvando junto com o restante da configuração.
 - Simulador (`src/lib/bot.functions.ts`) reflete a mesma regra.
