@@ -951,7 +951,14 @@ async function executarAcaoResposta(
     }
 
     case "atendente":
-      await transferir(conversa, config, "resposta automática encaminhou para atendimento");
+    case "transferir_silencioso":
+      await transferir(
+        conversa,
+        config,
+        "resposta automática encaminhou para atendimento",
+        undefined,
+        acao === "transferir_silencioso",
+      );
       return;
 
     case "finalizar":
