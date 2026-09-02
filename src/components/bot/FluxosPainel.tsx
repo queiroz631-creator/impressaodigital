@@ -269,25 +269,38 @@ export function FluxosPainel() {
       </div>
 
       <Card className="shadow-card">
-        <CardContent className="grid gap-2 pt-6">
-          <Label>Fluxo de finalização</Label>
-          <Select
-            value={config.data?.fluxo_finalizacao_id ?? "nenhum"}
-            onValueChange={(v) => void salvarFluxoFinalizacao(v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Nenhum" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="nenhum">Nenhum</SelectItem>
-              {lista.filter((f) => f.ativo).map((f) => (
-                <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Fluxo executado quando a conversa é enviada para a aba "Aguardando Finalização".
-          </p>
+        <CardContent className="grid gap-3 pt-6 sm:grid-cols-[1fr_180px]">
+          <div className="grid gap-2">
+            <Label>Fluxo de finalização</Label>
+            <Select
+              value={config.data?.fluxo_finalizacao_id ?? "nenhum"}
+              onValueChange={(v) => void salvarFluxoFinalizacao(v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Nenhum" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nenhum">Nenhum</SelectItem>
+                {lista.filter((f) => f.ativo).map((f) => (
+                  <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Fluxo executado quando a conversa é enviada para a aba "Aguardando Finalização".
+            </p>
+          </div>
+          <div className="grid gap-2">
+            <Label>Iniciar após (minutos)</Label>
+            <Input
+              type="number"
+              min={0}
+              defaultValue={config.data?.finalizacao_delay_minutos ?? 0}
+              key={config.data?.finalizacao_delay_minutos ?? 0}
+              onBlur={(e) => void salvarEsperaFinalizacao(Number(e.target.value))}
+            />
+            <p className="text-xs text-muted-foreground">0 inicia o fluxo imediatamente.</p>
+          </div>
         </CardContent>
       </Card>
 
