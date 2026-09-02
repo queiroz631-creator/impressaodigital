@@ -1490,6 +1490,7 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
           .update({ bot_pendente: false } as never)
           .eq("id", conversa.id);
       } finally {
+        pararBatimento();
         await destravar(conversa.id);
       }
     }
