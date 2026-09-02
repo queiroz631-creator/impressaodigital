@@ -103,7 +103,13 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           ? analise.data
           : ((bruto ?? {}) as z.infer<typeof corpoSchema>);
 
-        if (corpo.fromMe || corpo.isStatusReply) return Response.json({ ok: true, ignorado: true });
+        if (corpo.isStatusReply) return Response.json({ ok: true, ignorado: true });
+
+        // Mensagem enviada pelo próprio número (celular/WhatsApp Web, fora do
+        // sistema): é registrada como saída para o histórico ficar completo,
+        // mas nunca aciona o bot nem reabre atendimento.
+        const ehSaidaPropria = corpo.fromMe === true;
+
 
         // A Z-API envia vários tipos de callback (entrega, status, presença).
         // Só o "ReceivedCallback" é mensagem de cliente; o resto causaria laço.
