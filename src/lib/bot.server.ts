@@ -313,8 +313,16 @@ async function auditar(conversaId: string, acao: string, detalhe?: string) {
 }
 
 /** Passa a conversa para a fila humana. */
-async function transferir(conversa: ConversaBot, config: ConfigBot, motivo: string, mensagem?: string) {
-  const aviso = mensagem ?? (config.msg_transferencia_ativo !== false ? config.msg_transferencia : "");
+async function transferir(
+  conversa: ConversaBot,
+  config: ConfigBot,
+  motivo: string,
+  mensagem?: string,
+  silencioso = false,
+) {
+  const aviso = silencioso
+    ? ""
+    : (mensagem ?? (config.msg_transferencia_ativo !== false ? config.msg_transferencia : ""));
   if (aviso.trim()) await responder(conversa, aviso);
   await salvar(conversa, {
     status: "aguardando",
