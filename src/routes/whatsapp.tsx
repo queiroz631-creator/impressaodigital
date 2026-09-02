@@ -201,6 +201,14 @@ function Atendimento() {
     return base;
   }, [conversas]);
 
+  const naoLidasPorStatus = useMemo(() => {
+    const base: Record<string, number> = {};
+    for (const s of STATUS_CONVERSA) base[s.valor] = 0;
+    for (const c of conversas ?? []) base[c.status] = (base[c.status] ?? 0) + (c.nao_lidas ?? 0);
+    return base;
+  }, [conversas]);
+
+
   const termo = normalizar(busca.trim());
   const lista = (conversas ?? []).filter((c) => {
     if (c.status !== aba) return false;
@@ -231,25 +239,35 @@ function Atendimento() {
         {STATUS_CONVERSA.map((s) => {
           const Icone = ICONE_STATUS[s.valor];
           const ativo = aba === s.valor;
+          const novas = naoLidasPorStatus[s.valor] ?? 0;
+          const rotulo = novas > 0 ? `${s.rotulo} — ${novas} nova(s) mensagem(ns)` : s.rotulo;
           return (
             <button
               key={s.valor}
               type="button"
-              title={s.rotulo}
-              aria-label={s.rotulo}
+              title={rotulo}
+              aria-label={rotulo}
               onClick={() => setAba(s.valor)}
               className={cn(
-                "flex items-center gap-1 rounded-md border px-2 py-1.5 text-xs transition-colors",
+                "relative flex items-center gap-1 rounded-md border px-2 py-1.5 text-xs transition-colors",
                 ativo
                   ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground hover:bg-muted",
+                  : novas > 0
+                    ? "border-destructive font-bold text-destructive hover:bg-muted"
+                    : "border-border text-muted-foreground hover:bg-muted",
               )}
             >
-              <Icone className="h-4 w-4" />
+              <Icone className={cn("h-4 w-4", novas > 0 && !ativo && "animate-pulse")} />
               <span className="font-semibold">{contagem[s.valor] ?? 0}</span>
+              {novas > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-destructive-foreground">
+                  {novas}
+                </span>
+              )}
             </button>
           );
         })}
+
       </div>
 
       <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
@@ -279,7 +297,7 @@ function Atendimento() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
-                  <span className="min-w-0 flex-1 truncate text-sm font-semibold">{nome}</span>
+                  <span className={cn("min-w-0 flex-1 truncate text-sm", c.nao_lidas > 0 ? "font-bold" : "font-semibold")}>{nome}</span>
                   <span className="shrink-0 text-[10px] text-muted-foreground">
                     {dataHoraCurta(c.ultima_mensagem_em ?? c.created_at)}
                   </span>
