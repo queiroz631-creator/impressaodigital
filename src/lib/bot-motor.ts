@@ -67,6 +67,8 @@ export interface BotConfig {
   fluxo_finalizacao_id: string | null;
   /** Minutos sem reconhecimento até o bot iniciar o fluxo inicial (0 = desativado). */
   fallback_inicial_minutos: number;
+  /** Fluxo disparado por esse tempo; nulo usa o fluxo inicial. */
+  fallback_fluxo_id: string | null;
   msg_inatividade1: string;
   msg_inatividade_pendente: string;
   msg_inatividade_aguardando: string;
