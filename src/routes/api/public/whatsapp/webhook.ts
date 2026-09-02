@@ -238,13 +238,14 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           (cfgBot as { ignorar_agradecimentos?: unknown } | null)?.ignorar_agradecimentos,
         );
         const cortesiaIgnorada =
+          !ehSaidaPropria &&
           conversaAberta?.status === "finalizado" &&
           conteudo.tipo === "texto" &&
           cfgCortesia.ativo &&
           dentroDaJanela(conversaAberta?.data_finalizacao, cfgCortesia.janela_minutos, new Date()) &&
           ehMensagemCortesia(conteudo.texto, cfgCortesia.frases);
 
-        if (conversaAberta?.status === "finalizado" && !cortesiaIgnorada) {
+        if (!ehSaidaPropria && conversaAberta?.status === "finalizado" && !cortesiaIgnorada) {
           // Atendimento anterior encerrado: abre o próximo na mesma conversa.
           const numero = Number(conversaAberta.atendimento_numero ?? 1) + 1;
           await supabaseAdmin
