@@ -1,0 +1,1 @@
+ALTER TABLE public.whatsapp_config ADD COLUMN IF NOT EXISTS fallback_fluxo_id uuid REFERENCES public.bot_fluxos(id) ON DELETE SET NULL;
