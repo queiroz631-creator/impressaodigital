@@ -75,8 +75,14 @@ interface ContextoBot {
   regra?: string | null;
   /** Fluxo iniciado automaticamente pelo tempo de fallback (nada reconhecido). */
   fluxoFallback?: boolean | null;
-  /** Regra de primeiro contato que já enviou a mensagem neste atendimento. */
+  /** Regras de primeiro contato que já enviaram a mensagem neste atendimento. */
+  regrasEnviadas?: string[] | null;
+  /** Compatibilidade com atendimentos gravados antes da lista acima. */
   regraEnviada?: string | null;
+  /** Última regra de primeiro contato acionada (não pode repetir em sequência). */
+  ultimaRegra?: string | null;
+  /** Janela em que uma regra diferente ainda pode ser acionada. */
+  janelaRegra?: boolean | null;
   /** Última mensagem de entrada já processada pelo bot (evita respostas repetidas). */
   ultimaProcessada?: string | null;
 }
