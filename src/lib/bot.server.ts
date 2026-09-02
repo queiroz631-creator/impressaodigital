@@ -81,10 +81,13 @@ interface ContextoBot {
   regraEnviada?: string | null;
   /** Última regra de primeiro contato acionada (não pode repetir em sequência). */
   ultimaRegra?: string | null;
+  /** Momento em que a última regra de primeiro contato enviou a mensagem. */
+  ultimaRegraEm?: string | null;
   /** Janela em que uma regra diferente ainda pode ser acionada. */
   janelaRegra?: boolean | null;
   /** Última mensagem de entrada já processada pelo bot (evita respostas repetidas). */
   ultimaProcessada?: string | null;
+
 }
 
 interface ConversaBot {
