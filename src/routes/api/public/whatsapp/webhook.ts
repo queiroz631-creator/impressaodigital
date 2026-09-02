@@ -128,7 +128,11 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         const telefone = normalizarTelefone(corpo.phone);
         if (!telefone) return Response.json({ ok: true, ignorado: true });
 
-        const nomeContato = corpo.senderName || corpo.chatName || null;
+        // Em mensagens enviadas pelo próprio número, "senderName" é a loja:
+        // o nome do contato é o do chat (o cliente).
+        const nomeContato = ehSaidaPropria
+          ? corpo.chatName || null
+          : corpo.senderName || corpo.chatName || null;
         const conteudo = extrair(corpo);
         const agora = new Date().toISOString();
 
