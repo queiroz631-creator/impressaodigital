@@ -1,0 +1,2 @@
+ALTER TABLE public.whatsapp_config ADD COLUMN IF NOT EXISTS finalizacao_delay_minutos integer NOT NULL DEFAULT 0;
+ALTER TABLE public.whatsapp_conversas ADD COLUMN IF NOT EXISTS finalizacao_fluxo_em timestamptz;
