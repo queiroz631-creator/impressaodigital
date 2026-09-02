@@ -121,12 +121,22 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         const ehGrupo =
           corpo.isGroup === true ||
           Boolean(corpo.participantPhone) ||
-          /@g\.us$/i.test(corpo.phone ?? "") ||
-          String(corpo.phone ?? "").replace(/\D/g, "").length > 15;
+          /@g\.us$/i.test(corpo.phone ?? "");
         if (ehGrupo) return Response.json({ ok: true, ignorado: true, motivo: "grupo" });
 
-        const telefone = normalizarTelefone(corpo.phone);
-        if (!telefone) return Response.json({ ok: true, ignorado: true });
+        // Nas mensagens enviadas pelo próprio número o provedor manda o
+        // identificador interno do chat (LID) no lugar do telefone do cliente.
+        // Ele não é telefone: usar como tal criaria contato/conversa fantasma.
+        const chatLid = (corpo.chatLid ?? (/@lid$/i.test(corpo.phone ?? "") ? corpo.phone : null)) || null;
+        const lidNormalizado = chatLid ? chatLid.replace(/@.*$/, "").replace(/\D/g, "") : null;
+        const phoneEhLid =
+          /@lid$/i.test(corpo.phone ?? "") ||
+          String(corpo.phone ?? "").replace(/\D/g, "").length > 15;
+
+        const telefone = phoneEhLid ? "" : normalizarTelefone(corpo.phone);
+        if (!telefone && !(ehSaidaPropria && lidNormalizado)) {
+          return Response.json({ ok: true, ignorado: true });
+        }
 
         // Em mensagens enviadas pelo próprio número, "senderName" é a loja:
         // o nome do contato é o do chat (o cliente).
@@ -141,11 +151,9 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         // "somente_liberados": responde apenas aos liberados e ativos.
         const [{ data: cfgBot }, { data: regraNumero }] = await Promise.all([
           supabaseAdmin.from("whatsapp_config").select("modo_numeros, ignorar_agradecimentos").limit(1).maybeSingle(),
-          supabaseAdmin
-            .from("bot_numeros")
-            .select("permitido, ativo")
-            .eq("telefone", telefone)
-            .maybeSingle(),
+          telefone
+            ? supabaseAdmin.from("bot_numeros").select("permitido, ativo").eq("telefone", telefone).maybeSingle()
+            : Promise.resolve({ data: null as { permitido: boolean; ativo: boolean } | null }),
         ]);
         const modoNumeros = cfgBot?.modo_numeros ?? "todos";
         const regraValida = regraNumero?.ativo ? regraNumero : null;
@@ -172,61 +180,82 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           if (jaExiste?.id) return Response.json({ ok: true, ignorado: true, motivo: "duplicada" });
         }
 
-        // Cliente
-        const { data: clienteExistente } = await supabaseAdmin
-          .from("clientes")
-          .select("id, nome")
-          .eq("telefone_normalizado", telefone)
-          .maybeSingle();
-
-        let clienteId = clienteExistente?.id ?? null;
-        if (!clienteId) {
-          const { data: novo } = await supabaseAdmin
-            .from("clientes")
-            .insert({ nome: nomeContato ?? "", telefone, telefone_normalizado: telefone })
-            .select("id")
-            .maybeSingle();
-          clienteId = novo?.id ?? null;
-        }
-
-        // Conversa do cliente (única por telefone: atendimentos são numerados dentro dela).
-        // "telefone" tem UNIQUE constraint no banco: duas mensagens simultâneas do
-        // mesmo cliente não podem mais criar duas conversas em paralelo. Se o INSERT
-        // esbarrar na constraint (outra requisição criou a linha entre o SELECT e o
-        // INSERT), a busca abaixo recupera a linha já existente.
-        let conversaAberta: {
+        type ConversaBase = {
           id: string;
           total_mensagens: number | null;
           nao_lidas: number | null;
           status: string;
           atendimento_numero: number | null;
           data_finalizacao: string | null;
-        } | null = null;
+          cliente_id?: string | null;
+        };
+        const colunasConversa =
+          "id, total_mensagens, nao_lidas, status, atendimento_numero, data_finalizacao, cliente_id";
 
-        for (let tentativa = 0; tentativa < 2 && !conversaAberta; tentativa += 1) {
+        let conversaAberta: ConversaBase | null = null;
+        let clienteId: string | null = null;
+
+        if (!telefone) {
+          // Mensagem enviada pelo celular: só temos o identificador interno do
+          // chat. Localizamos a conversa já existente por ele; sem isso a
+          // mensagem é ignorada (nunca criamos contato a partir de um LID).
           const { data } = await supabaseAdmin
             .from("whatsapp_conversas")
-            .select("id, total_mensagens, nao_lidas, status, atendimento_numero, data_finalizacao")
-            .eq("telefone", telefone)
+            .select(colunasConversa)
+            .eq("chat_lid", lidNormalizado ?? "")
+            .maybeSingle();
+          if (!data) return Response.json({ ok: true, ignorado: true, motivo: "lid_sem_conversa" });
+          conversaAberta = data as ConversaBase;
+          clienteId = data.cliente_id ?? null;
+        } else {
+          // Cliente
+          const { data: clienteExistente } = await supabaseAdmin
+            .from("clientes")
+            .select("id, nome")
+            .eq("telefone_normalizado", telefone)
             .maybeSingle();
 
-          if (data) {
-            conversaAberta = data;
-            break;
+          clienteId = clienteExistente?.id ?? null;
+          if (!clienteId) {
+            const { data: novo } = await supabaseAdmin
+              .from("clientes")
+              .insert({ nome: nomeContato ?? "", telefone, telefone_normalizado: telefone })
+              .select("id")
+              .maybeSingle();
+            clienteId = novo?.id ?? null;
           }
 
-          const { error: erroNova } = await supabaseAdmin.from("whatsapp_conversas").insert({
-            telefone,
-            cliente_id: clienteId,
-            nome_contato: nomeContato,
-            status: "automatico",
-            etapa: "inicio",
-          });
+          // Conversa do cliente (única por telefone: atendimentos são numerados dentro dela).
+          // "telefone" tem UNIQUE constraint no banco: duas mensagens simultâneas do
+          // mesmo cliente não podem mais criar duas conversas em paralelo. Se o INSERT
+          // esbarrar na constraint (outra requisição criou a linha entre o SELECT e o
+          // INSERT), a busca abaixo recupera a linha já existente.
+          for (let tentativa = 0; tentativa < 2 && !conversaAberta; tentativa += 1) {
+            const { data } = await supabaseAdmin
+              .from("whatsapp_conversas")
+              .select(colunasConversa)
+              .eq("telefone", telefone)
+              .maybeSingle();
 
-          // 23505 = unique_violation: outra requisição concorrente já criou a
-          // conversa deste telefone; a próxima volta do loop apenas a lê.
-          if (erroNova && erroNova.code !== "23505") {
-            return new Response("Falha ao registrar a conversa", { status: 500 });
+            if (data) {
+              conversaAberta = data as ConversaBase;
+              break;
+            }
+
+            const { error: erroNova } = await supabaseAdmin.from("whatsapp_conversas").insert({
+              telefone,
+              cliente_id: clienteId,
+              nome_contato: nomeContato,
+              status: "automatico",
+              etapa: "inicio",
+              ...(lidNormalizado ? { chat_lid: lidNormalizado } : {}),
+            });
+
+            // 23505 = unique_violation: outra requisição concorrente já criou a
+            // conversa deste telefone; a próxima volta do loop apenas a lê.
+            if (erroNova && erroNova.code !== "23505") {
+              return new Response("Falha ao registrar a conversa", { status: 500 });
+            }
           }
         }
 
@@ -235,6 +264,22 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         let naoLidas = conversaAberta?.nao_lidas ?? 0;
 
         if (!conversaId) return new Response("Falha ao registrar a conversa", { status: 500 });
+
+        // Eco da própria resposta do sistema (o provedor devolve com outro
+        // identificador): não registra cópia duplicada.
+        if (ehSaidaPropria && conteudo.texto) {
+          const limite = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+          const { data: repetida } = await supabaseAdmin
+            .from("whatsapp_mensagens")
+            .select("id")
+            .eq("conversa_id", conversaId)
+            .eq("direcao", "saida")
+            .eq("texto", conteudo.texto)
+            .gte("data_hora", limite)
+            .limit(1)
+            .maybeSingle();
+          if (repetida?.id) return Response.json({ ok: true, ignorado: true, motivo: "eco_do_sistema" });
+        }
 
         // Agradecimento/despedida logo após finalizar: registra a mensagem,
         // mas não reabre o atendimento nem aciona o bot (BOT > Inatividade).
@@ -339,7 +384,11 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           .from("whatsapp_conversas")
           .update({
             cliente_id: clienteId,
-            ...(nomeContato ? { nome_contato: nomeContato } : {}),
+            // Guarda o identificador interno do chat para casar as mensagens
+            // enviadas pelo celular com esta mesma conversa.
+            ...(lidNormalizado ? ({ chat_lid: lidNormalizado } as Record<string, string>) : {}),
+            // "…@lid" não é nome de contato: nunca sobrescreve o nome real.
+            ...(nomeContato && !/@lid$/i.test(nomeContato) ? { nome_contato: nomeContato } : {}),
             ultima_mensagem: resumo.slice(0, 300),
             ultima_mensagem_em: agora,
             total_mensagens: totalMensagens + 1,
