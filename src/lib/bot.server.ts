@@ -1072,9 +1072,8 @@ async function triagem(
   const cfg = await carregarDadosBot();
   if (!cfg) return;
 
-  if (!dentroDoHorario(cfg, vars.agora) && cfg.config.msg_fora_horario_ativo && cfg.config.msg_fora_horario.trim()) {
-    await responder(conversa, aplicarVariaveis(cfg.config.msg_fora_horario, vars));
-  }
+  // A mensagem global "Fora do horário" foi desativada: o primeiro contato
+  // responde apenas pela regra configurada.
   await salvar(conversa, { saudacao_em: vars.agora.toISOString() });
 
   const texto = (entrada.texto ?? "").trim();
