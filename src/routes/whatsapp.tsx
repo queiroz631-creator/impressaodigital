@@ -297,7 +297,7 @@ function Atendimento() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
-                  <span className="min-w-0 flex-1 truncate text-sm font-semibold">{nome}</span>
+                  <span className={cn("min-w-0 flex-1 truncate text-sm", c.nao_lidas > 0 ? "font-bold" : "font-semibold")}>{nome}</span>
                   <span className="shrink-0 text-[10px] text-muted-foreground">
                     {dataHoraCurta(c.ultima_mensagem_em ?? c.created_at)}
                   </span>
