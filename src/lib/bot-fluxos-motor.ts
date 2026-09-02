@@ -36,6 +36,8 @@ export interface SaidaFluxo {
   transferir?: boolean;
   pendente?: boolean;
   finalizar?: boolean;
+  /** true quando a finalização não deve enviar a mensagem de despedida. */
+  silencioso?: boolean;
   /** true quando a mensagem não foi entendida na etapa atual. */
   naoEntendi?: boolean;
 }
@@ -216,6 +218,8 @@ function aplicarAcaoEtapa(
       return { mensagens: [], estado: null, pendente: true, acao: etapa.acao, etapaAcao: etapa };
     case "finalizar":
       return { mensagens: [], estado: null, finalizar: true };
+    case "finalizar_silencioso":
+      return { mensagens: [], estado: null, finalizar: true, silencioso: true };
     case "voltar_inicio_fluxo": {
       const primeira = etapasDoFluxo(dados, etapa.fluxo_id)[0];
       if (!primeira || profundidade >= LIMITE_ENCADEAMENTO) return { mensagens: [], estado: null };
@@ -351,6 +355,8 @@ function aplicarOpcao(
       return { mensagens: [], estado: null, transferir: true, acao: "transferir_atendente", etapaAcao: etapa };
     case "finalizar":
       return { mensagens: [], estado: null, finalizar: true };
+    case "finalizar_silencioso":
+      return { mensagens: [], estado: null, finalizar: true, silencioso: true };
     case "iniciar_fluxo": {
       const destino = fluxoPorId(dados, opcao.destino_fluxo_id);
       if (!destino?.ativo) return avancar(dados, etapa, novo, vars);
