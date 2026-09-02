@@ -121,12 +121,22 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         const ehGrupo =
           corpo.isGroup === true ||
           Boolean(corpo.participantPhone) ||
-          /@g\.us$/i.test(corpo.phone ?? "") ||
-          String(corpo.phone ?? "").replace(/\D/g, "").length > 15;
+          /@g\.us$/i.test(corpo.phone ?? "");
         if (ehGrupo) return Response.json({ ok: true, ignorado: true, motivo: "grupo" });
 
-        const telefone = normalizarTelefone(corpo.phone);
-        if (!telefone) return Response.json({ ok: true, ignorado: true });
+        // Nas mensagens enviadas pelo próprio número o provedor manda o
+        // identificador interno do chat (LID) no lugar do telefone do cliente.
+        // Ele não é telefone: usar como tal criaria contato/conversa fantasma.
+        const chatLid = (corpo.chatLid ?? (/@lid$/i.test(corpo.phone ?? "") ? corpo.phone : null)) || null;
+        const lidNormalizado = chatLid ? chatLid.replace(/@.*$/, "").replace(/\D/g, "") : null;
+        const phoneEhLid =
+          /@lid$/i.test(corpo.phone ?? "") ||
+          String(corpo.phone ?? "").replace(/\D/g, "").length > 15;
+
+        const telefone = phoneEhLid ? "" : normalizarTelefone(corpo.phone);
+        if (!telefone && !(ehSaidaPropria && lidNormalizado)) {
+          return Response.json({ ok: true, ignorado: true });
+        }
 
         // Em mensagens enviadas pelo próprio número, "senderName" é a loja:
         // o nome do contato é o do chat (o cliente).
