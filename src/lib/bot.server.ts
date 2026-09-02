@@ -1172,9 +1172,39 @@ async function rodarFluxo(
   const vars: Vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
   const estado = conversa.etapa === "fluxo" ? (ctx.fluxo ?? null) : null;
   const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
-  // Atendimento novo (conversa foi finalizada): a regra de primeiro contato
-  // pode enviar a mensagem de novo.
-  if (conversa.etapa === "finalizado") ctx.regraEnviada = null;
+  // Atendimento novo (conversa foi finalizada): as regras de primeiro contato
+  // podem enviar a mensagem de novo.
+  if (conversa.etapa === "finalizado") {
+    ctx.regraEnviada = null;
+    ctx.regrasEnviadas = [];
+    ctx.ultimaRegra = null;
+    ctx.janelaRegra = null;
+  }
+
+  // Janela de sequência: logo depois de uma regra de primeiro contato, uma
+  // mensagem seguinte (por exemplo um arquivo) pode acionar uma regra
+  // diferente, em vez de cair na confirmação pendente ou na etapa do fluxo.
+  if (ctx.janelaRegra) {
+    const texto = (entrada.texto ?? "").trim();
+    const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
+    const respondeuSimNao = conversa.etapa === "triagem" && simOuNao(texto) !== null;
+    if (!respondeuSimNao) {
+      const cfg = await carregarDadosBot();
+      const outra = cfg ? escolherRegra(cfg.regras ?? [], { texto, ehArquivo }, ctx.ultimaRegra ?? null) : null;
+      if (outra) {
+        await triagem(
+          conversa,
+          config,
+          { ...ctx, fluxo: null, fluxoFallback: null, triagem: null, regra: null },
+          dados,
+          entrada,
+          primeiraDoDia,
+          vars,
+        );
+        return;
+      }
+    }
+  }
 
   if (conversa.etapa === "triagem") {
     await resolverTriagem(conversa, config, ctx, dados, entrada, primeiraDoDia, vars);
