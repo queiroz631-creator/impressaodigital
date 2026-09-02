@@ -32,7 +32,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
-import { enviarParaFinalizacao, enviarTextoWhatsapp } from "@/lib/whatsapp.functions";
+import { enviarDigitandoWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp } from "@/lib/whatsapp.functions";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONVERSA,
@@ -351,8 +351,18 @@ function Conversa({
   const queryClient = useQueryClient();
   const [texto, setTexto] = useState("");
   const fim = useRef<HTMLDivElement | null>(null);
+  const ultimaPresenca = useRef(0);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
   const finalizacao = useServerFn(enviarParaFinalizacao);
+  const presenca = useServerFn(enviarDigitandoWhatsapp);
+
+  // Avisa o cliente que o atendente está digitando (no máximo 1x a cada 3s).
+  function avisarDigitando() {
+    const agora = Date.now();
+    if (agora - ultimaPresenca.current < 3000) return;
+    ultimaPresenca.current = agora;
+    void presenca({ data: { telefone: conversa.telefone } }).catch(() => undefined);
+  }
 
   async function enviarFinalizacao() {
     try {
@@ -551,7 +561,10 @@ function Conversa({
           <div className="flex items-end gap-2 border-t pt-3">
             <Textarea
               value={texto}
-              onChange={(e) => setTexto(e.target.value)}
+              onChange={(e) => {
+                setTexto(e.target.value);
+                if (e.target.value.trim()) avisarDigitando();
+              }}
               placeholder="Escreva a mensagem..."
               rows={2}
               className="min-h-0 flex-1 resize-none"

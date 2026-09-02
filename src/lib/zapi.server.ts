@@ -25,6 +25,18 @@ export interface RespostaZapi {
   erro?: string;
 }
 
+/**
+ * Mostra o indicador "digitando..." no WhatsApp do cliente por `duracaoMs`
+ * milissegundos. Falha silenciosa: nunca interrompe o envio da mensagem.
+ */
+export async function enviarPresencaDigitando(telefone: string, duracaoMs: number): Promise<void> {
+  const delay = Math.min(15000, Math.max(500, Math.round(duracaoMs)));
+  await chamarZapi("send-presence", {
+    metodo: "POST",
+    corpo: { phone: telefone, presence: "composing", delay },
+  }).catch(() => undefined);
+}
+
 export async function chamarZapi(
   caminho: string,
   opcoes: { metodo?: "GET" | "POST"; corpo?: unknown } = {},
