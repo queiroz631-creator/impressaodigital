@@ -785,6 +785,10 @@ async function executarAcaoFluxo(
       await transferir(conversa, config, "fluxo do bot encaminhou para atendimento");
       return false;
 
+    case "transferir_silencioso":
+      await transferir(conversa, config, "fluxo do bot encaminhou para atendimento", undefined, true);
+      return false;
+
     case "criar_pendente":
       await salvar(conversa, {
         status: "pendente",
