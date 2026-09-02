@@ -841,7 +841,13 @@ async function entregarFluxo(
 
     if (!atual.acao && !atual.transferir && !atual.pendente) return;
 
-    const acao = atual.acao ?? (atual.transferir ? "transferir_atendente" : "criar_pendente");
+    const acao =
+      atual.acao ??
+      (atual.transferir
+        ? atual.silencioso
+          ? "transferir_silencioso"
+          : "transferir_atendente"
+        : "criar_pendente");
     const continuar = await executarAcaoFluxo(conversa, config, ctx, acao);
     if (!continuar || !atual.etapaAcao || !atual.estado) return;
 
