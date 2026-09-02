@@ -191,6 +191,7 @@ export const ACOES_SISTEMA = new Set([
   "gerar_link",
   "enviar_orcamento",
   "transferir_atendente",
+  "transferir_silencioso",
   "criar_pendente",
 ]);
 
