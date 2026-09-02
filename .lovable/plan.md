@@ -1,53 +1,38 @@
-# Primeiro contato em sequência: arquivo após a saudação dispara nova regra
+# Primeiro contato: nova opção "Uma vez por atendimento" em Enviar a mensagem
 
-Hoje as regras de primeiro contato só são avaliadas quando a conversa está parada no início.
-Se a primeira regra inicia um fluxo (ou fica aguardando SIM/NÃO) e o cliente manda um arquivo
-logo em seguida, esse arquivo cai dentro do fluxo e nenhuma outra regra dispara.
+O campo **Enviar a mensagem** da regra de primeiro contato passa a ter três opções:
 
-## Objetivo
+1. **Sempre** — envia a mensagem toda vez que a regra combinar (hoje, na prática, ela só envia
+   1 vez por atendimento por causa de uma trava interna; essa trava sai desta opção).
+2. **Uma vez por atendimento** (nova) — envia a mensagem só na primeira vez que a regra
+   combinar naquele atendimento; nas próximas combinações a ação da regra executa em silêncio.
+   Ao finalizar o atendimento, a regra pode enviar de novo no próximo.
+3. **Somente no 1º contato do dia** — comportamento atual inédito: só envia na primeira
+   conversa do dia.
 
-Logo após o bot reconhecer um primeiro contato, se o cliente enviar um arquivo (ou texto com
-palavras-chave), o bot volta a avaliar as regras de primeiro contato — permitindo ativar uma
-resposta automática ou reconhecer um novo primeiro contato — em vez de tratar a mensagem como
-resposta do fluxo/ da confirmação pendente.
+Regras já cadastradas continuam exatamente como estão (padrão "Sempre"); quem quiser o
+comportamento de hoje (sem repetição) escolhe "Uma vez por atendimento".
 
-## Como vai funcionar
+## Tela
 
-- Janela de sequência: depois que uma regra de primeiro contato é acionada, as próximas
-  mensagens do cliente continuam passando pelas regras enquanto nenhum fluxo tiver sido
-  efetivamente escolhido/iniciado pelo cliente e nenhuma confirmação SIM/NÃO respondida.
-- Nessa janela, cada mensagem é avaliada por `escolherRegra` normalmente:
-  - Arquivo sem texto → regra "Somente arquivos" (ex.: enviar resposta automática ou iniciar
-    o fluxo de orçamento).
-  - Arquivo com palavra-chave → regra "Arquivos + palavras-chave".
-  - Texto com palavra-chave → regra "Texto com palavras-chave".
-- Cada regra envia sua mensagem no máximo 1 vez por atendimento (controle já existente
-  `regraEnviada`), estendido para guardar todas as regras já disparadas — assim regras
-  diferentes respondem, mas a mesma regra não repete.
-- Quando uma regra da janela tem ação "iniciar fluxo" ou o cliente responde SIM a uma
-  confirmação, a janela fecha e o atendimento segue o fluxo normalmente.
-- Se nenhuma regra combinar na janela, a mensagem segue o caminho atual (confirmação
-  pendente / etapa do fluxo).
-
-## O que muda na prática
-
-Exemplo típico: cliente diz "oi" → regra de saudação responde e aguarda → cliente manda o PDF →
-regra "Somente arquivos" dispara a resposta automática ou inicia o fluxo de orçamento, mesmo
-se a saudação estava configurada para perguntar SIM/NÃO ou apontar para um fluxo.
+- No diálogo de edição da regra (aba **Primeiro contato**), o seletor "Enviar a mensagem"
+  ganha a opção **Uma vez por atendimento** entre "Sempre" e "Somente no 1º contato do dia".
+- No card da regra, selo discreto "1x por atendimento" quando essa opção estiver escolhida
+  (o selo "1º contato do dia" já existe).
+- Nenhuma outra mudança de layout.
 
 ## Detalhes técnicos
 
-- `src/lib/bot-motor.ts`: sem mudanças em `escolherRegra` (já é pura e reutilizável).
-- `src/lib/bot.server.ts`:
-  - `ContextoBot.regraEnviada` passa a ser lista de ids (`regrasEnviadas`), com migração do
-    valor antigo no contexto salvo.
-  - Novo estado de janela no contexto (ex.: `janelaPrimeiroContato: true`) gravado por
-    `executarAcaoRegra`/`resolverTriagem` ao acionar uma regra.
-  - Em `rodarFluxo`: quando a janela está aberta e chega mensagem do cliente, rodar
-    `escolherRegra` antes de `resolverTriagem`/etapa do fluxo; se uma regra diferente combinar,
-    executar `triagem` com ela; se nada combinar, seguir o fluxo normal. A janela fecha ao
-    iniciar fluxo, transferir, finalizar ou ao cliente responder SIM/NÃO à confirmação.
-  - Reaproveitar a lógica existente de interrupção por palavra-chave do fluxo de fallback como
-    referência de onde encaixar a verificação.
-- Simulador da aba do Bot: passa a refletir a janela (sem mudanças visuais).
-- Sem alterações de banco, telas de configuração ou demais áreas (orçamento, currículo etc.).
+- Banco: o campo `bot_primeiro_contato.enviar_mensagem` passa a aceitar também
+  `uma_vez_atendimento` (ajuste do CHECK/valores permitidos, sem migração de dados).
+- `src/lib/bot-fluxos.ts`: nova entrada em `ENVIOS_PRIMEIRO_CONTATO` com o rótulo.
+- `src/lib/bot-motor.ts`: comentário/tipo do campo atualizado.
+- `src/lib/bot.server.ts` (`triagem`): a trava `regraEnviada` passa a valer apenas quando
+  `enviar_mensagem === "uma_vez_atendimento"`:
+  - `sempre` → envia em toda combinação (mantém o limite de 1 envio por rajada de mensagens,
+    garantido pela fila/lock já existentes);
+  - `uma_vez_atendimento` → envia só se a regra ainda não enviou neste atendimento
+    (regraEnviada, zerada quando a conversa é finalizada — lógica já existente);
+  - `primeira_do_dia` → inalterado.
+- Simulador (`src/lib/bot.functions.ts`): mesma regra de envio.
+- Sem mudanças em fluxos, respostas automáticas, orçamento, currículo ou Z-API.
