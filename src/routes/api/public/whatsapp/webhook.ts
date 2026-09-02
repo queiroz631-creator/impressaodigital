@@ -11,7 +11,6 @@ const corpoSchema = z
     chatName: z.string().nullish(),
     messageId: z.string().nullish(),
     fromMe: z.boolean().nullish(),
-    fromApi: z.boolean().nullish(),
     isGroup: z.boolean().nullish(),
     participantPhone: z.string().nullish(),
     chatLid: z.string().nullish(),
@@ -109,7 +108,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         // Mensagem enviada pelo próprio número (celular/WhatsApp Web, fora do
         // sistema): é registrada como saída para o histórico ficar completo,
         // mas nunca aciona o bot nem reabre atendimento.
-        const ehSaidaPropria = corpo.fromMe === true && corpo.fromApi !== true;
+        const ehSaidaPropria = corpo.fromMe === true;
 
 
         // A Z-API envia vários tipos de callback (entrega, status, presença).
