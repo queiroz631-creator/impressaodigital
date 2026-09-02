@@ -561,7 +561,10 @@ function Conversa({
           <div className="flex items-end gap-2 border-t pt-3">
             <Textarea
               value={texto}
-              onChange={(e) => setTexto(e.target.value)}
+              onChange={(e) => {
+                setTexto(e.target.value);
+                if (e.target.value.trim()) avisarDigitando();
+              }}
               placeholder="Escreva a mensagem..."
               rows={2}
               className="min-h-0 flex-1 resize-none"
