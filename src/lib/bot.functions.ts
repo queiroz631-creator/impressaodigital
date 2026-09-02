@@ -47,6 +47,16 @@ export const simularBot = createServerFn({ method: "POST" })
 
     mensagens.push(...saida.mensagens);
 
+    const foraDoHorario = !dentroDoHorario(dados, agora);
+    if (
+      saida.acao === "atendente" &&
+      foraDoHorario &&
+      dados.config.msg_transferencia_fora_horario_ativo &&
+      dados.config.msg_transferencia_fora_horario.trim()
+    ) {
+      mensagens.push({ texto: dados.config.msg_transferencia_fora_horario });
+    }
+
     const descricao: Record<string, string> = {
       orcamento: "➡️ O bot iniciaria a coleta de arquivos para o orçamento.",
       consultar_pedido: "➡️ O bot buscaria os pedidos deste telefone.",
