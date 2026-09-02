@@ -17,6 +17,7 @@ import { FluxosPainel } from "@/components/bot/FluxosPainel";
 import { RespostasPainel } from "@/components/bot/RespostasPainel";
 import { NumerosPainel } from "@/components/bot/NumerosPainel";
 import { PrimeiroContatoPainel } from "@/components/bot/PrimeiroContatoPainel";
+import { lerCfgCortesia } from "@/lib/whatsapp-cortesia";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -96,6 +97,8 @@ interface FormBot {
   msg_revisao_ativo: boolean;
   msg_orcamento_confirmado: string;
   msg_orcamento_confirmado_ativo: boolean;
+  /** Frases de cortesia separadas por quebra de linha (convertido ao salvar). */
+  ignorar_agradecimentos: { ativo: boolean; janela_minutos: number; frases: string };
 }
 
 const STATUS_INATIVIDADE: { valor: string; rotulo: string }[] = [
@@ -208,6 +211,10 @@ export function ConfiguracaoBot() {
       msg_revisao_ativo: d.msg_revisao_ativo !== false,
       msg_orcamento_confirmado: d.msg_orcamento_confirmado ?? "",
       msg_orcamento_confirmado_ativo: d.msg_orcamento_confirmado_ativo !== false,
+      ignorar_agradecimentos: (() => {
+        const c = lerCfgCortesia((d as { ignorar_agradecimentos?: unknown }).ignorar_agradecimentos);
+        return { ativo: c.ativo, janela_minutos: c.janela_minutos, frases: c.frases.join("\n") };
+      })(),
     });
   }, [config.data, form]);
 
@@ -218,7 +225,21 @@ export function ConfiguracaoBot() {
   async function salvarConfig() {
     if (!id || !form) return;
     setSalvando(true);
-    const { error } = await supabase.from("whatsapp_config").update(form).eq("id", id);
+    const { ignorar_agradecimentos, ...restante } = form;
+    const { error } = await supabase
+      .from("whatsapp_config")
+      .update({
+        ...restante,
+        ignorar_agradecimentos: {
+          ativo: ignorar_agradecimentos.ativo,
+          janela_minutos: Math.max(0, Number(ignorar_agradecimentos.janela_minutos) || 0),
+          frases: ignorar_agradecimentos.frases
+            .split("\n")
+            .map((f) => f.trim())
+            .filter(Boolean),
+        },
+      } as never)
+      .eq("id", id);
     setSalvando(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Atendimento automático atualizado.");
