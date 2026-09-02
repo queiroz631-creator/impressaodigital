@@ -294,6 +294,7 @@ type AtualizacaoConversa = Partial<{
   ultima_mensagem: string;
   ultima_mensagem_em: string;
   finalizacao_fluxo_em: string | null;
+  nao_lidas: number;
 }>;
 
 async function salvar(conversa: ConversaBot, dados: AtualizacaoConversa) {
