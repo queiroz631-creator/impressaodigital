@@ -151,11 +151,9 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         // "somente_liberados": responde apenas aos liberados e ativos.
         const [{ data: cfgBot }, { data: regraNumero }] = await Promise.all([
           supabaseAdmin.from("whatsapp_config").select("modo_numeros, ignorar_agradecimentos").limit(1).maybeSingle(),
-          supabaseAdmin
-            .from("bot_numeros")
-            .select("permitido, ativo")
-            .eq("telefone", telefone)
-            .maybeSingle(),
+          telefone
+            ? supabaseAdmin.from("bot_numeros").select("permitido, ativo").eq("telefone", telefone).maybeSingle()
+            : Promise.resolve({ data: null as { permitido: boolean; ativo: boolean } | null }),
         ]);
         const modoNumeros = cfgBot?.modo_numeros ?? "todos";
         const regraValida = regraNumero?.ativo ? regraNumero : null;
