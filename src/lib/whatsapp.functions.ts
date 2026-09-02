@@ -77,6 +77,20 @@ export const enviarTextoWhatsapp = createServerFn({ method: "POST" })
     return { ok: true as const, erro: null };
   });
 
+/** Mostra "digitando..." no WhatsApp do cliente enquanto o atendente escreve. */
+export const enviarDigitandoWhatsapp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ telefone: z.string().min(8).max(30) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { enviarPresencaDigitando } = await import("@/lib/zapi.server");
+    const telefone = normalizarTelefone(data.telefone);
+    if (!telefone) return { ok: false as const };
+    await enviarPresencaDigitando(telefone, 4000);
+    return { ok: true as const };
+  });
+
 /** Envia um documento (PDF) ou imagem em base64. */
 export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
