@@ -1993,6 +1993,7 @@ export type Database = {
           bot_lock_em: string | null
           bot_pendente: boolean
           bot_pendente_em: string | null
+          chat_lid: string | null
           cliente_id: string | null
           contexto: Json
           created_at: string
@@ -2025,6 +2026,7 @@ export type Database = {
           bot_lock_em?: string | null
           bot_pendente?: boolean
           bot_pendente_em?: string | null
+          chat_lid?: string | null
           cliente_id?: string | null
           contexto?: Json
           created_at?: string
@@ -2057,6 +2059,7 @@ export type Database = {
           bot_lock_em?: string | null
           bot_pendente?: boolean
           bot_pendente_em?: string | null
+          chat_lid?: string | null
           cliente_id?: string | null
           contexto?: Json
           created_at?: string
