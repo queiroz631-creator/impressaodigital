@@ -27,6 +27,39 @@ export const statusInstanciaZapi = createServerFn({ method: "GET" })
     };
   });
 
+/** Ativa na Z-API o envio ao webhook das mensagens digitadas no celular/Web. */
+export const ativarMensagensEnviadasPorMim = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: ehAdmin, error: erroPermissao } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (erroPermissao || !ehAdmin) {
+      return { ok: false as const, erro: "Somente administradores podem alterar a integração." };
+    }
+
+    const { chamarZapi } = await import("@/lib/zapi.server");
+    const resposta = await chamarZapi("update-notify-sent-by-me", {
+      metodo: "PUT",
+      corpo: { notifySentByMe: true },
+    });
+
+    if (!resposta.ok) {
+      return {
+        ok: false as const,
+        erro: resposta.erro ?? "Não foi possível ativar as mensagens enviadas pelo celular.",
+      };
+    }
+
+    const dados = resposta.dados as { value?: boolean } | null;
+    if (dados?.value === false) {
+      return { ok: false as const, erro: "A Z-API não confirmou a ativação." };
+    }
+
+    return { ok: true as const, erro: null };
+  });
+
 /** Envia uma mensagem de texto e registra na conversa. */
 export const enviarTextoWhatsapp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
