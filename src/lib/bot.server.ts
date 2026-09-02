@@ -1318,6 +1318,7 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
   }
   if (!travou) return;
 
+  const pararBatimento = manterTravaViva(conversaId);
   try {
     let alvo = entrada;
 
