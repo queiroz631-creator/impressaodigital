@@ -294,6 +294,7 @@ type AtualizacaoConversa = Partial<{
   ultima_mensagem: string;
   ultima_mensagem_em: string;
   finalizacao_fluxo_em: string | null;
+  nao_lidas: number;
 }>;
 
 async function salvar(conversa: ConversaBot, dados: AtualizacaoConversa) {
@@ -842,7 +843,7 @@ async function entregarFluxo(
       await salvar(conversa, {
         status: "finalizado",
         data_finalizacao: vars.agora.toISOString(),
-        
+        nao_lidas: 0,
       });
       await auditar(conversa.id, "bot_finalizou", "fluxo finalizado");
       return;
@@ -969,7 +970,7 @@ async function executarAcaoResposta(
           : "";
       if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
       await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: null }, "finalizado");
-      await salvar(conversa, { status: "finalizado", data_finalizacao: vars.agora.toISOString() });
+      await salvar(conversa, { status: "finalizado", data_finalizacao: vars.agora.toISOString(), nao_lidas: 0 });
       await auditar(conversa.id, "bot_finalizou", "resposta automática finalizou o atendimento");
       return;
     }
@@ -1663,7 +1664,7 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
     }
 
     if (saida.estado.etapa === "finalizado") {
-      await salvar(conversa, { status: "finalizado", data_finalizacao: agora.toISOString() });
+      await salvar(conversa, { status: "finalizado", data_finalizacao: agora.toISOString(), nao_lidas: 0 });
       await auditar(conversa.id, "bot_finalizou", "cliente não precisava de mais nada");
       return;
     }
@@ -2025,6 +2026,7 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
               data_finalizacao: agora.toISOString(),
               finalizacao_em: agora.toISOString(),
               motivo_finalizacao: "inatividade do cliente",
+              nao_lidas: 0,
             }
           : { motivo_pendencia: "inatividade do cliente" }),
       })
