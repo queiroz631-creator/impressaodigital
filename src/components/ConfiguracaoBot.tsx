@@ -79,6 +79,7 @@ interface FormBot {
   inatividade1_minutos: number;
   inatividade2_minutos: number;
   fallback_inicial_minutos: number;
+  fallback_fluxo_id: string;
   inatividade_status: string;
   msg_inatividade1: string;
   msg_inatividade_pendente: string;
