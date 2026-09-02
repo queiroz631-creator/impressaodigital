@@ -1063,15 +1063,31 @@ async function triagem(
     const confirmar = regra.acao === "confirmar_fluxo";
     const modo = regra.enviar_mensagem ?? "sempre";
     const enviadas = regrasEnviadas(ctx);
+    const esperaMsg = Math.min(300, Math.max(0, Number(regra.delay_mensagem_segundos ?? 0)));
+
+    // Janela anti-repetição: vários arquivos do mesmo envio combinam com a
+    // mesma regra em callbacks diferentes. Depois de responder uma vez, a
+    // regra fica em silêncio pela duração da espera + margem de agrupamento.
+    const ultimaEm = ctx.ultimaRegra === regra.id ? Date.parse(ctx.ultimaRegraEm ?? "") : NaN;
+    const janelaLote = esperaMsg * 1000 + 45_000;
+    const repetindoLote = Number.isFinite(ultimaEm) && Date.now() - ultimaEm < janelaLote;
+    if (repetindoLote) return;
+
     // "Uma vez por atendimento": a regra só fala na primeira vez que combinar.
     const jaEnviada = modo === "uma_vez_atendimento" && enviadas.includes(regra.id);
     const podeEnviar = modo !== "primeira_do_dia" || primeiraDoDia || confirmar;
     let enviada = jaEnviada;
 
     if (mensagem && !jaEnviada && podeEnviar) {
-      // Espera configurada na regra antes de enviar a saudação.
-      const esperaMsg = Math.min(300, Math.max(0, Number(regra.delay_mensagem_segundos ?? 0)));
+      // Espera configurada na regra antes de enviar a saudação. Marca a regra
+      // antes de esperar para que os arquivos que chegarem durante a espera
+      // entrem no mesmo atendimento em vez de gerarem outra resposta.
       if (esperaMsg > 0) {
+        await salvarContexto(
+          conversa,
+          { ...ctx, ultimaRegra: regra.id, ultimaRegraEm: new Date().toISOString() },
+          conversa.etapa,
+        );
         await enviarPresencaDigitando(conversa.telefone, esperaMsg * 1000);
         await new Promise((r) => setTimeout(r, esperaMsg * 1000));
       }
@@ -1086,8 +1102,11 @@ async function triagem(
     const ctxRegra: ContextoBot = {
       ...ctx,
       regraEnviada: null,
+      ultimaRegra: regra.id,
+      ultimaRegraEm: new Date().toISOString(),
       regrasEnviadas: enviada && !enviadas.includes(regra.id) ? [...enviadas, regra.id] : enviadas,
     };
+
 
     if (confirmar) {
       await salvarContexto(
