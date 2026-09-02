@@ -4,16 +4,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
+  AlertCircle,
   ArrowLeft,
   Bot,
   Bot as BotIcon,
   BotOff,
   CheckCircle2,
-  ChevronDown,
+  Clock,
   Flag,
+  Headset,
+  MessageSquare,
   Search,
   Send,
   UserCheck,
+  type LucideIcon,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -23,22 +27,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { enviarDigitandoWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp } from "@/lib/whatsapp.functions";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONVERSA,
   dataHoraCurta,
   formatarTelefone,
-  rotuloEtapa,
   rotuloStatusConversa,
   type StatusConversa,
 } from "@/lib/whatsapp-comum";
@@ -91,6 +88,16 @@ interface Mensagem {
   erro: string | null;
   data_hora: string;
 }
+
+/** Ícone de cada aba de status. */
+const ICONE_STATUS: Record<StatusConversa, LucideIcon> = {
+  automatico: Bot,
+  aguardando: Clock,
+  em_atendimento: Headset,
+  pendente: AlertCircle,
+  aguardando_finalizacao: Flag,
+  finalizado: CheckCircle2,
+};
 
 function useConversas() {
   return useQuery({
@@ -161,23 +168,14 @@ async function alterarStatusConversa(
   return true;
 }
 
-const ACOES_STATUS: { status: StatusConversa; acao: string; rotulo: string }[] = [
-  { status: "em_atendimento", acao: "assumiu", rotulo: "Assumir" },
-  { status: "automatico", acao: "devolveu_bot", rotulo: "Devolver ao bot" },
-  { status: "pendente", acao: "marcou_pendente", rotulo: "Pendente" },
-  { status: "aguardando_finalizacao", acao: "aguardando_finalizacao", rotulo: "Aguardando Finalização" },
-  { status: "finalizado", acao: "finalizou", rotulo: "Finalizar" },
-];
-
-
 function Atendimento() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: conversas, isLoading } = useConversas();
+  const isMobile = useIsMobile();
   const [aba, setAba] = useState<StatusConversa>("automatico");
   const [abertaId, setAbertaId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
-  const finalizacao = useServerFn(enviarParaFinalizacao);
 
   useEffect(() => {
     const canal = supabase
@@ -209,46 +207,17 @@ function Atendimento() {
     if (!termo) return true;
     const nome = normalizar(c.nome_contato ?? "");
     const telefone = (c.telefone ?? "").replace(/\D/g, "");
-    return nome.includes(termo) || telefone.includes(termo.replace(/\D/g, "")) || formatarTelefone(c.telefone).includes(busca.trim());
+    return (
+      nome.includes(termo) ||
+      telefone.includes(termo.replace(/\D/g, "")) ||
+      formatarTelefone(c.telefone).includes(busca.trim())
+    );
   });
   const aberta = (conversas ?? []).find((c) => c.id === abertaId) ?? null;
 
-  async function mudarStatus(conversaId: string, status: StatusConversa, acao: string) {
-    if (status === "aguardando_finalizacao") {
-      await enviarFinalizacao(conversaId);
-      return;
-    }
-    const ok = await alterarStatusConversa(conversaId, status, acao, user?.email ?? "Atendente", user?.id ?? null);
-    if (ok) await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
-  }
-
-  async function enviarFinalizacao(conversaId: string) {
-    try {
-      const r = await finalizacao({ data: { conversaId, atendente: user?.email ?? "Atendente" } });
-      if (!r.ok) { toast.error(r.erro ?? "Falha ao enviar para finalização."); return; }
-      toast.success(r.fluxo ? "Conversa enviada para finalização." : "Conversa movida (nenhum fluxo de finalização configurado).");
-      await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Falha ao enviar para finalização.");
-    }
-  }
-
-  if (aberta) {
-    return (
-      <Conversa
-        conversa={aberta}
-        atendente={user?.email ?? "Atendente"}
-        atendenteId={user?.id ?? null}
-        onVoltar={() => setAbertaId(null)}
-      />
-    );
-  }
-
-  return (
-    <>
-      <PageHeader titulo="Atendimento WhatsApp" subtitulo="Conversas recebidas pelo WhatsApp da loja" />
-
-      <div className="relative mb-3">
+  const painelContatos = (
+    <div className="flex min-h-0 flex-col gap-3">
+      <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={busca}
@@ -258,82 +227,126 @@ function Atendimento() {
         />
       </div>
 
-      <Tabs value={aba} onValueChange={(v) => setAba(v as StatusConversa)}>
-        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
-          {STATUS_CONVERSA.map((s) => (
-            <TabsTrigger key={s.valor} value={s.valor} className="gap-2">
-              {s.rotulo}
-              <Badge variant="secondary">{contagem[s.valor] ?? 0}</Badge>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <div className="flex flex-wrap gap-1">
+        {STATUS_CONVERSA.map((s) => {
+          const Icone = ICONE_STATUS[s.valor];
+          const ativo = aba === s.valor;
+          return (
+            <button
+              key={s.valor}
+              type="button"
+              title={s.rotulo}
+              aria-label={s.rotulo}
+              onClick={() => setAba(s.valor)}
+              className={cn(
+                "flex items-center gap-1 rounded-md border px-2 py-1.5 text-xs transition-colors",
+                ativo
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-muted-foreground hover:bg-muted",
+              )}
+            >
+              <Icone className="h-4 w-4" />
+              <span className="font-semibold">{contagem[s.valor] ?? 0}</span>
+            </button>
+          );
+        })}
+      </div>
 
-      <div className="mt-4 space-y-2">
-        {isLoading && <Skeleton className="h-24 w-full" />}
+      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
+        {isLoading && <Skeleton className="h-20 w-full" />}
 
         {!isLoading && lista.length === 0 && (
-          <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              {termo ? "Nenhuma conversa encontrada." : "Nenhuma conversa nesta aba."}
-            </CardContent>
-          </Card>
+          <p className="py-10 text-center text-sm text-muted-foreground">
+            {termo ? "Nenhuma conversa encontrada." : "Nenhuma conversa nesta aba."}
+          </p>
         )}
 
-        {lista.map((c) => (
-          <Card key={c.id} className="transition-colors hover:border-primary">
-            <CardContent className="flex flex-wrap items-center gap-3 py-3">
-              <button onClick={() => setAbertaId(c.id)} className="min-w-0 flex-1 text-left">
-                <p className="truncate text-sm font-semibold">
-                  {c.nome_contato || formatarTelefone(c.telefone)}
-                  <span className="ml-2 font-normal text-muted-foreground">{formatarTelefone(c.telefone)}</span>
-                </p>
-                <p className="truncate text-xs text-muted-foreground">{c.ultima_mensagem ?? "Sem mensagens"}</p>
-              </button>
+        {lista.map((c) => {
+          const nome = c.nome_contato || formatarTelefone(c.telefone);
+          const selecionado = c.id === abertaId;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setAbertaId(c.id)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors",
+                selecionado ? "border-primary bg-muted" : "border-transparent hover:bg-muted/60",
+              )}
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                {nome.trim().charAt(0).toUpperCase() || "?"}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold">{nome}</span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                    {dataHoraCurta(c.ultima_mensagem_em ?? c.created_at)}
+                  </span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                    {c.ultima_mensagem ?? "Sem mensagens"}
+                  </span>
+                  {c.nao_lidas > 0 && <Badge className="shrink-0 px-1.5 py-0 text-[10px]">{c.nao_lidas}</Badge>}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 
-              <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs">
-                <Badge variant="outline">{rotuloEtapa[c.etapa] ?? c.etapa}</Badge>
-                <Badge variant="secondary">Atendimento {c.atendimento_numero ?? 1}</Badge>
-                <Badge variant="secondary">{c.total_mensagens} msg</Badge>
-                {c.nao_lidas > 0 && <Badge>{c.nao_lidas} nova(s)</Badge>}
-                {c.pedido_id && <Badge variant="outline">Pedido vinculado</Badge>}
-                <span className="text-muted-foreground">{dataHoraCurta(c.ultima_mensagem_em ?? c.created_at)}</span>
+  // Mobile: lista em tela cheia e conversa substitui a lista.
+  if (isMobile) {
+    if (aberta) {
+      return (
+        <Conversa
+          conversa={aberta}
+          atendente={user?.email ?? "Atendente"}
+          atendenteId={user?.id ?? null}
+          onVoltar={() => setAbertaId(null)}
+          mostrarVoltar
+        />
+      );
+    }
+    return (
+      <>
+        <PageHeader titulo="Atendimento WhatsApp" subtitulo="Conversas recebidas pelo WhatsApp da loja" />
+        <div className="flex h-[calc(100vh-14rem)] flex-col">{painelContatos}</div>
+      </>
+    );
+  }
 
-                <Button
-                  size="sm"
-                  variant="outline"
-                  title="Enviar para Aguardando Finalização"
-                  disabled={c.status === "aguardando_finalizacao"}
-                  onClick={() => void enviarFinalizacao(c.id)}
-                >
-                  <Flag className="h-4 w-4" />
-                </Button>
+  return (
+    <>
+      <PageHeader titulo="Atendimento WhatsApp" subtitulo="Conversas recebidas pelo WhatsApp da loja" />
+      <div className="grid h-[calc(100vh-12rem)] grid-cols-[340px_1fr] gap-4">
+        <Card className="flex min-h-0 flex-col">
+          <CardContent className="flex min-h-0 flex-1 flex-col p-3">{painelContatos}</CardContent>
+        </Card>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="sm" variant="outline" className="gap-1">
-                      Status <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {ACOES_STATUS.map((a) => (
-                      <DropdownMenuItem
-                        key={a.status}
-                        disabled={c.status === a.status}
-                        onSelect={() => void mudarStatus(c.id, a.status, a.acao)}
-                      >
-                        {a.rotulo}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <div className="min-h-0">
+          {aberta ? (
+            <Conversa
+              key={aberta.id}
+              conversa={aberta}
+              atendente={user?.email ?? "Atendente"}
+              atendenteId={user?.id ?? null}
+              onVoltar={() => setAbertaId(null)}
+            />
+          ) : (
+            <Card className="flex h-full items-center justify-center">
+              <CardContent className="flex flex-col items-center gap-2 py-10 text-center text-sm text-muted-foreground">
+                <MessageSquare className="h-8 w-8 opacity-50" />
+                Selecione uma conversa para começar o atendimento.
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </>
-
   );
 }
 
@@ -342,11 +355,13 @@ function Conversa({
   atendente,
   atendenteId,
   onVoltar,
+  mostrarVoltar = false,
 }: {
   conversa: Conversa;
   atendente: string;
   atendenteId: string | null;
   onVoltar: () => void;
+  mostrarVoltar?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [texto, setTexto] = useState("");
@@ -370,7 +385,6 @@ function Conversa({
       if (!r.ok) { toast.error(r.erro ?? "Falha ao enviar para finalização."); return; }
       toast.success(r.fluxo ? "Conversa enviada para finalização." : "Conversa movida (nenhum fluxo de finalização configurado).");
       await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
-      onVoltar();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao enviar para finalização.");
     }
@@ -447,12 +461,9 @@ function Conversa({
   }
 
   async function alterarStatus(status: StatusConversa, acao: string) {
-
     const ok = await alterarStatusConversa(conversa.id, status, acao, atendente, atendenteId);
     if (!ok) return;
     await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
-    // Assumir mantém a conversa aberta; as demais voltam para a lista.
-    if (status !== "em_atendimento") onVoltar();
   }
 
   const envio = useMutation({
@@ -472,11 +483,13 @@ function Conversa({
   });
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col">
+    <div className={cn("flex flex-col", mostrarVoltar ? "h-[calc(100vh-8rem)]" : "h-full")}>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={onVoltar}>
-          <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
-        </Button>
+        {mostrarVoltar && (
+          <Button variant="ghost" size="sm" onClick={onVoltar}>
+            <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
+          </Button>
+        )}
 
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold">
@@ -488,36 +501,29 @@ function Conversa({
           </p>
         </div>
 
-        <Button size="sm" variant="secondary" onClick={() => alterarStatus("em_atendimento", "assumiu")}>
-          <UserCheck className="mr-1 h-4 w-4" /> Assumir
+        <Button size="sm" variant="secondary" title="Assumir" onClick={() => alterarStatus("em_atendimento", "assumiu")}>
+          <UserCheck className="h-4 w-4" />
         </Button>
-        <Button size="sm" variant="outline" onClick={() => alterarStatus("automatico", "devolveu_bot")}>
-          <Bot className="mr-1 h-4 w-4" /> Devolver ao bot
+        <Button size="sm" variant="outline" title="Devolver ao bot" onClick={() => alterarStatus("automatico", "devolveu_bot")}>
+          <BotIcon className="h-4 w-4" />
         </Button>
-        <Button size="sm" variant="outline" onClick={() => alterarStatus("pendente", "marcou_pendente")}>
-          Pendente
+        <Button size="sm" variant="outline" title="Pendente" onClick={() => alterarStatus("pendente", "marcou_pendente")}>
+          <AlertCircle className="h-4 w-4" />
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          title="Enviar para Aguardando Finalização"
-          onClick={() => void enviarFinalizacao()}
-        >
-          <Flag className="mr-1 h-4 w-4" /> Aguardando Finalização
+        <Button size="sm" variant="outline" title="Enviar para Aguardando Finalização" onClick={() => void enviarFinalizacao()}>
+          <Flag className="h-4 w-4" />
         </Button>
-        <Button size="sm" onClick={() => alterarStatus("finalizado", "finalizou")}>
-          <CheckCircle2 className="mr-1 h-4 w-4" /> Finalizar
+        <Button size="sm" title="Finalizar" onClick={() => alterarStatus("finalizado", "finalizou")}>
+          <CheckCircle2 className="h-4 w-4" />
         </Button>
         <Button
           size="sm"
           variant={botLiberado ? "outline" : "destructive"}
           onClick={() => void alternarBotNumero()}
-          title="Liga ou desliga o atendimento automático para este número"
+          title={botLiberado ? "Bot ligado para este número" : "Bot desligado para este número"}
         >
-          {botLiberado ? <BotIcon className="mr-1 h-4 w-4" /> : <BotOff className="mr-1 h-4 w-4" />}
-          {botLiberado ? "Bot ligado" : "Bot desligado"}
+          {botLiberado ? <Bot className="h-4 w-4" /> : <BotOff className="h-4 w-4" />}
         </Button>
-
       </div>
 
       <Card className="flex min-h-0 flex-1 flex-col">
