@@ -324,9 +324,27 @@ async function transferir(
   mensagem?: string,
   silencioso = false,
 ) {
-  const aviso = silencioso
+  let aviso = silencioso
     ? ""
     : (mensagem ?? (config.msg_transferencia_ativo !== false ? config.msg_transferencia : ""));
+
+  // Fora do horário de funcionamento, a transferência usa a mensagem própria
+  // configurada na aba Horários — inclusive nas transferências silenciosas.
+  const dados = await carregarDadosBot();
+  const agora = new Date();
+  if (
+    dados &&
+    !dentroDoHorario(dados, agora) &&
+    dados.config.msg_transferencia_fora_horario_ativo &&
+    dados.config.msg_transferencia_fora_horario.trim()
+  ) {
+    aviso = aplicarVariaveis(dados.config.msg_transferencia_fora_horario, {
+      nome: conversa.nome_contato ?? "",
+      telefone: conversa.telefone,
+      agora,
+    });
+  }
+
   if (aviso.trim()) await responder(conversa, aviso);
   await salvar(conversa, {
     status: "aguardando",
