@@ -313,8 +313,16 @@ async function auditar(conversaId: string, acao: string, detalhe?: string) {
 }
 
 /** Passa a conversa para a fila humana. */
-async function transferir(conversa: ConversaBot, config: ConfigBot, motivo: string, mensagem?: string) {
-  const aviso = mensagem ?? (config.msg_transferencia_ativo !== false ? config.msg_transferencia : "");
+async function transferir(
+  conversa: ConversaBot,
+  config: ConfigBot,
+  motivo: string,
+  mensagem?: string,
+  silencioso = false,
+) {
+  const aviso = silencioso
+    ? ""
+    : (mensagem ?? (config.msg_transferencia_ativo !== false ? config.msg_transferencia : ""));
   if (aviso.trim()) await responder(conversa, aviso);
   await salvar(conversa, {
     status: "aguardando",
@@ -777,6 +785,10 @@ async function executarAcaoFluxo(
       await transferir(conversa, config, "fluxo do bot encaminhou para atendimento");
       return false;
 
+    case "transferir_silencioso":
+      await transferir(conversa, config, "fluxo do bot encaminhou para atendimento", undefined, true);
+      return false;
+
     case "criar_pendente":
       await salvar(conversa, {
         status: "pendente",
@@ -841,7 +853,13 @@ async function entregarFluxo(
 
     if (!atual.acao && !atual.transferir && !atual.pendente) return;
 
-    const acao = atual.acao ?? (atual.transferir ? "transferir_atendente" : "criar_pendente");
+    const acao =
+      atual.acao ??
+      (atual.transferir
+        ? atual.silencioso
+          ? "transferir_silencioso"
+          : "transferir_atendente"
+        : "criar_pendente");
     const continuar = await executarAcaoFluxo(conversa, config, ctx, acao);
     if (!continuar || !atual.etapaAcao || !atual.estado) return;
 

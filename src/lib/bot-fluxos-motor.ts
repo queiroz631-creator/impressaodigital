@@ -214,6 +214,15 @@ function aplicarAcaoEtapa(
   switch (etapa.acao) {
     case "transferir_atendente":
       return { mensagens: [], estado: null, transferir: true, acao: etapa.acao, etapaAcao: etapa };
+    case "transferir_silencioso":
+      return {
+        mensagens: [],
+        estado: null,
+        transferir: true,
+        silencioso: true,
+        acao: etapa.acao,
+        etapaAcao: etapa,
+      };
     case "criar_pendente":
       return { mensagens: [], estado: null, pendente: true, acao: etapa.acao, etapaAcao: etapa };
     case "finalizar":
@@ -353,6 +362,15 @@ function aplicarOpcao(
   switch (opcao.acao) {
     case "transferir_atendente":
       return { mensagens: [], estado: null, transferir: true, acao: "transferir_atendente", etapaAcao: etapa };
+    case "transferir_silencioso":
+      return {
+        mensagens: [],
+        estado: null,
+        transferir: true,
+        silencioso: true,
+        acao: "transferir_silencioso",
+        etapaAcao: etapa,
+      };
     case "finalizar":
       return { mensagens: [], estado: null, finalizar: true };
     case "finalizar_silencioso":

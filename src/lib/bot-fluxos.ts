@@ -110,6 +110,7 @@ export const ACOES_ETAPA: { valor: string; rotulo: string }[] = [
   { valor: "gerar_link", rotulo: "Gerar link" },
   { valor: "enviar_orcamento", rotulo: "Enviar orçamento" },
   { valor: "transferir_atendente", rotulo: "Transferir para atendente" },
+  { valor: "transferir_silencioso", rotulo: "Transferir para atendente (sem mensagem)" },
   { valor: "criar_pendente", rotulo: "Criar atendimento pendente" },
   { valor: "iniciar_fluxo", rotulo: "Iniciar outro fluxo" },
   { valor: "voltar_inicio_fluxo", rotulo: "Voltar ao início do fluxo" },
@@ -123,6 +124,7 @@ export const ACOES_OPCAO: { valor: string; rotulo: string }[] = [
   { valor: "ir_para_etapa", rotulo: "Ir para uma etapa específica" },
   { valor: "iniciar_fluxo", rotulo: "Iniciar outro fluxo" },
   { valor: "transferir_atendente", rotulo: "Transferir para atendente" },
+  { valor: "transferir_silencioso", rotulo: "Transferir para atendente (sem mensagem)" },
   { valor: "voltar_inicio_fluxo", rotulo: "Voltar ao início do fluxo" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
   { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
@@ -189,6 +191,7 @@ export const ACOES_SISTEMA = new Set([
   "gerar_link",
   "enviar_orcamento",
   "transferir_atendente",
+  "transferir_silencioso",
   "criar_pendente",
 ]);
 
