@@ -202,7 +202,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           const { data } = await supabaseAdmin
             .from("whatsapp_conversas")
             .select(colunasConversa)
-            .eq("chat_lid", lidNormalizado)
+            .eq("chat_lid", lidNormalizado ?? "")
             .maybeSingle();
           if (!data) return Response.json({ ok: true, ignorado: true, motivo: "lid_sem_conversa" });
           conversaAberta = data as ConversaBase;
