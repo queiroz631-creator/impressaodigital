@@ -1839,7 +1839,10 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
       .limit(50);
 
     const fluxos = await carregarFluxos();
-    const raiz = fluxoInicial(fluxos);
+    const escolhido = dados.config.fallback_fluxo_id
+      ? fluxos.fluxos.find((f) => f.id === dados.config.fallback_fluxo_id && f.ativo)
+      : null;
+    const raiz = escolhido ?? fluxoInicial(fluxos);
 
     if (raiz) {
       for (const linha of paradas ?? []) {

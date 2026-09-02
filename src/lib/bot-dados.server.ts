@@ -53,6 +53,8 @@ export async function carregarDadosBot(): Promise<BotDados | null> {
     fallback_inicial_minutos: Number(
       (d as { fallback_inicial_minutos?: number | null }).fallback_inicial_minutos ?? 2,
     ),
+    fallback_fluxo_id:
+      (d as { fallback_fluxo_id?: string | null }).fallback_fluxo_id ?? null,
     msg_inatividade1: d.msg_inatividade1 ?? "",
     msg_inatividade_pendente: d.msg_inatividade_pendente ?? "",
     msg_inatividade_aguardando: d.msg_inatividade_aguardando ?? "",

@@ -79,6 +79,7 @@ interface FormBot {
   inatividade1_minutos: number;
   inatividade2_minutos: number;
   fallback_inicial_minutos: number;
+  fallback_fluxo_id: string;
   inatividade_status: string;
   msg_inatividade1: string;
   msg_inatividade_pendente: string;
@@ -179,6 +180,21 @@ export function ConfiguracaoBot() {
     },
   });
 
+  const fluxos = useQuery({
+    queryKey: ["bot-fluxos-select"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bot_fluxos")
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("ordem");
+      if (error) throw error;
+      return (data ?? []) as { id: string; nome: string }[];
+    },
+  });
+
+
+
   useEffect(() => {
     const d = config.data;
     if (!d || form) return;
@@ -193,6 +209,8 @@ export function ConfiguracaoBot() {
       inatividade1_minutos: Number(d.inatividade1_minutos ?? 5),
       inatividade2_minutos: Number(d.inatividade2_minutos ?? 10),
       fallback_inicial_minutos: Number(d.fallback_inicial_minutos ?? 2),
+      fallback_fluxo_id:
+        (d as { fallback_fluxo_id?: string | null }).fallback_fluxo_id ?? "inicial",
       inatividade_status: d.inatividade_status ?? "finalizado",
       msg_inatividade1: d.msg_inatividade1 ?? "",
       msg_inatividade_pendente: d.msg_inatividade_pendente ?? "",
@@ -230,6 +248,7 @@ export function ConfiguracaoBot() {
       .from("whatsapp_config")
       .update({
         ...restante,
+        fallback_fluxo_id: restante.fallback_fluxo_id === "inicial" ? null : restante.fallback_fluxo_id,
         ignorar_agradecimentos: {
           ativo: ignorar_agradecimentos.ativo,
           janela_minutos: Math.max(0, Number(ignorar_agradecimentos.janela_minutos) || 0),
@@ -452,20 +471,38 @@ export function ConfiguracaoBot() {
                 </div>
               </div>
 
-              <div className="grid gap-1 sm:max-w-xs">
-                <Label>Iniciar fluxo inicial após (minutos)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={form.fallback_inicial_minutos}
-                  onChange={(e) => setForm({ ...form, fallback_inicial_minutos: Number(e.target.value || 0) })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Quando o bot não reconhece nenhum fluxo ou resposta automática, ele inicia o fluxo inicial após
-                  esse tempo. Use 0 para desativar. Conversas aguardando confirmação Sim/Não seguem a regra de
-                  inatividade.
-                </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-1">
+                  <Label>Iniciar fluxo inicial após (minutos)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.fallback_inicial_minutos}
+                    onChange={(e) => setForm({ ...form, fallback_inicial_minutos: Number(e.target.value || 0) })}
+                  />
+                </div>
+                <div className="grid gap-1">
+                  <Label>Fluxo que será iniciado</Label>
+                  <Select
+                    value={form.fallback_fluxo_id}
+                    onValueChange={(v) => setForm({ ...form, fallback_fluxo_id: v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Fluxo inicial" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="inicial">Fluxo inicial (padrão)</SelectItem>
+                      {(fluxos.data ?? []).map((f) => (
+                        <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Quando o bot não reconhece nenhum fluxo ou resposta automática, ele inicia o fluxo escolhido após
+                esse tempo. Use 0 para desativar. Conversas aguardando confirmação Sim/Não seguem a regra de
+                inatividade.
+              </p>
+
 
               <div className="grid gap-1">
                 <Label>Mensagem da 1ª inatividade</Label>

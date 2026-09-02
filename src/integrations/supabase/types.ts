@@ -1804,6 +1804,7 @@ export type Database = {
           conexao_nome: string
           enviar_msg_finalizacao: boolean
           exigir_revisao_humana: boolean
+          fallback_fluxo_id: string | null
           fallback_inicial_minutos: number
           finalizacao_uma_vez_dia: boolean
           fluxo_finalizacao_id: string | null
@@ -1860,6 +1861,7 @@ export type Database = {
           conexao_nome?: string
           enviar_msg_finalizacao?: boolean
           exigir_revisao_humana?: boolean
+          fallback_fluxo_id?: string | null
           fallback_inicial_minutos?: number
           finalizacao_uma_vez_dia?: boolean
           fluxo_finalizacao_id?: string | null
@@ -1916,6 +1918,7 @@ export type Database = {
           conexao_nome?: string
           enviar_msg_finalizacao?: boolean
           exigir_revisao_humana?: boolean
+          fallback_fluxo_id?: string | null
           fallback_inicial_minutos?: number
           finalizacao_uma_vez_dia?: boolean
           fluxo_finalizacao_id?: string | null
@@ -1966,6 +1969,13 @@ export type Database = {
           webhook_token?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "whatsapp_config_fallback_fluxo_id_fkey"
+            columns: ["fallback_fluxo_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "whatsapp_config_fluxo_finalizacao_id_fkey"
             columns: ["fluxo_finalizacao_id"]
