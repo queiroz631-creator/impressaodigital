@@ -951,8 +951,12 @@ async function executarAcaoResposta(
       await transferir(conversa, config, "resposta automática encaminhou para atendimento");
       return;
 
-    case "finalizar": {
-      const despedida = cfg.config.msg_finalizacao_ativo ? cfg.config.msg_finalizacao.trim() : "";
+    case "finalizar":
+    case "finalizar_silencioso": {
+      const despedida =
+        acao !== "finalizar_silencioso" && cfg.config.msg_finalizacao_ativo
+          ? cfg.config.msg_finalizacao.trim()
+          : "";
       if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
       await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: null }, "finalizado");
       await salvar(conversa, { status: "finalizado", data_finalizacao: vars.agora.toISOString() });
