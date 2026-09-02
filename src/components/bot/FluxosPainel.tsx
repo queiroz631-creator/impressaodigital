@@ -74,11 +74,13 @@ export function FluxosPainel() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("whatsapp_config")
-        .select("id, fluxo_finalizacao_id")
+        .select("id, fluxo_finalizacao_id, finalizacao_delay_minutos")
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return (data ?? null) as { id: string; fluxo_finalizacao_id: string | null } | null;
+      return (data ?? null) as
+        | { id: string; fluxo_finalizacao_id: string | null; finalizacao_delay_minutos: number }
+        | null;
     },
   });
 
@@ -90,6 +92,17 @@ export function FluxosPainel() {
       .eq("id", config.data.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Fluxo de finalização salvo.");
+    await queryClient.invalidateQueries({ queryKey: ["bot-config-finalizacao"] });
+  }
+
+  async function salvarEsperaFinalizacao(valor: number) {
+    if (!config.data) return;
+    const { error } = await supabase
+      .from("whatsapp_config")
+      .update({ finalizacao_delay_minutos: Math.max(0, Math.trunc(valor) || 0) })
+      .eq("id", config.data.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Tempo de espera salvo.");
     await queryClient.invalidateQueries({ queryKey: ["bot-config-finalizacao"] });
   }
 
@@ -256,25 +269,38 @@ export function FluxosPainel() {
       </div>
 
       <Card className="shadow-card">
-        <CardContent className="grid gap-2 pt-6">
-          <Label>Fluxo de finalização</Label>
-          <Select
-            value={config.data?.fluxo_finalizacao_id ?? "nenhum"}
-            onValueChange={(v) => void salvarFluxoFinalizacao(v)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Nenhum" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="nenhum">Nenhum</SelectItem>
-              {lista.filter((f) => f.ativo).map((f) => (
-                <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Fluxo executado quando a conversa é enviada para a aba "Aguardando Finalização".
-          </p>
+        <CardContent className="grid gap-3 pt-6 sm:grid-cols-[1fr_180px]">
+          <div className="grid gap-2">
+            <Label>Fluxo de finalização</Label>
+            <Select
+              value={config.data?.fluxo_finalizacao_id ?? "nenhum"}
+              onValueChange={(v) => void salvarFluxoFinalizacao(v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Nenhum" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="nenhum">Nenhum</SelectItem>
+                {lista.filter((f) => f.ativo).map((f) => (
+                  <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Fluxo executado quando a conversa é enviada para a aba "Aguardando Finalização".
+            </p>
+          </div>
+          <div className="grid gap-2">
+            <Label>Iniciar após (minutos)</Label>
+            <Input
+              type="number"
+              min={0}
+              defaultValue={config.data?.finalizacao_delay_minutos ?? 0}
+              key={config.data?.finalizacao_delay_minutos ?? 0}
+              onBlur={(e) => void salvarEsperaFinalizacao(Number(e.target.value))}
+            />
+            <p className="text-xs text-muted-foreground">0 inicia o fluxo imediatamente.</p>
+          </div>
         </CardContent>
       </Card>
 

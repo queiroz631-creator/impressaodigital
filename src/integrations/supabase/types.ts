@@ -1806,6 +1806,7 @@ export type Database = {
           exigir_revisao_humana: boolean
           fallback_fluxo_id: string | null
           fallback_inicial_minutos: number
+          finalizacao_delay_minutos: number
           finalizacao_uma_vez_dia: boolean
           fluxo_finalizacao_id: string | null
           id: string
@@ -1863,6 +1864,7 @@ export type Database = {
           exigir_revisao_humana?: boolean
           fallback_fluxo_id?: string | null
           fallback_inicial_minutos?: number
+          finalizacao_delay_minutos?: number
           finalizacao_uma_vez_dia?: boolean
           fluxo_finalizacao_id?: string | null
           id?: string
@@ -1920,6 +1922,7 @@ export type Database = {
           exigir_revisao_humana?: boolean
           fallback_fluxo_id?: string | null
           fallback_inicial_minutos?: number
+          finalizacao_delay_minutos?: number
           finalizacao_uma_vez_dia?: boolean
           fluxo_finalizacao_id?: string | null
           id?: string
@@ -2000,6 +2003,7 @@ export type Database = {
           data_finalizacao: string | null
           etapa: string
           finalizacao_em: string | null
+          finalizacao_fluxo_em: string | null
           id: string
           inatividade_avisada: boolean
           inatividade_etapa: number
@@ -2033,6 +2037,7 @@ export type Database = {
           data_finalizacao?: string | null
           etapa?: string
           finalizacao_em?: string | null
+          finalizacao_fluxo_em?: string | null
           id?: string
           inatividade_avisada?: boolean
           inatividade_etapa?: number
@@ -2066,6 +2071,7 @@ export type Database = {
           data_finalizacao?: string | null
           etapa?: string
           finalizacao_em?: string | null
+          finalizacao_fluxo_em?: string | null
           id?: string
           inatividade_avisada?: boolean
           inatividade_etapa?: number

@@ -290,6 +290,7 @@ type AtualizacaoConversa = Partial<{
   inatividade_avisada: boolean;
   ultima_mensagem: string;
   ultima_mensagem_em: string;
+  finalizacao_fluxo_em: string | null;
 }>;
 
 async function salvar(conversa: ConversaBot, dados: AtualizacaoConversa) {
@@ -1810,16 +1811,23 @@ export async function iniciarFinalizacao(conversaId: string): Promise<{ ok: bool
   const conversa = (data ?? null) as ConversaBot | null;
   if (!conversa) return { ok: false, fluxo: false };
 
+  const dadosBot = await carregarDadosBot();
+  const fluxoId = dadosBot?.config.fluxo_finalizacao_id ?? null;
+  const espera = Math.max(0, Number(dadosBot?.config.finalizacao_delay_minutos ?? 0));
+
   await supabaseAdmin
     .from("whatsapp_conversas")
-    .update({ status: "aguardando_finalizacao", inatividade_avisada: false })
+    .update({
+      status: "aguardando_finalizacao",
+      inatividade_avisada: false,
+      finalizacao_fluxo_em: fluxoId && espera > 0 ? new Date().toISOString() : null,
+    })
     .eq("id", conversa.id);
   conversa.status = "aguardando_finalizacao";
 
-  const dadosBot = await carregarDadosBot();
-  const fluxoId = dadosBot?.config.fluxo_finalizacao_id ?? null;
   const config = await lerConfig();
   if (!fluxoId || !config) return { ok: true, fluxo: false };
+  if (espera > 0) return { ok: true, fluxo: false };
 
   const fluxos = await carregarFluxos();
   if (!fluxoPorId(fluxos, fluxoId)) return { ok: true, fluxo: false };
@@ -1883,6 +1891,34 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
       }
     }
   }
+
+  // Fluxo de finalização com tempo de espera: dispara depois do prazo configurado.
+  const minFinal = Math.max(0, Number(dados.config.finalizacao_delay_minutos ?? 0));
+  const fluxoFinalId = dados.config.fluxo_finalizacao_id ?? null;
+  if (minFinal > 0 && fluxoFinalId) {
+    const limiteFinal = new Date(agora.getTime() - minFinal * 60_000).toISOString();
+    const { data: aguardando } = await supabaseAdmin
+      .from("whatsapp_conversas")
+      .select(`${CAMPOS}, finalizacao_fluxo_em`)
+      .eq("status", "aguardando_finalizacao")
+      .not("finalizacao_fluxo_em", "is", null)
+      .lt("finalizacao_fluxo_em", limiteFinal)
+      .limit(50);
+
+    const fluxos = await carregarFluxos();
+    if (fluxoPorId(fluxos, fluxoFinalId)) {
+      for (const linha of aguardando ?? []) {
+        const conversa = linha as unknown as ConversaBot;
+        await salvar(conversa, { finalizacao_fluxo_em: null });
+        const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
+        const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
+        const saida = iniciarFluxo(fluxos, fluxoFinalId, { respostas: ctx.fluxo?.respostas ?? {} }, vars);
+        await entregarFluxo(conversa, config, { ...ctx, fluxoFallback: null }, fluxos, saida, vars);
+        await auditar(conversa.id, "bot_fluxo_finalizacao", `${minFinal} min na aba Aguardando Finalização`);
+      }
+    }
+  }
+
 
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
