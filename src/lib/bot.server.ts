@@ -1368,6 +1368,7 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
         .eq("id", conversaId);
     }
   } finally {
+    pararBatimento();
     await destravar(conversaId);
   }
 }
