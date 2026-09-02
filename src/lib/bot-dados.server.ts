@@ -50,6 +50,9 @@ export async function carregarDadosBot(): Promise<BotDados | null> {
     inatividade_status: d.inatividade_status ?? "finalizado",
     fluxo_finalizacao_id:
       (d as { fluxo_finalizacao_id?: string | null }).fluxo_finalizacao_id ?? null,
+    finalizacao_delay_minutos: Number(
+      (d as { finalizacao_delay_minutos?: number | null }).finalizacao_delay_minutos ?? 0,
+    ),
     fallback_inicial_minutos: Number(
       (d as { fallback_inicial_minutos?: number | null }).fallback_inicial_minutos ?? 2,
     ),
