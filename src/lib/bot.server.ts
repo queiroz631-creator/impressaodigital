@@ -81,10 +81,13 @@ interface ContextoBot {
   regraEnviada?: string | null;
   /** Última regra de primeiro contato acionada (não pode repetir em sequência). */
   ultimaRegra?: string | null;
+  /** Momento em que a última regra de primeiro contato enviou a mensagem. */
+  ultimaRegraEm?: string | null;
   /** Janela em que uma regra diferente ainda pode ser acionada. */
   janelaRegra?: boolean | null;
   /** Última mensagem de entrada já processada pelo bot (evita respostas repetidas). */
   ultimaProcessada?: string | null;
+
 }
 
 interface ConversaBot {
@@ -1060,15 +1063,31 @@ async function triagem(
     const confirmar = regra.acao === "confirmar_fluxo";
     const modo = regra.enviar_mensagem ?? "sempre";
     const enviadas = regrasEnviadas(ctx);
+    const esperaMsg = Math.min(300, Math.max(0, Number(regra.delay_mensagem_segundos ?? 0)));
+
+    // Janela anti-repetição: vários arquivos do mesmo envio combinam com a
+    // mesma regra em callbacks diferentes. Depois de responder uma vez, a
+    // regra fica em silêncio pela duração da espera + margem de agrupamento.
+    const ultimaEm = ctx.ultimaRegra === regra.id ? Date.parse(ctx.ultimaRegraEm ?? "") : NaN;
+    const janelaLote = esperaMsg * 1000 + 45_000;
+    const repetindoLote = Number.isFinite(ultimaEm) && Date.now() - ultimaEm < janelaLote;
+    if (repetindoLote) return;
+
     // "Uma vez por atendimento": a regra só fala na primeira vez que combinar.
     const jaEnviada = modo === "uma_vez_atendimento" && enviadas.includes(regra.id);
     const podeEnviar = modo !== "primeira_do_dia" || primeiraDoDia || confirmar;
     let enviada = jaEnviada;
 
     if (mensagem && !jaEnviada && podeEnviar) {
-      // Espera configurada na regra antes de enviar a saudação.
-      const esperaMsg = Math.min(300, Math.max(0, Number(regra.delay_mensagem_segundos ?? 0)));
+      // Espera configurada na regra antes de enviar a saudação. Marca a regra
+      // antes de esperar para que os arquivos que chegarem durante a espera
+      // entrem no mesmo atendimento em vez de gerarem outra resposta.
       if (esperaMsg > 0) {
+        await salvarContexto(
+          conversa,
+          { ...ctx, ultimaRegra: regra.id, ultimaRegraEm: new Date().toISOString() },
+          conversa.etapa,
+        );
         await enviarPresencaDigitando(conversa.telefone, esperaMsg * 1000);
         await new Promise((r) => setTimeout(r, esperaMsg * 1000));
       }
@@ -1083,8 +1102,11 @@ async function triagem(
     const ctxRegra: ContextoBot = {
       ...ctx,
       regraEnviada: null,
+      ultimaRegra: regra.id,
+      ultimaRegraEm: new Date().toISOString(),
       regrasEnviadas: enviada && !enviadas.includes(regra.id) ? [...enviadas, regra.id] : enviadas,
     };
+
 
     if (confirmar) {
       await salvarContexto(
@@ -1330,6 +1352,36 @@ function manterTravaViva(conversaId: string): () => void {
   return () => clearInterval(timer);
 }
 
+/**
+ * Marca como processada a entrada mais recente da conversa (ou a informada),
+ * confirmando o lote inteiro de arquivos enviados juntos.
+ */
+async function confirmarLoteProcessado(conversaId: string, minimo: string): Promise<void> {
+  const { data: ultima } = await supabaseAdmin
+    .from("whatsapp_mensagens")
+    .select("id")
+    .eq("conversa_id", conversaId)
+    .eq("direcao", "entrada")
+    .order("data_hora", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { data: atual } = await supabaseAdmin
+    .from("whatsapp_conversas")
+    .select("contexto")
+    .eq("id", conversaId)
+    .maybeSingle();
+  const ctxAtual = ((atual?.contexto ?? {}) as ContextoBot) || {};
+
+  await supabaseAdmin
+    .from("whatsapp_conversas")
+    .update({ contexto: { ...ctxAtual, ultimaProcessada: ultima?.id ?? minimo } as never })
+    .eq("id", conversaId);
+}
+
+
+
 export async function processarBot(conversaId: string, entrada: EntradaBot): Promise<void> {
   // Dá tempo para callbacks do mesmo envio chegarem juntos (vários arquivos).
   if (entrada.mensagemId) {
@@ -1377,21 +1429,13 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
 
     await processarBotInterno(conversaId, alvo);
 
-    // Só confirma depois que todo o tratamento terminou. Se a execução for
-    // interrompida durante uma espera ou envio, outro callback ainda poderá
-    // retomar esta mensagem em vez de descartá-la como já processada.
+    // Só confirma depois que todo o tratamento terminou, marcando a última
+    // entrada existente agora: os arquivos que chegaram durante a espera fazem
+    // parte do mesmo lote e não devem gerar uma nova resposta.
     if (alvo.mensagemId) {
-      const { data: atual } = await supabaseAdmin
-        .from("whatsapp_conversas")
-        .select("contexto")
-        .eq("id", conversaId)
-        .maybeSingle();
-      const ctxAtual = ((atual?.contexto ?? {}) as ContextoBot) || {};
-      await supabaseAdmin
-        .from("whatsapp_conversas")
-        .update({ contexto: { ...ctxAtual, ultimaProcessada: alvo.mensagemId } as never })
-        .eq("id", conversaId);
+      await confirmarLoteProcessado(conversaId, alvo.mensagemId);
     }
+
   } finally {
     pararBatimento();
     await destravar(conversaId);
@@ -1482,19 +1526,10 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
 
         if (ultima?.id && ctxAtual.ultimaProcessada !== ultima.id) {
           await processarBotInterno(conversa.id, entradaDaMensagem(ultima as MensagemEntrada));
-
-          const { data: depois } = await supabaseAdmin
-            .from("whatsapp_conversas")
-            .select("contexto")
-            .eq("id", conversa.id)
-            .maybeSingle();
-          const ctxDepois = ((depois?.contexto ?? {}) as ContextoBot) || {};
-          await supabaseAdmin
-            .from("whatsapp_conversas")
-            .update({ contexto: { ...ctxDepois, ultimaProcessada: ultima.id } as never })
-            .eq("id", conversa.id);
+          await confirmarLoteProcessado(conversa.id, ultima.id);
           processadas += 1;
         }
+
 
         // Só desmarca se nenhuma mensagem nova chegou durante o processamento;
         // caso contrário a conversa continua na fila para a próxima passada.
