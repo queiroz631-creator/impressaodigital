@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { statusInstanciaZapi } from "@/lib/whatsapp.functions";
+import { ativarMensagensEnviadasPorMim, statusInstanciaZapi } from "@/lib/whatsapp.functions";
 import { toast } from "sonner";
 import { Copy, Plus, Printer, RefreshCw, Save, ShieldAlert, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -795,6 +795,7 @@ function CardLinkPublico() {
 function CardWhatsapp() {
   const [origem, setOrigem] = useState("");
   const consultarStatus = useServerFn(statusInstanciaZapi);
+  const ativarMensagensExternas = useServerFn(ativarMensagensEnviadasPorMim);
 
   useEffect(() => setOrigem(window.location.origin), []);
 
@@ -815,6 +816,18 @@ function CardWhatsapp() {
     queryKey: ["whatsapp-status"],
     queryFn: async () => consultarStatus(),
     retry: false,
+  });
+
+  const ativacaoMensagensExternas = useMutation({
+    mutationFn: () => ativarMensagensExternas(),
+    onSuccess: (resultado) => {
+      if (resultado.ok) {
+        toast.success("Mensagens enviadas pelo celular foram ativadas.");
+        return;
+      }
+      toast.error(resultado.erro);
+    },
+    onError: () => toast.error("Não foi possível ativar as mensagens enviadas pelo celular."),
   });
 
   const token = config.data?.webhook_token ?? "";
@@ -870,9 +883,23 @@ function CardWhatsapp() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Configure em <strong>Ao receber</strong>, <strong>Ao receber status</strong> e{" "}
-            <strong>Ao desconectar</strong> na Z-API. O token na URL valida as chamadas recebidas.
+            Configure este endereço em <strong>Ao receber</strong> na Z-API. Depois, ative abaixo a notificação
+            de mensagens enviadas pelo próprio número para sincronizar celular e WhatsApp Web.
           </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
+          <Button
+            variant="outline"
+            onClick={() => ativacaoMensagensExternas.mutate()}
+            disabled={!status.data?.conectado || ativacaoMensagensExternas.isPending}
+          >
+            <RefreshCw className={`h-4 w-4 ${ativacaoMensagensExternas.isPending ? "animate-spin" : ""}`} />
+            {ativacaoMensagensExternas.isPending ? "Ativando..." : "Ativar mensagens do celular"}
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            Necessário para exibir mensagens enviadas fora do sistema.
+          </span>
         </div>
 
         <div className="grid gap-1 text-xs text-muted-foreground">
