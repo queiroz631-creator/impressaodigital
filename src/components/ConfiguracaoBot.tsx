@@ -456,20 +456,38 @@ export function ConfiguracaoBot() {
                 </div>
               </div>
 
-              <div className="grid gap-1 sm:max-w-xs">
-                <Label>Iniciar fluxo inicial após (minutos)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={form.fallback_inicial_minutos}
-                  onChange={(e) => setForm({ ...form, fallback_inicial_minutos: Number(e.target.value || 0) })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Quando o bot não reconhece nenhum fluxo ou resposta automática, ele inicia o fluxo inicial após
-                  esse tempo. Use 0 para desativar. Conversas aguardando confirmação Sim/Não seguem a regra de
-                  inatividade.
-                </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-1">
+                  <Label>Iniciar fluxo inicial após (minutos)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.fallback_inicial_minutos}
+                    onChange={(e) => setForm({ ...form, fallback_inicial_minutos: Number(e.target.value || 0) })}
+                  />
+                </div>
+                <div className="grid gap-1">
+                  <Label>Fluxo que será iniciado</Label>
+                  <Select
+                    value={form.fallback_fluxo_id}
+                    onValueChange={(v) => setForm({ ...form, fallback_fluxo_id: v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Fluxo inicial" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="inicial">Fluxo inicial (padrão)</SelectItem>
+                      {(fluxos.data ?? []).map((f) => (
+                        <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Quando o bot não reconhece nenhum fluxo ou resposta automática, ele inicia o fluxo escolhido após
+                esse tempo. Use 0 para desativar. Conversas aguardando confirmação Sim/Não seguem a regra de
+                inatividade.
+              </p>
+
 
               <div className="grid gap-1">
                 <Label>Mensagem da 1ª inatividade</Label>
