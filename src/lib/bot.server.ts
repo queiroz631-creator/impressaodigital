@@ -1289,6 +1289,22 @@ async function destravar(conversaId: string): Promise<void> {
     .eq("id", conversaId);
 }
 
+/**
+ * Renova a trava a cada 15s enquanto o processamento estiver em andamento.
+ * Sem isso, etapas com esperas longas (digitação, avanço automático) deixam a
+ * trava expirar no meio do envio e uma segunda execução da fila reprocessa a
+ * mesma mensagem — era o que duplicava o link do currículo.
+ */
+function manterTravaViva(conversaId: string): () => void {
+  const timer = setInterval(() => {
+    void supabaseAdmin
+      .from("whatsapp_conversas")
+      .update({ bot_lock_em: new Date().toISOString() } as never)
+      .eq("id", conversaId);
+  }, 15_000);
+  return () => clearInterval(timer);
+}
+
 export async function processarBot(conversaId: string, entrada: EntradaBot): Promise<void> {
   // Dá tempo para callbacks do mesmo envio chegarem juntos (vários arquivos).
   if (entrada.mensagemId) {
@@ -1302,6 +1318,7 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
   }
   if (!travou) return;
 
+  const pararBatimento = manterTravaViva(conversaId);
   try {
     let alvo = entrada;
 
@@ -1351,6 +1368,7 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
         .eq("id", conversaId);
     }
   } finally {
+    pararBatimento();
     await destravar(conversaId);
   }
 }
@@ -1418,6 +1436,7 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
       const travou = await tentarTravar(conversa.id);
       if (!travou) continue;
 
+      const pararBatimento = manterTravaViva(conversa.id);
       try {
         const { data: ultima } = await supabaseAdmin
           .from("whatsapp_mensagens")
@@ -1471,6 +1490,7 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
           .update({ bot_pendente: false } as never)
           .eq("id", conversa.id);
       } finally {
+        pararBatimento();
         await destravar(conversa.id);
       }
     }
