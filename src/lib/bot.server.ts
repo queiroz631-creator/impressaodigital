@@ -7,7 +7,7 @@
  */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { chamarZapi } from "@/lib/zapi.server";
+import { chamarZapi, enviarPresencaDigitando } from "@/lib/zapi.server";
 import {
   FORMATOS,
   acabamentosDoTipo,
@@ -223,6 +223,12 @@ async function responder(
     }
   }
   if (!envio) envio = { caminho: "send-text", corpo: { phone: conversa.telefone, message: mensagem } };
+
+  // Mostra "digitando..." no WhatsApp do cliente antes de enviar, com duração
+  // proporcional ao tamanho da mensagem (1,5s a 4s).
+  const digitandoMs = Math.min(4000, 1500 + mensagem.length * 20);
+  await enviarPresencaDigitando(conversa.telefone, digitandoMs);
+  await new Promise((x) => setTimeout(x, digitandoMs));
 
   let entregue = false;
   let idMensagem: unknown = null;
