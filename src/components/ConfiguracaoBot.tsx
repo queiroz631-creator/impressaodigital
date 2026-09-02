@@ -180,6 +180,21 @@ export function ConfiguracaoBot() {
     },
   });
 
+  const fluxos = useQuery({
+    queryKey: ["bot-fluxos-select"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("bot_fluxos")
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("ordem");
+      if (error) throw error;
+      return (data ?? []) as { id: string; nome: string }[];
+    },
+  });
+
+
+
   useEffect(() => {
     const d = config.data;
     if (!d || form) return;
