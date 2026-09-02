@@ -210,8 +210,9 @@ async function responder(
   midia?: MidiaBot,
 ): Promise<boolean> {
   // Texto simples sempre: listas de botões não são entregues de forma confiável.
+  const cabecalho = "_🤖 mensagem do bot_";
   const complemento = botoes && botoes.length > 0 ? `\n\n_Responda: ${botoes.join(" ou ")}_` : "";
-  const mensagem = `${texto}${complemento}`;
+  const mensagem = texto.trim() ? `${cabecalho}\n\n${texto}${complemento}` : cabecalho;
 
   let envio: { caminho: string; corpo: Record<string, unknown> } | null = null;
   if (midia?.url) {
