@@ -201,6 +201,14 @@ function Atendimento() {
     return base;
   }, [conversas]);
 
+  const naoLidasPorStatus = useMemo(() => {
+    const base: Record<string, number> = {};
+    for (const s of STATUS_CONVERSA) base[s.valor] = 0;
+    for (const c of conversas ?? []) base[c.status] = (base[c.status] ?? 0) + (c.nao_lidas ?? 0);
+    return base;
+  }, [conversas]);
+
+
   const termo = normalizar(busca.trim());
   const lista = (conversas ?? []).filter((c) => {
     if (c.status !== aba) return false;
