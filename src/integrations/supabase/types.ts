@@ -1848,6 +1848,8 @@ export type Database = {
           msg_revisao_ativo: boolean
           msg_transferencia: string
           msg_transferencia_ativo: boolean
+          msg_transferencia_fora_horario: string
+          msg_transferencia_fora_horario_ativo: boolean
           permitir_link: boolean
           permitir_orcamento_automatico: boolean
           reabrir_mesmo_dia: boolean
@@ -1906,6 +1908,8 @@ export type Database = {
           msg_revisao_ativo?: boolean
           msg_transferencia?: string
           msg_transferencia_ativo?: boolean
+          msg_transferencia_fora_horario?: string
+          msg_transferencia_fora_horario_ativo?: boolean
           permitir_link?: boolean
           permitir_orcamento_automatico?: boolean
           reabrir_mesmo_dia?: boolean
@@ -1964,6 +1968,8 @@ export type Database = {
           msg_revisao_ativo?: boolean
           msg_transferencia?: string
           msg_transferencia_ativo?: boolean
+          msg_transferencia_fora_horario?: string
+          msg_transferencia_fora_horario_ativo?: boolean
           permitir_link?: boolean
           permitir_orcamento_automatico?: boolean
           reabrir_mesmo_dia?: boolean
