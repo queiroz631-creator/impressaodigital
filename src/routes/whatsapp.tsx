@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Search,
   Send,
+  Square,
   UserCheck,
   X,
   type LucideIcon,
