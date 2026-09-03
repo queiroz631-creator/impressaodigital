@@ -41,12 +41,20 @@ Hoje o botão "Últimos Arquivos" seleciona todos os arquivos do último atendim
 - A pesquisa passa a buscar em todas as conversas, independentemente da data e do status: ao pesquisar, só as abas que contêm o cliente pesquisado ficam com resultados e a contagem reflete a busca.
 - A busca aceita nome, telefone e também palavras que apareçam nas mensagens da conversa.
 
+## 7. Destaque de melhorias implementadas (tela Melhorias)
+
+- Ao finalizar a implementação de uma melhoria, ela passa a aparecer na lista com **borda esverdeada**, indicando que já foi executada.
+- O status continua "pendente": só o botão "Concluir" (manual) fecha a melhoria de fato. O destaque verde não mexe no status nem no fluxo de Reabrir/Concluir.
+- Regra válida daqui em diante: toda melhoria implementada é marcada com esse destaque ao final do trabalho.
+
 ## Detalhes técnicos
 
 - Banco (uma migração):
   - `whatsapp_mensagens.transcricao text null` (cache da transcrição de áudio);
   - `bot_fluxos.mostrar_finalizacao boolean not null default false`;
+  - `melhorias.executada boolean not null default false` (marca "implementada, aguardando conclusão manual");
   - novo valor de status `esperando_impressao` (coluna é texto, sem enum a alterar).
+- `src/routes/melhorias.tsx`: borda verde (`border-green-500/60`) quando `executada` for verdadeira; ao implementar, marco via banco.
 - `src/lib/whatsapp-comum.ts`: incluir `esperando_impressao` em `StatusConversa`, `STATUS_CONVERSA` e rótulos.
 - `src/routes/whatsapp.tsx`: filtro de entrada em "Últimos Arquivos"; botão/modal de transcrição; modal de finalização com radiobuttons; nova aba e botão de "Esperando Impressão"; filtro de finalizados do dia + busca global por nome/telefone/mensagem.
 - Busca por conteúdo: consulta adicional em `whatsapp_mensagens` (`ilike` no texto) só quando houver termo, com debounce, retornando os `conversa_id` correspondentes.
