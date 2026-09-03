@@ -446,6 +446,18 @@ function Conversa({
     setSelecionados(new Set());
   }
 
+  /** Retorna os IDs dos arquivos que pertencem ao atendimento mais recente (após o último divisor "ATENDIMENTO N"). */
+  function arquivosDoUltimoAtendimento(msgs: Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto">[]) {
+    let inicio = 0;
+    msgs.forEach((m, i) => {
+      if (m.tipo === "sistema" && /^ATENDIMENTO\s+\d+/i.test(m.texto ?? "")) inicio = i + 1;
+    });
+    return msgs
+      .slice(inicio)
+      .filter((m) => m.arquivo_url)
+      .map((m) => m.id);
+  }
+
   /** Abre o atendimento mais recente do cliente e seleciona todos os seus arquivos. */
   async function abrirUltimosArquivos() {
     const { data, error } = await supabase
@@ -468,16 +480,17 @@ function Conversa({
 
     const { data: msgs, error: erroMsgs } = await supabase
       .from("whatsapp_mensagens")
-      .select("id, arquivo_url")
-      .eq("conversa_id", maisRecente.id);
+      .select("id, arquivo_url, tipo, texto")
+      .eq("conversa_id", maisRecente.id)
+      .order("data_hora", { ascending: true });
     if (erroMsgs) {
       toast.error(erroMsgs.message);
       return;
     }
 
-    const arquivos = ((msgs ?? []) as { id: string; arquivo_url: string | null }[])
-      .filter((m) => m.arquivo_url)
-      .map((m) => m.id);
+    const arquivos = arquivosDoUltimoAtendimento(
+      (msgs ?? []) as Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto">[],
+    );
     if (arquivos.length === 0) {
       toast("Nenhum arquivo no atendimento mais recente.");
       return;
@@ -545,7 +558,7 @@ function Conversa({
   // Após abrir o atendimento mais recente, seleciona todos os arquivos das mensagens carregadas.
   useEffect(() => {
     if (!selecionarAoCarregar || isLoading || !mensagens) return;
-    const arquivos = mensagens.filter((m) => m.arquivo_url).map((m) => m.id);
+    const arquivos = arquivosDoUltimoAtendimento(mensagens);
     if (arquivos.length > 0) setSelecionados(new Set(arquivos));
     setSelecionarAoCarregar(false);
   }, [selecionarAoCarregar, isLoading, mensagens]);
