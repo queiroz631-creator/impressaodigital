@@ -100,6 +100,24 @@ function Melhorias() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const atualizar = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("melhorias")
+        .update({ titulo: titulo.trim(), descricao: descricao.trim() || null, tela })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setTitulo("");
+      setDescricao("");
+      setEditandoId(null);
+      toast.success("Melhoria atualizada");
+      qc.invalidateQueries({ queryKey: ["melhorias"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const alternarStatus = useMutation({
     mutationFn: async (m: Melhoria) => {
       const { error } = await supabase
