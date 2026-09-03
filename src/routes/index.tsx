@@ -149,6 +149,9 @@ interface EstadoRascunho {
   prazoQuantidade: number;
 }
 
+/** Chave do sessionStorage usada para receber arquivos enviados pela tela do WhatsApp. */
+const CHAVE_ARQUIVOS_WHATSAPP = "calc-arquivos-whatsapp";
+
 const ESTADO_INICIAL: EstadoRascunho = {
   pedidoId: null,
   editandoId: null,
@@ -367,11 +370,9 @@ function Calculadora() {
 
   const num = (v: string) => Math.max(0, Number(v.replace(/\D/g, "")) || 0);
 
-  async function anexar(files: FileList | null) {
-    if (!files || files.length === 0) return;
+  async function anexarArquivos(originais: File[], atuais: ArquivoDoc[]) {
     setLendoArquivos(true);
     try {
-      const originais = Array.from(files);
       const r = await contarPaginas(originais);
 
       /**
