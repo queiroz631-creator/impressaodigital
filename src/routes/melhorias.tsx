@@ -70,6 +70,7 @@ function Melhorias() {
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [tela, setTela] = useState<string>(TELAS[0]!);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   const { data: melhorias, isLoading } = useQuery({
     queryKey: ["melhorias"],
