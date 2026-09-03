@@ -367,7 +367,6 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
       </div>
 
       {modalEtapa}
-      </div>
 
       {/* ---------- Visualização ---------- */}
       <Card className="shadow-card">
