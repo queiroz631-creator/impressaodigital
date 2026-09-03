@@ -534,6 +534,14 @@ function Conversa({
     fim.current?.scrollIntoView({ block: "end" });
   }, [mensagens]);
 
+  // Após abrir o atendimento mais recente, seleciona todos os arquivos das mensagens carregadas.
+  useEffect(() => {
+    if (!selecionarAoCarregar || isLoading || !mensagens) return;
+    const arquivos = mensagens.filter((m) => m.arquivo_url).map((m) => m.id);
+    if (arquivos.length > 0) setSelecionados(new Set(arquivos));
+    setSelecionarAoCarregar(false);
+  }, [selecionarAoCarregar, isLoading, mensagens]);
+
   useEffect(() => {
     if (conversa.nao_lidas > 0) {
       void supabase
