@@ -704,7 +704,7 @@ function urlMidia(id: string, baixar = false) {
 }
 
 /** Renderiza imagem, documento ou áudio anexado a uma mensagem. */
-function MidiaMensagem({ mensagem }: { mensagem: Mensagem }) {
+function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem; selecionando?: boolean }) {
   const [aberto, setAberto] = useState(false);
   if (!mensagem.arquivo_url && !mensagem.arquivo_nome) return null;
 
@@ -719,22 +719,33 @@ function MidiaMensagem({ mensagem }: { mensagem: Mensagem }) {
   if (ehImagem) {
     return (
       <>
-        <button type="button" onClick={() => setAberto(true)} className="mb-1 block">
+        {selecionando ? (
           <img
             src={urlMidia(mensagem.id)}
             alt={nome}
             loading="lazy"
-            className="max-h-64 w-full max-w-xs rounded-lg object-cover"
+            className="mb-1 max-h-64 w-full max-w-xs rounded-lg object-cover"
           />
-        </button>
-        <a
-          href={urlMidia(mensagem.id, true)}
-          className="mb-1 inline-flex items-center gap-1 text-xs underline opacity-90"
-          download={nome}
-        >
-          <Download className="h-3 w-3" /> Baixar imagem
-        </a>
-        <Dialog open={aberto} onOpenChange={setAberto}>
+        ) : (
+          <>
+            <button type="button" onClick={() => setAberto(true)} className="mb-1 block">
+              <img
+                src={urlMidia(mensagem.id)}
+                alt={nome}
+                loading="lazy"
+                className="max-h-64 w-full max-w-xs rounded-lg object-cover"
+              />
+            </button>
+            <a
+              href={urlMidia(mensagem.id, true)}
+              className="mb-1 inline-flex items-center gap-1 text-xs underline opacity-90"
+              download={nome}
+            >
+              <Download className="h-3 w-3" /> Baixar imagem
+            </a>
+          </>
+        )}
+        <Dialog open={aberto && !selecionando} onOpenChange={setAberto}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle className="truncate text-sm">{nome}</DialogTitle>
@@ -756,14 +767,25 @@ function MidiaMensagem({ mensagem }: { mensagem: Mensagem }) {
   if (ehAudio) {
     return (
       <div className="mb-1 space-y-1">
-        <audio controls src={urlMidia(mensagem.id)} className="w-56 max-w-full" />
-        <a
-          href={urlMidia(mensagem.id, true)}
-          className="inline-flex items-center gap-1 text-xs underline opacity-90"
-          download={nome}
-        >
-          <Download className="h-3 w-3" /> Baixar áudio
-        </a>
+        <audio controls={!selecionando} src={urlMidia(mensagem.id)} className="w-56 max-w-full" />
+        {!selecionando && (
+          <a
+            href={urlMidia(mensagem.id, true)}
+            className="inline-flex items-center gap-1 text-xs underline opacity-90"
+            download={nome}
+          >
+            <Download className="h-3 w-3" /> Baixar áudio
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  if (selecionando) {
+    return (
+      <div className="mb-1 flex items-center gap-2 rounded-lg border border-current/20 bg-background/20 px-2 py-2">
+        <FileText className="h-5 w-5 shrink-0" />
+        <span className="min-w-0 flex-1 truncate text-xs">{nome}</span>
       </div>
     );
   }
