@@ -11,6 +11,8 @@ import {
   BotOff,
   CheckCircle2,
   Clock,
+  Download,
+  FileText,
   Flag,
   Headset,
   MessageSquare,
@@ -28,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { enviarDigitandoWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp } from "@/lib/whatsapp.functions";
@@ -84,6 +87,7 @@ interface Mensagem {
   texto: string | null;
   arquivo_nome: string | null;
   arquivo_url: string | null;
+  mime_type: string | null;
   status: string;
   erro: string | null;
   data_hora: string;
@@ -613,5 +617,88 @@ function Conversa({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+/** URL do proxy de mídia da mensagem. */
+function urlMidia(id: string, baixar = false) {
+  return `/api/public/whatsapp/midia?id=${encodeURIComponent(id)}${baixar ? "&download=1" : ""}`;
+}
+
+/** Renderiza imagem, documento ou áudio anexado a uma mensagem. */
+function MidiaMensagem({ mensagem }: { mensagem: Mensagem }) {
+  const [aberto, setAberto] = useState(false);
+  if (!mensagem.arquivo_url && !mensagem.arquivo_nome) return null;
+
+  const nome = mensagem.arquivo_nome ?? "arquivo";
+  const ehImagem = mensagem.tipo === "imagem" || (mensagem.mime_type ?? "").startsWith("image/");
+  const ehAudio = mensagem.tipo === "audio" || (mensagem.mime_type ?? "").startsWith("audio/");
+
+  if (!mensagem.arquivo_url) {
+    return <p className="mb-1 text-xs opacity-80">📎 {nome}</p>;
+  }
+
+  if (ehImagem) {
+    return (
+      <>
+        <button type="button" onClick={() => setAberto(true)} className="mb-1 block">
+          <img
+            src={urlMidia(mensagem.id)}
+            alt={nome}
+            loading="lazy"
+            className="max-h-64 w-full max-w-xs rounded-lg object-cover"
+          />
+        </button>
+        <a
+          href={urlMidia(mensagem.id, true)}
+          className="mb-1 inline-flex items-center gap-1 text-xs underline opacity-90"
+          download={nome}
+        >
+          <Download className="h-3 w-3" /> Baixar imagem
+        </a>
+        <Dialog open={aberto} onOpenChange={setAberto}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="truncate text-sm">{nome}</DialogTitle>
+            </DialogHeader>
+            <img src={urlMidia(mensagem.id)} alt={nome} className="max-h-[70vh] w-full object-contain" />
+            <a
+              href={urlMidia(mensagem.id, true)}
+              className="inline-flex items-center gap-1 text-sm underline"
+              download={nome}
+            >
+              <Download className="h-4 w-4" /> Baixar imagem
+            </a>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  if (ehAudio) {
+    return (
+      <div className="mb-1 space-y-1">
+        <audio controls src={urlMidia(mensagem.id)} className="w-56 max-w-full" />
+        <a
+          href={urlMidia(mensagem.id, true)}
+          className="inline-flex items-center gap-1 text-xs underline opacity-90"
+          download={nome}
+        >
+          <Download className="h-3 w-3" /> Baixar áudio
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={urlMidia(mensagem.id, true)}
+      download={nome}
+      className="mb-1 flex items-center gap-2 rounded-lg border border-current/20 bg-background/20 px-2 py-2"
+    >
+      <FileText className="h-5 w-5 shrink-0" />
+      <span className="min-w-0 flex-1 truncate text-xs">{nome}</span>
+      <Download className="h-4 w-4 shrink-0" />
+    </a>
   );
 }
