@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronRight, Paperclip, Pencil, Play, Plus, Send, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Paperclip, Pencil, Play, Plus, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { simularFluxo } from "@/lib/bot.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   ACOES_ETAPA,
   ACOES_OPCAO,
