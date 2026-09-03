@@ -136,7 +136,6 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
   const outrosFluxos = fluxos.filter((f) => f.ativo && f.id !== fluxo.id);
 
   function abrir(e: FluxoEtapa) {
-    if (aberta === e.id) { setAberta(null); setForm(null); return; }
     setAberta(e.id);
     setForm(formDaEtapa(e, opcoes));
   }
