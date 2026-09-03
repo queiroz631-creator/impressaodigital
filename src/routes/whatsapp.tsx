@@ -391,6 +391,7 @@ function Conversa({
   mostrarVoltar?: boolean;
 }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [texto, setTexto] = useState("");
   const [selecionando, setSelecionando] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
@@ -617,6 +618,15 @@ function Conversa({
               ? "Toque nos arquivos da conversa para selecionar."
               : `${selecionados.size} arquivo${selecionados.size > 1 ? "s" : ""} selecionado${selecionados.size > 1 ? "s" : ""}`}
           </span>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={selecionados.size === 0}
+            onClick={enviarParaCalculadora}
+            title="Abrir a calculadora com os arquivos selecionados"
+          >
+            <Calculator className="mr-1 h-4 w-4" /> Calculadora
+          </Button>
           <Button size="sm" disabled={selecionados.size === 0} onClick={() => void baixarSelecionados()}>
             <Download className="mr-1 h-4 w-4" /> Baixar
           </Button>
