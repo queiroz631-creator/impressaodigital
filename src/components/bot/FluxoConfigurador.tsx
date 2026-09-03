@@ -229,15 +229,29 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
     await recarregar();
   }
 
-  const editor = form && (
-    <EditorEtapa
-      form={form}
-      setForm={setForm}
-      etapas={ordenadas}
-      outrosFluxos={outrosFluxos}
-      onCancelar={() => { setForm(null); setAberta(null); }}
-      onSalvar={() => void salvarEtapa()}
-    />
+  function fecharModal() {
+    setForm(null);
+    setAberta(null);
+  }
+
+  const modalEtapa = (
+    <Dialog open={!!form} onOpenChange={(v) => { if (!v) fecharModal(); }}>
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{aberta === "nova" ? "Nova etapa" : "Editar etapa"}</DialogTitle>
+        </DialogHeader>
+        {form && (
+          <EditorEtapa
+            form={form}
+            setForm={setForm}
+            etapas={ordenadas}
+            outrosFluxos={outrosFluxos}
+            onCancelar={fecharModal}
+            onSalvar={() => void salvarEtapa()}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 
   return (
