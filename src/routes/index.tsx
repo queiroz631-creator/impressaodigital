@@ -149,6 +149,9 @@ interface EstadoRascunho {
   prazoQuantidade: number;
 }
 
+/** Chave do sessionStorage usada para receber arquivos enviados pela tela do WhatsApp. */
+const CHAVE_ARQUIVOS_WHATSAPP = "calc-arquivos-whatsapp";
+
 const ESTADO_INICIAL: EstadoRascunho = {
   pedidoId: null,
   editandoId: null,
@@ -235,6 +238,50 @@ function Calculadora() {
     }
     setHidratado(true);
   }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
+
+  // ----- Arquivos enviados pela tela do WhatsApp -----
+  const whatsappPendente = useRef<{ id: string; nome: string }[] | null>(null);
+  useEffect(() => {
+    try {
+      const bruto = sessionStorage.getItem(CHAVE_ARQUIVOS_WHATSAPP);
+      if (bruto) {
+        sessionStorage.removeItem(CHAVE_ARQUIVOS_WHATSAPP);
+        whatsappPendente.current = JSON.parse(bruto) as { id: string; nome: string }[];
+      }
+    } catch {
+      whatsappPendente.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hidratado) return;
+    const itens = whatsappPendente.current;
+    whatsappPendente.current = null;
+    if (!itens || itens.length === 0) return;
+    void importarArquivosWhatsapp(itens);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hidratado]);
+
+  /** Limpa a tela (como "Novo Pedido") e anexa os arquivos vindos do WhatsApp. */
+  async function importarArquivosWhatsapp(itens: { id: string; nome: string }[]) {
+    limparFormulario(false);
+    const arquivos: File[] = [];
+    for (const item of itens) {
+      try {
+        const resposta = await fetch(`/api/public/whatsapp/midia?id=${encodeURIComponent(item.id)}`);
+        if (!resposta.ok) continue;
+        const blob = await resposta.blob();
+        arquivos.push(new File([blob], item.nome, { type: blob.type || "application/octet-stream" }));
+      } catch {
+        /* ignora falhas individuais de download */
+      }
+    }
+    if (arquivos.length === 0) {
+      toast.error("Não foi possível obter os arquivos selecionados no WhatsApp.");
+      return;
+    }
+    await anexarArquivos(arquivos, []);
+  }
 
   // ----- Persistência automática do rascunho -----
   useEffect(() => {
@@ -367,11 +414,9 @@ function Calculadora() {
 
   const num = (v: string) => Math.max(0, Number(v.replace(/\D/g, "")) || 0);
 
-  async function anexar(files: FileList | null) {
-    if (!files || files.length === 0) return;
+  async function anexarArquivos(originais: File[], atuais: ArquivoDoc[]) {
     setLendoArquivos(true);
     try {
-      const originais = Array.from(files);
       const r = await contarPaginas(originais);
 
       /**
@@ -392,7 +437,7 @@ function Calculadora() {
       );
 
       const novos = r.arquivos.map((a) => ({ ...a, caminho: caminhos.get(a.nome) ?? null }));
-      const lista = [...estado.arquivosLista, ...novos];
+      const lista = [...atuais, ...novos];
       aplicarArquivos(lista);
       if (r.ignorados.length > 0) toast.warning(`Arquivos ignorados: ${r.ignorados.join(", ")}`);
       if (r.manuais.length > 0) {
@@ -405,6 +450,14 @@ function Calculadora() {
       toast.error("Não foi possível ler os arquivos.");
     } finally {
       setLendoArquivos(false);
+    }
+  }
+
+  async function anexar(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    try {
+      await anexarArquivos(Array.from(files), estado.arquivosLista);
+    } finally {
       if (inputArquivos.current) inputArquivos.current.value = "";
     }
   }

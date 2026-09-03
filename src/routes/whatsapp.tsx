@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import {
   Bot,
   Bot as BotIcon,
   BotOff,
+  Calculator,
   CheckCircle2,
   CheckSquare,
   Clock,
@@ -390,6 +391,7 @@ function Conversa({
   mostrarVoltar?: boolean;
 }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [texto, setTexto] = useState("");
   const [selecionando, setSelecionando] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
@@ -429,6 +431,18 @@ function Conversa({
     toast.success(ids.length === 1 ? "1 arquivo baixado." : `${ids.length} arquivos baixados.`);
     setSelecionando(false);
     setSelecionados(new Set());
+  }
+
+  /** Envia os arquivos selecionados para a calculadora, sem baixar nada. */
+  function enviarParaCalculadora() {
+    const itens = (mensagens ?? [])
+      .filter((m) => selecionados.has(m.id) && m.arquivo_url)
+      .map((m) => ({ id: m.id, nome: m.arquivo_nome ?? "arquivo" }));
+    if (itens.length === 0) return;
+    sessionStorage.setItem("calc-arquivos-whatsapp", JSON.stringify(itens));
+    setSelecionando(false);
+    setSelecionados(new Set());
+    void navigate({ to: "/" });
   }
 
   // Avisa o cliente que o atendente está digitando (no máximo 1x a cada 3s).
@@ -604,6 +618,15 @@ function Conversa({
               ? "Toque nos arquivos da conversa para selecionar."
               : `${selecionados.size} arquivo${selecionados.size > 1 ? "s" : ""} selecionado${selecionados.size > 1 ? "s" : ""}`}
           </span>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={selecionados.size === 0}
+            onClick={enviarParaCalculadora}
+            title="Abrir a calculadora com os arquivos selecionados"
+          >
+            <Calculator className="mr-1 h-4 w-4" /> Calculadora
+          </Button>
           <Button size="sm" disabled={selecionados.size === 0} onClick={() => void baixarSelecionados()}>
             <Download className="mr-1 h-4 w-4" /> Baixar
           </Button>
