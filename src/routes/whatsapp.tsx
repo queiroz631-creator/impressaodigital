@@ -571,8 +571,9 @@ function Conversa({
                     m.direcao === "saida" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
                   )}
                 >
+                  <MidiaMensagem mensagem={m} />
                   {m.texto && <p className="whitespace-pre-wrap break-words">{m.texto}</p>}
-                  {m.arquivo_nome && <p className="mt-1 text-xs opacity-80">📎 {m.arquivo_nome}</p>}
+
                   <p className="mt-1 text-[10px] opacity-70">
                     {dataHoraCurta(m.data_hora)}
                     {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
