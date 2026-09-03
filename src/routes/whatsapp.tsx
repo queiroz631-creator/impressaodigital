@@ -335,6 +335,10 @@ function Atendimento() {
           atendente={user?.email ?? "Atendente"}
           atendenteId={user?.id ?? null}
           onVoltar={() => setAbertaId(null)}
+          onAbrirConversa={(id, status) => {
+            setAbertaId(id);
+            setAba(status);
+          }}
           mostrarVoltar
         />
       );
@@ -363,6 +367,10 @@ function Atendimento() {
               atendente={user?.email ?? "Atendente"}
               atendenteId={user?.id ?? null}
               onVoltar={() => setAbertaId(null)}
+              onAbrirConversa={(id, status) => {
+                setAbertaId(id);
+                setAba(status);
+              }}
             />
           ) : (
             <Card className="flex h-full items-center justify-center">
@@ -383,12 +391,14 @@ function Conversa({
   atendente,
   atendenteId,
   onVoltar,
+  onAbrirConversa,
   mostrarVoltar = false,
 }: {
   conversa: Conversa;
   atendente: string;
   atendenteId: string | null;
   onVoltar: () => void;
+  onAbrirConversa?: (id: string, status: StatusConversa) => void;
   mostrarVoltar?: boolean;
 }) {
   const queryClient = useQueryClient();
@@ -396,6 +406,7 @@ function Conversa({
   const [texto, setTexto] = useState("");
   const [selecionando, setSelecionando] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [selecionarAoCarregar, setSelecionarAoCarregar] = useState(false);
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
@@ -406,6 +417,7 @@ function Conversa({
   useEffect(() => {
     setSelecionando(false);
     setSelecionados(new Set());
+    setSelecionarAoCarregar(false);
   }, [conversa.id]);
 
   function alternarSelecao(id: string) {
@@ -434,14 +446,50 @@ function Conversa({
     setSelecionados(new Set());
   }
 
-  /** Seleciona ou desmarca todos os arquivos da conversa aberta. */
-  function selecionarTodosArquivos() {
-    const arquivos = (mensagens ?? [])
+  /** Abre o atendimento mais recente do cliente e seleciona todos os seus arquivos. */
+  async function abrirUltimosArquivos() {
+    const { data, error } = await supabase
+      .from("whatsapp_conversas")
+      .select("id,status,atendimento_numero,created_at")
+      .eq("telefone", conversa.telefone)
+      .order("atendimento_numero", { ascending: false })
+      .order("created_at", { ascending: false });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    const todas = (data ?? []) as unknown as Pick<Conversa, "id" | "status" | "atendimento_numero" | "created_at">[];
+    const maisRecente = todas[0];
+    if (!maisRecente) {
+      toast("Nenhuma conversa encontrada para este número.");
+      return;
+    }
+
+    const { data: msgs, error: erroMsgs } = await supabase
+      .from("whatsapp_mensagens")
+      .select("id, arquivo_url")
+      .eq("conversa_id", maisRecente.id);
+    if (erroMsgs) {
+      toast.error(erroMsgs.message);
+      return;
+    }
+
+    const arquivos = ((msgs ?? []) as { id: string; arquivo_url: string | null }[])
       .filter((m) => m.arquivo_url)
       .map((m) => m.id);
-    if (arquivos.length === 0) return;
-    const todosSelecionados = arquivos.every((id) => selecionados.has(id));
-    setSelecionados(todosSelecionados ? new Set() : new Set(arquivos));
+    if (arquivos.length === 0) {
+      toast("Nenhum arquivo no atendimento mais recente.");
+      return;
+    }
+
+    setSelecionando(true);
+    if (maisRecente.id === conversa.id) {
+      setSelecionados(new Set(arquivos));
+    } else {
+      onAbrirConversa?.(maisRecente.id, maisRecente.status as StatusConversa);
+      setSelecionarAoCarregar(true);
+    }
   }
 
   /** Envia os arquivos selecionados para a calculadora, sem baixar nada. */
@@ -493,6 +541,14 @@ function Conversa({
   useEffect(() => {
     fim.current?.scrollIntoView({ block: "end" });
   }, [mensagens]);
+
+  // Após abrir o atendimento mais recente, seleciona todos os arquivos das mensagens carregadas.
+  useEffect(() => {
+    if (!selecionarAoCarregar || isLoading || !mensagens) return;
+    const arquivos = mensagens.filter((m) => m.arquivo_url).map((m) => m.id);
+    if (arquivos.length > 0) setSelecionados(new Set(arquivos));
+    setSelecionarAoCarregar(false);
+  }, [selecionarAoCarregar, isLoading, mensagens]);
 
   useEffect(() => {
     if (conversa.nao_lidas > 0) {
@@ -632,8 +688,8 @@ function Conversa({
           <Button
             size="sm"
             variant="outline"
-            onClick={selecionarTodosArquivos}
-            title="Selecionar arquivos do último atendimento"
+            onClick={() => void abrirUltimosArquivos()}
+            title="Abrir o atendimento mais recente e selecionar seus arquivos"
           >
             {(mensagens ?? []).filter((m) => m.arquivo_url).length > 0 &&
             (mensagens ?? []).filter((m) => m.arquivo_url).every((m) => selecionados.has(m.id)) ? (
@@ -641,7 +697,7 @@ function Conversa({
             ) : (
               <Square className="mr-1 h-4 w-4" />
             )}
-            Último atendimento
+            Últimos Arquivos
           </Button>
           <Button
             size="sm"
