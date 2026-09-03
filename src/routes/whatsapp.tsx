@@ -680,8 +680,8 @@ function Conversa({
           <Button
             size="sm"
             variant="outline"
-            onClick={selecionarTodosArquivos}
-            title="Selecionar arquivos do último atendimento"
+            onClick={() => void abrirUltimosArquivos()}
+            title="Abrir o atendimento mais recente e selecionar seus arquivos"
           >
             {(mensagens ?? []).filter((m) => m.arquivo_url).length > 0 &&
             (mensagens ?? []).filter((m) => m.arquivo_url).every((m) => selecionados.has(m.id)) ? (
@@ -689,7 +689,7 @@ function Conversa({
             ) : (
               <Square className="mr-1 h-4 w-4" />
             )}
-            Último atendimento
+            Últimos Arquivos
           </Button>
           <Button
             size="sm"
