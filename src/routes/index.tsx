@@ -393,7 +393,7 @@ function Calculadora() {
       );
 
       const novos = r.arquivos.map((a) => ({ ...a, caminho: caminhos.get(a.nome) ?? null }));
-      const lista = [...estado.arquivosLista, ...novos];
+      const lista = [...atuais, ...novos];
       aplicarArquivos(lista);
       if (r.ignorados.length > 0) toast.warning(`Arquivos ignorados: ${r.ignorados.join(", ")}`);
       if (r.manuais.length > 0) {
@@ -406,6 +406,14 @@ function Calculadora() {
       toast.error("Não foi possível ler os arquivos.");
     } finally {
       setLendoArquivos(false);
+    }
+  }
+
+  async function anexar(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    try {
+      await anexarArquivos(Array.from(files), estado.arquivosLista);
+    } finally {
       if (inputArquivos.current) inputArquivos.current.value = "";
     }
   }
