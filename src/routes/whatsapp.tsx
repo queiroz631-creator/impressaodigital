@@ -383,12 +383,14 @@ function Conversa({
   atendente,
   atendenteId,
   onVoltar,
+  onAbrirConversa,
   mostrarVoltar = false,
 }: {
   conversa: Conversa;
   atendente: string;
   atendenteId: string | null;
   onVoltar: () => void;
+  onAbrirConversa?: (id: string, status: StatusConversa) => void;
   mostrarVoltar?: boolean;
 }) {
   const queryClient = useQueryClient();
