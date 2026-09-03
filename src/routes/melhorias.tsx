@@ -282,6 +282,15 @@ function Melhorias() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label="Editar melhoria"
+                    onClick={() => iniciarEdicao(m)}
+                    disabled={editandoId === m.id}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     aria-label="Excluir melhoria"
                     onClick={() => excluir.mutate(m.id)}
                     disabled={excluir.isPending}
