@@ -316,15 +316,16 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
 
         {ordenadas.map((e, i) => {
           const lista = opcoes.filter((o) => o.etapa_id === e.id).sort((a, b) => a.ordem - b.ordem);
-          const expandida = aberta === e.id;
           return (
             <Card key={e.id} className="shadow-card">
               <CardContent className="grid gap-2 pt-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <Button size="icon" variant="ghost" onClick={() => abrir(e)}>
-                    {expandida ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    <Pencil className="h-4 w-4" />
                   </Button>
-                  <strong className="text-sm">ETAPA {i + 1} — {e.nome}</strong>
+                  <strong className="cursor-pointer text-sm" onClick={() => abrir(e)}>
+                    ETAPA {i + 1} — {e.nome}
+                  </strong>
                   <Badge variant="secondary">{rotuloTipoMensagem(e.tipo_mensagem)}</Badge>
                   {i === 0 && <Badge variant="outline">Abertura do fluxo</Badge>}
                   {!e.ativo && <Badge variant="outline">Inativa</Badge>}
@@ -343,32 +344,19 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
                   </span>
                 </div>
 
-                {!expandida && (
-                  <>
-                    {e.mensagem && <p className="whitespace-pre-wrap text-sm">{e.mensagem}</p>}
-                    <p className="text-xs text-muted-foreground">
-                      {rotuloModoAvanco(e.modo_avanco)}
-                      {e.modo_avanco === "automatico" && e.espera_segundos > 0 ? ` · ${e.espera_segundos}s` : ""}
-                      {lista.length > 0 ? ` · ${lista.length} opção(ões)` : ""}
-                    </p>
-                  </>
-                )}
-
-                {expandida && editor}
+                {e.mensagem && <p className="whitespace-pre-wrap text-sm">{e.mensagem}</p>}
+                <p className="text-xs text-muted-foreground">
+                  {rotuloModoAvanco(e.modo_avanco)}
+                  {e.modo_avanco === "automatico" && e.espera_segundos > 0 ? ` · ${e.espera_segundos}s` : ""}
+                  {lista.length > 0 ? ` · ${lista.length} opção(ões)` : ""}
+                </p>
               </CardContent>
             </Card>
           );
         })}
 
-        {ordenadas.length === 0 && aberta !== "nova" && (
+        {ordenadas.length === 0 && (
           <p className="text-sm text-muted-foreground">Nenhuma etapa cadastrada.</p>
-        )}
-
-        {aberta === "nova" && (
-          <Card className="shadow-card">
-            <CardHeader className="pb-2"><CardTitle className="text-base">Nova etapa</CardTitle></CardHeader>
-            <CardContent>{editor}</CardContent>
-          </Card>
         )}
 
         <div>
@@ -376,6 +364,9 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
             <Plus className="h-4 w-4" /> ADICIONAR ETAPA
           </Button>
         </div>
+      </div>
+
+      {modalEtapa}
       </div>
 
       {/* ---------- Visualização ---------- */}
