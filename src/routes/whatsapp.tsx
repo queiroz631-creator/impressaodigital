@@ -438,14 +438,50 @@ function Conversa({
     setSelecionados(new Set());
   }
 
-  /** Seleciona ou desmarca todos os arquivos da conversa aberta. */
-  function selecionarTodosArquivos() {
-    const arquivos = (mensagens ?? [])
+  /** Abre o atendimento mais recente do cliente e seleciona todos os seus arquivos. */
+  async function abrirUltimosArquivos() {
+    const { data, error } = await supabase
+      .from("whatsapp_conversas")
+      .select("id,status,atendimento_numero,created_at")
+      .eq("telefone", conversa.telefone)
+      .order("atendimento_numero", { ascending: false })
+      .order("created_at", { ascending: false });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    const todas = (data ?? []) as unknown as Pick<Conversa, "id" | "status" | "atendimento_numero" | "created_at">[];
+    const maisRecente = todas[0];
+    if (!maisRecente) {
+      toast("Nenhuma conversa encontrada para este número.");
+      return;
+    }
+
+    const { data: msgs, error: erroMsgs } = await supabase
+      .from("whatsapp_mensagens")
+      .select("id, arquivo_url")
+      .eq("conversa_id", maisRecente.id);
+    if (erroMsgs) {
+      toast.error(erroMsgs.message);
+      return;
+    }
+
+    const arquivos = ((msgs ?? []) as { id: string; arquivo_url: string | null }[])
       .filter((m) => m.arquivo_url)
       .map((m) => m.id);
-    if (arquivos.length === 0) return;
-    const todosSelecionados = arquivos.every((id) => selecionados.has(id));
-    setSelecionados(todosSelecionados ? new Set() : new Set(arquivos));
+    if (arquivos.length === 0) {
+      toast("Nenhum arquivo no atendimento mais recente.");
+      return;
+    }
+
+    setSelecionando(true);
+    if (maisRecente.id === conversa.id) {
+      setSelecionados(new Set(arquivos));
+    } else {
+      onAbrirConversa?.(maisRecente.id, maisRecente.status as StatusConversa);
+      setSelecionarAoCarregar(true);
+    }
   }
 
   /** Envia os arquivos selecionados para a calculadora, sem baixar nada. */
