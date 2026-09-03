@@ -304,7 +304,7 @@ function Melhorias() {
                   </Button>
                 </div>
               </div>
-            ))}
+            )})}
           </CardContent>
         </Card>
       </div>
