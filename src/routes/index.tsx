@@ -23,6 +23,7 @@ import {
   Copy,
   Image as ImageIcon,
   Tag,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -265,22 +266,34 @@ function Calculadora() {
   /** Limpa a tela (como "Novo Pedido") e anexa os arquivos vindos do WhatsApp. */
   async function importarArquivosWhatsapp(itens: { id: string; nome: string }[]) {
     limparFormulario(false);
-    const arquivos: File[] = [];
-    for (const item of itens) {
-      try {
-        const resposta = await fetch(`/api/public/whatsapp/midia?id=${encodeURIComponent(item.id)}`);
-        if (!resposta.ok) continue;
-        const blob = await resposta.blob();
-        arquivos.push(new File([blob], item.nome, { type: blob.type || "application/octet-stream" }));
-      } catch {
-        /* ignora falhas individuais de download */
+    setImportacao({ ativo: true, progresso: 0 });
+    try {
+      const arquivos: File[] = [];
+      let baixados = 0;
+      for (const item of itens) {
+        try {
+          const resposta = await fetch(`/api/public/whatsapp/midia?id=${encodeURIComponent(item.id)}`);
+          if (resposta.ok) {
+            const blob = await resposta.blob();
+            arquivos.push(new File([blob], item.nome, { type: blob.type || "application/octet-stream" }));
+          }
+        } catch {
+          /* ignora falhas individuais de download */
+        }
+        baixados += 1;
+        // Downloads representam até 80% do progresso; os 20% finais são a contagem de páginas.
+        setImportacao({ ativo: true, progresso: Math.round((baixados / itens.length) * 80) });
       }
+      if (arquivos.length === 0) {
+        toast.error("Não foi possível obter os arquivos selecionados no WhatsApp.");
+        return;
+      }
+      setImportacao({ ativo: true, progresso: 90 });
+      await anexarArquivos(arquivos, []);
+      setImportacao({ ativo: true, progresso: 100 });
+    } finally {
+      setImportacao({ ativo: false, progresso: 0 });
     }
-    if (arquivos.length === 0) {
-      toast.error("Não foi possível obter os arquivos selecionados no WhatsApp.");
-      return;
-    }
-    await anexarArquivos(arquivos, []);
   }
 
   // ----- Persistência automática do rascunho -----
