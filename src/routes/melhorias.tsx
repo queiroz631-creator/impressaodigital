@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,6 +70,7 @@ function Melhorias() {
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [tela, setTela] = useState<string>(TELAS[0]!);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   const { data: melhorias, isLoading } = useQuery({
     queryKey: ["melhorias"],
@@ -99,6 +100,24 @@ function Melhorias() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const atualizar = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("melhorias")
+        .update({ titulo: titulo.trim(), descricao: descricao.trim() || null, tela })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setTitulo("");
+      setDescricao("");
+      setEditandoId(null);
+      toast.success("Melhoria atualizada");
+      qc.invalidateQueries({ queryKey: ["melhorias"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const alternarStatus = useMutation({
     mutationFn: async (m: Melhoria) => {
       const { error } = await supabase
@@ -123,6 +142,20 @@ function Melhorias() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const iniciarEdicao = (m: Melhoria) => {
+    setEditandoId(m.id);
+    setTitulo(m.titulo);
+    setDescricao(m.descricao || "");
+    setTela(m.tela);
+  };
+
+  const cancelarEdicao = () => {
+    setEditandoId(null);
+    setTitulo("");
+    setDescricao("");
+    setTela(TELAS[0]!);
+  };
+
   return (
     <div>
       <PageHeader titulo="Melhorias" subtitulo="Registre melhorias e a tela onde serão aplicadas" />
@@ -130,7 +163,9 @@ function Melhorias() {
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-base">Nova melhoria</CardTitle>
+            <CardTitle className="text-base">
+              {editandoId ? "Editar melhoria" : "Nova melhoria"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -170,14 +205,31 @@ function Melhorias() {
               />
             </div>
 
-            <Button
-              className="w-full"
-              disabled={!titulo.trim() || criar.isPending}
-              onClick={() => criar.mutate()}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar melhoria
-            </Button>
+            {editandoId ? (
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1"
+                  disabled={!titulo.trim() || atualizar.isPending}
+                  onClick={() => atualizar.mutate(editandoId)}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Salvar alterações
+                </Button>
+                <Button variant="outline" onClick={cancelarEdicao}>
+                  <X className="mr-2 h-4 w-4" />
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <Button
+                className="w-full"
+                disabled={!titulo.trim() || criar.isPending}
+                onClick={() => criar.mutate()}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar melhoria
+              </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -226,6 +278,15 @@ function Melhorias() {
                     disabled={alternarStatus.isPending}
                   >
                     {m.status === "concluida" ? "Reabrir" : "Concluir"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Editar melhoria"
+                    onClick={() => iniciarEdicao(m)}
+                    disabled={editandoId === m.id}
+                  >
+                    <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
