@@ -446,6 +446,18 @@ function Conversa({
     setSelecionados(new Set());
   }
 
+  /** Retorna os IDs dos arquivos que pertencem ao atendimento mais recente (após o último divisor "ATENDIMENTO N"). */
+  function arquivosDoUltimoAtendimento(msgs: Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto">[]) {
+    let inicio = 0;
+    msgs.forEach((m, i) => {
+      if (m.tipo === "sistema" && /^ATENDIMENTO\s+\d+/i.test(m.texto ?? "")) inicio = i + 1;
+    });
+    return msgs
+      .slice(inicio)
+      .filter((m) => m.arquivo_url)
+      .map((m) => m.id);
+  }
+
   /** Abre o atendimento mais recente do cliente e seleciona todos os seus arquivos. */
   async function abrirUltimosArquivos() {
     const { data, error } = await supabase
