@@ -398,6 +398,7 @@ function Conversa({
   const [texto, setTexto] = useState("");
   const [selecionando, setSelecionando] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [selecionarAoCarregar, setSelecionarAoCarregar] = useState(false);
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
@@ -408,6 +409,7 @@ function Conversa({
   useEffect(() => {
     setSelecionando(false);
     setSelecionados(new Set());
+    setSelecionarAoCarregar(false);
   }, [conversa.id]);
 
   function alternarSelecao(id: string) {
