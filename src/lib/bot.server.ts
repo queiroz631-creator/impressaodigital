@@ -837,7 +837,24 @@ async function entregarFluxo(
   let atual = inicial;
 
   for (let volta = 0; volta < 6; volta += 1) {
-    for (const m of atual.mensagens) {
+    // Fora do horário, uma etapa que termina em transferência não envia o próprio
+    // texto: o cliente recebe somente a mensagem de fora do horário configurada.
+    let pularMensagens = false;
+    const vaiTransferir =
+      atual.transferir ||
+      atual.acao === "transferir_atendente" ||
+      atual.acao === "transferir_silencioso";
+    if (vaiTransferir) {
+      const cfgHorario = await carregarDadosBot();
+      pularMensagens = Boolean(
+        cfgHorario &&
+          !dentroDoHorario(cfgHorario, vars.agora) &&
+          cfgHorario.config.msg_transferencia_fora_horario_ativo &&
+          cfgHorario.config.msg_transferencia_fora_horario.trim(),
+      );
+    }
+
+    for (const m of pularMensagens ? [] : atual.mensagens) {
       const enviou = await responder(conversa, m.texto, m.botoes, m.midia);
       // Envio não confirmado: mantém o estado anterior da conversa para que a
       // próxima mensagem do cliente refaça este passo, em vez de avançar sem
@@ -850,6 +867,7 @@ async function entregarFluxo(
         await new Promise((r) => setTimeout(r, espera * 1000));
       }
     }
+
 
     if (atual.finalizar) {
       if (!atual.silencioso) {
