@@ -142,6 +142,20 @@ function Melhorias() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const iniciarEdicao = (m: Melhoria) => {
+    setEditandoId(m.id);
+    setTitulo(m.titulo);
+    setDescricao(m.descricao || "");
+    setTela(m.tela);
+  };
+
+  const cancelarEdicao = () => {
+    setEditandoId(null);
+    setTitulo("");
+    setDescricao("");
+    setTela(TELAS[0]!);
+  };
+
   return (
     <div>
       <PageHeader titulo="Melhorias" subtitulo="Registre melhorias e a tela onde serão aplicadas" />
@@ -149,7 +163,9 @@ function Melhorias() {
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="text-base">Nova melhoria</CardTitle>
+            <CardTitle className="text-base">
+              {editandoId ? "Editar melhoria" : "Nova melhoria"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -189,14 +205,31 @@ function Melhorias() {
               />
             </div>
 
-            <Button
-              className="w-full"
-              disabled={!titulo.trim() || criar.isPending}
-              onClick={() => criar.mutate()}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar melhoria
-            </Button>
+            {editandoId ? (
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1"
+                  disabled={!titulo.trim() || atualizar.isPending}
+                  onClick={() => atualizar.mutate(editandoId)}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Salvar alterações
+                </Button>
+                <Button variant="outline" onClick={cancelarEdicao}>
+                  <X className="mr-2 h-4 w-4" />
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <Button
+                className="w-full"
+                disabled={!titulo.trim() || criar.isPending}
+                onClick={() => criar.mutate()}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar melhoria
+              </Button>
+            )}
           </CardContent>
         </Card>
 
