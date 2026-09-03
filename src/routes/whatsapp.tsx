@@ -591,6 +591,13 @@ function Conversa({
                 setTexto(e.target.value);
                 if (e.target.value.trim()) avisarDigitando();
               }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  const msg = texto.trim();
+                  if (msg && !envio.isPending) envio.mutate(msg);
+                }
+              }}
               placeholder="Escreva a mensagem..."
               rows={2}
               className="min-h-0 flex-1 resize-none"
