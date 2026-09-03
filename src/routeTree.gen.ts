@@ -15,6 +15,7 @@ import { Route as BotRouteImport } from './routes/bot'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as MelhoriasRouteImport } from './routes/melhorias'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as PrecosRouteImport } from './routes/precos'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
@@ -55,6 +56,11 @@ const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MelhoriasRoute = MelhoriasRouteImport.update({
+  id: '/melhorias',
+  path: '/melhorias',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrcamentosRoute = OrcamentosRouteImport.update({
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/clientes': typeof ClientesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
+  '/melhorias': typeof MelhoriasRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/clientes': typeof ClientesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
+  '/melhorias': typeof MelhoriasRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/clientes': typeof ClientesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
+  '/melhorias': typeof MelhoriasRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/configuracoes'
     | '/dashboard'
+    | '/melhorias'
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
@@ -201,6 +211,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/configuracoes'
     | '/dashboard'
+    | '/melhorias'
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
@@ -220,6 +231,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/configuracoes'
     | '/dashboard'
+    | '/melhorias'
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
@@ -240,6 +252,7 @@ export interface RootRouteChildren {
   ClientesRoute: typeof ClientesRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   DashboardRoute: typeof DashboardRoute
+  MelhoriasRoute: typeof MelhoriasRoute
   OrcamentosRoute: typeof OrcamentosRoute
   PrecosRoute: typeof PrecosRoute
   WhatsappRoute: typeof WhatsappRoute
@@ -295,6 +308,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/melhorias': {
+      id: '/melhorias'
+      path: '/melhorias'
+      fullPath: '/melhorias'
+      preLoaderRoute: typeof MelhoriasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orcamentos': {
@@ -384,6 +404,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClientesRoute: ClientesRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   DashboardRoute: DashboardRoute,
+  MelhoriasRoute: MelhoriasRoute,
   OrcamentosRoute: OrcamentosRoute,
   PrecosRoute: PrecosRoute,
   WhatsappRoute: WhatsappRoute,
