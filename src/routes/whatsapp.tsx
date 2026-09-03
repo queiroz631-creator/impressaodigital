@@ -417,9 +417,9 @@ function Conversa({
   async function baixarSelecionados() {
     const ids = Array.from(selecionados);
     if (ids.length === 0) return;
-    for (let i = 0; i < ids.length; i++) {
+    for (const [i, id] of ids.entries()) {
       const a = document.createElement("a");
-      a.href = urlMidia(ids[i], true);
+      a.href = urlMidia(id, true);
       a.download = "";
       document.body.appendChild(a);
       a.click();
