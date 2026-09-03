@@ -13,6 +13,7 @@ import {
   MessageCircle,
   FileUser,
   Users,
+  Sparkles,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,7 @@ const itens = [
   { to: "/bot", label: "Configurar Bot", icon: Bot },
   { to: "/precos", label: "Configurar Preços", icon: DollarSign, adminOnly: true },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
+  { to: "/melhorias", label: "Melhorias", icon: Sparkles },
 ];
 
 export function AppLayout({ children }: { children: ReactNode }) {
