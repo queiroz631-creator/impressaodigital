@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronRight, Paperclip, Pencil, Play, Plus, Send, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Paperclip, Pencil, Play, Plus, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { simularFluxo } from "@/lib/bot.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   ACOES_ETAPA,
   ACOES_OPCAO,
@@ -135,7 +136,6 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
   const outrosFluxos = fluxos.filter((f) => f.ativo && f.id !== fluxo.id);
 
   function abrir(e: FluxoEtapa) {
-    if (aberta === e.id) { setAberta(null); setForm(null); return; }
     setAberta(e.id);
     setForm(formDaEtapa(e, opcoes));
   }
@@ -229,15 +229,29 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
     await recarregar();
   }
 
-  const editor = form && (
-    <EditorEtapa
-      form={form}
-      setForm={setForm}
-      etapas={ordenadas}
-      outrosFluxos={outrosFluxos}
-      onCancelar={() => { setForm(null); setAberta(null); }}
-      onSalvar={() => void salvarEtapa()}
-    />
+  function fecharModal() {
+    setForm(null);
+    setAberta(null);
+  }
+
+  const modalEtapa = (
+    <Dialog open={!!form} onOpenChange={(v) => { if (!v) fecharModal(); }}>
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{aberta === "nova" ? "Nova etapa" : "Editar etapa"}</DialogTitle>
+        </DialogHeader>
+        {form && (
+          <EditorEtapa
+            form={form}
+            setForm={setForm}
+            etapas={ordenadas}
+            outrosFluxos={outrosFluxos}
+            onCancelar={fecharModal}
+            onSalvar={() => void salvarEtapa()}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 
   return (
@@ -302,15 +316,16 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
 
         {ordenadas.map((e, i) => {
           const lista = opcoes.filter((o) => o.etapa_id === e.id).sort((a, b) => a.ordem - b.ordem);
-          const expandida = aberta === e.id;
           return (
             <Card key={e.id} className="shadow-card">
               <CardContent className="grid gap-2 pt-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <Button size="icon" variant="ghost" onClick={() => abrir(e)}>
-                    {expandida ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    <Pencil className="h-4 w-4" />
                   </Button>
-                  <strong className="text-sm">ETAPA {i + 1} — {e.nome}</strong>
+                  <strong className="cursor-pointer text-sm" onClick={() => abrir(e)}>
+                    ETAPA {i + 1} — {e.nome}
+                  </strong>
                   <Badge variant="secondary">{rotuloTipoMensagem(e.tipo_mensagem)}</Badge>
                   {i === 0 && <Badge variant="outline">Abertura do fluxo</Badge>}
                   {!e.ativo && <Badge variant="outline">Inativa</Badge>}
@@ -329,32 +344,19 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
                   </span>
                 </div>
 
-                {!expandida && (
-                  <>
-                    {e.mensagem && <p className="whitespace-pre-wrap text-sm">{e.mensagem}</p>}
-                    <p className="text-xs text-muted-foreground">
-                      {rotuloModoAvanco(e.modo_avanco)}
-                      {e.modo_avanco === "automatico" && e.espera_segundos > 0 ? ` · ${e.espera_segundos}s` : ""}
-                      {lista.length > 0 ? ` · ${lista.length} opção(ões)` : ""}
-                    </p>
-                  </>
-                )}
-
-                {expandida && editor}
+                {e.mensagem && <p className="whitespace-pre-wrap text-sm">{e.mensagem}</p>}
+                <p className="text-xs text-muted-foreground">
+                  {rotuloModoAvanco(e.modo_avanco)}
+                  {e.modo_avanco === "automatico" && e.espera_segundos > 0 ? ` · ${e.espera_segundos}s` : ""}
+                  {lista.length > 0 ? ` · ${lista.length} opção(ões)` : ""}
+                </p>
               </CardContent>
             </Card>
           );
         })}
 
-        {ordenadas.length === 0 && aberta !== "nova" && (
+        {ordenadas.length === 0 && (
           <p className="text-sm text-muted-foreground">Nenhuma etapa cadastrada.</p>
-        )}
-
-        {aberta === "nova" && (
-          <Card className="shadow-card">
-            <CardHeader className="pb-2"><CardTitle className="text-base">Nova etapa</CardTitle></CardHeader>
-            <CardContent>{editor}</CardContent>
-          </Card>
         )}
 
         <div>
@@ -363,6 +365,8 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
           </Button>
         </div>
       </div>
+
+      {modalEtapa}
 
       {/* ---------- Visualização ---------- */}
       <Card className="shadow-card">
