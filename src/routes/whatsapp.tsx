@@ -10,6 +10,7 @@ import {
   Bot as BotIcon,
   BotOff,
   CheckCircle2,
+  CheckSquare,
   Clock,
   Download,
   FileText,
@@ -19,6 +20,7 @@ import {
   Search,
   Send,
   UserCheck,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -389,11 +391,45 @@ function Conversa({
 }) {
   const queryClient = useQueryClient();
   const [texto, setTexto] = useState("");
+  const [selecionando, setSelecionando] = useState(false);
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
   const finalizacao = useServerFn(enviarParaFinalizacao);
   const presenca = useServerFn(enviarDigitandoWhatsapp);
+
+  // Ao trocar de conversa, sai do modo seleção.
+  useEffect(() => {
+    setSelecionando(false);
+    setSelecionados(new Set());
+  }, [conversa.id]);
+
+  function alternarSelecao(id: string) {
+    setSelecionados((atual) => {
+      const novo = new Set(atual);
+      if (novo.has(id)) novo.delete(id);
+      else novo.add(id);
+      return novo;
+    });
+  }
+
+  async function baixarSelecionados() {
+    const ids = Array.from(selecionados);
+    if (ids.length === 0) return;
+    for (const [i, id] of ids.entries()) {
+      const a = document.createElement("a");
+      a.href = urlMidia(id, true);
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      if (i < ids.length - 1) await new Promise((r) => setTimeout(r, 400));
+    }
+    toast.success(ids.length === 1 ? "1 arquivo baixado." : `${ids.length} arquivos baixados.`);
+    setSelecionando(false);
+    setSelecionados(new Set());
+  }
 
   // Avisa o cliente que o atendente está digitando (no máximo 1x a cada 3s).
   function avisarDigitando() {
@@ -548,7 +584,41 @@ function Conversa({
         >
           {botLiberado ? <Bot className="h-4 w-4" /> : <BotOff className="h-4 w-4" />}
         </Button>
+        <Button
+          size="sm"
+          variant={selecionando ? "secondary" : "outline"}
+          title="Selecionar arquivos para baixar"
+          onClick={() => {
+            if (selecionando) setSelecionados(new Set());
+            setSelecionando(!selecionando);
+          }}
+        >
+          <CheckSquare className="h-4 w-4" />
+        </Button>
       </div>
+
+      {selecionando && (
+        <div className="mb-3 flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm">
+          <span className="flex-1">
+            {selecionados.size === 0
+              ? "Toque nos arquivos da conversa para selecionar."
+              : `${selecionados.size} arquivo${selecionados.size > 1 ? "s" : ""} selecionado${selecionados.size > 1 ? "s" : ""}`}
+          </span>
+          <Button size="sm" disabled={selecionados.size === 0} onClick={() => void baixarSelecionados()}>
+            <Download className="mr-1 h-4 w-4" /> Baixar
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setSelecionando(false);
+              setSelecionados(new Set());
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       <Card className="flex min-h-0 flex-1 flex-col">
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
@@ -570,12 +640,20 @@ function Conversa({
               ) : (
               <div key={m.id} className={cn("flex", m.direcao === "saida" ? "justify-end" : "justify-start")}>
                 <div
+                  onClick={selecionando && m.arquivo_url ? () => alternarSelecao(m.id) : undefined}
                   className={cn(
                     "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm",
                     m.direcao === "saida" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+                    selecionando && m.arquivo_url && "cursor-pointer",
+                    selecionando && selecionados.has(m.id) && "ring-2 ring-offset-1 ring-primary",
                   )}
                 >
-                  <MidiaMensagem mensagem={m} />
+                  {selecionando && m.arquivo_url && (
+                    <span className="mb-1 flex items-center gap-1 text-[11px] font-semibold opacity-90">
+                      {selecionados.has(m.id) ? "☑" : "☐"} {selecionados.has(m.id) ? "Selecionado" : "Selecionar"}
+                    </span>
+                  )}
+                  <MidiaMensagem mensagem={m} selecionando={selecionando} />
                   {m.texto && <p className="whitespace-pre-wrap break-words">{m.texto}</p>}
 
                   <p className="mt-1 text-[10px] opacity-70">
@@ -626,7 +704,7 @@ function urlMidia(id: string, baixar = false) {
 }
 
 /** Renderiza imagem, documento ou áudio anexado a uma mensagem. */
-function MidiaMensagem({ mensagem }: { mensagem: Mensagem }) {
+function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem; selecionando?: boolean }) {
   const [aberto, setAberto] = useState(false);
   if (!mensagem.arquivo_url && !mensagem.arquivo_nome) return null;
 
@@ -641,22 +719,33 @@ function MidiaMensagem({ mensagem }: { mensagem: Mensagem }) {
   if (ehImagem) {
     return (
       <>
-        <button type="button" onClick={() => setAberto(true)} className="mb-1 block">
+        {selecionando ? (
           <img
             src={urlMidia(mensagem.id)}
             alt={nome}
             loading="lazy"
-            className="max-h-64 w-full max-w-xs rounded-lg object-cover"
+            className="mb-1 max-h-64 w-full max-w-xs rounded-lg object-cover"
           />
-        </button>
-        <a
-          href={urlMidia(mensagem.id, true)}
-          className="mb-1 inline-flex items-center gap-1 text-xs underline opacity-90"
-          download={nome}
-        >
-          <Download className="h-3 w-3" /> Baixar imagem
-        </a>
-        <Dialog open={aberto} onOpenChange={setAberto}>
+        ) : (
+          <>
+            <button type="button" onClick={() => setAberto(true)} className="mb-1 block">
+              <img
+                src={urlMidia(mensagem.id)}
+                alt={nome}
+                loading="lazy"
+                className="max-h-64 w-full max-w-xs rounded-lg object-cover"
+              />
+            </button>
+            <a
+              href={urlMidia(mensagem.id, true)}
+              className="mb-1 inline-flex items-center gap-1 text-xs underline opacity-90"
+              download={nome}
+            >
+              <Download className="h-3 w-3" /> Baixar imagem
+            </a>
+          </>
+        )}
+        <Dialog open={aberto && !selecionando} onOpenChange={setAberto}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle className="truncate text-sm">{nome}</DialogTitle>
@@ -678,14 +767,25 @@ function MidiaMensagem({ mensagem }: { mensagem: Mensagem }) {
   if (ehAudio) {
     return (
       <div className="mb-1 space-y-1">
-        <audio controls src={urlMidia(mensagem.id)} className="w-56 max-w-full" />
-        <a
-          href={urlMidia(mensagem.id, true)}
-          className="inline-flex items-center gap-1 text-xs underline opacity-90"
-          download={nome}
-        >
-          <Download className="h-3 w-3" /> Baixar áudio
-        </a>
+        <audio controls={!selecionando} src={urlMidia(mensagem.id)} className="w-56 max-w-full" />
+        {!selecionando && (
+          <a
+            href={urlMidia(mensagem.id, true)}
+            className="inline-flex items-center gap-1 text-xs underline opacity-90"
+            download={nome}
+          >
+            <Download className="h-3 w-3" /> Baixar áudio
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  if (selecionando) {
+    return (
+      <div className="mb-1 flex items-center gap-2 rounded-lg border border-current/20 bg-background/20 px-2 py-2">
+        <FileText className="h-5 w-5 shrink-0" />
+        <span className="min-w-0 flex-1 truncate text-xs">{nome}</span>
       </div>
     );
   }
