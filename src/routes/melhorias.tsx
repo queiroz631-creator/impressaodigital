@@ -244,13 +244,18 @@ function Melhorias() {
             {!isLoading && !melhorias?.length && (
               <p className="text-sm text-muted-foreground">Nenhuma melhoria cadastrada ainda.</p>
             )}
-            {melhorias?.map((m) => (
+            {melhorias?.map((m, idx) => {
+              const numero = (melhorias?.length ?? 0) - idx;
+              return (
               <div
                 key={m.id}
                 className="flex items-start justify-between gap-3 rounded-lg border p-3"
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-muted-foreground min-w-[1.5rem]">
+                      {numero}.
+                    </span>
                     <span
                       className={
                         m.status === "concluida"
@@ -299,7 +304,7 @@ function Melhorias() {
                   </Button>
                 </div>
               </div>
-            ))}
+            )})}
           </CardContent>
         </Card>
       </div>
