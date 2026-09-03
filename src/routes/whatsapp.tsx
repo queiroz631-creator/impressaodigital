@@ -10,6 +10,7 @@ import {
   Bot as BotIcon,
   BotOff,
   CheckCircle2,
+  CheckSquare,
   Clock,
   Download,
   FileText,
@@ -19,6 +20,7 @@ import {
   Search,
   Send,
   UserCheck,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -389,11 +391,45 @@ function Conversa({
 }) {
   const queryClient = useQueryClient();
   const [texto, setTexto] = useState("");
+  const [selecionando, setSelecionando] = useState(false);
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
   const finalizacao = useServerFn(enviarParaFinalizacao);
   const presenca = useServerFn(enviarDigitandoWhatsapp);
+
+  // Ao trocar de conversa, sai do modo seleção.
+  useEffect(() => {
+    setSelecionando(false);
+    setSelecionados(new Set());
+  }, [conversa.id]);
+
+  function alternarSelecao(id: string) {
+    setSelecionados((atual) => {
+      const novo = new Set(atual);
+      if (novo.has(id)) novo.delete(id);
+      else novo.add(id);
+      return novo;
+    });
+  }
+
+  async function baixarSelecionados() {
+    const ids = Array.from(selecionados);
+    if (ids.length === 0) return;
+    for (let i = 0; i < ids.length; i++) {
+      const a = document.createElement("a");
+      a.href = urlMidia(ids[i], true);
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      if (i < ids.length - 1) await new Promise((r) => setTimeout(r, 400));
+    }
+    toast.success(ids.length === 1 ? "1 arquivo baixado." : `${ids.length} arquivos baixados.`);
+    setSelecionando(false);
+    setSelecionados(new Set());
+  }
 
   // Avisa o cliente que o atendente está digitando (no máximo 1x a cada 3s).
   function avisarDigitando() {
