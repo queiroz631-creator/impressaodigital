@@ -23,6 +23,7 @@ import {
   Copy,
   Image as ImageIcon,
   Tag,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -241,6 +242,10 @@ function Calculadora() {
 
   // ----- Arquivos enviados pela tela do WhatsApp -----
   const whatsappPendente = useRef<{ id: string; nome: string }[] | null>(null);
+  const [importacao, setImportacao] = useState<{ ativo: boolean; progresso: number }>({
+    ativo: false,
+    progresso: 0,
+  });
   useEffect(() => {
     try {
       const bruto = sessionStorage.getItem(CHAVE_ARQUIVOS_WHATSAPP);
@@ -265,22 +270,34 @@ function Calculadora() {
   /** Limpa a tela (como "Novo Pedido") e anexa os arquivos vindos do WhatsApp. */
   async function importarArquivosWhatsapp(itens: { id: string; nome: string }[]) {
     limparFormulario(false);
-    const arquivos: File[] = [];
-    for (const item of itens) {
-      try {
-        const resposta = await fetch(`/api/public/whatsapp/midia?id=${encodeURIComponent(item.id)}`);
-        if (!resposta.ok) continue;
-        const blob = await resposta.blob();
-        arquivos.push(new File([blob], item.nome, { type: blob.type || "application/octet-stream" }));
-      } catch {
-        /* ignora falhas individuais de download */
+    setImportacao({ ativo: true, progresso: 0 });
+    try {
+      const arquivos: File[] = [];
+      let baixados = 0;
+      for (const item of itens) {
+        try {
+          const resposta = await fetch(`/api/public/whatsapp/midia?id=${encodeURIComponent(item.id)}`);
+          if (resposta.ok) {
+            const blob = await resposta.blob();
+            arquivos.push(new File([blob], item.nome, { type: blob.type || "application/octet-stream" }));
+          }
+        } catch {
+          /* ignora falhas individuais de download */
+        }
+        baixados += 1;
+        // Downloads representam até 80% do progresso; os 20% finais são a contagem de páginas.
+        setImportacao({ ativo: true, progresso: Math.round((baixados / itens.length) * 80) });
       }
+      if (arquivos.length === 0) {
+        toast.error("Não foi possível obter os arquivos selecionados no WhatsApp.");
+        return;
+      }
+      setImportacao({ ativo: true, progresso: 90 });
+      await anexarArquivos(arquivos, []);
+      setImportacao({ ativo: true, progresso: 100 });
+    } finally {
+      setImportacao({ ativo: false, progresso: 0 });
     }
-    if (arquivos.length === 0) {
-      toast.error("Não foi possível obter os arquivos selecionados no WhatsApp.");
-      return;
-    }
-    await anexarArquivos(arquivos, []);
   }
 
   // ----- Persistência automática do rascunho -----
@@ -944,6 +961,19 @@ function Calculadora() {
 
   return (
     <>
+      {/* ==================== PRELOAD DA IMPORTAÇÃO DO WHATSAPP ==================== */}
+      {importacao.ativo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-card px-8 py-6 shadow-lg">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm font-medium text-card-foreground">Importando arquivos do WhatsApp…</p>
+            <p className="text-2xl font-extrabold tabular-nums text-primary">
+              {Math.round(importacao.progresso)}%
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ==================== HEADER FIXO ==================== */}
       <div className="sticky top-0 z-30 -mx-4 mb-6 border-b border-sidebar-border bg-sidebar px-4 pt-3 pb-3 text-sidebar-foreground sm:-mx-6 sm:px-6">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
