@@ -24,6 +24,7 @@ import { Route as OrcamentoTokenRouteImport } from './routes/orcamento.$token'
 import { Route as CurriculoPublicoTokenRouteImport } from './routes/curriculo.publico.$token'
 import { Route as ApiPublicWhatsappFilaRouteImport } from './routes/api/public/whatsapp/fila'
 import { Route as ApiPublicWhatsappInatividadeRouteImport } from './routes/api/public/whatsapp/inatividade'
+import { Route as ApiPublicWhatsappMidiaRouteImport } from './routes/api/public/whatsapp/midia'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -102,6 +103,11 @@ const ApiPublicWhatsappInatividadeRoute =
     path: '/api/public/whatsapp/inatividade',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWhatsappMidiaRoute = ApiPublicWhatsappMidiaRouteImport.update({
+  id: '/api/public/whatsapp/midia',
+  path: '/api/public/whatsapp/midia',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWhatsappWebhookRoute =
   ApiPublicWhatsappWebhookRouteImport.update({
     id: '/api/public/whatsapp/webhook',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
+  '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
+  '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRoutesById {
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
+  '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
 }
 export interface FileRouteTypes {
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
+    | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
+    | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/webhook'
   id:
     | '__root__'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
+    | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -237,6 +249,7 @@ export interface RootRouteChildren {
   CurriculoPublicoTokenRoute: typeof CurriculoPublicoTokenRoute
   ApiPublicWhatsappFilaRoute: typeof ApiPublicWhatsappFilaRoute
   ApiPublicWhatsappInatividadeRoute: typeof ApiPublicWhatsappInatividadeRoute
+  ApiPublicWhatsappMidiaRoute: typeof ApiPublicWhatsappMidiaRoute
   ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
 }
 
@@ -347,6 +360,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWhatsappInatividadeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/whatsapp/midia': {
+      id: '/api/public/whatsapp/midia'
+      path: '/api/public/whatsapp/midia'
+      fullPath: '/api/public/whatsapp/midia'
+      preLoaderRoute: typeof ApiPublicWhatsappMidiaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/whatsapp/webhook': {
       id: '/api/public/whatsapp/webhook'
       path: '/api/public/whatsapp/webhook'
@@ -373,6 +393,7 @@ const rootRouteChildren: RootRouteChildren = {
   CurriculoPublicoTokenRoute: CurriculoPublicoTokenRoute,
   ApiPublicWhatsappFilaRoute: ApiPublicWhatsappFilaRoute,
   ApiPublicWhatsappInatividadeRoute: ApiPublicWhatsappInatividadeRoute,
+  ApiPublicWhatsappMidiaRoute: ApiPublicWhatsappMidiaRoute,
   ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
 }
 export const routeTree = rootRouteImport
