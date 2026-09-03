@@ -1107,12 +1107,13 @@ async function triagem(
     const modo = regra.enviar_mensagem ?? "sempre";
     const enviadas = regrasEnviadas(ctx);
     const esperaMsg = Math.min(300, Math.max(0, Number(regra.delay_mensagem_segundos ?? 0)));
+    const esperaAcao = Math.min(60, Math.max(0, Number(regra.delay_segundos ?? 0)));
 
     // Janela anti-repetição: vários arquivos do mesmo envio combinam com a
     // mesma regra em callbacks diferentes. Depois de responder uma vez, a
-    // regra fica em silêncio pela duração da espera + margem de agrupamento.
+    // regra fica em silêncio pela duração das esperas + margem de agrupamento.
     const ultimaEm = ctx.ultimaRegra === regra.id ? Date.parse(ctx.ultimaRegraEm ?? "") : NaN;
-    const janelaLote = esperaMsg * 1000 + 45_000;
+    const janelaLote = (esperaMsg + esperaAcao) * 1000 + 45_000;
     const repetindoLote = Number.isFinite(ultimaEm) && Date.now() - ultimaEm < janelaLote;
     if (repetindoLote) return;
 
@@ -1149,6 +1150,16 @@ async function triagem(
       ultimaRegraEm: new Date().toISOString(),
       regrasEnviadas: enviada && !enviadas.includes(regra.id) ? [...enviadas, regra.id] : enviadas,
     };
+
+    // Confirma a entrada como respondida assim que a mensagem sai, antes da
+    // espera da ação. Se a execução em segundo plano for interrompida durante
+    // essa espera, a fila não reprocessa a mesma mensagem nem reenvia a resposta.
+    if (enviada) {
+      await salvarContexto(conversa, ctxRegra, conversa.etapa);
+      await confirmarLoteProcessado(conversa.id, "");
+    }
+
+
 
 
     if (confirmar) {
@@ -1479,7 +1490,14 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
       await confirmarLoteProcessado(conversaId, alvo.mensagemId);
     }
 
+  } catch (e) {
+    await auditar(
+      conversaId,
+      "bot_erro",
+      e instanceof Error ? e.message : "Atendimento automático interrompido",
+    );
   } finally {
+
     pararBatimento();
     await destravar(conversaId);
   }
