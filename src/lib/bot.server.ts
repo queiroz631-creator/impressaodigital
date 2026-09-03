@@ -1490,7 +1490,14 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
       await confirmarLoteProcessado(conversaId, alvo.mensagemId);
     }
 
+  } catch (e) {
+    await auditar(
+      conversaId,
+      "bot_erro",
+      e instanceof Error ? e.message : "Atendimento automático interrompido",
+    );
   } finally {
+
     pararBatimento();
     await destravar(conversaId);
   }
