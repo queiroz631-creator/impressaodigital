@@ -25,8 +25,8 @@ Hoje o botão "Últimos Arquivos" seleciona todos os arquivos do último atendim
 
 ## 4. Iniciar conversa pelo sistema ou WhatsApp (melhoria 5)
 
-- Quando uma mensagem sai (pelo sistema, celular ou WhatsApp Web) e a conversa está finalizada, é nova ou está sem atendimento humano, o status passa automaticamente para "Em Atendimento".
-- Conversas já em atendimento, pendentes, aguardando ou aguardando finalização não são alteradas.
+- Quando uma mensagem sai (pelo sistema, celular ou WhatsApp Web) e a conversa está finalizada, é nova ou em "Automático", o status passa automaticamente para "Em Atendimento".
+- Conversas em "Pendente" continuam como estão; conversas já em atendimento, aguardando resposta ou aguardando finalização também não são alteradas.
 
 ## 5. Fila "Esperando Impressão" (melhoria 7)
 
