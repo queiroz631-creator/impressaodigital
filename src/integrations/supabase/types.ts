@@ -1241,6 +1241,36 @@ export type Database = {
           },
         ]
       }
+      melhorias: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          status: string
+          tela: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          tela: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          status?: string
+          tela?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       objetivos_curriculo: {
         Row: {
           ativo: boolean
