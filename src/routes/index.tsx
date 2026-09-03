@@ -271,7 +271,7 @@ function Calculadora() {
         const resposta = await fetch(`/api/public/whatsapp/midia?id=${encodeURIComponent(item.id)}`);
         if (!resposta.ok) continue;
         const blob = await resposta.blob();
-        arquivos.push(new File([blob], item.nome, { type: blob.type || undefined }));
+        arquivos.push(new File([blob], item.nome, { type: blob.type || "application/octet-stream" }));
       } catch {
         /* ignora falhas individuais de download */
       }
