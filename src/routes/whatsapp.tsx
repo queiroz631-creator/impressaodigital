@@ -584,7 +584,41 @@ function Conversa({
         >
           {botLiberado ? <Bot className="h-4 w-4" /> : <BotOff className="h-4 w-4" />}
         </Button>
+        <Button
+          size="sm"
+          variant={selecionando ? "secondary" : "outline"}
+          title="Selecionar arquivos para baixar"
+          onClick={() => {
+            if (selecionando) setSelecionados(new Set());
+            setSelecionando(!selecionando);
+          }}
+        >
+          <CheckSquare className="h-4 w-4" />
+        </Button>
       </div>
+
+      {selecionando && (
+        <div className="mb-3 flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm">
+          <span className="flex-1">
+            {selecionados.size === 0
+              ? "Toque nos arquivos da conversa para selecionar."
+              : `${selecionados.size} arquivo${selecionados.size > 1 ? "s" : ""} selecionado${selecionados.size > 1 ? "s" : ""}`}
+          </span>
+          <Button size="sm" disabled={selecionados.size === 0} onClick={() => void baixarSelecionados()}>
+            <Download className="mr-1 h-4 w-4" /> Baixar
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setSelecionando(false);
+              setSelecionados(new Set());
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       <Card className="flex min-h-0 flex-1 flex-col">
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
