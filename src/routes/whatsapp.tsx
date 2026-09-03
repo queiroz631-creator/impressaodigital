@@ -20,6 +20,7 @@ import {
   MessageSquare,
   Search,
   Send,
+  Square,
   UserCheck,
   X,
   type LucideIcon,
@@ -433,6 +434,16 @@ function Conversa({
     setSelecionados(new Set());
   }
 
+  /** Seleciona ou desmarca todos os arquivos da conversa aberta. */
+  function selecionarTodosArquivos() {
+    const arquivos = (mensagens ?? [])
+      .filter((m) => m.arquivo_url)
+      .map((m) => m.id);
+    if (arquivos.length === 0) return;
+    const todosSelecionados = arquivos.every((id) => selecionados.has(id));
+    setSelecionados(todosSelecionados ? new Set() : new Set(arquivos));
+  }
+
   /** Envia os arquivos selecionados para a calculadora, sem baixar nada. */
   function enviarParaCalculadora() {
     const itens = (mensagens ?? [])
@@ -618,6 +629,20 @@ function Conversa({
               ? "Toque nos arquivos da conversa para selecionar."
               : `${selecionados.size} arquivo${selecionados.size > 1 ? "s" : ""} selecionado${selecionados.size > 1 ? "s" : ""}`}
           </span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={selecionarTodosArquivos}
+            title="Selecionar todos os arquivos deste atendimento"
+          >
+            {(mensagens ?? []).filter((m) => m.arquivo_url).length > 0 &&
+            (mensagens ?? []).filter((m) => m.arquivo_url).every((m) => selecionados.has(m.id)) ? (
+              <CheckSquare className="mr-1 h-4 w-4" />
+            ) : (
+              <Square className="mr-1 h-4 w-4" />
+            )}
+            Selecionar todos
+          </Button>
           <Button
             size="sm"
             variant="secondary"
