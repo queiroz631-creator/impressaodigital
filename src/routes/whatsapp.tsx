@@ -432,6 +432,18 @@ function Conversa({
     setSelecionados(new Set());
   }
 
+  /** Envia os arquivos selecionados para a calculadora, sem baixar nada. */
+  function enviarParaCalculadora() {
+    const itens = (mensagens ?? [])
+      .filter((m) => selecionados.has(m.id) && m.arquivo_url)
+      .map((m) => ({ id: m.id, nome: m.arquivo_nome ?? "arquivo" }));
+    if (itens.length === 0) return;
+    sessionStorage.setItem("calc-arquivos-whatsapp", JSON.stringify(itens));
+    setSelecionando(false);
+    setSelecionados(new Set());
+    void navigate({ to: "/" });
+  }
+
   // Avisa o cliente que o atendente está digitando (no máximo 1x a cada 3s).
   function avisarDigitando() {
     const agora = Date.now();
