@@ -242,6 +242,10 @@ function Calculadora() {
 
   // ----- Arquivos enviados pela tela do WhatsApp -----
   const whatsappPendente = useRef<{ id: string; nome: string }[] | null>(null);
+  const [importacao, setImportacao] = useState<{ ativo: boolean; progresso: number }>({
+    ativo: false,
+    progresso: 0,
+  });
   useEffect(() => {
     try {
       const bruto = sessionStorage.getItem(CHAVE_ARQUIVOS_WHATSAPP);
@@ -957,6 +961,19 @@ function Calculadora() {
 
   return (
     <>
+      {/* ==================== PRELOAD DA IMPORTAÇÃO DO WHATSAPP ==================== */}
+      {importacao.ativo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-card px-8 py-6 shadow-lg">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm font-medium text-card-foreground">Importando arquivos do WhatsApp…</p>
+            <p className="text-2xl font-extrabold tabular-nums text-primary">
+              {Math.round(importacao.progresso)}%
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ==================== HEADER FIXO ==================== */}
       <div className="sticky top-0 z-30 -mx-4 mb-6 border-b border-sidebar-border bg-sidebar px-4 pt-3 pb-3 text-sidebar-foreground sm:-mx-6 sm:px-6">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
