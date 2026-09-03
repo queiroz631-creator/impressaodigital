@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
