@@ -640,12 +640,20 @@ function Conversa({
               ) : (
               <div key={m.id} className={cn("flex", m.direcao === "saida" ? "justify-end" : "justify-start")}>
                 <div
+                  onClick={selecionando && m.arquivo_url ? () => alternarSelecao(m.id) : undefined}
                   className={cn(
                     "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm",
                     m.direcao === "saida" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+                    selecionando && m.arquivo_url && "cursor-pointer",
+                    selecionando && selecionados.has(m.id) && "ring-2 ring-offset-1 ring-primary",
                   )}
                 >
-                  <MidiaMensagem mensagem={m} />
+                  {selecionando && m.arquivo_url && (
+                    <span className="mb-1 flex items-center gap-1 text-[11px] font-semibold opacity-90">
+                      {selecionados.has(m.id) ? "☑" : "☐"} {selecionados.has(m.id) ? "Selecionado" : "Selecionar"}
+                    </span>
+                  )}
+                  <MidiaMensagem mensagem={m} selecionando={selecionando} />
                   {m.texto && <p className="whitespace-pre-wrap break-words">{m.texto}</p>}
 
                   <p className="mt-1 text-[10px] opacity-70">
