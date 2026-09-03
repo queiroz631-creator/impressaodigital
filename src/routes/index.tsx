@@ -239,6 +239,50 @@ function Calculadora() {
     setHidratado(true);
   }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
 
+  // ----- Arquivos enviados pela tela do WhatsApp -----
+  const whatsappPendente = useRef<{ id: string; nome: string }[] | null>(null);
+  useEffect(() => {
+    try {
+      const bruto = sessionStorage.getItem(CHAVE_ARQUIVOS_WHATSAPP);
+      if (bruto) {
+        sessionStorage.removeItem(CHAVE_ARQUIVOS_WHATSAPP);
+        whatsappPendente.current = JSON.parse(bruto) as { id: string; nome: string }[];
+      }
+    } catch {
+      whatsappPendente.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hidratado) return;
+    const itens = whatsappPendente.current;
+    whatsappPendente.current = null;
+    if (!itens || itens.length === 0) return;
+    void importarArquivosWhatsapp(itens);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hidratado]);
+
+  /** Limpa a tela (como "Novo Pedido") e anexa os arquivos vindos do WhatsApp. */
+  async function importarArquivosWhatsapp(itens: { id: string; nome: string }[]) {
+    limparFormulario(false);
+    const arquivos: File[] = [];
+    for (const item of itens) {
+      try {
+        const resposta = await fetch(`/api/public/whatsapp/midia?id=${encodeURIComponent(item.id)}`);
+        if (!resposta.ok) continue;
+        const blob = await resposta.blob();
+        arquivos.push(new File([blob], item.nome, { type: blob.type || undefined }));
+      } catch {
+        /* ignora falhas individuais de download */
+      }
+    }
+    if (arquivos.length === 0) {
+      toast.error("Não foi possível obter os arquivos selecionados no WhatsApp.");
+      return;
+    }
+    await anexarArquivos(arquivos, []);
+  }
+
   // ----- Persistência automática do rascunho -----
   useEffect(() => {
     if (!hidratado || !user?.id) return;
