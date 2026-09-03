@@ -434,6 +434,16 @@ function Conversa({
     setSelecionados(new Set());
   }
 
+  /** Seleciona ou desmarca todos os arquivos da conversa aberta. */
+  function selecionarTodosArquivos() {
+    const arquivos = (mensagens ?? [])
+      .filter((m) => m.arquivo_url)
+      .map((m) => m.id);
+    if (arquivos.length === 0) return;
+    const todosSelecionados = arquivos.every((id) => selecionados.has(id));
+    setSelecionados(todosSelecionados ? new Set() : new Set(arquivos));
+  }
+
   /** Envia os arquivos selecionados para a calculadora, sem baixar nada. */
   function enviarParaCalculadora() {
     const itens = (mensagens ?? [])
