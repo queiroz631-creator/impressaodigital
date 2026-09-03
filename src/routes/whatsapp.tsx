@@ -367,6 +367,10 @@ function Atendimento() {
               atendente={user?.email ?? "Atendente"}
               atendenteId={user?.id ?? null}
               onVoltar={() => setAbertaId(null)}
+              onAbrirConversa={(id, status) => {
+                setAbertaId(id);
+                setAba(status);
+              }}
             />
           ) : (
             <Card className="flex h-full items-center justify-center">
