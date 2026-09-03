@@ -221,7 +221,9 @@ function Atendimento() {
       formatarTelefone(c.telefone).includes(busca.trim())
     );
   });
-  const aberta = (conversas ?? []).find((c) => c.id === abertaId) ?? null;
+  // Se a conversa aberta mudou de status (saiu da aba atual), fecha automaticamente.
+  const abertaBruta = (conversas ?? []).find((c) => c.id === abertaId) ?? null;
+  const aberta = abertaBruta && abertaBruta.status === aba ? abertaBruta : null;
 
   const painelContatos = (
     <div className="flex min-h-0 flex-col gap-3">
