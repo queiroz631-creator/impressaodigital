@@ -631,6 +631,20 @@ function Conversa({
           </span>
           <Button
             size="sm"
+            variant="outline"
+            onClick={selecionarTodosArquivos}
+            title="Selecionar todos os arquivos deste atendimento"
+          >
+            {(mensagens ?? []).filter((m) => m.arquivo_url).length > 0 &&
+            (mensagens ?? []).filter((m) => m.arquivo_url).every((m) => selecionados.has(m.id)) ? (
+              <CheckSquare className="mr-1 h-4 w-4" />
+            ) : (
+              <Square className="mr-1 h-4 w-4" />
+            )}
+            Selecionar todos
+          </Button>
+          <Button
+            size="sm"
             variant="secondary"
             disabled={selecionados.size === 0}
             onClick={enviarParaCalculadora}
