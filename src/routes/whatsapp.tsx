@@ -468,16 +468,17 @@ function Conversa({
 
     const { data: msgs, error: erroMsgs } = await supabase
       .from("whatsapp_mensagens")
-      .select("id, arquivo_url")
-      .eq("conversa_id", maisRecente.id);
+      .select("id, arquivo_url, tipo, texto")
+      .eq("conversa_id", maisRecente.id)
+      .order("data_hora", { ascending: true });
     if (erroMsgs) {
       toast.error(erroMsgs.message);
       return;
     }
 
-    const arquivos = ((msgs ?? []) as { id: string; arquivo_url: string | null }[])
-      .filter((m) => m.arquivo_url)
-      .map((m) => m.id);
+    const arquivos = arquivosDoUltimoAtendimento(
+      (msgs ?? []) as Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto">[],
+    );
     if (arquivos.length === 0) {
       toast("Nenhum arquivo no atendimento mais recente.");
       return;
@@ -545,7 +546,7 @@ function Conversa({
   // Após abrir o atendimento mais recente, seleciona todos os arquivos das mensagens carregadas.
   useEffect(() => {
     if (!selecionarAoCarregar || isLoading || !mensagens) return;
-    const arquivos = mensagens.filter((m) => m.arquivo_url).map((m) => m.id);
+    const arquivos = arquivosDoUltimoAtendimento(mensagens);
     if (arquivos.length > 0) setSelecionados(new Set(arquivos));
     setSelecionarAoCarregar(false);
   }, [selecionarAoCarregar, isLoading, mensagens]);
