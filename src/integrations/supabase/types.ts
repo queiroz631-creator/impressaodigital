@@ -223,6 +223,7 @@ export type Database = {
           id: string
           mensagem_inicial: string
           mensagem_unica: boolean
+          mostrar_finalizacao: boolean
           nome: string
           ordem: number
           updated_at: string
@@ -235,6 +236,7 @@ export type Database = {
           id?: string
           mensagem_inicial?: string
           mensagem_unica?: boolean
+          mostrar_finalizacao?: boolean
           nome: string
           ordem?: number
           updated_at?: string
@@ -247,6 +249,7 @@ export type Database = {
           id?: string
           mensagem_inicial?: string
           mensagem_unica?: boolean
+          mostrar_finalizacao?: boolean
           nome?: string
           ordem?: number
           updated_at?: string
@@ -1245,6 +1248,7 @@ export type Database = {
         Row: {
           created_at: string
           descricao: string | null
+          executada: boolean
           id: string
           status: string
           tela: string
@@ -1254,6 +1258,7 @@ export type Database = {
         Insert: {
           created_at?: string
           descricao?: string | null
+          executada?: boolean
           id?: string
           status?: string
           tela: string
@@ -1263,6 +1268,7 @@ export type Database = {
         Update: {
           created_at?: string
           descricao?: string | null
+          executada?: boolean
           id?: string
           status?: string
           tela?: string
@@ -2168,6 +2174,7 @@ export type Database = {
           status: string
           texto: string | null
           tipo: string
+          transcricao: string | null
           whatsapp_message_id: string | null
         }
         Insert: {
@@ -2186,6 +2193,7 @@ export type Database = {
           status?: string
           texto?: string | null
           tipo?: string
+          transcricao?: string | null
           whatsapp_message_id?: string | null
         }
         Update: {
@@ -2204,6 +2212,7 @@ export type Database = {
           status?: string
           texto?: string | null
           tipo?: string
+          transcricao?: string | null
           whatsapp_message_id?: string | null
         }
         Relationships: [
