@@ -19,3 +19,29 @@ export const dataBR = (value?: string | null) => {
 
 export const dataHoraBR = (value?: string | null) =>
   value ? new Date(value).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "-";
+
+export const telefoneRaw = (value?: string | null) => (value ?? "").replace(/\D/g, "");
+
+export const telefoneBR = (value?: string | null) => {
+  const digits = telefoneRaw(value);
+  if (digits.length > 11) {
+    const ddd = digits.slice(-13, -11);
+    const prefix = digits.slice(-11, -9);
+    const first = digits.slice(-9, -4);
+    const second = digits.slice(-4);
+    return `+${ddd} (${prefix}) ${first}-${second}`;
+  }
+  if (digits.length >= 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  }
+  if (digits.length >= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6, 10)}`;
+  }
+  if (digits.length >= 7) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  if (digits.length >= 2) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+  return digits;
+};
