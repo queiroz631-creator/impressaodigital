@@ -659,7 +659,10 @@ function Conversa({
       .filter((m) => selecionados.has(m.id) && m.arquivo_url)
       .map((m) => ({ id: m.id, nome: m.arquivo_nome ?? "arquivo" }));
     if (itens.length === 0) return;
-    sessionStorage.setItem("calc-arquivos-whatsapp", JSON.stringify(itens));
+    sessionStorage.setItem(
+      "calc-arquivos-whatsapp",
+      JSON.stringify({ arquivos: itens, nome: conversa.nome_contato ?? "", telefone: conversa.telefone }),
+    );
     setSelecionando(false);
     setSelecionados(new Set());
     void navigate({ to: "/" });
