@@ -282,8 +282,9 @@ function Calculadora() {
     const itens = dados.arquivos;
     limparFormulario(false);
     if (dados.nome.trim()) set("clienteNome", dados.nome.trim());
-    if (dados.telefone.trim()) set("clienteTelefone", dados.telefone.trim());
+    if (dados.telefone.trim()) set("clienteTelefone", telefoneBR(dados.telefone));
     setImportacao({ ativo: true, progresso: 0 });
+
     try {
       const arquivos: File[] = [];
       let baixados = 0;
