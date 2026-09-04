@@ -1841,6 +1841,19 @@ function Calculadora() {
 
                   {estado.editandoId ? "Salvar alterações" : "Adicionar ao Pedido"}
                 </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!mostrarTabela || !materialSelecionado}
+                  onClick={() => {
+                    setModoRapido(true);
+                    setDialogAberto(true);
+                  }}
+                >
+                  <Zap className="h-4 w-4" />
+                  Orçamento Rápido
+                </Button>
               </div>
             </CardHeader>
 
