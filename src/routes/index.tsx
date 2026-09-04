@@ -1015,6 +1015,34 @@ function Calculadora() {
     }
   }
 
+  /** Envia o orçamento simplificado em texto pelo WhatsApp do cliente. */
+  async function enviarOrcamentoZap() {
+    if (!validarDadosOrcamento()) return;
+
+    const telefone = telefoneRaw(estado.clienteTelefone);
+    if (telefone.length < 10) {
+      toast.error("Informe um telefone válido para enviar pelo WhatsApp.");
+      return;
+    }
+
+    setEnviandoZap(true);
+    try {
+      await salvarDadosCliente();
+      const mensagem = textoOrcamentoZap(documentoParaGerar());
+      const r = await enviarZapFn({ data: { telefone, mensagem } });
+      if (!r.ok) {
+        toast.error(r.erro ?? "Não foi possível enviar o orçamento.");
+        return;
+      }
+      toast.success("Orçamento enviado pelo WhatsApp.");
+      setDialogAberto(false);
+    } catch (e) {
+      toast.error((e as Error)?.message || "Não foi possível enviar o orçamento.");
+    } finally {
+      setEnviandoZap(false);
+    }
+  }
+
   return (
     <>
       {/* ==================== PRELOAD DA IMPORTAÇÃO DO WHATSAPP ==================== */}
