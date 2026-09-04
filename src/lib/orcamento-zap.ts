@@ -40,14 +40,13 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
   const partes: string[] = ["*Segue Orçamento:*"];
 
   for (const item of doc.itens) {
-    partes.push(`Qtd Arquivos: ${doisDigitos(item.quantidadeArquivos)}`);
-    partes.push(`Total Pagina: ${doisDigitos(item.paginasTotal)}`);
-    partes.push(item.material);
+    partes.push(
+      `Qtd Arquivos: ${doisDigitos(item.quantidadeArquivos)}\n` +
+        `Total Pagina: ${doisDigitos(item.paginasTotal)}`,
+    );
 
     const acabamentos = linhasAcabamentos(item);
-    if (acabamentos.length > 0) {
-      partes.push(acabamentos.join("\n"));
-    }
+    partes.push([item.material, ...acabamentos].join("\n"));
   }
 
   if (doc.mostrarTotal !== false) {
@@ -60,7 +59,7 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
 
   if (doc.pix) {
     const pix = linhasPix(doc.pix);
-    if (pix.length > 0) partes.push(pix.join("\n\n"));
+    if (pix.length > 0) partes.push(pix.join("\n"));
   }
 
   partes.push(OBS_FINAL);
