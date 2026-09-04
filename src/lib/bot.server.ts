@@ -1275,7 +1275,13 @@ async function resolverTriagem(
     return;
   }
 
-  if (escolha) await responder(conversa, aplicarVariaveis(textoResposta(resposta, primeiraDoDia), vars));
+  if (escolha)
+    await responder(
+      conversa,
+      aplicarVariaveis(textoResposta(resposta, primeiraDoDia), vars),
+      undefined,
+      midiaResposta(resposta),
+    );
 
   const espera = Math.min(60, Math.max(0, Number(resposta.delay_acao_segundos ?? 0)));
   if (espera > 0) {
