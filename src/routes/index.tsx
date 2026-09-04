@@ -2013,7 +2013,13 @@ function Calculadora() {
               </span>
               ORÇAMENTOS ADICIONADOS AO PEDIDO {pedido?.numero ?? ""}
             </CardTitle>
-            <Button variant="outline" onClick={() => setDialogAberto(true)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setModoRapido(false);
+                setDialogAberto(true);
+              }}
+            >
               <FileText className="h-4 w-4" /> Gerar Orçamento
             </Button>
           </CardHeader>
