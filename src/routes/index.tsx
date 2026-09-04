@@ -949,7 +949,12 @@ function Calculadora() {
       return false;
     }
 
-    if ((itensPedido ?? []).length === 0) {
+    if (modoRapido) {
+      if (!materialSelecionado) {
+        toast.error("Selecione um material para o orçamento rápido.");
+        return false;
+      }
+    } else if ((itensPedido ?? []).length === 0) {
       toast.error("Adicione pelo menos um item ao pedido.");
       return false;
     }
