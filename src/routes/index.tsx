@@ -241,7 +241,7 @@ function Calculadora() {
   }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
 
   // ----- Arquivos enviados pela tela do WhatsApp -----
-  const whatsappPendente = useRef<{ id: string; nome: string }[] | null>(null);
+  const whatsappPendente = useRef<{ arquivos: { id: string; nome: string }[]; nome: string; telefone: string } | null>(null);
   const [importacao, setImportacao] = useState<{ ativo: boolean; progresso: number }>({
     ativo: false,
     progresso: 0,
@@ -251,7 +251,13 @@ function Calculadora() {
       const bruto = sessionStorage.getItem(CHAVE_ARQUIVOS_WHATSAPP);
       if (bruto) {
         sessionStorage.removeItem(CHAVE_ARQUIVOS_WHATSAPP);
-        whatsappPendente.current = JSON.parse(bruto) as { id: string; nome: string }[];
+        const dados = JSON.parse(bruto) as
+          | { id: string; nome: string }[]
+          | { arquivos: { id: string; nome: string }[]; nome?: string; telefone?: string };
+        // Aceita também o formato antigo (lista simples de arquivos).
+        whatsappPendente.current = Array.isArray(dados)
+          ? { arquivos: dados, nome: "", telefone: "" }
+          : { arquivos: dados.arquivos ?? [], nome: dados.nome ?? "", telefone: dados.telefone ?? "" };
       }
     } catch {
       whatsappPendente.current = null;
