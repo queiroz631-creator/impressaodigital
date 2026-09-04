@@ -24,6 +24,8 @@ import {
   Image as ImageIcon,
   Tag,
   Loader2,
+  Send,
+  Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
