@@ -899,6 +899,45 @@ function Conversa({
           </div>
         </CardContent>
       </Card>
+
+      {/* Escolha da finalização: imediata ou por fluxo configurado em Configurar Bot. */}
+      <Dialog open={finalizarAberto} onOpenChange={setFinalizarAberto}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Finalizar atendimento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Button
+              className="w-full justify-start"
+              onClick={() => {
+                setFinalizarAberto(false);
+                void alterarStatus("finalizado", "finalizou");
+              }}
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" /> Finalizar agora
+            </Button>
+            {(fluxosFinalizacao.data ?? []).map((f) => (
+              <Button
+                key={f.id}
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setFinalizarAberto(false);
+                  void enviarFinalizacao(f.id);
+                }}
+                title="Aguardando Finalização, iniciando este fluxo imediatamente"
+              >
+                <Flag className="mr-2 h-4 w-4" /> {f.nome}
+              </Button>
+            ))}
+            {(fluxosFinalizacao.data ?? []).length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Para oferecer outros fluxos aqui, ative "Mostrar na finalização" no fluxo em Configurar Bot.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
