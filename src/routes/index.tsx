@@ -24,6 +24,8 @@ import {
   Image as ImageIcon,
   Tag,
   Loader2,
+  Send,
+  Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -84,6 +86,9 @@ import type { AcabamentoDoc, ArquivoDoc } from "@/lib/documento";
 import { brl, numeroBR, telefoneBR, telefoneRaw } from "@/lib/format";
 import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
 import { montarTextoPix, montarTextoPrazo, type PrazoTipo } from "@/lib/orcamento-extras";
+import { textoOrcamentoZap } from "@/lib/orcamento-zap";
+import { enviarTextoWhatsapp } from "@/lib/whatsapp.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 import { gerarOrcamentoPdf } from "@/lib/pdf";
 import { gerarOrcamentoImagem } from "@/lib/imagem";
@@ -196,6 +201,10 @@ function Calculadora() {
   const [lendoArquivos, setLendoArquivos] = useState(false);
   const [salvandoItem, setSalvandoItem] = useState(false);
   const [dialogAberto, setDialogAberto] = useState(false);
+  /** Orçamento rápido: usa somente o material selecionado na sessão atual. */
+  const [modoRapido, setModoRapido] = useState(false);
+  const [enviandoZap, setEnviandoZap] = useState(false);
+  const enviarZapFn = useServerFn(enviarTextoWhatsapp);
   const [incluirTotal, setIncluirTotal] = useState(true);
   /** Decisão obrigatória sobre mostrar o total no documento. */
   const [decisaoTotal, setDecisaoTotal] = useState<"" | "sim" | "nao">("");
@@ -881,10 +890,32 @@ function Calculadora() {
   /** Texto do prazo de entrega (vazio quando não informado). */
   const textoPrazo = estado.precisaPrazo ? montarTextoPrazo(config, estado.prazoTipo, estado.prazoQuantidade) : "";
 
+  /** Linha do orçamento montada com o material selecionado na sessão atual. */
+  function linhaOrcamentoRapido(): Record<string, unknown> {
+    return {
+      material_nome: materialSelecionado?.material.nome ?? "-",
+      arquivos: estado.arquivosLista,
+      acabamentos: acabamentosParaSalvar(),
+      tipo_impressao: estado.tipoServico,
+      quantidade_arquivos: estado.arquivos,
+      paginas_total: paginasArquivos,
+      paginas_adicionais: estado.paginasAdicionais,
+      copias_adicionais: estado.copiasAdicionais,
+      tamanho: tamanhoFinal,
+      frente_verso: estado.frenteVerso,
+      copia_manual: estado.copiaManual,
+      valor_total: materialSelecionado?.total ?? 0,
+    };
+  }
+
   function documentoDoPedido() {
     const validade = estado.validade || calcularValidadePadrao();
 
-    return documentoDeOrcamentos((itensPedido ?? []) as unknown as Record<string, unknown>[], config, {
+    const linhas = modoRapido
+      ? [linhaOrcamentoRapido()]
+      : ((itensPedido ?? []) as unknown as Record<string, unknown>[]);
+
+    return documentoDeOrcamentos(linhas, config, {
       numero: String(pedido?.numero ?? "-"),
       data: String(pedido?.created_at ?? new Date().toISOString()),
       clienteNome: estado.clienteNome,
@@ -919,7 +950,12 @@ function Calculadora() {
       return false;
     }
 
-    if ((itensPedido ?? []).length === 0) {
+    if (modoRapido) {
+      if (!materialSelecionado) {
+        toast.error("Selecione um material para o orçamento rápido.");
+        return false;
+      }
+    } else if ((itensPedido ?? []).length === 0) {
       toast.error("Adicione pelo menos um item ao pedido.");
       return false;
     }
@@ -943,7 +979,8 @@ function Calculadora() {
   }
 
   async function salvarDadosCliente() {
-    if (!estado.pedidoId) return;
+    // No orçamento rápido nada é gravado no pedido.
+    if (modoRapido || !estado.pedidoId) return;
     const extras = {
       incluir_pix: estado.incluirPix,
       pix_texto_final: textoPix || null,
@@ -975,6 +1012,34 @@ function Calculadora() {
         .eq("pedido_id", estado.pedidoId);
       queryClient.invalidateQueries({ queryKey: ["orcamentos-pedido", estado.pedidoId] });
       queryClient.invalidateQueries({ queryKey: ["orcamentos"] });
+    }
+  }
+
+  /** Envia o orçamento simplificado em texto pelo WhatsApp do cliente. */
+  async function enviarOrcamentoZap() {
+    if (!validarDadosOrcamento()) return;
+
+    const telefone = telefoneRaw(estado.clienteTelefone);
+    if (telefone.length < 10) {
+      toast.error("Informe um telefone válido para enviar pelo WhatsApp.");
+      return;
+    }
+
+    setEnviandoZap(true);
+    try {
+      await salvarDadosCliente();
+      const mensagem = textoOrcamentoZap(documentoParaGerar());
+      const r = await enviarZapFn({ data: { telefone, mensagem } });
+      if (!r.ok) {
+        toast.error(r.erro ?? "Não foi possível enviar o orçamento.");
+        return;
+      }
+      toast.success("Orçamento enviado pelo WhatsApp.");
+      setDialogAberto(false);
+    } catch (e) {
+      toast.error((e as Error)?.message || "Não foi possível enviar o orçamento.");
+    } finally {
+      setEnviandoZap(false);
     }
   }
 
@@ -1029,7 +1094,10 @@ function Calculadora() {
             <Button
               size="sm"
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => setDialogAberto(true)}
+              onClick={() => {
+                setModoRapido(false);
+                setDialogAberto(true);
+              }}
             >
               <FileText className="h-4 w-4" /> Gerar Orçamento
             </Button>
@@ -1776,6 +1844,19 @@ function Calculadora() {
 
                   {estado.editandoId ? "Salvar alterações" : "Adicionar ao Pedido"}
                 </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!mostrarTabela || !materialSelecionado}
+                  onClick={() => {
+                    setModoRapido(true);
+                    setDialogAberto(true);
+                  }}
+                >
+                  <Zap className="h-4 w-4" />
+                  Orçamento Rápido
+                </Button>
               </div>
             </CardHeader>
 
@@ -1932,7 +2013,13 @@ function Calculadora() {
               </span>
               ORÇAMENTOS ADICIONADOS AO PEDIDO {pedido?.numero ?? ""}
             </CardTitle>
-            <Button variant="outline" onClick={() => setDialogAberto(true)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setModoRapido(false);
+                setDialogAberto(true);
+              }}
+            >
               <FileText className="h-4 w-4" /> Gerar Orçamento
             </Button>
           </CardHeader>
@@ -2204,6 +2291,10 @@ function Calculadora() {
           </div>
 
           <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" disabled={enviandoZap} onClick={enviarOrcamentoZap}>
+              {enviandoZap ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Envia Zap
+            </Button>
             <Button
               type="button"
               variant="outline"
