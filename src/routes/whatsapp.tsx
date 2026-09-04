@@ -198,8 +198,50 @@ function Atendimento() {
     setTodasFinalizadas(false);
   }, [aba]);
 
+  // Largura da lista de contatos (arrastável e salva no navegador).
+  const LARGURA_PADRAO = 340;
+  const [larguraLista, setLarguraLista] = useState(LARGURA_PADRAO);
+  const larguraRef = useRef(LARGURA_PADRAO);
+  const inicioRef = useRef({ x: 0, largura: LARGURA_PADRAO });
+
+  useEffect(() => {
+    const salvo = Number(localStorage.getItem("whatsapp:largura-lista"));
+    if (Number.isFinite(salvo) && salvo >= 260 && salvo <= 560) {
+      larguraRef.current = salvo;
+      setLarguraLista(salvo);
+    }
+  }, []);
+
+  function iniciarArraste(e: React.PointerEvent) {
+    e.preventDefault();
+    inicioRef.current = { x: e.clientX, largura: larguraRef.current };
+    const mover = (ev: PointerEvent) => {
+      const largura = Math.min(
+        560,
+        Math.max(260, inicioRef.current.largura + (ev.clientX - inicioRef.current.x)),
+      );
+      larguraRef.current = largura;
+      setLarguraLista(largura);
+    };
+    const soltar = () => {
+      localStorage.setItem("whatsapp:largura-lista", String(larguraRef.current));
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", soltar);
+    };
+    window.addEventListener("pointermove", mover);
+    window.addEventListener("pointerup", soltar);
+  }
+
+  function restaurarLargura() {
+    larguraRef.current = LARGURA_PADRAO;
+    setLarguraLista(LARGURA_PADRAO);
+    localStorage.setItem("whatsapp:largura-lista", String(LARGURA_PADRAO));
+  }
+
+
   useEffect(() => {
     const canal = supabase
+
       .channel("whatsapp-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversas" }, () => {
         queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
@@ -215,12 +257,22 @@ function Atendimento() {
     };
   }, [queryClient]);
 
+  const hojeTexto = new Date().toDateString();
+
   const contagem = useMemo(() => {
     const base: Record<string, number> = {};
     for (const s of STATUS_CONVERSA) base[s.valor] = 0;
-    for (const c of conversas ?? []) base[c.status] = (base[c.status] ?? 0) + 1;
+    for (const c of conversas ?? []) {
+      // Finalizados contam apenas os do dia atual.
+      if (c.status === "finalizado") {
+        const referencia = c.data_finalizacao ?? c.created_at;
+        if (new Date(referencia).toDateString() !== hojeTexto) continue;
+      }
+      base[c.status] = (base[c.status] ?? 0) + 1;
+    }
     return base;
-  }, [conversas]);
+  }, [conversas, hojeTexto]);
+
 
   const naoLidasPorStatus = useMemo(() => {
     const base: Record<string, number> = {};
@@ -254,7 +306,7 @@ function Atendimento() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [termo]);
 
-  const hoje = new Date().toDateString();
+  const hoje = hojeTexto;
   const lista = (conversas ?? []).filter((c) => {
     // Pesquisando: ignora a aba e a data; vale nome, telefone e conteúdo das mensagens.
     if (termo) {
@@ -424,10 +476,26 @@ function Atendimento() {
   return (
     <>
       <PageHeader titulo="Atendimento WhatsApp" subtitulo="Conversas recebidas pelo WhatsApp da loja" />
-      <div className="grid h-[calc(100vh-12rem)] grid-cols-[340px_1fr] gap-4">
+      <div
+        className="grid h-[calc(100vh-12rem)] gap-0"
+        style={{ gridTemplateColumns: `${larguraLista}px 12px 1fr` }}
+      >
         <Card className="flex min-h-0 flex-col">
           <CardContent className="flex min-h-0 flex-1 flex-col p-3">{painelContatos}</CardContent>
         </Card>
+
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          title="Arraste para ajustar a largura (duplo clique restaura)"
+          onPointerDown={iniciarArraste}
+          onDoubleClick={restaurarLargura}
+          className="group flex cursor-col-resize items-center justify-center"
+        >
+          <span className="h-16 w-1 rounded-full bg-border transition-colors group-hover:bg-primary" />
+        </div>
+
+
 
         <div className="min-h-0">
           {aberta ? (
