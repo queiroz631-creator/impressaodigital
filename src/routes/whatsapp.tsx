@@ -559,7 +559,7 @@ function Conversa({
     }
 
     const arquivos = arquivosDoUltimoAtendimento(
-      (msgs ?? []) as Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto">[],
+      (msgs ?? []) as Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto" | "direcao">[],
     );
     if (arquivos.length === 0) {
       toast("Nenhum arquivo no atendimento mais recente.");
@@ -595,9 +595,9 @@ function Conversa({
     void presenca({ data: { telefone: conversa.telefone } }).catch(() => undefined);
   }
 
-  async function enviarFinalizacao() {
+  async function enviarFinalizacao(fluxoId?: string) {
     try {
-      const r = await finalizacao({ data: { conversaId: conversa.id, atendente: atendente } });
+      const r = await finalizacao({ data: { conversaId: conversa.id, atendente: atendente, fluxoId } });
       if (!r.ok) { toast.error(r.erro ?? "Falha ao enviar para finalização."); return; }
       toast.success(r.fluxo ? "Conversa enviada para finalização." : "Conversa movida (nenhum fluxo de finalização configurado).");
       await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
@@ -605,6 +605,20 @@ function Conversa({
       toast.error(e instanceof Error ? e.message : "Falha ao enviar para finalização.");
     }
   }
+
+  // Fluxos marcados em Configurar Bot para aparecer como opção na finalização.
+  const fluxosFinalizacao = useQuery({
+    queryKey: ["bot-fluxos-finalizacao"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("bot_fluxos")
+        .select("id, nome, icone")
+        .eq("ativo", true)
+        .eq("mostrar_finalizacao", true)
+        .order("ordem");
+      return data ?? [];
+    },
+  });
 
   const { data: mensagens, isLoading } = useQuery({
     queryKey: ["whatsapp-mensagens", conversa.id],
