@@ -1211,12 +1211,7 @@ async function triagem(
   // 2) Texto → procura uma resposta automática e confirma com o cliente.
   const encontrada = texto ? reconhecerResposta(cfg, texto) : null;
   if (encontrada) {
-    const enviou = await responder(
-      conversa,
-      aplicarVariaveis(perguntaConfirmacao(encontrada), vars),
-      ["SIM", "NÃO"],
-      midiaResposta(encontrada),
-    );
+    const enviou = await responder(conversa, aplicarVariaveis(perguntaConfirmacao(encontrada), vars), ["SIM", "NÃO"]);
     if (!enviou) return;
     await salvarContexto(
       conversa,
