@@ -58,8 +58,18 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
 
   if (doc.pix) {
     const pix = linhasPix(doc.pix);
+
     if (pix.length > 0) {
-      partes.push(pix.join("\n"));
+      const indiceObs = pix.findIndex((l) => l.toLowerCase().startsWith("obs.:"));
+
+      if (indiceObs >= 0) {
+        const dadosPix = pix.slice(0, indiceObs);
+        const observacao = pix[indiceObs];
+
+        partes.push(dadosPix.join("\n") + "\n\n" + observacao);
+      } else {
+        partes.push(pix.join("\n"));
+      }
     }
   }
 
