@@ -81,7 +81,7 @@ import {
 } from "@/lib/calc";
 import { contarPaginas } from "@/lib/contagem";
 import type { AcabamentoDoc, ArquivoDoc } from "@/lib/documento";
-import { brl, numeroBR } from "@/lib/format";
+import { brl, numeroBR, telefoneBR, telefoneRaw } from "@/lib/format";
 import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
 import { montarTextoPix, montarTextoPrazo, type PrazoTipo } from "@/lib/orcamento-extras";
 
@@ -235,7 +235,12 @@ function Calculadora() {
               paginasAdicionais: Math.max(0, Number(salvo["paginas"] ?? 0) - Number(salvo["arquivos"] ?? 0)),
             }
           : {};
-      setEstado({ ...ESTADO_INICIAL, ...(salvo as unknown as EstadoRascunho), ...compat });
+      const hidratado: Partial<EstadoRascunho> = { ...(salvo as unknown as EstadoRascunho), ...compat };
+      if (typeof hidratado.clienteTelefone === "string") {
+        hidratado.clienteTelefone = telefoneBR(hidratado.clienteTelefone);
+      }
+      setEstado({ ...ESTADO_INICIAL, ...hidratado });
+
     }
     setHidratado(true);
   }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
@@ -282,8 +287,9 @@ function Calculadora() {
     const itens = dados.arquivos;
     limparFormulario(false);
     if (dados.nome.trim()) set("clienteNome", dados.nome.trim());
-    if (dados.telefone.trim()) set("clienteTelefone", dados.telefone.trim());
+    if (dados.telefone.trim()) set("clienteTelefone", telefoneBR(dados.telefone));
     setImportacao({ ativo: true, progresso: 0 });
+
     try {
       const arquivos: File[] = [];
       let baixados = 0;
@@ -680,7 +686,7 @@ function Calculadora() {
       .from("pedidos")
       .insert({
         cliente_nome: estado.clienteNome,
-        cliente_telefone: estado.clienteTelefone,
+        cliente_telefone: telefoneRaw(estado.clienteTelefone),
         observacao: observacaoComTags,
         validade: estado.validade || null,
         status: "pendente_envio",
@@ -711,7 +717,7 @@ function Calculadora() {
       const registro = {
         pedido_id: pedidoId,
         cliente_nome: estado.clienteNome,
-        cliente_telefone: estado.clienteTelefone,
+        cliente_telefone: telefoneRaw(estado.clienteTelefone),
         material_id: materialSelecionado.material.id,
         material_nome: materialSelecionado.material.nome,
         arquivos: estado.arquivosLista as unknown as never,
@@ -747,7 +753,7 @@ function Calculadora() {
         .from("pedidos")
         .update({
           cliente_nome: estado.clienteNome,
-          cliente_telefone: estado.clienteTelefone,
+          cliente_telefone: telefoneRaw(estado.clienteTelefone),
           observacao: observacaoComTags,
           validade: estado.validade || null,
         })
@@ -950,7 +956,7 @@ function Calculadora() {
       .from("pedidos")
       .update({
         cliente_nome: estado.clienteNome,
-        cliente_telefone: estado.clienteTelefone,
+        cliente_telefone: telefoneRaw(estado.clienteTelefone),
         observacao: observacaoComTags,
         validade: estado.validade || null,
         ...extras,
@@ -961,7 +967,7 @@ function Calculadora() {
         .from("orcamentos")
         .update({
           cliente_nome: estado.clienteNome,
-          cliente_telefone: estado.clienteTelefone,
+          cliente_telefone: telefoneRaw(estado.clienteTelefone),
           observacao: observacaoComTags,
           validade: estado.validade || null,
           ...extras,
@@ -2057,8 +2063,14 @@ function Calculadora() {
             </div>
             <div className="space-y-2">
               <Label>Telefone</Label>
-              <Input value={estado.clienteTelefone} onChange={(e) => set("clienteTelefone", e.target.value)} />
+              <Input
+                value={estado.clienteTelefone}
+                onChange={(e) => set("clienteTelefone", telefoneBR(e.target.value))}
+                placeholder="(27) 99999-9999"
+                inputMode="tel"
+              />
             </div>
+
             <div className="space-y-2">
               <Label>Validade</Label>
               <Input type="date" value={estado.validade} onChange={(e) => set("validade", e.target.value)} />
