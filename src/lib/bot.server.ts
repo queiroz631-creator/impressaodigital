@@ -316,6 +316,16 @@ async function auditar(conversaId: string, acao: string, detalhe?: string) {
   });
 }
 
+/** Move a conversa para a fila de impressão (atendimento humano; o bot para). */
+async function filaImpressao(conversa: ConversaBot, motivo: string) {
+  await salvar(conversa, {
+    status: "esperando_impressao",
+    etapa: "aguardando_impressao",
+    motivo_pendencia: motivo,
+  });
+  await auditar(conversa.id, "bot_fila_impressao", motivo);
+}
+
 /** Passa a conversa para a fila humana. */
 async function transferir(
   conversa: ConversaBot,
@@ -811,6 +821,11 @@ async function executarAcaoFluxo(
       await transferir(conversa, config, "fluxo do bot encaminhou para atendimento", undefined, true);
       return false;
 
+    case "esperando_impressao":
+    case "esperando_impressao_silencioso":
+      await filaImpressao(conversa, "fluxo do bot enviou para impressão");
+      return false;
+
     case "criar_pendente":
       await salvar(conversa, {
         status: "pendente",
@@ -996,6 +1011,12 @@ async function executarAcaoResposta(
         undefined,
         acao === "transferir_silencioso",
       );
+      return;
+
+    case "esperando_impressao":
+    case "esperando_impressao_silencioso":
+      await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: null }, "aguardando_impressao");
+      await filaImpressao(conversa, "resposta automática enviou para impressão");
       return;
 
     case "finalizar":
@@ -1910,7 +1931,10 @@ function msgDoStatus(cfg: BotDados["config"], status: string) {
  * finalização configurado (aba Fluxos). Sem fluxo configurado, apenas
  * troca o status.
  */
-export async function iniciarFinalizacao(conversaId: string): Promise<{ ok: boolean; fluxo: boolean }> {
+export async function iniciarFinalizacao(
+  conversaId: string,
+  fluxoEscolhidoId?: string | null,
+): Promise<{ ok: boolean; fluxo: boolean }> {
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
     .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em")
@@ -1921,8 +1945,8 @@ export async function iniciarFinalizacao(conversaId: string): Promise<{ ok: bool
   if (!conversa) return { ok: false, fluxo: false };
 
   const dadosBot = await carregarDadosBot();
-  const fluxoId = dadosBot?.config.fluxo_finalizacao_id ?? null;
-  const espera = Math.max(0, Number(dadosBot?.config.finalizacao_delay_minutos ?? 0));
+  const fluxoId = fluxoEscolhidoId || dadosBot?.config.fluxo_finalizacao_id || null;
+  const espera = fluxoEscolhidoId ? 0 : Math.max(0, Number(dadosBot?.config.finalizacao_delay_minutos ?? 0));
 
   await supabaseAdmin
     .from("whatsapp_conversas")
