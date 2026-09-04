@@ -86,6 +86,9 @@ import type { AcabamentoDoc, ArquivoDoc } from "@/lib/documento";
 import { brl, numeroBR, telefoneBR, telefoneRaw } from "@/lib/format";
 import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
 import { montarTextoPix, montarTextoPrazo, type PrazoTipo } from "@/lib/orcamento-extras";
+import { textoOrcamentoZap } from "@/lib/orcamento-zap";
+import { enviarTextoWhatsapp } from "@/lib/whatsapp.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 import { gerarOrcamentoPdf } from "@/lib/pdf";
 import { gerarOrcamentoImagem } from "@/lib/imagem";
