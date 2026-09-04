@@ -516,15 +516,15 @@ function Conversa({
     setSelecionados(new Set());
   }
 
-  /** Retorna os IDs dos arquivos que pertencem ao atendimento mais recente (após o último divisor "ATENDIMENTO N"). */
-  function arquivosDoUltimoAtendimento(msgs: Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto">[]) {
+  /** Retorna os IDs dos arquivos do atendimento mais recente (após o último divisor "ATENDIMENTO N"). Somente arquivos recebidos do cliente. */
+  function arquivosDoUltimoAtendimento(msgs: Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto" | "direcao">[]) {
     let inicio = 0;
     msgs.forEach((m, i) => {
       if (m.tipo === "sistema" && /^ATENDIMENTO\s+\d+/i.test(m.texto ?? "")) inicio = i + 1;
     });
     return msgs
       .slice(inicio)
-      .filter((m) => m.arquivo_url)
+      .filter((m) => m.arquivo_url && m.direcao === "entrada")
       .map((m) => m.id);
   }
 
@@ -550,7 +550,7 @@ function Conversa({
 
     const { data: msgs, error: erroMsgs } = await supabase
       .from("whatsapp_mensagens")
-      .select("id, arquivo_url, tipo, texto")
+      .select("id, arquivo_url, tipo, texto, direcao")
       .eq("conversa_id", maisRecente.id)
       .order("data_hora", { ascending: true });
     if (erroMsgs) {
