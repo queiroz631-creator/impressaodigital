@@ -476,10 +476,26 @@ function Atendimento() {
   return (
     <>
       <PageHeader titulo="Atendimento WhatsApp" subtitulo="Conversas recebidas pelo WhatsApp da loja" />
-      <div className="grid h-[calc(100vh-12rem)] grid-cols-[340px_1fr] gap-4">
+      <div
+        className="grid h-[calc(100vh-12rem)] gap-0"
+        style={{ gridTemplateColumns: `${larguraLista}px 12px 1fr` }}
+      >
         <Card className="flex min-h-0 flex-col">
           <CardContent className="flex min-h-0 flex-1 flex-col p-3">{painelContatos}</CardContent>
         </Card>
+
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          title="Arraste para ajustar a largura (duplo clique restaura)"
+          onPointerDown={iniciarArraste}
+          onDoubleClick={restaurarLargura}
+          className="group flex cursor-col-resize items-center justify-center"
+        >
+          <span className="h-16 w-1 rounded-full bg-border transition-colors group-hover:bg-primary" />
+        </div>
+
+
 
         <div className="min-h-0">
           {aberta ? (
