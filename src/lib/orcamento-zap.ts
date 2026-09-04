@@ -60,7 +60,7 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
     const pix = linhasPix(doc.pix);
 
     if (pix.length > 0) {
-      const indiceObs = pix.findIndex((l) => l.toLowerCase().startsWith("obs.:"));
+      const indiceObs = pix.findIndex((l) => l.toLowerCase().startsWith("Obs.:"));
 
       if (indiceObs >= 0) {
         const dadosPix = pix.slice(0, indiceObs);
