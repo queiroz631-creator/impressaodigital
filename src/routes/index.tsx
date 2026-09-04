@@ -1094,7 +1094,10 @@ function Calculadora() {
             <Button
               size="sm"
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => setDialogAberto(true)}
+              onClick={() => {
+                setModoRapido(false);
+                setDialogAberto(true);
+              }}
             >
               <FileText className="h-4 w-4" /> Gerar Orçamento
             </Button>
