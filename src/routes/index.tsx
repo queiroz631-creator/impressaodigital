@@ -81,7 +81,7 @@ import {
 } from "@/lib/calc";
 import { contarPaginas } from "@/lib/contagem";
 import type { AcabamentoDoc, ArquivoDoc } from "@/lib/documento";
-import { brl, numeroBR } from "@/lib/format";
+import { brl, numeroBR, telefoneBR, telefoneRaw } from "@/lib/format";
 import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
 import { montarTextoPix, montarTextoPrazo, type PrazoTipo } from "@/lib/orcamento-extras";
 
