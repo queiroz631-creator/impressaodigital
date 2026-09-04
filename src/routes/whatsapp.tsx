@@ -190,6 +190,13 @@ function Atendimento() {
   const [aba, setAba] = useState<StatusConversa>("automatico");
   const [abertaId, setAbertaId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const [todasFinalizadas, setTodasFinalizadas] = useState(false);
+  const [idsBuscaMensagem, setIdsBuscaMensagem] = useState<Set<string> | null>(null);
+
+  // Trocar de aba volta a mostrar somente os finalizados de hoje.
+  useEffect(() => {
+    setTodasFinalizadas(false);
+  }, [aba]);
 
   useEffect(() => {
     const canal = supabase
@@ -224,20 +231,62 @@ function Atendimento() {
 
 
   const termo = normalizar(busca.trim());
+
+  // Busca também no conteúdo das mensagens (qualquer status), com espera curta.
+  useEffect(() => {
+    if (termo.length < 3) {
+      setIdsBuscaMensagem(null);
+      return;
+    }
+    let ativo = true;
+    const espera = setTimeout(async () => {
+      const { data } = await supabase
+        .from("whatsapp_mensagens")
+        .select("conversa_id")
+        .ilike("texto", `%${busca.trim()}%`)
+        .limit(200);
+      if (ativo) setIdsBuscaMensagem(new Set((data ?? []).map((r) => r.conversa_id as string)));
+    }, 400);
+    return () => {
+      ativo = false;
+      clearTimeout(espera);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [termo]);
+
+  const hoje = new Date().toDateString();
   const lista = (conversas ?? []).filter((c) => {
+    // Pesquisando: ignora a aba e a data; vale nome, telefone e conteúdo das mensagens.
+    if (termo) {
+      const nome = normalizar(c.nome_contato ?? "");
+      const telefone = (c.telefone ?? "").replace(/\D/g, "");
+      return (
+        nome.includes(termo) ||
+        telefone.includes(termo.replace(/\D/g, "")) ||
+        formatarTelefone(c.telefone).includes(busca.trim()) ||
+        (idsBuscaMensagem?.has(c.id) ?? false)
+      );
+    }
     if (c.status !== aba) return false;
-    if (!termo) return true;
-    const nome = normalizar(c.nome_contato ?? "");
-    const telefone = (c.telefone ?? "").replace(/\D/g, "");
-    return (
-      nome.includes(termo) ||
-      telefone.includes(termo.replace(/\D/g, "")) ||
-      formatarTelefone(c.telefone).includes(busca.trim())
-    );
+    // Finalizados mostram só os de hoje, até pedir para ver todos.
+    if (aba === "finalizado" && !todasFinalizadas) {
+      const referencia = c.data_finalizacao ?? c.created_at;
+      if (new Date(referencia).toDateString() !== hoje) return false;
+    }
+    return true;
   });
-  // Se a conversa aberta mudou de status (saiu da aba atual), fecha automaticamente.
+  const finalizadosOcultos =
+    aba === "finalizado" && !todasFinalizadas && !termo
+      ? (conversas ?? []).filter(
+          (c) =>
+            c.status === "finalizado" &&
+            new Date(c.data_finalizacao ?? c.created_at).toDateString() !== hoje,
+        ).length
+      : 0;
+  // Se a conversa aberta mudou de status (saiu da aba atual), fecha automaticamente
+  // (na pesquisa, a conversa pode pertencer a outra aba e permanece aberta).
   const abertaBruta = (conversas ?? []).find((c) => c.id === abertaId) ?? null;
-  const aberta = abertaBruta && abertaBruta.status === aba ? abertaBruta : null;
+  const aberta = abertaBruta && (termo !== "" || abertaBruta.status === aba) ? abertaBruta : null;
 
   const painelContatos = (
     <div className="flex min-h-0 flex-col gap-3">
@@ -246,7 +295,7 @@ function Atendimento() {
         <Input
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          placeholder="Pesquisar por nome ou telefone..."
+          placeholder="Pesquisar nome, telefone ou conteúdo da mensagem..."
           className="pl-9"
         />
       </div>
