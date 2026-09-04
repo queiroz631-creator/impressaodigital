@@ -686,7 +686,7 @@ function Calculadora() {
       .from("pedidos")
       .insert({
         cliente_nome: estado.clienteNome,
-        cliente_telefone: estado.clienteTelefone,
+        cliente_telefone: telefoneRaw(estado.clienteTelefone),
         observacao: observacaoComTags,
         validade: estado.validade || null,
         status: "pendente_envio",
@@ -717,7 +717,7 @@ function Calculadora() {
       const registro = {
         pedido_id: pedidoId,
         cliente_nome: estado.clienteNome,
-        cliente_telefone: estado.clienteTelefone,
+        cliente_telefone: telefoneRaw(estado.clienteTelefone),
         material_id: materialSelecionado.material.id,
         material_nome: materialSelecionado.material.nome,
         arquivos: estado.arquivosLista as unknown as never,
@@ -753,7 +753,7 @@ function Calculadora() {
         .from("pedidos")
         .update({
           cliente_nome: estado.clienteNome,
-          cliente_telefone: estado.clienteTelefone,
+          cliente_telefone: telefoneRaw(estado.clienteTelefone),
           observacao: observacaoComTags,
           validade: estado.validade || null,
         })
@@ -956,7 +956,7 @@ function Calculadora() {
       .from("pedidos")
       .update({
         cliente_nome: estado.clienteNome,
-        cliente_telefone: estado.clienteTelefone,
+        cliente_telefone: telefoneRaw(estado.clienteTelefone),
         observacao: observacaoComTags,
         validade: estado.validade || null,
         ...extras,
@@ -967,7 +967,7 @@ function Calculadora() {
         .from("orcamentos")
         .update({
           cliente_nome: estado.clienteNome,
-          cliente_telefone: estado.clienteTelefone,
+          cliente_telefone: telefoneRaw(estado.clienteTelefone),
           observacao: observacaoComTags,
           validade: estado.validade || null,
           ...extras,
