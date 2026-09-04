@@ -889,10 +889,32 @@ function Calculadora() {
   /** Texto do prazo de entrega (vazio quando não informado). */
   const textoPrazo = estado.precisaPrazo ? montarTextoPrazo(config, estado.prazoTipo, estado.prazoQuantidade) : "";
 
+  /** Linha do orçamento montada com o material selecionado na sessão atual. */
+  function linhaOrcamentoRapido(): Record<string, unknown> {
+    return {
+      material_nome: materialSelecionado?.material.nome ?? "-",
+      arquivos: estado.arquivosLista,
+      acabamentos: acabamentosParaSalvar(),
+      tipo_impressao: estado.tipoServico,
+      quantidade_arquivos: estado.arquivos,
+      paginas_total: paginasArquivos,
+      paginas_adicionais: estado.paginasAdicionais,
+      copias_adicionais: estado.copiasAdicionais,
+      tamanho: tamanhoFinal,
+      frente_verso: estado.frenteVerso,
+      copia_manual: estado.copiaManual,
+      valor_total: materialSelecionado?.total ?? 0,
+    };
+  }
+
   function documentoDoPedido() {
     const validade = estado.validade || calcularValidadePadrao();
 
-    return documentoDeOrcamentos((itensPedido ?? []) as unknown as Record<string, unknown>[], config, {
+    const linhas = modoRapido
+      ? [linhaOrcamentoRapido()]
+      : ((itensPedido ?? []) as unknown as Record<string, unknown>[]);
+
+    return documentoDeOrcamentos(linhas, config, {
       numero: String(pedido?.numero ?? "-"),
       data: String(pedido?.created_at ?? new Date().toISOString()),
       clienteNome: estado.clienteNome,
