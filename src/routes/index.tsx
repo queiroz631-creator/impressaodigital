@@ -235,7 +235,12 @@ function Calculadora() {
               paginasAdicionais: Math.max(0, Number(salvo["paginas"] ?? 0) - Number(salvo["arquivos"] ?? 0)),
             }
           : {};
-      setEstado({ ...ESTADO_INICIAL, ...(salvo as unknown as EstadoRascunho), ...compat });
+      const hidratado: Partial<EstadoRascunho> = { ...(salvo as unknown as EstadoRascunho), ...compat };
+      if (typeof hidratado.clienteTelefone === "string") {
+        hidratado.clienteTelefone = telefoneBR(hidratado.clienteTelefone);
+      }
+      setEstado({ ...ESTADO_INICIAL, ...hidratado });
+
     }
     setHidratado(true);
   }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
