@@ -363,6 +363,11 @@ function Atendimento() {
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
                   <span className={cn("min-w-0 flex-1 truncate text-sm", c.nao_lidas > 0 ? "font-bold" : "font-semibold")}>{nome}</span>
+                  {termo !== "" && c.status !== aba && (
+                    <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[10px]">
+                      {rotuloStatusConversa[c.status] ?? c.status}
+                    </Badge>
+                  )}
                   <span className="shrink-0 text-[10px] text-muted-foreground">
                     {dataHoraCurta(c.ultima_mensagem_em ?? c.created_at)}
                   </span>
@@ -377,6 +382,16 @@ function Atendimento() {
             </button>
           );
         })}
+
+        {finalizadosOcultos > 0 && (
+          <button
+            type="button"
+            onClick={() => setTodasFinalizadas(true)}
+            className="w-full rounded-lg border border-dashed px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted"
+          >
+            Mostrar todas ({finalizadosOcultos} de outros dias)
+          </button>
+        )}
       </div>
     </div>
   );
