@@ -23,14 +23,12 @@ export const dataHoraBR = (value?: string | null) =>
 export const telefoneRaw = (value?: string | null) => (value ?? "").replace(/\D/g, "");
 
 export const telefoneBR = (value?: string | null) => {
-  const digits = telefoneRaw(value);
-  if (digits.length > 11) {
-    const ddd = digits.slice(-13, -11);
-    const prefix = digits.slice(-11, -9);
-    const first = digits.slice(-9, -4);
-    const second = digits.slice(-4);
-    return `+${ddd} (${prefix}) ${first}-${second}`;
-  }
+  let digits = telefoneRaw(value);
+  if (!digits) return "";
+  // Remove zeros de discagem e o DDI 55 para exibição local.
+  digits = digits.replace(/^0+/, "");
+  if (digits.startsWith("55") && digits.length > 11) digits = digits.slice(2);
+
   if (digits.length >= 11) {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
   }
@@ -45,3 +43,4 @@ export const telefoneBR = (value?: string | null) => {
   }
   return digits;
 };
+
