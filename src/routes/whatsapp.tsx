@@ -198,8 +198,40 @@ function Atendimento() {
     setTodasFinalizadas(false);
   }, [aba]);
 
+  // Largura da lista de contatos (arrastável e salva no navegador).
+  const LARGURA_PADRAO = 340;
+  const [larguraLista, setLarguraLista] = useState(LARGURA_PADRAO);
+  const arrastando = useRef(false);
+
+  useEffect(() => {
+    const salvo = Number(localStorage.getItem("whatsapp:largura-lista"));
+    if (Number.isFinite(salvo) && salvo >= 260 && salvo <= 560) setLarguraLista(salvo);
+  }, []);
+
+  useEffect(() => {
+    if (!arrastando.current) return;
+    const mover = (e: PointerEvent) => {
+      if (!arrastando.current) return;
+      const largura = Math.min(560, Math.max(260, e.clientX - 40));
+      setLarguraLista(largura);
+    };
+    const soltar = () => {
+      arrastando.current = false;
+      localStorage.setItem("whatsapp:largura-lista", String(larguraLista));
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", soltar);
+    };
+    window.addEventListener("pointermove", mover);
+    window.addEventListener("pointerup", soltar);
+    return () => {
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", soltar);
+    };
+  }, [larguraLista]);
+
   useEffect(() => {
     const canal = supabase
+
       .channel("whatsapp-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversas" }, () => {
         queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
