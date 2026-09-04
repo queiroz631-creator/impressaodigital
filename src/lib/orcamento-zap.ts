@@ -58,7 +58,9 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
 
   if (doc.pix) {
     const pix = linhasPix(doc.pix);
-    if (pix.length > 0) partes.push(pix.join("\n"));
+    if (pix.length > 0) {
+      partes.push(pix.join("\n"));
+    }
   }
 
   //partes.push(OBS_FINAL);
