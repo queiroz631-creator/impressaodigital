@@ -58,8 +58,6 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
 
   if (doc.pix) {
     const pix = linhasPix(doc.pix);
-    console.log("DOC.PIX:", doc.pix);
-    console.log("PIX PROCESSADO:", pix);
 
     if (pix.length > 0) {
       const indiceObs = pix.findIndex((l) => l.toLowerCase().startsWith("obs.:"));
