@@ -264,7 +264,7 @@ function Atendimento() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [termo]);
 
-  const hoje = new Date().toDateString();
+  const hoje = hojeTexto;
   const lista = (conversas ?? []).filter((c) => {
     // Pesquisando: ignora a aba e a data; vale nome, telefone e conteúdo das mensagens.
     if (termo) {
