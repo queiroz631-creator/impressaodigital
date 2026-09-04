@@ -978,7 +978,8 @@ function Calculadora() {
   }
 
   async function salvarDadosCliente() {
-    if (!estado.pedidoId) return;
+    // No orçamento rápido nada é gravado no pedido.
+    if (modoRapido || !estado.pedidoId) return;
     const extras = {
       incluir_pix: estado.incluirPix,
       pix_texto_final: textoPix || null,
