@@ -2291,6 +2291,10 @@ function Calculadora() {
           </div>
 
           <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" disabled={enviandoZap} onClick={enviarOrcamentoZap}>
+              {enviandoZap ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Envia Zap
+            </Button>
             <Button
               type="button"
               variant="outline"
