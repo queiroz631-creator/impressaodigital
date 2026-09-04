@@ -950,6 +950,29 @@ function urlMidia(id: string, baixar = false) {
 /** Renderiza imagem, documento ou áudio anexado a uma mensagem. */
 function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem; selecionando?: boolean }) {
   const [aberto, setAberto] = useState(false);
+  const [transcricao, setTranscricao] = useState<string | null>(mensagem.transcricao);
+  const [transcricaoAberta, setTranscricaoAberta] = useState(false);
+  const [carregandoTranscricao, setCarregandoTranscricao] = useState(false);
+  const transcrever = useServerFn(transcreverAudioWhatsapp);
+
+  async function transcreverAudio() {
+    if (carregandoTranscricao) return;
+    setCarregandoTranscricao(true);
+    try {
+      const r = await transcrever({ data: { mensagemId: mensagem.id } });
+      if (r.ok && r.texto) {
+        setTranscricao(r.texto);
+        setTranscricaoAberta(true);
+      } else {
+        toast.error(r.erro ?? "Não foi possível transcrever o áudio.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao transcrever.");
+    } finally {
+      setCarregandoTranscricao(false);
+    }
+  }
+
   if (!mensagem.arquivo_url && !mensagem.arquivo_nome) return null;
 
   const nome = mensagem.arquivo_nome ?? "arquivo";
@@ -1013,14 +1036,52 @@ function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem;
       <div className="mb-1 space-y-1">
         <audio controls={!selecionando} src={urlMidia(mensagem.id)} className="w-56 max-w-full" />
         {!selecionando && (
-          <a
-            href={urlMidia(mensagem.id, true)}
-            className="inline-flex items-center gap-1 text-xs underline opacity-90"
-            download={nome}
-          >
-            <Download className="h-3 w-3" /> Baixar áudio
-          </a>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <a
+              href={urlMidia(mensagem.id, true)}
+              className="inline-flex items-center gap-1 underline opacity-90"
+              download={nome}
+            >
+              <Download className="h-3 w-3" /> Baixar áudio
+            </a>
+            {transcricao ? (
+              <button
+                type="button"
+                onClick={() => setTranscricaoAberta(true)}
+                className="inline-flex items-center gap-1 underline opacity-90"
+              >
+                <Mic className="h-3 w-3" /> Ver transcrição
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void transcreverAudio()}
+                disabled={carregandoTranscricao}
+                className="inline-flex items-center gap-1 underline opacity-90 disabled:opacity-50"
+              >
+                <Mic className="h-3 w-3" /> {carregandoTranscricao ? "Transcrevendo..." : "Transcrever"}
+              </button>
+            )}
+          </div>
         )}
+        <Dialog open={transcricaoAberta} onOpenChange={setTranscricaoAberta}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-sm">Transcrição do áudio</DialogTitle>
+            </DialogHeader>
+            <p className="whitespace-pre-wrap break-words text-sm">{transcricao ?? ""}</p>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                if (!transcricao) return;
+                void navigator.clipboard.writeText(transcricao).then(() => toast.success("Transcrição copiada."));
+              }}
+            >
+              <Copy className="mr-2 h-4 w-4" /> Copiar transcrição
+            </Button>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
