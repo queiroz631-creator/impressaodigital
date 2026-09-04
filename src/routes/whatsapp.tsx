@@ -215,12 +215,22 @@ function Atendimento() {
     };
   }, [queryClient]);
 
+  const hojeTexto = new Date().toDateString();
+
   const contagem = useMemo(() => {
     const base: Record<string, number> = {};
     for (const s of STATUS_CONVERSA) base[s.valor] = 0;
-    for (const c of conversas ?? []) base[c.status] = (base[c.status] ?? 0) + 1;
+    for (const c of conversas ?? []) {
+      // Finalizados contam apenas os do dia atual.
+      if (c.status === "finalizado") {
+        const referencia = c.data_finalizacao ?? c.created_at;
+        if (new Date(referencia).toDateString() !== hojeTexto) continue;
+      }
+      base[c.status] = (base[c.status] ?? 0) + 1;
+    }
     return base;
-  }, [conversas]);
+  }, [conversas, hojeTexto]);
+
 
   const naoLidasPorStatus = useMemo(() => {
     const base: Record<string, number> = {};
