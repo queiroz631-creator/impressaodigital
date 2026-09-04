@@ -201,33 +201,43 @@ function Atendimento() {
   // Largura da lista de contatos (arrastável e salva no navegador).
   const LARGURA_PADRAO = 340;
   const [larguraLista, setLarguraLista] = useState(LARGURA_PADRAO);
-  const arrastando = useRef(false);
+  const larguraRef = useRef(LARGURA_PADRAO);
+  const inicioRef = useRef({ x: 0, largura: LARGURA_PADRAO });
 
   useEffect(() => {
     const salvo = Number(localStorage.getItem("whatsapp:largura-lista"));
-    if (Number.isFinite(salvo) && salvo >= 260 && salvo <= 560) setLarguraLista(salvo);
+    if (Number.isFinite(salvo) && salvo >= 260 && salvo <= 560) {
+      larguraRef.current = salvo;
+      setLarguraLista(salvo);
+    }
   }, []);
 
-  useEffect(() => {
-    if (!arrastando.current) return;
-    const mover = (e: PointerEvent) => {
-      if (!arrastando.current) return;
-      const largura = Math.min(560, Math.max(260, e.clientX - 40));
+  function iniciarArraste(e: React.PointerEvent) {
+    e.preventDefault();
+    inicioRef.current = { x: e.clientX, largura: larguraRef.current };
+    const mover = (ev: PointerEvent) => {
+      const largura = Math.min(
+        560,
+        Math.max(260, inicioRef.current.largura + (ev.clientX - inicioRef.current.x)),
+      );
+      larguraRef.current = largura;
       setLarguraLista(largura);
     };
     const soltar = () => {
-      arrastando.current = false;
-      localStorage.setItem("whatsapp:largura-lista", String(larguraLista));
+      localStorage.setItem("whatsapp:largura-lista", String(larguraRef.current));
       window.removeEventListener("pointermove", mover);
       window.removeEventListener("pointerup", soltar);
     };
     window.addEventListener("pointermove", mover);
     window.addEventListener("pointerup", soltar);
-    return () => {
-      window.removeEventListener("pointermove", mover);
-      window.removeEventListener("pointerup", soltar);
-    };
-  }, [larguraLista]);
+  }
+
+  function restaurarLargura() {
+    larguraRef.current = LARGURA_PADRAO;
+    setLarguraLista(LARGURA_PADRAO);
+    localStorage.setItem("whatsapp:largura-lista", String(LARGURA_PADRAO));
+  }
+
 
   useEffect(() => {
     const canal = supabase
