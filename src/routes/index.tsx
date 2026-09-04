@@ -2063,8 +2063,14 @@ function Calculadora() {
             </div>
             <div className="space-y-2">
               <Label>Telefone</Label>
-              <Input value={estado.clienteTelefone} onChange={(e) => set("clienteTelefone", e.target.value)} />
+              <Input
+                value={estado.clienteTelefone}
+                onChange={(e) => set("clienteTelefone", telefoneBR(e.target.value))}
+                placeholder="(27) 99999-9999"
+                inputMode="tel"
+              />
             </div>
+
             <div className="space-y-2">
               <Label>Validade</Label>
               <Input type="date" value={estado.validade} onChange={(e) => set("validade", e.target.value)} />
