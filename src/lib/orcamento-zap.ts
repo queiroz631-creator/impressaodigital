@@ -63,10 +63,10 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
       const indiceObs = pix.findIndex((l) => l.toLowerCase().startsWith("obs.:"));
 
       if (indiceObs >= 0) {
-        const dadosPix = pix.slice(0, indiceObs);
-        const observacao = pix[indiceObs];
+        const dadosPix = pix.slice(0, indiceObs).join("\n");
+        const observacao = pix.slice(indiceObs).join("\n");
 
-        partes.push(dadosPix.join("\n") + "\n\n" + observacao);
+        partes.push(`${dadosPix}\n\n${observacao}`);
       } else {
         partes.push(pix.join("\n"));
       }
