@@ -87,6 +87,10 @@ interface ContextoBot {
   janelaRegra?: boolean | null;
   /** Última mensagem de entrada já processada pelo bot (evita respostas repetidas). */
   ultimaProcessada?: string | null;
+  /** Fluxo escolhido para a finalização (aguarda o tempo configurado no fluxo). */
+  fluxoFinalizacaoId?: string | null;
+  /** Marca da parada em que a ação de "sem resposta" já foi executada. */
+  semRespostaEm?: string | null;
 
 }
 
@@ -1946,14 +1950,26 @@ export async function iniciarFinalizacao(
 
   const dadosBot = await carregarDadosBot();
   const fluxoId = fluxoEscolhidoId || dadosBot?.config.fluxo_finalizacao_id || null;
-  const espera = fluxoEscolhidoId ? 0 : Math.max(0, Number(dadosBot?.config.finalizacao_delay_minutos ?? 0));
+
+  const fluxosCfg = await carregarFluxos();
+  const fluxoCfg = fluxoId ? fluxoPorId(fluxosCfg, fluxoId) : null;
+  const esperaFluxo = Math.max(0, Number(fluxoCfg?.finalizacao_delay_minutos ?? 0));
+  const espera = esperaFluxo > 0
+    ? esperaFluxo
+    : fluxoEscolhidoId
+      ? 0
+      : Math.max(0, Number(dadosBot?.config.finalizacao_delay_minutos ?? 0));
+
+  const ctxAtual: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
+  const aguardando = Boolean(fluxoId) && espera > 0;
 
   await supabaseAdmin
     .from("whatsapp_conversas")
     .update({
       status: "aguardando_finalizacao",
       inatividade_avisada: false,
-      finalizacao_fluxo_em: fluxoId && espera > 0 ? new Date().toISOString() : null,
+      finalizacao_fluxo_em: aguardando ? new Date().toISOString() : null,
+      ...(aguardando ? { contexto: { ...ctxAtual, fluxoFinalizacaoId: fluxoId } as never } : {}),
     })
     .eq("id", conversa.id);
   conversa.status = "aguardando_finalizacao";
@@ -1962,15 +1978,102 @@ export async function iniciarFinalizacao(
   if (!fluxoId || !config) return { ok: true, fluxo: false };
   if (espera > 0) return { ok: true, fluxo: false };
 
-  const fluxos = await carregarFluxos();
-  if (!fluxoPorId(fluxos, fluxoId)) return { ok: true, fluxo: false };
+  const fluxos = fluxosCfg;
+  if (!fluxoCfg) return { ok: true, fluxo: false };
 
   const agora = new Date();
-  const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
+  const ctx: ContextoBot = ctxAtual;
   const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
   const saida = iniciarFluxo(fluxos, fluxoId, { respostas: ctx.fluxo?.respostas ?? {} }, vars);
   await entregarFluxo(conversa, config, { ...ctx, fluxoFallback: null }, fluxos, saida, vars);
   return { ok: true, fluxo: true };
+}
+
+/**
+ * Fluxo em execução parado: quando o cliente não responde no tempo configurado
+ * no fluxo, envia a mensagem opcional e executa a ação escolhida.
+ */
+async function verificarFluxoSemResposta(config: ConfigBot, agora: Date, CAMPOS: string) {
+  const fluxos = await carregarFluxos();
+  const comRegra = fluxos.fluxos.filter((f) => Math.max(0, Number(f.sem_resposta_minutos ?? 0)) > 0);
+  if (comRegra.length === 0) return;
+
+  const { data } = await supabaseAdmin
+    .from("whatsapp_conversas")
+    .select(CAMPOS)
+    .in("status", ["automatico", "aguardando_finalizacao"])
+    .not("contexto->fluxo", "is", null)
+    .limit(50);
+
+  for (const linha of data ?? []) {
+    const conversa = linha as unknown as ConversaBot;
+    const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
+    const fluxoId = ctx.fluxo?.fluxoId ?? null;
+    if (!fluxoId) continue;
+
+    const fluxo = comRegra.find((f) => f.id === fluxoId);
+    if (!fluxo) continue;
+
+    const min = Math.max(0, Number(fluxo.sem_resposta_minutos ?? 0));
+    const ultima = String((linha as { ultima_mensagem_em?: string }).ultima_mensagem_em ?? "");
+    const desde = new Date(ultima || agora);
+    if (agora.getTime() - desde.getTime() < min * 60_000) continue;
+    if (ctx.semRespostaEm && ctx.semRespostaEm === ultima) continue;
+
+    const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
+    const texto = (fluxo.sem_resposta_mensagem ?? "").trim();
+    if (texto) await responder(conversa, aplicarVariaveis(texto, vars));
+
+    const base: ContextoBot = { ...ctx, semRespostaEm: ultima || agora.toISOString() };
+    const acao = fluxo.sem_resposta_acao || "nenhuma";
+    await auditar(conversa.id, "bot_fluxo_sem_resposta", `${min} min sem resposta — ${acao}`);
+
+    switch (acao) {
+      case "voltar_inicio_fluxo":
+      case "iniciar_fluxo": {
+        const destino = acao === "iniciar_fluxo" ? (fluxo.sem_resposta_fluxo_id ?? null) : fluxo.id;
+        if (!destino || !fluxoPorId(fluxos, destino)) {
+          await salvarContexto(conversa, base);
+          break;
+        }
+        const saida = iniciarFluxo(fluxos, destino, { respostas: ctx.fluxo?.respostas ?? {} }, vars);
+        await entregarFluxo(conversa, config, { ...base, fluxoFallback: null }, fluxos, saida, vars);
+        break;
+      }
+
+      case "transferir_atendente":
+      case "transferir_silencioso":
+        await salvarContexto(conversa, { ...base, fluxo: null, triagem: null });
+        await transferir(
+          conversa,
+          config,
+          "fluxo sem resposta do cliente",
+          undefined,
+          acao === "transferir_silencioso",
+        );
+        break;
+
+      case "finalizar":
+      case "finalizar_silencioso": {
+        const cfg = await carregarDadosBot();
+        const despedida =
+          acao === "finalizar" && cfg?.config.msg_finalizacao_ativo ? (cfg.config.msg_finalizacao ?? "").trim() : "";
+        if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
+        await salvarContexto(conversa, { ...base, fluxo: null, triagem: null }, "finalizado");
+        await salvar(conversa, {
+          status: "finalizado",
+          data_finalizacao: agora.toISOString(),
+          motivo_finalizacao: "fluxo sem resposta do cliente",
+          nao_lidas: 0,
+        });
+        break;
+      }
+
+      default:
+        // "nenhuma" ou "mensagem": mantém o fluxo aguardando.
+        await salvarContexto(conversa, base);
+    }
+  }
 }
 
 export async function verificarInatividade(): Promise<{ avisadas: number; finalizadas: number }> {
@@ -2025,32 +2128,50 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
     }
   }
 
-  // Fluxo de finalização com tempo de espera: dispara depois do prazo configurado.
-  const minFinal = Math.max(0, Number(dados.config.finalizacao_delay_minutos ?? 0));
-  const fluxoFinalId = dados.config.fluxo_finalizacao_id ?? null;
-  if (minFinal > 0 && fluxoFinalId) {
-    const limiteFinal = new Date(agora.getTime() - minFinal * 60_000).toISOString();
+  // Fluxo de finalização com tempo de espera: cada fluxo tem o seu próprio
+  // tempo; sem valor próprio, vale o tempo geral da configuração.
+  const minFinalGeral = Math.max(0, Number(dados.config.finalizacao_delay_minutos ?? 0));
+  const fluxoFinalPadrao = dados.config.fluxo_finalizacao_id ?? null;
+  {
     const { data: aguardando } = await supabaseAdmin
       .from("whatsapp_conversas")
       .select(`${CAMPOS}, finalizacao_fluxo_em`)
       .eq("status", "aguardando_finalizacao")
       .not("finalizacao_fluxo_em", "is", null)
-      .lt("finalizacao_fluxo_em", limiteFinal)
       .limit(50);
 
     const fluxos = await carregarFluxos();
-    if (fluxoPorId(fluxos, fluxoFinalId)) {
-      for (const linha of aguardando ?? []) {
-        const conversa = linha as unknown as ConversaBot;
-        await salvar(conversa, { finalizacao_fluxo_em: null });
-        const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
-        const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
-        const saida = iniciarFluxo(fluxos, fluxoFinalId, { respostas: ctx.fluxo?.respostas ?? {} }, vars);
-        await entregarFluxo(conversa, config, { ...ctx, fluxoFallback: null }, fluxos, saida, vars);
-        await auditar(conversa.id, "bot_fluxo_finalizacao", `${minFinal} min na aba Aguardando Finalização`);
-      }
+    for (const linha of aguardando ?? []) {
+      const conversa = linha as unknown as ConversaBot;
+      const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
+      const fluxoFinalId = ctx.fluxoFinalizacaoId || fluxoFinalPadrao;
+      const fluxo = fluxoFinalId ? fluxoPorId(fluxos, fluxoFinalId) : null;
+      if (!fluxoFinalId || !fluxo) continue;
+
+      const proprio = Math.max(0, Number(fluxo.finalizacao_delay_minutos ?? 0));
+      const min = proprio > 0 ? proprio : minFinalGeral;
+      if (min <= 0) continue;
+
+      const marcado = new Date(String((linha as { finalizacao_fluxo_em?: string }).finalizacao_fluxo_em ?? agora));
+      if (agora.getTime() - marcado.getTime() < min * 60_000) continue;
+
+      await salvar(conversa, { finalizacao_fluxo_em: null });
+      const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
+      const saida = iniciarFluxo(fluxos, fluxoFinalId, { respostas: ctx.fluxo?.respostas ?? {} }, vars);
+      await entregarFluxo(
+        conversa,
+        config,
+        { ...ctx, fluxoFallback: null, fluxoFinalizacaoId: null },
+        fluxos,
+        saida,
+        vars,
+      );
+      await auditar(conversa.id, "bot_fluxo_finalizacao", `${min} min na aba Aguardando Finalização`);
     }
   }
+
+  // Fluxo em andamento sem resposta do cliente: executa a ação do fluxo.
+  await verificarFluxoSemResposta(config, agora, CAMPOS);
 
 
   const { data } = await supabaseAdmin

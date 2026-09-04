@@ -14,7 +14,14 @@ import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FluxoConfigurador } from "@/components/bot/FluxoConfigurador";
-import { ICONES, emojiIcone, type Fluxo, type FluxoEtapa, type FluxoOpcao } from "@/lib/bot-fluxos";
+import {
+  ACOES_SEM_RESPOSTA,
+  ICONES,
+  emojiIcone,
+  type Fluxo,
+  type FluxoEtapa,
+  type FluxoOpcao,
+} from "@/lib/bot-fluxos";
 
 interface FormFluxo {
   nome: string;
@@ -24,6 +31,11 @@ interface FormFluxo {
   ativo: boolean;
   mensagem_unica: boolean;
   mostrar_finalizacao: boolean;
+  finalizacao_delay_minutos: number;
+  sem_resposta_minutos: number;
+  sem_resposta_acao: string;
+  sem_resposta_mensagem: string;
+  sem_resposta_fluxo_id: string | null;
 }
 
 const VAZIO: FormFluxo = {
@@ -34,6 +46,11 @@ const VAZIO: FormFluxo = {
   ativo: true,
   mensagem_unica: true,
   mostrar_finalizacao: false,
+  finalizacao_delay_minutos: 0,
+  sem_resposta_minutos: 0,
+  sem_resposta_acao: "nenhuma",
+  sem_resposta_mensagem: "",
+  sem_resposta_fluxo_id: null,
 };
 
 /** Preenche o formulário com os dados de um fluxo existente. */
@@ -46,6 +63,11 @@ function formDoFluxo(f: Fluxo): FormFluxo {
     ativo: f.ativo,
     mensagem_unica: f.mensagem_unica !== false,
     mostrar_finalizacao: Boolean(f.mostrar_finalizacao),
+    finalizacao_delay_minutos: Math.max(0, Number(f.finalizacao_delay_minutos ?? 0)),
+    sem_resposta_minutos: Math.max(0, Number(f.sem_resposta_minutos ?? 0)),
+    sem_resposta_acao: f.sem_resposta_acao || "nenhuma",
+    sem_resposta_mensagem: f.sem_resposta_mensagem ?? "",
+    sem_resposta_fluxo_id: f.sem_resposta_fluxo_id ?? null,
   };
 }
 
@@ -190,6 +212,11 @@ export function FluxosPainel() {
         ativo: f.ativo,
         mensagem_unica: f.mensagem_unica !== false,
         mostrar_finalizacao: Boolean(f.mostrar_finalizacao),
+        finalizacao_delay_minutos: Math.max(0, Number(f.finalizacao_delay_minutos ?? 0)),
+        sem_resposta_minutos: Math.max(0, Number(f.sem_resposta_minutos ?? 0)),
+        sem_resposta_acao: f.sem_resposta_acao || "nenhuma",
+        sem_resposta_mensagem: f.sem_resposta_mensagem ?? "",
+        sem_resposta_fluxo_id: f.sem_resposta_fluxo_id ?? null,
         ordem,
       })
       .select("id")
@@ -419,6 +446,88 @@ export function FluxosPainel() {
                 <p className="text-xs text-muted-foreground">
                   Este fluxo aparece como opção na janela de finalização da tela de conversas.
                 </p>
+                {form.mostrar_finalizacao && (
+                  <div className="grid gap-1 pt-2">
+                    <Label>Iniciar após (minutos)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={form.finalizacao_delay_minutos}
+                      onChange={(e) =>
+                        setForm({ ...form, finalizacao_delay_minutos: Math.max(0, Number(e.target.value) || 0) })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      0 inicia o fluxo assim que a conversa entra em Aguardando Finalização. Sem valor próprio,
+                      vale o tempo geral configurado acima.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-2 rounded-lg border p-3">
+                <strong className="text-sm">Se o cliente não responder</strong>
+                <div className="grid gap-1">
+                  <Label>Tempo sem resposta (minutos)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.sem_resposta_minutos}
+                    onChange={(e) =>
+                      setForm({ ...form, sem_resposta_minutos: Math.max(0, Number(e.target.value) || 0) })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    0 desliga. Vale enquanto este fluxo estiver em execução — também destrava conversas paradas.
+                  </p>
+                </div>
+                {form.sem_resposta_minutos > 0 && (
+                  <>
+                    <div className="grid gap-1">
+                      <Label>O que fazer</Label>
+                      <Select
+                        value={form.sem_resposta_acao}
+                        onValueChange={(v) => setForm({ ...form, sem_resposta_acao: v })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {ACOES_SEM_RESPOSTA.map((a) => (
+                            <SelectItem key={a.valor} value={a.valor}>{a.rotulo}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-1">
+                      <Label>Mensagem (opcional)</Label>
+                      <Input
+                        value={form.sem_resposta_mensagem}
+                        onChange={(e) => setForm({ ...form, sem_resposta_mensagem: e.target.value })}
+                        placeholder="Enviada antes da ação"
+                      />
+                    </div>
+                    {form.sem_resposta_acao === "iniciar_fluxo" && (
+                      <div className="grid gap-1">
+                        <Label>Fluxo de destino</Label>
+                        <Select
+                          value={form.sem_resposta_fluxo_id ?? "nenhum"}
+                          onValueChange={(v) =>
+                            setForm({ ...form, sem_resposta_fluxo_id: v === "nenhum" ? null : v })
+                          }
+                        >
+                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="nenhum">Nenhum</SelectItem>
+                            {lista
+                              .filter((f) => f.id !== editando?.id)
+                              .map((f) => (
+                                <SelectItem key={f.id} value={f.id}>{emojiIcone(f.icone)} {f.nome}</SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
               <label className="flex items-center justify-between gap-4 text-sm">
                 <strong>Ativo</strong>

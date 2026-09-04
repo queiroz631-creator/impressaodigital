@@ -219,6 +219,7 @@ export type Database = {
           ativo: boolean
           created_at: string
           descricao: string
+          finalizacao_delay_minutos: number
           icone: string
           id: string
           mensagem_inicial: string
@@ -226,12 +227,17 @@ export type Database = {
           mostrar_finalizacao: boolean
           nome: string
           ordem: number
+          sem_resposta_acao: string
+          sem_resposta_fluxo_id: string | null
+          sem_resposta_mensagem: string
+          sem_resposta_minutos: number
           updated_at: string
         }
         Insert: {
           ativo?: boolean
           created_at?: string
           descricao?: string
+          finalizacao_delay_minutos?: number
           icone?: string
           id?: string
           mensagem_inicial?: string
@@ -239,12 +245,17 @@ export type Database = {
           mostrar_finalizacao?: boolean
           nome: string
           ordem?: number
+          sem_resposta_acao?: string
+          sem_resposta_fluxo_id?: string | null
+          sem_resposta_mensagem?: string
+          sem_resposta_minutos?: number
           updated_at?: string
         }
         Update: {
           ativo?: boolean
           created_at?: string
           descricao?: string
+          finalizacao_delay_minutos?: number
           icone?: string
           id?: string
           mensagem_inicial?: string
@@ -252,9 +263,21 @@ export type Database = {
           mostrar_finalizacao?: boolean
           nome?: string
           ordem?: number
+          sem_resposta_acao?: string
+          sem_resposta_fluxo_id?: string | null
+          sem_resposta_mensagem?: string
+          sem_resposta_minutos?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bot_fluxos_sem_resposta_fluxo_id_fkey"
+            columns: ["sem_resposta_fluxo_id"]
+            isOneToOne: false
+            referencedRelation: "bot_fluxos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bot_horarios: {
         Row: {
