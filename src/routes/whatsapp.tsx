@@ -477,6 +477,7 @@ function Conversa({
   const [selecionando, setSelecionando] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [selecionarAoCarregar, setSelecionarAoCarregar] = useState(false);
+  const [finalizarAberto, setFinalizarAberto] = useState(false);
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
@@ -748,10 +749,13 @@ function Conversa({
         <Button size="sm" variant="outline" title="Pendente" onClick={() => alterarStatus("pendente", "marcou_pendente")}>
           <AlertCircle className="h-4 w-4" />
         </Button>
+        <Button size="sm" variant="outline" title="Fila de impressão" onClick={() => alterarStatus("esperando_impressao", "fila_impressao")}>
+          <Printer className="h-4 w-4" />
+        </Button>
         <Button size="sm" variant="outline" title="Enviar para Aguardando Finalização" onClick={() => void enviarFinalizacao()}>
           <Flag className="h-4 w-4" />
         </Button>
-        <Button size="sm" title="Finalizar" onClick={() => alterarStatus("finalizado", "finalizou")}>
+        <Button size="sm" title="Finalizar" onClick={() => setFinalizarAberto(true)}>
           <CheckCircle2 className="h-4 w-4" />
         </Button>
         <Button
