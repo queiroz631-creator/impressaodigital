@@ -276,7 +276,8 @@ export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${chave}` },
         body: JSON.stringify({
-          model: "openai/gpt-5.6-sol",
+          // Modelo que aceita áudio OGG/Opus (formato dos áudios do WhatsApp).
+          model: "google/gemini-3.7-flash",
           messages: [
             {
               role: "user",
@@ -292,7 +293,33 @@ export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
         }),
       });
 
-      if (!r.ok) return { ok: false as const, texto: null, erro: "A transcrição falhou. Tente novamente." };
+      if (!r.ok) {
+        const detalhe = await r.text().catch(() => "");
+        console.error("Falha na transcrição de áudio", r.status, detalhe.slice(0, 500));
+
+        if (r.status === 429 || r.status >= 500) {
+          return { ok: false as const, texto: null, erro: "Serviço de IA ocupado. Tente novamente em instantes." };
+        }
+        if (r.status === 402) {
+          return { ok: false as const, texto: null, erro: "Créditos de IA insuficientes para transcrever." };
+        }
+        if (r.status === 403) {
+          return { ok: false as const, texto: null, erro: "Transcrição bloqueada pelas configurações de IA." };
+        }
+
+        let mensagem = "";
+        try {
+          const j = JSON.parse(detalhe) as { error?: { message?: string }; message?: string };
+          mensagem = j.error?.message ?? j.message ?? "";
+        } catch {
+          mensagem = "";
+        }
+        return {
+          ok: false as const,
+          texto: null,
+          erro: mensagem ? `A transcrição falhou: ${mensagem}` : "A transcrição falhou. Tente novamente.",
+        };
+      }
 
       const j = (await r.json()) as { choices?: { message?: { content?: unknown } }[] };
       const conteudo = j.choices?.[0]?.message?.content;
@@ -301,7 +328,9 @@ export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
 
       await context.supabase.from("whatsapp_mensagens").update({ transcricao: texto }).eq("id", msg.id);
       return { ok: true as const, texto, erro: null as string | null };
-    } catch {
+    } catch (e) {
+      console.error("Erro ao transcrever áudio", e);
       return { ok: false as const, texto: null, erro: "A transcrição falhou. Tente novamente." };
     }
+
   });
