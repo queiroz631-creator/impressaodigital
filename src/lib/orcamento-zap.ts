@@ -74,10 +74,5 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
   }
 
   //partes.push(OBS_FINAL);
-  const resultado = partes.join("\n\n");
-
-  console.log("ORÇAMENTO FINAL:", JSON.stringify(resultado));
-
-  return resultado;
   return partes.join("\n\n");
 }
