@@ -13,6 +13,8 @@ export interface Fluxo {
   ordem: number;
   /** Envia o texto do fluxo, da etapa e as opções em uma única mensagem. */
   mensagem_unica: boolean;
+  /** Mostra este fluxo na janela de finalização da tela de conversas. */
+  mostrar_finalizacao: boolean;
 }
 
 
@@ -111,6 +113,8 @@ export const ACOES_ETAPA: { valor: string; rotulo: string }[] = [
   { valor: "enviar_orcamento", rotulo: "Enviar orçamento" },
   { valor: "transferir_atendente", rotulo: "Transferir para atendente" },
   { valor: "transferir_silencioso", rotulo: "Transferir para atendente (sem mensagem)" },
+  { valor: "esperando_impressao", rotulo: "Enviar para fila de impressão" },
+  { valor: "esperando_impressao_silencioso", rotulo: "Enviar para fila de impressão (sem mensagem)" },
   { valor: "criar_pendente", rotulo: "Criar atendimento pendente" },
   { valor: "iniciar_fluxo", rotulo: "Iniciar outro fluxo" },
   { valor: "voltar_inicio_fluxo", rotulo: "Voltar ao início do fluxo" },
@@ -125,6 +129,8 @@ export const ACOES_OPCAO: { valor: string; rotulo: string }[] = [
   { valor: "iniciar_fluxo", rotulo: "Iniciar outro fluxo" },
   { valor: "transferir_atendente", rotulo: "Transferir para atendente" },
   { valor: "transferir_silencioso", rotulo: "Transferir para atendente (sem mensagem)" },
+  { valor: "esperando_impressao", rotulo: "Enviar para fila de impressão" },
+  { valor: "esperando_impressao_silencioso", rotulo: "Enviar para fila de impressão (sem mensagem)" },
   { valor: "voltar_inicio_fluxo", rotulo: "Voltar ao início do fluxo" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
   { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
@@ -136,6 +142,8 @@ export const ACOES_RESPOSTA: { valor: string; rotulo: string }[] = [
   { valor: "iniciar_fluxo", rotulo: "Iniciar um fluxo" },
   { valor: "resposta", rotulo: "Enviar outra resposta automática" },
   { valor: "atendente", rotulo: "Transferir para atendente" },
+  { valor: "esperando_impressao", rotulo: "Enviar para fila de impressão" },
+  { valor: "esperando_impressao_silencioso", rotulo: "Enviar para fila de impressão (sem mensagem)" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
   { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
 ];
@@ -162,6 +170,8 @@ export const ACOES_PRIMEIRO_CONTATO: { valor: string; rotulo: string }[] = [
   { valor: "resposta", rotulo: "Enviar uma resposta automática" },
   { valor: "atendente", rotulo: "Transferir para atendente" },
   { valor: "transferir_silencioso", rotulo: "Transferir para atendente (sem mensagem)" },
+  { valor: "esperando_impressao", rotulo: "Enviar para fila de impressão" },
+  { valor: "esperando_impressao_silencioso", rotulo: "Enviar para fila de impressão (sem mensagem)" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
   { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
 ];
@@ -195,6 +205,8 @@ export const ACOES_SISTEMA = new Set([
   "enviar_orcamento",
   "transferir_atendente",
   "transferir_silencioso",
+  "esperando_impressao",
+  "esperando_impressao_silencioso",
   "criar_pendente",
 ]);
 
