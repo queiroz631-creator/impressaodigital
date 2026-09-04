@@ -41,8 +41,7 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
 
   for (const item of doc.itens) {
     partes.push(
-      `Qtd Arquivos: ${doisDigitos(item.quantidadeArquivos)}\n` +
-        `Total Pagina: ${doisDigitos(item.paginasTotal)}`,
+      `Qtd Arquivos: ${doisDigitos(item.quantidadeArquivos)}\n` + `Total Pagina: ${doisDigitos(item.paginasTotal)}`,
     );
 
     const acabamentos = linhasAcabamentos(item);
@@ -62,7 +61,7 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
     if (pix.length > 0) partes.push(pix.join("\n"));
   }
 
-  partes.push(OBS_FINAL);
+  //partes.push(OBS_FINAL);
 
   return partes.join("\n\n");
 }
