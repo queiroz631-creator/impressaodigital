@@ -13,11 +13,14 @@ import {
   CheckCircle2,
   CheckSquare,
   Clock,
+  Copy,
   Download,
   FileText,
   Flag,
   Headset,
   MessageSquare,
+  Mic,
+  Printer,
   Search,
   Send,
   Square,
@@ -37,7 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { enviarDigitandoWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp } from "@/lib/whatsapp.functions";
+import { enviarDigitandoWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONVERSA,
@@ -80,6 +83,7 @@ interface Conversa {
   orcamento_id: string | null;
   created_at: string;
   atendimento_numero: number;
+  data_finalizacao: string | null;
 }
 
 interface Mensagem {
@@ -95,6 +99,7 @@ interface Mensagem {
   status: string;
   erro: string | null;
   data_hora: string;
+  transcricao: string | null;
 }
 
 /** Ícone de cada aba de status. */
@@ -103,6 +108,7 @@ const ICONE_STATUS: Record<StatusConversa, LucideIcon> = {
   aguardando: Clock,
   em_atendimento: Headset,
   pendente: AlertCircle,
+  esperando_impressao: Printer,
   aguardando_finalizacao: Flag,
   finalizado: CheckCircle2,
 };
