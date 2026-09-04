@@ -292,11 +292,16 @@ function Atendimento() {
     }
     let ativo = true;
     const espera = setTimeout(async () => {
+      const alvo = busca.trim().replace(/[%,()]/g, " ").trim();
+      if (!alvo) {
+        if (ativo) setIdsBuscaMensagem(null);
+        return;
+      }
       const { data } = await supabase
         .from("whatsapp_mensagens")
         .select("conversa_id")
-        .ilike("texto", `%${busca.trim()}%`)
-        .limit(200);
+        .or(`texto.ilike.%${alvo}%,arquivo_nome.ilike.%${alvo}%,transcricao.ilike.%${alvo}%`)
+        .limit(400);
       if (ativo) setIdsBuscaMensagem(new Set((data ?? []).map((r) => r.conversa_id as string)));
     }, 400);
     return () => {
@@ -307,18 +312,22 @@ function Atendimento() {
   }, [termo]);
 
   const hoje = hojeTexto;
+  const digitosBusca = termo.replace(/\D/g, "");
   const lista = (conversas ?? []).filter((c) => {
     // Pesquisando: ignora a aba e a data; vale nome, telefone e conteúdo das mensagens.
     if (termo) {
       const nome = normalizar(c.nome_contato ?? "");
       const telefone = (c.telefone ?? "").replace(/\D/g, "");
+      // O telefone só entra na comparação quando o termo tem dígitos; caso
+      // contrário a busca vazia casaria com todos os contatos.
+      const casaTelefone = digitosBusca.length > 0 && telefone.includes(digitosBusca);
       return (
         nome.includes(termo) ||
-        telefone.includes(termo.replace(/\D/g, "")) ||
-        formatarTelefone(c.telefone).includes(busca.trim()) ||
+        casaTelefone ||
         (idsBuscaMensagem?.has(c.id) ?? false)
       );
     }
+
     if (c.status !== aba) return false;
     // Finalizados mostram só os de hoje, até pedir para ver todos.
     if (aba === "finalizado" && !todasFinalizadas) {
