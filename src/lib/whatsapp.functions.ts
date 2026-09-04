@@ -2,6 +2,40 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+/**
+ * Quando alguém da loja envia mensagem pelo sistema, conversas finalizadas,
+ * automáticas, aguardando resposta ou aguardando finalização passam para
+ * "Em Atendimento". Pendente e já em atendimento não mudam.
+ */
+async function promoverParaEmAtendimento(
+  supabase: SupabaseClient,
+  conversaId: string,
+  atendenteId: string,
+  atendenteNome?: string,
+) {
+  const { data } = await supabase
+    .from("whatsapp_conversas")
+    .select("status")
+    .eq("id", conversaId)
+    .maybeSingle();
+  const status = (data as { status?: string } | null)?.status;
+  if (!status || status === "em_atendimento" || status === "pendente") return;
+
+  await supabase
+    .from("whatsapp_conversas")
+    .update({
+      status: "em_atendimento",
+      etapa: "em_atendimento",
+      atendente_id: atendenteId,
+      atendente_nome: atendenteNome ?? null,
+      inicio_atendimento: new Date().toISOString(),
+      inatividade_avisada: false,
+      inatividade_etapa: 0,
+    })
+    .eq("id", conversaId);
+}
 
 /** Verifica se a instância da Z-API está configurada e conectada. */
 export const statusInstanciaZapi = createServerFn({ method: "GET" })
@@ -103,6 +137,7 @@ export const enviarTextoWhatsapp = createServerFn({ method: "POST" })
           .from("whatsapp_conversas")
           .update({ ultima_mensagem: data.mensagem, ultima_mensagem_em: new Date().toISOString() })
           .eq("id", data.conversaId);
+        await promoverParaEmAtendimento(context.supabase, data.conversaId, context.userId, data.autor);
       }
     }
 
@@ -172,6 +207,10 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
         status: r.ok ? "enviada" : "erro",
         erro: r.ok ? null : (r.erro ?? "Falha no envio"),
       });
+
+      if (r.ok) {
+        await promoverParaEmAtendimento(context.supabase, data.conversaId, context.userId, data.autor);
+      }
     }
 
     if (!r.ok) return { ok: false as const, erro: r.erro ?? "Falha ao enviar o arquivo." };
@@ -182,11 +221,17 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
 export const enviarParaFinalizacao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ conversaId: z.string().uuid(), atendente: z.string().max(120).optional() }).parse(input),
+    z
+      .object({
+        conversaId: z.string().uuid(),
+        atendente: z.string().max(120).optional(),
+        fluxoId: z.string().uuid().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { iniciarFinalizacao } = await import("@/lib/bot.server");
-    const r = await iniciarFinalizacao(data.conversaId);
+    const r = await iniciarFinalizacao(data.conversaId, data.fluxoId ?? null);
     if (!r.ok) return { ok: false, fluxo: false, erro: "Conversa não encontrada." };
 
     await context.supabase.from("whatsapp_auditoria").insert({
@@ -198,4 +243,65 @@ export const enviarParaFinalizacao = createServerFn({ method: "POST" })
     });
 
     return { ok: true, fluxo: r.fluxo, erro: null as string | null };
+  });
+
+/** Transcreve o áudio de uma mensagem (sob demanda) e grava o texto na mensagem. */
+export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ mensagemId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: msg } = await context.supabase
+      .from("whatsapp_mensagens")
+      .select("id, transcricao, arquivo_url, mime_type")
+      .eq("id", data.mensagemId)
+      .maybeSingle();
+
+    if (!msg?.arquivo_url) return { ok: false as const, texto: null, erro: "Áudio não encontrado." };
+    if (msg.transcricao) return { ok: true as const, texto: msg.transcricao, erro: null as string | null };
+
+    const resposta = await fetch(msg.arquivo_url);
+    if (!resposta.ok) return { ok: false as const, texto: null, erro: "Não foi possível baixar o áudio." };
+
+    const buffer = Buffer.from(await resposta.arrayBuffer());
+    if (buffer.length > 18 * 1024 * 1024) {
+      return { ok: false as const, texto: null, erro: "Áudio muito grande para transcrever." };
+    }
+
+    const formato = ((msg.mime_type ?? "audio/ogg").split("/")[1] ?? "ogg").split(";")[0] || "ogg";
+    const chave = process.env["LOVABLE_API_KEY"];
+    if (!chave) return { ok: false as const, texto: null, erro: "Serviço de IA não configurado." };
+
+    try {
+      const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${chave}` },
+        body: JSON.stringify({
+          model: "openai/gpt-5.6-sol",
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: "Transcreva exatamente o que foi dito neste áudio (português). Responda somente com a transcrição, sem comentários.",
+                },
+                { type: "input_audio", input_audio: { data: buffer.toString("base64"), format: formato } },
+              ],
+            },
+          ],
+        }),
+      });
+
+      if (!r.ok) return { ok: false as const, texto: null, erro: "A transcrição falhou. Tente novamente." };
+
+      const j = (await r.json()) as { choices?: { message?: { content?: unknown } }[] };
+      const conteudo = j.choices?.[0]?.message?.content;
+      const texto = (typeof conteudo === "string" ? conteudo : "").trim();
+      if (!texto) return { ok: false as const, texto: null, erro: "Não foi possível entender o áudio." };
+
+      await context.supabase.from("whatsapp_mensagens").update({ transcricao: texto }).eq("id", msg.id);
+      return { ok: true as const, texto, erro: null as string | null };
+    } catch {
+      return { ok: false as const, texto: null, erro: "A transcrição falhou. Tente novamente." };
+    }
   });

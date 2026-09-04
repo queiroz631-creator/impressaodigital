@@ -371,6 +371,10 @@ function aplicarOpcao(
         acao: "transferir_silencioso",
         etapaAcao: etapa,
       };
+    case "esperando_impressao":
+      return { mensagens: [], estado: null, acao: "esperando_impressao", etapaAcao: etapa };
+    case "esperando_impressao_silencioso":
+      return { mensagens: [], estado: null, acao: "esperando_impressao_silencioso", etapaAcao: etapa };
     case "finalizar":
       return { mensagens: [], estado: null, finalizar: true };
     case "finalizar_silencioso":

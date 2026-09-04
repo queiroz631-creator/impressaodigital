@@ -5,6 +5,7 @@ export type StatusConversa =
   | "aguardando"
   | "em_atendimento"
   | "pendente"
+  | "esperando_impressao"
   | "aguardando_finalizacao"
   | "finalizado";
 
@@ -13,6 +14,7 @@ export const STATUS_CONVERSA: { valor: StatusConversa; rotulo: string }[] = [
   { valor: "aguardando", rotulo: "Aguardando Resposta" },
   { valor: "em_atendimento", rotulo: "Em Atendimento" },
   { valor: "pendente", rotulo: "Pendente" },
+  { valor: "esperando_impressao", rotulo: "Esperando Impressão" },
   { valor: "aguardando_finalizacao", rotulo: "Aguardando Finalização" },
   { valor: "finalizado", rotulo: "Finalizado" },
 ];
@@ -22,6 +24,7 @@ export const rotuloStatusConversa: Record<string, string> = {
   aguardando: "Aguardando Resposta",
   em_atendimento: "Em Atendimento",
   pendente: "Pendente",
+  esperando_impressao: "Esperando Impressão",
   aguardando_finalizacao: "Aguardando Finalização",
   finalizado: "Finalizado",
 };
@@ -41,6 +44,7 @@ export const rotuloEtapa: Record<string, string> = {
   aguardando_confirmacao: "Aguardando confirmação",
   aguardando_revisao: "Aguardando revisão",
   aguardando_atendente: "Aguardando atendente",
+  aguardando_impressao: "Aguardando impressão",
   finalizado: "Finalizado",
 };
 

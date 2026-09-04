@@ -397,9 +397,26 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           })
           .eq("id", conversaId);
 
-        // Mensagem enviada fora do sistema: fica registrada no histórico e o
-        // bot não é acionado.
+        // Mensagem enviada fora do sistema (celular/WhatsApp Web): fica
+        // registrada no histórico e o bot não é acionado. Ecos das mensagens
+        // enviadas pelo próprio sistema já foram descartados acima (messageId
+        // repetido ou texto idêntico), então aqui é sempre um envio manual:
+        // finalizado/automático/aguardando/aguardando finalização passam para
+        // "Em Atendimento"; pendente e em atendimento não mudam.
         if (ehSaidaPropria) {
+          const statusAtual = conversaAberta?.status ?? "";
+          if (statusAtual && statusAtual !== "em_atendimento" && statusAtual !== "pendente") {
+            await supabaseAdmin
+              .from("whatsapp_conversas")
+              .update({
+                status: "em_atendimento",
+                etapa: "em_atendimento",
+                inicio_atendimento: agora,
+                inatividade_avisada: false,
+                inatividade_etapa: 0,
+              })
+              .eq("id", conversaId);
+          }
           return Response.json({ ok: true, bot: false, motivo: "enviada_fora_do_sistema" });
         }
 

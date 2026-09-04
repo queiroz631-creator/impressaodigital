@@ -13,11 +13,14 @@ import {
   CheckCircle2,
   CheckSquare,
   Clock,
+  Copy,
   Download,
   FileText,
   Flag,
   Headset,
   MessageSquare,
+  Mic,
+  Printer,
   Search,
   Send,
   Square,
@@ -37,7 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { enviarDigitandoWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp } from "@/lib/whatsapp.functions";
+import { enviarDigitandoWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONVERSA,
@@ -80,6 +83,7 @@ interface Conversa {
   orcamento_id: string | null;
   created_at: string;
   atendimento_numero: number;
+  data_finalizacao: string | null;
 }
 
 interface Mensagem {
@@ -95,6 +99,7 @@ interface Mensagem {
   status: string;
   erro: string | null;
   data_hora: string;
+  transcricao: string | null;
 }
 
 /** Ícone de cada aba de status. */
@@ -103,6 +108,7 @@ const ICONE_STATUS: Record<StatusConversa, LucideIcon> = {
   aguardando: Clock,
   em_atendimento: Headset,
   pendente: AlertCircle,
+  esperando_impressao: Printer,
   aguardando_finalizacao: Flag,
   finalizado: CheckCircle2,
 };
@@ -184,6 +190,13 @@ function Atendimento() {
   const [aba, setAba] = useState<StatusConversa>("automatico");
   const [abertaId, setAbertaId] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
+  const [todasFinalizadas, setTodasFinalizadas] = useState(false);
+  const [idsBuscaMensagem, setIdsBuscaMensagem] = useState<Set<string> | null>(null);
+
+  // Trocar de aba volta a mostrar somente os finalizados de hoje.
+  useEffect(() => {
+    setTodasFinalizadas(false);
+  }, [aba]);
 
   useEffect(() => {
     const canal = supabase
@@ -218,20 +231,62 @@ function Atendimento() {
 
 
   const termo = normalizar(busca.trim());
+
+  // Busca também no conteúdo das mensagens (qualquer status), com espera curta.
+  useEffect(() => {
+    if (termo.length < 3) {
+      setIdsBuscaMensagem(null);
+      return;
+    }
+    let ativo = true;
+    const espera = setTimeout(async () => {
+      const { data } = await supabase
+        .from("whatsapp_mensagens")
+        .select("conversa_id")
+        .ilike("texto", `%${busca.trim()}%`)
+        .limit(200);
+      if (ativo) setIdsBuscaMensagem(new Set((data ?? []).map((r) => r.conversa_id as string)));
+    }, 400);
+    return () => {
+      ativo = false;
+      clearTimeout(espera);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [termo]);
+
+  const hoje = new Date().toDateString();
   const lista = (conversas ?? []).filter((c) => {
+    // Pesquisando: ignora a aba e a data; vale nome, telefone e conteúdo das mensagens.
+    if (termo) {
+      const nome = normalizar(c.nome_contato ?? "");
+      const telefone = (c.telefone ?? "").replace(/\D/g, "");
+      return (
+        nome.includes(termo) ||
+        telefone.includes(termo.replace(/\D/g, "")) ||
+        formatarTelefone(c.telefone).includes(busca.trim()) ||
+        (idsBuscaMensagem?.has(c.id) ?? false)
+      );
+    }
     if (c.status !== aba) return false;
-    if (!termo) return true;
-    const nome = normalizar(c.nome_contato ?? "");
-    const telefone = (c.telefone ?? "").replace(/\D/g, "");
-    return (
-      nome.includes(termo) ||
-      telefone.includes(termo.replace(/\D/g, "")) ||
-      formatarTelefone(c.telefone).includes(busca.trim())
-    );
+    // Finalizados mostram só os de hoje, até pedir para ver todos.
+    if (aba === "finalizado" && !todasFinalizadas) {
+      const referencia = c.data_finalizacao ?? c.created_at;
+      if (new Date(referencia).toDateString() !== hoje) return false;
+    }
+    return true;
   });
-  // Se a conversa aberta mudou de status (saiu da aba atual), fecha automaticamente.
+  const finalizadosOcultos =
+    aba === "finalizado" && !todasFinalizadas && !termo
+      ? (conversas ?? []).filter(
+          (c) =>
+            c.status === "finalizado" &&
+            new Date(c.data_finalizacao ?? c.created_at).toDateString() !== hoje,
+        ).length
+      : 0;
+  // Se a conversa aberta mudou de status (saiu da aba atual), fecha automaticamente
+  // (na pesquisa, a conversa pode pertencer a outra aba e permanece aberta).
   const abertaBruta = (conversas ?? []).find((c) => c.id === abertaId) ?? null;
-  const aberta = abertaBruta && abertaBruta.status === aba ? abertaBruta : null;
+  const aberta = abertaBruta && (termo !== "" || abertaBruta.status === aba) ? abertaBruta : null;
 
   const painelContatos = (
     <div className="flex min-h-0 flex-col gap-3">
@@ -240,7 +295,7 @@ function Atendimento() {
         <Input
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          placeholder="Pesquisar por nome ou telefone..."
+          placeholder="Pesquisar nome, telefone ou conteúdo da mensagem..."
           className="pl-9"
         />
       </div>
@@ -308,6 +363,11 @@ function Atendimento() {
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
                   <span className={cn("min-w-0 flex-1 truncate text-sm", c.nao_lidas > 0 ? "font-bold" : "font-semibold")}>{nome}</span>
+                  {termo !== "" && c.status !== aba && (
+                    <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[10px]">
+                      {rotuloStatusConversa[c.status] ?? c.status}
+                    </Badge>
+                  )}
                   <span className="shrink-0 text-[10px] text-muted-foreground">
                     {dataHoraCurta(c.ultima_mensagem_em ?? c.created_at)}
                   </span>
@@ -322,6 +382,16 @@ function Atendimento() {
             </button>
           );
         })}
+
+        {finalizadosOcultos > 0 && (
+          <button
+            type="button"
+            onClick={() => setTodasFinalizadas(true)}
+            className="w-full rounded-lg border border-dashed px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted"
+          >
+            Mostrar todas ({finalizadosOcultos} de outros dias)
+          </button>
+        )}
       </div>
     </div>
   );
@@ -407,6 +477,7 @@ function Conversa({
   const [selecionando, setSelecionando] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [selecionarAoCarregar, setSelecionarAoCarregar] = useState(false);
+  const [finalizarAberto, setFinalizarAberto] = useState(false);
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
@@ -446,15 +517,15 @@ function Conversa({
     setSelecionados(new Set());
   }
 
-  /** Retorna os IDs dos arquivos que pertencem ao atendimento mais recente (após o último divisor "ATENDIMENTO N"). */
-  function arquivosDoUltimoAtendimento(msgs: Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto">[]) {
+  /** Retorna os IDs dos arquivos do atendimento mais recente (após o último divisor "ATENDIMENTO N"). Somente arquivos recebidos do cliente. */
+  function arquivosDoUltimoAtendimento(msgs: Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto" | "direcao">[]) {
     let inicio = 0;
     msgs.forEach((m, i) => {
       if (m.tipo === "sistema" && /^ATENDIMENTO\s+\d+/i.test(m.texto ?? "")) inicio = i + 1;
     });
     return msgs
       .slice(inicio)
-      .filter((m) => m.arquivo_url)
+      .filter((m) => m.arquivo_url && m.direcao === "entrada")
       .map((m) => m.id);
   }
 
@@ -480,7 +551,7 @@ function Conversa({
 
     const { data: msgs, error: erroMsgs } = await supabase
       .from("whatsapp_mensagens")
-      .select("id, arquivo_url, tipo, texto")
+      .select("id, arquivo_url, tipo, texto, direcao")
       .eq("conversa_id", maisRecente.id)
       .order("data_hora", { ascending: true });
     if (erroMsgs) {
@@ -489,7 +560,7 @@ function Conversa({
     }
 
     const arquivos = arquivosDoUltimoAtendimento(
-      (msgs ?? []) as Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto">[],
+      (msgs ?? []) as Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto" | "direcao">[],
     );
     if (arquivos.length === 0) {
       toast("Nenhum arquivo no atendimento mais recente.");
@@ -525,9 +596,9 @@ function Conversa({
     void presenca({ data: { telefone: conversa.telefone } }).catch(() => undefined);
   }
 
-  async function enviarFinalizacao() {
+  async function enviarFinalizacao(fluxoId?: string) {
     try {
-      const r = await finalizacao({ data: { conversaId: conversa.id, atendente: atendente } });
+      const r = await finalizacao({ data: { conversaId: conversa.id, atendente: atendente, fluxoId } });
       if (!r.ok) { toast.error(r.erro ?? "Falha ao enviar para finalização."); return; }
       toast.success(r.fluxo ? "Conversa enviada para finalização." : "Conversa movida (nenhum fluxo de finalização configurado).");
       await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
@@ -535,6 +606,20 @@ function Conversa({
       toast.error(e instanceof Error ? e.message : "Falha ao enviar para finalização.");
     }
   }
+
+  // Fluxos marcados em Configurar Bot para aparecer como opção na finalização.
+  const fluxosFinalizacao = useQuery({
+    queryKey: ["bot-fluxos-finalizacao"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("bot_fluxos")
+        .select("id, nome, icone")
+        .eq("ativo", true)
+        .eq("mostrar_finalizacao", true)
+        .order("ordem");
+      return data ?? [];
+    },
+  });
 
   const { data: mensagens, isLoading } = useQuery({
     queryKey: ["whatsapp-mensagens", conversa.id],
@@ -664,10 +749,13 @@ function Conversa({
         <Button size="sm" variant="outline" title="Pendente" onClick={() => alterarStatus("pendente", "marcou_pendente")}>
           <AlertCircle className="h-4 w-4" />
         </Button>
+        <Button size="sm" variant="outline" title="Fila de impressão" onClick={() => alterarStatus("esperando_impressao", "fila_impressao")}>
+          <Printer className="h-4 w-4" />
+        </Button>
         <Button size="sm" variant="outline" title="Enviar para Aguardando Finalização" onClick={() => void enviarFinalizacao()}>
           <Flag className="h-4 w-4" />
         </Button>
-        <Button size="sm" title="Finalizar" onClick={() => alterarStatus("finalizado", "finalizou")}>
+        <Button size="sm" title="Finalizar" onClick={() => setFinalizarAberto(true)}>
           <CheckCircle2 className="h-4 w-4" />
         </Button>
         <Button
@@ -811,6 +899,45 @@ function Conversa({
           </div>
         </CardContent>
       </Card>
+
+      {/* Escolha da finalização: imediata ou por fluxo configurado em Configurar Bot. */}
+      <Dialog open={finalizarAberto} onOpenChange={setFinalizarAberto}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Finalizar atendimento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Button
+              className="w-full justify-start"
+              onClick={() => {
+                setFinalizarAberto(false);
+                void alterarStatus("finalizado", "finalizou");
+              }}
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" /> Finalizar agora
+            </Button>
+            {(fluxosFinalizacao.data ?? []).map((f) => (
+              <Button
+                key={f.id}
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  setFinalizarAberto(false);
+                  void enviarFinalizacao(f.id);
+                }}
+                title="Aguardando Finalização, iniciando este fluxo imediatamente"
+              >
+                <Flag className="mr-2 h-4 w-4" /> {f.nome}
+              </Button>
+            ))}
+            {(fluxosFinalizacao.data ?? []).length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Para oferecer outros fluxos aqui, ative "Mostrar na finalização" no fluxo em Configurar Bot.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -823,6 +950,29 @@ function urlMidia(id: string, baixar = false) {
 /** Renderiza imagem, documento ou áudio anexado a uma mensagem. */
 function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem; selecionando?: boolean }) {
   const [aberto, setAberto] = useState(false);
+  const [transcricao, setTranscricao] = useState<string | null>(mensagem.transcricao);
+  const [transcricaoAberta, setTranscricaoAberta] = useState(false);
+  const [carregandoTranscricao, setCarregandoTranscricao] = useState(false);
+  const transcrever = useServerFn(transcreverAudioWhatsapp);
+
+  async function transcreverAudio() {
+    if (carregandoTranscricao) return;
+    setCarregandoTranscricao(true);
+    try {
+      const r = await transcrever({ data: { mensagemId: mensagem.id } });
+      if (r.ok && r.texto) {
+        setTranscricao(r.texto);
+        setTranscricaoAberta(true);
+      } else {
+        toast.error(r.erro ?? "Não foi possível transcrever o áudio.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao transcrever.");
+    } finally {
+      setCarregandoTranscricao(false);
+    }
+  }
+
   if (!mensagem.arquivo_url && !mensagem.arquivo_nome) return null;
 
   const nome = mensagem.arquivo_nome ?? "arquivo";
@@ -886,14 +1036,52 @@ function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem;
       <div className="mb-1 space-y-1">
         <audio controls={!selecionando} src={urlMidia(mensagem.id)} className="w-56 max-w-full" />
         {!selecionando && (
-          <a
-            href={urlMidia(mensagem.id, true)}
-            className="inline-flex items-center gap-1 text-xs underline opacity-90"
-            download={nome}
-          >
-            <Download className="h-3 w-3" /> Baixar áudio
-          </a>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <a
+              href={urlMidia(mensagem.id, true)}
+              className="inline-flex items-center gap-1 underline opacity-90"
+              download={nome}
+            >
+              <Download className="h-3 w-3" /> Baixar áudio
+            </a>
+            {transcricao ? (
+              <button
+                type="button"
+                onClick={() => setTranscricaoAberta(true)}
+                className="inline-flex items-center gap-1 underline opacity-90"
+              >
+                <Mic className="h-3 w-3" /> Ver transcrição
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => void transcreverAudio()}
+                disabled={carregandoTranscricao}
+                className="inline-flex items-center gap-1 underline opacity-90 disabled:opacity-50"
+              >
+                <Mic className="h-3 w-3" /> {carregandoTranscricao ? "Transcrevendo..." : "Transcrever"}
+              </button>
+            )}
+          </div>
         )}
+        <Dialog open={transcricaoAberta} onOpenChange={setTranscricaoAberta}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-sm">Transcrição do áudio</DialogTitle>
+            </DialogHeader>
+            <p className="whitespace-pre-wrap break-words text-sm">{transcricao ?? ""}</p>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                if (!transcricao) return;
+                void navigator.clipboard.writeText(transcricao).then(() => toast.success("Transcrição copiada."));
+              }}
+            >
+              <Copy className="mr-2 h-4 w-4" /> Copiar transcrição
+            </Button>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }

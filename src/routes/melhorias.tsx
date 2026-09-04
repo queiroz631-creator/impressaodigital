@@ -62,6 +62,7 @@ type Melhoria = {
   descricao: string | null;
   tela: string;
   status: string;
+  executada: boolean;
   created_at: string;
 };
 
@@ -77,7 +78,7 @@ function Melhorias() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("melhorias")
-        .select("id, titulo, descricao, tela, status, created_at")
+        .select("id, titulo, descricao, tela, status, executada, created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Melhoria[];
@@ -249,7 +250,11 @@ function Melhorias() {
               return (
               <div
                 key={m.id}
-                className="flex items-start justify-between gap-3 rounded-lg border p-3"
+                className={
+                  m.executada && m.status !== "concluida"
+                    ? "flex items-start justify-between gap-3 rounded-lg border-2 border-green-500 p-3"
+                    : "flex items-start justify-between gap-3 rounded-lg border p-3"
+                }
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -266,6 +271,9 @@ function Melhorias() {
                       {m.titulo}
                     </span>
                     <Badge variant="secondary">{m.tela}</Badge>
+                    {m.executada && m.status !== "concluida" && (
+                      <Badge className="bg-green-600 text-white hover:bg-green-600">Executada</Badge>
+                    )}
                   </div>
                   {m.descricao && (
                     <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">

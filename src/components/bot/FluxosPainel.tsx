@@ -23,6 +23,7 @@ interface FormFluxo {
   mensagem_inicial: string;
   ativo: boolean;
   mensagem_unica: boolean;
+  mostrar_finalizacao: boolean;
 }
 
 const VAZIO: FormFluxo = {
@@ -32,7 +33,21 @@ const VAZIO: FormFluxo = {
   mensagem_inicial: "",
   ativo: true,
   mensagem_unica: true,
+  mostrar_finalizacao: false,
 };
+
+/** Preenche o formulário com os dados de um fluxo existente. */
+function formDoFluxo(f: Fluxo): FormFluxo {
+  return {
+    nome: f.nome,
+    descricao: f.descricao,
+    icone: f.icone,
+    mensagem_inicial: f.mensagem_inicial,
+    ativo: f.ativo,
+    mensagem_unica: f.mensagem_unica !== false,
+    mostrar_finalizacao: Boolean(f.mostrar_finalizacao),
+  };
+}
 
 
 /** Aba FLUXOS: cadastro e administração das conversas que o bot conduz. */
@@ -174,6 +189,7 @@ export function FluxosPainel() {
         mensagem_inicial: f.mensagem_inicial,
         ativo: f.ativo,
         mensagem_unica: f.mensagem_unica !== false,
+        mostrar_finalizacao: Boolean(f.mostrar_finalizacao),
         ordem,
       })
       .select("id")
@@ -322,6 +338,9 @@ export function FluxosPainel() {
                   <Button size="sm" onClick={() => setConfigurando(f.id)}>
                     <Settings2 className="h-4 w-4" /> CONFIGURAR
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => { setEditando(f); setForm(formDoFluxo(f)); }}>
+                    EDITAR
+                  </Button>
                   <Button size="sm" variant="outline" onClick={() => void duplicar(f)}>
                     <Copy className="h-4 w-4" /> DUPLICAR
                   </Button>
@@ -387,6 +406,18 @@ export function FluxosPainel() {
                 </label>
                 <p className="text-xs text-muted-foreground">
                   Junta a mensagem do fluxo, o texto da etapa e a lista de opções em um só envio.
+                </p>
+              </div>
+              <div className="grid gap-1 rounded-lg border p-3">
+                <label className="flex items-center justify-between gap-4 text-sm">
+                  <strong>Mostrar na finalização</strong>
+                  <Switch
+                    checked={form.mostrar_finalizacao}
+                    onCheckedChange={(v) => setForm({ ...form, mostrar_finalizacao: v })}
+                  />
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Este fluxo aparece como opção na janela de finalização da tela de conversas.
                 </p>
               </div>
               <label className="flex items-center justify-between gap-4 text-sm">
