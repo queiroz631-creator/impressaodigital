@@ -201,6 +201,9 @@ function Calculadora() {
   const [lendoArquivos, setLendoArquivos] = useState(false);
   const [salvandoItem, setSalvandoItem] = useState(false);
   const [dialogAberto, setDialogAberto] = useState(false);
+  /** Orçamento rápido: usa somente o material selecionado na sessão atual. */
+  const [modoRapido, setModoRapido] = useState(false);
+  const [enviandoZap, setEnviandoZap] = useState(false);
   const [incluirTotal, setIncluirTotal] = useState(true);
   /** Decisão obrigatória sobre mostrar o total no documento. */
   const [decisaoTotal, setDecisaoTotal] = useState<"" | "sim" | "nao">("");
