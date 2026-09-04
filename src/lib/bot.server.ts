@@ -2063,7 +2063,6 @@ async function verificarFluxoSemResposta(config: ConfigBot, agora: Date, CAMPOS:
         await salvar(conversa, {
           status: "finalizado",
           data_finalizacao: agora.toISOString(),
-          finalizacao_em: agora.toISOString(),
           motivo_finalizacao: "fluxo sem resposta do cliente",
           nao_lidas: 0,
         });
