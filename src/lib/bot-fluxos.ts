@@ -15,6 +15,32 @@ export interface Fluxo {
   mensagem_unica: boolean;
   /** Mostra este fluxo na janela de finalização da tela de conversas. */
   mostrar_finalizacao: boolean;
+  /** Minutos de espera antes de iniciar este fluxo na finalização (0 = imediato). */
+  finalizacao_delay_minutos: number;
+  /** Minutos sem resposta do cliente antes de executar a ação abaixo (0 = desligado). */
+  sem_resposta_minutos: number;
+  /** Ação executada quando o cliente não responde (ver ACOES_SEM_RESPOSTA). */
+  sem_resposta_acao: string;
+  /** Mensagem opcional enviada antes da ação. */
+  sem_resposta_mensagem: string;
+  /** Fluxo de destino quando a ação for "iniciar_fluxo". */
+  sem_resposta_fluxo_id: string | null;
+}
+
+/** Ações possíveis quando o cliente não responde o fluxo no tempo configurado. */
+export const ACOES_SEM_RESPOSTA: { valor: string; rotulo: string }[] = [
+  { valor: "nenhuma", rotulo: "Não fazer nada" },
+  { valor: "mensagem", rotulo: "Só enviar a mensagem e continuar aguardando" },
+  { valor: "voltar_inicio_fluxo", rotulo: "Voltar ao início do fluxo" },
+  { valor: "iniciar_fluxo", rotulo: "Iniciar outro fluxo" },
+  { valor: "transferir_atendente", rotulo: "Transferir para atendente" },
+  { valor: "transferir_silencioso", rotulo: "Transferir para atendente (sem mensagem)" },
+  { valor: "finalizar", rotulo: "Finalizar atendimento" },
+  { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
+];
+
+export function rotuloAcaoSemResposta(valor: string) {
+  return ACOES_SEM_RESPOSTA.find((a) => a.valor === valor)?.rotulo ?? valor;
 }
 
 
