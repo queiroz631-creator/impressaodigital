@@ -118,6 +118,9 @@ const MSG_STATUS: { valor: string; chave: keyof FormBot }[] = [
   { valor: "finalizado", chave: "msg_inatividade_finalizado" },
 ];
 
+const MSG_AUSENCIA_PADRAO =
+  "Olá! No momento estamos fora do horário de atendimento. Deixe sua mensagem que responderemos assim que a loja abrir. 😊";
+
 const MSG_TRANSFERENCIA_FORA_HORARIO_PADRAO =
   "No momento estamos fora do horário de atendimento. Sua mensagem foi encaminhada e responderemos assim que a loja abrir. 😊";
 
@@ -388,6 +391,41 @@ export function ConfiguracaoBot() {
                   ))}
                 </div>
               )}
+
+              <div className="grid gap-2 rounded-lg border p-3">
+                <Alternar
+                  titulo="Mensagem de ausência (fora do horário)"
+                  ajuda="Fora do horário de funcionamento, o bot envia esta mensagem uma única vez por atendimento nas filas de espera, no lugar da mensagem de primeiro contato. Respostas automáticas cadastradas têm prioridade."
+                  valor={form.msg_fora_horario_ativo}
+                  ao={(v) => setForm({ ...form, msg_fora_horario_ativo: v })}
+                />
+                {form.msg_fora_horario_ativo && (
+                  <>
+                    <Textarea
+                      rows={3}
+                      value={form.msg_fora_horario}
+                      onChange={(e) =>
+                        setForm({ ...form, msg_fora_horario: e.target.value })
+                      }
+                    />
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        Aceita {"{nome}"}, {"{telefone}"} e {"{saudacao}"}. Enviada somente fora do
+                        horário de atendimento.
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          setForm({ ...form, msg_fora_horario: MSG_AUSENCIA_PADRAO })
+                        }
+                      >
+                        Restaurar padrão
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
 
               <div className="grid gap-2 rounded-lg border p-3">
                 <Alternar
