@@ -1695,6 +1695,11 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
           }),
         );
         await salvarContexto(conversa, { ...ctx, ausenciaEnviada: true });
+        // Após a ausência, a conversa aguarda resposta do cliente.
+        if (conversa.status !== "aguardando") {
+          await salvar(conversa, { status: "aguardando" });
+          conversa.status = "aguardando";
+        }
         return;
       }
     }
