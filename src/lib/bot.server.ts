@@ -91,7 +91,8 @@ interface ContextoBot {
   fluxoFinalizacaoId?: string | null;
   /** Marca da parada em que a ação de "sem resposta" já foi executada. */
   semRespostaEm?: string | null;
-
+  /** Mensagem de ausência (fora do horário) já enviada neste atendimento. */
+  ausenciaEnviada?: boolean | null;
 }
 
 interface ConversaBot {
@@ -1663,10 +1664,44 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
   const conversa = (data ?? null) as ConversaBot | null;
   if (!conversa) return;
 
+  const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
+
+  // Mensagem de ausência: fora do horário, responde uma vez por atendimento
+  // nas filas de espera, antes de qualquer primeiro contato. Respostas
+  // automáticas (palavras-chave) têm prioridade e substituem a ausência.
+  if (
+    entrada.tipo !== "acao_sistema" &&
+    ["automatico", "aguardando", "pendente", "aguardando_finalizacao"].includes(conversa.status)
+  ) {
+    const dadosAus = await carregarDadosBot();
+    const agoraAus = new Date();
+    if (
+      dadosAus &&
+      dadosAus.config.msg_fora_horario_ativo &&
+      dadosAus.config.msg_fora_horario.trim() &&
+      !dentroDoHorario(dadosAus, agoraAus)
+    ) {
+      const textoAus = (entrada.texto ?? "").trim();
+      const ehRespostaRapida = Boolean(textoAus && reconhecerResposta(dadosAus, textoAus));
+      const emFluxo = conversa.etapa === "fluxo" && Boolean(ctx.fluxo);
+      const novoAtendimento = conversa.etapa === "finalizado";
+      if (!ehRespostaRapida && !emFluxo && (novoAtendimento || !ctx.ausenciaEnviada)) {
+        await responder(
+          conversa,
+          aplicarVariaveis(dadosAus.config.msg_fora_horario, {
+            nome: conversa.nome_contato ?? "",
+            telefone: conversa.telefone,
+            agora: agoraAus,
+          }),
+        );
+        await salvarContexto(conversa, { ...ctx, ausenciaEnviada: true });
+        return;
+      }
+    }
+  }
+
   // O bot só atua no modo automático ou durante o fluxo de finalização.
   if (conversa.status !== "automatico" && conversa.status !== "aguardando_finalizacao") return;
-
-  const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
   const texto = (entrada.texto ?? "").trim();
   const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
   const agora = new Date();
