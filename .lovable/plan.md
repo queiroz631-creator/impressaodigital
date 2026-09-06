@@ -1,36 +1,36 @@
-# Status do WhatsApp na tela Configurar Bot
+# Arquivo de controle de agendamentos
 
-Nova aba "Status WhatsApp" para criar e programar publicações automáticas no status do WhatsApp (texto, imagem ou vídeo), publicadas sozinhas na hora marcada.
+Criar um pequeno arquivo de status que o sistema consulta a cada 5 minutos, em vez de ficar consultando o banco o tempo todo.
 
-## O que a aba terá
+## Como vai funcionar
 
-- Botão "Novo status" com formulário:
-  - Tipo: Texto, Imagem ou Vídeo
-  - Texto/legenda
-  - Envio do arquivo (imagem ou vídeo) direto pela tela
-  - Cor de fundo e fonte (apenas para status de texto)
-  - Agendamento:
-    - Data e hora únicas (publica uma vez), ou
-    - Recorrente: dias da semana + horário (repete sempre)
-  - Ativo/inativo
-- Lista dos status programados mostrando tipo, prévia do conteúdo, quando publica, último envio e resultado
-- Ações: editar, ativar/desativar, duplicar, excluir e "Publicar agora" para testar
+- Existe um arquivo único, `agendamentos/status.json`, guardado numa pasta de arquivos do sistema.
+- Ele guarda coisas simples: data da última atualização, se há agendamento pendente, quantos, o próximo horário e a lista de recorrentes.
+- Toda vez que alguém cria, altera ou cancela um agendamento (inclusive os recorrentes), o arquivo é regravado na hora.
+- A cada 5 minutos o sistema lê só esse arquivo. Se nada mudou, nada acontece e o banco não é consultado.
+- Se o arquivo não existir ainda, o sistema o cria automaticamente na primeira leitura, a partir dos dados atuais.
 
-## Como funciona a publicação
+## Observação importante
 
-- A cada 5 minutos o sistema verifica se algum status chegou na hora e publica no WhatsApp.
-  Isso significa que um status marcado para 09:00 sai entre 09:00 e 09:05, e essa verificação
-  contínua mantém o banco ativo, o que tem um pequeno custo recorrente. Se preferir, dá para
-  checar de hora em hora e você agenda só em horas cheias.
-- Cada publicação é registrada (sucesso ou erro) e um status de data única é marcado como concluído para não repetir.
-- Recorrentes não repetem no mesmo dia/horário, mesmo que a verificação rode várias vezes.
+O servidor deste projeto não guarda arquivos gravados em disco entre uma requisição e outra — o que é escrito se perde. Por isso o "arquivo" fica na área de arquivos do backend (mesma ideia: uma pasta e um arquivo), que é rápida, barata e não usa o banco em cada leitura. O comportamento que você pediu é exatamente o mesmo.
 
 ## Detalhes técnicos
 
-- Nova tabela `whatsapp_status_agendados`: tipo (`texto|imagem|video`), texto, `midia_url`, `midia_path`, cor de fundo/fonte, `modo` (`unico|recorrente`), `agendado_em` (timestamptz), `dias_semana` (int[]), `hora` (time), `ativo`, `enviado_em`, `ultimo_resultado`, `ultimo_erro`, timestamps. GRANTs para `authenticated`/`service_role`, RLS liberando usuários autenticados (mesmo padrão das outras tabelas do bot), trigger `set_updated_at`.
-- Arquivos de mídia vão para um bucket privado novo `whatsapp-status`, com URL assinada gerada no momento do envio.
-- `src/lib/zapi.server.ts`: funções `enviarStatusTexto`, `enviarStatusImagem`, `enviarStatusVideo` usando os endpoints Z-API `send-text-status`, `send-image-status`, `send-video-status` via `chamarZapi` já existente.
-- Nova rota `src/routes/api/public/whatsapp/status.ts` (POST): valida o `webhook_token` já usado na fila, busca agendamentos vencidos, publica e grava resultado; idempotente.
-- `pg_cron` chamando essa rota a cada 5 minutos (via `run_sql`, não migração).
-- Novo componente `src/components/bot/StatusWhatsappPainel.tsx` + nova `TabsTrigger`/`TabsContent` em `src/components/ConfiguracaoBot.tsx`. Server function `publicarStatusAgora` em `src/lib/whatsapp.functions.ts` para o botão de teste.
-- Nenhuma alteração no layout existente, no motor do bot ou em outras abas.
+- Bucket privado `sistema` (Storage), caminho `agendamentos/status.json`.
+- `src/lib/agenda-status.functions.ts`:
+  - `lerStatusAgenda()` — baixa o JSON; cache em memória do worker com TTL de 60s; se ausente/corrompido, reconstrói via `regravarStatusAgenda()`.
+  - `regravarStatusAgenda()` — consulta o banco uma vez, monta o JSON e faz upload com `upsert: true`.
+- Formato:
+  ```json
+  {
+    "atualizado_em": "2026-09-06T02:00:00Z",
+    "versao": 12,
+    "tem_pendente": true,
+    "total_pendentes": 3,
+    "proximo_em": "2026-09-06T09:00:00Z",
+    "recorrentes": [{ "id": "...", "cron": "0 9 * * 1", "ativo": true }]
+  }
+  ```
+- Poll de 5 min no cliente via `useQuery` com `refetchInterval: 300000` chamando `lerStatusAgenda`; reage apenas quando `versao` muda.
+- Rota `src/routes/api/public/hooks/agenda-status.ts` (POST, valida token) para o pg_cron regravar o arquivo caso algo mude fora do app.
+- Nenhuma tela ou lógica existente é alterada.
