@@ -581,6 +581,63 @@ export type Database = {
           },
         ]
       }
+      bot_status_whatsapp: {
+        Row: {
+          agendado_em: string | null
+          ativo: boolean
+          cor_fundo: string
+          created_at: string
+          dias_semana: number[]
+          hora: string | null
+          id: string
+          imagem_nome: string | null
+          imagem_url: string | null
+          legenda: string
+          modo: string
+          texto: string
+          tipo: string
+          ultima_publicacao_em: string | null
+          ultimo_erro: string | null
+          updated_at: string
+        }
+        Insert: {
+          agendado_em?: string | null
+          ativo?: boolean
+          cor_fundo?: string
+          created_at?: string
+          dias_semana?: number[]
+          hora?: string | null
+          id?: string
+          imagem_nome?: string | null
+          imagem_url?: string | null
+          legenda?: string
+          modo?: string
+          texto?: string
+          tipo?: string
+          ultima_publicacao_em?: string | null
+          ultimo_erro?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agendado_em?: string | null
+          ativo?: boolean
+          cor_fundo?: string
+          created_at?: string
+          dias_semana?: number[]
+          hora?: string | null
+          id?: string
+          imagem_nome?: string | null
+          imagem_url?: string | null
+          legenda?: string
+          modo?: string
+          texto?: string
+          tipo?: string
+          ultima_publicacao_em?: string | null
+          ultimo_erro?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       calculo_itens: {
         Row: {
           calculo_id: string
