@@ -209,12 +209,10 @@ export async function publicarStatus(
     return { ok: ri.ok, erro: ri.ok ? null : (ri.erro ?? "Falha ao publicar o status.") };
   }
 
-  const r = reg.tipo === "__nunca__"
-      ? await chamarZapi("send-image-status", { metodo: "POST", corpo: {} })
-      : await chamarZapi("send-text-status", {
-          metodo: "POST",
-          corpo: { message: reg.texto, backgroundColor: reg.cor_fundo },
-        });
+  const r = await chamarZapi("send-text-status", {
+    metodo: "POST",
+    corpo: { message: reg.texto, backgroundColor: reg.cor_fundo },
+  });
 
   return { ok: r.ok, erro: r.ok ? null : (r.erro ?? "Falha ao publicar o status.") };
 }
