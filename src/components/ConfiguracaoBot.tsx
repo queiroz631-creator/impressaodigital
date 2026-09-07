@@ -17,6 +17,7 @@ import { FluxosPainel } from "@/components/bot/FluxosPainel";
 import { RespostasPainel } from "@/components/bot/RespostasPainel";
 import { NumerosPainel } from "@/components/bot/NumerosPainel";
 import { PrimeiroContatoPainel } from "@/components/bot/PrimeiroContatoPainel";
+import { StatusWhatsappPainel } from "@/components/bot/StatusWhatsappPainel";
 import { lerCfgCortesia } from "@/lib/whatsapp-cortesia";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -303,6 +304,7 @@ export function ConfiguracaoBot() {
           <TabsTrigger value="respostas">Respostas automáticas</TabsTrigger>
           <TabsTrigger value="inatividade">Inatividade</TabsTrigger>
           <TabsTrigger value="numeros">Números</TabsTrigger>
+          <TabsTrigger value="status">Status WhatsApp</TabsTrigger>
           <TabsTrigger value="simulador">Simulador</TabsTrigger>
 
         </TabsList>
