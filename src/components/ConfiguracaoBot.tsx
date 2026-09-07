@@ -524,6 +524,11 @@ export function ConfiguracaoBot() {
           <NumerosPainel />
         </TabsContent>
 
+        {/* ---------- Status do WhatsApp ---------- */}
+        <TabsContent value="status">
+          <StatusWhatsappPainel />
+        </TabsContent>
+
 
         {/* ---------- Inatividade e finalização ---------- */}
         <TabsContent value="inatividade">
