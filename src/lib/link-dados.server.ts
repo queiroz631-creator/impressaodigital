@@ -313,7 +313,7 @@ export function urlBase(): string {
   } catch {
     /* fora de um contexto de requisição */
   }
-  return process.env["SITE_URL"] ?? "https://impressadigital.lovable.app";
+  return process.env["SITE_URL"] ?? "https://impressaodigital.lovable.app";
 }
 
 
