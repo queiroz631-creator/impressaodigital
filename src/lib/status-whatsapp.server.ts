@@ -182,18 +182,35 @@ export async function lerAgenda(): Promise<AgendaArquivo> {
   return regravarAgenda();
 }
 
+/**
+ * Endereço público temporário da imagem. Aceita URL completa (colada pelo
+ * usuário) ou caminho dentro do bucket privado bot-midia.
+ */
+async function urlDaImagem(valor: string): Promise<string | null> {
+  if (/^https?:\/\//i.test(valor)) return valor;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.storage.from("bot-midia").createSignedUrl(valor, 60 * 60);
+  return data?.signedUrl ?? null;
+}
+
 /** Publica um status na Z-API. */
 export async function publicarStatus(
   reg: StatusRegistro,
 ): Promise<{ ok: boolean; erro: string | null }> {
   const { chamarZapi } = await import("@/lib/zapi.server");
 
-  const r =
-    reg.tipo === "imagem"
-      ? await chamarZapi("send-image-status", {
-          metodo: "POST",
-          corpo: { image: reg.imagem_url, caption: reg.legenda || "" },
-        })
+  if (reg.tipo === "imagem") {
+    const url = reg.imagem_url ? await urlDaImagem(reg.imagem_url) : null;
+    if (!url) return { ok: false, erro: "Imagem não encontrada." };
+    const ri = await chamarZapi("send-image-status", {
+      metodo: "POST",
+      corpo: { image: url, caption: reg.legenda || "" },
+    });
+    return { ok: ri.ok, erro: ri.ok ? null : (ri.erro ?? "Falha ao publicar o status.") };
+  }
+
+  const r = reg.tipo === "__nunca__"
+      ? await chamarZapi("send-image-status", { metodo: "POST", corpo: {} })
       : await chamarZapi("send-text-status", {
           metodo: "POST",
           corpo: { message: reg.texto, backgroundColor: reg.cor_fundo },
