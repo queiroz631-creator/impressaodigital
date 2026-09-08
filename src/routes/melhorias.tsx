@@ -162,7 +162,7 @@ function Melhorias() {
       <PageHeader titulo="Melhorias" subtitulo="Registre melhorias e a tela onde serão aplicadas" />
 
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <Card className="shadow-card">
+        <Card className="shadow-card lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
           <CardHeader>
             <CardTitle className="text-base">
               {editandoId ? "Editar melhoria" : "Nova melhoria"}
