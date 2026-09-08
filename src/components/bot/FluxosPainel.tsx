@@ -4,6 +4,15 @@ import { toast } from "sonner";
 import { Copy, Plus, Settings2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
+
+const TONS_CARD = [
+  "bg-primary/5 border-primary/30",
+  "bg-accent/10 border-accent/40",
+  "bg-secondary/40 border-secondary",
+  "bg-muted/60 border-muted-foreground/20",
+  "bg-destructive/5 border-destructive/25",
+];
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -347,21 +356,22 @@ export function FluxosPainel() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-3">
-        {lista.map((f) => {
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {lista.map((f, i) => {
           const qtdEtapas = todasEtapas.filter((e) => e.fluxo_id === f.id).length;
+          const tom = TONS_CARD[i % TONS_CARD.length];
           return (
-            <Card key={f.id} className="shadow-card">
-              <CardContent className="grid gap-2 pt-6">
+            <Card key={f.id} className={`flex h-full flex-col shadow-card border ${tom}`}>
+              <CardContent className="flex h-full flex-col gap-2 pt-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-lg">{emojiIcone(f.icone)}</span>
                   <strong className="uppercase">{f.nome}</strong>
                   <Badge variant={f.ativo ? "default" : "outline"}>{f.ativo ? "Ativo" : "Inativo"}</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">{f.descricao}</p>
+                <p className="line-clamp-2 text-sm text-muted-foreground">{f.descricao}</p>
                 <p className="text-xs text-muted-foreground">{qtdEtapas} etapa(s)</p>
 
-                <div className="flex flex-wrap gap-2 pt-1">
+                <div className="mt-auto flex flex-wrap gap-2 pt-3">
                   <Button size="sm" onClick={() => setConfigurando(f.id)}>
                     <Settings2 className="h-4 w-4" /> CONFIGURAR
                   </Button>
@@ -387,6 +397,7 @@ export function FluxosPainel() {
             </Card>
           );
         })}
+
         {lista.length === 0 && (
           <p className="text-sm text-muted-foreground">Nenhum fluxo cadastrado ainda.</p>
         )}
