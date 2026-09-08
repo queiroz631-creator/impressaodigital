@@ -70,11 +70,18 @@ Isso instala Node 20, Docker, Nginx, Certbot e PM2, clona a aplicação em
 
 ## 5. Configurar a aplicação
 
+O arquivo `deploy/.env.example` fica versionado como modelo. O `.env` real
+é ignorado pelo Git (`# Variáveis de ambiente` no `.gitignore`) e deve ser
+criado apenas na VPS:
+
 ```bash
 cd /var/www/impressaodigital
 cp deploy/.env.example .env
 nano .env
 ```
+
+> **Atenção:** nunca commitar `deploy/.env`, `.env.production` ou qualquer
+> arquivo que contenha senhas, chaves de API ou tokens reais.
 
 Preencha com as chaves do **novo** Supabase (anon e service_role geradas no
 passo 3), o `SITE_URL` e as credenciais da Z-API.

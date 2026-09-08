@@ -10,6 +10,7 @@ echo "==> Baixando a última versão do GitHub"
 git pull
 
 echo "==> Carregando variáveis de ambiente (.env)"
+echo "    Lembre-se: .env é ignorado pelo Git. O modelo versionado é deploy/.env.example"
 if [ ! -f .env ]; then
   echo "ERRO: arquivo .env não encontrado."
   echo "Copie o modelo: cp deploy/.env.example .env  e preencha os valores."
