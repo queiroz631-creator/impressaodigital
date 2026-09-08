@@ -432,3 +432,84 @@ export const reconfigurarWebhooksZapi = createServerFn({ method: "POST" })
     }
     return { ok: true as const, erro: null as string | null, url };
   });
+
+/** Envia uma mensagem rápida cadastrada (texto e/ou imagem salva no Storage). */
+export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        conversaId: z.string().uuid(),
+        mensagemId: z.string().uuid(),
+        autor: z.string().max(120).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { chamarZapi } = await import("@/lib/zapi.server");
+
+    const { data: conversa } = await context.supabase
+      .from("whatsapp_conversas")
+      .select("telefone")
+      .eq("id", data.conversaId)
+      .maybeSingle();
+    const telefone = normalizarTelefone((conversa as { telefone?: string } | null)?.telefone ?? "");
+    if (!telefone) return { ok: false as const, erro: "Telefone da conversa não encontrado." };
+
+    const { data: rapida, error: errBusca } = await context.supabase
+      .from("mensagens_rapidas")
+      .select("id, tipo, texto, imagem_path, imagem_nome, ativo")
+      .eq("id", data.mensagemId)
+      .maybeSingle();
+    if (errBusca) return { ok: false as const, erro: errBusca.message };
+    if (!rapida || !rapida.ativo) return { ok: false as const, erro: "Mensagem rápida não encontrada ou inativa." };
+
+    const texto = rapida.texto?.trim() || null;
+    const comImagem = rapida.tipo !== "texto" && Boolean(rapida.imagem_path);
+    if (rapida.tipo === "texto" && !texto) return { ok: false as const, erro: "Mensagem rápida sem texto." };
+    if (rapida.tipo !== "texto" && !comImagem) return { ok: false as const, erro: "Mensagem rápida sem imagem." };
+
+    let mime: string | null = null;
+    let r: Awaited<ReturnType<typeof chamarZapi>>;
+    if (comImagem) {
+      const { data: blob, error: errImg } = await context.supabase.storage
+        .from("mensagens-rapidas")
+        .download(rapida.imagem_path as string);
+      if (errImg || !blob) return { ok: false as const, erro: "Não foi possível ler a imagem salva." };
+      mime = blob.type || "image/jpeg";
+      const base64 = Buffer.from(await blob.arrayBuffer()).toString("base64");
+      r = await chamarZapi("send-image", {
+        metodo: "POST",
+        corpo: {
+          phone: telefone,
+          image: `data:${mime};base64,${base64}`,
+          caption: rapida.tipo === "texto_imagem" ? (texto ?? "") : "",
+        },
+      });
+    } else {
+      r = await chamarZapi("send-text", { metodo: "POST", corpo: { phone: telefone, message: texto as string } });
+    }
+
+    await context.supabase.from("whatsapp_mensagens").insert({
+      conversa_id: data.conversaId,
+      direcao: "saida",
+      tipo: comImagem ? "imagem" : "texto",
+      texto: texto ?? rapida.imagem_nome ?? "Imagem",
+      arquivo_nome: comImagem ? rapida.imagem_nome : null,
+      mime_type: mime,
+      autor: data.autor ?? "Atendente",
+      status: r.ok ? "enviada" : "erro",
+      erro: r.ok ? null : (r.erro ?? "Falha no envio"),
+    });
+
+    if (r.ok) {
+      await context.supabase
+        .from("whatsapp_conversas")
+        .update({ ultima_mensagem: texto ?? "📷 Imagem", ultima_mensagem_em: new Date().toISOString() })
+        .eq("id", data.conversaId);
+      await promoverParaEmAtendimento(context.supabase, data.conversaId, context.userId, data.autor);
+    }
+
+    if (!r.ok) return { ok: false as const, erro: r.erro ?? "Falha ao enviar a mensagem rápida." };
+    return { ok: true as const, erro: null as string | null };
+  });
