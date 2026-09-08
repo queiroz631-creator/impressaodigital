@@ -801,6 +801,8 @@ function CardWhatsapp() {
   const [origem, setOrigem] = useState("");
   const consultarStatus = useServerFn(statusInstanciaZapi);
   const ativarMensagensExternas = useServerFn(ativarMensagensEnviadasPorMim);
+  const lerWebhooks = useServerFn(lerWebhooksZapi);
+  const reconfigurarWebhooks = useServerFn(reconfigurarWebhooksZapi);
 
   useEffect(() => setOrigem(window.location.origin), []);
 
