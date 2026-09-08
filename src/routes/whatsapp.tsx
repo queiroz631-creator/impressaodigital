@@ -1296,6 +1296,9 @@ function Conversa({
                 rows={5}
                 className="resize-none"
               />
+              <p className="text-xs text-muted-foreground">
+                A mensagem antiga será apagada no WhatsApp do cliente e o texto corrigido será reenviado.
+              </p>
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" onClick={() => setMsgEditando(null)}>
                   Cancelar
