@@ -16,6 +16,9 @@ const corpoSchema = z
     chatLid: z.string().nullish(),
     isStatusReply: z.boolean().nullish(),
     type: z.string().nullish(),
+    notification: z.string().nullish(),
+    isEdit: z.boolean().nullish(),
+    referencedMessage: z.object({ messageId: z.string().nullish() }).partial().nullish(),
     text: z.object({ message: z.string().optional() }).partial().nullish(),
     image: z.object({ imageUrl: z.string().nullish(), caption: z.string().nullish(), mimeType: z.string().optional() }).partial().nullish(),
     document: z
