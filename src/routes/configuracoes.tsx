@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ativarMensagensEnviadasPorMim, statusInstanciaZapi } from "@/lib/whatsapp.functions";
+import {
+  ativarMensagensEnviadasPorMim,
+  lerWebhooksZapi,
+  reconfigurarWebhooksZapi,
+  statusInstanciaZapi,
+} from "@/lib/whatsapp.functions";
 import { toast } from "sonner";
 import { Copy, Plus, Printer, RefreshCw, Save, ShieldAlert, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -796,6 +801,8 @@ function CardWhatsapp() {
   const [origem, setOrigem] = useState("");
   const consultarStatus = useServerFn(statusInstanciaZapi);
   const ativarMensagensExternas = useServerFn(ativarMensagensEnviadasPorMim);
+  const lerWebhooks = useServerFn(lerWebhooksZapi);
+  const reconfigurarWebhooks = useServerFn(reconfigurarWebhooksZapi);
 
   useEffect(() => setOrigem(window.location.origin), []);
 
@@ -828,6 +835,25 @@ function CardWhatsapp() {
       toast.error(resultado.erro);
     },
     onError: () => toast.error("Não foi possível ativar as mensagens enviadas pelo celular."),
+  });
+
+  const webhooks = useQuery({
+    queryKey: ["whatsapp-webhooks"],
+    queryFn: async () => lerWebhooks(),
+    retry: false,
+  });
+
+  const reconfiguracao = useMutation({
+    mutationFn: () => reconfigurarWebhooks(),
+    onSuccess: (resultado) => {
+      if (resultado.ok) {
+        toast.success(resultado.erro ?? "Webhook reconfigurado na Z-API.");
+        webhooks.refetch();
+        return;
+      }
+      toast.error(resultado.erro ?? "Não foi possível reconfigurar o webhook.");
+    },
+    onError: () => toast.error("Não foi possível reconfigurar o webhook."),
   });
 
   const token = config.data?.webhook_token ?? "";
@@ -886,7 +912,42 @@ function CardWhatsapp() {
             Configure este endereço em <strong>Ao receber</strong> na Z-API. Depois, ative abaixo a notificação
             de mensagens enviadas pelo próprio número para sincronizar celular e WhatsApp Web.
           </p>
+
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => reconfiguracao.mutate()}
+              disabled={reconfiguracao.isPending}
+            >
+              <RefreshCw className={`h-4 w-4 ${reconfiguracao.isPending ? "animate-spin" : ""}`} />
+              {reconfiguracao.isPending ? "Reconfigurando..." : "Reconfigurar webhook"}
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Grava o endereço correto direto na Z-API, sem precisar abrir o painel.
+            </span>
+          </div>
+
+          <div className="grid gap-1 text-xs">
+            {webhooks.isFetching ? (
+              <span className="text-muted-foreground">Lendo o que está gravado na Z-API...</span>
+            ) : webhooks.data ? (
+              <>
+                <span className={webhooks.data.correto ? "text-muted-foreground" : "font-semibold text-destructive"}>
+                  {webhooks.data.correto
+                    ? "O endereço gravado na Z-API está correto."
+                    : "O endereço gravado na Z-API está diferente do correto."}
+                </span>
+                {webhooks.data.itens.map((item) => (
+                  <span key={item.rotulo} className="font-mono text-muted-foreground break-all">
+                    {item.rotulo}: {item.url || "(vazio)"}
+                  </span>
+                ))}
+              </>
+            ) : null}
+          </div>
         </div>
+
 
         <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
           <Button
