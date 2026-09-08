@@ -861,13 +861,23 @@ function CardWhatsapp() {
 
   // Corrige automaticamente quando o endereço gravado na Z-API está diferente do correto.
   useEffect(() => {
-    if (!webhooks.data || webhooks.data.correto) return;
+    if (!webhooks.data) return;
+    if (webhooks.data.correto) return;
+    // Enquanto continuar errado, não pode aparecer aviso de correção.
+    setCorrigidoAutomaticamente(false);
     if (tentouCorrigirAutomaticamente.current || reconfiguracao.isPending) return;
     tentouCorrigirAutomaticamente.current = true;
-    reconfiguracao.mutateAsync().then((resultado) => {
-      if (resultado.ok) setCorrigidoAutomaticamente(true);
-    }).catch(() => undefined);
-  }, [webhooks.data, reconfiguracao]);
+    reconfiguracao
+      .mutateAsync()
+      .then(async (resultado) => {
+        if (!resultado.ok) return;
+        // Só avisa que corrigiu depois de reler e confirmar na Z-API.
+        const confirmado = await webhooks.refetch();
+        if (confirmado.data?.correto) setCorrigidoAutomaticamente(true);
+      })
+      .catch(() => undefined);
+  }, [webhooks.data, webhooks, reconfiguracao]);
+
 
   const token = config.data?.webhook_token ?? "";
   const urlWebhook = origem && token ? `${origem}/api/public/whatsapp/webhook?token=${token}` : "";
