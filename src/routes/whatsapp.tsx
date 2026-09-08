@@ -1044,6 +1044,30 @@ function Conversa({
         </CardContent>
       </Card>
 
+      {notasAbertas && (
+        <Card className="flex min-h-0 w-64 shrink-0 flex-col md:w-72">
+          <CardContent className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+            <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <StickyNote className="h-3.5 w-3.5" /> Anotações do cliente
+            </p>
+            <Textarea
+              value={notaTexto}
+              onChange={(e) => setNotaTexto(e.target.value)}
+              placeholder="Escreva observações sobre este cliente..."
+              className="min-h-0 flex-1 resize-none text-sm"
+            />
+            <Button
+              size="sm"
+              onClick={() => salvarNota.mutate(notaTexto)}
+              disabled={salvarNota.isPending || notaTexto === (notaCliente.data ?? "")}
+            >
+              Salvar anotação
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      </div>
+
       {/* Escolha da finalização: imediata ou por fluxo configurado em Configurar Bot. */}
       <Dialog open={finalizarAberto} onOpenChange={setFinalizarAberto}>
         <DialogContent className="max-w-md">
