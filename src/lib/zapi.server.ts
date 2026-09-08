@@ -39,7 +39,7 @@ export async function enviarPresencaDigitando(telefone: string, duracaoMs: numbe
 
 export async function chamarZapi(
   caminho: string,
-  opcoes: { metodo?: "GET" | "POST" | "PUT"; corpo?: unknown } = {},
+  opcoes: { metodo?: "GET" | "POST" | "PUT" | "DELETE"; corpo?: unknown } = {},
 ): Promise<RespostaZapi> {
   const cred = lerCredenciaisZapi();
   if (!cred) {

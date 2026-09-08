@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Mic,
   Pencil,
+  Trash2,
   Printer,
   Search,
   StickyNote,
@@ -43,7 +44,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { enviarDigitandoWhatsapp, enviarMensagemRapidaWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
+import { apagarMensagemWhatsapp, editarMensagemWhatsapp, enviarDigitandoWhatsapp, enviarMensagemRapidaWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
+import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONVERSA,
@@ -103,6 +105,9 @@ interface Mensagem {
   erro: string | null;
   data_hora: string;
   transcricao: string | null;
+  editada?: boolean | null;
+  apagada?: boolean | null;
+  whatsapp_message_id?: string | null;
 }
 
 interface MensagemRapida {
@@ -591,6 +596,42 @@ function Conversa({
   const finalizacao = useServerFn(enviarParaFinalizacao);
   const presenca = useServerFn(enviarDigitandoWhatsapp);
   const enviarRapida = useServerFn(enviarMensagemRapidaWhatsapp);
+  const editarMsgFn = useServerFn(editarMensagemWhatsapp);
+  const apagarMsgFn = useServerFn(apagarMensagemWhatsapp);
+  const [msgEditando, setMsgEditando] = useState<Mensagem | null>(null);
+  const [textoEdicao, setTextoEdicao] = useState("");
+
+  const editarMsg = useMutation({
+    mutationFn: async (novo: string) => {
+      if (!msgEditando) return { ok: false as const, erro: "Mensagem não selecionada." };
+      return await editarMsgFn({ data: { mensagemId: msgEditando.id, texto: novo } });
+    },
+    onSuccess: (r) => {
+      if (!r.ok) {
+        toast.error(r.erro ?? "Não foi possível editar a mensagem.");
+        return;
+      }
+      toast.success("Mensagem editada.");
+      setMsgEditando(null);
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-mensagens"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const apagarMsg = useMutation({
+    mutationFn: async (id: string) => await apagarMsgFn({ data: { mensagemId: id } }),
+    onSuccess: (r) => {
+      if (!r.ok) {
+        toast.error(r.erro ?? "Não foi possível apagar a mensagem.");
+        return;
+      }
+      toast.success("Mensagem apagada.");
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-mensagens"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   // Ao trocar de conversa, sai do modo seleção e volta as anotações para leitura.
   useEffect(() => {
@@ -1108,7 +1149,35 @@ function Conversa({
                   <span className="h-px flex-1 bg-border" />
                 </div>
               ) : (
-              <div key={m.id} className={cn("flex", m.direcao === "saida" ? "justify-end" : "justify-start")}>
+              <div key={m.id} className={cn("group flex items-center gap-1", m.direcao === "saida" ? "justify-end" : "justify-start")}>
+                {m.direcao === "saida" && !m.apagada && !selecionando && m.whatsapp_message_id && (
+                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    {m.tipo === "texto" && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        title="Editar mensagem"
+                        onClick={() => {
+                          setMsgEditando(m);
+                          setTextoEdicao(m.texto ?? "");
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <ConfirmarExclusao
+                      titulo="Apagar mensagem"
+                      descricao="A mensagem será apagada no WhatsApp do cliente e ficará marcada como apagada aqui."
+                      rotuloConfirmar="Apagar"
+                      onConfirmar={() => apagarMsg.mutate(m.id)}
+                    >
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Apagar mensagem">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </ConfirmarExclusao>
+                  </div>
+                )}
                 <div
                   onClick={selecionando && m.arquivo_url ? () => alternarSelecao(m.id) : undefined}
                   className={cn(
@@ -1116,6 +1185,7 @@ function Conversa({
                     m.direcao === "saida" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
                     selecionando && m.arquivo_url && "cursor-pointer",
                     selecionando && selecionados.has(m.id) && "ring-2 ring-offset-1 ring-primary",
+                    m.apagada && "opacity-50",
                   )}
                 >
                   {selecionando && m.arquivo_url && (
@@ -1123,11 +1193,15 @@ function Conversa({
                       {selecionados.has(m.id) ? "☑" : "☐"} {selecionados.has(m.id) ? "Selecionado" : "Selecionar"}
                     </span>
                   )}
-                  <MidiaMensagem mensagem={m} selecionando={selecionando} />
-                  {m.texto && <p className="whitespace-pre-wrap break-words">{m.texto}</p>}
+                  {!m.apagada && <MidiaMensagem mensagem={m} selecionando={selecionando} />}
+                  {m.texto && (
+                    <p className={cn("whitespace-pre-wrap break-words", m.apagada && "line-through")}>{m.texto}</p>
+                  )}
+                  {m.apagada && <p className="mt-1 text-[10px] italic opacity-80">mensagem apagada</p>}
 
                   <p className="mt-1 text-[10px] opacity-70">
                     {dataHoraCurta(m.data_hora)}
+                    {m.editada && !m.apagada ? " · editada" : ""}
                     {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
                   </p>
                 </div>
@@ -1210,6 +1284,31 @@ function Conversa({
               <Send className="mr-1 h-4 w-4" /> Enviar
             </Button>
           </div>
+
+          <Dialog open={Boolean(msgEditando)} onOpenChange={(a) => !a && setMsgEditando(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Editar mensagem</DialogTitle>
+              </DialogHeader>
+              <Textarea
+                value={textoEdicao}
+                onChange={(e) => setTextoEdicao(e.target.value)}
+                rows={5}
+                className="resize-none"
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setMsgEditando(null)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() => textoEdicao.trim() && editarMsg.mutate(textoEdicao.trim())}
+                  disabled={!textoEdicao.trim() || editarMsg.isPending}
+                >
+                  Salvar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={rapidasAberto} onOpenChange={setRapidasAberto}>
             <DialogContent className="max-w-md">

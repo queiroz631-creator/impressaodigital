@@ -2284,6 +2284,8 @@ export type Database = {
       }
       whatsapp_mensagens: {
         Row: {
+          apagada: boolean
+          apagada_em: string | null
           arquivo_nome: string | null
           arquivo_path: string | null
           arquivo_url: string | null
@@ -2292,17 +2294,22 @@ export type Database = {
           created_at: string
           data_hora: string
           direcao: string
+          editada: boolean
+          editada_em: string | null
           erro: string | null
           id: string
           mime_type: string | null
           payload: Json
           status: string
           texto: string | null
+          texto_original: string | null
           tipo: string
           transcricao: string | null
           whatsapp_message_id: string | null
         }
         Insert: {
+          apagada?: boolean
+          apagada_em?: string | null
           arquivo_nome?: string | null
           arquivo_path?: string | null
           arquivo_url?: string | null
@@ -2311,17 +2318,22 @@ export type Database = {
           created_at?: string
           data_hora?: string
           direcao?: string
+          editada?: boolean
+          editada_em?: string | null
           erro?: string | null
           id?: string
           mime_type?: string | null
           payload?: Json
           status?: string
           texto?: string | null
+          texto_original?: string | null
           tipo?: string
           transcricao?: string | null
           whatsapp_message_id?: string | null
         }
         Update: {
+          apagada?: boolean
+          apagada_em?: string | null
           arquivo_nome?: string | null
           arquivo_path?: string | null
           arquivo_url?: string | null
@@ -2330,12 +2342,15 @@ export type Database = {
           created_at?: string
           data_hora?: string
           direcao?: string
+          editada?: boolean
+          editada_em?: string | null
           erro?: string | null
           id?: string
           mime_type?: string | null
           payload?: Json
           status?: string
           texto?: string | null
+          texto_original?: string | null
           tipo?: string
           transcricao?: string | null
           whatsapp_message_id?: string | null
