@@ -40,9 +40,15 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
   const partes: string[] = ["*Segue Orçamento:*"];
 
   for (const item of doc.itens) {
+    /** Mesmo cálculo do "Total para Cobrança" exibido na calculadora. */
+    const totalCobranca =
+      (Number(item.quantidadeArquivos) || 0) +
+      (Number(item.paginasAdicionais) || 0) +
+      (Number(item.copiasAdicionais) || 0);
+
     partes.push(
       `Qtd Arquivos: ${doisDigitos(item.quantidadeArquivos)}\n` +
-        `Total de paginas: ${doisDigitos(item.paginasTotal)}`,
+        `Total de paginas: ${doisDigitos(totalCobranca)}`,
     );
 
     const acabamentos = linhasAcabamentos(item);
