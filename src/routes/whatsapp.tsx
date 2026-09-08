@@ -1114,7 +1114,35 @@ function Conversa({
                   <span className="h-px flex-1 bg-border" />
                 </div>
               ) : (
-              <div key={m.id} className={cn("flex", m.direcao === "saida" ? "justify-end" : "justify-start")}>
+              <div key={m.id} className={cn("group flex items-center gap-1", m.direcao === "saida" ? "justify-end" : "justify-start")}>
+                {m.direcao === "saida" && !m.apagada && !selecionando && m.whatsapp_message_id && (
+                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    {m.tipo === "texto" && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        title="Editar mensagem"
+                        onClick={() => {
+                          setMsgEditando(m);
+                          setTextoEdicao(m.texto ?? "");
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <ConfirmarExclusao
+                      titulo="Apagar mensagem"
+                      descricao="A mensagem será apagada no WhatsApp do cliente e ficará marcada como apagada aqui."
+                      rotuloConfirmar="Apagar"
+                      onConfirmar={() => apagarMsg.mutate(m.id)}
+                    >
+                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Apagar mensagem">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </ConfirmarExclusao>
+                  </div>
+                )}
                 <div
                   onClick={selecionando && m.arquivo_url ? () => alternarSelecao(m.id) : undefined}
                   className={cn(
@@ -1122,6 +1150,7 @@ function Conversa({
                     m.direcao === "saida" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
                     selecionando && m.arquivo_url && "cursor-pointer",
                     selecionando && selecionados.has(m.id) && "ring-2 ring-offset-1 ring-primary",
+                    m.apagada && "opacity-50",
                   )}
                 >
                   {selecionando && m.arquivo_url && (
@@ -1129,11 +1158,15 @@ function Conversa({
                       {selecionados.has(m.id) ? "☑" : "☐"} {selecionados.has(m.id) ? "Selecionado" : "Selecionar"}
                     </span>
                   )}
-                  <MidiaMensagem mensagem={m} selecionando={selecionando} />
-                  {m.texto && <p className="whitespace-pre-wrap break-words">{m.texto}</p>}
+                  {!m.apagada && <MidiaMensagem mensagem={m} selecionando={selecionando} />}
+                  {m.texto && (
+                    <p className={cn("whitespace-pre-wrap break-words", m.apagada && "line-through")}>{m.texto}</p>
+                  )}
+                  {m.apagada && <p className="mt-1 text-[10px] italic opacity-80">mensagem apagada</p>}
 
                   <p className="mt-1 text-[10px] opacity-70">
                     {dataHoraCurta(m.data_hora)}
+                    {m.editada && !m.apagada ? " · editada" : ""}
                     {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
                   </p>
                 </div>
