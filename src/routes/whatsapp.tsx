@@ -22,6 +22,7 @@ import {
   Mic,
   Printer,
   Search,
+  StickyNote,
   Send,
   Square,
   UserCheck,
@@ -555,6 +556,15 @@ function Conversa({
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [selecionarAoCarregar, setSelecionarAoCarregar] = useState(false);
   const [finalizarAberto, setFinalizarAberto] = useState(false);
+  // Painel de anotações do cliente (direita): preferência fica salva no navegador.
+  const [notasAbertas, setNotasAbertas] = useState(() => {
+    try {
+      return window.localStorage.getItem("whatsapp:notas-abertas") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [notaTexto, setNotaTexto] = useState("");
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
