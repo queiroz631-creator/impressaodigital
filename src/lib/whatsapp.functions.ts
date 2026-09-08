@@ -206,6 +206,7 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
         autor: data.autor ?? "Atendente",
         status: r.ok ? "enviada" : "erro",
         erro: r.ok ? null : (r.erro ?? "Falha no envio"),
+        whatsapp_message_id: idDaResposta(r.dados),
       });
 
       if (r.ok) {
