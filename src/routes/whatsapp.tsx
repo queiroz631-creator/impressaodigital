@@ -1124,7 +1124,33 @@ function Conversa({
             <div ref={fim} />
           </div>
 
-          <div className="flex items-end gap-2 border-t pt-3">
+          <div className="relative flex items-end gap-2 border-t pt-3">
+            {sugestoesRapidas.length > 0 && (
+              <div className="absolute bottom-full left-0 z-20 mb-1 max-h-64 w-full overflow-y-auto rounded-lg border bg-popover p-1 shadow-md">
+                {sugestoesRapidas.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+                    onClick={() => aplicarRapida(m)}
+                  >
+                    <Zap className="h-4 w-4 shrink-0 text-primary" />
+                    <Badge variant="secondary">/{m.atalho}</Badge>
+                    <span className="shrink-0 font-medium">{m.titulo}</span>
+                    <span className="truncate text-xs text-muted-foreground">{m.texto ?? m.imagem_nome ?? ""}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Mensagens rápidas"
+              title="Mensagens rápidas"
+              onClick={() => setRapidasAberto(true)}
+            >
+              <Zap className="h-4 w-4" />
+            </Button>
             <Textarea
               value={texto}
               onChange={(e) => {
@@ -1134,11 +1160,16 @@ function Conversa({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
+                  if (sugestoesRapidas.length > 0) {
+                    aplicarRapida(sugestoesRapidas[0]!);
+                    return;
+                  }
                   const msg = texto.trim();
                   if (msg && !envio.isPending) envio.mutate(msg);
                 }
+                if (e.key === "Escape" && termoAtalho !== null) setTexto("");
               }}
-              placeholder="Escreva a mensagem..."
+              placeholder="Escreva a mensagem... (digite / para mensagens rápidas)"
               rows={2}
               className="min-h-0 flex-1 resize-none"
             />
@@ -1149,6 +1180,42 @@ function Conversa({
               <Send className="mr-1 h-4 w-4" /> Enviar
             </Button>
           </div>
+
+          <Dialog open={rapidasAberto} onOpenChange={setRapidasAberto}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Mensagens rápidas</DialogTitle>
+              </DialogHeader>
+              <div className="max-h-96 space-y-2 overflow-y-auto">
+                {rapidasBotao.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhuma mensagem configurada para este botão. Cadastre em Mensagens Rápidas.
+                  </p>
+                )}
+                {rapidasBotao.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    disabled={envio.isPending || envioRapida.isPending}
+                    className="w-full rounded-lg border p-3 text-left hover:bg-accent disabled:opacity-50"
+                    onClick={() => enviarRapidaDoModal(m)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 shrink-0 text-primary" />
+                      <span className="font-medium">{m.titulo}</span>
+                      <Badge variant="secondary">/{m.atalho}</Badge>
+                    </div>
+                    {m.texto && (
+                      <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-xs text-muted-foreground">{m.texto}</p>
+                    )}
+                    {!m.texto && m.imagem_nome && (
+                      <p className="mt-1 text-xs text-muted-foreground">{m.imagem_nome}</p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
 
