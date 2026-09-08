@@ -1074,19 +1074,96 @@ function Conversa({
             <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <StickyNote className="h-3.5 w-3.5" /> Anotações do cliente
             </p>
+
+            {editandoNome ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  autoFocus
+                  value={nomeEdicao}
+                  onChange={(e) => setNomeEdicao(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") salvarNome.mutate(nomeEdicao);
+                    if (e.key === "Escape") setEditandoNome(false);
+                  }}
+                  placeholder="Nome do cliente"
+                  className="h-8 text-sm"
+                />
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="h-8 w-8 shrink-0"
+                  title="Salvar nome"
+                  onClick={() => salvarNome.mutate(nomeEdicao)}
+                  disabled={salvarNome.isPending}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0"
+                  title="Cancelar"
+                  onClick={() => setEditandoNome(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {conversa.nome_contato || formatarTelefone(conversa.telefone)}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{formatarTelefone(conversa.telefone)}</p>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0"
+                  title="Editar nome do cliente"
+                  onClick={() => {
+                    setNomeEdicao(conversa.nome_contato ?? "");
+                    setEditandoNome(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
             <Textarea
               value={notaTexto}
               onChange={(e) => setNotaTexto(e.target.value)}
               placeholder="Escreva observações sobre este cliente..."
-              className="min-h-0 flex-1 resize-none text-sm"
+              disabled={!editandoNota}
+              className="min-h-0 flex-1 resize-none text-sm disabled:opacity-100"
             />
-            <Button
-              size="sm"
-              onClick={() => salvarNota.mutate(notaTexto)}
-              disabled={salvarNota.isPending || notaTexto === (notaCliente.data ?? "")}
-            >
-              Salvar anotação
-            </Button>
+            {editandoNota ? (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => salvarNota.mutate(notaTexto)}
+                  disabled={salvarNota.isPending || notaTexto === (notaCliente.data ?? "")}
+                >
+                  Salvar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setNotaTexto(notaCliente.data ?? "");
+                    setEditandoNota(false);
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => setEditandoNota(true)}>
+                <Pencil className="mr-1 h-4 w-4" /> Editar
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
