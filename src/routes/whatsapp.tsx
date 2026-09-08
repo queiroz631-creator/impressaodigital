@@ -1286,6 +1286,31 @@ function Conversa({
             </Button>
           </div>
 
+          <Dialog open={Boolean(msgEditando)} onOpenChange={(a) => !a && setMsgEditando(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Editar mensagem</DialogTitle>
+              </DialogHeader>
+              <Textarea
+                value={textoEdicao}
+                onChange={(e) => setTextoEdicao(e.target.value)}
+                rows={5}
+                className="resize-none"
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setMsgEditando(null)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() => textoEdicao.trim() && editarMsg.mutate(textoEdicao.trim())}
+                  disabled={!textoEdicao.trim() || editarMsg.isPending}
+                >
+                  Salvar
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Dialog open={rapidasAberto} onOpenChange={setRapidasAberto}>
             <DialogContent className="max-w-md">
               <DialogHeader>
