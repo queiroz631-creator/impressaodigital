@@ -22,6 +22,7 @@ import {
   Mic,
   Printer,
   Search,
+  StickyNote,
   Send,
   Square,
   UserCheck,
@@ -555,6 +556,15 @@ function Conversa({
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [selecionarAoCarregar, setSelecionarAoCarregar] = useState(false);
   const [finalizarAberto, setFinalizarAberto] = useState(false);
+  // Painel de anotações do cliente (direita): preferência fica salva no navegador.
+  const [notasAbertas, setNotasAbertas] = useState(() => {
+    try {
+      return window.localStorage.getItem("whatsapp:notas-abertas") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [notaTexto, setNotaTexto] = useState("");
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
@@ -801,6 +811,51 @@ function Conversa({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Anotação do cliente (por telefone, vale para todos os atendimentos).
+  const notaCliente = useQuery({
+    queryKey: ["whatsapp-nota", conversa.telefone],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_notas")
+        .select("nota")
+        .eq("telefone", conversa.telefone)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.nota ?? "";
+    },
+  });
+
+  // Preenche o campo ao abrir a conversa ou carregar a nota.
+  useEffect(() => {
+    setNotaTexto(notaCliente.data ?? "");
+  }, [conversa.telefone, notaCliente.data]);
+
+  function alternarNotas() {
+    setNotasAbertas((aberto) => {
+      const novo = !aberto;
+      try {
+        window.localStorage.setItem("whatsapp:notas-abertas", novo ? "1" : "0");
+      } catch {
+        /* sem armazenamento */
+      }
+      return novo;
+    });
+  }
+
+  const salvarNota = useMutation({
+    mutationFn: async (nota: string) => {
+      const { error } = await supabase
+        .from("whatsapp_notas")
+        .upsert({ telefone: conversa.telefone, nota }, { onConflict: "telefone" });
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      toast.success("Anotação salva.");
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-nota", conversa.telefone] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className={cn("flex flex-col", mostrarVoltar ? "h-[calc(100vh-8rem)]" : "h-full")}>
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -857,6 +912,14 @@ function Conversa({
         >
           <CheckSquare className="h-4 w-4" />
         </Button>
+        <Button
+          size="sm"
+          variant={notasAbertas ? "secondary" : "outline"}
+          title={notasAbertas ? "Recolher anotações" : "Mostrar anotações do cliente"}
+          onClick={alternarNotas}
+        >
+          <StickyNote className="h-4 w-4" />
+        </Button>
       </div>
 
       {selecionando && (
@@ -905,7 +968,8 @@ function Conversa({
         </div>
       )}
 
-      <Card className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 gap-3">
+      <Card className="flex min-h-0 min-w-0 flex-1 flex-col">
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
             {isLoading && <Skeleton className="h-20 w-full" />}
@@ -979,6 +1043,30 @@ function Conversa({
           </div>
         </CardContent>
       </Card>
+
+      {notasAbertas && (
+        <Card className="flex min-h-0 w-64 shrink-0 flex-col md:w-72">
+          <CardContent className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+            <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <StickyNote className="h-3.5 w-3.5" /> Anotações do cliente
+            </p>
+            <Textarea
+              value={notaTexto}
+              onChange={(e) => setNotaTexto(e.target.value)}
+              placeholder="Escreva observações sobre este cliente..."
+              className="min-h-0 flex-1 resize-none text-sm"
+            />
+            <Button
+              size="sm"
+              onClick={() => salvarNota.mutate(notaTexto)}
+              disabled={salvarNota.isPending || notaTexto === (notaCliente.data ?? "")}
+            >
+              Salvar anotação
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      </div>
 
       {/* Escolha da finalização: imediata ou por fluxo configurado em Configurar Bot. */}
       <Dialog open={finalizarAberto} onOpenChange={setFinalizarAberto}>
