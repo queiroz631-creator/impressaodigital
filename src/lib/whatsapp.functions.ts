@@ -334,3 +334,101 @@ export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
     }
 
   });
+
+/** Endereço público fixo usado nos webhooks da Z-API. */
+function urlWebhookProducao(token: string): string {
+  const base = (process.env["SITE_URL"] ?? "https://impressaodigital.lovable.app").replace(/\/+$/, "");
+  return `${base}/api/public/whatsapp/webhook?token=${token}`;
+}
+
+async function tokenWebhook(supabase: SupabaseClient): Promise<string | null> {
+  const { data } = await supabase
+    .from("whatsapp_config")
+    .select("webhook_token")
+    .limit(1)
+    .maybeSingle();
+  const token = (data as { webhook_token?: string } | null)?.webhook_token;
+  return token ?? null;
+}
+
+const CAMINHOS_WEBHOOK = [
+  { ler: "webhook-received", gravar: "update-webhook-received", rotulo: "Ao receber" },
+  { ler: "webhook-delivery", gravar: "update-webhook-delivery", rotulo: "Ao enviar" },
+  { ler: "webhook-message-status", gravar: "update-webhook-message-status", rotulo: "Status da mensagem" },
+  { ler: "webhook-disconnected", gravar: "update-webhook-disconnected", rotulo: "Ao desconectar" },
+] as const;
+
+function extrairUrl(dados: unknown): string {
+  if (typeof dados === "string") return dados;
+  if (dados && typeof dados === "object") {
+    const d = dados as Record<string, unknown>;
+    for (const chave of ["value", "url", "webhook"]) {
+      if (typeof d[chave] === "string") return d[chave] as string;
+    }
+  }
+  return "";
+}
+
+/** Lê os endereços de webhook gravados hoje na Z-API. */
+export const lerWebhooksZapi = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { chamarZapi } = await import("@/lib/zapi.server");
+    const token = await tokenWebhook(context.supabase);
+    const esperado = token ? urlWebhookProducao(token) : "";
+
+    const itens: { rotulo: string; url: string }[] = [];
+    for (const c of CAMINHOS_WEBHOOK) {
+      const r = await chamarZapi(c.ler);
+      itens.push({ rotulo: c.rotulo, url: r.ok ? extrairUrl(r.dados) : "" });
+    }
+
+    const recebimento = itens[0]?.url ?? "";
+    return {
+      ok: true as const,
+      esperado,
+      itens,
+      correto: Boolean(esperado) && recebimento === esperado,
+    };
+  });
+
+/** Grava na Z-API os endereços de webhook corretos deste sistema. */
+export const reconfigurarWebhooksZapi = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: ehAdmin, error: erroPermissao } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (erroPermissao || !ehAdmin) {
+      return { ok: false as const, erro: "Somente administradores podem alterar a integração.", url: null };
+    }
+
+    const token = await tokenWebhook(context.supabase);
+    if (!token) {
+      return { ok: false as const, erro: "Token do webhook não encontrado nas configurações.", url: null };
+    }
+
+    const url = urlWebhookProducao(token);
+    const { chamarZapi } = await import("@/lib/zapi.server");
+
+    const falhas: string[] = [];
+    for (const c of CAMINHOS_WEBHOOK) {
+      const r = await chamarZapi(c.gravar, { metodo: "PUT", corpo: { value: url } });
+      if (!r.ok) {
+        console.error(`Falha ao gravar webhook ${c.gravar}`, r.erro);
+        falhas.push(c.rotulo);
+      }
+    }
+
+    // Garante que as mensagens enviadas pelo celular também cheguem ao sistema.
+    await chamarZapi("update-notify-sent-by-me", { metodo: "PUT", corpo: { notifySentByMe: true } });
+
+    if (falhas.length === CAMINHOS_WEBHOOK.length) {
+      return { ok: false as const, erro: "A Z-API não aceitou a atualização dos endereços.", url: null };
+    }
+    if (falhas.length > 0) {
+      return { ok: true as const, erro: `Não foi possível atualizar: ${falhas.join(", ")}.`, url };
+    }
+    return { ok: true as const, erro: null as string | null, url };
+  });
