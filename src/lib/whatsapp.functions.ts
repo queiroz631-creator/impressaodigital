@@ -513,3 +513,126 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
     if (!r.ok) return { ok: false as const, erro: r.erro ?? "Falha ao enviar a mensagem rápida." };
     return { ok: true as const, erro: null as string | null };
   });
+
+/** Edita no WhatsApp do cliente uma mensagem de texto já enviada pela loja. */
+export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ mensagemId: z.string().uuid(), texto: z.string().min(1).max(4000) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { chamarZapi } = await import("@/lib/zapi.server");
+
+    const { data: msg, error } = await context.supabase
+      .from("whatsapp_mensagens")
+      .select("id, conversa_id, direcao, tipo, texto, texto_original, apagada, whatsapp_message_id, data_hora")
+      .eq("id", data.mensagemId)
+      .maybeSingle();
+    if (error) return { ok: false as const, erro: error.message };
+    if (!msg) return { ok: false as const, erro: "Mensagem não encontrada." };
+    if (msg.direcao !== "saida") return { ok: false as const, erro: "Só é possível editar mensagens enviadas pela loja." };
+    if (msg.tipo !== "texto") return { ok: false as const, erro: "Só é possível editar mensagens de texto." };
+    if (msg.apagada) return { ok: false as const, erro: "Esta mensagem já foi apagada." };
+    if (!msg.whatsapp_message_id) return { ok: false as const, erro: "Mensagem sem identificação no WhatsApp." };
+
+    const { data: conversa } = await context.supabase
+      .from("whatsapp_conversas")
+      .select("telefone, ultima_mensagem_em")
+      .eq("id", msg.conversa_id)
+      .maybeSingle();
+    const telefone = normalizarTelefone((conversa as { telefone?: string } | null)?.telefone ?? "");
+    if (!telefone) return { ok: false as const, erro: "Telefone da conversa não encontrado." };
+
+    const r = await chamarZapi("edit-message", {
+      metodo: "POST",
+      corpo: { phone: telefone, messageId: msg.whatsapp_message_id, message: data.texto },
+    });
+    if (!r.ok) {
+      return {
+        ok: false as const,
+        erro: r.erro ?? "O WhatsApp recusou a edição (o prazo para editar pode ter expirado).",
+      };
+    }
+
+    await context.supabase
+      .from("whatsapp_mensagens")
+      .update({
+        texto: data.texto,
+        texto_original: msg.texto_original ?? msg.texto,
+        editada: true,
+        editada_em: new Date().toISOString(),
+      })
+      .eq("id", msg.id);
+
+    const ultimaEm = (conversa as { ultima_mensagem_em?: string | null } | null)?.ultima_mensagem_em;
+    if (!ultimaEm || !msg.data_hora || new Date(msg.data_hora) >= new Date(ultimaEm)) {
+      await context.supabase
+        .from("whatsapp_conversas")
+        .update({ ultima_mensagem: data.texto })
+        .eq("id", msg.conversa_id);
+    }
+
+    await context.supabase.from("whatsapp_auditoria").insert({
+      conversa_id: msg.conversa_id,
+      usuario_id: context.userId,
+      acao: "mensagem_editada",
+      detalhe: data.texto.slice(0, 200),
+    });
+
+    return { ok: true as const, erro: null as string | null };
+  });
+
+/** Apaga no WhatsApp do cliente uma mensagem enviada pela loja (mantém no histórico). */
+export const apagarMensagemWhatsapp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ mensagemId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { chamarZapi } = await import("@/lib/zapi.server");
+
+    const { data: msg, error } = await context.supabase
+      .from("whatsapp_mensagens")
+      .select("id, conversa_id, direcao, apagada, whatsapp_message_id, data_hora")
+      .eq("id", data.mensagemId)
+      .maybeSingle();
+    if (error) return { ok: false as const, erro: error.message };
+    if (!msg) return { ok: false as const, erro: "Mensagem não encontrada." };
+    if (msg.direcao !== "saida") return { ok: false as const, erro: "Só é possível apagar mensagens enviadas pela loja." };
+    if (msg.apagada) return { ok: true as const, erro: null as string | null };
+    if (!msg.whatsapp_message_id) return { ok: false as const, erro: "Mensagem sem identificação no WhatsApp." };
+
+    const { data: conversa } = await context.supabase
+      .from("whatsapp_conversas")
+      .select("telefone, ultima_mensagem_em")
+      .eq("id", msg.conversa_id)
+      .maybeSingle();
+    const telefone = normalizarTelefone((conversa as { telefone?: string } | null)?.telefone ?? "");
+    if (!telefone) return { ok: false as const, erro: "Telefone da conversa não encontrado." };
+
+    const consulta = `messages?messageId=${encodeURIComponent(msg.whatsapp_message_id)}&phone=${encodeURIComponent(telefone)}&owner=true`;
+    const r = await chamarZapi(consulta, { metodo: "DELETE" });
+    if (!r.ok) {
+      return { ok: false as const, erro: r.erro ?? "O WhatsApp recusou apagar esta mensagem." };
+    }
+
+    await context.supabase
+      .from("whatsapp_mensagens")
+      .update({ apagada: true, apagada_em: new Date().toISOString() })
+      .eq("id", msg.id);
+
+    const ultimaEm = (conversa as { ultima_mensagem_em?: string | null } | null)?.ultima_mensagem_em;
+    if (!ultimaEm || !msg.data_hora || new Date(msg.data_hora) >= new Date(ultimaEm)) {
+      await context.supabase
+        .from("whatsapp_conversas")
+        .update({ ultima_mensagem: "Mensagem apagada" })
+        .eq("id", msg.conversa_id);
+    }
+
+    await context.supabase.from("whatsapp_auditoria").insert({
+      conversa_id: msg.conversa_id,
+      usuario_id: context.userId,
+      acao: "mensagem_apagada",
+      detalhe: null,
+    });
+
+    return { ok: true as const, erro: null as string | null };
+  });
