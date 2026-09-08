@@ -1180,14 +1180,25 @@ function Conversa({
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   if (sugestoesRapidas.length > 0) {
-                    aplicarRapida(sugestoesRapidas[0]!);
+                    aplicarRapida(sugestoesRapidas[indiceSugestao]!);
                     return;
                   }
                   const msg = texto.trim();
                   if (msg && !envio.isPending) envio.mutate(msg);
                 }
+                if (e.key === "ArrowDown" && sugestoesRapidas.length > 0) {
+                  e.preventDefault();
+                  setIndiceSugestao((i) => Math.min(i + 1, sugestoesRapidas.length - 1));
+                  return;
+                }
+                if (e.key === "ArrowUp" && sugestoesRapidas.length > 0) {
+                  e.preventDefault();
+                  setIndiceSugestao((i) => Math.max(i - 1, 0));
+                  return;
+                }
                 if (e.key === "Escape" && termoAtalho !== null) setTexto("");
               }}
+
               placeholder="Escreva a mensagem... (digite / para mensagens rápidas)"
               rows={2}
               className="min-h-0 flex-1 resize-none"
