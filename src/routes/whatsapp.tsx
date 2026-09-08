@@ -28,6 +28,7 @@ import {
   Square,
   UserCheck,
   X,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -42,7 +43,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { enviarDigitandoWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
+import { enviarDigitandoWhatsapp, enviarMensagemRapidaWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONVERSA,
@@ -102,6 +103,17 @@ interface Mensagem {
   erro: string | null;
   data_hora: string;
   transcricao: string | null;
+}
+
+interface MensagemRapida {
+  id: string;
+  titulo: string;
+  atalho: string;
+  tipo: string;
+  texto: string | null;
+  imagem_nome: string | null;
+  mostrar_no_botao: boolean;
+  ordem: number;
 }
 
 /** Ícone de cada aba de status. */
@@ -557,6 +569,7 @@ function Conversa({
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [selecionarAoCarregar, setSelecionarAoCarregar] = useState(false);
   const [finalizarAberto, setFinalizarAberto] = useState(false);
+  const [rapidasAberto, setRapidasAberto] = useState(false);
   // Painel de anotações do cliente (direita): preferência fica salva no navegador.
   const [notasAbertas, setNotasAbertas] = useState(() => {
     try {
@@ -574,6 +587,7 @@ function Conversa({
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
   const finalizacao = useServerFn(enviarParaFinalizacao);
   const presenca = useServerFn(enviarDigitandoWhatsapp);
+  const enviarRapida = useServerFn(enviarMensagemRapidaWhatsapp);
 
   // Ao trocar de conversa, sai do modo seleção e volta as anotações para leitura.
   useEffect(() => {
