@@ -1,17 +1,18 @@
-# Melhoria 25 — Páginas e cópias adicionais no orçamento do WhatsApp
+# Melhoria 25 — Total de páginas no orçamento do WhatsApp
 
-Incluir, no texto do orçamento enviado pelo WhatsApp, as linhas de **páginas adicionais**
-e **cópias adicionais**, exibidas somente quando forem maiores que zero.
+No texto do orçamento enviado pelo WhatsApp, substituir as duas linhas atuais
+("Qtd Arquivos" e "Total Pagina") por uma única informação: **Total de páginas**,
+que representa o total de páginas a serem cobradas (arquivos + páginas adicionais +
+cópias adicionais, já calculado no total do item).
+
+Não serão exibidas linhas separadas para "Páginas adicionais" nem "Cópias adicionais".
 
 ## Como fica o texto
 
 ```text
 *Segue Orçamento:*
 
-Qtd Arquivos: 03
-Total Pagina: 15
-Paginas Adicionais: 12      (só aparece se > 0)
-Copias Adicionais: 02       (só aparece se > 0)
+Total de paginas: 27
 
 Impressão Colorida
 Encadernação: 1x
@@ -21,14 +22,11 @@ Plastificação: Nenhum
 ...
 ```
 
-As novas linhas ficam no mesmo bloco de "Qtd Arquivos" / "Total Pagina", sem linha em
-branco entre elas, seguindo o formato de dois dígitos já usado. Quando o valor for 0,
-a linha simplesmente não aparece.
-
 ## Detalhes técnicos
 
 - Arquivo único: `src/lib/orcamento-zap.ts`, função `textoOrcamentoZap`.
-- Os valores `paginasAdicionais` e `copiasAdicionais` já existem em `ItemDoc`
-  (`src/lib/documento.ts`) e já são preenchidos pela calculadora — nenhum dado novo.
+- O cálculo do total de páginas já existe no resultado da calculadora; a propriedade
+  `paginasTotal` em `ItemDoc` representa as páginas totais do item. O texto usará esse
+  valor.
 - Nenhuma mudança de banco, de cálculo, de layout ou do PDF/imagem do orçamento.
 - Ao final: typecheck/build e marcar a melhoria 25 como executada.
