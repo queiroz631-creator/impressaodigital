@@ -883,6 +883,11 @@ function Conversa({
       : [];
   const rapidasBotao = (rapidas.data ?? []).filter((m) => m.mostrar_no_botao);
 
+  useEffect(() => {
+    setIndiceSugestao(0);
+  }, [termoAtalho]);
+
+
   /** Atalho "/": texto preenche a caixa para revisão; imagem já é enviada. */
   function aplicarRapida(m: MensagemRapida) {
     if (m.tipo === "texto") {
