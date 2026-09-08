@@ -45,7 +45,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { enviarDigitandoWhatsapp, enviarMensagemRapidaWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
+import { apagarMensagemWhatsapp, editarMensagemWhatsapp, enviarDigitandoWhatsapp, enviarMensagemRapidaWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONVERSA,
