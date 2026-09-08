@@ -20,6 +20,7 @@ import {
   Headset,
   MessageSquare,
   Mic,
+  Pencil,
   Printer,
   Search,
   StickyNote,
@@ -565,17 +566,22 @@ function Conversa({
     }
   });
   const [notaTexto, setNotaTexto] = useState("");
+  const [editandoNota, setEditandoNota] = useState(false);
+  const [editandoNome, setEditandoNome] = useState(false);
+  const [nomeEdicao, setNomeEdicao] = useState("");
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
   const finalizacao = useServerFn(enviarParaFinalizacao);
   const presenca = useServerFn(enviarDigitandoWhatsapp);
 
-  // Ao trocar de conversa, sai do modo seleção.
+  // Ao trocar de conversa, sai do modo seleção e volta as anotações para leitura.
   useEffect(() => {
     setSelecionando(false);
     setSelecionados(new Set());
     setSelecionarAoCarregar(false);
+    setEditandoNota(false);
+    setEditandoNome(false);
   }, [conversa.id]);
 
   function alternarSelecao(id: string) {
@@ -830,6 +836,24 @@ function Conversa({
     setNotaTexto(notaCliente.data ?? "");
   }, [conversa.telefone, notaCliente.data]);
 
+  // Edição do nome do cliente vale para todos os atendimentos do mesmo telefone.
+  const salvarNome = useMutation({
+    mutationFn: async (nome: string) => {
+      const valor = nome.trim() || null;
+      const { error } = await supabase
+        .from("whatsapp_conversas")
+        .update({ nome_contato: valor })
+        .eq("telefone", conversa.telefone);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      toast.success("Nome do cliente atualizado.");
+      setEditandoNome(false);
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   function alternarNotas() {
     setNotasAbertas((aberto) => {
       const novo = !aberto;
@@ -851,6 +875,7 @@ function Conversa({
     },
     onSuccess: async () => {
       toast.success("Anotação salva.");
+      setEditandoNota(false);
       await queryClient.invalidateQueries({ queryKey: ["whatsapp-nota", conversa.telefone] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -1050,19 +1075,96 @@ function Conversa({
             <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               <StickyNote className="h-3.5 w-3.5" /> Anotações do cliente
             </p>
+
+            {editandoNome ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  autoFocus
+                  value={nomeEdicao}
+                  onChange={(e) => setNomeEdicao(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") salvarNome.mutate(nomeEdicao);
+                    if (e.key === "Escape") setEditandoNome(false);
+                  }}
+                  placeholder="Nome do cliente"
+                  className="h-8 text-sm"
+                />
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="h-8 w-8 shrink-0"
+                  title="Salvar nome"
+                  onClick={() => salvarNome.mutate(nomeEdicao)}
+                  disabled={salvarNome.isPending}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0"
+                  title="Cancelar"
+                  onClick={() => setEditandoNome(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {conversa.nome_contato || formatarTelefone(conversa.telefone)}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{formatarTelefone(conversa.telefone)}</p>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0"
+                  title="Editar nome do cliente"
+                  onClick={() => {
+                    setNomeEdicao(conversa.nome_contato ?? "");
+                    setEditandoNome(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
             <Textarea
               value={notaTexto}
               onChange={(e) => setNotaTexto(e.target.value)}
               placeholder="Escreva observações sobre este cliente..."
-              className="min-h-0 flex-1 resize-none text-sm"
+              disabled={!editandoNota}
+              className="min-h-0 flex-1 resize-none text-sm disabled:opacity-100"
             />
-            <Button
-              size="sm"
-              onClick={() => salvarNota.mutate(notaTexto)}
-              disabled={salvarNota.isPending || notaTexto === (notaCliente.data ?? "")}
-            >
-              Salvar anotação
-            </Button>
+            {editandoNota ? (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => salvarNota.mutate(notaTexto)}
+                  disabled={salvarNota.isPending || notaTexto === (notaCliente.data ?? "")}
+                >
+                  Salvar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setNotaTexto(notaCliente.data ?? "");
+                    setEditandoNota(false);
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => setEditandoNota(true)}>
+                <Pencil className="mr-1 h-4 w-4" /> Editar
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
