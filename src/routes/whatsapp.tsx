@@ -1135,11 +1135,16 @@ function Conversa({
           <div className="relative flex items-end gap-2 border-t pt-3">
             {sugestoesRapidas.length > 0 && (
               <div className="absolute bottom-full left-0 z-20 mb-1 max-h-64 w-full overflow-y-auto rounded-lg border bg-popover p-1 shadow-md">
-                {sugestoesRapidas.map((m) => (
+                {sugestoesRapidas.map((m, idx) => (
                   <button
                     key={m.id}
+                    ref={(el) => { sugestaoRefs.current[idx] = el; }}
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm",
+                      idx === indiceSugestao ? "bg-accent" : "hover:bg-accent",
+                    )}
+                    onMouseEnter={() => setIndiceSugestao(idx)}
                     onClick={() => aplicarRapida(m)}
                   >
                     <Zap className="h-4 w-4 shrink-0 text-primary" />
@@ -1150,6 +1155,7 @@ function Conversa({
                 ))}
               </div>
             )}
+
             <Button
               variant="outline"
               size="icon"
