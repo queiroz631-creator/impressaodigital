@@ -1,31 +1,30 @@
-# WhatsApp não está recebendo mensagens
+# Botão de reconfiguração do webhook do WhatsApp
 
-## O que eu verifiquei agora
+Hoje a URL do webhook só pode ser copiada e colada manualmente no painel da Z-API. Como o endereço do site mudou, o webhook antigo deixou de entregar mensagens. A ideia é ter um botão que ajusta isso sozinho.
 
-- O número está conectado na Z-API (`connected: true`, celular conectado).
-- O envio funciona: há mensagem de saída registrada hoje às 02:44.
-- A última mensagem recebida de cliente foi ontem às 20:50.
-- Nos registros da última hora não há **nenhuma** chamada para o endereço de recebimento (`/api/public/whatsapp/webhook`), enquanto as rotinas internas (inatividade, status) chamam normalmente a cada minuto.
+## O que muda na tela
 
-Conclusão: o problema não está no sistema nem na conexão do WhatsApp — a Z-API simplesmente não está avisando o sistema quando chega mensagem. Isso acontece quando o endereço de recebimento cadastrado na Z-API está vazio, com token antigo, ou apontando para um endereço de pré-visualização que mudou (a tela de Configurações monta esse endereço usando o endereço da janela aberta na hora).
+Em Configurações → WhatsApp (Z-API), ao lado de "Testar conexão":
 
-## O que vou fazer
+- Novo botão **Reconfigurar webhook**: grava automaticamente na Z-API o endereço atual de recebimento (mensagens recebidas, mensagens enviadas pelo celular, status de entrega e desconexão).
+- Uma linha mostrando o endereço que está atualmente gravado na Z-API, com aviso em vermelho quando ele estiver diferente do endereço correto.
+- Mensagem de sucesso ou de erro após clicar.
 
-1. **Fixar o endereço correto na tela de Configurações**
-   Em vez de usar o endereço da janela atual, mostrar sempre o endereço estável do sistema, com o token atual. Assim o texto copiado nunca aponta para um endereço temporário.
+Nada mais da tela muda: copiar URL, testar conexão e ativar mensagens do celular continuam iguais.
 
-2. **Botão "Reconectar recebimento"**
-   Novo botão ao lado do endereço que registra automaticamente na Z-API os avisos de mensagem recebida, mensagem enviada por mim e status de entrega — sem precisar entrar no painel da Z-API.
+## Endereço usado
 
-3. **Botão "Testar recebimento"**
-   Mostra na tela: se o número está conectado, quando foi a última mensagem recebida e quando foi a última chamada da Z-API ao sistema. Serve para confirmar na hora se voltou a funcionar.
-
-4. **Validação final**
-   Depois de reconectar, peço para você mandar uma mensagem de teste do seu celular e confirmo pelos registros que ela chegou e apareceu na tela do WhatsApp.
+Será usado o endereço fixo de produção do site (impressaodigital.lovable.app) com o token de segurança já existente, para o webhook não quebrar de novo em futuras publicações. A tela avisa quando estiver aberta em endereço diferente do de produção.
 
 ## Detalhes técnicos
 
-- Endereço estável: `https://impressaodigital.lovable.app/api/public/whatsapp/webhook?token=<webhook_token>`.
-- Registro via Z-API: `POST /instances/{id}/token/{token}/update-webhook-received`, `update-webhook-message-status` e `update-webhook-received-delivery`, com header `Client-Token`.
-- Chamadas à Z-API ficam em um server function novo (`src/lib/whatsapp-webhook.functions.ts`) usando os segredos já existentes (`ZAPI_*`); a tela em `src/routes/configuracoes.tsx` só chama esse server function.
-- Nenhuma alteração no fluxo do bot, no layout geral ou no banco de dados (apenas leitura de `whatsapp_config` e das últimas mensagens para o diagnóstico).
+- Novas server functions em `src/lib/whatsapp.functions.ts`:
+  - `lerWebhooksZapi`: GET nas rotas de leitura de webhook da Z-API para exibir o que está gravado.
+  - `reconfigurarWebhooksZapi`: PUT em `update-webhook-received`, `update-webhook-received-delivery`, `update-webhook-message-status` e `update-webhook-disconnected` usando `chamarZapi` de `src/lib/zapi.server.ts`, com a URL `<SITE_URL>/api/public/whatsapp/webhook?token=<webhook_token>` lida de `whatsapp_config`.
+  - Retorno tipado `{ ok, erro? , urls? }`; erros da Z-API registrados no servidor e resumidos ao usuário.
+- `CardWhatsapp` em `src/routes/configuracoes.tsx` ganha uma query para o estado atual e uma mutation para o botão, com invalidação após sucesso.
+- Sem alterações de banco, layout geral ou lógica do bot.
+
+## Verificação
+
+Após implementar: clicar em Reconfigurar, conferir que a leitura passa a mostrar o endereço novo e enviar uma mensagem de teste do celular para confirmar que a conversa aparece no sistema.
