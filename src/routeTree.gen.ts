@@ -16,6 +16,7 @@ import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as MelhoriasRouteImport } from './routes/melhorias'
+import { Route as MensagensRapidasRouteImport } from './routes/mensagens-rapidas'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as PrecosRouteImport } from './routes/precos'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
@@ -62,6 +63,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const MelhoriasRoute = MelhoriasRouteImport.update({
   id: '/melhorias',
   path: '/melhorias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MensagensRapidasRoute = MensagensRapidasRouteImport.update({
+  id: '/mensagens-rapidas',
+  path: '/mensagens-rapidas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrcamentosRoute = OrcamentosRouteImport.update({
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
+  '/mensagens-rapidas': typeof MensagensRapidasRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
+  '/mensagens-rapidas': typeof MensagensRapidasRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
+  '/mensagens-rapidas': typeof MensagensRapidasRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/whatsapp': typeof WhatsappRoute
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/dashboard'
     | '/melhorias'
+    | '/mensagens-rapidas'
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/dashboard'
     | '/melhorias'
+    | '/mensagens-rapidas'
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/dashboard'
     | '/melhorias'
+    | '/mensagens-rapidas'
     | '/orcamentos'
     | '/precos'
     | '/whatsapp'
@@ -265,6 +277,7 @@ export interface RootRouteChildren {
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   DashboardRoute: typeof DashboardRoute
   MelhoriasRoute: typeof MelhoriasRoute
+  MensagensRapidasRoute: typeof MensagensRapidasRoute
   OrcamentosRoute: typeof OrcamentosRoute
   PrecosRoute: typeof PrecosRoute
   WhatsappRoute: typeof WhatsappRoute
@@ -328,6 +341,13 @@ declare module '@tanstack/react-router' {
       path: '/melhorias'
       fullPath: '/melhorias'
       preLoaderRoute: typeof MelhoriasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mensagens-rapidas': {
+      id: '/mensagens-rapidas'
+      path: '/mensagens-rapidas'
+      fullPath: '/mensagens-rapidas'
+      preLoaderRoute: typeof MensagensRapidasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orcamentos': {
@@ -425,6 +445,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfiguracoesRoute: ConfiguracoesRoute,
   DashboardRoute: DashboardRoute,
   MelhoriasRoute: MelhoriasRoute,
+  MensagensRapidasRoute: MensagensRapidasRoute,
   OrcamentosRoute: OrcamentosRoute,
   PrecosRoute: PrecosRoute,
   WhatsappRoute: WhatsappRoute,
