@@ -1357,6 +1357,51 @@ export type Database = {
         }
         Relationships: []
       }
+      mensagens_rapidas: {
+        Row: {
+          atalho: string
+          ativo: boolean
+          created_at: string
+          id: string
+          imagem_nome: string | null
+          imagem_path: string | null
+          mostrar_no_botao: boolean
+          ordem: number
+          texto: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          atalho: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          imagem_nome?: string | null
+          imagem_path?: string | null
+          mostrar_no_botao?: boolean
+          ordem?: number
+          texto?: string | null
+          tipo?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          atalho?: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          imagem_nome?: string | null
+          imagem_path?: string | null
+          mostrar_no_botao?: boolean
+          ordem?: number
+          texto?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       objetivos_curriculo: {
         Row: {
           ativo: boolean
