@@ -1,63 +1,40 @@
-# Deploy do projeto em VPS Hostinger (com GitHub já conectado)
+# Deploy do projeto em VPS Hostinger (npm + Nginx + script automatizado)
 
-## Pré-requisitos assumidos
-- Repositório GitHub sincronizado com o Lovable.
-- VPS Hostinger com acesso SSH e usuário root/sudo.
-- Domínio apontado para o IP da VPS (opcional, mas recomendado).
+## Situação atual
+- Repositório GitHub já conectado ao Lovable.
+- O banco de dados continua no Lovable Cloud; a VPS hospeda apenas a aplicação.
+- A aplicação é full-stack (SSR), então precisa de Node rodando na VPS — não basta subir arquivos estáticos.
 
-## Passos
+## O que será criado no projeto
+1. `deploy/setup-vps.sh` — script executado uma única vez na VPS nova: instala Node 20, npm, git, Nginx, Certbot e PM2; cria a pasta da aplicação; clona o repositório.
+2. `deploy/deploy.sh` — script de atualização, executado a cada nova versão: faz `git pull`, `npm ci`, `npm run build` e reinicia o processo no PM2.
+3. `deploy/nginx.conf` — modelo de configuração do Nginx com proxy reverso para a porta da aplicação, cabeçalhos corretos e suporte a HTTPS.
+4. `deploy/ecosystem.config.cjs` — configuração do PM2 (nome do processo, porta, reinício automático, logs).
+5. `deploy/.env.example` — lista das variáveis necessárias na VPS.
+6. `deploy/README.md` — passo a passo curto, em português, do que rodar e em que ordem.
 
-### 1. Preparar a VPS
-- Conectar via SSH à VPS.
-- Instalar Node.js 20 LTS (ou 22) e gerenciador de pacotes (npm ou bun).
-- Instalar Git e PM2 (opcional, mas recomendado para manter o app rodando).
-- Instalar Nginx ou Caddy como proxy reverso.
+## Passo a passo que você seguirá na VPS
+1. Acessar a VPS por SSH.
+2. Baixar e rodar `setup-vps.sh` (instala tudo e clona o projeto).
+3. Preencher o arquivo `.env` na pasta do projeto com as chaves listadas.
+4. Rodar `deploy.sh` para gerar a versão de produção e subir o serviço.
+5. Copiar `nginx.conf` para o Nginx, ajustar o domínio e recarregar.
+6. Rodar o Certbot para o certificado HTTPS.
+7. Apontar o domínio para o IP da VPS e liberar as portas 80 e 443.
 
-### 2. Clonar o repositório
-- Clonar o repo do GitHub na VPS (ex.: `/var/www/impressaodigital`).
-- Garantir que a branch correta está ativa (normalmente `main`).
+## Variáveis de ambiente necessárias
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`
+- `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `SITE_URL` — endereço público novo, usado nos links de currículo e orçamento
+- Z-API: `ZAPI_INSTANCE_ID`, `ZAPI_INSTANCE_TOKEN`, `ZAPI_CLIENT_TOKEN`, `ZAPI_BASE_URL`
+- `LOVABLE_API_KEY` (usado pelos recursos de inteligência artificial, como transcrição de áudio)
 
-### 3. Instalar dependências e fazer o build
-- Rodar `npm install` ou `bun install`.
-- Rodar `npm run build` para gerar a versão de produção.
-- Verificar se há variáveis de ambiente necessárias para o build.
+## Pontos de atenção
+- A chave de serviço do banco (`SUPABASE_SERVICE_ROLE_KEY`) não fica disponível pelo Lovable Cloud; sem ela, funções administrativas do servidor não funcionarão na VPS. Precisaremos avaliar quais recursos dependem dela.
+- Os agendamentos automáticos (status do WhatsApp, inatividade) chamam endereços públicos do sistema. Após o deploy, esses endereços precisam ser atualizados para o domínio da VPS.
+- `SITE_URL` deve ser definido na VPS, senão os links públicos continuarão apontando para o endereço Lovable.
 
-### 4. Configurar variáveis de ambiente
-- Copiar `.env.example` para `.env` (ou criar manualmente).
-- Preencher:
-  - `VITE_SUPABASE_URL`
-  - `VITE_SUPABASE_PUBLISHABLE_KEY`
-  - `VITE_SUPABASE_PROJECT_ID`
-  - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (se houver funções do servidor)
-  - Outras chaves opcionais: Z-API, PIX, etc.
-- O banco continuará sendo o Lovable Cloud/Supabase; a VPS não hospedará o banco.
-
-### 5. Iniciar o app com PM2
-- Criar um arquivo `ecosystem.config.cjs` ou rodar PM2 diretamente.
-- Exemplo de comando: `pm2 start npm --name "impressaodigital" -- run start`.
-- Configurar PM2 para iniciar automaticamente com o sistema (`pm2 startup && pm2 save`).
-
-### 6. Configurar proxy reverso
-- Com Nginx: criar um server block apontando para `localhost:3000` (ou a porta que o app usar).
-- Com Caddy: Caddyfile com reverse_proxy para a porta do app e SSL automático.
-- Habilitar SSL (Let's Encrypt via Certbot ou Caddy automático).
-
-### 7. Configurar DNS e firewall
-- Apontar domínio/subdomínio para o IP da VPS.
-- Liberar portas 80, 443 e a porta do app (se necessário) no firewall da Hostinger/UFW.
-
-### 8. Verificar deploy
-- Acessar o domínio configurado.
-- Testar login, orçamento, currículo e WhatsApp (se usar Z-API).
-- Verificar logs com `pm2 logs` e ajustar conforme necessário.
-
-## Entregáveis sugeridos
-- Script de setup automatizado para VPS (opcional).
-- Arquivos de configuração: `ecosystem.config.cjs`, `nginx.conf` ou `Caddyfile`.
-- Checklist final de validação.
-
-## Dúvidas para o usuário
-1. Qual gerenciador de pacotes prefere usar na VPS: `npm` ou `bun`?
-2. Qual servidor web prefere: `Nginx` ou `Caddy`?
-3. Já possui um domínio próprio apontado para a VPS?
-4. Quer que eu gere um script de deploy automatizado, ou prefere comandos passo a passo?
+## Detalhes técnicos
+- Aplicação roda com `node .output/server/index.mjs` (saída do build TanStack Start/Nitro) sob PM2, na porta 3000.
+- Nginx escuta em 80/443 e encaminha para 127.0.0.1:3000, preservando `Host`, `X-Forwarded-For` e `X-Forwarded-Proto`.
+- O `deploy.sh` usa `npm ci` para instalação determinística e `pm2 reload` para atualização sem derrubar o serviço.
