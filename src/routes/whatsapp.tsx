@@ -46,12 +46,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { apagarMensagemWhatsapp, editarMensagemWhatsapp, enviarDigitandoWhatsapp, enviarMensagemRapidaWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { cn } from "@/lib/utils";
 import {
