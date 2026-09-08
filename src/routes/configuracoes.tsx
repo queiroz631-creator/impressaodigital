@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -843,6 +843,9 @@ function CardWhatsapp() {
     retry: false,
   });
 
+  const tentouCorrigirAutomaticamente = useRef(false);
+  const [corrigidoAutomaticamente, setCorrigidoAutomaticamente] = useState(false);
+
   const reconfiguracao = useMutation({
     mutationFn: () => reconfigurarWebhooks(),
     onSuccess: (resultado) => {
@@ -855,6 +858,16 @@ function CardWhatsapp() {
     },
     onError: () => toast.error("Não foi possível reconfigurar o webhook."),
   });
+
+  // Corrige automaticamente quando o endereço gravado na Z-API está diferente do correto.
+  useEffect(() => {
+    if (!webhooks.data || webhooks.data.correto) return;
+    if (tentouCorrigirAutomaticamente.current || reconfiguracao.isPending) return;
+    tentouCorrigirAutomaticamente.current = true;
+    reconfiguracao.mutateAsync().then((resultado) => {
+      if (resultado.ok) setCorrigidoAutomaticamente(true);
+    }).catch(() => undefined);
+  }, [webhooks.data, reconfiguracao]);
 
   const token = config.data?.webhook_token ?? "";
   const urlWebhook = origem && token ? `${origem}/api/public/whatsapp/webhook?token=${token}` : "";
@@ -935,8 +948,12 @@ function CardWhatsapp() {
               <>
                 <span className={webhooks.data.correto ? "text-muted-foreground" : "font-semibold text-destructive"}>
                   {webhooks.data.correto
-                    ? "O endereço gravado na Z-API está correto."
-                    : "O endereço gravado na Z-API está diferente do correto."}
+                    ? corrigidoAutomaticamente
+                      ? "O endereço estava errado e foi corrigido automaticamente."
+                      : "O endereço gravado na Z-API está correto."
+                    : reconfiguracao.isPending
+                      ? "Endereço diferente do correto. Corrigindo automaticamente..."
+                      : "O endereço gravado na Z-API está diferente do correto."}
                 </span>
                 {webhooks.data.itens.map((item) => (
                   <span key={item.rotulo} className="font-mono text-muted-foreground break-all">
