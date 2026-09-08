@@ -565,6 +565,9 @@ function Conversa({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [texto, setTexto] = useState("");
+  const [indiceSugestao, setIndiceSugestao] = useState(0);
+  const sugestaoRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
   const [selecionando, setSelecionando] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [selecionarAoCarregar, setSelecionarAoCarregar] = useState(false);
@@ -880,6 +883,11 @@ function Conversa({
       : [];
   const rapidasBotao = (rapidas.data ?? []).filter((m) => m.mostrar_no_botao);
 
+  useEffect(() => {
+    setIndiceSugestao(0);
+  }, [termoAtalho]);
+
+
   /** Atalho "/": texto preenche a caixa para revisão; imagem já é enviada. */
   function aplicarRapida(m: MensagemRapida) {
     if (m.tipo === "texto") {
@@ -889,6 +897,11 @@ function Conversa({
       envioRapida.mutate(m);
     }
   }
+
+  useEffect(() => {
+    sugestaoRefs.current[indiceSugestao]?.scrollIntoView({ block: "nearest" });
+  }, [indiceSugestao]);
+
 
   /** Modal do botão de raio: envia imediatamente a mensagem escolhida. */
   function enviarRapidaDoModal(m: MensagemRapida) {
@@ -1127,11 +1140,16 @@ function Conversa({
           <div className="relative flex items-end gap-2 border-t pt-3">
             {sugestoesRapidas.length > 0 && (
               <div className="absolute bottom-full left-0 z-20 mb-1 max-h-64 w-full overflow-y-auto rounded-lg border bg-popover p-1 shadow-md">
-                {sugestoesRapidas.map((m) => (
+                {sugestoesRapidas.map((m, idx) => (
                   <button
                     key={m.id}
+                    ref={(el) => { sugestaoRefs.current[idx] = el; }}
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm",
+                      idx === indiceSugestao ? "bg-accent" : "hover:bg-accent",
+                    )}
+                    onMouseEnter={() => setIndiceSugestao(idx)}
                     onClick={() => aplicarRapida(m)}
                   >
                     <Zap className="h-4 w-4 shrink-0 text-primary" />
@@ -1142,6 +1160,7 @@ function Conversa({
                 ))}
               </div>
             )}
+
             <Button
               variant="outline"
               size="icon"
@@ -1161,14 +1180,25 @@ function Conversa({
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   if (sugestoesRapidas.length > 0) {
-                    aplicarRapida(sugestoesRapidas[0]!);
+                    aplicarRapida(sugestoesRapidas[indiceSugestao]!);
                     return;
                   }
                   const msg = texto.trim();
                   if (msg && !envio.isPending) envio.mutate(msg);
                 }
+                if (e.key === "ArrowDown" && sugestoesRapidas.length > 0) {
+                  e.preventDefault();
+                  setIndiceSugestao((i) => Math.min(i + 1, sugestoesRapidas.length - 1));
+                  return;
+                }
+                if (e.key === "ArrowUp" && sugestoesRapidas.length > 0) {
+                  e.preventDefault();
+                  setIndiceSugestao((i) => Math.max(i - 1, 0));
+                  return;
+                }
                 if (e.key === "Escape" && termoAtalho !== null) setTexto("");
               }}
+
               placeholder="Escreva a mensagem... (digite / para mensagens rápidas)"
               rows={2}
               className="min-h-0 flex-1 resize-none"
