@@ -20,6 +20,7 @@ import {
   Headset,
   MessageSquare,
   Mic,
+  Pencil,
   Printer,
   Search,
   StickyNote,
@@ -565,6 +566,9 @@ function Conversa({
     }
   });
   const [notaTexto, setNotaTexto] = useState("");
+  const [editandoNota, setEditandoNota] = useState(false);
+  const [editandoNome, setEditandoNome] = useState(false);
+  const [nomeEdicao, setNomeEdicao] = useState("");
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
