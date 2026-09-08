@@ -4,6 +4,15 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+/** Lê o identificador da mensagem devolvido pela Z-API (permite editar/apagar depois). */
+function idDaResposta(dados: unknown): string | null {
+  if (!dados || typeof dados !== "object") return null;
+  const d = dados as { messageId?: unknown; zaapId?: unknown; id?: unknown };
+  const bruto = d.messageId ?? d.zaapId ?? d.id;
+  return bruto ? String(bruto) : null;
+}
+
+
 /**
  * Quando alguém da loja envia mensagem pelo sistema, conversas finalizadas,
  * automáticas, aguardando resposta ou aguardando finalização passam para
