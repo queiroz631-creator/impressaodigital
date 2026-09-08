@@ -2305,6 +2305,30 @@ export type Database = {
           },
         ]
       }
+      whatsapp_notas: {
+        Row: {
+          created_at: string
+          id: string
+          nota: string
+          telefone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nota?: string
+          telefone: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nota?: string
+          telefone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
