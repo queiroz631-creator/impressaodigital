@@ -565,6 +565,9 @@ function Conversa({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [texto, setTexto] = useState("");
+  const [indiceSugestao, setIndiceSugestao] = useState(0);
+  const sugestaoRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
   const [selecionando, setSelecionando] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [selecionarAoCarregar, setSelecionarAoCarregar] = useState(false);
