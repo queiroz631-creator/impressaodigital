@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Plus, Pencil, X, Zap, ImageIcon } from "lucide-react";
+import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { toast } from "sonner";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -378,15 +379,20 @@ function MensagensRapidas() {
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Excluir mensagem"
-                    onClick={() => excluir.mutate(m)}
-                    disabled={excluir.isPending}
+                  <ConfirmarExclusao
+                    titulo="Excluir mensagem rápida"
+                    descricao={`Tem certeza que deseja excluir "${m.titulo}"? Esta ação não poderá ser desfeita.`}
+                    onConfirmar={() => excluir.mutate(m)}
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Excluir mensagem"
+                      disabled={excluir.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </ConfirmarExclusao>
                 </div>
               </div>
             ))}
