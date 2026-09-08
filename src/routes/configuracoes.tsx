@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ativarMensagensEnviadasPorMim, statusInstanciaZapi } from "@/lib/whatsapp.functions";
+import {
+  ativarMensagensEnviadasPorMim,
+  lerWebhooksZapi,
+  reconfigurarWebhooksZapi,
+  statusInstanciaZapi,
+} from "@/lib/whatsapp.functions";
 import { toast } from "sonner";
 import { Copy, Plus, Printer, RefreshCw, Save, ShieldAlert, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
