@@ -575,11 +575,13 @@ function Conversa({
   const finalizacao = useServerFn(enviarParaFinalizacao);
   const presenca = useServerFn(enviarDigitandoWhatsapp);
 
-  // Ao trocar de conversa, sai do modo seleção.
+  // Ao trocar de conversa, sai do modo seleção e volta as anotações para leitura.
   useEffect(() => {
     setSelecionando(false);
     setSelecionados(new Set());
     setSelecionarAoCarregar(false);
+    setEditandoNota(false);
+    setEditandoNome(false);
   }, [conversa.id]);
 
   function alternarSelecao(id: string) {
@@ -833,6 +835,24 @@ function Conversa({
   useEffect(() => {
     setNotaTexto(notaCliente.data ?? "");
   }, [conversa.telefone, notaCliente.data]);
+
+  // Edição do nome do cliente vale para todos os atendimentos do mesmo telefone.
+  const salvarNome = useMutation({
+    mutationFn: async (nome: string) => {
+      const valor = nome.trim() || null;
+      const { error } = await supabase
+        .from("whatsapp_conversas")
+        .update({ nome_contato: valor })
+        .eq("telefone", conversa.telefone);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      toast.success("Nome do cliente atualizado.");
+      setEditandoNome(false);
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   function alternarNotas() {
     setNotasAbertas((aberto) => {
