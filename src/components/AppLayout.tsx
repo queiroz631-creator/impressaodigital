@@ -14,6 +14,7 @@ import {
   FileUser,
   Users,
   Sparkles,
+  Zap,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,7 @@ const itens = [
   { to: "/curriculos", label: "Currículo Vitae", icon: FileUser },
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle, badge: true },
+  { to: "/mensagens-rapidas", label: "Mensagens Rápidas", icon: Zap },
   { to: "/bot", label: "Configurar Bot", icon: Bot },
   { to: "/precos", label: "Configurar Preços", icon: DollarSign, adminOnly: true },
   { to: "/configuracoes", label: "Configurações", icon: Settings },

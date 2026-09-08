@@ -28,6 +28,7 @@ import {
   Square,
   UserCheck,
   X,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -42,7 +43,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { enviarDigitandoWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
+import { enviarDigitandoWhatsapp, enviarMensagemRapidaWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONVERSA,
@@ -102,6 +103,17 @@ interface Mensagem {
   erro: string | null;
   data_hora: string;
   transcricao: string | null;
+}
+
+interface MensagemRapida {
+  id: string;
+  titulo: string;
+  atalho: string;
+  tipo: string;
+  texto: string | null;
+  imagem_nome: string | null;
+  mostrar_no_botao: boolean;
+  ordem: number;
 }
 
 /** Ícone de cada aba de status. */
@@ -557,6 +569,7 @@ function Conversa({
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [selecionarAoCarregar, setSelecionarAoCarregar] = useState(false);
   const [finalizarAberto, setFinalizarAberto] = useState(false);
+  const [rapidasAberto, setRapidasAberto] = useState(false);
   // Painel de anotações do cliente (direita): preferência fica salva no navegador.
   const [notasAbertas, setNotasAbertas] = useState(() => {
     try {
@@ -574,6 +587,7 @@ function Conversa({
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
   const finalizacao = useServerFn(enviarParaFinalizacao);
   const presenca = useServerFn(enviarDigitandoWhatsapp);
+  const enviarRapida = useServerFn(enviarMensagemRapidaWhatsapp);
 
   // Ao trocar de conversa, sai do modo seleção e volta as anotações para leitura.
   useEffect(() => {
@@ -817,6 +831,75 @@ function Conversa({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Mensagens rápidas ativas: usadas no atalho "/" e no botão de raio.
+  const rapidas = useQuery({
+    queryKey: ["mensagens-rapidas-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mensagens_rapidas")
+        .select("id, titulo, atalho, tipo, texto, imagem_nome, mostrar_no_botao, ordem")
+        .eq("ativo", true)
+        .order("ordem", { ascending: true })
+        .order("titulo", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as MensagemRapida[];
+    },
+  });
+
+  const envioRapida = useMutation({
+    mutationFn: async (m: MensagemRapida) => {
+      if (m.tipo === "texto") {
+        return enviarTexto({
+          data: { conversaId: conversa.id, telefone: conversa.telefone, mensagem: m.texto ?? "", autor: atendente },
+        });
+      }
+      return enviarRapida({ data: { conversaId: conversa.id, mensagemId: m.id, autor: atendente } });
+    },
+    onSuccess: async (r) => {
+      if (!r.ok) {
+        toast.error(r.erro ?? "Falha ao enviar.");
+      } else {
+        setTexto("");
+        toast.success("Mensagem enviada.");
+      }
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-mensagens", conversa.id] });
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const termoAtalho =
+    texto.startsWith("/") && !texto.includes("\n") && !texto.slice(1).includes(" ")
+      ? texto.slice(1).toLowerCase()
+      : null;
+  const sugestoesRapidas =
+    termoAtalho !== null
+      ? (rapidas.data ?? []).filter(
+          (m) => m.atalho.startsWith(termoAtalho) || m.titulo.toLowerCase().includes(termoAtalho),
+        )
+      : [];
+  const rapidasBotao = (rapidas.data ?? []).filter((m) => m.mostrar_no_botao);
+
+  /** Atalho "/": texto preenche a caixa para revisão; imagem já é enviada. */
+  function aplicarRapida(m: MensagemRapida) {
+    if (m.tipo === "texto") {
+      setTexto(m.texto ?? "");
+    } else if (!envioRapida.isPending) {
+      setTexto("");
+      envioRapida.mutate(m);
+    }
+  }
+
+  /** Modal do botão de raio: envia imediatamente a mensagem escolhida. */
+  function enviarRapidaDoModal(m: MensagemRapida) {
+    setRapidasAberto(false);
+    if (m.tipo === "texto") {
+      if (m.texto && !envio.isPending) envio.mutate(m.texto);
+    } else if (!envioRapida.isPending) {
+      envioRapida.mutate(m);
+    }
+  }
+
   // Anotação do cliente (por telefone, vale para todos os atendimentos).
   const notaCliente = useQuery({
     queryKey: ["whatsapp-nota", conversa.telefone],
@@ -1041,7 +1124,33 @@ function Conversa({
             <div ref={fim} />
           </div>
 
-          <div className="flex items-end gap-2 border-t pt-3">
+          <div className="relative flex items-end gap-2 border-t pt-3">
+            {sugestoesRapidas.length > 0 && (
+              <div className="absolute bottom-full left-0 z-20 mb-1 max-h-64 w-full overflow-y-auto rounded-lg border bg-popover p-1 shadow-md">
+                {sugestoesRapidas.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+                    onClick={() => aplicarRapida(m)}
+                  >
+                    <Zap className="h-4 w-4 shrink-0 text-primary" />
+                    <Badge variant="secondary">/{m.atalho}</Badge>
+                    <span className="shrink-0 font-medium">{m.titulo}</span>
+                    <span className="truncate text-xs text-muted-foreground">{m.texto ?? m.imagem_nome ?? ""}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Mensagens rápidas"
+              title="Mensagens rápidas"
+              onClick={() => setRapidasAberto(true)}
+            >
+              <Zap className="h-4 w-4" />
+            </Button>
             <Textarea
               value={texto}
               onChange={(e) => {
@@ -1051,11 +1160,16 @@ function Conversa({
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
+                  if (sugestoesRapidas.length > 0) {
+                    aplicarRapida(sugestoesRapidas[0]!);
+                    return;
+                  }
                   const msg = texto.trim();
                   if (msg && !envio.isPending) envio.mutate(msg);
                 }
+                if (e.key === "Escape" && termoAtalho !== null) setTexto("");
               }}
-              placeholder="Escreva a mensagem..."
+              placeholder="Escreva a mensagem... (digite / para mensagens rápidas)"
               rows={2}
               className="min-h-0 flex-1 resize-none"
             />
@@ -1066,6 +1180,42 @@ function Conversa({
               <Send className="mr-1 h-4 w-4" /> Enviar
             </Button>
           </div>
+
+          <Dialog open={rapidasAberto} onOpenChange={setRapidasAberto}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Mensagens rápidas</DialogTitle>
+              </DialogHeader>
+              <div className="max-h-96 space-y-2 overflow-y-auto">
+                {rapidasBotao.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhuma mensagem configurada para este botão. Cadastre em Mensagens Rápidas.
+                  </p>
+                )}
+                {rapidasBotao.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    disabled={envio.isPending || envioRapida.isPending}
+                    className="w-full rounded-lg border p-3 text-left hover:bg-accent disabled:opacity-50"
+                    onClick={() => enviarRapidaDoModal(m)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 shrink-0 text-primary" />
+                      <span className="font-medium">{m.titulo}</span>
+                      <Badge variant="secondary">/{m.atalho}</Badge>
+                    </div>
+                    {m.texto && (
+                      <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-xs text-muted-foreground">{m.texto}</p>
+                    )}
+                    {!m.texto && m.imagem_nome && (
+                      <p className="mt-1 text-xs text-muted-foreground">{m.imagem_nome}</p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
 
