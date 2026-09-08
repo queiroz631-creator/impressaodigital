@@ -4,6 +4,15 @@ import { toast } from "sonner";
 import { Copy, Plus, Settings2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
+
+const TONS_CARD = [
+  "bg-primary/5 border-primary/30",
+  "bg-accent/10 border-accent/40",
+  "bg-secondary/40 border-secondary",
+  "bg-muted/60 border-muted-foreground/20",
+  "bg-destructive/5 border-destructive/25",
+];
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
