@@ -837,6 +837,25 @@ function CardWhatsapp() {
     onError: () => toast.error("Não foi possível ativar as mensagens enviadas pelo celular."),
   });
 
+  const webhooks = useQuery({
+    queryKey: ["whatsapp-webhooks"],
+    queryFn: async () => lerWebhooks(),
+    retry: false,
+  });
+
+  const reconfiguracao = useMutation({
+    mutationFn: () => reconfigurarWebhooks(),
+    onSuccess: (resultado) => {
+      if (resultado.ok) {
+        toast.success(resultado.erro ?? "Webhook reconfigurado na Z-API.");
+        webhooks.refetch();
+        return;
+      }
+      toast.error(resultado.erro ?? "Não foi possível reconfigurar o webhook.");
+    },
+    onError: () => toast.error("Não foi possível reconfigurar o webhook."),
+  });
+
   const token = config.data?.webhook_token ?? "";
   const urlWebhook = origem && token ? `${origem}/api/public/whatsapp/webhook?token=${token}` : "";
 
