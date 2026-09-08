@@ -4,6 +4,15 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+/** Lê o identificador da mensagem devolvido pela Z-API (permite editar/apagar depois). */
+function idDaResposta(dados: unknown): string | null {
+  if (!dados || typeof dados !== "object") return null;
+  const d = dados as { messageId?: unknown; zaapId?: unknown; id?: unknown };
+  const bruto = d.messageId ?? d.zaapId ?? d.id;
+  return bruto ? String(bruto) : null;
+}
+
+
 /**
  * Quando alguém da loja envia mensagem pelo sistema, conversas finalizadas,
  * automáticas, aguardando resposta ou aguardando finalização passam para
@@ -206,6 +215,7 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
         autor: data.autor ?? "Atendente",
         status: r.ok ? "enviada" : "erro",
         erro: r.ok ? null : (r.erro ?? "Falha no envio"),
+        whatsapp_message_id: idDaResposta(r.dados),
       });
 
       if (r.ok) {
@@ -500,6 +510,7 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
       autor: data.autor ?? "Atendente",
       status: r.ok ? "enviada" : "erro",
       erro: r.ok ? null : (r.erro ?? "Falha no envio"),
+      whatsapp_message_id: idDaResposta(r.dados),
     });
 
     if (r.ok) {
@@ -543,14 +554,29 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
     const telefone = normalizarTelefone((conversa as { telefone?: string } | null)?.telefone ?? "");
     if (!telefone) return { ok: false as const, erro: "Telefone da conversa não encontrado." };
 
-    const r = await chamarZapi("edit-message", {
-      metodo: "POST",
-      corpo: { phone: telefone, messageId: msg.whatsapp_message_id, message: data.texto },
-    });
-    if (!r.ok) {
+    // A Z-API não possui edição de mensagem: apagamos a original no WhatsApp
+    // do cliente e reenviamos o texto corrigido logo em seguida.
+    const consultaApagar = `messages?messageId=${encodeURIComponent(msg.whatsapp_message_id)}&phone=${encodeURIComponent(telefone)}&owner=true`;
+    const rApagar = await chamarZapi(consultaApagar, { metodo: "DELETE" });
+    if (!rApagar.ok) {
       return {
         ok: false as const,
-        erro: r.erro ?? "O WhatsApp recusou a edição (o prazo para editar pode ter expirado).",
+        erro: rApagar.erro ?? "O WhatsApp recusou apagar a mensagem original (o prazo pode ter expirado).",
+      };
+    }
+
+    const r = await chamarZapi("send-text", {
+      metodo: "POST",
+      corpo: { phone: telefone, message: data.texto },
+    });
+    if (!r.ok) {
+      await context.supabase
+        .from("whatsapp_mensagens")
+        .update({ apagada: true, apagada_em: new Date().toISOString() })
+        .eq("id", msg.id);
+      return {
+        ok: false as const,
+        erro: r.erro ?? "A mensagem antiga foi apagada, mas o texto corrigido não pôde ser enviado.",
       };
     }
 
@@ -561,6 +587,7 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
         texto_original: msg.texto_original ?? msg.texto,
         editada: true,
         editada_em: new Date().toISOString(),
+        whatsapp_message_id: idDaResposta(r.dados) ?? msg.whatsapp_message_id,
       })
       .eq("id", msg.id);
 

@@ -16,6 +16,9 @@ const corpoSchema = z
     chatLid: z.string().nullish(),
     isStatusReply: z.boolean().nullish(),
     type: z.string().nullish(),
+    notification: z.string().nullish(),
+    isEdit: z.boolean().nullish(),
+    referencedMessage: z.object({ messageId: z.string().nullish() }).partial().nullish(),
     text: z.object({ message: z.string().optional() }).partial().nullish(),
     image: z.object({ imageUrl: z.string().nullish(), caption: z.string().nullish(), mimeType: z.string().optional() }).partial().nullish(),
     document: z
@@ -104,6 +107,68 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           : ((bruto ?? {}) as z.infer<typeof corpoSchema>);
 
         if (corpo.isStatusReply) return Response.json({ ok: true, ignorado: true });
+
+        // Mensagem apagada pelo cliente (ou pela loja fora do sistema): o
+        // WhatsApp avisa com uma revogação. Marcamos a mensagem como apagada
+        // no histórico e não acionamos o bot.
+        const ehRevogacao = String(corpo.notification ?? "").toUpperCase().includes("REVOKE");
+        if (ehRevogacao) {
+          const alvo = corpo.referencedMessage?.messageId || corpo.messageId || null;
+          if (alvo) {
+            const { data: msg } = await supabaseAdmin
+              .from("whatsapp_mensagens")
+              .select("id, conversa_id, data_hora")
+              .eq("whatsapp_message_id", alvo)
+              .maybeSingle();
+            if (msg?.id) {
+              await supabaseAdmin
+                .from("whatsapp_mensagens")
+                .update({ apagada: true, apagada_em: new Date().toISOString() })
+                .eq("id", msg.id);
+
+              const { data: conv } = await supabaseAdmin
+                .from("whatsapp_conversas")
+                .select("ultima_mensagem_em")
+                .eq("id", msg.conversa_id)
+                .maybeSingle();
+              const ultimaEm = (conv as { ultima_mensagem_em?: string | null } | null)?.ultima_mensagem_em;
+              if (!ultimaEm || !msg.data_hora || new Date(msg.data_hora) >= new Date(ultimaEm)) {
+                await supabaseAdmin
+                  .from("whatsapp_conversas")
+                  .update({ ultima_mensagem: "Mensagem apagada" })
+                  .eq("id", msg.conversa_id);
+              }
+            }
+          }
+          return Response.json({ ok: true, ignorado: true, motivo: "revogacao" });
+        }
+
+        // Cliente editou uma mensagem já recebida: atualizamos o texto no
+        // histórico em vez de gravar uma mensagem nova.
+        if (corpo.isEdit === true) {
+          const alvo = corpo.referencedMessage?.messageId || corpo.messageId || null;
+          const novoTexto = corpo.text?.message ?? corpo.image?.caption ?? null;
+          if (alvo && novoTexto) {
+            const { data: msg } = await supabaseAdmin
+              .from("whatsapp_mensagens")
+              .select("id, texto, texto_original")
+              .eq("whatsapp_message_id", alvo)
+              .maybeSingle();
+            if (msg?.id) {
+              await supabaseAdmin
+                .from("whatsapp_mensagens")
+                .update({
+                  texto: novoTexto,
+                  texto_original: msg.texto_original ?? msg.texto,
+                  editada: true,
+                  editada_em: new Date().toISOString(),
+                })
+                .eq("id", msg.id);
+              return Response.json({ ok: true, ignorado: true, motivo: "edicao" });
+            }
+          }
+        }
+
 
         // Mensagem enviada pelo próprio número (celular/WhatsApp Web, fora do
         // sistema): é registrada como saída para o histórico ficar completo,
