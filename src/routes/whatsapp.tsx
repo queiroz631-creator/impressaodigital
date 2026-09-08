@@ -875,6 +875,7 @@ function Conversa({
     },
     onSuccess: async () => {
       toast.success("Anotação salva.");
+      setEditandoNota(false);
       await queryClient.invalidateQueries({ queryKey: ["whatsapp-nota", conversa.telefone] });
     },
     onError: (e: Error) => toast.error(e.message),
