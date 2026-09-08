@@ -811,6 +811,51 @@ function Conversa({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Anotação do cliente (por telefone, vale para todos os atendimentos).
+  const notaCliente = useQuery({
+    queryKey: ["whatsapp-nota", conversa.telefone],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_notas")
+        .select("nota")
+        .eq("telefone", conversa.telefone)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.nota ?? "";
+    },
+  });
+
+  // Preenche o campo ao abrir a conversa ou carregar a nota.
+  useEffect(() => {
+    setNotaTexto(notaCliente.data ?? "");
+  }, [conversa.telefone, notaCliente.data]);
+
+  function alternarNotas() {
+    setNotasAbertas((aberto) => {
+      const novo = !aberto;
+      try {
+        window.localStorage.setItem("whatsapp:notas-abertas", novo ? "1" : "0");
+      } catch {
+        /* sem armazenamento */
+      }
+      return novo;
+    });
+  }
+
+  const salvarNota = useMutation({
+    mutationFn: async (nota: string) => {
+      const { error } = await supabase
+        .from("whatsapp_notas")
+        .upsert({ telefone: conversa.telefone, nota }, { onConflict: "telefone" });
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      toast.success("Anotação salva.");
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-nota", conversa.telefone] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className={cn("flex flex-col", mostrarVoltar ? "h-[calc(100vh-8rem)]" : "h-full")}>
       <div className="mb-3 flex flex-wrap items-center gap-2">
