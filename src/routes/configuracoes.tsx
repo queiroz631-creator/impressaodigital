@@ -912,7 +912,42 @@ function CardWhatsapp() {
             Configure este endereço em <strong>Ao receber</strong> na Z-API. Depois, ative abaixo a notificação
             de mensagens enviadas pelo próprio número para sincronizar celular e WhatsApp Web.
           </p>
+
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => reconfiguracao.mutate()}
+              disabled={reconfiguracao.isPending}
+            >
+              <RefreshCw className={`h-4 w-4 ${reconfiguracao.isPending ? "animate-spin" : ""}`} />
+              {reconfiguracao.isPending ? "Reconfigurando..." : "Reconfigurar webhook"}
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Grava o endereço correto direto na Z-API, sem precisar abrir o painel.
+            </span>
+          </div>
+
+          <div className="grid gap-1 text-xs">
+            {webhooks.isFetching ? (
+              <span className="text-muted-foreground">Lendo o que está gravado na Z-API...</span>
+            ) : webhooks.data ? (
+              <>
+                <span className={webhooks.data.correto ? "text-muted-foreground" : "font-semibold text-destructive"}>
+                  {webhooks.data.correto
+                    ? "O endereço gravado na Z-API está correto."
+                    : "O endereço gravado na Z-API está diferente do correto."}
+                </span>
+                {webhooks.data.itens.map((item) => (
+                  <span key={item.rotulo} className="font-mono text-muted-foreground break-all">
+                    {item.rotulo}: {item.url || "(vazio)"}
+                  </span>
+                ))}
+              </>
+            ) : null}
+          </div>
         </div>
+
 
         <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
           <Button
