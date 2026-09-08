@@ -103,6 +103,9 @@ interface Mensagem {
   erro: string | null;
   data_hora: string;
   transcricao: string | null;
+  editada?: boolean | null;
+  apagada?: boolean | null;
+  whatsapp_message_id?: string | null;
 }
 
 interface MensagemRapida {
