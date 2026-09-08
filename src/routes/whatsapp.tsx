@@ -597,6 +597,42 @@ function Conversa({
   const finalizacao = useServerFn(enviarParaFinalizacao);
   const presenca = useServerFn(enviarDigitandoWhatsapp);
   const enviarRapida = useServerFn(enviarMensagemRapidaWhatsapp);
+  const editarMsgFn = useServerFn(editarMensagemWhatsapp);
+  const apagarMsgFn = useServerFn(apagarMensagemWhatsapp);
+  const [msgEditando, setMsgEditando] = useState<Mensagem | null>(null);
+  const [textoEdicao, setTextoEdicao] = useState("");
+
+  const editarMsg = useMutation({
+    mutationFn: async (novo: string) => {
+      if (!msgEditando) return { ok: false as const, erro: "Mensagem não selecionada." };
+      return await editarMsgFn({ data: { mensagemId: msgEditando.id, texto: novo } });
+    },
+    onSuccess: (r) => {
+      if (!r.ok) {
+        toast.error(r.erro ?? "Não foi possível editar a mensagem.");
+        return;
+      }
+      toast.success("Mensagem editada.");
+      setMsgEditando(null);
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-mensagens"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const apagarMsg = useMutation({
+    mutationFn: async (id: string) => await apagarMsgFn({ data: { mensagemId: id } }),
+    onSuccess: (r) => {
+      if (!r.ok) {
+        toast.error(r.erro ?? "Não foi possível apagar a mensagem.");
+        return;
+      }
+      toast.success("Mensagem apagada.");
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-mensagens"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   // Ao trocar de conversa, sai do modo seleção e volta as anotações para leitura.
   useEffect(() => {
