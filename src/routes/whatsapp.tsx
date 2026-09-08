@@ -20,7 +20,6 @@ import {
   Headset,
   MessageSquare,
   Mic,
-  MoreVertical,
   Pencil,
   Trash2,
   Printer,
