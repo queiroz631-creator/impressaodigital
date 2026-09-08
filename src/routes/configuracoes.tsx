@@ -948,8 +948,12 @@ function CardWhatsapp() {
               <>
                 <span className={webhooks.data.correto ? "text-muted-foreground" : "font-semibold text-destructive"}>
                   {webhooks.data.correto
-                    ? "O endereço gravado na Z-API está correto."
-                    : "O endereço gravado na Z-API está diferente do correto."}
+                    ? corrigidoAutomaticamente
+                      ? "O endereço estava errado e foi corrigido automaticamente."
+                      : "O endereço gravado na Z-API está correto."
+                    : reconfiguracao.isPending
+                      ? "Endereço diferente do correto. Corrigindo automaticamente..."
+                      : "O endereço gravado na Z-API está diferente do correto."}
                 </span>
                 {webhooks.data.itens.map((item) => (
                   <span key={item.rotulo} className="font-mono text-muted-foreground break-all">
