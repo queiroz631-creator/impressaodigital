@@ -831,6 +831,75 @@ function Conversa({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Mensagens rápidas ativas: usadas no atalho "/" e no botão de raio.
+  const rapidas = useQuery({
+    queryKey: ["mensagens-rapidas-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("mensagens_rapidas")
+        .select("id, titulo, atalho, tipo, texto, imagem_nome, mostrar_no_botao, ordem")
+        .eq("ativo", true)
+        .order("ordem", { ascending: true })
+        .order("titulo", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as MensagemRapida[];
+    },
+  });
+
+  const envioRapida = useMutation({
+    mutationFn: async (m: MensagemRapida) => {
+      if (m.tipo === "texto") {
+        return enviarTexto({
+          data: { conversaId: conversa.id, telefone: conversa.telefone, mensagem: m.texto ?? "", autor: atendente },
+        });
+      }
+      return enviarRapida({ data: { conversaId: conversa.id, mensagemId: m.id, autor: atendente } });
+    },
+    onSuccess: async (r) => {
+      if (!r.ok) {
+        toast.error(r.erro ?? "Falha ao enviar.");
+      } else {
+        setTexto("");
+        toast.success("Mensagem enviada.");
+      }
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-mensagens", conversa.id] });
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const termoAtalho =
+    texto.startsWith("/") && !texto.includes("\n") && !texto.slice(1).includes(" ")
+      ? texto.slice(1).toLowerCase()
+      : null;
+  const sugestoesRapidas =
+    termoAtalho !== null
+      ? (rapidas.data ?? []).filter(
+          (m) => m.atalho.startsWith(termoAtalho) || m.titulo.toLowerCase().includes(termoAtalho),
+        )
+      : [];
+  const rapidasBotao = (rapidas.data ?? []).filter((m) => m.mostrar_no_botao);
+
+  /** Atalho "/": texto preenche a caixa para revisão; imagem já é enviada. */
+  function aplicarRapida(m: MensagemRapida) {
+    if (m.tipo === "texto") {
+      setTexto(m.texto ?? "");
+    } else if (!envioRapida.isPending) {
+      setTexto("");
+      envioRapida.mutate(m);
+    }
+  }
+
+  /** Modal do botão de raio: envia imediatamente a mensagem escolhida. */
+  function enviarRapidaDoModal(m: MensagemRapida) {
+    setRapidasAberto(false);
+    if (m.tipo === "texto") {
+      if (m.texto && !envio.isPending) envio.mutate(m.texto);
+    } else if (!envioRapida.isPending) {
+      envioRapida.mutate(m);
+    }
+  }
+
   // Anotação do cliente (por telefone, vale para todos os atendimentos).
   const notaCliente = useQuery({
     queryKey: ["whatsapp-nota", conversa.telefone],
