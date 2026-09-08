@@ -968,7 +968,8 @@ function Conversa({
         </div>
       )}
 
-      <Card className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 gap-3">
+      <Card className="flex min-h-0 min-w-0 flex-1 flex-col">
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
             {isLoading && <Skeleton className="h-20 w-full" />}
