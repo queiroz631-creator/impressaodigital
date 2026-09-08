@@ -898,6 +898,11 @@ function Conversa({
     }
   }
 
+  useEffect(() => {
+    sugestaoRefs.current[indiceSugestao]?.scrollIntoView({ block: "nearest" });
+  }, [indiceSugestao]);
+
+
   /** Modal do botão de raio: envia imediatamente a mensagem escolhida. */
   function enviarRapidaDoModal(m: MensagemRapida) {
     setRapidasAberto(false);
