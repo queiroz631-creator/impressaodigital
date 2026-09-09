@@ -488,7 +488,16 @@ function Curriculos() {
                 toast.success("Link copiado!");
               }}
             >
-              Copiar link
+              Copiar só o link
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                await navigator.clipboard.writeText(linkNovoMensagem || linkNovoUrl);
+                toast.success("Mensagem copiada!");
+              }}
+            >
+              Copiar mensagem
             </Button>
             <Button onClick={() => setLinkNovoAberto(false)}>Fechar</Button>
           </DialogFooter>
