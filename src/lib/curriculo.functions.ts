@@ -148,7 +148,12 @@ export const gerarLinkNovoCurriculo = createServerFn({ method: "POST" })
       acao: "curriculo_link_novo_gerado",
       detalhe: "Link para novo currículo (autoatendimento)",
     });
-    return r;
+    const { data: cfg } = await supabaseAdmin
+      .from("whatsapp_config")
+      .select("msg_link_curriculo")
+      .limit(1)
+      .maybeSingle();
+    return { ...r, mensagem: (cfg as { msg_link_curriculo?: string | null } | null)?.msg_link_curriculo ?? "" };
   });
 
 export const invalidarLinkCurriculo = createServerFn({ method: "POST" })
