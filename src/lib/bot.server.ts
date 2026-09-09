@@ -1686,7 +1686,10 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
       const textoAus = (entrada.texto ?? "").trim();
       const ehRespostaRapida = Boolean(textoAus && reconhecerResposta(dadosAus, textoAus));
       const emFluxo = conversa.etapa === "fluxo" && Boolean(ctx.fluxo);
-      const aguardandoResposta = Boolean(ctx.pendenteTipo);
+      const aguardandoResposta = Boolean(
+        ctx.pendenteTipo ||
+          (conversa.etapa === "triagem" && (ctx.triagem || ctx.regra)),
+      );
       const novoAtendimento = conversa.etapa === "finalizado";
       if (!ehRespostaRapida && !emFluxo && !aguardandoResposta && (novoAtendimento || !ctx.ausenciaEnviada)) {
         await responder(
