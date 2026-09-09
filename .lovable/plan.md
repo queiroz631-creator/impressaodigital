@@ -1,16 +1,29 @@
-# Melhoria 27 — Assumir atendimento abre a conversa
+# Melhoria 27 — Assumir atendimento + envio de anexos na conversa
 
-## Objetivo
-Ao assumir um atendimento (pelo botão "Assumir" ou quando o atendimento passa para atendimento humano automaticamente), o sistema deve levar direto para a conversa daquele cliente, já aberta, em vez de fechar a conversa e deixar o usuário na aba anterior.
+## Parte 1 — Assumir atendimento abre a conversa
+Ao assumir um atendimento (pelo botão "Assumir" ou quando ele passa para atendimento humano), ir direto para a conversa do cliente já aberta, em vez de fechar a conversa e deixar o usuário na aba anterior.
 
-## Comportamento novo
-- Ao clicar em "Assumir": a aba passa para "Em atendimento" e a conversa do cliente continua aberta, pronta para digitar.
-- Quando o robô transferir a conversa para atendimento humano e essa conversa já estiver aberta na tela, ela permanece aberta e a aba acompanha o novo status (sem fechar sozinha).
-- Demais ações (Devolver ao bot, Pendente, Fila de impressão, Finalizar) continuam exatamente como estão hoje: a conversa fecha e a aba atual é mantida.
+- Ao clicar em "Assumir": a aba muda para "Em atendimento" e a conversa continua aberta, pronta para digitar.
+- Se o robô transferir para atendimento humano uma conversa que já está aberta na tela, ela permanece aberta e a aba acompanha o novo status.
+- Demais ações (Devolver ao bot, Pendente, Fila de impressão, Finalizar) continuam como hoje: a conversa fecha e a aba atual é mantida.
+
+## Parte 2 — Caixa de mensagem
+- Ao abrir qualquer conversa, o cursor já fica na caixa de digitação (foco automático), inclusive ao trocar de conversa.
+- Novo botão de clipe ao lado da caixa de texto para escolher arquivos do computador (imagens, PDF e documentos).
+- Arrastar e soltar arquivos sobre a caixa de texto anexa automaticamente, com destaque visual durante o arraste.
+- Os anexos aparecem como uma lista acima da caixa, cada um com opção de remover.
+- Enter (ou o botão de enviar) envia os anexos; o texto digitado vai como legenda do primeiro arquivo. Shift+Enter continua quebrando linha.
+- Enquanto envia, mostra progresso e bloqueia envios duplicados; sucesso e erro aparecem em avisos como já acontece hoje.
 
 ## Detalhes técnicos
-Alteração restrita a `src/routes/whatsapp.tsx`:
-- Em `alterarStatus`, aceitar um parâmetro opcional "seguir" que, ao concluir a mudança para `em_atendimento`, chama `onAbrirConversa(conversa.id, "em_atendimento")` — o mesmo callback já usado por "Últimos Arquivos" para trocar aba e manter a conversa aberta. Usado apenas no botão "Assumir".
-- No efeito que hoje fecha a conversa aberta quando o status deixa de bater com a aba selecionada, abrir exceção quando o novo status for `em_atendimento`: nesse caso trocar a aba para `em_atendimento` e manter a conversa aberta.
+`src/routes/whatsapp.tsx`:
+- `alterarStatus` ganha um parâmetro opcional para, após mudar para `em_atendimento`, chamar `onAbrirConversa(conversa.id, "em_atendimento")` — mesmo callback já usado por "Últimos Arquivos". Usado só no botão "Assumir".
+- No efeito que fecha a conversa aberta quando o status deixa de bater com a aba, abrir exceção para `em_atendimento`: trocar a aba e manter aberta.
+- `useRef` no `Textarea` + `useEffect` com foco ao montar/trocar `conversa.id`.
+- Estado `anexos: File[]`; `<input type="file" multiple hidden>` acionado pelo botão de clipe; handlers `onDragOver`/`onDragLeave`/`onDrop` no contêiner da caixa de texto.
+- No envio: para cada anexo, ler como base64 (`FileReader`) e chamar `enviarArquivoWhatsapp`; se houver texto sem anexos, mantém o fluxo atual de `enviarTexto`. Invalidação das queries de mensagens/conversas como hoje.
 
-Sem mudanças em banco de dados, lógica do bot, layout ou outras telas. Ao final, marcar a melhoria como executada.
+`src/lib/whatsapp.functions.ts`:
+- `enviarArquivoWhatsapp` passa a aceitar também documentos genéricos (`tipo: "documento"`), usando `send-document/{extensão}` da Z-API com o mime type real, mantendo o comportamento atual de `pdf` e `imagem` intacto.
+
+Sem mudanças de banco de dados, lógica do bot ou layout geral da tela. Ao final, marcar a melhoria como executada.
