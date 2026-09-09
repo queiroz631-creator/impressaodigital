@@ -29,7 +29,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { cpfValido, formatarCpf, formatarTelefone, somenteNumeros } from "@/lib/curriculo";
+import {
+  cpfValido,
+  formatarCpf,
+  formatarTelefone,
+  mensagemLinkCurriculo,
+  somenteNumeros,
+} from "@/lib/curriculo";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import { dataBR, dataHoraBR } from "@/lib/format";
 import { gerarLinkNovoCurriculo } from "@/lib/curriculo.functions";
