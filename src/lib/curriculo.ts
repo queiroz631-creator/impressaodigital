@@ -296,3 +296,13 @@ export function informacoesAdicionais(c: CurriculoRegistro) {
   }
   return linhas;
 }
+
+/** Frase padrão enviada junto do link do currículo. */
+export const MSG_LINK_CURRICULO_PADRAO =
+  "Para montar seu currículo, é só preencher por aqui:\n{link}\n\nO link vale por 24 horas.";
+
+/** Monta a frase do link do currículo, substituindo {link} pelo endereço. */
+export function mensagemLinkCurriculo(texto: string | null | undefined, url: string) {
+  const base = (texto ?? "").trim() || MSG_LINK_CURRICULO_PADRAO;
+  return base.includes("{link}") ? base.split("{link}").join(url) : `${base}\n${url}`;
+}
