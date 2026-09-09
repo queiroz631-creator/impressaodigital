@@ -88,6 +88,8 @@ export interface BotConfig {
   msg_transferencia_fora_horario_ativo: boolean;
   msg_finalizacao: string;
   msg_finalizacao_ativo: boolean;
+  /** Frase enviada junto do link do currículo; usa a variável {link}. */
+  msg_link_curriculo: string;
 }
 
 /** Regra de identificação da primeira mensagem do cliente. */
