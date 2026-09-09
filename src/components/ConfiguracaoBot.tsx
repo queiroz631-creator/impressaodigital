@@ -246,6 +246,8 @@ export function ConfiguracaoBot() {
       msg_revisao_ativo: d.msg_revisao_ativo !== false,
       msg_orcamento_confirmado: d.msg_orcamento_confirmado ?? "",
       msg_orcamento_confirmado_ativo: d.msg_orcamento_confirmado_ativo !== false,
+      msg_link_curriculo:
+        (d as { msg_link_curriculo?: string | null }).msg_link_curriculo || MSG_LINK_CURRICULO_PADRAO,
       ignorar_agradecimentos: (() => {
         const c = lerCfgCortesia((d as { ignorar_agradecimentos?: unknown }).ignorar_agradecimentos);
         return { ativo: c.ativo, janela_minutos: c.janela_minutos, frases: c.frases.join("\n") };
