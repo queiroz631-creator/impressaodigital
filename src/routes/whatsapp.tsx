@@ -21,8 +21,8 @@ import {
   MessageSquare,
   Mic,
   Paperclip,
-  Paperclip,
   Pencil,
+
 
   Trash2,
   Printer,
