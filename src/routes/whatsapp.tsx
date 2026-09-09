@@ -20,7 +20,10 @@ import {
   Headset,
   MessageSquare,
   Mic,
+  Paperclip,
   Pencil,
+
+
   Trash2,
   Printer,
   Search,
@@ -44,7 +47,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { apagarMensagemWhatsapp, editarMensagemWhatsapp, enviarDigitandoWhatsapp, enviarMensagemRapidaWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
+import { apagarMensagemWhatsapp, editarMensagemWhatsapp, enviarArquivoWhatsapp, enviarDigitandoWhatsapp, enviarMensagemRapidaWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { cn } from "@/lib/utils";
 import {
@@ -368,6 +371,14 @@ function Atendimento() {
   const abertaBruta = (conversas ?? []).find((c) => c.id === abertaId) ?? null;
   const aberta = abertaBruta && (termo !== "" || abertaBruta.status === aba) ? abertaBruta : null;
 
+  // Exceção: ao assumir (ou quando o bot transfere para atendimento humano), a aba
+  // acompanha a conversa e ela continua aberta para o atendente digitar.
+  const statusAberta = abertaBruta?.status ?? null;
+  useEffect(() => {
+    if (termo === "" && statusAberta === "em_atendimento") setAba("em_atendimento");
+  }, [statusAberta, termo]);
+
+
   const painelContatos = (
     <div className="flex min-h-0 flex-col gap-3">
       <div className="relative">
@@ -592,7 +603,13 @@ function Conversa({
   const [nomeEdicao, setNomeEdicao] = useState("");
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
+  const campoTexto = useRef<HTMLTextAreaElement | null>(null);
+  const inputArquivo = useRef<HTMLInputElement | null>(null);
+  const [anexos, setAnexos] = useState<File[]>([]);
+  const [arrastando, setArrastando] = useState(false);
+  const [enviandoAnexos, setEnviandoAnexos] = useState(false);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
+  const enviarArquivo = useServerFn(enviarArquivoWhatsapp);
   const finalizacao = useServerFn(enviarParaFinalizacao);
   const presenca = useServerFn(enviarDigitandoWhatsapp);
   const enviarRapida = useServerFn(enviarMensagemRapidaWhatsapp);
@@ -600,6 +617,66 @@ function Conversa({
   const apagarMsgFn = useServerFn(apagarMensagemWhatsapp);
   const [msgEditando, setMsgEditando] = useState<Mensagem | null>(null);
   const [textoEdicao, setTextoEdicao] = useState("");
+
+  function adicionarAnexos(arquivos: File[]) {
+    if (arquivos.length === 0) return;
+    setAnexos((atual) => [...atual, ...arquivos]);
+    campoTexto.current?.focus();
+  }
+
+  /** Lê o arquivo como data URL (base64) para envio pela Z-API. */
+  function lerBase64(arquivo: File) {
+    return new Promise<string>((resolve, reject) => {
+      const leitor = new FileReader();
+      leitor.onload = () => resolve(String(leitor.result));
+      leitor.onerror = () => reject(new Error("Falha ao ler o arquivo."));
+      leitor.readAsDataURL(arquivo);
+    });
+  }
+
+  /** Envia os anexos escolhidos; o texto digitado vai como legenda do primeiro. */
+  async function enviarAnexos() {
+    if (anexos.length === 0 || enviandoAnexos) return;
+    setEnviandoAnexos(true);
+    const legenda = texto.trim();
+    let enviados = 0;
+    try {
+      for (const [i, arquivo] of anexos.entries()) {
+        const base64 = await lerBase64(arquivo);
+        const ehImagem = arquivo.type.startsWith("image/");
+        const ehPdf = arquivo.type === "application/pdf" || /\.pdf$/i.test(arquivo.name);
+        const r = await enviarArquivo({
+          data: {
+            conversaId: conversa.id,
+            telefone: conversa.telefone,
+            base64,
+            nomeArquivo: arquivo.name,
+            tipo: ehImagem ? ("imagem" as const) : ehPdf ? ("pdf" as const) : ("documento" as const),
+            mimeType: arquivo.type || undefined,
+            legenda: i === 0 && legenda ? legenda : undefined,
+            autor: atendente,
+          },
+        });
+        if (!r.ok) {
+          toast.error(r.erro ?? `Falha ao enviar ${arquivo.name}.`);
+          break;
+        }
+        enviados += 1;
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao enviar os arquivos.");
+    } finally {
+      setEnviandoAnexos(false);
+      if (enviados > 0) {
+        setAnexos((atual) => atual.slice(enviados));
+        if (legenda) setTexto("");
+        toast.success(enviados === 1 ? "Arquivo enviado." : `${enviados} arquivos enviados.`);
+      }
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-mensagens", conversa.id] });
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    }
+  }
+
 
   const editarMsg = useMutation({
     mutationFn: async (novo: string) => {
@@ -640,6 +717,12 @@ function Conversa({
     setSelecionarAoCarregar(false);
     setEditandoNota(false);
     setEditandoNome(false);
+    setAnexos([]);
+    setArrastando(false);
+    // Foco direto na caixa de digitação ao abrir a conversa.
+    const t = setTimeout(() => campoTexto.current?.focus(), 80);
+    return () => clearTimeout(t);
+
   }, [conversa.id]);
 
   function alternarSelecao(id: string) {
@@ -1211,7 +1294,28 @@ function Conversa({
             <div ref={fim} />
           </div>
 
-          <div className="relative flex items-end gap-2 border-t pt-3">
+          <div
+            className={cn(
+              "relative flex items-end gap-2 rounded-lg border-t pt-3",
+              arrastando && "bg-primary/5 ring-2 ring-primary",
+            )}
+            onDragOver={(e) => {
+              if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+              e.preventDefault();
+              setArrastando(true);
+            }}
+            onDragLeave={(e) => {
+              if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+              setArrastando(false);
+            }}
+            onDrop={(e) => {
+              const arquivos = Array.from(e.dataTransfer.files ?? []);
+              if (arquivos.length === 0) return;
+              e.preventDefault();
+              setArrastando(false);
+              adicionarAnexos(arquivos);
+            }}
+          >
             {sugestoesRapidas.length > 0 && (
               <div className="absolute bottom-full left-0 z-20 mb-1 max-h-64 w-full overflow-y-auto rounded-lg border bg-popover p-1 shadow-md">
                 {sugestoesRapidas.map((m, idx) => (
@@ -1235,6 +1339,47 @@ function Conversa({
               </div>
             )}
 
+            {anexos.length > 0 && (
+              <div className="absolute bottom-full left-0 z-10 mb-1 flex w-full flex-wrap gap-2 rounded-lg border bg-muted/60 p-2">
+                {anexos.map((a, idx) => (
+                  <span
+                    key={`${a.name}-${idx}`}
+                    className="flex max-w-[16rem] items-center gap-1 rounded-md border bg-background px-2 py-1 text-xs"
+                  >
+                    <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{a.name}</span>
+                    <button
+                      type="button"
+                      aria-label={`Remover ${a.name}`}
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => setAnexos((atual) => atual.filter((_, i) => i !== idx))}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <input
+              ref={inputArquivo}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                adicionarAnexos(Array.from(e.target.files ?? []));
+                e.target.value = "";
+              }}
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Anexar arquivos"
+              title="Anexar arquivos"
+              onClick={() => inputArquivo.current?.click()}
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
             <Button
               variant="outline"
               size="icon"
@@ -1245,16 +1390,27 @@ function Conversa({
               <Zap className="h-4 w-4" />
             </Button>
             <Textarea
+              ref={campoTexto}
               value={texto}
               onChange={(e) => {
                 setTexto(e.target.value);
                 if (e.target.value.trim()) avisarDigitando();
+              }}
+              onPaste={(e) => {
+                const arquivos = Array.from(e.clipboardData.files ?? []);
+                if (arquivos.length === 0) return;
+                e.preventDefault();
+                adicionarAnexos(arquivos);
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   if (sugestoesRapidas.length > 0) {
                     aplicarRapida(sugestoesRapidas[indiceSugestao]!);
+                    return;
+                  }
+                  if (anexos.length > 0) {
+                    if (!enviandoAnexos) void enviarAnexos();
                     return;
                   }
                   const msg = texto.trim();
@@ -1278,12 +1434,20 @@ function Conversa({
               className="min-h-0 flex-1 resize-none"
             />
             <Button
-              onClick={() => texto.trim() && envio.mutate(texto.trim())}
-              disabled={!texto.trim() || envio.isPending}
+              onClick={() => {
+                if (anexos.length > 0) {
+                  if (!enviandoAnexos) void enviarAnexos();
+                  return;
+                }
+                if (texto.trim()) envio.mutate(texto.trim());
+              }}
+              disabled={enviandoAnexos || envio.isPending || (anexos.length === 0 && !texto.trim())}
             >
-              <Send className="mr-1 h-4 w-4" /> Enviar
+              <Send className="mr-1 h-4 w-4" />
+              {enviandoAnexos ? "Enviando..." : "Enviar"}
             </Button>
           </div>
+
 
           <Dialog open={Boolean(msgEditando)} onOpenChange={(a) => !a && setMsgEditando(null)}>
             <DialogContent className="max-w-md">
