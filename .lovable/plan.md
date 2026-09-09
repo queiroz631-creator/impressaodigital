@@ -1,29 +1,16 @@
-# Melhoria 27 — Lembrar da autorização do QZ Tray
+# Melhoria 27 — Assumir atendimento abre a conversa
 
-Hoje, a cada conexão, o QZ Tray abre a janela perguntando se o site pode acessar as impressoras, porque a conexão é feita sem assinatura digital. A correção oficial é assinar a conexão com um certificado próprio: assim o QZ Tray mostra o pedido de autorização apenas uma vez (com a opção de lembrar), em vez de perguntar toda hora.
+## Objetivo
+Ao assumir um atendimento (pelo botão "Assumir" ou quando o atendimento passa para atendimento humano automaticamente), o sistema deve levar direto para a conversa daquele cliente, já aberta, em vez de fechar a conversa e deixar o usuário na aba anterior.
 
-## Como vai funcionar
-
-- Será gerado um certificado digital próprio do sistema (par de chaves).
-- A parte pública do certificado fica no código do site e é apresentada ao QZ Tray na conexão.
-- A parte privada fica guardada como segredo no backend e é usada por uma função de servidor que assina cada conexão.
-- Com a conexão assinada, o QZ Tray passa a oferecer "lembrar esta decisão" e não volta a perguntar.
-- Se o certificado não estiver configurado, tudo continua funcionando como hoje (pergunta a cada vez), sem quebrar a impressão.
-- Nenhuma mudança de layout nem nas telas de impressão — apenas a camada de conexão.
+## Comportamento novo
+- Ao clicar em "Assumir": a aba passa para "Em atendimento" e a conversa do cliente continua aberta, pronta para digitar.
+- Quando o robô transferir a conversa para atendimento humano e essa conversa já estiver aberta na tela, ela permanece aberta e a aba acompanha o novo status (sem fechar sozinha).
+- Demais ações (Devolver ao bot, Pendente, Fila de impressão, Finalizar) continuam exatamente como estão hoje: a conversa fecha e a aba atual é mantida.
 
 ## Detalhes técnicos
+Alteração restrita a `src/routes/whatsapp.tsx`:
+- Em `alterarStatus`, aceitar um parâmetro opcional "seguir" que, ao concluir a mudança para `em_atendimento`, chama `onAbrirConversa(conversa.id, "em_atendimento")` — o mesmo callback já usado por "Últimos Arquivos" para trocar aba e manter a conversa aberta. Usado apenas no botão "Assumir".
+- No efeito que hoje fecha a conversa aberta quando o status deixa de bater com a aba selecionada, abrir exceção quando o novo status for `em_atendimento`: nesse caso trocar a aba para `em_atendimento` e manter a conversa aberta.
 
-1. Gerar par de chaves RSA + certificado autoassinado (openssl, via sandbox):
-   - chave privada → salva como segredo `QZ_PRIVATE_KEY` no backend;
-   - certificado público (PEM) → gravado em `src/lib/qz-certificado.ts` (constante).
-2. Nova server function `assinarQz` em `src/lib/impressora.functions.ts`:
-   - `createServerFn` POST sem middleware de auth (assinatura é operação neutra do site; o conteúdo assinado é apenas o hash de handshake do QZ);
-   - lê `process.env.QZ_PRIVATE_KEY` dentro do handler e assina com `crypto.sign("sha512", ..., RSA-PSS)` conforme exigido pelo QZ Tray 2.x.
-3. `src/lib/impressora.ts` (`carregarQz`):
-   - se o certificado existir, chamar `qz.security.setCertificatePromise` (resolve o PEM) e `qz.security.setSignaturePromise` (chama `assinarQz`), antes de qualquer `connect`.
-4. Validar com typecheck + build.
-5. Marcar a melhoria 27 como executada (`executada = true`, mantendo `status = 'pendente'`).
-
-## Observação
-
-Mesmo com assinatura, na **primeira** conexão de cada computador o QZ Tray pode exibir a janela uma vez com a opção de lembrar a decisão — depois disso, não pergunta mais.
+Sem mudanças em banco de dados, lógica do bot, layout ou outras telas. Ao final, marcar a melhoria como executada.
