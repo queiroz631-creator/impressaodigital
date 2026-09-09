@@ -735,8 +735,10 @@ function rotuloStatus(status: string) {
 async function acaoCurriculo(conversa: ConversaBot) {
   try {
     const { gerarLinkNovo } = await import("@/lib/curriculo.server");
+    const { mensagemLinkCurriculo } = await import("@/lib/curriculo");
     const { url } = await gerarLinkNovo();
-    await responder(conversa, `Para montar seu currículo, é só preencher por aqui:\n${url}\n\nO link vale por 24 horas.`);
+    const dadosBot = await carregarDadosBot();
+    await responder(conversa, mensagemLinkCurriculo(dadosBot?.config.msg_link_curriculo, url));
   } catch {
     await responder(conversa, "Não consegui gerar o link do currículo agora. Vou chamar um atendente. 😊");
   }
