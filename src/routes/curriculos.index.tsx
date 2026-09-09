@@ -74,6 +74,7 @@ function Curriculos() {
   const gerarNovoLink = useServerFn(gerarLinkNovoCurriculo);
   const [linkNovoAberto, setLinkNovoAberto] = useState(false);
   const [linkNovoUrl, setLinkNovoUrl] = useState("");
+  const [linkNovoMensagem, setLinkNovoMensagem] = useState("");
   const [linkNovoExpira, setLinkNovoExpira] = useState("");
   const [gerandoLink, setGerandoLink] = useState(false);
   const [importarAberto, setImportarAberto] = useState(false);
