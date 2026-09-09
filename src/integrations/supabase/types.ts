@@ -1998,6 +1998,7 @@ export type Database = {
           msg_inatividade_pendente: string
           msg_inatividade1: string
           msg_inicial: string
+          msg_link_curriculo: string
           msg_menu: string
           msg_nao_entendi: string
           msg_orcamento_confirmado: string
@@ -2058,6 +2059,7 @@ export type Database = {
           msg_inatividade_pendente?: string
           msg_inatividade1?: string
           msg_inicial?: string
+          msg_link_curriculo?: string
           msg_menu?: string
           msg_nao_entendi?: string
           msg_orcamento_confirmado?: string
@@ -2118,6 +2120,7 @@ export type Database = {
           msg_inatividade_pendente?: string
           msg_inatividade1?: string
           msg_inicial?: string
+          msg_link_curriculo?: string
           msg_menu?: string
           msg_nao_entendi?: string
           msg_orcamento_confirmado?: string

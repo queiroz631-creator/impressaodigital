@@ -1,0 +1,1 @@
+ALTER TABLE public.whatsapp_config ADD COLUMN IF NOT EXISTS msg_link_curriculo text NOT NULL DEFAULT '';

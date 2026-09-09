@@ -29,7 +29,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { cpfValido, formatarCpf, formatarTelefone, somenteNumeros } from "@/lib/curriculo";
+import {
+  cpfValido,
+  formatarCpf,
+  formatarTelefone,
+  mensagemLinkCurriculo,
+  somenteNumeros,
+} from "@/lib/curriculo";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import { dataBR, dataHoraBR } from "@/lib/format";
 import { gerarLinkNovoCurriculo } from "@/lib/curriculo.functions";
@@ -74,6 +80,7 @@ function Curriculos() {
   const gerarNovoLink = useServerFn(gerarLinkNovoCurriculo);
   const [linkNovoAberto, setLinkNovoAberto] = useState(false);
   const [linkNovoUrl, setLinkNovoUrl] = useState("");
+  const [linkNovoMensagem, setLinkNovoMensagem] = useState("");
   const [linkNovoExpira, setLinkNovoExpira] = useState("");
   const [gerandoLink, setGerandoLink] = useState(false);
   const [importarAberto, setImportarAberto] = useState(false);
@@ -83,11 +90,13 @@ function Curriculos() {
     try {
       const r = await gerarNovoLink();
       const url = urlPublica(r.url);
+      const texto = mensagemLinkCurriculo(r.mensagem, url);
       setLinkNovoUrl(url);
+      setLinkNovoMensagem(texto);
       setLinkNovoExpira(r.expiraEm);
       setLinkNovoAberto(true);
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copiado!");
+      await navigator.clipboard.writeText(texto);
+      toast.success("Mensagem com o link copiada!");
     } catch {
       toast.error("Não foi possível gerar o link.");
     } finally {
@@ -479,7 +488,16 @@ function Curriculos() {
                 toast.success("Link copiado!");
               }}
             >
-              Copiar link
+              Copiar só o link
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                await navigator.clipboard.writeText(linkNovoMensagem || linkNovoUrl);
+                toast.success("Mensagem copiada!");
+              }}
+            >
+              Copiar mensagem
             </Button>
             <Button onClick={() => setLinkNovoAberto(false)}>Fechar</Button>
           </DialogFooter>

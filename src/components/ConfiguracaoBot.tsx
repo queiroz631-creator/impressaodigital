@@ -19,6 +19,7 @@ import { NumerosPainel } from "@/components/bot/NumerosPainel";
 import { PrimeiroContatoPainel } from "@/components/bot/PrimeiroContatoPainel";
 import { StatusWhatsappPainel } from "@/components/bot/StatusWhatsappPainel";
 import { lerCfgCortesia } from "@/lib/whatsapp-cortesia";
+import { MSG_LINK_CURRICULO_PADRAO } from "@/lib/curriculo";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -101,6 +102,8 @@ interface FormBot {
   msg_revisao_ativo: boolean;
   msg_orcamento_confirmado: string;
   msg_orcamento_confirmado_ativo: boolean;
+  /** Frase enviada junto do link do currículo; usa a variável {link}. */
+  msg_link_curriculo: string;
   /** Frases de cortesia separadas por quebra de linha (convertido ao salvar). */
   ignorar_agradecimentos: { ativo: boolean; janela_minutos: number; frases: string };
 }
@@ -244,6 +247,8 @@ export function ConfiguracaoBot() {
       msg_revisao_ativo: d.msg_revisao_ativo !== false,
       msg_orcamento_confirmado: d.msg_orcamento_confirmado ?? "",
       msg_orcamento_confirmado_ativo: d.msg_orcamento_confirmado_ativo !== false,
+      msg_link_curriculo:
+        (d as { msg_link_curriculo?: string | null }).msg_link_curriculo || MSG_LINK_CURRICULO_PADRAO,
       ignorar_agradecimentos: (() => {
         const c = lerCfgCortesia((d as { ignorar_agradecimentos?: unknown }).ignorar_agradecimentos);
         return { ativo: c.ativo, janela_minutos: c.janela_minutos, frases: c.frases.join("\n") };
@@ -500,6 +505,30 @@ export function ConfiguracaoBot() {
                   <p className="text-xs text-muted-foreground">{campo.ajuda}</p>
                 </div>
               ))}
+
+              <div className="grid gap-1 rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label>Link do currículo</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => setForm({ ...form, msg_link_curriculo: MSG_LINK_CURRICULO_PADRAO })}
+                  >
+                    Restaurar padrão
+                  </Button>
+                </div>
+                <Textarea
+                  rows={3}
+                  value={form.msg_link_curriculo}
+                  onChange={(e) => setForm({ ...form, msg_link_curriculo: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Frase enviada junto do link do currículo. Use {"{link}"} onde o endereço deve
+                  aparecer. Em branco, usa o texto padrão.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
