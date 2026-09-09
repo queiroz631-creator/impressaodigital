@@ -1219,7 +1219,28 @@ function Conversa({
             <div ref={fim} />
           </div>
 
-          <div className="relative flex items-end gap-2 border-t pt-3">
+          <div
+            className={cn(
+              "relative flex items-end gap-2 rounded-lg border-t pt-3",
+              arrastando && "bg-primary/5 ring-2 ring-primary",
+            )}
+            onDragOver={(e) => {
+              if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+              e.preventDefault();
+              setArrastando(true);
+            }}
+            onDragLeave={(e) => {
+              if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+              setArrastando(false);
+            }}
+            onDrop={(e) => {
+              const arquivos = Array.from(e.dataTransfer.files ?? []);
+              if (arquivos.length === 0) return;
+              e.preventDefault();
+              setArrastando(false);
+              adicionarAnexos(arquivos);
+            }}
+          >
             {sugestoesRapidas.length > 0 && (
               <div className="absolute bottom-full left-0 z-20 mb-1 max-h-64 w-full overflow-y-auto rounded-lg border bg-popover p-1 shadow-md">
                 {sugestoesRapidas.map((m, idx) => (
@@ -1243,6 +1264,47 @@ function Conversa({
               </div>
             )}
 
+            {anexos.length > 0 && (
+              <div className="absolute bottom-full left-0 z-10 mb-1 flex w-full flex-wrap gap-2 rounded-lg border bg-muted/60 p-2">
+                {anexos.map((a, idx) => (
+                  <span
+                    key={`${a.name}-${idx}`}
+                    className="flex max-w-[16rem] items-center gap-1 rounded-md border bg-background px-2 py-1 text-xs"
+                  >
+                    <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{a.name}</span>
+                    <button
+                      type="button"
+                      aria-label={`Remover ${a.name}`}
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => setAnexos((atual) => atual.filter((_, i) => i !== idx))}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <input
+              ref={inputArquivo}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                adicionarAnexos(Array.from(e.target.files ?? []));
+                e.target.value = "";
+              }}
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Anexar arquivos"
+              title="Anexar arquivos"
+              onClick={() => inputArquivo.current?.click()}
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
             <Button
               variant="outline"
               size="icon"
@@ -1253,16 +1315,27 @@ function Conversa({
               <Zap className="h-4 w-4" />
             </Button>
             <Textarea
+              ref={campoTexto}
               value={texto}
               onChange={(e) => {
                 setTexto(e.target.value);
                 if (e.target.value.trim()) avisarDigitando();
+              }}
+              onPaste={(e) => {
+                const arquivos = Array.from(e.clipboardData.files ?? []);
+                if (arquivos.length === 0) return;
+                e.preventDefault();
+                adicionarAnexos(arquivos);
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   if (sugestoesRapidas.length > 0) {
                     aplicarRapida(sugestoesRapidas[indiceSugestao]!);
+                    return;
+                  }
+                  if (anexos.length > 0) {
+                    if (!enviandoAnexos) void enviarAnexos();
                     return;
                   }
                   const msg = texto.trim();
@@ -1286,12 +1359,20 @@ function Conversa({
               className="min-h-0 flex-1 resize-none"
             />
             <Button
-              onClick={() => texto.trim() && envio.mutate(texto.trim())}
-              disabled={!texto.trim() || envio.isPending}
+              onClick={() => {
+                if (anexos.length > 0) {
+                  if (!enviandoAnexos) void enviarAnexos();
+                  return;
+                }
+                if (texto.trim()) envio.mutate(texto.trim());
+              }}
+              disabled={enviandoAnexos || envio.isPending || (anexos.length === 0 && !texto.trim())}
             >
-              <Send className="mr-1 h-4 w-4" /> Enviar
+              <Send className="mr-1 h-4 w-4" />
+              {enviandoAnexos ? "Enviando..." : "Enviar"}
             </Button>
           </div>
+
 
           <Dialog open={Boolean(msgEditando)} onOpenChange={(a) => !a && setMsgEditando(null)}>
             <DialogContent className="max-w-md">
