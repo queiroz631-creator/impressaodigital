@@ -714,6 +714,12 @@ function Conversa({
     setSelecionarAoCarregar(false);
     setEditandoNota(false);
     setEditandoNome(false);
+    setAnexos([]);
+    setArrastando(false);
+    // Foco direto na caixa de digitação ao abrir a conversa.
+    const t = setTimeout(() => campoTexto.current?.focus(), 80);
+    return () => clearTimeout(t);
+
   }, [conversa.id]);
 
   function alternarSelecao(id: string) {
