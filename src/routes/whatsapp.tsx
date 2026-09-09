@@ -600,7 +600,13 @@ function Conversa({
   const [nomeEdicao, setNomeEdicao] = useState("");
   const fim = useRef<HTMLDivElement | null>(null);
   const ultimaPresenca = useRef(0);
+  const campoTexto = useRef<HTMLTextAreaElement | null>(null);
+  const inputArquivo = useRef<HTMLInputElement | null>(null);
+  const [anexos, setAnexos] = useState<File[]>([]);
+  const [arrastando, setArrastando] = useState(false);
+  const [enviandoAnexos, setEnviandoAnexos] = useState(false);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
+  const enviarArquivo = useServerFn(enviarArquivoWhatsapp);
   const finalizacao = useServerFn(enviarParaFinalizacao);
   const presenca = useServerFn(enviarDigitandoWhatsapp);
   const enviarRapida = useServerFn(enviarMensagemRapidaWhatsapp);
@@ -608,6 +614,66 @@ function Conversa({
   const apagarMsgFn = useServerFn(apagarMensagemWhatsapp);
   const [msgEditando, setMsgEditando] = useState<Mensagem | null>(null);
   const [textoEdicao, setTextoEdicao] = useState("");
+
+  function adicionarAnexos(arquivos: File[]) {
+    if (arquivos.length === 0) return;
+    setAnexos((atual) => [...atual, ...arquivos]);
+    campoTexto.current?.focus();
+  }
+
+  /** Lê o arquivo como data URL (base64) para envio pela Z-API. */
+  function lerBase64(arquivo: File) {
+    return new Promise<string>((resolve, reject) => {
+      const leitor = new FileReader();
+      leitor.onload = () => resolve(String(leitor.result));
+      leitor.onerror = () => reject(new Error("Falha ao ler o arquivo."));
+      leitor.readAsDataURL(arquivo);
+    });
+  }
+
+  /** Envia os anexos escolhidos; o texto digitado vai como legenda do primeiro. */
+  async function enviarAnexos() {
+    if (anexos.length === 0 || enviandoAnexos) return;
+    setEnviandoAnexos(true);
+    const legenda = texto.trim();
+    let enviados = 0;
+    try {
+      for (const [i, arquivo] of anexos.entries()) {
+        const base64 = await lerBase64(arquivo);
+        const ehImagem = arquivo.type.startsWith("image/");
+        const ehPdf = arquivo.type === "application/pdf" || /\.pdf$/i.test(arquivo.name);
+        const r = await enviarArquivo({
+          data: {
+            conversaId: conversa.id,
+            telefone: conversa.telefone,
+            base64,
+            nomeArquivo: arquivo.name,
+            tipo: ehImagem ? ("imagem" as const) : ehPdf ? ("pdf" as const) : ("documento" as const),
+            mimeType: arquivo.type || undefined,
+            legenda: i === 0 && legenda ? legenda : undefined,
+            autor: atendente,
+          },
+        });
+        if (!r.ok) {
+          toast.error(r.erro ?? `Falha ao enviar ${arquivo.name}.`);
+          break;
+        }
+        enviados += 1;
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao enviar os arquivos.");
+    } finally {
+      setEnviandoAnexos(false);
+      if (enviados > 0) {
+        setAnexos((atual) => atual.slice(enviados));
+        if (legenda) setTexto("");
+        toast.success(enviados === 1 ? "Arquivo enviado." : `${enviados} arquivos enviados.`);
+      }
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-mensagens", conversa.id] });
+      await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    }
+  }
+
 
   const editarMsg = useMutation({
     mutationFn: async (novo: string) => {
