@@ -101,6 +101,8 @@ interface FormBot {
   msg_revisao_ativo: boolean;
   msg_orcamento_confirmado: string;
   msg_orcamento_confirmado_ativo: boolean;
+  /** Frase enviada junto do link do currículo; usa a variável {link}. */
+  msg_link_curriculo: string;
   /** Frases de cortesia separadas por quebra de linha (convertido ao salvar). */
   ignorar_agradecimentos: { ativo: boolean; janela_minutos: number; frases: string };
 }
