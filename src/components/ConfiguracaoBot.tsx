@@ -500,6 +500,30 @@ export function ConfiguracaoBot() {
                   <p className="text-xs text-muted-foreground">{campo.ajuda}</p>
                 </div>
               ))}
+
+              <div className="grid gap-1 rounded-lg border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label>Link do currículo</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => setForm({ ...form, msg_link_curriculo: MSG_LINK_CURRICULO_PADRAO })}
+                  >
+                    Restaurar padrão
+                  </Button>
+                </div>
+                <Textarea
+                  rows={3}
+                  value={form.msg_link_curriculo}
+                  onChange={(e) => setForm({ ...form, msg_link_curriculo: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Frase enviada junto do link do currículo. Use {"{link}"} onde o endereço deve
+                  aparecer. Em branco, usa o texto padrão.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
