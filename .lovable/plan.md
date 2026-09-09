@@ -1,24 +1,29 @@
-# Melhoria 23 — Nova opção na regra do primeiro contato
+# Melhoria 23 — Mensagem automática do link do currículo
+
+Hoje a frase enviada junto com o link do currículo está fixa no código:
+"Para montar seu currículo, é só preencher por aqui: {link} — O link vale por 24 horas."
+Ela passa a ser editável.
 
 ## O que muda
 
-Em Configurar Bot > Primeiro contato, no campo **"Enviar a mensagem"**, entra uma nova opção:
+**Configurar Bot > Mensagens**
+- Novo campo "Link do currículo", junto das demais mensagens, com o texto atual já preenchido.
+- Aceita a variável `{link}` (onde o endereço do currículo entra) e as variáveis já usadas nas outras mensagens.
+- Se o campo ficar vazio, o robô volta a usar o texto padrão, para nunca enviar um link sem explicação.
 
-**"Somente a partir do 2º contato do dia"**
+**Robô**
+- Sempre que o robô enviar o link do currículo (menu, fluxo ou ação "gerar link"), usa a frase configurada.
 
-- Com ela marcada, a regra fica em silêncio no primeiro atendimento do dia daquele cliente.
-- A partir do segundo atendimento do mesmo dia, a mensagem da regra passa a ser enviada normalmente.
-- No dia seguinte a contagem zera: o primeiro contato volta a ficar em silêncio.
-- A ação da regra (iniciar fluxo, transferir, finalizar etc.) continua sendo executada como hoje — a opção controla apenas o envio da mensagem, igual às opções já existentes.
-
-Na lista de regras aparece um selo indicando essa condição, como já acontece com "Somente no 1º contato do dia" e "Uma vez por atendimento".
-
-As opções atuais ("Sempre que a regra combinar", "Uma vez por atendimento", "Somente no 1º contato do dia") continuam iguais. Nada mais muda.
+**Tela Currículos**
+- Ao gerar o link do novo currículo, o sistema copia a frase completa já com o link (em vez de só o endereço).
+- A janela do link continua mostrando o endereço e a validade; ganha também a opção de copiar apenas o endereço.
 
 ## Detalhes técnicos
 
-- `src/lib/bot-fluxos.ts`: novo item em `ENVIOS_PRIMEIRO_CONTATO` com valor `apos_primeira_do_dia`.
-- `src/lib/bot.server.ts` (função `triagem`): o cálculo de `podeEnviar` passa a considerar o novo modo — quando `apos_primeira_do_dia`, só envia se `primeiraDoDia` for falso (a confirmação SIM/NÃO segue a mesma exceção já existente). O restante da lógica (janela anti-repetição, delays, `regrasEnviadas`, execução da ação) permanece intacto.
-- `src/components/bot/PrimeiroContatoPainel.tsx`: selo na lista para o novo modo; o `Select` já é montado a partir de `ENVIOS_PRIMEIRO_CONTATO`.
-- Sem migração de banco: `bot_primeiro_contato.enviar_mensagem` já é texto livre.
-- Ao final, marcar a melhoria 23 como executada, mantendo `status = 'pendente'`.
+- Migração: nova coluna `msg_link_curriculo text not null default ''` em `whatsapp_config`.
+- `src/lib/bot.server.ts` (`acaoCurriculo`): lê a mensagem da configuração já carregada, aplica `{link}` e as variáveis existentes; usa o texto padrão quando vazia. Mensagem de erro atual permanece igual.
+- `src/components/ConfiguracaoBot.tsx`: campo novo na lista de mensagens (mesmo padrão dos demais, com dica das variáveis) e inclusão no salvamento.
+- `src/lib/curriculo.functions.ts` / `curriculo.server.ts`: `gerarLinkNovo` passa a devolver também a frase pronta com o link.
+- `src/routes/curriculos.index.tsx`: copia a frase pronta e mostra botão "Copiar só o link".
+- Sem mudanças no layout geral, em fluxos, respostas automáticas ou no restante do bot.
+- Ao final, marcar a melhoria "Mensagem automatica" (Currículo Vitae) como executada, mantendo `status = 'pendente'`.
