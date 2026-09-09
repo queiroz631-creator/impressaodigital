@@ -77,6 +77,8 @@ export async function carregarDadosBot(): Promise<BotDados | null> {
     ),
     msg_finalizacao: d.msg_finalizacao ?? "",
     msg_finalizacao_ativo: d.msg_finalizacao_ativo !== false,
+    msg_link_curriculo:
+      (d as { msg_link_curriculo?: string | null }).msg_link_curriculo ?? "",
   };
 
   const opcoes: BotOpcao[] = ((opc.data ?? []) as Omit<BotOpcao, "palavras">[]).map((o) => ({
