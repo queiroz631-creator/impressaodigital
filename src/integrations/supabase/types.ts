@@ -2180,6 +2180,7 @@ export type Database = {
           motivo_pendencia: string | null
           nao_lidas: number
           nome_contato: string | null
+          nome_manual: boolean
           orcamento_id: string | null
           pedido_id: string | null
           saudacao_em: string | null
@@ -2214,6 +2215,7 @@ export type Database = {
           motivo_pendencia?: string | null
           nao_lidas?: number
           nome_contato?: string | null
+          nome_manual?: boolean
           orcamento_id?: string | null
           pedido_id?: string | null
           saudacao_em?: string | null
@@ -2248,6 +2250,7 @@ export type Database = {
           motivo_pendencia?: string | null
           nao_lidas?: number
           nome_contato?: string | null
+          nome_manual?: boolean
           orcamento_id?: string | null
           pedido_id?: string | null
           saudacao_em?: string | null

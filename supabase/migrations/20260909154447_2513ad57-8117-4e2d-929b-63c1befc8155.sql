@@ -1,0 +1,1 @@
+ALTER TABLE public.whatsapp_conversas ADD COLUMN IF NOT EXISTS nome_manual boolean NOT NULL DEFAULT false;
