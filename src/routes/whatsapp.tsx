@@ -368,6 +368,14 @@ function Atendimento() {
   const abertaBruta = (conversas ?? []).find((c) => c.id === abertaId) ?? null;
   const aberta = abertaBruta && (termo !== "" || abertaBruta.status === aba) ? abertaBruta : null;
 
+  // Exceção: ao assumir (ou quando o bot transfere para atendimento humano), a aba
+  // acompanha a conversa e ela continua aberta para o atendente digitar.
+  const statusAberta = abertaBruta?.status ?? null;
+  useEffect(() => {
+    if (termo === "" && statusAberta === "em_atendimento") setAba("em_atendimento");
+  }, [statusAberta, termo]);
+
+
   const painelContatos = (
     <div className="flex min-h-0 flex-col gap-3">
       <div className="relative">
