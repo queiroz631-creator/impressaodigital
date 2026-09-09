@@ -19,6 +19,7 @@ import { NumerosPainel } from "@/components/bot/NumerosPainel";
 import { PrimeiroContatoPainel } from "@/components/bot/PrimeiroContatoPainel";
 import { StatusWhatsappPainel } from "@/components/bot/StatusWhatsappPainel";
 import { lerCfgCortesia } from "@/lib/whatsapp-cortesia";
+import { MSG_LINK_CURRICULO_PADRAO } from "@/lib/curriculo";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
