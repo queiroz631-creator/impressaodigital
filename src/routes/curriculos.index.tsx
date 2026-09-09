@@ -83,11 +83,13 @@ function Curriculos() {
     try {
       const r = await gerarNovoLink();
       const url = urlPublica(r.url);
+      const texto = mensagemLinkCurriculo(r.mensagem, url);
       setLinkNovoUrl(url);
+      setLinkNovoMensagem(texto);
       setLinkNovoExpira(r.expiraEm);
       setLinkNovoAberto(true);
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copiado!");
+      await navigator.clipboard.writeText(texto);
+      toast.success("Mensagem com o link copiada!");
     } catch {
       toast.error("Não foi possível gerar o link.");
     } finally {
