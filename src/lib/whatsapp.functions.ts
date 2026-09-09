@@ -178,7 +178,8 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
         telefone: z.string().min(8).max(30),
         base64: z.string().min(10),
         nomeArquivo: z.string().min(1).max(200),
-        tipo: z.enum(["pdf", "imagem"]),
+        tipo: z.enum(["pdf", "imagem", "documento"]),
+        mimeType: z.string().max(200).optional(),
         legenda: z.string().max(1000).optional(),
         autor: z.string().max(120).optional(),
       })
@@ -190,26 +191,36 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
     const telefone = normalizarTelefone(data.telefone);
     if (!telefone) throw new Error("Telefone inválido.");
 
+    const mimePadrao =
+      data.tipo === "pdf"
+        ? "application/pdf"
+        : data.tipo === "imagem"
+          ? "image/png"
+          : (data.mimeType ?? "application/octet-stream");
+
     const conteudo = data.base64.startsWith("data:")
       ? data.base64
-      : `data:${data.tipo === "pdf" ? "application/pdf" : "image/png"};base64,${data.base64}`;
+      : `data:${mimePadrao};base64,${data.base64}`;
+
+    // Documentos genéricos usam a extensão do nome do arquivo na rota da Z-API.
+    const extensao = (data.nomeArquivo.split(".").pop() ?? "").toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
 
     const r =
-      data.tipo === "pdf"
-        ? await chamarZapi("send-document/pdf", {
-            metodo: "POST",
-            corpo: { phone: telefone, document: conteudo, fileName: data.nomeArquivo, caption: data.legenda ?? "" },
-          })
-        : await chamarZapi("send-image", {
+      data.tipo === "imagem"
+        ? await chamarZapi("send-image", {
             metodo: "POST",
             corpo: { phone: telefone, image: conteudo, caption: data.legenda ?? "" },
+          })
+        : await chamarZapi(`send-document/${data.tipo === "pdf" ? "pdf" : extensao}`, {
+            metodo: "POST",
+            corpo: { phone: telefone, document: conteudo, fileName: data.nomeArquivo, caption: data.legenda ?? "" },
           });
 
     if (data.conversaId) {
       await context.supabase.from("whatsapp_mensagens").insert({
         conversa_id: data.conversaId,
         direcao: "saida",
-        tipo: data.tipo === "pdf" ? "documento" : "imagem",
+        tipo: data.tipo === "imagem" ? "imagem" : "documento",
         texto: data.legenda ?? data.nomeArquivo,
         arquivo_nome: data.nomeArquivo,
         autor: data.autor ?? "Atendente",
@@ -222,6 +233,7 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
         await promoverParaEmAtendimento(context.supabase, data.conversaId, context.userId, data.autor);
       }
     }
+
 
     if (!r.ok) return { ok: false as const, erro: r.erro ?? "Falha ao enviar o arquivo." };
     return { ok: true as const, erro: null };
