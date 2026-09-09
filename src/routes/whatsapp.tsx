@@ -1062,7 +1062,7 @@ function Conversa({
       const valor = nome.trim() || null;
       const { error } = await supabase
         .from("whatsapp_conversas")
-        .update({ nome_contato: valor })
+        .update({ nome_contato: valor, nome_manual: valor !== null })
         .eq("telefone", conversa.telefone);
       if (error) throw error;
     },

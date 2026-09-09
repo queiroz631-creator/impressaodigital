@@ -253,9 +253,10 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           atendimento_numero: number | null;
           data_finalizacao: string | null;
           cliente_id?: string | null;
+          nome_manual?: boolean | null;
         };
         const colunasConversa =
-          "id, total_mensagens, nao_lidas, status, atendimento_numero, data_finalizacao, cliente_id";
+          "id, total_mensagens, nao_lidas, status, atendimento_numero, data_finalizacao, cliente_id, nome_manual";
 
         let conversaAberta: ConversaBase | null = null;
         let clienteId: string | null = null;
@@ -453,7 +454,12 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
             // enviadas pelo celular com esta mesma conversa.
             ...(lidNormalizado ? ({ chat_lid: lidNormalizado } as Record<string, string>) : {}),
             // "…@lid" não é nome de contato: nunca sobrescreve o nome real.
-            ...(nomeContato && !/@lid$/i.test(nomeContato) ? { nome_contato: nomeContato } : {}),
+            // Nome definido manualmente pelo atendente também nunca é sobrescrito.
+            ...(nomeContato &&
+            !/@lid$/i.test(nomeContato) &&
+            !conversaAberta?.nome_manual
+              ? { nome_contato: nomeContato }
+              : {}),
             ultima_mensagem: resumo.slice(0, 300),
             ultima_mensagem_em: agora,
             total_mensagens: totalMensagens + 1,
