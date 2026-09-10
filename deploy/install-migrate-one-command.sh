@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# IMPRESSÃO DIGITAL - INSTALAÇÃO + MIGRAÇÃO COMPLETA EM VPS NOVA
+# IMPRESSÃO DIGITAL - INSTALAÇÃO + MIGRAÇÃO COMPLETA EM VPS NOVA - FINAL
 #
 # USO:
 #   bash install-migrate-one-command.sh /root/impressaodigital_260909.backup
@@ -283,7 +283,10 @@ chmod 600 "$PRE_RESTORE_BACKUP"
 ok "Backup de segurança salvo em: $PRE_RESTORE_BACKUP"
 
 # Confere se é um dump PostgreSQL válido.
-pg_restore -l "$BACKUP" >/dev/null 2>&1 || die "O arquivo informado não parece ser um backup PostgreSQL válido."
+# O backup do Lovable usa o formato CUSTOM 1.16, gerado por PostgreSQL 17.
+# O Ubuntu 24.04 pode instalar um pg_restore mais antigo (ex.: 14/16),
+# então a validação usa PostgreSQL 17 dentro de um container.
+docker run --rm -i postgres:17 pg_restore -l - < "$BACKUP" >/dev/null 2>&1   || die "O arquivo informado não parece ser um backup PostgreSQL 17 válido."
 
 echo "1/3 - Restaurando somente auth.users..."
 docker exec -i "$DB_CONTAINER" pg_restore \
