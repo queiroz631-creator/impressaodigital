@@ -1233,9 +1233,11 @@ function Conversa({
                 </div>
               ) : (
               <div key={m.id} className={cn("group flex items-center gap-1", m.direcao === "saida" ? "justify-end" : "justify-start")}>
-                {m.direcao === "saida" && !m.apagada && !selecionando && m.whatsapp_message_id && (
+                {m.direcao === "saida" && !m.apagada && !selecionando && (m.whatsapp_message_id || podeImprimirMidia(m)) && (
                   <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    {m.tipo === "texto" && (
+                    {podeImprimirMidia(m) && <BotaoImprimirMidia mensagem={m} />}
+                    {m.tipo === "texto" && m.whatsapp_message_id && (
+
                       <Button
                         size="icon"
                         variant="ghost"
@@ -1288,7 +1290,13 @@ function Conversa({
                     {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
                   </p>
                 </div>
+                {m.direcao === "entrada" && !m.apagada && !selecionando && podeImprimirMidia(m) && (
+                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <BotaoImprimirMidia mensagem={m} />
+                  </div>
+                )}
               </div>
+
               ),
             )}
             <div ref={fim} />
