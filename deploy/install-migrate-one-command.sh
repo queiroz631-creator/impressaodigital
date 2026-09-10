@@ -24,7 +24,7 @@ SUPABASE_DOMAIN="supabase.queiroztecno.com.br"
 
 # A instalação oficial atual cria o projeto dentro desta árvore.
 SUPABASE_ROOT="/root/supabase-project"
-SUPABASE_DIR="/root/supabase-project/docker/supabase-project"
+SUPABASE_DIR="/root/supabase-project"
 SUPABASE_SETUP_URL="https://supabase.link/setup.sh"
 
 BACKUP="${1:-}"
@@ -185,7 +185,7 @@ if [ ! -f "$SUPABASE_DIR/.env" ]; then
   chmod +x /root/supabase-setup.sh
 
   # A instalação oficial atual cria:
-  # /root/supabase-project/docker/supabase-project
+  # /root/supabase-project
   sh /root/supabase-setup.sh --project-dir supabase-project -y
 
   [ -f "$SUPABASE_DIR/.env" ] || die "Supabase não criou $SUPABASE_DIR/.env"
