@@ -1674,6 +1674,90 @@ function urlMidia(id: string, baixar = false) {
   return `/api/public/whatsapp/midia?id=${encodeURIComponent(id)}${baixar ? "&download=1" : ""}`;
 }
 
+/** Indica se a mensagem tem um arquivo PDF ou imagem que pode ser impresso. */
+function podeImprimirMidia(m: Mensagem) {
+  if (!m.arquivo_url) return false;
+  const mime = (m.mime_type ?? "").toLowerCase();
+  const nome = (m.arquivo_nome ?? "").toLowerCase();
+  if (m.tipo === "imagem" || mime.startsWith("image/")) return true;
+  return mime.includes("pdf") || nome.endsWith(".pdf");
+}
+
+/** Botão que abre a janela de impressão do navegador com o arquivo da mensagem. */
+function BotaoImprimirMidia({ mensagem }: { mensagem: Mensagem }) {
+  const [carregando, setCarregando] = useState(false);
+
+  function imprimir() {
+    if (carregando) return;
+    setCarregando(true);
+
+    const mime = (mensagem.mime_type ?? "").toLowerCase();
+    const ehImagem = mensagem.tipo === "imagem" || mime.startsWith("image/");
+    const url = urlMidia(mensagem.id);
+
+    const frame = document.createElement("iframe");
+    frame.style.position = "fixed";
+    frame.style.right = "0";
+    frame.style.bottom = "0";
+    frame.style.width = "0";
+    frame.style.height = "0";
+    frame.style.border = "0";
+    if (!ehImagem) frame.src = url;
+
+    let encerrado = false;
+    const encerrar = () => {
+      if (encerrado) return;
+      encerrado = true;
+      setCarregando(false);
+      window.setTimeout(() => frame.remove(), 60000);
+    };
+
+    frame.onload = () => {
+      try {
+        frame.contentWindow?.focus();
+        frame.contentWindow?.print();
+      } catch {
+        toast.error("Não foi possível abrir a impressão deste arquivo.");
+      }
+      encerrar();
+    };
+    frame.onerror = () => {
+      toast.error("Não foi possível carregar o arquivo para impressão.");
+      encerrar();
+    };
+
+    document.body.appendChild(frame);
+
+    if (ehImagem) {
+      const doc = frame.contentDocument;
+      if (!doc) {
+        toast.error("Não foi possível abrir a impressão deste arquivo.");
+        encerrar();
+        return;
+      }
+      doc.open();
+      doc.write(
+        `<!doctype html><html><head><style>@page{margin:10mm}html,body{margin:0;padding:0}img{width:100%;height:auto}</style></head><body><img src="${url}" /></body></html>`,
+      );
+      doc.close();
+      const img = doc.images[0];
+      if (img) {
+        img.onload = () => {
+          frame.contentWindow?.focus();
+          frame.contentWindow?.print();
+          encerrar();
+        };
+        img.onerror = () => {
+          toast.error("Não foi possível carregar o arquivo para impressão.");
+          encerrar();
+        };
+      }
+    }
+
+    window.setTimeout(encerrar, 20000);
+  }
+
+
 /** Renderiza imagem, documento ou áudio anexado a uma mensagem. */
 function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem; selecionando?: boolean }) {
   const [aberto, setAberto] = useState(false);
