@@ -21,6 +21,68 @@
 #
 # NÃO migra os arquivos físicos do Storage. Eles precisam ser copiados separadamente.
 
+# ============================================================================
+# GUIA RÁPIDO — INSTALADOR ÚNICO
+# ============================================================================
+#
+# O QUE DEVE FICAR NO GITHUB:
+#   - Este arquivo .sh
+#   - Código-fonte do projeto
+#   - Arquivos de configuração sem senhas/chaves reais
+#
+# NÃO coloque no GitHub (principalmente se o repositório for público):
+#   - arquivos *.backup do PostgreSQL
+#   - .env
+#   - senhas, tokens, chaves do Supabase, Z-API ou outros segredos
+#
+# LOCAL RECOMENDADO DESTE ARQUIVO NO GITHUB:
+#   deploy/install-migrate-one-command.sh
+#
+# BACKUP DO BANCO:
+#   O arquivo .backup deve ficar FORA do GitHub e ser enviado para a VPS.
+#   Exemplo de caminho na VPS:
+#     /root/impressaodigital_260909.backup
+#
+# COMO EXECUTAR NA VPS:
+#
+# Use esse comando o POWER SHEL para enviar para PVS (Deixe o arquivo no C: para facilitar)
+# scp "C:\impressaodigital_260909.backup" root@72.62.2.75:/root/
+#
+#
+#   1. Baixe este instalador do GitHub (se ainda não estiver na VPS):
+#
+#      curl -fsSL https://raw.githubusercontent.com/queiroz631-creator/impressaodigital/main/deploy/install-migrate-one-command.sh -o /root/install-migrate-one-command.sh
+#
+#   2. Dê permissão de execução:
+#
+#      chmod +x /root/install-migrate-one-command.sh
+#
+#   3. Execute informando o caminho do backup:
+#
+#      bash /root/install-migrate-one-command.sh /root/impressaodigital_260909.backup
+#
+#   Se o backup ainda não estiver na VPS, envie-o primeiro pelo SCP e depois
+#   execute o comando acima.
+#
+# PRÉ-REQUISITOS:
+#   - VPS nova ou preparada para a instalação
+#   - DNS A de queiroztecno.com.br apontando para o IP da VPS
+#   - DNS A de supabase.queiroztecno.com.br apontando para o IP da VPS
+#   - arquivo .backup do banco disponível na VPS
+#   - e-mail válido para o certificado Let's Encrypt
+#
+# IMPORTANTE:
+#   - Este instalador restaura o banco e substitui o schema public do destino.
+#   - Ele restaura auth.users de forma seletiva para evitar incompatibilidade
+#     com versões diferentes do Supabase Auth.
+#   - Ele corrige o vite.config.ts quando encontrar referências antigas ao
+#     Supabase/Lovable Cloud e valida o build antes de iniciar a aplicação.
+#   - O backup do banco NÃO contém os arquivos físicos do Storage; eles precisam
+#     ser migrados separadamente.
+#   - Nunca publique o arquivo .backup nem o .env no GitHub.
+#
+# ============================================================================
+
 set -Eeuo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
