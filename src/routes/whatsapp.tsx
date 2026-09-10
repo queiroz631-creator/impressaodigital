@@ -1251,16 +1251,19 @@ function Conversa({
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                     )}
-                    <ConfirmarExclusao
-                      titulo="Apagar mensagem"
-                      descricao="A mensagem será apagada no WhatsApp do cliente e ficará marcada como apagada aqui."
-                      rotuloConfirmar="Apagar"
-                      onConfirmar={() => apagarMsg.mutate(m.id)}
-                    >
-                      <Button size="icon" variant="ghost" className="h-7 w-7" title="Apagar mensagem">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </ConfirmarExclusao>
+                    {m.whatsapp_message_id && (
+                      <ConfirmarExclusao
+                        titulo="Apagar mensagem"
+                        descricao="A mensagem será apagada no WhatsApp do cliente e ficará marcada como apagada aqui."
+                        rotuloConfirmar="Apagar"
+                        onConfirmar={() => apagarMsg.mutate(m.id)}
+                      >
+                        <Button size="icon" variant="ghost" className="h-7 w-7" title="Apagar mensagem">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </ConfirmarExclusao>
+                    )}
+
                   </div>
                 )}
                 <div
