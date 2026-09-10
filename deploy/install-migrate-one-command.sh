@@ -284,9 +284,21 @@ ok "Backup de segurança salvo em: $PRE_RESTORE_BACKUP"
 
 # Confere se é um dump PostgreSQL válido.
 # O backup do Lovable usa o formato CUSTOM 1.16, gerado por PostgreSQL 17.
-# O Ubuntu 24.04 pode instalar um pg_restore mais antigo (ex.: 14/16),
-# então a validação usa PostgreSQL 17 dentro de um container.
-docker run --rm -i postgres:17 pg_restore -l - < "$BACKUP" >/dev/null 2>&1   || die "O arquivo informado não parece ser um backup PostgreSQL 17 válido."
+# Não usamos o pg_restore do Ubuntu, pois ele pode ser antigo.
+# O arquivo é montado diretamente no container PostgreSQL 17.
+echo "Validando backup com pg_restore PostgreSQL 17..."
+BACKUP_CHECK_LOG="/tmp/pg_restore_check.log"
+if ! docker run --rm \
+  -v "$BACKUP:/tmp/lovable.backup:ro" \
+  postgres:17 \
+  pg_restore -l /tmp/lovable.backup >"$BACKUP_CHECK_LOG" 2>&1; then
+  echo "[ERRO] O pg_restore PostgreSQL 17 retornou:"
+  cat "$BACKUP_CHECK_LOG"
+  rm -f "$BACKUP_CHECK_LOG"
+  die "O arquivo informado não pôde ser validado como backup PostgreSQL."
+fi
+rm -f "$BACKUP_CHECK_LOG"
+ok "Backup PostgreSQL 17 validado."
 
 echo "1/3 - Restaurando somente auth.users..."
 docker exec -i "$DB_CONTAINER" pg_restore \
