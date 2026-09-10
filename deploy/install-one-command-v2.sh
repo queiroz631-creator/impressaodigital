@@ -3,7 +3,7 @@
 # IMPRESSÃO DIGITAL - INSTALAÇÃO COMPLETA EM VPS NOVA
 #
 # Um único comando:
-# curl -fsSL https://raw.githubusercontent.com/queiroz631-creator/impressaodigital/main/deploy/install-one-command.sh | sudo bash
+# curl -fsSL https://raw.githubusercontent.com/queiroz631-creator/impressaodigital/main/deploy/install-one-command-v2.sh | sudo bash
 #
 # Pré-requisitos:
 # - VPS Ubuntu 22.04/24.04
