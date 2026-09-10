@@ -45,9 +45,15 @@
 #
 # COMO EXECUTAR NA VPS:
 #
+# Se for um VPS novo execute antes
+# ssh-keygen -R 72.62.2.75 (limpa a chave antiga)
+# ssh root@72.62.2.75 (testa a conexão digite yes)
+# exit (sai da vps)
+#
 # Use esse comando o POWER SHEL para enviar para PVS (Deixe o arquivo no C: para facilitar)
 # scp "C:\impressaodigital_260909.backup" root@72.62.2.75:/root/
 #
+# ls -lh /root/impressaodigital_260909.backup (confirme na VPS nome e tamanho do arquivo)
 #
 #   1. Baixe este instalador do GitHub (se ainda não estiver na VPS):
 #
@@ -88,7 +94,8 @@ export DEBIAN_FRONTEND=noninteractive
 
 APP_NAME="impressaodigital"
 APP_DIR="/var/www/impressaodigital"
-SUPABASE_DIR="/root/supabase-project"
+SUPABASE_REPO_DIR="/root/supabase-project"
+SUPABASE_DIR="/root/supabase-project/docker/supabase-project"
 REPO_URL="https://github.com/queiroz631-creator/impressaodigital.git"
 
 DOMAIN="${DOMAIN:-queiroztecno.com.br}"
@@ -167,14 +174,24 @@ fi
 cd "$APP_DIR"
 
 log "[5/12] Instalando Supabase self-hosted"
-if [[ ! -f "$SUPABASE_DIR/docker/docker-compose.yml" ]]; then
-  rm -rf "$SUPABASE_DIR"
-  git clone --depth 1 https://github.com/supabase/supabase.git "$SUPABASE_DIR"
 
-  cd "$SUPABASE_DIR/docker"
+# IMPORTANTE:
+# O setup oficial do Supabase cria o projeto real em:
+#   /root/supabase-project/docker/supabase-project
+# enquanto o repositório fica em:
+#   /root/supabase-project
+#
+# Separar esses dois caminhos evita iniciar o Docker pelo diretório errado
+# (que não possui o .env gerado pelo setup).
+
+if [[ ! -f "$SUPABASE_DIR/docker-compose.yml" ]]; then
+  rm -rf "$SUPABASE_REPO_DIR"
+  git clone --depth 1 https://github.com/supabase/supabase.git "$SUPABASE_REPO_DIR"
+
+  cd "$SUPABASE_REPO_DIR/docker"
   chmod +x setup.sh 2>/dev/null || true
 
-  # O setup oficial gera os segredos e cria o .env.
+  # O setup oficial gera os segredos e cria o projeto em docker/supabase-project.
   if [[ -x ./setup.sh ]]; then
     ./setup.sh -y
   else
@@ -188,7 +205,10 @@ else
   echo "Supabase já instalado em $SUPABASE_DIR."
 fi
 
-cd "$SUPABASE_DIR/docker"
+[[ -f "$SUPABASE_DIR/.env" ]] || die "Supabase .env não encontrado em $SUPABASE_DIR"
+[[ -f "$SUPABASE_DIR/docker-compose.yml" ]] || die "docker-compose.yml não encontrado em $SUPABASE_DIR"
+
+cd "$SUPABASE_DIR"
 
 set_env() {
   local key="$1"
@@ -466,13 +486,13 @@ APLICAÇÃO:
   ${APP_DIR}
 
 SUPABASE:
-  ${SUPABASE_DIR}/docker
+  ${SUPABASE_DIR}
 
 BACKUP ORIGINAL:
   /root/lovable-migration.backup
 
 CREDENCIAIS SUPABASE:
-  ${SUPABASE_DIR}/docker/.env
+  ${SUPABASE_DIR}/.env
   NÃO compartilhe este arquivo.
 
 COMANDOS:
