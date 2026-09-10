@@ -1757,6 +1757,22 @@ function BotaoImprimirMidia({ mensagem }: { mensagem: Mensagem }) {
     window.setTimeout(encerrar, 20000);
   }
 
+  return (
+    <Button
+      size="icon"
+      variant="ghost"
+      className="h-7 w-7"
+      title="Imprimir arquivo"
+      disabled={carregando}
+      onClick={imprimir}
+    >
+      <Printer className={cn("h-3.5 w-3.5", carregando && "animate-pulse")} />
+    </Button>
+  );
+}
+
+
+
 
 /** Renderiza imagem, documento ou áudio anexado a uma mensagem. */
 function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem; selecionando?: boolean }) {
