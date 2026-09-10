@@ -108,13 +108,19 @@ apt-get install -y \
   rsync
 
 # ---------------------------------------------------------------------------
-# 3. Node 20
+# 3. Node 22
 # ---------------------------------------------------------------------------
-log "3/15 - Instalando Node.js 20"
+log "3/15 - Instalando Node.js 22"
 
 if ! command -v node >/dev/null 2>&1 || [[ "$(node -p 'process.versions.node.split(".")[0]')" != "20" ]]; then
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
   apt-get install -y nodejs
+
+NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+if [ "$NODE_MAJOR" -lt 22 ]; then
+  die "Node.js 22+ é obrigatório para o suporte nativo a WebSocket. Versão encontrada: $(node -v)"
+fi
+ok "Node.js $(node -v) instalado."
 fi
 
 node --version
@@ -532,11 +538,10 @@ log "14/15 - Instalando dependências, build e PM2"
 
 cd "$APP_DIR"
 
-if [ -f package-lock.json ]; then
-  npm ci
-else
-  npm install
-fi
+# Usa npm install em vez de npm ci.
+# O projeto pode chegar com package.json/package-lock.json dessincronizados;
+# npm install reconcilia o lock antes do build.
+npm install
 
 NITRO_PRESET=node-server npm run build
 
