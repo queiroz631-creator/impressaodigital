@@ -247,6 +247,7 @@ def main():
 
     total_copiados = 0
     total_pulados = 0
+    total_reenviados = 0
     total_falhas = 0
 
     for bucket in BUCKETS:
@@ -257,7 +258,7 @@ def main():
             continue
 
         print("  Listando arquivos no destino...")
-        dest_existing = set(list_objects(DEST_URL, DEST_KEY, bucket))
+        dest_existing = list_objects(DEST_URL, DEST_KEY, bucket)
         print(f"  {len(dest_existing)} arquivo(s) já existem no destino.")
 
         print("  Listando arquivos na origem...")
@@ -266,12 +267,24 @@ def main():
 
         copiados = 0
         pulados = 0
+        reenviados = 0
         falhas = 0
 
-        for i, path in enumerate(source_files, 1):
+        for i, (path, source_size) in enumerate(source_files.items(), 1):
+            dest_size = dest_existing.get(path)
+            reenvio = False
             if path in dest_existing:
-                pulados += 1
-                continue
+                # Só pula se o tamanho bater; tamanho diferente, ausente ou
+                # zero indica upload incompleto e o arquivo será reenviado.
+                if (
+                    source_size is not None
+                    and dest_size is not None
+                    and dest_size > 0
+                    and dest_size == source_size
+                ):
+                    pulados += 1
+                    continue
+                reenvio = True
 
             # Mostra progresso a cada arquivo.
             print(f"  [{i}/{len(source_files)}] {path[:80]}", end=" ")
@@ -285,8 +298,15 @@ def main():
 
             ok, err = upload_object(bucket, path, data, err)
             if ok:
-                print("OK")
-                copiados += 1
+                if reenvio:
+                    print(f"OK (reenviado: tamanho no destino era {dest_size}, origem {source_size})")
+                    reenviados += 1
+                    log_path.open("a").write(
+                        f"REENVIADO {bucket}/{path}: destino={dest_size} origem={source_size}\n"
+                    )
+                else:
+                    print("OK")
+                    copiados += 1
             else:
                 print(f"FALHA UPLOAD: {err}")
                 log_path.open("a").write(f"UPLOAD {bucket}/{path}: {err}\n")
@@ -296,21 +316,24 @@ def main():
             time.sleep(0.05)
 
         print(f"  Resumo do bucket '{bucket}':")
-        print(f"    Copiados: {copiados}")
-        print(f"    Pulados:  {pulados}")
-        print(f"    Falhas:   {falhas}")
+        print(f"    Copiados:    {copiados}")
+        print(f"    Pulados:     {pulados}")
+        print(f"    Reenviados (tamanho diferente): {reenviados}")
+        print(f"    Falhas:      {falhas}")
 
         total_copiados += copiados
         total_pulados += pulados
+        total_reenviados += reenviados
         total_falhas += falhas
 
     print("\n" + "=" * 60)
     print(" RESUMO GERAL")
     print("=" * 60)
-    print(f"Copiados: {total_copiados}")
-    print(f"Pulados:  {total_pulados}")
-    print(f"Falhas:   {total_falhas}")
-    print(f"Log:      {LOG_FILE}")
+    print(f"Copiados:    {total_copiados}")
+    print(f"Pulados:     {total_pulados}")
+    print(f"Reenviados (tamanho diferente): {total_reenviados}")
+    print(f"Falhas:      {total_falhas}")
+    print(f"Log:         {LOG_FILE}")
 
     if total_falhas > 0:
         print("\nAVISO: houve falhas. Rode o script novamente após corrigir a causa.")
