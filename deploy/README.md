@@ -138,7 +138,7 @@ export SOURCE_SERVICE_ROLE_KEY=<chave-service-role-do-lovable>
 bash deploy/migrar-storage.sh
 ```
 
-O script lista os buckets, cria os que não existem no destino (sempre privados), baixa cada arquivo da origem e reenvia para a VPS mantendo o caminho original. Arquivos que já existem no destino são pulados, então o comando pode ser executado várias vezes.
+O script lista os buckets, cria os que não existem no destino (sempre privados), baixa cada arquivo da origem e reenvia para a VPS mantendo o caminho original. Arquivos que já existem no destino com o **mesmo tamanho** são pulados, então o comando pode ser executado várias vezes. Se o arquivo existe no destino mas o tamanho diverge da origem (ou está zerado), ele é **reenviado por completo**, sobrescrevendo a versão incompleta — o resumo final mostra esses casos em "Reenviados (tamanho diferente)".
 
 ### Configuração opcional
 
