@@ -16,7 +16,9 @@
 #   - cria os buckets privados no destino;
 #   - lista todos os arquivos da origem;
 #   - baixa e reenvia cada arquivo preservando o caminho;
-#   - pula arquivos que já existem no destino (pode rodar várias vezes);
+#   - pula arquivos que já existem no destino com o mesmo tamanho
+#     (pode rodar várias vezes). Se o tamanho divergir ou estiver zerado,
+#     o arquivo é reenviado por completo (corrige uploads incompletos);
 #   - grava em /root/migrar-storage.log os arquivos que falharam.
 #
 # Nada é apagado na origem.
@@ -125,8 +127,12 @@ def create_bucket_if_needed(bucket):
 
 
 def list_objects(base, key, bucket, prefix=""):
-    """Lista objetos de um bucket, recursivamente quando necessário."""
-    found = []
+    """Lista objetos de um bucket, recursivamente quando necessário.
+
+    Retorna um dict {caminho: tamanho_em_bytes}. O tamanho vem de
+    metadata.size da API de listagem; quando ausente, fica None.
+    """
+    found = {}
     visited = set()
     stack = [prefix]
 
@@ -162,7 +168,9 @@ def list_objects(base, key, bucket, prefix=""):
                 if name.endswith("/"):
                     stack.append(name)
                 else:
-                    found.append(name)
+                    metadata = item.get("metadata") or {}
+                    size = metadata.get("size")
+                    found[name] = size if isinstance(size, int) else None
 
             if len(items) < limit:
                 break
@@ -189,8 +197,13 @@ def download_object(bucket, path):
 
 
 def upload_object(bucket, path, data, content_type):
-    """Envia um arquivo para o destino preservando o caminho."""
+    """Envia um arquivo para o destino preservando o caminho.
+
+    Tenta criar sem sobrescrever; se já existir (reenvio de arquivo
+    incompleto), faz uma segunda tentativa com sobrescrita.
+    """
     encoded = urllib.parse.quote(path, safe="/")
+
     status, data_resp, _ = request(
         DEST_URL,
         DEST_KEY,
@@ -202,6 +215,22 @@ def upload_object(bucket, path, data, content_type):
     )
     if status in (200, 201):
         return True, None
+
+    # Já existe (arquivo incompleto): sobrescrever via PUT + upsert.
+    if status in (400, 409):
+        status2, data_resp2, _ = request(
+            DEST_URL,
+            DEST_KEY,
+            "PUT",
+            f"/object/{bucket}/{encoded}",
+            body=data,
+            headers={"Content-Type": content_type, "x-upsert": "true"},
+            raw_path=True,
+        )
+        if status2 in (200, 201):
+            return True, None
+        return False, f"{status2} {data_resp2.decode(errors='replace')[:200]}"
+
     return False, f"{status} {data_resp.decode(errors='replace')[:200]}"
 
 
@@ -220,6 +249,7 @@ def main():
 
     total_copiados = 0
     total_pulados = 0
+    total_reenviados = 0
     total_falhas = 0
 
     for bucket in BUCKETS:
@@ -230,7 +260,7 @@ def main():
             continue
 
         print("  Listando arquivos no destino...")
-        dest_existing = set(list_objects(DEST_URL, DEST_KEY, bucket))
+        dest_existing = list_objects(DEST_URL, DEST_KEY, bucket)
         print(f"  {len(dest_existing)} arquivo(s) já existem no destino.")
 
         print("  Listando arquivos na origem...")
@@ -239,12 +269,24 @@ def main():
 
         copiados = 0
         pulados = 0
+        reenviados = 0
         falhas = 0
 
-        for i, path in enumerate(source_files, 1):
+        for i, (path, source_size) in enumerate(source_files.items(), 1):
+            dest_size = dest_existing.get(path)
+            reenvio = False
             if path in dest_existing:
-                pulados += 1
-                continue
+                # Só pula se o tamanho bater; tamanho diferente, ausente ou
+                # zero indica upload incompleto e o arquivo será reenviado.
+                if (
+                    source_size is not None
+                    and dest_size is not None
+                    and dest_size > 0
+                    and dest_size == source_size
+                ):
+                    pulados += 1
+                    continue
+                reenvio = True
 
             # Mostra progresso a cada arquivo.
             print(f"  [{i}/{len(source_files)}] {path[:80]}", end=" ")
@@ -258,8 +300,15 @@ def main():
 
             ok, err = upload_object(bucket, path, data, err)
             if ok:
-                print("OK")
-                copiados += 1
+                if reenvio:
+                    print(f"OK (reenviado: tamanho no destino era {dest_size}, origem {source_size})")
+                    reenviados += 1
+                    log_path.open("a").write(
+                        f"REENVIADO {bucket}/{path}: destino={dest_size} origem={source_size}\n"
+                    )
+                else:
+                    print("OK")
+                    copiados += 1
             else:
                 print(f"FALHA UPLOAD: {err}")
                 log_path.open("a").write(f"UPLOAD {bucket}/{path}: {err}\n")
@@ -269,21 +318,24 @@ def main():
             time.sleep(0.05)
 
         print(f"  Resumo do bucket '{bucket}':")
-        print(f"    Copiados: {copiados}")
-        print(f"    Pulados:  {pulados}")
-        print(f"    Falhas:   {falhas}")
+        print(f"    Copiados:    {copiados}")
+        print(f"    Pulados:     {pulados}")
+        print(f"    Reenviados (tamanho diferente): {reenviados}")
+        print(f"    Falhas:      {falhas}")
 
         total_copiados += copiados
         total_pulados += pulados
+        total_reenviados += reenviados
         total_falhas += falhas
 
     print("\n" + "=" * 60)
     print(" RESUMO GERAL")
     print("=" * 60)
-    print(f"Copiados: {total_copiados}")
-    print(f"Pulados:  {total_pulados}")
-    print(f"Falhas:   {total_falhas}")
-    print(f"Log:      {LOG_FILE}")
+    print(f"Copiados:    {total_copiados}")
+    print(f"Pulados:     {total_pulados}")
+    print(f"Reenviados (tamanho diferente): {total_reenviados}")
+    print(f"Falhas:      {total_falhas}")
+    print(f"Log:         {LOG_FILE}")
 
     if total_falhas > 0:
         print("\nAVISO: houve falhas. Rode o script novamente após corrigir a causa.")
