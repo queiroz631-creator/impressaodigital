@@ -2,7 +2,7 @@
 
 ## Cenário confirmado
 - Supabase self-hosted **já está rodando** na VPS.
-- Banco de dados já migrado pelo instalador (`deploy/install-migrate-one-command.sh`).
+- Banco de dados já restaurado a partir do backup `impressaodigital_260909` (executado pelo `deploy/install-migrate-one-command.sh`).
 - Falta migrar os **arquivos físicos** do Storage — eles não vêm no backup do banco.
 - Os arquivos antigos permanecem no Lovable como **backup** (nada será apagado).
 - Lovable continua como ambiente de desenvolvimento; a VPS é a produção.
