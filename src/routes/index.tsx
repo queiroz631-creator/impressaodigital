@@ -59,10 +59,7 @@ import {
   usePerfisImpressao,
   useRascunho,
 } from "@/hooks/useDados";
-import {
-  ImprimirDocumentosDialog,
-  type DocumentoParaImprimir,
-} from "@/components/impressao/ImprimirDocumentosDialog";
+import { ImprimirDocumentosDialog, type DocumentoParaImprimir } from "@/components/impressao/ImprimirDocumentosDialog";
 import { PERFIL_VAZIO, type PerfilImpressao } from "@/lib/perfil-impressao";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -249,13 +246,14 @@ function Calculadora() {
         hidratado.clienteTelefone = telefoneBR(hidratado.clienteTelefone);
       }
       setEstado({ ...ESTADO_INICIAL, ...hidratado });
-
     }
     setHidratado(true);
   }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
 
   // ----- Arquivos enviados pela tela do WhatsApp -----
-  const whatsappPendente = useRef<{ arquivos: { id: string; nome: string }[]; nome: string; telefone: string } | null>(null);
+  const whatsappPendente = useRef<{ arquivos: { id: string; nome: string }[]; nome: string; telefone: string } | null>(
+    null,
+  );
   const [importacao, setImportacao] = useState<{ ativo: boolean; progresso: number }>({
     ativo: false,
     progresso: 0,
@@ -356,10 +354,7 @@ function Calculadora() {
         queryClient.setQueryData(["rascunho", usuarioId], ESTADO_INICIAL as unknown as Record<string, unknown>);
         void supabase
           .from("rascunhos")
-          .upsert(
-            { usuario_id: usuarioId, dados: ESTADO_INICIAL as unknown as never },
-            { onConflict: "usuario_id" },
-          );
+          .upsert({ usuario_id: usuarioId, dados: ESTADO_INICIAL as unknown as never }, { onConflict: "usuario_id" });
       }
     };
   }, [queryClient]);
@@ -567,7 +562,6 @@ function Calculadora() {
     setImpressaoAberta(true);
   }
 
-
   /** Chave de confirmação de um arquivo (muda se o nome ou as páginas mudarem). */
   const chaveArquivo = (a: ArquivoDoc) => `${a.nome}|${a.paginas}`;
 
@@ -601,9 +595,6 @@ function Calculadora() {
     if (qtd <= 0 || tagPorFolha < 1) return 0;
     return tagModo === "folhas" ? qtd * tagPorFolha : Math.ceil(qtd / tagPorFolha);
   }, [tagQuantidade, tagModo, tagPorFolha]);
-
-
-
 
   /** Converte milímetros em centímetros no padrão brasileiro (ex.: 45 -> "4,5"). */
   function mmParaCm(mm: number) {
@@ -1051,9 +1042,7 @@ function Calculadora() {
           <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-card px-8 py-6 shadow-lg">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm font-medium text-card-foreground">Importando arquivos do WhatsApp…</p>
-            <p className="text-2xl font-extrabold tabular-nums text-primary">
-              {Math.round(importacao.progresso)}%
-            </p>
+            <p className="text-2xl font-extrabold tabular-nums text-primary">{Math.round(importacao.progresso)}%</p>
           </div>
         </div>
       )}
@@ -1141,7 +1130,7 @@ function Calculadora() {
             <span className="rounded-lg bg-accent p-2 text-primary">
               <Calculator className="h-4 w-4" />
             </span>
-            DADOS DO TRABALHO
+            DADOS DO TRABALHO 2
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -1246,12 +1235,7 @@ function Calculadora() {
                 >
                   <Paperclip className="h-4 w-4" /> Adicionar arquivo
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8"
-                  onClick={limparTag}
-                >
+                <Button variant="ghost" size="sm" className="h-8" onClick={limparTag}>
                   Cancelar
                 </Button>
               </div>
@@ -2385,7 +2369,6 @@ function Calculadora() {
         impressoraPadrao={(config?.impressora_padrao_nome ?? null) as string | null}
       />
     </>
-
   );
 }
 
