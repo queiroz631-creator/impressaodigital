@@ -166,7 +166,9 @@ def list_objects(base, key, bucket, prefix=""):
                 if name.endswith("/"):
                     stack.append(name)
                 else:
-                    found.append(name)
+                    metadata = item.get("metadata") or {}
+                    size = metadata.get("size")
+                    found[name] = size if isinstance(size, int) else None
 
             if len(items) < limit:
                 break
