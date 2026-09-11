@@ -195,8 +195,13 @@ def download_object(bucket, path):
 
 
 def upload_object(bucket, path, data, content_type):
-    """Envia um arquivo para o destino preservando o caminho."""
+    """Envia um arquivo para o destino preservando o caminho.
+
+    Tenta criar sem sobrescrever; se já existir (reenvio de arquivo
+    incompleto), faz uma segunda tentativa com sobrescrita.
+    """
     encoded = urllib.parse.quote(path, safe="/")
+
     status, data_resp, _ = request(
         DEST_URL,
         DEST_KEY,
@@ -208,6 +213,22 @@ def upload_object(bucket, path, data, content_type):
     )
     if status in (200, 201):
         return True, None
+
+    # Já existe (arquivo incompleto): sobrescrever via PUT + upsert.
+    if status in (400, 409):
+        status2, data_resp2, _ = request(
+            DEST_URL,
+            DEST_KEY,
+            "PUT",
+            f"/object/{bucket}/{encoded}",
+            body=data,
+            headers={"Content-Type": content_type, "x-upsert": "true"},
+            raw_path=True,
+        )
+        if status2 in (200, 201):
+            return True, None
+        return False, f"{status2} {data_resp2.decode(errors='replace')[:200]}"
+
     return False, f"{status} {data_resp.decode(errors='replace')[:200]}"
 
 
