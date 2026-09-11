@@ -343,7 +343,7 @@ ok "Schema public restaurado."
 # ---------------------------------------------------------------------------
 # 11. Permissões/RLS/default privileges
 # ---------------------------------------------------------------------------
-log "11/15 - Aplicando permissões do Supabase para authenticated"
+log "11/15 - Aplicando permissões do Supabase para authenticated e service_role"
 
 docker exec "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "
 GRANT USAGE ON SCHEMA public TO authenticated;
@@ -360,6 +360,23 @@ GRANT EXECUTE
 ON ALL FUNCTIONS IN SCHEMA public
 TO authenticated;
 
+-- O restore usa --no-privileges. O service_role é usado pelo supabaseAdmin
+-- no servidor para operações administrativas, inclusive geração/edição de
+-- links públicos de currículo. Reaplicamos explicitamente esses privilégios.
+GRANT USAGE ON SCHEMA public TO service_role;
+
+GRANT ALL PRIVILEGES
+ON ALL TABLES IN SCHEMA public
+TO service_role;
+
+GRANT ALL PRIVILEGES
+ON ALL SEQUENCES IN SCHEMA public
+TO service_role;
+
+GRANT EXECUTE
+ON ALL FUNCTIONS IN SCHEMA public
+TO service_role;
+
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO authenticated;
 
@@ -368,9 +385,18 @@ GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO authenticated;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
 GRANT EXECUTE ON FUNCTIONS TO authenticated;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT ALL PRIVILEGES ON TABLES TO service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT ALL PRIVILEGES ON SEQUENCES TO service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT EXECUTE ON FUNCTIONS TO service_role;
 "
 
-ok "Permissões authenticated aplicadas."
+ok "Permissões authenticated e service_role aplicadas."
 
 # Verificações objetivas da migração.
 TABLE_COUNT="$(docker exec "$DB_CONTAINER" psql -U postgres -d postgres -Atc \
