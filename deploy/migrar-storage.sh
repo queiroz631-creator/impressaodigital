@@ -125,8 +125,12 @@ def create_bucket_if_needed(bucket):
 
 
 def list_objects(base, key, bucket, prefix=""):
-    """Lista objetos de um bucket, recursivamente quando necessário."""
-    found = []
+    """Lista objetos de um bucket, recursivamente quando necessário.
+
+    Retorna um dict {caminho: tamanho_em_bytes}. O tamanho vem de
+    metadata.size da API de listagem; quando ausente, fica None.
+    """
+    found = {}
     visited = set()
     stack = [prefix]
 
