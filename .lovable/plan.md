@@ -1,70 +1,59 @@
-# Plano: Migrar banco e arquivos para a VPS, mantendo o Lovable como desenvolvimento
+# Plano: Migrar os arquivos (Storage) para a VPS com script automatizado
 
-## Cenário definido
-- **VPS**: ambiente de produção — banco de dados completo + todos os arquivos (Storage).
-- **Lovable**: ambiente de desenvolvimento — continua com o banco atual, usado para testar antes de publicar.
-- Os dois ambientes ficam **separados**: dados não sincronizam entre eles.
+## Cenário confirmado
+- Supabase self-hosted **já está rodando** na VPS.
+- Banco de dados já migrado pelo instalador (`deploy/install-migrate-one-command.sh`).
+- Falta migrar os **arquivos físicos** do Storage — eles não vêm no backup do banco.
+- Os arquivos antigos permanecem no Lovable como **backup** (nada será apagado).
+- Lovable continua como ambiente de desenvolvimento; a VPS é a produção.
 
-## Parte A — Exportar o banco completo
+## O que será criado
 
-1. **Gerar o backup do banco atual**
-   No Lovable, em Cloud → Configurações avançadas → Exportar dados, obter o dump completo (estrutura + dados).
+### `deploy/migrar-storage.sh`
+Script único, executado na VPS, que copia todos os arquivos do Storage do Lovable para o Supabase da VPS.
 
-2. **Restaurar na VPS**
-   Restaurar o dump no Postgres do Supabase self-hosted (`/opt/supabase/supabase/docker`), com `psql`/`pg_restore`.
+Comportamento:
+- Lê a origem e o destino de variáveis de ambiente (nenhuma chave fica no código nem no Git).
+- Percorre os buckets: `bot-midia`, `mensagens-rapidas`, `orcamento-arquivos`, `sistema`, `whatsapp`, `database_export_09_09_26`.
+- Cria cada bucket no destino, sempre **privado**, se ainda não existir.
+- Lista recursivamente todas as pastas e arquivos da origem.
+- Baixa e reenvia cada arquivo **mantendo exatamente o mesmo caminho**, para que os caminhos já gravados no banco continuem válidos.
+- Pula arquivos que já existem no destino, permitindo rodar novamente sem duplicar.
+- Mostra progresso por bucket e um resumo final: copiados, pulados e falhas.
+- Grava um log em `/root/migrar-storage.log` com os arquivos que falharam, para reprocessar.
+- **Não apaga nada na origem.**
 
-3. **Recriar o que não vem no dump**
-   - Extensões: `pg_cron`, `pg_net`.
-   - Agendamentos do bot (inatividade, fila, status do WhatsApp) apontando para o domínio da VPS.
-   - Função `disparar_fila_bot()` com a URL nova.
-   - Usuários de acesso ao sistema (login), caso não venham no dump.
+### `deploy/README.md`
+Nova seção explicando:
+- Como definir as variáveis de origem e destino antes de rodar.
+- O comando de execução.
+- Como conferir o resultado e reprocessar falhas.
 
-## Parte B — Exportar o Storage (arquivos)
+## Como você vai usar
 
-Buckets a migrar, todos **privados**:
-- bot-midia
-- database_export_09_09_26
-- mensagens-rapidas
-- orcamento-arquivos
-- sistema
-- whatsapp
+1. Na VPS, informar os dados de origem (Lovable) e destino (VPS) como variáveis de ambiente.
+2. Rodar:
+   ```bash
+   cd /var/www/impressaodigital
+   bash deploy/migrar-storage.sh
+   ```
+3. Conferir o resumo final e, se houver falhas, rodar o mesmo comando novamente.
 
-Passos:
-1. Criar os seis buckets no Supabase da VPS, com os mesmos nomes e privados.
-2. Recriar as regras de acesso aos arquivos, iguais às atuais.
-3. Baixar todos os arquivos do Lovable Cloud mantendo a estrutura de pastas.
-4. Enviar os arquivos para os buckets equivalentes na VPS, preservando os caminhos — os caminhos gravados no banco precisam continuar válidos.
+## Validação depois da migração
+- Abrir uma conversa antiga no WhatsApp e visualizar uma imagem recebida.
+- Baixar um documento antigo de um orçamento.
+- Abrir uma mensagem rápida com imagem.
+- Ver a foto de um currículo antigo.
+- Enviar um arquivo novo e confirmar que ele grava no Storage da VPS.
 
-## Parte C — Apontar a aplicação da VPS para o banco da VPS
+## Fora de escopo
+- Nenhuma alteração no banco, nas telas ou nas regras do bot.
+- Nada será removido do Lovable — os arquivos ficam como backup.
 
-No `.env` da VPS (nunca no Git):
-- `SUPABASE_URL` e `VITE_SUPABASE_URL` → `https://db.seudominio.com`
-- chaves anon e service_role do Supabase da VPS
-- `SITE_URL` → domínio da VPS
-- credenciais da Z-API
-
-Depois: `bash deploy/deploy.sh` e atualizar as URLs de webhook na Z-API para o domínio novo.
-
-## Parte D — Manter o Lovable como desenvolvimento
-
-- O código continua sendo editado no Lovable e sincronizado com o GitHub.
-- Para publicar: `git pull` + `bash deploy/deploy.sh` na VPS.
-- O banco do Lovable passa a ser **de teste**: mudanças de estrutura feitas aqui precisam ser aplicadas também no banco da VPS, na mesma ordem.
-- Recomendo usar dados fictícios no ambiente Lovable a partir de agora, para não misturar com dados reais de clientes.
-
-## Validação final
-- Login funcionando na VPS.
-- WhatsApp recebendo e enviando mensagens (webhook novo).
-- Mídias antigas abrindo e baixando normalmente.
-- Orçamentos, currículos e links públicos abrindo com o domínio novo.
-- Bot respondendo (inatividade e fila disparando).
-
-## Pontos de atenção
-- Transcrição de áudio e interpretação por IA usam a chave do ambiente Lovable e **não funcionam na VPS** até trocarmos por uma chave própria (ex.: Google Gemini). Posso adaptar quando quiser.
-- Backups do banco e dos arquivos passam a ser sua responsabilidade na VPS.
-- Recomendo VPS com pelo menos 4 GB de RAM.
-
-## Decisões pendentes
-1. O Supabase self-hosted já está rodando na VPS?
-2. Quer que eu gere um script automatizado para baixar e reenviar os arquivos dos buckets em lote?
-3. Depois da migração, os arquivos antigos no Lovable devem ser mantidos como backup?
+## Detalhes técnicos
+- O script usa Python 3 (já presente na VPS) com a API REST do Storage do Supabase (`/storage/v1`), autenticando com a `service_role key` de cada lado.
+- Origem: `https://qmnienngwksbeiyczrka.supabase.co` + chave de serviço do Lovable (fornecida por você em variável de ambiente, pois não fica acessível no código).
+- Destino: `https://supabase.queiroztecno.com.br` + `SERVICE_ROLE_KEY` lida de `/root/supabase-project/.env`.
+- Listagem paginada (`POST /storage/v1/object/list/<bucket>`) com recursão por prefixo; download via `/object/<bucket>/<path>`; upload via `POST /object/<bucket>/<path>` preservando `content-type`.
+- Criação de bucket via `POST /storage/v1/bucket` com `public: false`; erro de bucket existente é ignorado.
+- As chaves são lidas apenas de variáveis de ambiente e do `.env` local; nunca são impressas nem gravadas no repositório.
