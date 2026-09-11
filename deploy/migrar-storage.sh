@@ -16,7 +16,9 @@
 #   - cria os buckets privados no destino;
 #   - lista todos os arquivos da origem;
 #   - baixa e reenvia cada arquivo preservando o caminho;
-#   - pula arquivos que já existem no destino (pode rodar várias vezes);
+#   - pula arquivos que já existem no destino com o mesmo tamanho
+#     (pode rodar várias vezes). Se o tamanho divergir ou estiver zerado,
+#     o arquivo é reenviado por completo (corrige uploads incompletos);
 #   - grava em /root/migrar-storage.log os arquivos que falharam.
 #
 # Nada é apagado na origem.
