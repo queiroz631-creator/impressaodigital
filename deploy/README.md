@@ -115,6 +115,56 @@ O token é o mesmo já configurado no sistema (Configurações → Bot).
 
 ---
 
+## Migrar o Storage (arquivos) para a VPS
+
+Os arquivos dos buckets **não** vêm no backup do banco de dados. Use o script abaixo para copiá-los do Lovable Cloud para o Supabase da VPS, preservando nomes e pastas.
+
+> Importante: nada é apagado na origem. Os arquivos antigos permanecem no Lovable como backup.
+
+### Pré-requisitos
+- Supabase self-hosted já rodando na VPS.
+- Banco de dados já restaurado (ex.: `impressaodigital_260909`).
+- Acesso à `SERVICE_ROLE_KEY` do projeto Lovable.
+
+### Execução
+
+```bash
+cd /var/www/impressaodigital
+
+export SOURCE_SERVICE_ROLE_KEY=<chave-service-role-do-lovable>
+# Opcional: export DEST_SERVICE_ROLE_KEY=<chave-da-vps>
+# (se não informada, o script lê de /root/supabase-project/.env)
+
+bash deploy/migrar-storage.sh
+```
+
+O script lista os buckets, cria os que não existem no destino (sempre privados), baixa cada arquivo da origem e reenvia para a VPS mantendo o caminho original. Arquivos que já existem no destino são pulados, então o comando pode ser executado várias vezes.
+
+### Configuração opcional
+
+| Variável | Padrão | Descrição |
+| --- | --- | --- |
+| `SOURCE_URL` | `https://qmnienngwksbeiyczrka.supabase.co` | URL do Supabase de origem (Lovable). |
+| `SOURCE_SERVICE_ROLE_KEY` | — | Chave de serviço da origem (**obrigatória**). |
+| `DEST_URL` | `https://supabase.queiroztecno.com.br` | URL do Supabase de destino (VPS). |
+| `DEST_SERVICE_ROLE_KEY` | lida do `.env` do Supabase | Chave de serviço do destino. |
+| `BUCKETS` | todos os buckets do projeto | Lista separada por espaço dos buckets a migrar. |
+| `LOG_FILE` | `/root/migrar-storage.log` | Arquivo com falhas para reprocessamento. |
+
+### Reprocessar falhas
+
+Se aparecerem falhas no resumo final, corrija a causa (geralmente permissão ou rede) e rode o mesmo comando novamente. Arquivos já copiados com sucesso serão pulados automaticamente.
+
+### Validação
+
+Após a migração, teste:
+- Abrir uma conversa antiga no WhatsApp e visualizar imagens.
+- Baixar um arquivo anexo a um orçamento antigo.
+- Visualizar a foto de um currículo antigo.
+- Enviar um arquivo novo pelo WhatsApp e confirmar que ele aparece no Storage da VPS.
+
+---
+
 ## Publicando novas versões
 
 Sempre que atualizar o código pelo Lovable (que sincroniza com o GitHub):
