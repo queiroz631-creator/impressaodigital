@@ -1,9 +1,27 @@
-# Plano: Exportar o Storage do Lovable Cloud para a VPS
+# Plano: Migrar banco e arquivos para a VPS, mantendo o Lovable como desenvolvimento
 
-## Objetivo
-Migrar todos os arquivos dos buckets do Lovable Cloud para o Supabase self-hosted na VPS, preservando nomes, pastas e permissões.
+## Cenário definido
+- **VPS**: ambiente de produção — banco de dados completo + todos os arquivos (Storage).
+- **Lovable**: ambiente de desenvolvimento — continua com o banco atual, usado para testar antes de publicar.
+- Os dois ambientes ficam **separados**: dados não sincronizam entre eles.
 
-## Buckets envolvidos
+## Parte A — Exportar o banco completo
+
+1. **Gerar o backup do banco atual**
+   No Lovable, em Cloud → Configurações avançadas → Exportar dados, obter o dump completo (estrutura + dados).
+
+2. **Restaurar na VPS**
+   Restaurar o dump no Postgres do Supabase self-hosted (`/opt/supabase/supabase/docker`), com `psql`/`pg_restore`.
+
+3. **Recriar o que não vem no dump**
+   - Extensões: `pg_cron`, `pg_net`.
+   - Agendamentos do bot (inatividade, fila, status do WhatsApp) apontando para o domínio da VPS.
+   - Função `disparar_fila_bot()` com a URL nova.
+   - Usuários de acesso ao sistema (login), caso não venham no dump.
+
+## Parte B — Exportar o Storage (arquivos)
+
+Buckets a migrar, todos **privados**:
 - bot-midia
 - database_export_09_09_26
 - mensagens-rapidas
@@ -11,43 +29,42 @@ Migrar todos os arquivos dos buckets do Lovable Cloud para o Supabase self-hoste
 - sistema
 - whatsapp
 
-Todas são privadas no Lovable Cloud e devem permanecer privadas na VPS.
+Passos:
+1. Criar os seis buckets no Supabase da VPS, com os mesmos nomes e privados.
+2. Recriar as regras de acesso aos arquivos, iguais às atuais.
+3. Baixar todos os arquivos do Lovable Cloud mantendo a estrutura de pastas.
+4. Enviar os arquivos para os buckets equivalentes na VPS, preservando os caminhos — os caminhos gravados no banco precisam continuar válidos.
 
-## Passos
+## Parte C — Apontar a aplicação da VPS para o banco da VPS
 
-### 1. Pré-requisitos na VPS
-- Supabase self-hosted já rodando (`docker compose up -d` em `/opt/supabase/supabase/docker`).
-- Domínio do Storage acessível (ex.: `https://db.seudominio.com/storage/v1`).
-- Chaves `ANON_KEY` e `SERVICE_ROLE_KEY` do novo Supabase geradas.
+No `.env` da VPS (nunca no Git):
+- `SUPABASE_URL` e `VITE_SUPABASE_URL` → `https://db.seudominio.com`
+- chaves anon e service_role do Supabase da VPS
+- `SITE_URL` → domínio da VPS
+- credenciais da Z-API
 
-### 2. Criar os buckets na VPS
-Criar, um a um, os seis buckets com os mesmos nomes e configuração **privada**.
+Depois: `bash deploy/deploy.sh` e atualizar as URLs de webhook na Z-API para o domínio novo.
 
-### 3. Replicar as políticas de acesso (RLS)
-Recriar, no Supabase da VPS, as mesmas políticas de `storage.objects` que existem no Lovable Cloud, garantindo que apenas usuários autenticados com permissão adequada acessem arquivos privados.
+## Parte D — Manter o Lovable como desenvolvimento
 
-### 4. Exportar os arquivos do Lovable Cloud
-Baixar todos os arquivos dos seis buckets, mantendo a estrutura de pastas (`bucket/pasta/arquivo.ext`). O método recomendado é usar um script local com a `service_role key` do Lovable Cloud para listar e fazer download em lote.
+- O código continua sendo editado no Lovable e sincronizado com o GitHub.
+- Para publicar: `git pull` + `bash deploy/deploy.sh` na VPS.
+- O banco do Lovable passa a ser **de teste**: mudanças de estrutura feitas aqui precisam ser aplicadas também no banco da VPS, na mesma ordem.
+- Recomendo usar dados fictícios no ambiente Lovable a partir de agora, para não misturar com dados reais de clientes.
 
-### 5. Importar os arquivos na VPS
-Fazer upload dos arquivos baixados para os buckets correspondentes no Supabase da VPS, preservando caminhos e nomes.
+## Validação final
+- Login funcionando na VPS.
+- WhatsApp recebendo e enviando mensagens (webhook novo).
+- Mídias antigas abrindo e baixando normalmente.
+- Orçamentos, currículos e links públicos abrindo com o domínio novo.
+- Bot respondendo (inatividade e fila disparando).
 
-### 6. Atualizar o `.env` da aplicação
-Apontar a aplicação para o novo Supabase:
-- `SUPABASE_URL`
-- `VITE_SUPABASE_URL`
-- `SUPABASE_PUBLISHABLE_KEY` / `VITE_SUPABASE_PUBLISHABLE_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_PROJECT_ID`
-
-### 7. Reimplantar e validar
-Rodar `bash deploy/deploy.sh` na VPS e testar:
-- Visualização de mídias do WhatsApp.
-- Download de arquivos de orçamento.
-- Envio/recepção de novos arquivos.
-- Leitura de mensagens rápidas e imagens do bot.
+## Pontos de atenção
+- Transcrição de áudio e interpretação por IA usam a chave do ambiente Lovable e **não funcionam na VPS** até trocarmos por uma chave própria (ex.: Google Gemini). Posso adaptar quando quiser.
+- Backups do banco e dos arquivos passam a ser sua responsabilidade na VPS.
+- Recomendo VPS com pelo menos 4 GB de RAM.
 
 ## Decisões pendentes
-1. Você já tem o Supabase self-hosted rodando na VPS?
-2. Prefere executar a exportação/importação manualmente ou quer que eu gere um script automatizado (Python) para fazer o download/upload em lote?
-3. Deseja manter os arquivos antigos no Lovable Cloud como backup ou pode remover após a migração?
+1. O Supabase self-hosted já está rodando na VPS?
+2. Quer que eu gere um script automatizado para baixar e reenviar os arquivos dos buckets em lote?
+3. Depois da migração, os arquivos antigos no Lovable devem ser mantidos como backup?
