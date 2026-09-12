@@ -291,6 +291,7 @@ export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
 
     const formato = ((msg.mime_type ?? "audio/ogg").split("/")[1] ?? "ogg").split(";")[0] || "ogg";
     try {
+      const { transcreverAudioIA } = await import("@/lib/ia-chave.server");
       const r = await transcreverAudioIA(
         "Transcreva exatamente o que foi dito neste áudio (português). Responda somente com a transcrição, sem comentários.",
         buffer.toString("base64"),
