@@ -843,7 +843,17 @@ function CardWhatsapp() {
       toast.success("Endereço do sistema salvo.");
       config.refetch();
     },
-    onError: () => toast.error("Não foi possível salvar o endereço do sistema."),
+    onError: (erro: unknown) => {
+      const detalhe =
+        erro && typeof erro === "object" && "message" in erro
+          ? String((erro as { message?: unknown }).message ?? "")
+          : "";
+      toast.error(
+        detalhe
+          ? `Não foi possível salvar o endereço do sistema: ${detalhe}`
+          : "Não foi possível salvar o endereço do sistema.",
+      );
+    },
   });
 
 
