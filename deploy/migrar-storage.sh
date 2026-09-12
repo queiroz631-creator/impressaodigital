@@ -3,14 +3,21 @@
 # Migração de Storage do Lovable Cloud para o Supabase self-hosted na VPS.
 #
 # USO:
-#   export SOURCE_SERVICE_ROLE_KEY=<chave-service-role-do-lovable>
+# USO (A) copiando direto de outro Supabase:
+#   export SOURCE_SERVICE_ROLE_KEY=<chave-service-role-da-origem>
 #   bash deploy/migrar-storage.sh
+#
+# USO (B) subindo a partir do backup baixado do Lovable (recomendado):
+#   unzip '*.zip' -d /root/storage-backup
+#   export LOCAL_DIR=/root/storage-backup
+#   bash deploy/migrar-storage.sh
+#   (a pasta deve conter uma subpasta por bucket)
 #
 # Opcional:
 #   export SOURCE_URL=https://qmnienngwksbeiyczrka.supabase.co
 #   export DEST_URL=https://supabase.queiroztecno.com.br
 #   export DEST_SERVICE_ROLE_KEY=<chave-da-vps>  # se não informada, lê do .env do Supabase
-#   export BUCKETS="bot-midia mensagens-rapidas orcamento-arquivos sistema whatsapp database_export_09_09_26"
+#   export BUCKETS="bot-midia mensagens-rapidas orcamento-arquivos sistema whatsapp database_export_11_09_26"
 #
 # O script:
 #   - cria os buckets privados no destino;
@@ -29,10 +36,17 @@ cd "$(dirname "$0")/.."
 
 export SOURCE_URL="${SOURCE_URL:-https://qmnienngwksbeiyczrka.supabase.co}"
 export DEST_URL="${DEST_URL:-https://supabase.queiroztecno.com.br}"
-export BUCKETS="${BUCKETS:-bot-midia mensagens-rapidas orcamento-arquivos sistema whatsapp database_export_09_09_26}"
+export BUCKETS="${BUCKETS:-bot-midia mensagens-rapidas orcamento-arquivos sistema whatsapp database_export_11_09_26}"
+export LOCAL_DIR="${LOCAL_DIR:-}"
+export SOURCE_SERVICE_ROLE_KEY="${SOURCE_SERVICE_ROLE_KEY:-}"
 
-if [ -z "${SOURCE_SERVICE_ROLE_KEY:-}" ]; then
-  echo "ERRO: informe a chave de serviço da origem (Lovable) em SOURCE_SERVICE_ROLE_KEY."
+if [ -n "$LOCAL_DIR" ]; then
+  if [ ! -d "$LOCAL_DIR" ]; then
+    echo "ERRO: pasta LOCAL_DIR não encontrada: $LOCAL_DIR"
+    exit 1
+  fi
+elif [ -z "$SOURCE_SERVICE_ROLE_KEY" ]; then
+  echo "ERRO: informe LOCAL_DIR (pasta do backup) ou SOURCE_SERVICE_ROLE_KEY (origem remota)."
   exit 1
 fi
 
@@ -63,11 +77,12 @@ import urllib.request
 from pathlib import Path
 
 SOURCE_URL = os.environ["SOURCE_URL"].rstrip("/")
-SOURCE_KEY = os.environ["SOURCE_SERVICE_ROLE_KEY"]
+SOURCE_KEY = os.environ.get("SOURCE_SERVICE_ROLE_KEY") or ""
 DEST_URL = os.environ["DEST_URL"].rstrip("/")
 DEST_KEY = os.environ["DEST_SERVICE_ROLE_KEY"]
 BUCKETS = os.environ["BUCKETS"].split()
 LOG_FILE = os.environ["LOG_FILE"]
+LOCAL_DIR = os.environ.get("LOCAL_DIR") or ""
 
 
 def request(base, key, method, path, body=None, headers=None, raw_path=False):
@@ -179,6 +194,36 @@ def list_objects(base, key, bucket, prefix=""):
     return found
 
 
+def list_local(bucket):
+    """Lista os arquivos do bucket na pasta local do backup (caminho -> tamanho)."""
+    import os as _os
+
+    base = Path(LOCAL_DIR) / bucket
+    found = {}
+    if not base.is_dir():
+        print(f"  [local] pasta não encontrada: {base}")
+        return found
+    for root, _dirs, files in _os.walk(base):
+        for name in files:
+            full = Path(root) / name
+            rel = str(full.relative_to(base)).replace(_os.sep, "/")
+            found[rel] = full.stat().st_size
+    return found
+
+
+def download_local(bucket, path):
+    """Lê um arquivo da pasta local do backup."""
+    import mimetypes
+
+    full = Path(LOCAL_DIR) / bucket / path
+    try:
+        data = full.read_bytes()
+    except Exception as e:  # noqa: BLE001
+        return None, str(e)
+    content_type = mimetypes.guess_type(path)[0] or "application/octet-stream"
+    return data, content_type
+
+
 def download_object(bucket, path):
     """Baixa um arquivo da origem e retorna os bytes."""
     encoded = urllib.parse.quote(path, safe="/")
@@ -238,7 +283,7 @@ def main():
     print("=" * 60)
     print(" MIGRAÇÃO DE STORAGE: LOVABLE CLOUD -> VPS")
     print("=" * 60)
-    print(f"Origem:  {SOURCE_URL}")
+    print(f"Origem:  {('pasta local ' + LOCAL_DIR) if LOCAL_DIR else SOURCE_URL}")
     print(f"Destino: {DEST_URL}")
     print(f"Buckets: {', '.join(BUCKETS)}")
     print(f"Log:     {LOG_FILE}")
@@ -264,7 +309,10 @@ def main():
         print(f"  {len(dest_existing)} arquivo(s) já existem no destino.")
 
         print("  Listando arquivos na origem...")
-        source_files = list_objects(SOURCE_URL, SOURCE_KEY, bucket)
+        if LOCAL_DIR:
+            source_files = list_local(bucket)
+        else:
+            source_files = list_objects(SOURCE_URL, SOURCE_KEY, bucket)
         print(f"  {len(source_files)} arquivo(s) encontrados na origem.")
 
         copiados = 0
@@ -291,7 +339,10 @@ def main():
             # Mostra progresso a cada arquivo.
             print(f"  [{i}/{len(source_files)}] {path[:80]}", end=" ")
 
-            data, err = download_object(bucket, path)
+            if LOCAL_DIR:
+                data, err = download_local(bucket, path)
+            else:
+                data, err = download_object(bucket, path)
             if data is None:
                 print(f"FALHA DOWNLOAD: {err}")
                 log_path.open("a").write(f"DOWNLOAD {bucket}/{path}: {err}\n")

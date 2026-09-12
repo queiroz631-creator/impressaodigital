@@ -121,31 +121,49 @@ Os arquivos dos buckets **não** vêm no backup do banco de dados. Use o script 
 
 > Importante: nada é apagado na origem. Os arquivos antigos permanecem no Lovable como backup.
 
-### Pré-requisitos
-- Supabase self-hosted já rodando na VPS.
-- Banco de dados já restaurado (ex.: `impressaodigital_260909`).
-- Acesso à `SERVICE_ROLE_KEY` do projeto Lovable.
+### Opção A (recomendada): subir a partir do backup baixado do Lovable
 
-### Execução
+A chave `service_role` do Lovable Cloud não é acessível, portanto a cópia direta de servidor a servidor não funciona nesse caso. Use o backup gerado no chat (um `.zip` por bucket + `storage-backup-relatorio.txt`):
+
+```bash
+# na VPS
+mkdir -p /root/storage-backup && cd /root/storage-backup
+# envie os .zip para esta pasta (scp/sftp) e descompacte:
+unzip -o '*.zip' -d /root/storage-backup
+
+cd /var/www/impressaodigital
+export LOCAL_DIR=/root/storage-backup
+# Opcional: export DEST_SERVICE_ROLE_KEY=<chave-da-vps>
+bash deploy/migrar-storage.sh
+```
+
+A pasta precisa conter uma subpasta por bucket (`whatsapp/`, `orcamento-arquivos/`, etc.), exatamente como os zips descompactam.
+
+### Opção B: copiar direto de outro Supabase
 
 ```bash
 cd /var/www/impressaodigital
 
-export SOURCE_SERVICE_ROLE_KEY=<chave-service-role-do-lovable>
+export SOURCE_SERVICE_ROLE_KEY=<chave-service-role-da-origem>
 # Opcional: export DEST_SERVICE_ROLE_KEY=<chave-da-vps>
 # (se não informada, o script lê de /root/supabase-project/.env)
 
 bash deploy/migrar-storage.sh
 ```
 
-O script lista os buckets, cria os que não existem no destino (sempre privados), baixa cada arquivo da origem e reenvia para a VPS mantendo o caminho original. Arquivos que já existem no destino com o **mesmo tamanho** são pulados, então o comando pode ser executado várias vezes. Se o arquivo existe no destino mas o tamanho diverge da origem (ou está zerado), ele é **reenviado por completo**, sobrescrevendo a versão incompleta — o resumo final mostra esses casos em "Reenviados (tamanho diferente)".
+### Pré-requisitos
+- Supabase self-hosted já rodando na VPS.
+- Banco de dados já restaurado (ex.: `impressaodigital_260909`).
+
+O script cria os buckets que não existem no destino (sempre privados) e envia cada arquivo mantendo o caminho original. Arquivos que já existem no destino com o **mesmo tamanho** são pulados, então o comando pode ser executado várias vezes. Se o arquivo existe no destino mas o tamanho diverge da origem (ou está zerado), ele é **reenviado por completo**, sobrescrevendo a versão incompleta — o resumo final mostra esses casos em "Reenviados (tamanho diferente)".
 
 ### Configuração opcional
 
 | Variável | Padrão | Descrição |
 | --- | --- | --- |
-| `SOURCE_URL` | `https://qmnienngwksbeiyczrka.supabase.co` | URL do Supabase de origem (Lovable). |
-| `SOURCE_SERVICE_ROLE_KEY` | — | Chave de serviço da origem (**obrigatória**). |
+| `LOCAL_DIR` | — | Pasta do backup descompactado (ativa a Opção A). |
+| `SOURCE_URL` | `https://qmnienngwksbeiyczrka.supabase.co` | URL do Supabase de origem. |
+| `SOURCE_SERVICE_ROLE_KEY` | — | Chave de serviço da origem (obrigatória na Opção B). |
 | `DEST_URL` | `https://supabase.queiroztecno.com.br` | URL do Supabase de destino (VPS). |
 | `DEST_SERVICE_ROLE_KEY` | lida do `.env` do Supabase | Chave de serviço do destino. |
 | `BUCKETS` | todos os buckets do projeto | Lista separada por espaço dos buckets a migrar. |
