@@ -3,14 +3,21 @@
 # Migração de Storage do Lovable Cloud para o Supabase self-hosted na VPS.
 #
 # USO:
-#   export SOURCE_SERVICE_ROLE_KEY=<chave-service-role-do-lovable>
+# USO (A) copiando direto de outro Supabase:
+#   export SOURCE_SERVICE_ROLE_KEY=<chave-service-role-da-origem>
 #   bash deploy/migrar-storage.sh
+#
+# USO (B) subindo a partir do backup baixado do Lovable (recomendado):
+#   unzip '*.zip' -d /root/storage-backup
+#   export LOCAL_DIR=/root/storage-backup
+#   bash deploy/migrar-storage.sh
+#   (a pasta deve conter uma subpasta por bucket)
 #
 # Opcional:
 #   export SOURCE_URL=https://qmnienngwksbeiyczrka.supabase.co
 #   export DEST_URL=https://supabase.queiroztecno.com.br
 #   export DEST_SERVICE_ROLE_KEY=<chave-da-vps>  # se não informada, lê do .env do Supabase
-#   export BUCKETS="bot-midia mensagens-rapidas orcamento-arquivos sistema whatsapp database_export_09_09_26"
+#   export BUCKETS="bot-midia mensagens-rapidas orcamento-arquivos sistema whatsapp database_export_11_09_26"
 #
 # O script:
 #   - cria os buckets privados no destino;
@@ -29,10 +36,17 @@ cd "$(dirname "$0")/.."
 
 export SOURCE_URL="${SOURCE_URL:-https://qmnienngwksbeiyczrka.supabase.co}"
 export DEST_URL="${DEST_URL:-https://supabase.queiroztecno.com.br}"
-export BUCKETS="${BUCKETS:-bot-midia mensagens-rapidas orcamento-arquivos sistema whatsapp database_export_09_09_26}"
+export BUCKETS="${BUCKETS:-bot-midia mensagens-rapidas orcamento-arquivos sistema whatsapp database_export_11_09_26}"
+export LOCAL_DIR="${LOCAL_DIR:-}"
+export SOURCE_SERVICE_ROLE_KEY="${SOURCE_SERVICE_ROLE_KEY:-}"
 
-if [ -z "${SOURCE_SERVICE_ROLE_KEY:-}" ]; then
-  echo "ERRO: informe a chave de serviço da origem (Lovable) em SOURCE_SERVICE_ROLE_KEY."
+if [ -n "$LOCAL_DIR" ]; then
+  if [ ! -d "$LOCAL_DIR" ]; then
+    echo "ERRO: pasta LOCAL_DIR não encontrada: $LOCAL_DIR"
+    exit 1
+  fi
+elif [ -z "$SOURCE_SERVICE_ROLE_KEY" ]; then
+  echo "ERRO: informe LOCAL_DIR (pasta do backup) ou SOURCE_SERVICE_ROLE_KEY (origem remota)."
   exit 1
 fi
 
@@ -63,11 +77,12 @@ import urllib.request
 from pathlib import Path
 
 SOURCE_URL = os.environ["SOURCE_URL"].rstrip("/")
-SOURCE_KEY = os.environ["SOURCE_SERVICE_ROLE_KEY"]
+SOURCE_KEY = os.environ.get("SOURCE_SERVICE_ROLE_KEY") or ""
 DEST_URL = os.environ["DEST_URL"].rstrip("/")
 DEST_KEY = os.environ["DEST_SERVICE_ROLE_KEY"]
 BUCKETS = os.environ["BUCKETS"].split()
 LOG_FILE = os.environ["LOG_FILE"]
+LOCAL_DIR = os.environ.get("LOCAL_DIR") or ""
 
 
 def request(base, key, method, path, body=None, headers=None, raw_path=False):
