@@ -232,3 +232,15 @@ automaticamente:
 
 **Importante:** a chave fica somente no servidor — nunca no código do
 navegador. Não commite o `.env`.
+
+## Endereço do sistema (bot do WhatsApp)
+
+O banco restaurado na VPS pode não ter o campo usado pelo bot para saber o
+endereço público do site. Se ao salvar em **Configurações → WhatsApp** aparecer
+"Não foi possível salvar o endereço do sistema", rode uma vez no banco da VPS:
+
+```bash
+docker exec -i supabase-db psql -U postgres -d postgres < deploy/vps-bot-endereco.sql
+```
+
+Depois abra **Configurações → WhatsApp**, clique em **Usar este endereço** e salve.
