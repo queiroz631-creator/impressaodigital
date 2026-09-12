@@ -1003,6 +1003,48 @@ function CardWhatsapp() {
           </div>
         </div>
 
+        <div className="grid gap-2 border-t border-border pt-4">
+          <Label>Endereço do sistema</Label>
+          <div className="flex flex-wrap gap-2">
+            <Input
+              value={enderecoSistema}
+              onChange={(e) => setEnderecoSistema(e.target.value)}
+              placeholder="https://seudominio.com"
+              className="font-mono text-xs"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => salvarEndereco.mutate(enderecoSistema)}
+              disabled={salvarEndereco.isPending}
+            >
+              {salvarEndereco.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+            {origem && enderecoSistema.replace(/\/+$/, "") !== origem ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEnderecoSistema(origem);
+                  salvarEndereco.mutate(origem);
+                }}
+                disabled={salvarEndereco.isPending}
+              >
+                Usar este endereço
+              </Button>
+            ) : null}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            É o endereço em que o sistema está publicado. As respostas automáticas do bot e os avisos de
+            inatividade são disparados por aqui — se estiver diferente do endereço em uso, o bot não responde.
+          </p>
+          {origem && enderecoSistema.replace(/\/+$/, "") !== origem ? (
+            <p className="text-xs font-semibold text-destructive">
+              Diferente do endereço aberto agora ({origem}).
+            </p>
+          ) : null}
+        </div>
+
 
         <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
           <Button
