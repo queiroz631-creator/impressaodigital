@@ -14,8 +14,7 @@ import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import { gravarEtapa } from "@/lib/curriculo.server";
 import type { PayloadEtapa } from "@/lib/curriculo";
 import type { CurriculoImportado } from "@/lib/curriculo-import-tipos";
-
-const MODELO = "google/gemini-2.5-flash";
+import { gerarTextoIA } from "@/lib/ia-chave.server";
 
 const SISTEMA = `Você extrai dados de currículos brasileiros e devolve SOMENTE JSON válido.
 REGRAS OBRIGATÓRIAS:
@@ -43,29 +42,13 @@ function lista(v: unknown): unknown[] {
 
 /** Chama a IA e normaliza o resultado para os tipos do sistema. */
 export async function interpretarTexto(conteudo: string): Promise<CurriculoImportado> {
-  const chave = process.env["LOVABLE_API_KEY"];
-  if (!chave) throw new Error("IA_INDISPONIVEL");
+  const r = await gerarTextoIA(SISTEMA, conteudo.slice(0, 30000), { json: true });
 
-  const resposta = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${chave}` },
-    body: JSON.stringify({
-      model: MODELO,
-      temperature: 0,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: SISTEMA },
-        { role: "user", content: conteudo.slice(0, 30000) },
-      ],
-    }),
-  });
+  if (r.status === 429) throw new Error("IA_LIMITE");
+  if (r.status === 402) throw new Error("IA_CREDITOS");
+  if (r.status !== 200 || r.conteudo === null) throw new Error("IA_INDISPONIVEL");
 
-  if (resposta.status === 429) throw new Error("IA_LIMITE");
-  if (resposta.status === 402) throw new Error("IA_CREDITOS");
-  if (!resposta.ok) throw new Error("IA_INDISPONIVEL");
-
-  const json = (await resposta.json()) as { choices?: { message?: { content?: string } }[] };
-  const bruto = json.choices?.[0]?.message?.content ?? "";
+  const bruto = r.conteudo;
   let obj: Record<string, unknown>;
   try {
     obj = JSON.parse(bruto.replace(/^```json/i, "").replace(/```$/, "").trim());
