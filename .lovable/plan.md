@@ -1,29 +1,70 @@
-# Migrações automáticas do banco para a VPS via Git
+# Migrações automáticas do banco de produção na VPS
 
-## Situação atual
+## Situação atual (verificada)
 
-- Toda alteração feita no banco pelo Lovable já é gravada automaticamente como arquivo em `supabase/migrations/` (73 arquivos hoje) e sincroniza com o GitHub — essa parte já funciona.
-- O que não existe: na VPS, ninguém aplica esses arquivos novos. Hoje é preciso rodar scripts manuais (como o `deploy/vps-bot-endereco.sql`), o que causou o erro do bot.
+- Toda alteração de banco feita no Lovable já gera um arquivo em `supabase/migrations/` — hoje são **73 arquivos**, e eles já sincronizam com o GitHub.
+- Falta apenas a VPS aplicar automaticamente as migrações novas. Hoje isso é manual (foi o que causou o problema do bot).
+
+## Baseline (qual migração corresponde ao banco da VPS)
+
+Determinado pelo histórico real do projeto, não arbitrariamente:
+
+- O backup restaurado na VPS é o `impressaodigital_260909` (09/09/2026). A última migração anterior a ele é
+  `20260909204005_e228651b-244a-4ad1-b2e2-26493e52a0d0.sql`.
+- Depois dele existem só duas migrações, ambas de 12/09: `20260912044325...` e `20260912044341...` (campo
+  "Endereço do sistema" e as rotinas do bot). Essas já foram aplicadas na VPS à mão, pelo
+  `deploy/vps-bot-endereco.sql`.
+
+Portanto o baseline será gravado em **`deploy/migrations-baseline.txt`** com o nome:
+
+```text
+20260912044341_909d866e-0aa4-4020-9090-112fd05a21c6.sql
+```
+
+Tudo até esse arquivo (inclusive) é marcado como já aplicado, **sem executar nada**. Só o que vier depois roda.
+O arquivo é comentado e fácil de alterar. Se ele estiver ausente ou com um nome que não existe em
+`supabase/migrations/`, o script **aborta** com mensagem clara pedindo definição manual do baseline.
 
 ## O que será criado
 
-1. **`deploy/aplicar-migracoes.sh`** — script que roda na VPS:
-   - Cria (se não existir) uma tabela de controle no banco da VPS com o nome de cada migração já aplicada.
-   - Percorre `supabase/migrations/*.sql` em ordem de data e aplica só os arquivos que ainda não foram aplicados, um a um, parando com aviso claro se algum falhar.
-   - Registra cada migração aplicada na tabela de controle, então pode ser executado várias vezes sem reaplicar nada.
+**`deploy/aplicar-migracoes.sh`**
 
-2. **`deploy/deploy.sh`** — passa a chamar `aplicar-migracoes.sh` logo após o `git pull` e antes do build. Assim, cada `bash deploy/deploy.sh` já atualiza o banco da VPS junto com o código.
+- Confere que o container `supabase-db` existe e está rodando, e testa a conexão antes de qualquer coisa.
+- Cria (se faltar) a tabela de controle `public._migracoes_aplicadas` (`nome` chave primária, `aplicado_em`).
+- Se a tabela estiver vazia, faz o baseline: registra todas as migrações até o nome do
+  `migrations-baseline.txt` sem executá-las.
+- Lista `supabase/migrations/*.sql` em ordem alfabética (= cronológica) e, para cada uma:
+  `[SKIP]` se já registrada, `[APPLY]` + `[OK]` quando aplicada com sucesso.
+- Cada migração roda isolada com `ON_ERROR_STOP=1` e em transação única, exceto quando o arquivo declarar
+  que não pode rodar em transação (`CREATE INDEX CONCURRENTLY`, marcador `-- no-transaction`).
+- Registra na tabela de controle **somente depois** do sucesso.
+- Em erro: mostra o nome da migração e a mensagem do PostgreSQL, não registra nada e sai com código ≠ 0.
+- Antes de aplicar, lê `pg_extension` e avisa/interrompe se uma migração pendente usar `pg_net` ou `pg_cron`
+  e a extensão não estiver instalada. Não instala nem remove extensões.
+- Modo diagnóstico `--pendentes`: só lista o que falta aplicar, sem tocar no banco.
+- Nenhuma senha, chave ou token no script — usa apenas o acesso já existente
+  `docker exec -i supabase-db psql -U postgres -d postgres`.
 
-3. **`deploy/README.md`** — documenta o fluxo: "alterou o banco no Lovable → sincronizou o Git → rodou deploy.sh na VPS → banco da VPS atualizado sozinho".
+## O que será modificado
 
-## Pontos de atenção
+**`deploy/deploy.sh`** — ordem: `git pull` → `aplicar-migracoes.sh` → `npm ci`/`npm install` → `npm run build`
+→ `pm2 reload` → `pm2 save`. Se as migrações falharem, o deploy para ali: sem build e sem reiniciar a
+aplicação, para nunca subir código novo sobre banco incompatível. O carregamento do `.env` e a checagem
+atual continuam iguais; nada de `git reset`, `git clean`, `git checkout .` ou `git restore` — alterações
+locais da VPS são preservadas.
 
-- Migrações que dependem de `pg_net`/`pg_cron` (rotinas do bot) exigem as extensões ativas na VPS — o script verifica e avisa se faltar.
-- Migrações antigas (anteriores à VPS) já existem no banco restaurado; o script marca como aplicadas as que já estão no backup para não reaplicar — na primeira execução ele pergunta/registra a linha de corte.
-- Nada muda no ambiente Lovable nem no código da aplicação.
+**`deploy/README.md`** — o fluxo completo (alterou no Lovable → migração criada → GitHub → `bash deploy/deploy.sh`
+na VPS → banco atualizado antes do build), como o baseline funciona e onde mudá-lo, como listar migrações
+aplicadas e pendentes, e o que fazer quando uma falha acontecer.
 
-## Detalhes técnicos
+## Fora de escopo
 
-- Tabela de controle: `public._migracoes_aplicadas (nome text primary key, aplicado_em timestamptz default now())`.
-- Script usa `docker exec -i supabase-db psql -U postgres -d postgres` para aplicar cada arquivo e `ON_ERROR_STOP=1` para abortar em erro.
-- Idempotente: `INSERT ... ON CONFLICT DO NOTHING` no registro.
+Nada muda no Lovable, no bot, na Z-API, no Gemini, no Storage, na autenticação, no layout ou nos dados.
+Nenhuma migração de produção é executada a partir do ambiente Lovable.
+
+## Validação
+
+Sintaxe (`bash -n`) e shellcheck se disponível; conferência de que o `deploy.sh` chama o script na ordem
+certa, que migração já registrada é ignorada, que erro interrompe, que o baseline não executa migrações
+antigas, e que nenhuma credencial entrou no repositório. No fim, relatório com arquivos criados/alterados,
+baseline escolhido e resultados.
