@@ -283,7 +283,7 @@ def main():
     print("=" * 60)
     print(" MIGRAÇÃO DE STORAGE: LOVABLE CLOUD -> VPS")
     print("=" * 60)
-    print(f"Origem:  {SOURCE_URL}")
+    print(f"Origem:  {('pasta local ' + LOCAL_DIR) if LOCAL_DIR else SOURCE_URL}")
     print(f"Destino: {DEST_URL}")
     print(f"Buckets: {', '.join(BUCKETS)}")
     print(f"Log:     {LOG_FILE}")
@@ -339,7 +339,10 @@ def main():
             # Mostra progresso a cada arquivo.
             print(f"  [{i}/{len(source_files)}] {path[:80]}", end=" ")
 
-            data, err = download_object(bucket, path)
+            if LOCAL_DIR:
+                data, err = download_local(bucket, path)
+            else:
+                data, err = download_object(bucket, path)
             if data is None:
                 print(f"FALHA DOWNLOAD: {err}")
                 log_path.open("a").write(f"DOWNLOAD {bucket}/{path}: {err}\n")
