@@ -7,3 +7,5 @@
 - [x] `deploy/ecosystem.config.cjs` — configuração PM2
 - [x] `deploy/.env.example` — variáveis necessárias
 - [x] `deploy/README.md` — passo a passo em português
+- [x] `deploy/aplicar-migracoes.sh` + `deploy/migrations-baseline.txt` — migrações
+      automáticas do banco no deploy (baseline sem reaplicar as antigas)

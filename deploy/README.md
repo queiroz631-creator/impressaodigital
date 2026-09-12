@@ -185,12 +185,84 @@ Após a migração, teste:
 
 ---
 
-## Publicando novas versões
+## Publicando novas versões (código + banco)
 
-Sempre que atualizar o código pelo Lovable (que sincroniza com o GitHub):
+O fluxo completo é:
+
+```text
+Alterou o banco no Lovable
+        ↓
+Lovable cria a migração em supabase/migrations/
+        ↓
+Migração sincronizada com o GitHub
+        ↓
+Na VPS:  cd /var/www/impressaodigital && bash deploy/deploy.sh
+        ↓
+O banco é atualizado automaticamente ANTES do build
+```
+
+O `deploy.sh` executa, nesta ordem: `git pull` → aplicar migrações → instalar
+dependências → build → `pm2 reload` → `pm2 save`. Se alguma migração falhar, o
+deploy para ali: **não faz build e não reinicia a aplicação**, para nunca colocar
+código novo em cima de um banco incompatível.
+
+Nenhuma alteração local da VPS é apagada — o deploy não usa `git reset`,
+`git clean`, `git checkout .` nem `git restore`.
+
+### Como funciona o baseline
+
+O banco da VPS veio de um backup completo, então as migrações antigas já estão
+lá. O arquivo **`deploy/migrations-baseline.txt`** informa até qual migração o
+banco já está atualizado. Na primeira execução (tabela de controle vazia), tudo
+até esse nome é apenas **registrado** como aplicado, sem executar SQL. Só o que
+vier depois é executado.
+
+Baseline atual:
+
+```text
+20260912044341_909d866e-0aa4-4020-9090-112fd05a21c6.sql
+```
+
+(backup `impressaodigital_260909` + as duas migrações de 12/09 já aplicadas à mão
+pelo `deploy/vps-bot-endereco.sql`). Para mudar, edite o arquivo com o nome exato
+de um arquivo existente em `supabase/migrations/`. Se o baseline estiver ausente
+ou com um nome inválido, o script aborta com mensagem clara em vez de adivinhar.
+
+### Verificar migrações aplicadas e pendentes
+
+Aplicadas (registradas no banco):
 
 ```bash
-cd /var/www/impressaodigital && bash deploy/deploy.sh
+docker exec -i supabase-db psql -U postgres -d postgres \
+  -c "SELECT * FROM public._migracoes_aplicadas ORDER BY aplicado_em;"
+```
+
+Pendentes (não altera nada no banco):
+
+```bash
+cd /var/www/impressaodigital
+bash deploy/aplicar-migracoes.sh --pendentes
+```
+
+### Quando uma migração falhar
+
+O script mostra `[ERRO] Migration: <nome>` junto com a mensagem do PostgreSQL, e
+**não** registra a migração como aplicada. Corrija a causa (geralmente uma
+extensão ausente ou um objeto que já existe no banco) e rode o deploy de novo —
+as migrações já aplicadas são puladas automaticamente.
+
+Se uma migração depender de `pg_net` ou `pg_cron` e a extensão não estiver
+instalada, o script interrompe antes de aplicar. Instale e repita:
+
+```sql
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+```
+
+Rodar somente as migrações, sem deploy:
+
+```bash
+cd /var/www/impressaodigital && bash deploy/aplicar-migracoes.sh
 ```
 
 ## Comandos úteis
