@@ -194,6 +194,36 @@ def list_objects(base, key, bucket, prefix=""):
     return found
 
 
+def list_local(bucket):
+    """Lista os arquivos do bucket na pasta local do backup (caminho -> tamanho)."""
+    import os as _os
+
+    base = Path(LOCAL_DIR) / bucket
+    found = {}
+    if not base.is_dir():
+        print(f"  [local] pasta não encontrada: {base}")
+        return found
+    for root, _dirs, files in _os.walk(base):
+        for name in files:
+            full = Path(root) / name
+            rel = str(full.relative_to(base)).replace(_os.sep, "/")
+            found[rel] = full.stat().st_size
+    return found
+
+
+def download_local(bucket, path):
+    """Lê um arquivo da pasta local do backup."""
+    import mimetypes
+
+    full = Path(LOCAL_DIR) / bucket / path
+    try:
+        data = full.read_bytes()
+    except Exception as e:  # noqa: BLE001
+        return None, str(e)
+    content_type = mimetypes.guess_type(path)[0] or "application/octet-stream"
+    return data, content_type
+
+
 def download_object(bucket, path):
     """Baixa um arquivo da origem e retorna os bytes."""
     encoded = urllib.parse.quote(path, safe="/")
