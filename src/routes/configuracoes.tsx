@@ -811,13 +811,41 @@ function CardWhatsapp() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("whatsapp_config")
-        .select("id, conexao_nome, base_url, webhook_token")
+        .select("id, conexao_nome, base_url, webhook_token, app_url")
         .limit(1)
         .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
+
+  // Endereço público do sistema, usado pelas rotinas automáticas do bot.
+  const [enderecoSistema, setEnderecoSistema] = useState("");
+  const enderecoCarregado = useRef(false);
+  useEffect(() => {
+    if (enderecoCarregado.current) return;
+    if (!config.data) return;
+    enderecoCarregado.current = true;
+    setEnderecoSistema(config.data.app_url ?? "");
+  }, [config.data]);
+
+  const salvarEndereco = useMutation({
+    mutationFn: async (valor: string) => {
+      const id = config.data?.id;
+      if (!id) throw new Error("Configuração não encontrada");
+      const { error } = await supabase
+        .from("whatsapp_config")
+        .update({ app_url: valor.trim().replace(/\/+$/, "") })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Endereço do sistema salvo.");
+      config.refetch();
+    },
+    onError: () => toast.error("Não foi possível salvar o endereço do sistema."),
+  });
+
 
   const status = useQuery({
     queryKey: ["whatsapp-status"],
