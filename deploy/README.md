@@ -208,7 +208,7 @@ interpretação das respostas do bot usam IA. O sistema escolhe o provedor
 automaticamente:
 
 - **`GEMINI_API_KEY` definida no `.env`** → usa a API oficial do Google
-  Gemini (modelo gemini-2.5-flash). É o modo da VPS.
+  Gemini (modelo gemini-3.6-flash). É o modo da VPS.
 - **Sem `GEMINI_API_KEY`** → usa o gateway do Lovable (só funciona dentro
   do ambiente Lovable).
 

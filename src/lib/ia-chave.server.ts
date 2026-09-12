@@ -3,16 +3,16 @@
  *
  * Dois provedores, escolhidos por variável de ambiente:
  * - `GEMINI_API_KEY` definida (ex.: VPS) → API oficial do Google Gemini
- *   (`generativelanguage.googleapis.com`, modelo gemini-2.5-flash).
+ *   (`generativelanguage.googleapis.com`, modelo gemini-3.6-flash).
  * - Caso contrário (ambiente Lovable) → gateway do Lovable
  *   (`ai.gateway.lovable.dev`) com `LOVABLE_API_KEY` — comportamento original.
  *
  * Nenhuma chave é exposta ao frontend: este módulo só roda no servidor.
  */
 
-const GEMINI_MODELO = "gemini-2.5-flash";
+const GEMINI_MODELO = "gemini-3.6-flash";
 const LOVABLE_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const LOVABLE_MODELO = "google/gemini-2.5-flash";
+const LOVABLE_MODELO = "google/gemini-3.6-flash";
 /** Modelo com entrada de áudio usado no gateway Lovable (transcrição). */
 const LOVABLE_MODELO_AUDIO = "google/gemini-3.7-flash";
 
