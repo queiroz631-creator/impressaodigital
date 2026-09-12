@@ -1,31 +1,37 @@
-# Configurar a Z-API na VPS
+# Corrigir IA na VPS (importação de currículo, transcrição e bot)
 
-## Como funciona (sem alteração de código)
+## Diagnóstico
 
-O sistema já está preparado: as credenciais da Z-API são lidas de variáveis de ambiente e o botão **Reconfigurar webhook** (em Configurações → WhatsApp) grava na Z-API o endereço definido em `SITE_URL`.
+O erro "Não foi possível interpretar o currículo agora" na VPS acontece porque toda a IA do sistema passa pelo gateway do Lovable (`ai.gateway.lovable.dev`) com a `LOVABLE_API_KEY`, que **só funciona dentro do ambiente Lovable**. Na VPS a chamada falha e a importação de currículo, a transcrição de áudio e a interpretação das respostas do bot param.
 
-## Passo a passo na VPS
+São 3 pontos afetados (todos com o mesmo padrão de chamada):
+- `src/lib/curriculo-import.server.ts` — interpretar currículo (PDF/DOC/DOCX)
+- `src/lib/whatsapp.functions.ts` — transcrever áudio do WhatsApp
+- `src/lib/ia.server.ts` — interpretar respostas do cliente no bot (SIM/NÃO, opções, quantidades)
 
-1. No `.env` da aplicação na VPS, preencher (modelo já existe em `deploy/.env.example`):
-   - `ZAPI_BASE_URL=https://api.z-api.io`
-   - `ZAPI_INSTANCE_ID` — ID da instância (painel da Z-API)
-   - `ZAPI_INSTANCE_TOKEN` — token da instância (vem na URL de envio do painel)
-   - `ZAPI_CLIENT_TOKEN` — Client-Token da conta (painel da Z-API → Segurança)
-   - `SITE_URL=https://seudominio.com` — domínio público da VPS (essencial: é ele que vai para o webhook)
-2. Reiniciar a aplicação: `pm2 reload impressaodigital` (as variáveis só são lidas no início do processo).
-3. Abrir o sistema pelo domínio da VPS → Configurações → WhatsApp (Z-API):
-   - Clicar em **Testar conexão** para confirmar as credenciais.
-   - Clicar em **Reconfigurar webhook** — ele grava na Z-API os 4 webhooks (recebidas, enviadas pelo celular, status de entrega e desconexão) apontando para `https://seudominio.com/api/public/whatsapp/webhook?token=...`.
-   - Conferir a linha que mostra o endereço gravado na Z-API: deve ficar sem o aviso vermelho de divergência.
-4. Enviar uma mensagem de teste do celular e confirmar que a conversa aparece no sistema.
-5. Recriar no banco da VPS os agendamentos do bot (inatividade, fila, status) apontando para o domínio da VPS — já documentado no `deploy/README.md`.
+## Solução
 
-## O que será alterado no projeto
+Adicionar suporte a uma **chave própria do Google (Gemini)**, usada automaticamente quando existir. No Lovable nada muda (a chave nova não existirá aqui, então continua usando o gateway atual).
 
-- `deploy/README.md`: nova seção "Z-API (WhatsApp)" com o passo a passo acima e observação de que, sem `SITE_URL` correto, o webhook apontaria para o endereço Lovable.
+## O que será alterado
 
-## Pontos de atenção
+1. **Novo helper `src/lib/ia-chave.server.ts`** — centraliza a chamada de IA:
+   - Se `GEMINI_API_KEY` estiver definida → chama direto a API do Google (`generativelanguage.googleapis.com`, modelo `gemini-2.5-flash`).
+   - Senão → comportamento atual (gateway Lovable + `LOVABLE_API_KEY`).
+   - Suporta texto puro (com/sem resposta JSON obrigatória) e entrada de áudio (base64).
+2. **`src/lib/curriculo-import.server.ts`** — troca a chamada direta pelo helper (mesmo prompt, mesma normalização do resultado).
+3. **`src/lib/ia.server.ts`** — idem para as 3 funções de interpretação do bot.
+4. **`src/lib/whatsapp.functions.ts`** — idem para a transcrição de áudio (formato OGG/Opus convertido para o formato aceito pelo Gemini).
+5. **`deploy/.env.example` e `deploy/README.md`** — documentar `GEMINI_API_KEY`: como gerar grátis no Google AI Studio (aistudio.google.com → Get API key) e onde colocar no `.env` da VPS.
 
-- Não é preciso mexer no painel da Z-API manualmente — o botão faz tudo via API.
-- Se a VPS ainda estiver sem HTTPS/domínio definitivo, o webhook precisa ser reconfigurado de novo depois que o domínio estiver no ar.
-- A transcrição de áudio e a interpretação do bot usam `LOVABLE_API_KEY`, que só funciona no ambiente Lovable; na VPS esses recursos ficam indisponíveis até adaptarmos para uma chave própria (ex.: Google Gemini) — isso é separado da Z-API.
+## Passo a passo para você (depois da alteração)
+
+1. Criar a chave grátis em https://aistudio.google.com (botão "Get API key").
+2. Na VPS, adicionar no `.env`: `GEMINI_API_KEY=<sua-chave>`.
+3. `pm2 reload impressaodigital` e testar a importação de currículo novamente.
+
+## Garantias
+
+- No ambiente Lovable o comportamento fica **idêntico** ao de hoje (a chave nova só é usada se existir).
+- Nenhuma mudança de layout, banco de dados ou lógica do bot — apenas a camada de chamada da IA.
+- O plano gratuito do Gemini atende folgadamente o volume de uma gráfica (importação de currículos, transcrições e interpretações do bot).
