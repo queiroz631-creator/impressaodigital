@@ -1959,6 +1959,7 @@ export type Database = {
       }
       whatsapp_config: {
         Row: {
+          app_url: string
           base_url: string
           bot_24h: boolean
           bot_ativo: boolean
@@ -2020,6 +2021,7 @@ export type Database = {
           webhook_token: string
         }
         Insert: {
+          app_url?: string
           base_url?: string
           bot_24h?: boolean
           bot_ativo?: boolean
@@ -2081,6 +2083,7 @@ export type Database = {
           webhook_token?: string
         }
         Update: {
+          app_url?: string
           base_url?: string
           bot_24h?: boolean
           bot_ativo?: boolean
@@ -2400,6 +2403,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      disparar_rotina_bot: { Args: { rota: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
