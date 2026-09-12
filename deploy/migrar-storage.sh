@@ -309,7 +309,10 @@ def main():
         print(f"  {len(dest_existing)} arquivo(s) já existem no destino.")
 
         print("  Listando arquivos na origem...")
-        source_files = list_objects(SOURCE_URL, SOURCE_KEY, bucket)
+        if LOCAL_DIR:
+            source_files = list_local(bucket)
+        else:
+            source_files = list_objects(SOURCE_URL, SOURCE_KEY, bucket)
         print(f"  {len(source_files)} arquivo(s) encontrados na origem.")
 
         copiados = 0
