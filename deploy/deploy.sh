@@ -21,6 +21,14 @@ set -a
 . ./.env
 set +a
 
+echo "==> Aplicando migrações novas no banco"
+if ! bash deploy/aplicar-migracoes.sh; then
+  echo
+  echo "ERRO: as migrações do banco falharam. Build e PM2 NÃO foram executados."
+  echo "Corrija a migração indicada acima e rode o deploy novamente."
+  exit 1
+fi
+
 echo "==> Instalando dependências"
 if [ -f package-lock.json ]; then
   npm ci

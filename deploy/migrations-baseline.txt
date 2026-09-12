@@ -1,0 +1,19 @@
+# BASELINE DAS MIGRAÇÕES DO BANCO DA VPS
+#
+# Este arquivo diz até qual migração o banco da VPS JÁ ESTÁ atualizado.
+# Na primeira execução de deploy/aplicar-migracoes.sh (tabela de controle vazia),
+# todas as migrações até este nome — inclusive — são apenas REGISTRADAS como
+# aplicadas, sem executar nenhum SQL. Só o que vier depois é executado.
+#
+# Como este valor foi determinado:
+#   - O banco da VPS veio do backup completo "impressaodigital_260909" (09/09/2026),
+#     ou seja, já contém tudo até 20260909204005_e228651b-....
+#   - As duas migrações posteriores (20260912044325 e 20260912044341), que criaram o
+#     campo "Endereço do sistema" e as rotinas do bot, foram aplicadas manualmente na
+#     VPS pelo script deploy/vps-bot-endereco.sql.
+#   - Portanto o estado atual do banco da VPS corresponde à última migração abaixo.
+#
+# Para alterar: coloque o nome exato do arquivo (com .sql) existente em
+# supabase/migrations/. Linhas em branco e linhas com # são ignoradas.
+
+20260912044341_909d866e-0aa4-4020-9090-112fd05a21c6.sql
