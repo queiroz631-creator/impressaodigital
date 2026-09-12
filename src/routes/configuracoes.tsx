@@ -811,13 +811,41 @@ function CardWhatsapp() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("whatsapp_config")
-        .select("id, conexao_nome, base_url, webhook_token")
+        .select("id, conexao_nome, base_url, webhook_token, app_url")
         .limit(1)
         .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
+
+  // Endereço público do sistema, usado pelas rotinas automáticas do bot.
+  const [enderecoSistema, setEnderecoSistema] = useState("");
+  const enderecoCarregado = useRef(false);
+  useEffect(() => {
+    if (enderecoCarregado.current) return;
+    if (!config.data) return;
+    enderecoCarregado.current = true;
+    setEnderecoSistema(config.data.app_url ?? "");
+  }, [config.data]);
+
+  const salvarEndereco = useMutation({
+    mutationFn: async (valor: string) => {
+      const id = config.data?.id;
+      if (!id) throw new Error("Configuração não encontrada");
+      const { error } = await supabase
+        .from("whatsapp_config")
+        .update({ app_url: valor.trim().replace(/\/+$/, "") })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Endereço do sistema salvo.");
+      config.refetch();
+    },
+    onError: () => toast.error("Não foi possível salvar o endereço do sistema."),
+  });
+
 
   const status = useQuery({
     queryKey: ["whatsapp-status"],
@@ -973,6 +1001,48 @@ function CardWhatsapp() {
               </>
             ) : null}
           </div>
+        </div>
+
+        <div className="grid gap-2 border-t border-border pt-4">
+          <Label>Endereço do sistema</Label>
+          <div className="flex flex-wrap gap-2">
+            <Input
+              value={enderecoSistema}
+              onChange={(e) => setEnderecoSistema(e.target.value)}
+              placeholder="https://seudominio.com"
+              className="font-mono text-xs"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => salvarEndereco.mutate(enderecoSistema)}
+              disabled={salvarEndereco.isPending}
+            >
+              {salvarEndereco.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+            {origem && enderecoSistema.replace(/\/+$/, "") !== origem ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEnderecoSistema(origem);
+                  salvarEndereco.mutate(origem);
+                }}
+                disabled={salvarEndereco.isPending}
+              >
+                Usar este endereço
+              </Button>
+            ) : null}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            É o endereço em que o sistema está publicado. As respostas automáticas do bot e os avisos de
+            inatividade são disparados por aqui — se estiver diferente do endereço em uso, o bot não responde.
+          </p>
+          {origem && enderecoSistema.replace(/\/+$/, "") !== origem ? (
+            <p className="text-xs font-semibold text-destructive">
+              Diferente do endereço aberto agora ({origem}).
+            </p>
+          ) : null}
         </div>
 
 

@@ -56,17 +56,19 @@ Isso instala Node 20, Docker, Nginx, Certbot e PM2, clona a aplicação em
 3. Recrie os buckets de armazenamento no Studio do novo Supabase
    (`https://db.seudominio.com`): **bot-midia**, **orcamento-arquivos**,
    **sistema** e **whatsapp** (todos privados) e copie os arquivos, se houver.
-4. Ative as extensões e recrie os agendamentos do bot (inatividade, fila e
-   status do WhatsApp), agora apontando para o novo domínio:
+4. Ative as extensões usadas pelas rotinas automáticas do bot:
 
    ```sql
    create extension if not exists pg_cron;
    create extension if not exists pg_net;
    ```
 
-   Os agendamentos atuais chamam endereços `*.lovable.app` — recrie-os com a
-   URL nova (`https://seudominio.com/api/public/whatsapp/...`). A função
-   `disparar_fila_bot()` também precisa ser atualizada com a URL nova.
+   Os agendamentos (fila, inatividade e status do WhatsApp) vêm no backup e já
+   leem o endereço configurado no sistema. Depois de subir a aplicação, abra
+   **Configurações → WhatsApp** e preencha **Endereço do sistema** com o
+   domínio da VPS (ex.: `https://seudominio.com`). Sem isso, o bot continua
+   avisando o endereço antigo e não responde.
+
 
 ## 5. Configurar a aplicação
 
