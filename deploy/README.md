@@ -201,9 +201,32 @@ cd /var/www/impressaodigital && bash deploy/deploy.sh
 | Logs do Supabase | `cd /opt/supabase/supabase/docker && docker compose logs -f` |
 | Status do Supabase | `docker compose ps` |
 
-## Limitações conhecidas neste momento
+## Inteligência artificial na VPS (GEMINI_API_KEY)
 
-- A transcrição de áudio e a interpretação do bot por IA usam a chave do
-  ambiente Lovable e **não funcionam na VPS** até adaptarmos o código para
-  uma chave própria (ex.: Google Gemini). Avise quando quiser que eu faça
-  essa adaptação.
+A importação de currículo, a transcrição de áudio do WhatsApp e a
+interpretação das respostas do bot usam IA. O sistema escolhe o provedor
+automaticamente:
+
+- **`GEMINI_API_KEY` definida no `.env`** → usa a API oficial do Google
+  Gemini (modelo gemini-2.5-flash). É o modo da VPS.
+- **Sem `GEMINI_API_KEY`** → usa o gateway do Lovable (só funciona dentro
+  do ambiente Lovable).
+
+### Como configurar
+
+1. Acesse https://aistudio.google.com e clique em **Get API key** para gerar
+   uma chave gratuita do Gemini (o plano gratuito atende folgadamente o
+   volume de uma gráfica).
+2. No `.env` da aplicação na VPS, adicione:
+
+   ```bash
+   GEMINI_API_KEY=<sua-chave>
+   ```
+
+3. Reinicie a aplicação: `pm2 restart impressaodigital`
+   (as variáveis só são lidas na inicialização).
+4. Teste: importe um currículo em PDF e confira que os campos são
+   preenchidos; peça a transcrição de um áudio no WhatsApp.
+
+**Importante:** a chave fica somente no servidor — nunca no código do
+navegador. Não commite o `.env`.

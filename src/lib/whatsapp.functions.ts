@@ -290,33 +290,20 @@ export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
     }
 
     const formato = ((msg.mime_type ?? "audio/ogg").split("/")[1] ?? "ogg").split(";")[0] || "ogg";
-    const chave = process.env["LOVABLE_API_KEY"];
-    if (!chave) return { ok: false as const, texto: null, erro: "Serviço de IA não configurado." };
-
     try {
-      const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${chave}` },
-        body: JSON.stringify({
-          // Modelo que aceita áudio OGG/Opus (formato dos áudios do WhatsApp).
-          model: "google/gemini-3.7-flash",
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: "Transcreva exatamente o que foi dito neste áudio (português). Responda somente com a transcrição, sem comentários.",
-                },
-                { type: "input_audio", input_audio: { data: buffer.toString("base64"), format: formato } },
-              ],
-            },
-          ],
-        }),
-      });
+      const { transcreverAudioIA } = await import("@/lib/ia-chave.server");
+      const r = await transcreverAudioIA(
+        "Transcreva exatamente o que foi dito neste áudio (português). Responda somente com a transcrição, sem comentários.",
+        buffer.toString("base64"),
+        formato,
+      );
 
-      if (!r.ok) {
-        const detalhe = await r.text().catch(() => "");
+      if (r.status === 0) {
+        return { ok: false as const, texto: null, erro: "Serviço de IA não configurado." };
+      }
+
+      if (r.status !== 200 || r.conteudo === null) {
+        const detalhe = r.erroBruto ?? "";
         console.error("Falha na transcrição de áudio", r.status, detalhe.slice(0, 500));
 
         if (r.status === 429 || r.status >= 500) {
@@ -343,9 +330,7 @@ export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
         };
       }
 
-      const j = (await r.json()) as { choices?: { message?: { content?: unknown } }[] };
-      const conteudo = j.choices?.[0]?.message?.content;
-      const texto = (typeof conteudo === "string" ? conteudo : "").trim();
+      const texto = r.conteudo.trim();
       if (!texto) return { ok: false as const, texto: null, erro: "Não foi possível entender o áudio." };
 
       await context.supabase.from("whatsapp_mensagens").update({ transcricao: texto }).eq("id", msg.id);
@@ -354,6 +339,7 @@ export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
       console.error("Erro ao transcrever áudio", e);
       return { ok: false as const, texto: null, erro: "A transcrição falhou. Tente novamente." };
     }
+
 
   });
 

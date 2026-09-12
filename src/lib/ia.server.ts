@@ -1,12 +1,13 @@
 /**
- * Interpretação de intenção com a Lovable AI. Somente servidor.
+ * Interpretação de intenção via IA (Lovable ou Gemini — ver ia-chave.server.ts).
+ * Somente servidor.
  *
  * A IA é usada APENAS para entender o que o cliente quis dizer (mapear a
  * resposta livre para uma das opções cadastradas). Nenhum valor financeiro é
  * calculado ou sugerido pela IA — o preço vem sempre de src/lib/calc.ts.
  */
 
-const MODELO = "google/gemini-2.5-flash";
+import { gerarTextoIA } from "@/lib/ia-chave.server";
 
 interface RespostaIA {
   ok: boolean;
@@ -14,34 +15,9 @@ interface RespostaIA {
 }
 
 async function chamarIA(sistema: string, usuario: string): Promise<RespostaIA> {
-  const chaveApi = process.env["LOVABLE_API_KEY"];
-  if (!chaveApi) return { ok: false, conteudo: "" };
-
-  try {
-    const resposta = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${chaveApi}` },
-      body: JSON.stringify({
-        model: MODELO,
-        temperature: 0,
-        messages: [
-          { role: "system", content: sistema },
-          { role: "user", content: usuario },
-        ],
-      }),
-    });
-
-    if (!resposta.ok) return { ok: false, conteudo: "" };
-
-    const dados = (await resposta.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-
-    const conteudo = dados.choices?.[0]?.message?.content ?? "";
-    return { ok: Boolean(conteudo), conteudo: conteudo.trim() };
-  } catch {
-    return { ok: false, conteudo: "" };
-  }
+  const r = await gerarTextoIA(sistema, usuario);
+  const conteudo = r.conteudo ?? "";
+  return { ok: Boolean(conteudo), conteudo };
 }
 
 /**
