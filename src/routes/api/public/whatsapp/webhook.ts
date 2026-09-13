@@ -106,6 +106,18 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           return Response.json({ ok: true, ignorado: true, motivo: "conexao_inativa" });
         }
 
+        // Token antigo sem conexão vinculada: cai na primeira conexão cadastrada.
+        if (!conexaoId) {
+          const { data: primeira } = await supabaseAdmin
+            .from("whatsapp_conexoes")
+            .select("id")
+            .order("ordem")
+            .limit(1)
+            .maybeSingle();
+          conexaoId = primeira?.id ?? null;
+        }
+        if (!conexaoId) return new Response("Nenhuma conexão cadastrada", { status: 409 });
+
         let bruto: unknown;
         try {
           bruto = await request.json();
