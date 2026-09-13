@@ -1,45 +1,19 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-  LayoutDashboard,
-  Printer,
-  DollarSign,
-  FileText,
-  Bot,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  MessageCircle,
-  FileUser,
-  Users,
-  Sparkles,
-  Zap,
-} from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
+import { usePermissoes } from "@/hooks/usePermissoes";
+import { modulosVisiveis } from "@/lib/modulos";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo-impressao.png";
 
-const itens = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/", label: "Calculadora", icon: Printer },
-  { to: "/orcamentos", label: "Orçamentos", icon: FileText },
-  { to: "/curriculos", label: "Currículo Vitae", icon: FileUser },
-  { to: "/clientes", label: "Clientes", icon: Users },
-  { to: "/whatsapp", label: "WhatsApp", icon: MessageCircle, badge: true },
-  { to: "/mensagens-rapidas", label: "Mensagens Rápidas", icon: Zap },
-  { to: "/bot", label: "Configurar Bot", icon: Bot },
-  { to: "/precos", label: "Configurar Preços", icon: DollarSign, adminOnly: true },
-  { to: "/configuracoes", label: "Configurações", icon: Settings },
-  { to: "/melhorias", label: "Melhorias", icon: Sparkles },
-];
-
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const { data: isAdmin } = useIsAdmin(user?.id);
+  const { pode } = usePermissoes(user?.id);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [aberto, setAberto] = useState(false);
@@ -59,33 +33,42 @@ export function AppLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  const visiveis = itens.filter((i) => !i.adminOnly || isAdmin);
+  const grupos = modulosVisiveis(pode);
+
+  const linkClasse = (ativo: boolean) =>
+    cn(
+      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+      ativo
+        ? "bg-sidebar-primary text-sidebar-primary-foreground"
+        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+    );
 
   const nav = (
     <nav className="flex flex-col gap-1 p-3">
-      {visiveis.map((item) => {
-        const ativo = pathname === item.to;
-        return (
-          <Link
-            key={item.to}
-            to={item.to}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-              ativo
-                ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-            )}
-          >
-            <item.icon className="h-4 w-4 shrink-0" />
-            <span className="flex-1">{item.label}</span>
-            {"badge" in item && item.badge && pendentes > 0 && (
-              <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
-                {pendentes}
-              </span>
-            )}
-          </Link>
-        );
-      })}
+      <Link to="/dashboard" className={linkClasse(pathname === "/dashboard")}>
+        <LayoutDashboard className="h-4 w-4 shrink-0" />
+        <span className="flex-1">Dashboard</span>
+      </Link>
+
+      {grupos.map((grupo) => (
+        <div key={grupo.id} className="flex flex-col gap-1">
+          <p className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+            {grupo.nome}
+          </p>
+          {grupo.itens.map((item) => (
+            <Link key={item.id} to={item.rota!} className={linkClasse(pathname === item.rota)}>
+              <item.icone className="h-4 w-4 shrink-0" />
+              <span className="flex-1">{item.nome}</span>
+              {item.badgeNaoLidas && pendentes > 0 && (
+                <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
+                  {pendentes}
+                </span>
+              )}
+            </Link>
+          ))}
+        </div>
+      ))}
+
       <button
         onClick={async () => {
           await supabase.auth.signOut();
