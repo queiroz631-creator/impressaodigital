@@ -105,6 +105,7 @@ interface ConversaBot {
   contexto: unknown;
   pedido_id: string | null;
   saudacao_em?: string | null;
+  conexao_id?: string | null;
 }
 
 interface ConfigBot {
