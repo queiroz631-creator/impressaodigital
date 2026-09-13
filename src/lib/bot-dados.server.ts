@@ -27,14 +27,23 @@ export async function carregarFluxos(conexaoId?: string | null): Promise<DadosFl
   };
 }
 
-export async function carregarDadosBot(): Promise<BotDados | null> {
+/**
+ * Carrega a configuração do bot. Com `conexaoId` informado, traz somente os
+ * dados daquela conexão; sem ele, usa a primeira configuração cadastrada.
+ */
+export async function carregarDadosBot(conexaoId?: string | null): Promise<BotDados | null> {
+  const filtro = <T extends { eq: (c: string, v: string) => T }>(q: T) =>
+    conexaoId ? q.eq("conexao_id", conexaoId) : q;
+
+  const consultaCfg = supabaseAdmin.from("whatsapp_config").select("*");
+
   const [cfg, hor, opc, resp, pal, reg] = await Promise.all([
-    supabaseAdmin.from("whatsapp_config").select("*").limit(1).maybeSingle(),
-    supabaseAdmin.from("bot_horarios").select("*").order("dia_semana"),
-    supabaseAdmin.from("bot_menu_opcoes").select("*").order("ordem"),
-    supabaseAdmin.from("bot_respostas").select("*").order("ordem"),
+    (conexaoId ? consultaCfg.eq("conexao_id", conexaoId) : consultaCfg).limit(1).maybeSingle(),
+    filtro(supabaseAdmin.from("bot_horarios").select("*").order("dia_semana")),
+    filtro(supabaseAdmin.from("bot_menu_opcoes").select("*").order("ordem")),
+    filtro(supabaseAdmin.from("bot_respostas").select("*").order("ordem")),
     supabaseAdmin.from("bot_palavras_chave").select("*"),
-    supabaseAdmin.from("bot_primeiro_contato").select("*").order("ordem"),
+    filtro(supabaseAdmin.from("bot_primeiro_contato").select("*").order("ordem")),
   ]);
 
   const d = cfg.data;
