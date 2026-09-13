@@ -56,7 +56,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
             {grupo.nome}
           </p>
           {grupo.itens.map((item) => (
-            <Link key={item.id} to={item.rota as never} className={linkClasse(pathname === item.rota)}>
+            <Link
+              key={item.id}
+              to={item.rota as never}
+              className={linkClasse(pathname === item.rota)}
+            >
               <item.icone className="h-4 w-4 shrink-0" />
               <span className="flex-1">{item.nome}</span>
               {item.badgeNaoLidas && pendentes > 0 && (
@@ -99,7 +103,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* MENU MOBILE */}
       {aberto && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-navy/60" onClick={() => setAberto(false)} aria-hidden />
+          <div
+            className="absolute inset-0 bg-navy/60"
+            onClick={() => setAberto(false)}
+            aria-hidden
+          />
 
           <aside className="relative flex h-full w-64 flex-col bg-sidebar">
             <SidebarHeader />
@@ -168,7 +176,14 @@ export function PageHeader({ titulo, subtitulo }: { titulo: string; subtitulo?: 
       style={{ backgroundImage: "var(--gradient-header)" }}
     >
       <div className="flex items-center gap-4">
-        <img src={logo} alt="" width={56} height={56} className="hidden h-14 w-14 sm:block" loading="lazy" />
+        <img
+          src={logo}
+          alt=""
+          width={56}
+          height={56}
+          className="hidden h-14 w-14 sm:block"
+          loading="lazy"
+        />
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{titulo}</h1>
           {subtitulo && <p className="mt-1 text-sm text-navy-foreground/80">{subtitulo}</p>}
