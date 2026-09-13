@@ -32,18 +32,19 @@ export async function carregarFluxos(conexaoId?: string | null): Promise<DadosFl
  * dados daquela conexão; sem ele, usa a primeira configuração cadastrada.
  */
 export async function carregarDadosBot(conexaoId?: string | null): Promise<BotDados | null> {
-  const filtro = <T extends { eq: (c: string, v: string) => T }>(q: T) =>
-    conexaoId ? q.eq("conexao_id", conexaoId) : q;
-
-  const consultaCfg = supabaseAdmin.from("whatsapp_config").select("*");
+  const qCfg = supabaseAdmin.from("whatsapp_config").select("*");
+  const qHor = supabaseAdmin.from("bot_horarios").select("*").order("dia_semana");
+  const qOpc = supabaseAdmin.from("bot_menu_opcoes").select("*").order("ordem");
+  const qResp = supabaseAdmin.from("bot_respostas").select("*").order("ordem");
+  const qReg = supabaseAdmin.from("bot_primeiro_contato").select("*").order("ordem");
 
   const [cfg, hor, opc, resp, pal, reg] = await Promise.all([
-    (conexaoId ? consultaCfg.eq("conexao_id", conexaoId) : consultaCfg).limit(1).maybeSingle(),
-    filtro(supabaseAdmin.from("bot_horarios").select("*").order("dia_semana")),
-    filtro(supabaseAdmin.from("bot_menu_opcoes").select("*").order("ordem")),
-    filtro(supabaseAdmin.from("bot_respostas").select("*").order("ordem")),
+    (conexaoId ? qCfg.eq("conexao_id", conexaoId) : qCfg).limit(1).maybeSingle(),
+    conexaoId ? qHor.eq("conexao_id", conexaoId) : qHor,
+    conexaoId ? qOpc.eq("conexao_id", conexaoId) : qOpc,
+    conexaoId ? qResp.eq("conexao_id", conexaoId) : qResp,
     supabaseAdmin.from("bot_palavras_chave").select("*"),
-    filtro(supabaseAdmin.from("bot_primeiro_contato").select("*").order("ordem")),
+    conexaoId ? qReg.eq("conexao_id", conexaoId) : qReg,
   ]);
 
   const d = cfg.data;
