@@ -1,21 +1,36 @@
-# Acesso sem confirmação de e-mail
+# Acesso sem confirmação de e-mail e cadastro só pelo administrador
 
 ## Objetivo
-Quem cria uma conta entra direto no sistema, sem precisar clicar no link enviado por e-mail.
+Ninguém cria conta sozinho. O administrador cria os usuários na página Usuários, e quem é criado já entra direto com e-mail e senha, sem link de confirmação.
 
 ## O que muda
-- Ativar a confirmação automática de e-mail no cadastro: a conta já nasce confirmada e a sessão é criada na hora.
-- Na tela de acesso (`/auth`), o cadastro passa a levar o usuário direto para o painel, já autenticado — sem mensagem de "verifique seu e-mail".
+
+### 1. Tela de acesso (/auth)
+- Sai a aba "Criar conta". Fica somente "Entrar" com e-mail e senha.
+- Texto de apoio informando que o acesso é criado pelo administrador.
+
+### 2. Página Usuários
+- Novo botão "Novo usuário" na aba Usuários, aberto só para administrador.
+- Formulário com nome, e-mail, senha inicial e perfil de acesso.
+- Ao salvar, a conta é criada já confirmada e ativa, com o perfil escolhido, e aparece na lista imediatamente.
+- Erros claros: e-mail já usado, senha curta, sem permissão.
+
+### 3. Confirmação de e-mail
+- Contas nascem confirmadas: o usuário entra na primeira tentativa com a senha informada.
+- Cadastro público desativado no próprio sistema de contas, então mesmo por fora ninguém consegue se registrar.
 
 ## O que não muda
-- Login por e-mail e senha continua igual.
-- Usuários já existentes continuam funcionando normalmente.
-- Perfis, permissões, menu, WhatsApp, orçamentos e preços não são alterados.
+- Login, sessão, perfis, permissões, menu recolhível, WhatsApp, orçamentos, currículos e preços seguem iguais.
+- Nenhum usuário existente é alterado ou removido.
 
-## Ponto de atenção
-Com a confirmação desativada, qualquer e-mail digitado é aceito sem validação (inclusive inexistente). Como o cadastro é usado apenas internamente, isso é aceitável; se preferir, depois podemos desativar o cadastro público e criar usuários só pela página Usuários.
+## Pontos de atenção
+- Você define a senha inicial e passa ao atendente; recomendo pedir que ele troque depois. Recuperação de senha por e-mail não faz parte desta etapa.
+- Nenhum usuário de teste será criado automaticamente.
 
 ## Detalhes técnicos
-- Chamar `configure_auth` com `auto_confirm_email: true` (mantendo as demais opções atuais).
-- Ajuste pequeno em `src/routes/auth.tsx`: mensagem de sucesso do cadastro e navegação imediata para `/`, sem `emailRedirectTo` obrigatório.
-- Sem migração de banco, sem alteração de RLS.
+- `configure_auth`: `auto_confirm_email: true` e `disable_signup: true`.
+- `src/routes/auth.tsx`: remover as abas e o formulário de cadastro (`signUp`), manter apenas `signInWithPassword`.
+- Nova server function em `src/lib/usuarios.functions.ts`: valida com Zod, usa `requireSupabaseAuth`, confirma no banco que o chamador é administrador (`has_role`) e só então importa `supabaseAdmin` dentro do handler para `auth.admin.createUser({ email_confirm: true })`; em seguida grava nome, `perfil_id` e `ativo` em `profiles`. Cliente comum nunca recebe a chave privilegiada.
+- `src/components/usuarios/UsuariosPainel.tsx`: diálogo de criação chamando a server function via `useServerFn` + mutation, invalidando `usuarios-lista` e `CHAVE_PERMISSOES`.
+- Sem migração de banco e sem alteração de RLS.
+- Ao final: typecheck, lint e build. Sem commit e sem push.
