@@ -1664,7 +1664,7 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
 
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
-    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em")
+    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, conexao_id")
     .eq("id", conversaId)
     .maybeSingle();
 
@@ -1993,7 +1993,7 @@ export async function iniciarFinalizacao(
 ): Promise<{ ok: boolean; fluxo: boolean }> {
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
-    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em")
+    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, conexao_id")
     .eq("id", conversaId)
     .maybeSingle();
 
