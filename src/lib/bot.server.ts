@@ -237,7 +237,7 @@ async function responder(
   // Mostra "digitando..." no WhatsApp do cliente antes de enviar, com duração
   // proporcional ao tamanho da mensagem (1,5s a 4s).
   const digitandoMs = Math.min(4000, 1500 + mensagem.length * 20);
-  await enviarPresencaDigitando(conversa.telefone, digitandoMs);
+  await enviarPresencaDigitando(conversa.telefone, digitandoMs, conversa.conexao_id ?? null);
   await new Promise((x) => setTimeout(x, digitandoMs));
 
   let entregue = false;
