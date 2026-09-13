@@ -105,6 +105,7 @@ interface ConversaBot {
   contexto: unknown;
   pedido_id: string | null;
   saudacao_em?: string | null;
+  conexao_id?: string | null;
 }
 
 interface ConfigBot {
@@ -236,7 +237,7 @@ async function responder(
   // Mostra "digitando..." no WhatsApp do cliente antes de enviar, com duração
   // proporcional ao tamanho da mensagem (1,5s a 4s).
   const digitandoMs = Math.min(4000, 1500 + mensagem.length * 20);
-  await enviarPresencaDigitando(conversa.telefone, digitandoMs);
+  await enviarPresencaDigitando(conversa.telefone, digitandoMs, conversa.conexao_id ?? null);
   await new Promise((x) => setTimeout(x, digitandoMs));
 
   let entregue = false;
@@ -244,7 +245,11 @@ async function responder(
   let erro: string | null = null;
 
   for (let tentativa = 1; tentativa <= TENTATIVAS_ENVIO && !entregue; tentativa += 1) {
-    const r = await chamarZapi(envio.caminho, { metodo: "POST", corpo: envio.corpo });
+    const r = await chamarZapi(envio.caminho, {
+      metodo: "POST",
+      corpo: envio.corpo,
+      conexaoId: conversa.conexao_id ?? null,
+    });
     const dados = (r.dados ?? {}) as { messageId?: unknown; zaapId?: unknown; error?: unknown };
     idMensagem = dados.messageId ?? dados.zaapId ?? null;
     entregue = r.ok && Boolean(idMensagem);
@@ -345,7 +350,7 @@ async function transferir(
 
   // Fora do horário de funcionamento, a transferência usa a mensagem própria
   // configurada na aba Horários — inclusive nas transferências silenciosas.
-  const dados = await carregarDadosBot();
+  const dados = await carregarDadosBot(conversa.conexao_id ?? null);
   const agora = new Date();
   if (
     dados &&
@@ -737,7 +742,7 @@ async function acaoCurriculo(conversa: ConversaBot) {
     const { gerarLinkNovo } = await import("@/lib/curriculo.server");
     const { mensagemLinkCurriculo } = await import("@/lib/curriculo");
     const { url } = await gerarLinkNovo();
-    const dadosBot = await carregarDadosBot();
+    const dadosBot = await carregarDadosBot(conversa.conexao_id ?? null);
     await responder(conversa, mensagemLinkCurriculo(dadosBot?.config.msg_link_curriculo, url));
   } catch {
     await responder(conversa, "Não consegui gerar o link do currículo agora. Vou chamar um atendente. 😊");
@@ -867,7 +872,7 @@ async function entregarFluxo(
       atual.acao === "transferir_atendente" ||
       atual.acao === "transferir_silencioso";
     if (vaiTransferir) {
-      const cfgHorario = await carregarDadosBot();
+      const cfgHorario = await carregarDadosBot(conversa.conexao_id ?? null);
       pularMensagens = Boolean(
         cfgHorario &&
           !dentroDoHorario(cfgHorario, vars.agora) &&
@@ -893,7 +898,7 @@ async function entregarFluxo(
 
     if (atual.finalizar) {
       if (!atual.silencioso) {
-        const cfg = await carregarDadosBot();
+        const cfg = await carregarDadosBot(conversa.conexao_id ?? null);
         const despedida = cfg?.config.msg_finalizacao_ativo ? cfg.config.msg_finalizacao.trim() : "";
         if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
       }
@@ -1115,7 +1120,7 @@ async function triagem(
   primeiraDoDia: boolean,
   vars: Vars,
 ) {
-  const cfg = await carregarDadosBot();
+  const cfg = await carregarDadosBot(conversa.conexao_id ?? null);
   if (!cfg) return;
 
   // A mensagem global "Fora do horário" foi desativada: o primeiro contato
@@ -1238,7 +1243,7 @@ async function resolverTriagem(
   primeiraDoDia: boolean,
   vars: Vars,
 ) {
-  const cfg = await carregarDadosBot();
+  const cfg = await carregarDadosBot(conversa.conexao_id ?? null);
 
   // Confirmação de uma regra de primeiro contato.
   if (cfg && ctx.regra) {
@@ -1338,7 +1343,7 @@ async function rodarFluxo(
     const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
     const respondeuSimNao = conversa.etapa === "triagem" && simOuNao(texto) !== null;
     if (!respondeuSimNao) {
-      const cfg = await carregarDadosBot();
+      const cfg = await carregarDadosBot(conversa.conexao_id ?? null);
       const outra = cfg ? escolherRegra(cfg.regras ?? [], { texto, ehArquivo }, ctx.ultimaRegra ?? null) : null;
       if (outra) {
         await triagem(
@@ -1371,7 +1376,7 @@ async function rodarFluxo(
   const raizAtual = fluxoInicial(dados);
   const aindaNoFluxoInicial = Boolean(raizAtual && estado.fluxoId === raizAtual.id);
   if (ctx.fluxoFallback && aindaNoFluxoInicial) {
-    const cfg = await carregarDadosBot();
+    const cfg = await carregarDadosBot(conversa.conexao_id ?? null);
     const texto = (entrada.texto ?? "").trim();
     if (cfg && texto && reconhecerResposta(cfg, texto)) {
       await triagem(
@@ -1659,7 +1664,7 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
 
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
-    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em")
+    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, conexao_id")
     .eq("id", conversaId)
     .maybeSingle();
 
@@ -1675,7 +1680,7 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
     entrada.tipo !== "acao_sistema" &&
     ["automatico", "aguardando", "pendente", "aguardando_finalizacao"].includes(conversa.status)
   ) {
-    const dadosAus = await carregarDadosBot();
+    const dadosAus = await carregarDadosBot(conversa.conexao_id ?? null);
     const agoraAus = new Date();
     if (
       dadosAus &&
@@ -1732,7 +1737,7 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
     ETAPAS_MENU.has(conversa.etapa) ||
     conversa.etapa === "finalizado"
   ) {
-    const fluxos = await carregarFluxos();
+    const fluxos = await carregarFluxos(conversa.conexao_id ?? null);
     const raiz = fluxoInicial(fluxos);
     if (raiz) {
       await rodarFluxo(conversa, config, ctx, fluxos, raiz.id, entrada, agora);
@@ -1742,7 +1747,7 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
 
   // Etapas de saudação, menu, palavras-chave e respostas automáticas.
   if (ETAPAS_MENU.has(conversa.etapa) || conversa.etapa === "finalizado") {
-    const dados = await carregarDadosBot();
+    const dados = await carregarDadosBot(conversa.conexao_id ?? null);
     if (!dados) return;
 
     const primeiraDoDia = !mesmoDia(conversa.saudacao_em, agora);
@@ -1988,17 +1993,17 @@ export async function iniciarFinalizacao(
 ): Promise<{ ok: boolean; fluxo: boolean }> {
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
-    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em")
+    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, conexao_id")
     .eq("id", conversaId)
     .maybeSingle();
 
   const conversa = (data ?? null) as ConversaBot | null;
   if (!conversa) return { ok: false, fluxo: false };
 
-  const dadosBot = await carregarDadosBot();
+  const dadosBot = await carregarDadosBot(conversa.conexao_id ?? null);
   const fluxoId = fluxoEscolhidoId || dadosBot?.config.fluxo_finalizacao_id || null;
 
-  const fluxosCfg = await carregarFluxos();
+  const fluxosCfg = await carregarFluxos(conversa.conexao_id ?? null);
   const fluxoCfg = fluxoId ? fluxoPorId(fluxosCfg, fluxoId) : null;
   const esperaFluxo = Math.max(0, Number(fluxoCfg?.finalizacao_delay_minutos ?? 0));
   const espera = esperaFluxo > 0
@@ -2102,7 +2107,7 @@ async function verificarFluxoSemResposta(config: ConfigBot, agora: Date, CAMPOS:
 
       case "finalizar":
       case "finalizar_silencioso": {
-        const cfg = await carregarDadosBot();
+        const cfg = await carregarDadosBot(conversa.conexao_id ?? null);
         const despedida =
           acao === "finalizar" && cfg?.config.msg_finalizacao_ativo ? (cfg.config.msg_finalizacao ?? "").trim() : "";
         if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
@@ -2137,7 +2142,7 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
   const limite = new Date(agora.getTime() - min1 * 60_000).toISOString();
 
   const CAMPOS =
-    "id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, inatividade_avisada, ultima_mensagem_em, finalizacao_em";
+    "id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, conexao_id, inatividade_avisada, ultima_mensagem_em, finalizacao_em";
 
   // Nada reconhecido: depois do tempo configurado, o bot inicia o fluxo inicial.
   const minFallback = Math.max(0, Number(dados.config.fallback_inicial_minutos ?? 0));

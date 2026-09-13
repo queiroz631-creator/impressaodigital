@@ -11,10 +11,11 @@ import type {
 } from "@/lib/bot-motor";
 import type { DadosFluxos, Fluxo, FluxoEtapa, FluxoOpcao } from "@/lib/bot-fluxos";
 
-/** Carrega os fluxos, etapas e opções cadastrados. */
-export async function carregarFluxos(): Promise<DadosFluxos> {
+/** Carrega os fluxos, etapas e opções de uma conexão (ou de todas, se não informada). */
+export async function carregarFluxos(conexaoId?: string | null): Promise<DadosFluxos> {
+  const consultaFluxos = supabaseAdmin.from("bot_fluxos").select("*").order("ordem");
   const [f, e, o] = await Promise.all([
-    supabaseAdmin.from("bot_fluxos").select("*").order("ordem"),
+    conexaoId ? consultaFluxos.eq("conexao_id", conexaoId) : consultaFluxos,
     supabaseAdmin.from("bot_fluxo_etapas").select("*").order("ordem"),
     supabaseAdmin.from("bot_fluxo_opcoes").select("*").order("ordem"),
   ]);
@@ -26,14 +27,24 @@ export async function carregarFluxos(): Promise<DadosFluxos> {
   };
 }
 
-export async function carregarDadosBot(): Promise<BotDados | null> {
+/**
+ * Carrega a configuração do bot. Com `conexaoId` informado, traz somente os
+ * dados daquela conexão; sem ele, usa a primeira configuração cadastrada.
+ */
+export async function carregarDadosBot(conexaoId?: string | null): Promise<BotDados | null> {
+  const qCfg = supabaseAdmin.from("whatsapp_config").select("*");
+  const qHor = supabaseAdmin.from("bot_horarios").select("*").order("dia_semana");
+  const qOpc = supabaseAdmin.from("bot_menu_opcoes").select("*").order("ordem");
+  const qResp = supabaseAdmin.from("bot_respostas").select("*").order("ordem");
+  const qReg = supabaseAdmin.from("bot_primeiro_contato").select("*").order("ordem");
+
   const [cfg, hor, opc, resp, pal, reg] = await Promise.all([
-    supabaseAdmin.from("whatsapp_config").select("*").limit(1).maybeSingle(),
-    supabaseAdmin.from("bot_horarios").select("*").order("dia_semana"),
-    supabaseAdmin.from("bot_menu_opcoes").select("*").order("ordem"),
-    supabaseAdmin.from("bot_respostas").select("*").order("ordem"),
+    (conexaoId ? qCfg.eq("conexao_id", conexaoId) : qCfg).limit(1).maybeSingle(),
+    conexaoId ? qHor.eq("conexao_id", conexaoId) : qHor,
+    conexaoId ? qOpc.eq("conexao_id", conexaoId) : qOpc,
+    conexaoId ? qResp.eq("conexao_id", conexaoId) : qResp,
     supabaseAdmin.from("bot_palavras_chave").select("*"),
-    supabaseAdmin.from("bot_primeiro_contato").select("*").order("ordem"),
+    conexaoId ? qReg.eq("conexao_id", conexaoId) : qReg,
   ]);
 
   const d = cfg.data;

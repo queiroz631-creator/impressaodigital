@@ -18,6 +18,34 @@ export function lerCredenciaisZapi(): CredenciaisZapi | null {
   return { baseUrl: baseUrl.replace(/\/+$/, ""), instanceId, instanceToken, clientToken };
 }
 
+/**
+ * Credenciais de uma conexão cadastrada em "Conexões". Quando a conexão não
+ * tiver credenciais próprias, usa as variáveis de ambiente (conexão principal).
+ */
+export async function credenciaisDaConexao(conexaoId?: string | null): Promise<CredenciaisZapi | null> {
+  if (!conexaoId) return lerCredenciaisZapi();
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("whatsapp_conexoes")
+    .select("base_url, instance_id, instance_token, client_token")
+    .eq("id", conexaoId)
+    .maybeSingle();
+
+  const c = data as
+    | { base_url: string | null; instance_id: string | null; instance_token: string | null; client_token: string | null }
+    | null;
+
+  if (!c || !c.instance_id || !c.instance_token || !c.client_token) return lerCredenciaisZapi();
+
+  return {
+    baseUrl: (c.base_url || "https://api.z-api.io").replace(/\/+$/, ""),
+    instanceId: c.instance_id,
+    instanceToken: c.instance_token,
+    clientToken: c.client_token,
+  };
+}
+
 export interface RespostaZapi {
   ok: boolean;
   status: number;
@@ -29,19 +57,28 @@ export interface RespostaZapi {
  * Mostra o indicador "digitando..." no WhatsApp do cliente por `duracaoMs`
  * milissegundos. Falha silenciosa: nunca interrompe o envio da mensagem.
  */
-export async function enviarPresencaDigitando(telefone: string, duracaoMs: number): Promise<void> {
+export async function enviarPresencaDigitando(
+  telefone: string,
+  duracaoMs: number,
+  conexaoId?: string | null,
+): Promise<void> {
   const delay = Math.min(15000, Math.max(500, Math.round(duracaoMs)));
   await chamarZapi("send-presence", {
     metodo: "POST",
     corpo: { phone: telefone, presence: "composing", delay },
+    conexaoId,
   }).catch(() => undefined);
 }
 
 export async function chamarZapi(
   caminho: string,
-  opcoes: { metodo?: "GET" | "POST" | "PUT" | "DELETE"; corpo?: unknown } = {},
+  opcoes: {
+    metodo?: "GET" | "POST" | "PUT" | "DELETE";
+    corpo?: unknown;
+    conexaoId?: string | null;
+  } = {},
 ): Promise<RespostaZapi> {
-  const cred = lerCredenciaisZapi();
+  const cred = await credenciaisDaConexao(opcoes.conexaoId);
   if (!cred) {
     return { ok: false, status: 0, dados: null, erro: "Credenciais da Z-API não configuradas." };
   }
