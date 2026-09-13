@@ -245,7 +245,11 @@ async function responder(
   let erro: string | null = null;
 
   for (let tentativa = 1; tentativa <= TENTATIVAS_ENVIO && !entregue; tentativa += 1) {
-    const r = await chamarZapi(envio.caminho, { metodo: "POST", corpo: envio.corpo });
+    const r = await chamarZapi(envio.caminho, {
+      metodo: "POST",
+      corpo: envio.corpo,
+      conexaoId: conversa.conexao_id ?? null,
+    });
     const dados = (r.dados ?? {}) as { messageId?: unknown; zaapId?: unknown; error?: unknown };
     idMensagem = dados.messageId ?? dados.zaapId ?? null;
     entregue = r.ok && Boolean(idMensagem);
