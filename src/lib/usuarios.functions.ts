@@ -75,5 +75,5 @@ export const criarUsuario = createServerFn({ method: "POST" })
     );
     if (erroPerfil) throw new Error(erroPerfil.message);
 
-    return { id };
+    return { id, existente };
   });
