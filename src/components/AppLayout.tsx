@@ -56,7 +56,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             {grupo.nome}
           </p>
           {grupo.itens.map((item) => (
-            {/* rotas vêm do registro em src/lib/modulos.ts e apontam para páginas existentes */}
             <Link key={item.id} to={item.rota as never} className={linkClasse(pathname === item.rota)}>
               <item.icone className="h-4 w-4 shrink-0" />
               <span className="flex-1">{item.nome}</span>
