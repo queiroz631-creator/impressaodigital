@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, LogOut, Menu, X } from "lucide-react";
+import { ChevronDown, ChevronUp, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
@@ -17,6 +17,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [aberto, setAberto] = useState(false);
+  const [gruposAbertos, setGruposAbertos] = useState<Record<string, boolean>>({});
   const pendentes = useConversasPendentes(!!user);
 
   useEffect(() => {
@@ -50,28 +51,45 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <span className="flex-1">Dashboard</span>
       </Link>
 
-      {grupos.map((grupo) => (
-        <div key={grupo.id} className="flex flex-col gap-1">
-          <p className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
-            {grupo.nome}
-          </p>
-          {grupo.itens.map((item) => (
-            <Link
-              key={item.id}
-              to={item.rota as never}
-              className={linkClasse(pathname === item.rota)}
+      {grupos.map((grupo) => {
+        const expandido = gruposAbertos[grupo.id] !== false;
+        return (
+          <div key={grupo.id} className="flex flex-col">
+            <button
+              type="button"
+              aria-expanded={expandido}
+              onClick={() => setGruposAbertos((prev) => ({ ...prev, [grupo.id]: !expandido }))}
+              className="flex items-center justify-between px-3 pb-1 pt-4 text-left text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 transition-colors hover:text-sidebar-foreground/80 focus:outline-none"
             >
-              <item.icone className="h-4 w-4 shrink-0" />
-              <span className="flex-1">{item.nome}</span>
-              {item.badgeNaoLidas && pendentes > 0 && (
-                <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
-                  {pendentes}
-                </span>
+              {grupo.nome}
+              {expandido ? (
+                <ChevronUp className="h-3 w-3 shrink-0" />
+              ) : (
+                <ChevronDown className="h-3 w-3 shrink-0" />
               )}
-            </Link>
-          ))}
-        </div>
-      ))}
+            </button>
+            {expandido && (
+              <div className="flex flex-col gap-1">
+                {grupo.itens.map((item) => (
+                  <Link
+                    key={item.id}
+                    to={item.rota as never}
+                    className={linkClasse(pathname === item.rota)}
+                  >
+                    <item.icone className="h-4 w-4 shrink-0" />
+                    <span className="flex-1">{item.nome}</span>
+                    {item.badgeNaoLidas && pendentes > 0 && (
+                      <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
+                        {pendentes}
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       <button
         onClick={async () => {
