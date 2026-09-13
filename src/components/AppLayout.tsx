@@ -59,7 +59,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               type="button"
               aria-expanded={expandido}
               onClick={() => setGruposAbertos((prev) => ({ ...prev, [grupo.id]: !expandido }))}
-              className="flex items-center justify-between px-3 pb-1 pt-4 text-left text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 transition-colors hover:text-sidebar-foreground/80 focus:outline-none"
+              className="flex items-center justify-between px-3 pb-1 pt-4 text-left text-xs font-bold uppercase tracking-wider text-sidebar-foreground/80 transition-colors hover:text-sidebar-foreground focus:outline-none"
             >
               {grupo.nome}
               {expandido ? (
