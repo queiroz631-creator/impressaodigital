@@ -22,7 +22,12 @@
 - Bloquear escalada de privilégio: um gatilho impede que alguém que não seja administrador altere o próprio perfil ou o próprio ativo/inativo (pode continuar ajustando nome). Regras de leitura e de administração permanecem.
 - Índices em `profiles.perfil_id` e no nome do perfil.
 
-Comportamento seguro para usuário sem perfil: nenhum acesso além do Painel — só o administrador (por `user_roles`) escapa dessa regra. Isso ficará documentado no código.
+Regras de acesso (Painel sempre liberado, sem permissão obrigatória nesta etapa):
+
+- Administrador (`user_roles`) → acesso total, mesmo que o perfil divirja.
+- Usuário ativo sem perfil → Painel permitido; demais páginas bloqueadas.
+- Usuário ativo com perfil → Painel + o que o perfil permitir.
+- Usuário inativo → páginas protegidas bloqueadas.
 
 ### 2. Chaves de permissão
 
@@ -34,12 +39,16 @@ Todas derivadas de `src/lib/modulos.ts`, sem lista paralela. O catálogo ganha:
 
 ### 3. Permissões no aplicativo
 
-- `usePermissoes` passa a carregar, uma vez por sessão, se o usuário é administrador, se está ativo e quais chaves o perfil concede (respeitando perfil inativo). Mesma assinatura de hoje (`pode`, `isAdmin`), então o menu não muda de forma.
+- `usePermissoes` consulta o banco (administrador, usuário ativo, perfil e suas chaves) com cache curto em memória, revalidado quando a sessão/usuário carrega de novo e após qualquer alteração de perfis ou usuários. Nada é guardado no navegador de forma manipulável. Mesma assinatura de hoje (`pode`, `isAdmin`), então o menu não muda de forma.
 - O menu lateral continua idêntico no visual e com os grupos recolhíveis; só passa a esconder o que o usuário não pode ver.
 
 ### 4. Proteção de acesso direto por URL
 
-Um único componente de proteção envolvendo o conteúdo dentro do `AppLayout`: cada página informa a chave que exige e, sem permissão, aparece uma tela de "Acesso negado" com botão para o Painel. Sem duplicar lógica página por página. Usuário inativo recebe a mesma tela em qualquer página protegida.
+Um único componente de proteção envolvendo o conteúdo dentro do `AppLayout`: cada página informa a chave que exige e, sem permissão, aparece uma tela de "Acesso negado" com botão para o Painel. Sem duplicar lógica página por página. Usuário inativo recebe a mesma tela em qualquer página protegida. O Painel não exige permissão.
+
+### 4b. Segurança no banco (não só na tela)
+
+Trocar perfil de usuário, ativar/desativar usuário, criar/editar/desativar perfil e alterar permissões de perfil só funcionam para administrador confirmado no banco. Esconder botões é apenas conveniência: quem tentar pela API direta recebe erro. As regras atuais de administrador já cobrem isso e serão mantidas; o gatilho fecha a brecha da atualização da própria linha.
 
 ### 5. Nova página Usuários (`/usuarios`), só para administrador
 
@@ -49,13 +58,14 @@ Um único componente de proteção envolvendo o conteúdo dentro do `AppLayout`:
 
 ## Detalhes técnicos
 
-- Migração nova em `supabase/migrations/`, idempotente (`if not exists`, `insert ... where not exists`, `update` por mapa de chaves). Nada destrutivo; migrações antigas intactas.
+- Migração nova em `supabase/migrations/`, idempotente (`if not exists`, `insert ... where not exists`, `update` por mapa de chaves). Nada destrutivo; migrações antigas intactas. Antes de aplicar, conferência da estrutura e das regras atuais: nenhuma regra existente ainda necessária será apagada ou recriada sem motivo.
 - Gatilho `profiles_bloquear_escalada` (BEFORE UPDATE, security definer) barra mudança de `perfil_id`/`ativo` por não administrador; `profiles_update_own` continua para o próprio nome.
+- `tem_permissao` já existe e será mantida (administrador por `user_roles` sempre verdadeiro; senão a chave no perfil, exigindo usuário e perfil ativos); ajuste apenas se as chaves novas exigirem.
 - Novos arquivos: `src/routes/usuarios.tsx`, `src/components/usuarios/UsuariosPainel.tsx`, `src/components/usuarios/PerfisPainel.tsx`, `src/components/PermissaoGuard.tsx`.
 - Modificados: `src/lib/modulos.ts` (permissões sensíveis + item Usuários ativo), `src/hooks/usePermissoes.ts` (consulta real), `src/components/AppLayout.tsx` (apenas aceitar a chave da página e envolver o conteúdo no guard), e cada rota passa a declarar sua chave — uma linha por rota, sem tocar em regra de negócio.
 - Sem alterações em WhatsApp, Z-API, Gemini, Storage, calculadora, orçamentos, clientes, currículos, preços (além do controle de acesso), `.env` ou segredos.
-- Ao final: typecheck, lint e build; testes no preview como administrador; nenhum commit ou push.
+- Ao final: typecheck, lint e build; validação no preview com o administrador atual; nenhum commit ou push.
 
-## Ponto a confirmar antes da próxima etapa
+## Teste com segundo usuário
 
-Para testar de verdade um Atendente é preciso um segundo usuário. Posso validar administrador e as regras do banco; se você quiser, crio um usuário de teste e faço a verificação completa do menu restrito e do bloqueio por URL.
+Nenhum usuário novo será criado nesta etapa. A validação será feita com o administrador atual e com as regras do banco; o teste de Atendente fica para um passo separado, quando você quiser.
