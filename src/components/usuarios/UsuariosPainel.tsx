@@ -208,12 +208,7 @@ function DialogNovoUsuario({ perfis }: { perfis: PerfilOpcao[] }) {
         >
           <div className="space-y-2">
             <Label htmlFor="novo-nome">Nome</Label>
-            <Input
-              id="novo-nome"
-              required
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-            />
+            <Input id="novo-nome" required value={nome} onChange={(e) => setNome(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="novo-email">E-mail</Label>
