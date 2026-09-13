@@ -22,7 +22,12 @@
 - Bloquear escalada de privilégio: um gatilho impede que alguém que não seja administrador altere o próprio perfil ou o próprio ativo/inativo (pode continuar ajustando nome). Regras de leitura e de administração permanecem.
 - Índices em `profiles.perfil_id` e no nome do perfil.
 
-Comportamento seguro para usuário sem perfil: nenhum acesso além do Painel — só o administrador (por `user_roles`) escapa dessa regra. Isso ficará documentado no código.
+Regras de acesso (Painel sempre liberado, sem permissão obrigatória nesta etapa):
+
+- Administrador (`user_roles`) → acesso total, mesmo que o perfil divirja.
+- Usuário ativo sem perfil → Painel permitido; demais páginas bloqueadas.
+- Usuário ativo com perfil → Painel + o que o perfil permitir.
+- Usuário inativo → páginas protegidas bloqueadas.
 
 ### 2. Chaves de permissão
 
