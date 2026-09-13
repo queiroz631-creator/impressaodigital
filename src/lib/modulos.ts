@@ -38,8 +38,8 @@ export interface ItemModulo {
   ordem: number;
   /** Itens inativos são planejados e não aparecem no menu. */
   ativo: boolean;
-  /** Rota principal; null enquanto a página ainda não existe. */
-  rota: keyof FileRoutesByPath | null;
+  /** Rota principal (caminho de URL, ex.: "/orcamentos"); null enquanto a página ainda não existe. */
+  rota: string | null;
   /** Chave de permissão futura do item (ex.: "calculadora.visualizar"). */
   permissao: string;
   /** Exibe contador de conversas com mensagens não lidas. */
