@@ -91,6 +91,9 @@ export function UsuariosPainel() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <DialogNovoUsuario perfis={perfis ?? []} />
+      </div>
       {(usuarios ?? []).map((u) => (
         <Card key={u.id}>
           <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
