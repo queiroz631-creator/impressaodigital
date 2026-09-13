@@ -1,4 +1,3 @@
-import type { FileRoutesByPath } from "@tanstack/react-router";
 import {
   Bot,
   Cable,
