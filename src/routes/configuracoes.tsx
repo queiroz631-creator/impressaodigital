@@ -45,7 +45,7 @@ import {
 
 export const Route = createFileRoute("/configuracoes")({
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="configuracoes.visualizar">
       <Configuracoes />
     </AppLayout>
   ),

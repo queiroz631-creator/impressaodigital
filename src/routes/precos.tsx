@@ -44,7 +44,7 @@ import {
 
 export const Route = createFileRoute("/precos")({
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="precos.visualizar">
       <Precos />
     </AppLayout>
   ),

@@ -60,7 +60,7 @@ import {
 
 export const Route = createFileRoute("/whatsapp")({
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="whatsapp.visualizar">
       <Atendimento />
     </AppLayout>
   ),

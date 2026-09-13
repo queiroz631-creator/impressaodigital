@@ -23,7 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/mensagens-rapidas")({
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="mensagens_rapidas.visualizar">
       <MensagensRapidas />
     </AppLayout>
   ),

@@ -112,7 +112,7 @@ export const Route = createFileRoute("/")({
 
 function CalculadoraPage() {
   return (
-    <AppLayout>
+    <AppLayout permissao="calculadora.visualizar">
       <Calculadora />
     </AppLayout>
   );

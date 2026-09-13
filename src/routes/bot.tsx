@@ -4,7 +4,7 @@ import { ConfiguracaoBot } from "@/components/ConfiguracaoBot";
 
 export const Route = createFileRoute("/bot")({
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="bot.visualizar">
       <PageHeader
         titulo="CONFIGURAÇÃO DO BOT"
         subtitulo="Atendimento automático do WhatsApp: horários, menu, respostas e mensagens."

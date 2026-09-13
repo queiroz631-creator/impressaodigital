@@ -61,7 +61,7 @@ import { STATUS_ORCAMENTO, normalizarStatus, rotuloStatus } from "@/lib/status";
 
 export const Route = createFileRoute("/orcamentos")({
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="orcamentos.visualizar">
       <Orcamentos />
     </AppLayout>
   ),

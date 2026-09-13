@@ -22,7 +22,7 @@ import { dataHoraBR } from "@/lib/format";
 
 export const Route = createFileRoute("/melhorias")({
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="melhorias.visualizar">
       <Melhorias />
     </AppLayout>
   ),

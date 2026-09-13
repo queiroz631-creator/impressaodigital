@@ -60,7 +60,7 @@ export const Route = createFileRoute("/curriculos/$id")({
     ],
   }),
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="curriculos.visualizar">
       <DetalheCurriculo />
     </AppLayout>
   ),

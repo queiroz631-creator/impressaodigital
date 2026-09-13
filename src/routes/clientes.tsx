@@ -47,7 +47,7 @@ export const Route = createFileRoute("/clientes")({
     ],
   }),
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="clientes.visualizar">
       <Clientes />
     </AppLayout>
   ),
