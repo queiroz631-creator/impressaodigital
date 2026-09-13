@@ -1,6 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, ChevronUp, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  ShieldAlert,
+  X,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
