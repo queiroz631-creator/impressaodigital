@@ -11,10 +11,11 @@ import type {
 } from "@/lib/bot-motor";
 import type { DadosFluxos, Fluxo, FluxoEtapa, FluxoOpcao } from "@/lib/bot-fluxos";
 
-/** Carrega os fluxos, etapas e opções cadastrados. */
-export async function carregarFluxos(): Promise<DadosFluxos> {
+/** Carrega os fluxos, etapas e opções de uma conexão (ou de todas, se não informada). */
+export async function carregarFluxos(conexaoId?: string | null): Promise<DadosFluxos> {
+  const consultaFluxos = supabaseAdmin.from("bot_fluxos").select("*").order("ordem");
   const [f, e, o] = await Promise.all([
-    supabaseAdmin.from("bot_fluxos").select("*").order("ordem"),
+    conexaoId ? consultaFluxos.eq("conexao_id", conexaoId) : consultaFluxos,
     supabaseAdmin.from("bot_fluxo_etapas").select("*").order("ordem"),
     supabaseAdmin.from("bot_fluxo_opcoes").select("*").order("ordem"),
   ]);
