@@ -1,6 +1,22 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { criarUsuario } from "@/lib/usuarios.functions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -75,6 +91,9 @@ export function UsuariosPainel() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <DialogNovoUsuario perfis={perfis ?? []} />
+      </div>
       {(usuarios ?? []).map((u) => (
         <Card key={u.id}>
           <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -125,5 +144,117 @@ export function UsuariosPainel() {
         <p className="text-sm text-muted-foreground">Nenhum usuário cadastrado.</p>
       )}
     </div>
+  );
+}
+
+interface PerfilOpcao {
+  id: string;
+  nome: string;
+  ativo: boolean;
+}
+
+function DialogNovoUsuario({ perfis }: { perfis: PerfilOpcao[] }) {
+  const qc = useQueryClient();
+  const criar = useServerFn(criarUsuario);
+  const [aberto, setAberto] = useState(false);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [perfilId, setPerfilId] = useState(SEM_PERFIL);
+
+  const salvar = useMutation({
+    mutationFn: async () =>
+      criar({
+        data: {
+          nome,
+          email,
+          senha,
+          perfilId: perfilId === SEM_PERFIL ? null : perfilId,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Usuário criado. Ele já pode entrar com o e-mail e a senha.");
+      setAberto(false);
+      setNome("");
+      setEmail("");
+      setSenha("");
+      setPerfilId(SEM_PERFIL);
+      qc.invalidateQueries({ queryKey: ["usuarios-lista"] });
+      qc.invalidateQueries({ queryKey: [CHAVE_PERMISSOES] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={aberto} onOpenChange={setAberto}>
+      <DialogTrigger asChild>
+        <Button>
+          <UserPlus className="mr-2 h-4 w-4" /> Novo usuário
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Novo usuário</DialogTitle>
+          <DialogDescription>
+            O acesso é liberado na hora, sem confirmação por e-mail.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            salvar.mutate();
+          }}
+        >
+          <div className="space-y-2">
+            <Label htmlFor="novo-nome">Nome</Label>
+            <Input id="novo-nome" required value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="novo-email">E-mail</Label>
+            <Input
+              id="novo-email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="nova-senha">Senha inicial</Label>
+            <Input
+              id="nova-senha"
+              type="password"
+              required
+              minLength={6}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Perfil de acesso</Label>
+            <Select value={perfilId} onValueChange={setPerfilId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Perfil" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SEM_PERFIL}>Sem perfil</SelectItem>
+                {perfis.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.nome}
+                    {p.ativo ? "" : " (inativo)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={salvar.isPending}>
+              {salvar.isPending ? "Criando..." : "Criar usuário"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

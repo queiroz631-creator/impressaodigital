@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import logo from "@/assets/logo-impressao.png";
 
 export const Route = createFileRoute("/auth")({
@@ -34,7 +33,6 @@ function AuthPage() {
   const { user, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [nome, setNome] = useState("");
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
@@ -51,23 +49,6 @@ function AuthPage() {
       return;
     }
     toast.success("Bem-vindo de volta!");
-    navigate({ to: "/" });
-  }
-
-  async function cadastrar(e: React.FormEvent) {
-    e.preventDefault();
-    setEnviando(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password: senha,
-      options: { data: { nome }, emailRedirectTo: window.location.origin },
-    });
-    setEnviando(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Conta criada com sucesso.");
     navigate({ to: "/" });
   }
 
@@ -97,76 +78,34 @@ function AuthPage() {
             <CardDescription>Entre com seu e-mail e senha para continuar.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="signup">Criar conta</TabsTrigger>
-              </TabsList>
-              <TabsContent value="login">
-                <form onSubmit={entrar} className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-mail</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="senha">Senha</Label>
-                    <Input
-                      id="senha"
-                      type="password"
-                      required
-                      value={senha}
-                      onChange={(e) => setSenha(e.target.value)}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={enviando}>
-                    {enviando ? "Entrando..." : "Entrar"}
-                  </Button>
-                </form>
-              </TabsContent>
-              <TabsContent value="signup">
-                <form onSubmit={cadastrar} className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nome">Nome</Label>
-                    <Input
-                      id="nome"
-                      required
-                      value={nome}
-                      onChange={(e) => setNome(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email-cad">E-mail</Label>
-                    <Input
-                      id="email-cad"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="senha-cad">Senha</Label>
-                    <Input
-                      id="senha-cad"
-                      type="password"
-                      required
-                      minLength={6}
-                      value={senha}
-                      onChange={(e) => setSenha(e.target.value)}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={enviando}>
-                    {enviando ? "Criando..." : "Criar conta"}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+            <form onSubmit={entrar} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="senha">Senha</Label>
+                <Input
+                  id="senha"
+                  type="password"
+                  required
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={enviando}>
+                {enviando ? "Entrando..." : "Entrar"}
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                O acesso é criado pelo administrador do sistema.
+              </p>
+            </form>
           </CardContent>
         </Card>
       </div>
