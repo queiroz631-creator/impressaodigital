@@ -3,7 +3,16 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, FileDown, Link2, MessageCircle, Pencil, Printer, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Copy,
+  FileDown,
+  Link2,
+  MessageCircle,
+  Pencil,
+  Printer,
+  Trash2,
+} from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
@@ -43,7 +52,12 @@ import {
   type CurriculoCompleto,
   type PayloadEtapa,
 } from "@/lib/curriculo";
-import { baixarCurriculoPdf, curriculoPdfBase64, imprimirCurriculo, nomeArquivoCurriculo } from "@/lib/curriculo-pdf";
+import {
+  baixarCurriculoPdf,
+  curriculoPdfBase64,
+  imprimirCurriculo,
+  nomeArquivoCurriculo,
+} from "@/lib/curriculo-pdf";
 import { enviarCurriculoWhatsapp, gerarLinkCurriculo } from "@/lib/curriculo.functions";
 import { urlPublica } from "@/lib/link-publico";
 import { dataHoraBR } from "@/lib/format";
@@ -60,7 +74,7 @@ export const Route = createFileRoute("/curriculos/$id")({
     ],
   }),
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="curriculos.visualizar">
       <DetalheCurriculo />
     </AppLayout>
   ),
@@ -116,19 +130,44 @@ function DetalheCurriculo() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["curriculo", id],
-    queryFn: async (): Promise<CurriculoCompleto & { catalogo: { id: string; descricao: string }[]; objetivos: { id: string; texto: string }[] }> => {
+    queryFn: async (): Promise<
+      CurriculoCompleto & {
+        catalogo: { id: string; descricao: string }[];
+        objetivos: { id: string; texto: string }[];
+      }
+    > => {
       const [c, tel, cur, form, exp, hab, cat, obj] = await Promise.all([
         supabase.from("curriculos").select(CAMPOS).eq("id", id).maybeSingle(),
-        supabase.from("curriculo_telefones").select("telefone, tipo").eq("curriculo_id", id).order("ordem"),
-        supabase.from("curriculo_cursos").select("nome_curso, instituicao, ano").eq("curriculo_id", id).order("ordem"),
-        supabase.from("curriculo_formacoes").select("nome_curso, instituicao, ano, nivel").eq("curriculo_id", id).order("ordem"),
+        supabase
+          .from("curriculo_telefones")
+          .select("telefone, tipo")
+          .eq("curriculo_id", id)
+          .order("ordem"),
+        supabase
+          .from("curriculo_cursos")
+          .select("nome_curso, instituicao, ano")
+          .eq("curriculo_id", id)
+          .order("ordem"),
+        supabase
+          .from("curriculo_formacoes")
+          .select("nome_curso, instituicao, ano, nivel")
+          .eq("curriculo_id", id)
+          .order("ordem"),
         supabase
           .from("curriculo_experiencias")
           .select("empresa, cargo, periodo, atividades")
           .eq("curriculo_id", id)
           .order("ordem"),
-        supabase.from("curriculo_habilidades").select("habilidade_id, descricao").eq("curriculo_id", id).order("ordem"),
-        supabase.from("habilidades_curriculo").select("id, descricao").eq("ativo", true).order("ordem"),
+        supabase
+          .from("curriculo_habilidades")
+          .select("habilidade_id, descricao")
+          .eq("curriculo_id", id)
+          .order("ordem"),
+        supabase
+          .from("habilidades_curriculo")
+          .select("id, descricao")
+          .eq("ativo", true)
+          .order("ordem"),
         supabase.from("objetivos_curriculo").select("id, texto").eq("ativo", true).order("ordem"),
       ]);
 
@@ -306,10 +345,18 @@ function DetalheCurriculo() {
         <span className="text-xs text-muted-foreground">CPF {formatarCpf(data.curriculo.cpf)}</span>
 
         <div className="ml-auto flex flex-wrap gap-2">
-          <Button variant={modoEdicao ? "default" : "outline"} size="sm" onClick={() => setModoEdicao((v) => !v)}>
+          <Button
+            variant={modoEdicao ? "default" : "outline"}
+            size="sm"
+            onClick={() => setModoEdicao((v) => !v)}
+          >
             <Pencil className="mr-1 h-4 w-4" /> {modoEdicao ? "Ver currículo" : "Editar"}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => imprimirCurriculo(documentoRef.current)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => imprimirCurriculo(documentoRef.current)}
+          >
             <Printer className="mr-1 h-4 w-4" /> Imprimir
           </Button>
           <Button variant="outline" size="sm" onClick={() => baixarCurriculoPdf(dados)}>
@@ -357,7 +404,9 @@ function DetalheCurriculo() {
         <Card className="mb-4">
           <CardContent className="flex flex-wrap items-center gap-2 p-4 text-sm">
             <span className="font-medium">Link válido até {dataHoraBR(linkGerado.expiraEm)}</span>
-            <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">{linkGerado.url}</code>
+            <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">
+              {linkGerado.url}
+            </code>
             <Button
               size="sm"
               variant="outline"
@@ -473,7 +522,12 @@ function DetalheCurriculo() {
             </div>
             <div>
               <Label htmlFor="w-msg">Mensagem</Label>
-              <Textarea id="w-msg" rows={3} value={mensagem} onChange={(e) => setMensagem(e.target.value)} />
+              <Textarea
+                id="w-msg"
+                rows={3}
+                value={mensagem}
+                onChange={(e) => setMensagem(e.target.value)}
+              />
             </div>
             <p className="text-xs text-muted-foreground">
               O currículo será enviado em PDF para o número informado.

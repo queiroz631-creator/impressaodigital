@@ -62,7 +62,6 @@ export interface DadosDocumento {
   total: number;
 }
 
-
 /** Extrai a extensão/tipo legível de um nome de arquivo. */
 export function tipoDoArquivo(nome: string, mime?: string) {
   const ext = nome.split(".").pop();

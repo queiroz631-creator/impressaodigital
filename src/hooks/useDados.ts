@@ -30,7 +30,6 @@ export function usePerfisImpressao(somenteAtivos = false) {
   });
 }
 
-
 export interface Configuracao {
   id: string;
   empresa_nome: string;
@@ -55,12 +54,15 @@ export interface Configuracao {
   areas_impressao: unknown;
 }
 
-
 export function useConfiguracao() {
   return useQuery({
     queryKey: ["configuracoes"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("configuracoes").select("*").limit(1).maybeSingle();
+      const { data, error } = await supabase
+        .from("configuracoes")
+        .select("*")
+        .limit(1)
+        .maybeSingle();
       if (error) throw error;
       return (data ?? null) as unknown as Configuracao | null;
     },

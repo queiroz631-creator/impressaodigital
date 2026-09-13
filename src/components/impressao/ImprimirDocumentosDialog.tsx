@@ -6,7 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -48,7 +54,12 @@ const PERFIL_PADRAO = { ...PERFIL_VAZIO, id: "padrao", nome: "Padrão" } as Perf
  * Modal com a lista rolável dos documentos, total de páginas, escolha da
  * impressora e acompanhamento (preload) do envio para a impressora.
  */
-export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, impressoraPadrao }: Props) {
+export function ImprimirDocumentosDialog({
+  aberto,
+  onOpenChange,
+  documentos,
+  impressoraPadrao,
+}: Props) {
   const [impressoras, setImpressoras] = useState<string[]>([]);
   const [impressora, setImpressora] = useState("");
   const [imprimindo, setImprimindo] = useState(false);
@@ -98,7 +109,8 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
 
   const enviados = situacoes.filter((s) => s === "ok").length;
   const falhas = situacoes.filter((s) => s === "erro").length;
-  const progresso = documentos.length > 0 ? Math.round(((enviados + falhas) / documentos.length) * 100) : 0;
+  const progresso =
+    documentos.length > 0 ? Math.round(((enviados + falhas) / documentos.length) * 100) : 0;
 
   function marcar(indice: number, situacao: Situacao, erro?: string) {
     setSituacoes((s) => s.map((v, i) => (i === indice ? situacao : v)));
@@ -142,7 +154,11 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
         base64,
         copias: Math.max(1, doc.copias || 1),
       };
-      const resultado = await imprimirDocumentos(doc.perfil ?? PERFIL_PADRAO, [item], impressora || null);
+      const resultado = await imprimirDocumentos(
+        doc.perfil ?? PERFIL_PADRAO,
+        [item],
+        impressora || null,
+      );
       if (resultado.metodo === "qz") marcar(i, "ok");
       else marcar(i, "erro", resultado.mensagem ?? "Falha ao enviar para a impressora.");
     }
@@ -176,7 +192,9 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
 
         <div className="max-h-[300px] space-y-2 overflow-y-auto pr-1">
           {documentos.length === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">Nenhum documento disponível.</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Nenhum documento disponível.
+            </p>
           )}
 
           {documentos.map((d, i) => {
@@ -184,10 +202,15 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
             const paginas = Math.max(0, d.paginas || 0);
             const situacao = situacoes[i] ?? "pendente";
             return (
-              <div key={`${d.nome}-${i}`} className="rounded-lg border border-border bg-accent/30 p-2.5">
+              <div
+                key={`${d.nome}-${i}`}
+                className="rounded-lg border border-border bg-accent/30 p-2.5"
+              >
                 <div className="flex items-start gap-2">
                   <p className="flex-1 text-sm font-semibold break-all">{d.nome}</p>
-                  {situacao === "ok" && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />}
+                  {situacao === "ok" && (
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                  )}
                   {situacao === "erro" && <XCircle className="h-4 w-4 shrink-0 text-destructive" />}
                   {(situacao === "baixando" || situacao === "enviando") && (
                     <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
@@ -198,7 +221,9 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
                   {situacao === "baixando" && " · baixando arquivo"}
                   {situacao === "enviando" && " · enviando para a impressora"}
                 </p>
-                {erros[i] && <p className="mt-0.5 text-xs font-medium text-destructive">{erros[i]}</p>}
+                {erros[i] && (
+                  <p className="mt-0.5 text-xs font-medium text-destructive">{erros[i]}</p>
+                )}
               </div>
             );
           })}
@@ -211,7 +236,10 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
         {(imprimindo || concluido) && (
           <div className="space-y-1">
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div className="h-full bg-primary transition-all" style={{ width: `${progresso}%` }} />
+              <div
+                className="h-full bg-primary transition-all"
+                style={{ width: `${progresso}%` }}
+              />
             </div>
             <p className="text-xs text-muted-foreground">
               {enviados} enviado(s) · {falhas} falha(s) de {documentos.length}
@@ -248,7 +276,11 @@ export function ImprimirDocumentosDialog({ aberto, onOpenChange, documentos, imp
             <Button onClick={() => onOpenChange(false)}>Fechar</Button>
           ) : imprimindo ? (
             <Button variant="destructive" disabled={cancelando} onClick={cancelar}>
-              {cancelando ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+              {cancelando ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <XCircle className="h-4 w-4" />
+              )}
               {cancelando ? "Cancelando..." : "Cancelar impressão"}
             </Button>
           ) : (

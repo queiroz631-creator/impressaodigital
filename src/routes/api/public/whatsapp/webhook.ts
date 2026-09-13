@@ -20,7 +20,14 @@ const corpoSchema = z
     isEdit: z.boolean().nullish(),
     referencedMessage: z.object({ messageId: z.string().nullish() }).partial().nullish(),
     text: z.object({ message: z.string().optional() }).partial().nullish(),
-    image: z.object({ imageUrl: z.string().nullish(), caption: z.string().nullish(), mimeType: z.string().optional() }).partial().nullish(),
+    image: z
+      .object({
+        imageUrl: z.string().nullish(),
+        caption: z.string().nullish(),
+        mimeType: z.string().optional(),
+      })
+      .partial()
+      .nullish(),
     document: z
       .object({
         documentUrl: z.string().nullish(),
@@ -31,23 +38,53 @@ const corpoSchema = z
       })
       .partial()
       .nullish(),
-    audio: z.object({ audioUrl: z.string().nullish(), mimeType: z.string().optional() }).partial().nullish(),
-    location: z.object({ latitude: z.number().nullish(), longitude: z.number().nullish(), address: z.string().optional() }).partial().nullish(),
-    buttonsResponseMessage: z.object({ message: z.string().nullish(), buttonId: z.string().optional() }).partial().nullish(),
-    listResponseMessage: z.object({ message: z.string().nullish(), title: z.string().optional() }).partial().nullish(),
+    audio: z
+      .object({ audioUrl: z.string().nullish(), mimeType: z.string().optional() })
+      .partial()
+      .nullish(),
+    location: z
+      .object({
+        latitude: z.number().nullish(),
+        longitude: z.number().nullish(),
+        address: z.string().optional(),
+      })
+      .partial()
+      .nullish(),
+    buttonsResponseMessage: z
+      .object({ message: z.string().nullish(), buttonId: z.string().optional() })
+      .partial()
+      .nullish(),
+    listResponseMessage: z
+      .object({ message: z.string().nullish(), title: z.string().optional() })
+      .partial()
+      .nullish(),
   })
   .passthrough();
 
 function extrair(corpo: z.infer<typeof corpoSchema>) {
-  if (corpo.text?.message) return { tipo: "texto", texto: corpo.text.message, url: null as string | null, nome: null as string | null, mime: null as string | null };
+  if (corpo.text?.message)
+    return {
+      tipo: "texto",
+      texto: corpo.text.message,
+      url: null as string | null,
+      nome: null as string | null,
+      mime: null as string | null,
+    };
   if (corpo.image?.imageUrl)
-    return { tipo: "imagem", texto: corpo.image.caption ?? "", url: corpo.image.imageUrl, nome: "imagem.jpg", mime: corpo.image.mimeType ?? "image/jpeg" };
+    return {
+      tipo: "imagem",
+      texto: corpo.image.caption ?? "",
+      url: corpo.image.imageUrl,
+      nome: "imagem.jpg",
+      mime: corpo.image.mimeType ?? "image/jpeg",
+    };
   if (corpo.document?.documentUrl) {
     const nome = (corpo.document.fileName ?? "arquivo").trim();
     const legenda = (corpo.document.caption ?? "").trim();
     // Alguns formatos do callback repetem o nome do documento em caption.
     // Isso é metadado, não texto escrito pelo cliente.
-    const texto = legenda.localeCompare(nome, undefined, { sensitivity: "accent" }) === 0 ? "" : legenda;
+    const texto =
+      legenda.localeCompare(nome, undefined, { sensitivity: "accent" }) === 0 ? "" : legenda;
     return {
       // O nome do arquivo não é texto escrito pelo cliente: sem legenda o
       // documento precisa cair na regra "Somente arquivos".
@@ -58,19 +95,40 @@ function extrair(corpo: z.infer<typeof corpoSchema>) {
       mime: corpo.document.mimeType ?? "application/octet-stream",
     };
   }
-  if (corpo.audio?.audioUrl) return { tipo: "audio", texto: "", url: corpo.audio.audioUrl, nome: "audio.ogg", mime: corpo.audio.mimeType ?? "audio/ogg" };
+  if (corpo.audio?.audioUrl)
+    return {
+      tipo: "audio",
+      texto: "",
+      url: corpo.audio.audioUrl,
+      nome: "audio.ogg",
+      mime: corpo.audio.mimeType ?? "audio/ogg",
+    };
   if (corpo.location)
     return {
       tipo: "localizacao",
-      texto: corpo.location.address ?? `${corpo.location.latitude ?? ""}, ${corpo.location.longitude ?? ""}`,
+      texto:
+        corpo.location.address ??
+        `${corpo.location.latitude ?? ""}, ${corpo.location.longitude ?? ""}`,
       url: null,
       nome: null,
       mime: null,
     };
   if (corpo.buttonsResponseMessage?.message)
-    return { tipo: "botao", texto: corpo.buttonsResponseMessage.message, url: null, nome: null, mime: null };
+    return {
+      tipo: "botao",
+      texto: corpo.buttonsResponseMessage.message,
+      url: null,
+      nome: null,
+      mime: null,
+    };
   if (corpo.listResponseMessage?.message)
-    return { tipo: "botao", texto: corpo.listResponseMessage.message, url: null, nome: null, mime: null };
+    return {
+      tipo: "botao",
+      texto: corpo.listResponseMessage.message,
+      url: null,
+      nome: null,
+      mime: null,
+    };
   return { tipo: "desconhecido", texto: "", url: null, nome: null, mime: null };
 }
 
@@ -136,7 +194,9 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         // Mensagem apagada pelo cliente (ou pela loja fora do sistema): o
         // WhatsApp avisa com uma revogação. Marcamos a mensagem como apagada
         // no histórico e não acionamos o bot.
-        const ehRevogacao = String(corpo.notification ?? "").toUpperCase().includes("REVOKE");
+        const ehRevogacao = String(corpo.notification ?? "")
+          .toUpperCase()
+          .includes("REVOKE");
         if (ehRevogacao) {
           const alvo = corpo.referencedMessage?.messageId || corpo.messageId || null;
           if (alvo) {
@@ -156,7 +216,8 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
                 .select("ultima_mensagem_em")
                 .eq("id", msg.conversa_id)
                 .maybeSingle();
-              const ultimaEm = (conv as { ultima_mensagem_em?: string | null } | null)?.ultima_mensagem_em;
+              const ultimaEm = (conv as { ultima_mensagem_em?: string | null } | null)
+                ?.ultima_mensagem_em;
               if (!ultimaEm || !msg.data_hora || new Date(msg.data_hora) >= new Date(ultimaEm)) {
                 await supabaseAdmin
                   .from("whatsapp_conversas")
@@ -194,12 +255,10 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           }
         }
 
-
         // Mensagem enviada pelo próprio número (celular/WhatsApp Web, fora do
         // sistema): é registrada como saída para o histórico ficar completo,
         // mas nunca aciona o bot nem reabre atendimento.
         const ehSaidaPropria = corpo.fromMe === true;
-
 
         // A Z-API envia vários tipos de callback (entrega, status, presença).
         // Só o "ReceivedCallback" é mensagem de cliente; o resto causaria laço.
@@ -217,7 +276,8 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         // Nas mensagens enviadas pelo próprio número o provedor manda o
         // identificador interno do chat (LID) no lugar do telefone do cliente.
         // Ele não é telefone: usar como tal criaria contato/conversa fantasma.
-        const chatLid = (corpo.chatLid ?? (/@lid$/i.test(corpo.phone ?? "") ? corpo.phone : null)) || null;
+        const chatLid =
+          (corpo.chatLid ?? (/@lid$/i.test(corpo.phone ?? "") ? corpo.phone : null)) || null;
         const lidNormalizado = chatLid ? chatLid.replace(/@.*$/, "").replace(/\D/g, "") : null;
         const phoneEhLid =
           /@lid$/i.test(corpo.phone ?? "") ||
@@ -247,16 +307,24 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
                 .eq("conexao_id", conexaoId)
                 .limit(1)
                 .maybeSingle()
-            : supabaseAdmin.from("whatsapp_config").select("modo_numeros, ignorar_agradecimentos").limit(1).maybeSingle(),
+            : supabaseAdmin
+                .from("whatsapp_config")
+                .select("modo_numeros, ignorar_agradecimentos")
+                .limit(1)
+                .maybeSingle(),
           telefone
-            ? (conexaoId
-                ? supabaseAdmin
-                    .from("bot_numeros")
-                    .select("permitido, ativo")
-                    .eq("telefone", telefone)
-                    .eq("conexao_id", conexaoId)
-                    .maybeSingle()
-                : supabaseAdmin.from("bot_numeros").select("permitido, ativo").eq("telefone", telefone).maybeSingle())
+            ? conexaoId
+              ? supabaseAdmin
+                  .from("bot_numeros")
+                  .select("permitido, ativo")
+                  .eq("telefone", telefone)
+                  .eq("conexao_id", conexaoId)
+                  .maybeSingle()
+              : supabaseAdmin
+                  .from("bot_numeros")
+                  .select("permitido, ativo")
+                  .eq("telefone", telefone)
+                  .maybeSingle()
             : Promise.resolve({ data: null as { permitido: boolean; ativo: boolean } | null }),
         ]);
         const modoNumeros = cfgBot?.modo_numeros ?? "todos";
@@ -264,10 +332,9 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         const botLiberadoParaNumero =
           modoNumeros === "somente_liberados"
             ? Boolean(regraValida?.permitido)
-            : regraValida ? regraValida.permitido : true;
-
-
-
+            : regraValida
+              ? regraValida.permitido
+              : true;
 
         // Callback sem conteúdo reconhecível não deve acionar o bot.
         if (conteudo.tipo === "desconhecido") {
@@ -368,8 +435,8 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         }
 
         const conversaId = conversaAberta?.id ?? null;
-        let totalMensagens = conversaAberta?.total_mensagens ?? 0;
-        let naoLidas = conversaAberta?.nao_lidas ?? 0;
+        const totalMensagens = conversaAberta?.total_mensagens ?? 0;
+        const naoLidas = conversaAberta?.nao_lidas ?? 0;
 
         if (!conversaId) return new Response("Falha ao registrar a conversa", { status: 500 });
 
@@ -386,7 +453,8 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
             .gte("data_hora", limite)
             .limit(1)
             .maybeSingle();
-          if (repetida?.id) return Response.json({ ok: true, ignorado: true, motivo: "eco_do_sistema" });
+          if (repetida?.id)
+            return Response.json({ ok: true, ignorado: true, motivo: "eco_do_sistema" });
         }
 
         // Agradecimento/despedida logo após finalizar: registra a mensagem,
@@ -399,7 +467,11 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           conversaAberta?.status === "finalizado" &&
           conteudo.tipo === "texto" &&
           cfgCortesia.ativo &&
-          dentroDaJanela(conversaAberta?.data_finalizacao, cfgCortesia.janela_minutos, new Date()) &&
+          dentroDaJanela(
+            conversaAberta?.data_finalizacao,
+            cfgCortesia.janela_minutos,
+            new Date(),
+          ) &&
           ehMensagemCortesia(conteudo.texto, cfgCortesia.frases);
 
         if (!ehSaidaPropria && conversaAberta?.status === "finalizado" && !cortesiaIgnorada) {
@@ -464,13 +536,18 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
 
         // Registra imediatamente os metadados. A cópia da mídia para o
         // armazenamento privado é feita depois, pela rotina da fila.
-        if (!ehSaidaPropria && conteudo.url && (conteudo.tipo === "documento" || conteudo.tipo === "imagem")) {
+        if (
+          !ehSaidaPropria &&
+          conteudo.url &&
+          (conteudo.tipo === "documento" || conteudo.tipo === "imagem")
+        ) {
           await supabaseAdmin.from("whatsapp_arquivos").insert({
             conversa_id: conversaId,
             mensagem_id: mensagem.id,
             cliente_id: clienteId,
             nome: conteudo.nome ?? "arquivo",
-            tipo: (conteudo.nome ?? "").split(".").pop()?.toUpperCase() ?? conteudo.tipo.toUpperCase(),
+            tipo:
+              (conteudo.nome ?? "").split(".").pop()?.toUpperCase() ?? conteudo.tipo.toUpperCase(),
             mime_type: conteudo.mime,
             url: conteudo.url,
             paginas: corpo.document?.pageCount ?? 1,
@@ -497,9 +574,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
             ...(lidNormalizado ? ({ chat_lid: lidNormalizado } as Record<string, string>) : {}),
             // "…@lid" não é nome de contato: nunca sobrescreve o nome real.
             // Nome definido manualmente pelo atendente também nunca é sobrescrito.
-            ...(nomeContato &&
-            !/@lid$/i.test(nomeContato) &&
-            !conversaAberta?.nome_manual
+            ...(nomeContato && !/@lid$/i.test(nomeContato) && !conversaAberta?.nome_manual
               ? { nome_contato: nomeContato }
               : {}),
             ultima_mensagem: resumo.slice(0, 300),
@@ -557,7 +632,6 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
           .from("whatsapp_conversas")
           .update({ bot_pendente: true, bot_pendente_em: agora } as never)
           .eq("id", conversaId);
-
 
         return Response.json({ ok: true });
       },

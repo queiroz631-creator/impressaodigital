@@ -1,6 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, ChevronUp, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  ShieldAlert,
+  X,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
@@ -10,10 +18,17 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo-impressao.png";
 
-export function AppLayout({ children }: { children: ReactNode }) {
+export function AppLayout({
+  children,
+  permissao,
+}: {
+  children: ReactNode;
+  /** Chave exigida para ver esta página. Sem ela, o conteúdo não é renderizado. */
+  permissao?: string;
+}) {
   const { user, loading } = useAuth();
   const { data: isAdmin } = useIsAdmin(user?.id);
-  const { pode } = usePermissoes(user?.id);
+  const { pode, carregando: carregandoPermissoes } = usePermissoes(user?.id);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [aberto, setAberto] = useState(false);
@@ -150,8 +165,35 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <span className="text-sm font-semibold text-navy-foreground">Impressão Digital</span>
         </header>
 
-        <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
+        <main className="min-w-0 flex-1 p-4 sm:p-6">
+          {permissao && carregandoPermissoes ? (
+            <div className="flex min-h-[40vh] items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+            </div>
+          ) : permissao && !pode(permissao) ? (
+            <AcessoNegado />
+          ) : (
+            children
+          )}
+        </main>
       </div>
+    </div>
+  );
+}
+
+/** Tela exibida quando o usuário abre uma página sem ter permissão. */
+function AcessoNegado() {
+  return (
+    <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-card">
+      <ShieldAlert className="mx-auto h-10 w-10 text-muted-foreground" />
+      <h1 className="mt-4 text-xl font-bold">Acesso negado</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Você não tem permissão para acessar esta página. Fale com um administrador se precisar desse
+        acesso.
+      </p>
+      <Button asChild className="mt-6">
+        <Link to="/dashboard">Ir para o Dashboard</Link>
+      </Button>
     </div>
   );
 }

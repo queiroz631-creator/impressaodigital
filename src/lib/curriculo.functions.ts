@@ -153,7 +153,10 @@ export const gerarLinkNovoCurriculo = createServerFn({ method: "POST" })
       .select("msg_link_curriculo")
       .limit(1)
       .maybeSingle();
-    return { ...r, mensagem: (cfg as { msg_link_curriculo?: string | null } | null)?.msg_link_curriculo ?? "" };
+    return {
+      ...r,
+      mensagem: (cfg as { msg_link_curriculo?: string | null } | null)?.msg_link_curriculo ?? "",
+    };
   });
 
 export const invalidarLinkCurriculo = createServerFn({ method: "POST" })

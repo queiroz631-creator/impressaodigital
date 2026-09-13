@@ -72,9 +72,13 @@ function isoParaCampoLocal(valor: string | null) {
 
 function descreverAgenda(s: Status) {
   if (s.modo === "uma_vez") {
-    return s.agendado_em ? `Uma vez em ${new Date(s.agendado_em).toLocaleString("pt-BR")}` : "Sem data definida";
+    return s.agendado_em
+      ? `Uma vez em ${new Date(s.agendado_em).toLocaleString("pt-BR")}`
+      : "Sem data definida";
   }
-  const dias = (s.dias_semana ?? []).map((d) => DIAS.find((x) => x.valor === d)?.rotulo).filter(Boolean);
+  const dias = (s.dias_semana ?? [])
+    .map((d) => DIAS.find((x) => x.valor === d)?.rotulo)
+    .filter(Boolean);
   return `${dias.length ? dias.join(", ") : "Sem dias"} às ${(s.hora ?? "").slice(0, 5)}`;
 }
 
@@ -108,7 +112,8 @@ export function StatusWhatsappPainel() {
 
   const salvar = useMutation({
     mutationFn: async () => {
-      if (form.tipo === "texto" && !form.texto.trim()) throw new Error("Escreva o texto do status.");
+      if (form.tipo === "texto" && !form.texto.trim())
+        throw new Error("Escreva o texto do status.");
       if (form.tipo === "imagem" && !form.imagem_url) throw new Error("Anexe a imagem do status.");
       if (form.modo === "uma_vez" && !form.agendado_em) throw new Error("Informe a data e a hora.");
       if (form.modo === "recorrente" && form.dias_semana.length === 0)
@@ -178,7 +183,9 @@ export function StatusWhatsappPainel() {
     try {
       const extensao = arquivo.name.split(".").pop() ?? "jpg";
       const caminho = `status/${crypto.randomUUID()}.${extensao}`;
-      const { error } = await supabase.storage.from("bot-midia").upload(caminho, arquivo, { upsert: true });
+      const { error } = await supabase.storage
+        .from("bot-midia")
+        .upload(caminho, arquivo, { upsert: true });
       if (error) {
         toast.error(error.message);
         return;
@@ -391,7 +398,7 @@ export function StatusWhatsappPainel() {
                       {s.tipo === "imagem" ? "Imagem" : "Texto"}
                     </Badge>
                     <span className="truncate text-sm font-medium">
-                      {s.tipo === "imagem" ? (s.legenda || s.imagem_nome || "Imagem") : s.texto}
+                      {s.tipo === "imagem" ? s.legenda || s.imagem_nome || "Imagem" : s.texto}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">{descreverAgenda(s)}</p>
@@ -400,7 +407,9 @@ export function StatusWhatsappPainel() {
                       Última: {new Date(s.ultima_publicacao_em).toLocaleString("pt-BR")}
                     </p>
                   ) : null}
-                  {s.ultimo_erro ? <p className="text-xs text-destructive">{s.ultimo_erro}</p> : null}
+                  {s.ultimo_erro ? (
+                    <p className="text-xs text-destructive">{s.ultimo_erro}</p>
+                  ) : null}
                 </div>
 
                 <div className="flex items-center gap-2">

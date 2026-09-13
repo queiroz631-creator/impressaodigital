@@ -14,14 +14,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { brl, dataHoraBR } from "@/lib/format";
 import { resumoDoPedido } from "@/lib/etiqueta";
 import { normalizarStatus, rotuloStatus } from "@/lib/status";
 import { useConfiguracao } from "@/hooks/useDados";
 import { useAuth } from "@/hooks/useAuth";
-import { escolherImpressora, imprimirEtiqueta, listarImpressoras, statusQz } from "@/lib/impressora";
+import {
+  escolherImpressora,
+  imprimirEtiqueta,
+  listarImpressoras,
+  statusQz,
+} from "@/lib/impressora";
 
 interface Props {
   children: ReactNode;
@@ -79,7 +90,10 @@ export function ImprimirEtiqueta({
     return lista;
   }, [config]);
 
-  const opcoes = useMemo(() => Array.from(new Set([...configuradas, ...disponiveis])), [configuradas, disponiveis]);
+  const opcoes = useMemo(
+    () => Array.from(new Set([...configuradas, ...disponiveis])),
+    [configuradas, disponiveis],
+  );
 
   const statusFinal = normalizarStatus(status);
 
@@ -102,7 +116,8 @@ export function ImprimirEtiqueta({
   /*
    * Situação do pagamento.
    */
-  const situacaoPagamento = valorPagoNumero <= 0 ? "NÃO PAGO" : valorPagoNumero >= total ? "PAGO" : "PARCIAL";
+  const situacaoPagamento =
+    valorPagoNumero <= 0 ? "NÃO PAGO" : valorPagoNumero >= total ? "PAGO" : "PARCIAL";
 
   /*
    * Inicializa os dados quando o diálogo abre.
@@ -175,16 +190,12 @@ export function ImprimirEtiqueta({
       return;
     }
 
-    const resultado = await imprimirEtiqueta(
-      "",
-      metodoConfig === "qz" ? impressora : null,
-    );
+    const resultado = await imprimirEtiqueta("", metodoConfig === "qz" ? impressora : null);
 
     if (resultado.mensagem) {
       toast.info(resultado.mensagem);
     }
   }
-
 
   return (
     <>
@@ -255,7 +266,9 @@ export function ImprimirEtiqueta({
             <div className="flex items-start justify-between gap-3">
               <span className="shrink-0 text-muted-foreground">Cliente</span>
 
-              <span className="max-w-[200px] break-words text-right font-medium">{clienteNome || "-"}</span>
+              <span className="max-w-[200px] break-words text-right font-medium">
+                {clienteNome || "-"}
+              </span>
             </div>
 
             <div className="flex items-start justify-between gap-3">
@@ -280,7 +293,11 @@ export function ImprimirEtiqueta({
                 onChange={(e) => setPago(e.target.value.replace(/[^\d.,]/g, ""))}
               />
 
-              {excedeu && <p className="text-xs font-semibold text-destructive">Valor pago maior que o total.</p>}
+              {excedeu && (
+                <p className="text-xs font-semibold text-destructive">
+                  Valor pago maior que o total.
+                </p>
+              )}
             </div>
 
             {/*
@@ -421,7 +438,11 @@ export function ImprimirEtiqueta({
               Fechar
             </Button>
 
-            <Button variant="secondary" onClick={() => executarImpressao(true)} disabled={excedeu || salvando}>
+            <Button
+              variant="secondary"
+              onClick={() => executarImpressao(true)}
+              disabled={excedeu || salvando}
+            >
               <Printer className="h-4 w-4" />
               Escolher impressora
             </Button>

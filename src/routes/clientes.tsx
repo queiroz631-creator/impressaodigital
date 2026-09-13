@@ -39,15 +39,21 @@ export const Route = createFileRoute("/clientes")({
   head: () => ({
     meta: [
       { title: "Clientes | Impressão Digital" },
-      { name: "description", content: "Cadastre, consulte e edite os dados dos clientes da gráfica." },
+      {
+        name: "description",
+        content: "Cadastre, consulte e edite os dados dos clientes da gráfica.",
+      },
       { property: "og:title", content: "Clientes" },
-      { property: "og:description", content: "Cadastro completo de clientes com currículos, orçamentos e pedidos." },
+      {
+        property: "og:description",
+        content: "Cadastro completo de clientes com currículos, orçamentos e pedidos.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="clientes.visualizar">
       <Clientes />
     </AppLayout>
   ),
@@ -98,7 +104,11 @@ function Clientes() {
         q = q.or(`nome.ilike.${like},telefone.ilike.${like},email.ilike.${like}`);
       }
 
-      const { data: linhas, error, count } = await q.range(pagina * POR_PAGINA, pagina * POR_PAGINA + POR_PAGINA - 1);
+      const {
+        data: linhas,
+        error,
+        count,
+      } = await q.range(pagina * POR_PAGINA, pagina * POR_PAGINA + POR_PAGINA - 1);
       if (error) throw error;
       return { linhas: (linhas ?? []) as Cliente[], total: count ?? 0 };
     },
@@ -112,10 +122,28 @@ function Clientes() {
     queryFn: async () => {
       const id = detalheId!;
       const [cli, cur, orc, ped] = await Promise.all([
-        supabase.from("clientes").select("id, nome, telefone, email, observacao, created_at").eq("id", id).maybeSingle(),
-        supabase.from("curriculos").select("id, nome_completo, status, updated_at").eq("cliente_id", id).order("updated_at", { ascending: false }),
-        supabase.from("orcamentos").select("id, numero, valor_total, status, created_at").eq("cliente_id", id).order("created_at", { ascending: false }).limit(20),
-        supabase.from("pedidos").select("id, numero, valor_total, status, created_at").eq("cliente_id", id).order("created_at", { ascending: false }).limit(20),
+        supabase
+          .from("clientes")
+          .select("id, nome, telefone, email, observacao, created_at")
+          .eq("id", id)
+          .maybeSingle(),
+        supabase
+          .from("curriculos")
+          .select("id, nome_completo, status, updated_at")
+          .eq("cliente_id", id)
+          .order("updated_at", { ascending: false }),
+        supabase
+          .from("orcamentos")
+          .select("id, numero, valor_total, status, created_at")
+          .eq("cliente_id", id)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("pedidos")
+          .select("id, numero, valor_total, status, created_at")
+          .eq("cliente_id", id)
+          .order("created_at", { ascending: false })
+          .limit(20),
       ]);
       if (cli.error) throw cli.error;
       return {
@@ -154,7 +182,9 @@ function Clientes() {
       const registro = {
         nome: form.nome.trim(),
         telefone: form.telefone.trim() || null,
-        telefone_normalizado: form.telefone.trim() ? normalizarTelefone(form.telefone) || null : null,
+        telefone_normalizado: form.telefone.trim()
+          ? normalizarTelefone(form.telefone) || null
+          : null,
         email: form.email.trim() || null,
         observacao: form.observacao.trim() || null,
       };
@@ -171,7 +201,8 @@ function Clientes() {
 
       setFormAberto(false);
       await queryClient.invalidateQueries({ queryKey: ["clientes"] });
-      if (editandoId) await queryClient.invalidateQueries({ queryKey: ["cliente-detalhe", editandoId] });
+      if (editandoId)
+        await queryClient.invalidateQueries({ queryKey: ["cliente-detalhe", editandoId] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível salvar o cliente.");
     } finally {
@@ -184,9 +215,18 @@ function Clientes() {
     setExcluindo(true);
     try {
       const [cur, orc, ped] = await Promise.all([
-        supabase.from("curriculos").select("id", { count: "exact", head: true }).eq("cliente_id", excluir.id),
-        supabase.from("orcamentos").select("id", { count: "exact", head: true }).eq("cliente_id", excluir.id),
-        supabase.from("pedidos").select("id", { count: "exact", head: true }).eq("cliente_id", excluir.id),
+        supabase
+          .from("curriculos")
+          .select("id", { count: "exact", head: true })
+          .eq("cliente_id", excluir.id),
+        supabase
+          .from("orcamentos")
+          .select("id", { count: "exact", head: true })
+          .eq("cliente_id", excluir.id),
+        supabase
+          .from("pedidos")
+          .select("id", { count: "exact", head: true })
+          .eq("cliente_id", excluir.id),
       ]);
 
       const vinculos: string[] = [];
@@ -195,7 +235,9 @@ function Clientes() {
       if ((ped.count ?? 0) > 0) vinculos.push(`${ped.count} pedido(s)`);
 
       if (vinculos.length > 0) {
-        toast.error(`Não é possível excluir: o cliente possui ${vinculos.join(", ")} vinculado(s).`);
+        toast.error(
+          `Não é possível excluir: o cliente possui ${vinculos.join(", ")} vinculado(s).`,
+        );
         return;
       }
 
@@ -213,7 +255,10 @@ function Clientes() {
 
   return (
     <>
-      <PageHeader titulo="CLIENTES" subtitulo="Consulte e gerencie os dados cadastrais dos clientes" />
+      <PageHeader
+        titulo="CLIENTES"
+        subtitulo="Consulte e gerencie os dados cadastrais dos clientes"
+      />
 
       <Card className="mb-4">
         <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
@@ -322,7 +367,12 @@ function Clientes() {
             Página {pagina + 1} de {totalPaginas} — {data?.total} clientes
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={pagina === 0} onClick={() => setPagina((p) => p - 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pagina === 0}
+              onClick={() => setPagina((p) => p - 1)}
+            >
               Anterior
             </Button>
             <Button
@@ -346,7 +396,11 @@ function Clientes() {
           <div className="space-y-3">
             <div>
               <Label htmlFor="c-nome">Nome *</Label>
-              <Input id="c-nome" value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} />
+              <Input
+                id="c-nome"
+                value={form.nome}
+                onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
+              />
             </div>
             <div>
               <Label htmlFor="c-tel">Telefone</Label>
@@ -358,7 +412,11 @@ function Clientes() {
             </div>
             <div>
               <Label htmlFor="c-email">E-mail</Label>
-              <Input id="c-email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+              <Input
+                id="c-email"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              />
             </div>
             <div>
               <Label htmlFor="c-obs">Observação</Label>
@@ -396,14 +454,22 @@ function Clientes() {
           ) : (
             <div className="space-y-5 text-sm">
               <div className="grid gap-2 sm:grid-cols-2">
-                <p><span className="text-muted-foreground">Telefone:</span> {detalhe.cliente.telefone || "-"}</p>
-                <p><span className="text-muted-foreground">E-mail:</span> {detalhe.cliente.email || "-"}</p>
+                <p>
+                  <span className="text-muted-foreground">Telefone:</span>{" "}
+                  {detalhe.cliente.telefone || "-"}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">E-mail:</span>{" "}
+                  {detalhe.cliente.email || "-"}
+                </p>
                 <p className="sm:col-span-2">
-                  <span className="text-muted-foreground">Cadastrado em:</span> {dataHoraBR(detalhe.cliente.created_at)}
+                  <span className="text-muted-foreground">Cadastrado em:</span>{" "}
+                  {dataHoraBR(detalhe.cliente.created_at)}
                 </p>
                 {detalhe.cliente.observacao && (
                   <p className="sm:col-span-2">
-                    <span className="text-muted-foreground">Observação:</span> {detalhe.cliente.observacao}
+                    <span className="text-muted-foreground">Observação:</span>{" "}
+                    {detalhe.cliente.observacao}
                   </p>
                 )}
               </div>
@@ -438,7 +504,10 @@ function Clientes() {
                 ) : (
                   <div className="space-y-1">
                     {detalhe.pedidos.map((p) => (
-                      <div key={p.id} className="flex items-center justify-between rounded-lg border p-2">
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between rounded-lg border p-2"
+                      >
                         <span>
                           #{p.numero} — {dataHoraBR(p.created_at)}
                         </span>
@@ -459,7 +528,10 @@ function Clientes() {
                 ) : (
                   <div className="space-y-1">
                     {detalhe.orcamentos.map((o) => (
-                      <div key={o.id} className="flex items-center justify-between rounded-lg border p-2">
+                      <div
+                        key={o.id}
+                        className="flex items-center justify-between rounded-lg border p-2"
+                      >
                         <span>
                           #{o.numero} — {dataHoraBR(o.created_at)}
                         </span>

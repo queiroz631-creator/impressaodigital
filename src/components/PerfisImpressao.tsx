@@ -57,7 +57,9 @@ export function PerfisImpressao({ impressorasDetectadas, impressorasConfiguradas
   const [salvando, setSalvando] = useState(false);
 
   const impressoras = Array.from(
-    new Set([...impressorasConfiguradas, ...impressorasDetectadas].map((n) => n.trim()).filter(Boolean)),
+    new Set(
+      [...impressorasConfiguradas, ...impressorasDetectadas].map((n) => n.trim()).filter(Boolean),
+    ),
   );
 
   function set<K extends keyof Rascunho>(campo: K, valor: Rascunho[K]) {
@@ -74,7 +76,6 @@ export function PerfisImpressao({ impressorasDetectadas, impressorasConfiguradas
           : { ...r, largura_mm: medidas.largura, altura_mm: medidas.altura },
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rascunho.tamanho, aberto]);
 
   function novo() {
@@ -182,7 +183,8 @@ export function PerfisImpressao({ impressorasDetectadas, impressorasConfiguradas
           >
             <div className="min-w-48 flex-1">
               <p className="text-sm font-semibold">
-                {p.nome} {!p.ativo && <span className="text-xs text-muted-foreground">(inativo)</span>}
+                {p.nome}{" "}
+                {!p.ativo && <span className="text-xs text-muted-foreground">(inativo)</span>}
               </p>
               <p className="text-xs text-muted-foreground">{resumoPerfil(p)}</p>
               <p className="text-xs text-muted-foreground">
@@ -191,7 +193,13 @@ export function PerfisImpressao({ impressorasDetectadas, impressorasConfiguradas
               </p>
             </div>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" title="Subir" onClick={() => void mover(p, -1)} disabled={i === 0}>
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Subir"
+                onClick={() => void mover(p, -1)}
+                disabled={i === 0}
+              >
                 ↑
               </Button>
               <Button
@@ -203,7 +211,12 @@ export function PerfisImpressao({ impressorasDetectadas, impressorasConfiguradas
               >
                 ↓
               </Button>
-              <Button variant="ghost" size="icon" title="Imprimir teste" onClick={() => void testar(p)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Imprimir teste"
+                onClick={() => void testar(p)}
+              >
                 <Printer className="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="icon" title="Duplicar" onClick={() => duplicar(p)}>
@@ -352,7 +365,10 @@ export function PerfisImpressao({ impressorasDetectadas, impressorasConfiguradas
 
             <div className="space-y-2">
               <Label>Frente e verso</Label>
-              <Select value={rascunho.duplex} onValueChange={(v) => set("duplex", v as DuplexPerfil)}>
+              <Select
+                value={rascunho.duplex}
+                onValueChange={(v) => set("duplex", v as DuplexPerfil)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

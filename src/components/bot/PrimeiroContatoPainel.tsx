@@ -19,8 +19,20 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Regra {
   id: string;
@@ -82,7 +94,10 @@ export function PrimeiroContatoPainel() {
   const regras = useQuery({
     queryKey: ["bot-primeiro-contato"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bot_primeiro_contato").select("*").order("ordem");
+      const { data, error } = await supabase
+        .from("bot_primeiro_contato")
+        .select("*")
+        .order("ordem");
       if (error) throw error;
       return (data ?? []) as unknown as Regra[];
     },
@@ -100,9 +115,15 @@ export function PrimeiroContatoPainel() {
   const respostas = useQuery({
     queryKey: ["bot-respostas-lista"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bot_respostas").select("id, titulo").order("ordem");
+      const { data, error } = await supabase
+        .from("bot_respostas")
+        .select("id, titulo")
+        .order("ordem");
       if (error) throw error;
-      return ((data ?? []) as { id: string; titulo: string }[]).map((r) => ({ id: r.id, nome: r.titulo }));
+      return ((data ?? []) as { id: string; titulo: string }[]).map((r) => ({
+        id: r.id,
+        nome: r.titulo,
+      }));
     },
   });
 
@@ -128,7 +149,8 @@ export function PrimeiroContatoPainel() {
   }, [editando]);
 
   const lista = regras.data ?? [];
-  const usaPalavras = CONDICOES_PRIMEIRO_CONTATO.find((c) => c.valor === form.condicao)?.usaPalavras ?? false;
+  const usaPalavras =
+    CONDICOES_PRIMEIRO_CONTATO.find((c) => c.valor === form.condicao)?.usaPalavras ?? false;
   const usaFluxo = form.acao === "iniciar_fluxo" || form.acao === "confirmar_fluxo";
   const usaResposta = form.acao === "resposta";
 
@@ -153,9 +175,13 @@ export function PrimeiroContatoPainel() {
       mensagem: form.mensagem,
       acao: form.acao,
       destino_fluxo_id: usaFluxo && form.destino_fluxo_id !== NENHUM ? form.destino_fluxo_id : null,
-      destino_resposta_id: usaResposta && form.destino_resposta_id !== NENHUM ? form.destino_resposta_id : null,
+      destino_resposta_id:
+        usaResposta && form.destino_resposta_id !== NENHUM ? form.destino_resposta_id : null,
       delay_segundos: Math.min(60, Math.max(0, Number(form.delay_segundos) || 0)),
-      delay_mensagem_segundos: Math.min(300, Math.max(0, Number(form.delay_mensagem_segundos) || 0)),
+      delay_mensagem_segundos: Math.min(
+        300,
+        Math.max(0, Number(form.delay_mensagem_segundos) || 0),
+      ),
       enviar_mensagem: form.enviar_mensagem,
       ativo: form.ativo,
     };
@@ -167,7 +193,12 @@ export function PrimeiroContatoPainel() {
               .from("bot_primeiro_contato")
               .insert({ ...dados, ordem: Math.max(0, ...lista.map((r) => r.ordem)) + 1 })
           ).error
-        : (await supabase.from("bot_primeiro_contato").update(dados).eq("id", (editando as Regra).id)).error;
+        : (
+            await supabase
+              .from("bot_primeiro_contato")
+              .update(dados)
+              .eq("id", (editando as Regra).id)
+          ).error;
 
     if (erro) {
       toast.error(erro.message);
@@ -237,7 +268,9 @@ export function PrimeiroContatoPainel() {
                   <CardTitle className="flex items-center gap-2 text-base">
                     <MessageSquarePlus className="h-4 w-4 text-primary" />
                     {i + 1}. {r.nome}
-                    <Badge variant={r.ativo ? "default" : "secondary"}>{r.ativo ? "Ativo" : "Inativo"}</Badge>
+                    <Badge variant={r.ativo ? "default" : "secondary"}>
+                      {r.ativo ? "Ativo" : "Inativo"}
+                    </Badge>
                     {r.enviar_mensagem === "primeira_do_dia" && (
                       <Badge variant="outline">1º contato do dia</Badge>
                     )}
@@ -258,7 +291,12 @@ export function PrimeiroContatoPainel() {
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  <Button size="icon" variant="ghost" disabled={i === 0} onClick={() => void mover(r, -1)}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    disabled={i === 0}
+                    onClick={() => void mover(r, -1)}
+                  >
                     <ArrowUp className="h-4 w-4" />
                   </Button>
                   <Button
@@ -299,12 +337,18 @@ export function PrimeiroContatoPainel() {
           <div className="grid gap-3">
             <div className="grid gap-1">
               <Label>Nome da regra</Label>
-              <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
+              <Input
+                value={form.nome}
+                onChange={(e) => setForm({ ...form, nome: e.target.value })}
+              />
             </div>
 
             <div className="grid gap-1">
               <Label>Quando acontecer</Label>
-              <Select value={form.condicao} onValueChange={(v) => setForm({ ...form, condicao: v })}>
+              <Select
+                value={form.condicao}
+                onValueChange={(v) => setForm({ ...form, condicao: v })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -375,8 +419,6 @@ export function PrimeiroContatoPainel() {
                 0 envia imediatamente. Útil para aguardar o cliente terminar de enviar os arquivos.
               </p>
             </div>
-
-
 
             <div className="grid gap-1">
               <Label>O que o bot faz</Label>
@@ -451,7 +493,10 @@ export function PrimeiroContatoPainel() {
 
             <div className="flex items-center justify-between rounded-md border p-3">
               <Label>Regra ativa</Label>
-              <Switch checked={form.ativo} onCheckedChange={(v) => setForm({ ...form, ativo: v })} />
+              <Switch
+                checked={form.ativo}
+                onCheckedChange={(v) => setForm({ ...form, ativo: v })}
+              />
             </div>
           </div>
 

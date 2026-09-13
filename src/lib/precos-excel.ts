@@ -3,11 +3,20 @@
  * (materiais e acabamentos), com faixas em texto e vírgula decimal.
  */
 import * as XLSX from "xlsx";
-import { faixasParaTexto, textoParaFaixas, type Material, type Acabamento, type FaixaPreco } from "@/lib/calc";
+import {
+  faixasParaTexto,
+  textoParaFaixas,
+  type Material,
+  type Acabamento,
+  type FaixaPreco,
+} from "@/lib/calc";
 
 /** Converte número para o padrão brasileiro (vírgula decimal). */
 function numeroBR(valor: number) {
-  return Number(valor || 0).toLocaleString("pt-BR", { useGrouping: false, maximumFractionDigits: 10 });
+  return Number(valor || 0).toLocaleString("pt-BR", {
+    useGrouping: false,
+    maximumFractionDigits: 10,
+  });
 }
 
 /** Lê um número aceitando vírgula ou ponto decimal. */
@@ -15,7 +24,10 @@ function lerNumero(valor: unknown): number {
   if (typeof valor === "number") return valor;
   const texto = String(valor ?? "").trim();
   if (!texto) return 0;
-  const limpo = texto.replace(/[^\d,.-]/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", ".");
+  const limpo = texto
+    .replace(/[^\d,.-]/g, "")
+    .replace(/\.(?=\d{3}\b)/g, "")
+    .replace(",", ".");
   const n = Number(limpo);
   return Number.isFinite(n) ? n : 0;
 }
@@ -25,7 +37,9 @@ function lerInteiro(valor: unknown): number {
 }
 
 function lerBooleano(valor: unknown): boolean {
-  const texto = String(valor ?? "").trim().toLowerCase();
+  const texto = String(valor ?? "")
+    .trim()
+    .toLowerCase();
   return ["sim", "s", "true", "1", "verdadeiro", "x"].includes(texto);
 }
 
@@ -35,7 +49,10 @@ function boolBR(valor: boolean) {
 
 /** Faixas em uma célula: "500 = 0,08; 1000 = 0,06". */
 function faixasCelula(faixas: FaixaPreco[] | null | undefined) {
-  return faixasParaTexto(faixas ?? []).split("\n").filter(Boolean).join("; ");
+  return faixasParaTexto(faixas ?? [])
+    .split("\n")
+    .filter(Boolean)
+    .join("; ");
 }
 
 function baixar(wb: XLSX.WorkBook, nome: string) {
@@ -100,7 +117,8 @@ export async function lerMateriais(arquivo: File): Promise<ResultadoImportacao<M
         ...(id ? { id } : {}),
         nome,
         descricao: String(linha["Descrição"] ?? "").trim(),
-        categoria: (String(linha["Categoria"] ?? "impressao").trim() || "impressao") as Material["categoria"],
+        categoria: (String(linha["Categoria"] ?? "impressao").trim() ||
+          "impressao") as Material["categoria"],
         tipo_impressao: (String(linha["Tipo de impressão"] ?? "simples").trim() ||
           "simples") as Material["tipo_impressao"],
         formato: (String(linha["Formato"] ?? "A4").trim() || "A4") as Material["formato"],
@@ -111,7 +129,9 @@ export async function lerMateriais(arquivo: File): Promise<ResultadoImportacao<M
         preco_arquivos_fixo: lerNumero(linha["Preço arquivos fixo"]),
         faixas: textoParaFaixas(String(linha["Faixas por página"] ?? "")),
         faixas_por_arquivo: textoParaFaixas(String(linha["Faixas por arquivo"] ?? "")),
-        faixas_por_copia_adicional: textoParaFaixas(String(linha["Faixas por cópia adicional"] ?? "")),
+        faixas_por_copia_adicional: textoParaFaixas(
+          String(linha["Faixas por cópia adicional"] ?? ""),
+        ),
         ativo: lerBooleano(linha["Ativo"]),
         ordem: lerInteiro(linha["Ordem"]),
       } as MaterialImportado,
@@ -144,7 +164,9 @@ export function exportarAcabamentos(acabamentos: Acabamento[]) {
 
 type AcabamentoImportado = Omit<Acabamento, "id"> & { id?: string };
 
-export async function lerAcabamentos(arquivo: File): Promise<ResultadoImportacao<AcabamentoImportado>> {
+export async function lerAcabamentos(
+  arquivo: File,
+): Promise<ResultadoImportacao<AcabamentoImportado>> {
   const wb = XLSX.read(await arquivo.arrayBuffer(), { type: "array" });
   const aba = wb.Sheets[wb.SheetNames[0] ?? ""];
   const erros: string[] = [];
@@ -166,7 +188,8 @@ export async function lerAcabamentos(arquivo: File): Promise<ResultadoImportacao
         nome,
         tipo_impressao: (String(linha["Tipo de impressão"] ?? "ambos").trim() ||
           "ambos") as Acabamento["tipo_impressao"],
-        cobranca: (String(linha["Cobrança"] ?? "quantidade").trim() || "quantidade") as Acabamento["cobranca"],
+        cobranca: (String(linha["Cobrança"] ?? "quantidade").trim() ||
+          "quantidade") as Acabamento["cobranca"],
         valor: lerNumero(linha["Valor"]),
         paginas_bloco: Math.max(1, lerInteiro(linha["Páginas por bloco"]) || 1),
         faixas: textoParaFaixas(String(linha["Faixas"] ?? "")),

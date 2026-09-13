@@ -47,7 +47,6 @@ import {
 import type { DadosFluxos } from "@/lib/bot-fluxos";
 import {
   avancar,
-  
   fluxoInicial,
   fluxoPorId,
   iniciar as iniciarFluxo,
@@ -144,12 +143,19 @@ function entradaDaMensagem(mensagem: MensagemEntrada): EntradaBot {
   let texto = (mensagem.texto ?? "").trim();
 
   if (mensagem.tipo === "documento") {
-    const payload = mensagem.payload as { document?: { caption?: unknown; fileName?: unknown } } | null;
-    const legenda = typeof payload?.document?.caption === "string" ? payload.document.caption.trim() : "";
-    const nomePayload = typeof payload?.document?.fileName === "string" ? payload.document.fileName.trim() : "";
+    const payload = mensagem.payload as {
+      document?: { caption?: unknown; fileName?: unknown };
+    } | null;
+    const legenda =
+      typeof payload?.document?.caption === "string" ? payload.document.caption.trim() : "";
+    const nomePayload =
+      typeof payload?.document?.fileName === "string" ? payload.document.fileName.trim() : "";
     const nome = (mensagem.arquivo_nome ?? nomePayload).trim();
 
-    if (!legenda || (nome && texto.localeCompare(nome, undefined, { sensitivity: "accent" }) === 0)) {
+    if (
+      !legenda ||
+      (nome && texto.localeCompare(nome, undefined, { sensitivity: "accent" }) === 0)
+    ) {
       texto = legenda;
     }
   }
@@ -232,7 +238,8 @@ async function responder(
       await responder(conversa, texto, botoes);
     }
   }
-  if (!envio) envio = { caminho: "send-text", corpo: { phone: conversa.telefone, message: mensagem } };
+  if (!envio)
+    envio = { caminho: "send-text", corpo: { phone: conversa.telefone, message: mensagem } };
 
   // Mostra "digitando..." no WhatsApp do cliente antes de enviar, com duração
   // proporcional ao tamanho da mensagem (1,5s a 4s).
@@ -253,7 +260,9 @@ async function responder(
     const dados = (r.dados ?? {}) as { messageId?: unknown; zaapId?: unknown; error?: unknown };
     idMensagem = dados.messageId ?? dados.zaapId ?? null;
     entregue = r.ok && Boolean(idMensagem);
-    erro = entregue ? null : (r.erro ?? (dados.error ? String(dados.error) : "A operadora não confirmou o envio."));
+    erro = entregue
+      ? null
+      : (r.erro ?? (dados.error ? String(dados.error) : "A operadora não confirmou o envio."));
     // Espera curta antes de repetir (falha momentânea de rede ou da operadora).
     if (!entregue && tentativa < TENTATIVAS_ENVIO) await new Promise((x) => setTimeout(x, 1500));
   }
@@ -286,7 +295,6 @@ async function responder(
     .eq("id", conversa.id);
   return true;
 }
-
 
 type AtualizacaoConversa = Partial<{
   status: string;
@@ -403,7 +411,11 @@ async function perguntarFormato(conversa: ConversaBot) {
 }
 
 async function materiaisDisponiveis(ctx: ContextoBot) {
-  const { data } = await supabaseAdmin.from("materiais").select("*").eq("ativo", true).order("ordem");
+  const { data } = await supabaseAdmin
+    .from("materiais")
+    .select("*")
+    .eq("ativo", true)
+    .order("ordem");
   const lista = (data ?? []) as unknown as Material[];
   return lista.filter(
     (m) =>
@@ -413,7 +425,11 @@ async function materiaisDisponiveis(ctx: ContextoBot) {
 }
 
 async function acabamentosDisponiveis(ctx: ContextoBot) {
-  const { data } = await supabaseAdmin.from("acabamentos").select("*").eq("ativo", true).order("ordem");
+  const { data } = await supabaseAdmin
+    .from("acabamentos")
+    .select("*")
+    .eq("ativo", true)
+    .order("ordem");
   const lista = (data ?? []) as unknown as Acabamento[];
   return acabamentosDoTipo(lista, ctx.tipoServico);
 }
@@ -501,7 +517,12 @@ async function arquivosDaConversa(conversaId: string) {
 }
 
 async function usuarioResponsavel(): Promise<string | null> {
-  const { data } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin").limit(1).maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "admin")
+    .limit(1)
+    .maybeSingle();
   return data?.user_id ?? null;
 }
 
@@ -547,10 +568,13 @@ async function calcularOrcamento(conversa: ConversaBot, ctx: ContextoBot) {
 
   const selecao: Record<string, SelecaoAcabamento> = {};
   for (const a of acabamentos) {
-    if (selecionadosIds.has(a.id)) selecao[a.id] = { ativo: true, quantidade: quantidadeArquivos || 1 };
+    if (selecionadosIds.has(a.id))
+      selecao[a.id] = { ativo: true, quantidade: quantidadeArquivos || 1 };
   }
 
-  const linhasAcabamento = calcularAcabamentos(acabamentos, selecao, { paginas: paginasParaAcabamento });
+  const linhasAcabamento = calcularAcabamentos(acabamentos, selecao, {
+    paginas: paginasParaAcabamento,
+  });
   const valorAcabamento = totalAcabamentos(linhasAcabamento);
   const total = linha.total + valorAcabamento;
 
@@ -576,7 +600,11 @@ async function calcularOrcamento(conversa: ConversaBot, ctx: ContextoBot) {
     .maybeSingle();
 
   if (erroPedido || !pedido) {
-    await transferir(conversa, config, `falha ao registrar o pedido: ${erroPedido?.message ?? "desconhecida"}`);
+    await transferir(
+      conversa,
+      config,
+      `falha ao registrar o pedido: ${erroPedido?.message ?? "desconhecida"}`,
+    );
     return;
   }
 
@@ -675,9 +703,16 @@ async function calcularOrcamento(conversa: ConversaBot, ctx: ContextoBot) {
 
   if (config.exigir_revisao_humana) {
     await responder(conversa, config.msg_revisao);
-    await salvar(conversa, { status: "pendente", etapa: "aguardando_revisao", motivo_pendencia: "revisão do orçamento gerado pelo bot" });
+    await salvar(conversa, {
+      status: "pendente",
+      etapa: "aguardando_revisao",
+      motivo_pendencia: "revisão do orçamento gerado pelo bot",
+    });
   } else {
-    await responder(conversa, "Podemos confirmar este pedido? Responda *SIM* para confirmar ou *NÃO* para falar com um atendente.");
+    await responder(
+      conversa,
+      "Podemos confirmar este pedido? Responda *SIM* para confirmar ou *NÃO* para falar com um atendente.",
+    );
     await salvar(conversa, { etapa: "aguardando_confirmacao" });
   }
 }
@@ -745,7 +780,10 @@ async function acaoCurriculo(conversa: ConversaBot) {
     const dadosBot = await carregarDadosBot(conversa.conexao_id ?? null);
     await responder(conversa, mensagemLinkCurriculo(dadosBot?.config.msg_link_curriculo, url));
   } catch {
-    await responder(conversa, "Não consegui gerar o link do currículo agora. Vou chamar um atendente. 😊");
+    await responder(
+      conversa,
+      "Não consegui gerar o link do currículo agora. Vou chamar um atendente. 😊",
+    );
   }
 }
 
@@ -765,7 +803,10 @@ async function executarAcaoMenu(
       const arquivos = await arquivosDaConversa(conversa.id);
       await salvarContexto(conversa, { ...ctx, nome: ctx.nome || conversa.nome_contato || "" });
       if (arquivos.length > 0) {
-        await responder(conversa, `Já tenho *${arquivos.length}* arquivo(s) seu(s). Envie mais ou escreva *PRONTO*.`);
+        await responder(
+          conversa,
+          `Já tenho *${arquivos.length}* arquivo(s) seu(s). Envie mais ou escreva *PRONTO*.`,
+        );
         await salvar(conversa, { etapa: "aguardando_arquivos" });
         conversa.etapa = "aguardando_arquivos";
       } else {
@@ -830,7 +871,13 @@ async function executarAcaoFluxo(
       return false;
 
     case "transferir_silencioso":
-      await transferir(conversa, config, "fluxo do bot encaminhou para atendimento", undefined, true);
+      await transferir(
+        conversa,
+        config,
+        "fluxo do bot encaminhou para atendimento",
+        undefined,
+        true,
+      );
       return false;
 
     case "esperando_impressao":
@@ -875,9 +922,9 @@ async function entregarFluxo(
       const cfgHorario = await carregarDadosBot(conversa.conexao_id ?? null);
       pularMensagens = Boolean(
         cfgHorario &&
-          !dentroDoHorario(cfgHorario, vars.agora) &&
-          cfgHorario.config.msg_transferencia_fora_horario_ativo &&
-          cfgHorario.config.msg_transferencia_fora_horario.trim(),
+        !dentroDoHorario(cfgHorario, vars.agora) &&
+        cfgHorario.config.msg_transferencia_fora_horario_ativo &&
+        cfgHorario.config.msg_transferencia_fora_horario.trim(),
       );
     }
 
@@ -895,11 +942,12 @@ async function entregarFluxo(
       }
     }
 
-
     if (atual.finalizar) {
       if (!atual.silencioso) {
         const cfg = await carregarDadosBot(conversa.conexao_id ?? null);
-        const despedida = cfg?.config.msg_finalizacao_ativo ? cfg.config.msg_finalizacao.trim() : "";
+        const despedida = cfg?.config.msg_finalizacao_ativo
+          ? cfg.config.msg_finalizacao.trim()
+          : "";
         if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
       }
       await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null }, "finalizado");
@@ -984,7 +1032,14 @@ async function executarAcaoResposta(
           : fluxoInicial(fluxos);
       if (!alvo) return;
       const saida = iniciarFluxo(fluxos, alvo.id, {}, vars, 0);
-      await entregarFluxo(conversa, config, { ...ctx, triagem: null, regra: null }, fluxos, saida, vars);
+      await entregarFluxo(
+        conversa,
+        config,
+        { ...ctx, triagem: null, regra: null },
+        fluxos,
+        saida,
+        vars,
+      );
       return;
     }
 
@@ -1027,7 +1082,11 @@ async function executarAcaoResposta(
 
     case "esperando_impressao":
     case "esperando_impressao_silencioso":
-      await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: null }, "aguardando_impressao");
+      await salvarContexto(
+        conversa,
+        { ...ctx, fluxo: null, triagem: null },
+        "aguardando_impressao",
+      );
       await filaImpressao(conversa, "resposta automática enviou para impressão");
       return;
 
@@ -1039,7 +1098,11 @@ async function executarAcaoResposta(
           : "";
       if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
       await salvarContexto(conversa, { ...ctx, fluxo: null, triagem: null }, "finalizado");
-      await salvar(conversa, { status: "finalizado", data_finalizacao: vars.agora.toISOString(), nao_lidas: 0 });
+      await salvar(conversa, {
+        status: "finalizado",
+        data_finalizacao: vars.agora.toISOString(),
+        nao_lidas: 0,
+      });
       await auditar(conversa.id, "bot_finalizou", "resposta automática finalizou o atendimento");
       return;
     }
@@ -1192,9 +1255,6 @@ async function triagem(
       await confirmarLoteProcessado(conversa.id, "");
     }
 
-
-
-
     if (confirmar) {
       await salvarContexto(
         conversa,
@@ -1219,7 +1279,11 @@ async function triagem(
   // 2) Texto → procura uma resposta automática e confirma com o cliente.
   const encontrada = texto ? reconhecerResposta(cfg, texto) : null;
   if (encontrada) {
-    const enviou = await responder(conversa, aplicarVariaveis(perguntaConfirmacao(encontrada), vars), ["SIM", "NÃO"]);
+    const enviou = await responder(
+      conversa,
+      aplicarVariaveis(perguntaConfirmacao(encontrada), vars),
+      ["SIM", "NÃO"],
+    );
     if (!enviou) return;
     await salvarContexto(
       conversa,
@@ -1230,7 +1294,11 @@ async function triagem(
   }
 
   // 4) Nada reconhecido: aguarda a próxima mensagem do cliente.
-  await salvarContexto(conversa, { ...ctx, fluxo: null, fluxoFallback: null, triagem: null, regra: null }, "inicio");
+  await salvarContexto(
+    conversa,
+    { ...ctx, fluxo: null, fluxoFallback: null, triagem: null, regra: null },
+    "inicio",
+  );
 }
 
 /** Trata a confirmação (SIM/NÃO) da regra ou da resposta automática sugerida. */
@@ -1250,7 +1318,15 @@ async function resolverTriagem(
     const regra = (cfg.regras ?? []).find((r) => r.id === ctx.regra);
     const escolha = simOuNao(entrada.texto ?? "");
     if (!regra || escolha === null) {
-      await triagem(conversa, config, { ...ctx, regra: null }, fluxos, entrada, primeiraDoDia, vars);
+      await triagem(
+        conversa,
+        config,
+        { ...ctx, regra: null },
+        fluxos,
+        entrada,
+        primeiraDoDia,
+        vars,
+      );
       return;
     }
     if (!escolha) {
@@ -1279,7 +1355,15 @@ async function resolverTriagem(
   const escolha = simOuNao(entrada.texto ?? "");
   if (escolha === null) {
     // Não confirmou nem negou: trata como uma nova mensagem de triagem.
-    await triagem(conversa, config, { ...ctx, triagem: null }, fluxos, entrada, primeiraDoDia, vars);
+    await triagem(
+      conversa,
+      config,
+      { ...ctx, triagem: null },
+      fluxos,
+      entrada,
+      primeiraDoDia,
+      vars,
+    );
     return;
   }
 
@@ -1344,7 +1428,9 @@ async function rodarFluxo(
     const respondeuSimNao = conversa.etapa === "triagem" && simOuNao(texto) !== null;
     if (!respondeuSimNao) {
       const cfg = await carregarDadosBot(conversa.conexao_id ?? null);
-      const outra = cfg ? escolherRegra(cfg.regras ?? [], { texto, ehArquivo }, ctx.ultimaRegra ?? null) : null;
+      const outra = cfg
+        ? escolherRegra(cfg.regras ?? [], { texto, ehArquivo }, ctx.ultimaRegra ?? null)
+        : null;
       if (outra) {
         await triagem(
           conversa,
@@ -1468,8 +1554,6 @@ async function confirmarLoteProcessado(conversaId: string, minimo: string): Prom
     .eq("id", conversaId);
 }
 
-
-
 export async function processarBot(conversaId: string, entrada: EntradaBot): Promise<void> {
   // Dá tempo para callbacks do mesmo envio chegarem juntos (vários arquivos).
   if (entrada.mensagemId) {
@@ -1511,7 +1595,6 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
         if (ctxAtual.ultimaProcessada === ultima.id) return;
 
         alvo = entradaDaMensagem(ultima as MensagemEntrada);
-
       }
     }
 
@@ -1523,7 +1606,6 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
     if (alvo.mensagemId) {
       await confirmarLoteProcessado(conversaId, alvo.mensagemId);
     }
-
   } catch (e) {
     await auditar(
       conversaId,
@@ -1531,7 +1613,6 @@ export async function processarBot(conversaId: string, entrada: EntradaBot): Pro
       e instanceof Error ? e.message : "Atendimento automático interrompido",
     );
   } finally {
-
     pararBatimento();
     await destravar(conversaId);
   }
@@ -1559,10 +1640,16 @@ async function guardarMidiasPendentes(): Promise<void> {
       const caminho = `${arq.conversa_id}/${Date.now()}-${(arq.nome ?? "arquivo").replace(/[^\w.-]+/g, "_")}`;
       const { error: erroUpload } = await supabaseAdmin.storage
         .from("whatsapp")
-        .upload(caminho, bytes, { contentType: arq.mime_type ?? "application/octet-stream", upsert: true });
+        .upload(caminho, bytes, {
+          contentType: arq.mime_type ?? "application/octet-stream",
+          upsert: true,
+        });
       if (erroUpload) continue;
 
-      await supabaseAdmin.from("whatsapp_arquivos").update({ storage_path: caminho }).eq("id", arq.id);
+      await supabaseAdmin
+        .from("whatsapp_arquivos")
+        .update({ storage_path: caminho })
+        .eq("id", arq.id);
       if (arq.mensagem_id) {
         await supabaseAdmin
           .from("whatsapp_mensagens")
@@ -1625,7 +1712,6 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
           processadas += 1;
         }
 
-
         // Só desmarca se nenhuma mensagem nova chegou durante o processamento;
         // caso contrário a conversa continua na fila para a próxima passada.
         await supabaseAdmin
@@ -1655,16 +1741,15 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
   return { processadas };
 }
 
-
-
 async function processarBotInterno(conversaId: string, entrada: EntradaBot): Promise<void> {
   const config = await lerConfig();
   if (!config?.bot_ativo) return;
 
-
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
-    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, conexao_id")
+    .select(
+      "id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, conexao_id",
+    )
     .eq("id", conversaId)
     .maybeSingle();
 
@@ -1692,11 +1777,15 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
       const ehRespostaRapida = Boolean(textoAus && reconhecerResposta(dadosAus, textoAus));
       const emFluxo = conversa.etapa === "fluxo" && Boolean(ctx.fluxo);
       const aguardandoResposta = Boolean(
-        ctx.pendenteTipo ||
-          (conversa.etapa === "triagem" && (ctx.triagem || ctx.regra)),
+        ctx.pendenteTipo || (conversa.etapa === "triagem" && (ctx.triagem || ctx.regra)),
       );
       const novoAtendimento = conversa.etapa === "finalizado";
-      if (!ehRespostaRapida && !emFluxo && !aguardandoResposta && (novoAtendimento || !ctx.ausenciaEnviada)) {
+      if (
+        !ehRespostaRapida &&
+        !emFluxo &&
+        !aguardandoResposta &&
+        (novoAtendimento || !ctx.ausenciaEnviada)
+      ) {
         await responder(
           conversa,
           aplicarVariaveis(dadosAus.config.msg_fora_horario, {
@@ -1723,7 +1812,10 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
   const agora = new Date();
 
   // Qualquer mensagem do cliente reinicia o controle de inatividade.
-  await supabaseAdmin.from("whatsapp_conversas").update({ inatividade_avisada: false }).eq("id", conversa.id);
+  await supabaseAdmin
+    .from("whatsapp_conversas")
+    .update({ inatividade_avisada: false })
+    .eq("id", conversa.id);
 
   if (texto && pediuAtendente(texto)) {
     await transferir(conversa, config, "cliente pediu atendimento humano");
@@ -1757,7 +1849,11 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
 
     const saida = await processarMenu(
       dados,
-      { etapa: etapaAtual, pendenteTipo: ctx.pendenteTipo ?? null, pendenteId: ctx.pendenteId ?? null },
+      {
+        etapa: etapaAtual,
+        pendenteTipo: ctx.pendenteTipo ?? null,
+        pendenteId: ctx.pendenteId ?? null,
+      },
       {
         texto,
         tipo: entrada.tipo,
@@ -1776,7 +1872,11 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
 
     await salvarContexto(
       conversa,
-      { ...ctx, pendenteTipo: saida.estado.pendenteTipo ?? null, pendenteId: saida.estado.pendenteId ?? null },
+      {
+        ...ctx,
+        pendenteTipo: saida.estado.pendenteTipo ?? null,
+        pendenteId: saida.estado.pendenteId ?? null,
+      },
       saida.estado.etapa,
     );
 
@@ -1785,7 +1885,11 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
     }
 
     if (saida.estado.etapa === "finalizado") {
-      await salvar(conversa, { status: "finalizado", data_finalizacao: agora.toISOString(), nao_lidas: 0 });
+      await salvar(conversa, {
+        status: "finalizado",
+        data_finalizacao: agora.toISOString(),
+        nao_lidas: 0,
+      });
       await auditar(conversa.id, "bot_finalizou", "cliente não precisava de mais nada");
       return;
     }
@@ -1795,8 +1899,6 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
   }
 
   switch (conversa.etapa) {
-
-
     case "aguardando_arquivos": {
       if (ehArquivo) {
         const arquivos = await arquivosDaConversa(conversa.id);
@@ -1810,7 +1912,10 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
       if (terminouEnvio(texto)) {
         const arquivos = await arquivosDaConversa(conversa.id);
         if (arquivos.length === 0) {
-          await responder(conversa, "Ainda não recebi nenhum arquivo. Pode enviar o material que deseja imprimir? 😊");
+          await responder(
+            conversa,
+            "Ainda não recebi nenhum arquivo. Pode enviar o material que deseja imprimir? 😊",
+          );
           return;
         }
         await perguntarTipo(conversa);
@@ -1827,7 +1932,8 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
     case "aguardando_tipo": {
       const rotulos = TIPOS.map((t) => t.rotulo);
       let indice = escolherOpcao(texto, rotulos);
-      if (indice === null) indice = await interpretarOpcao("Qual o tipo de impressão?", texto, rotulos);
+      if (indice === null)
+        indice = await interpretarOpcao("Qual o tipo de impressão?", texto, rotulos);
 
       if (indice === null) {
         await responder(conversa, `Não entendi. Escolha uma opção:\n\n${listar(rotulos)}`);
@@ -1842,7 +1948,8 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
     case "aguardando_formato": {
       const rotulos = FORMATOS.map((f) => f.rotulo);
       let indice = escolherOpcao(texto, rotulos);
-      if (indice === null) indice = await interpretarOpcao("Qual o formato do papel?", texto, rotulos);
+      if (indice === null)
+        indice = await interpretarOpcao("Qual o formato do papel?", texto, rotulos);
 
       if (indice === null) {
         await responder(conversa, `Não entendi. Escolha o formato:\n\n${listar(rotulos)}`);
@@ -1860,7 +1967,8 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
       const rotulos = materiais.map((m) => m.nome);
 
       let indice = escolherOpcao(texto, rotulos);
-      if (indice === null) indice = await interpretarOpcao("Escolha o material/papel", texto, rotulos);
+      if (indice === null)
+        indice = await interpretarOpcao("Escolha o material/papel", texto, rotulos);
 
       if (indice === null || !materiais[indice]) {
         await responder(conversa, `Não entendi. Escolha o material:\n\n${listar(rotulos)}`);
@@ -1874,10 +1982,14 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
 
     case "aguardando_copias": {
       let quantidade = primeiroNumero(texto);
-      if (quantidade === null) quantidade = await interpretarQuantidade("Quantas cópias de cada arquivo?", texto);
+      if (quantidade === null)
+        quantidade = await interpretarQuantidade("Quantas cópias de cada arquivo?", texto);
 
       if (quantidade === null || quantidade < 1 || quantidade > 10000) {
-        await responder(conversa, "Me informe a quantidade de cópias em número, por exemplo *1* ou *5*.");
+        await responder(
+          conversa,
+          "Me informe a quantidade de cópias em número, por exemplo *1* ou *5*.",
+        );
         return;
       }
 
@@ -1888,7 +2000,8 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
 
     case "aguardando_frente_verso": {
       let resposta = simOuNao(texto);
-      if (resposta === null) resposta = await interpretarSimNao("A impressão deve ser frente e verso?", texto);
+      if (resposta === null)
+        resposta = await interpretarSimNao("A impressão deve ser frente e verso?", texto);
 
       if (resposta === null) {
         await responder(conversa, "Responda *SIM* ou *NÃO* para frente e verso, por favor. 😊");
@@ -1915,13 +2028,21 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
           .filter((n) => n >= 1 && n <= acabamentos.length)
           .map((n) => acabamentos[n - 1]!.id);
         if (escolhidos.length === 0) {
-          await responder(conversa, `Não entendi. Responda com os números da lista ou *0* para nenhum.\n\n${listar(rotulos)}`);
+          await responder(
+            conversa,
+            `Não entendi. Responda com os números da lista ou *0* para nenhum.\n\n${listar(rotulos)}`,
+          );
           return;
         }
       } else {
-        const indice = escolherOpcao(texto, rotulos) ?? (await interpretarOpcao("Qual acabamento deseja?", texto, rotulos));
+        const indice =
+          escolherOpcao(texto, rotulos) ??
+          (await interpretarOpcao("Qual acabamento deseja?", texto, rotulos));
         if (indice === null) {
-          await responder(conversa, `Não entendi. Responda com os números da lista ou *0* para nenhum.\n\n${listar(rotulos)}`);
+          await responder(
+            conversa,
+            `Não entendi. Responda com os números da lista ou *0* para nenhum.\n\n${listar(rotulos)}`,
+          );
           return;
         }
         escolhidos = [acabamentos[indice]!.id];
@@ -1936,15 +2057,26 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
 
     case "aguardando_confirmacao": {
       let resposta = simOuNao(texto);
-      if (resposta === null) resposta = await interpretarSimNao("Podemos confirmar este pedido?", texto);
+      if (resposta === null)
+        resposta = await interpretarSimNao("Podemos confirmar este pedido?", texto);
 
       if (resposta === true) {
         await responder(conversa, config.msg_orcamento_confirmado);
         if (conversa.pedido_id) {
-          await supabaseAdmin.from("pedidos").update({ status: "aprovado" }).eq("id", conversa.pedido_id);
-          await supabaseAdmin.from("orcamentos").update({ status: "aprovado" }).eq("pedido_id", conversa.pedido_id);
+          await supabaseAdmin
+            .from("pedidos")
+            .update({ status: "aprovado" })
+            .eq("id", conversa.pedido_id);
+          await supabaseAdmin
+            .from("orcamentos")
+            .update({ status: "aprovado" })
+            .eq("pedido_id", conversa.pedido_id);
         }
-        await salvar(conversa, { status: "pendente", etapa: "aguardando_atendente", motivo_pendencia: "pedido confirmado pelo cliente" });
+        await salvar(conversa, {
+          status: "pendente",
+          etapa: "aguardando_atendente",
+          motivo_pendencia: "pedido confirmado pelo cliente",
+        });
         await auditar(conversa.id, "cliente_confirmou_orcamento");
         return;
       }
@@ -1954,7 +2086,10 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
         return;
       }
 
-      await responder(conversa, "Responda *SIM* para confirmar o pedido ou *NÃO* para falar com um atendente.");
+      await responder(
+        conversa,
+        "Responda *SIM* para confirmar o pedido ou *NÃO* para falar com um atendente.",
+      );
       return;
     }
 
@@ -1993,7 +2128,9 @@ export async function iniciarFinalizacao(
 ): Promise<{ ok: boolean; fluxo: boolean }> {
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
-    .select("id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, conexao_id")
+    .select(
+      "id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, conexao_id",
+    )
     .eq("id", conversaId)
     .maybeSingle();
 
@@ -2006,11 +2143,12 @@ export async function iniciarFinalizacao(
   const fluxosCfg = await carregarFluxos(conversa.conexao_id ?? null);
   const fluxoCfg = fluxoId ? fluxoPorId(fluxosCfg, fluxoId) : null;
   const esperaFluxo = Math.max(0, Number(fluxoCfg?.finalizacao_delay_minutos ?? 0));
-  const espera = esperaFluxo > 0
-    ? esperaFluxo
-    : fluxoEscolhidoId
-      ? 0
-      : Math.max(0, Number(dadosBot?.config.finalizacao_delay_minutos ?? 0));
+  const espera =
+    esperaFluxo > 0
+      ? esperaFluxo
+      : fluxoEscolhidoId
+        ? 0
+        : Math.max(0, Number(dadosBot?.config.finalizacao_delay_minutos ?? 0));
 
   const ctxAtual: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
   const aguardando = Boolean(fluxoId) && espera > 0;
@@ -2047,7 +2185,9 @@ export async function iniciarFinalizacao(
  */
 async function verificarFluxoSemResposta(config: ConfigBot, agora: Date, CAMPOS: string) {
   const fluxos = await carregarFluxos();
-  const comRegra = fluxos.fluxos.filter((f) => Math.max(0, Number(f.sem_resposta_minutos ?? 0)) > 0);
+  const comRegra = fluxos.fluxos.filter(
+    (f) => Math.max(0, Number(f.sem_resposta_minutos ?? 0)) > 0,
+  );
   if (comRegra.length === 0) return;
 
   const { data } = await supabaseAdmin
@@ -2088,8 +2228,20 @@ async function verificarFluxoSemResposta(config: ConfigBot, agora: Date, CAMPOS:
           await salvarContexto(conversa, base);
           break;
         }
-        const saida = iniciarFluxo(fluxos, destino, { respostas: ctx.fluxo?.respostas ?? {} }, vars);
-        await entregarFluxo(conversa, config, { ...base, fluxoFallback: null }, fluxos, saida, vars);
+        const saida = iniciarFluxo(
+          fluxos,
+          destino,
+          { respostas: ctx.fluxo?.respostas ?? {} },
+          vars,
+        );
+        await entregarFluxo(
+          conversa,
+          config,
+          { ...base, fluxoFallback: null },
+          fluxos,
+          saida,
+          vars,
+        );
         break;
       }
 
@@ -2109,7 +2261,9 @@ async function verificarFluxoSemResposta(config: ConfigBot, agora: Date, CAMPOS:
       case "finalizar_silencioso": {
         const cfg = await carregarDadosBot(conversa.conexao_id ?? null);
         const despedida =
-          acao === "finalizar" && cfg?.config.msg_finalizacao_ativo ? (cfg.config.msg_finalizacao ?? "").trim() : "";
+          acao === "finalizar" && cfg?.config.msg_finalizacao_ativo
+            ? (cfg.config.msg_finalizacao ?? "").trim()
+            : "";
         if (despedida) await responder(conversa, aplicarVariaveis(despedida, vars));
         await salvarContexto(conversa, { ...base, fluxo: null, triagem: null }, "finalizado");
         await salvar(conversa, {
@@ -2173,7 +2327,14 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
 
         const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
         const saida = iniciarFluxo(fluxos, raiz.id, {}, vars, 0);
-        await entregarFluxo(conversa, config, { ...ctx, triagem: null, fluxoFallback: true }, fluxos, saida, vars);
+        await entregarFluxo(
+          conversa,
+          config,
+          { ...ctx, triagem: null, fluxoFallback: true },
+          fluxos,
+          saida,
+          vars,
+        );
         await salvar(conversa, { saudacao_em: agora.toISOString(), inatividade_avisada: false });
         await auditar(conversa.id, "bot_fluxo_inicial", `${minFallback} min sem reconhecimento`);
       }
@@ -2204,12 +2365,19 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
       const min = proprio > 0 ? proprio : minFinalGeral;
       if (min <= 0) continue;
 
-      const marcado = new Date(String((linha as { finalizacao_fluxo_em?: string }).finalizacao_fluxo_em ?? agora));
+      const marcado = new Date(
+        String((linha as { finalizacao_fluxo_em?: string }).finalizacao_fluxo_em ?? agora),
+      );
       if (agora.getTime() - marcado.getTime() < min * 60_000) continue;
 
       await salvar(conversa, { finalizacao_fluxo_em: null });
       const vars = { nome: conversa.nome_contato ?? "", telefone: conversa.telefone, agora };
-      const saida = iniciarFluxo(fluxos, fluxoFinalId, { respostas: ctx.fluxo?.respostas ?? {} }, vars);
+      const saida = iniciarFluxo(
+        fluxos,
+        fluxoFinalId,
+        { respostas: ctx.fluxo?.respostas ?? {} },
+        vars,
+      );
       await entregarFluxo(
         conversa,
         config,
@@ -2218,13 +2386,16 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
         saida,
         vars,
       );
-      await auditar(conversa.id, "bot_fluxo_finalizacao", `${min} min na aba Aguardando Finalização`);
+      await auditar(
+        conversa.id,
+        "bot_fluxo_finalizacao",
+        `${min} min na aba Aguardando Finalização`,
+      );
     }
   }
 
   // Fluxo em andamento sem resposta do cliente: executa a ação do fluxo.
   await verificarFluxoSemResposta(config, agora, CAMPOS);
-
 
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
@@ -2245,7 +2416,10 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
     if (!linha.inatividade_avisada) {
       const aviso = (dados.config.msg_inatividade1 ?? "").trim();
       if (aviso) await responder(conversa, aplicarVariaveis(aviso, vars));
-      await supabaseAdmin.from("whatsapp_conversas").update({ inatividade_avisada: true }).eq("id", conversa.id);
+      await supabaseAdmin
+        .from("whatsapp_conversas")
+        .update({ inatividade_avisada: true })
+        .eq("id", conversa.id);
       avisadas += 1;
       continue;
     }

@@ -46,7 +46,10 @@ export const Route = createFileRoute("/curriculos/")({
   head: () => ({
     meta: [
       { title: "Currículo Vitae | Impressão Digital" },
-      { name: "description", content: "Cadastre, edite e envie currículos profissionais dos clientes." },
+      {
+        name: "description",
+        content: "Cadastre, edite e envie currículos profissionais dos clientes.",
+      },
       { property: "og:title", content: "Currículo Vitae" },
       { property: "og:description", content: "Gerencie os currículos cadastrados dos clientes." },
       { property: "og:type", content: "website" },
@@ -54,7 +57,7 @@ export const Route = createFileRoute("/curriculos/")({
     ],
   }),
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="curriculos.visualizar">
       <Curriculos />
     </AppLayout>
   ),
@@ -109,9 +112,12 @@ function Curriculos() {
     queryFn: async () => {
       let q = supabase
         .from("curriculos")
-        .select("id, nome_completo, cpf, telefone_principal, data_nascimento, status, updated_at, foto_url", {
-          count: "exact",
-        });
+        .select(
+          "id, nome_completo, cpf, telefone_principal, data_nascimento, status, updated_at, foto_url",
+          {
+            count: "exact",
+          },
+        );
 
       if (filtro !== "todos") q = q.eq("status", filtro);
       const termo = busca.trim();
@@ -227,7 +233,10 @@ function Curriculos() {
 
   return (
     <>
-      <PageHeader titulo="CURRÍCULO VITAE" subtitulo="Gerencie os currículos cadastrados dos clientes" />
+      <PageHeader
+        titulo="CURRÍCULO VITAE"
+        subtitulo="Gerencie os currículos cadastrados dos clientes"
+      />
 
       <Card className="mb-4">
         <CardContent className="flex items-center justify-between p-4">
@@ -408,7 +417,12 @@ function Curriculos() {
             Página {pagina + 1} de {totalPaginas} — {data?.total} currículos
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={pagina === 0} onClick={() => setPagina((p) => p - 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pagina === 0}
+              onClick={() => setPagina((p) => p - 1)}
+            >
               Anterior
             </Button>
             <Button

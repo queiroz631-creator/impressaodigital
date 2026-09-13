@@ -11,7 +11,9 @@ function doisDigitos(valor: number) {
 /** Linhas dos acabamentos: inclusos com a quantidade, não inclusos como "Nenhum". */
 function linhasAcabamentos(item: ItemDoc) {
   return item.acabamentos.map((a) =>
-    a.incluso === false ? `${a.nome}: Nenhum` : `${a.nome}: ${Math.max(1, Number(a.quantidade) || 1)}x`,
+    a.incluso === false
+      ? `${a.nome}: Nenhum`
+      : `${a.nome}: ${Math.max(1, Number(a.quantidade) || 1)}x`,
   );
 }
 

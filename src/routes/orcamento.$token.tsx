@@ -30,9 +30,15 @@ export const Route = createFileRoute("/orcamento/$token")({
   head: () => ({
     meta: [
       { title: "Seu orçamento de impressão" },
-      { name: "description", content: "Confira os detalhes do seu orçamento de impressão e confirme o pedido." },
+      {
+        name: "description",
+        content: "Confira os detalhes do seu orçamento de impressão e confirme o pedido.",
+      },
       { property: "og:title", content: "Seu orçamento de impressão" },
-      { property: "og:description", content: "Confira os detalhes do seu orçamento e confirme o pedido." },
+      {
+        property: "og:description",
+        content: "Confira os detalhes do seu orçamento e confirme o pedido.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

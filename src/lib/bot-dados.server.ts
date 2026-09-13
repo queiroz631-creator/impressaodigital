@@ -50,7 +50,11 @@ export async function carregarDadosBot(conexaoId?: string | null): Promise<BotDa
   const d = cfg.data;
   if (!d) return null;
 
-  const palavras = (pal.data ?? []) as { opcao_id: string | null; resposta_id: string | null; texto: string }[];
+  const palavras = (pal.data ?? []) as {
+    opcao_id: string | null;
+    resposta_id: string | null;
+    texto: string;
+  }[];
 
   const config: BotConfig = {
     bot_ativo: Boolean(d.bot_ativo),
@@ -67,8 +71,7 @@ export async function carregarDadosBot(conexaoId?: string | null): Promise<BotDa
     fallback_inicial_minutos: Number(
       (d as { fallback_inicial_minutos?: number | null }).fallback_inicial_minutos ?? 2,
     ),
-    fallback_fluxo_id:
-      (d as { fallback_fluxo_id?: string | null }).fallback_fluxo_id ?? null,
+    fallback_fluxo_id: (d as { fallback_fluxo_id?: string | null }).fallback_fluxo_id ?? null,
     msg_inatividade1: d.msg_inatividade1 ?? "",
     msg_inatividade_pendente: d.msg_inatividade_pendente ?? "",
     msg_inatividade_aguardando: d.msg_inatividade_aguardando ?? "",
@@ -82,14 +85,15 @@ export async function carregarDadosBot(conexaoId?: string | null): Promise<BotDa
     msg_transferencia: d.msg_transferencia ?? "",
     msg_transferencia_ativo: d.msg_transferencia_ativo !== false,
     msg_transferencia_fora_horario:
-      (d as { msg_transferencia_fora_horario?: string | null }).msg_transferencia_fora_horario ?? "",
+      (d as { msg_transferencia_fora_horario?: string | null }).msg_transferencia_fora_horario ??
+      "",
     msg_transferencia_fora_horario_ativo: Boolean(
-      (d as { msg_transferencia_fora_horario_ativo?: boolean | null }).msg_transferencia_fora_horario_ativo,
+      (d as { msg_transferencia_fora_horario_ativo?: boolean | null })
+        .msg_transferencia_fora_horario_ativo,
     ),
     msg_finalizacao: d.msg_finalizacao ?? "",
     msg_finalizacao_ativo: d.msg_finalizacao_ativo !== false,
-    msg_link_curriculo:
-      (d as { msg_link_curriculo?: string | null }).msg_link_curriculo ?? "",
+    msg_link_curriculo: (d as { msg_link_curriculo?: string | null }).msg_link_curriculo ?? "",
   };
 
   const opcoes: BotOpcao[] = ((opc.data ?? []) as Omit<BotOpcao, "palavras">[]).map((o) => ({
@@ -97,10 +101,12 @@ export async function carregarDadosBot(conexaoId?: string | null): Promise<BotDa
     palavras: palavras.filter((p) => p.opcao_id === o.id).map((p) => p.texto),
   }));
 
-  const respostas: BotResposta[] = ((resp.data ?? []) as Omit<BotResposta, "palavras">[]).map((r) => ({
-    ...r,
-    palavras: palavras.filter((p) => p.resposta_id === r.id).map((p) => p.texto),
-  }));
+  const respostas: BotResposta[] = ((resp.data ?? []) as Omit<BotResposta, "palavras">[]).map(
+    (r) => ({
+      ...r,
+      palavras: palavras.filter((p) => p.resposta_id === r.id).map((p) => p.texto),
+    }),
+  );
 
   return {
     config,

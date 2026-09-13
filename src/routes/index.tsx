@@ -47,7 +47,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { ConfirmarAcao } from "@/components/ConfirmarAcao";
 import {
@@ -59,7 +65,10 @@ import {
   usePerfisImpressao,
   useRascunho,
 } from "@/hooks/useDados";
-import { ImprimirDocumentosDialog, type DocumentoParaImprimir } from "@/components/impressao/ImprimirDocumentosDialog";
+import {
+  ImprimirDocumentosDialog,
+  type DocumentoParaImprimir,
+} from "@/components/impressao/ImprimirDocumentosDialog";
 import { PERFIL_VAZIO, type PerfilImpressao } from "@/lib/perfil-impressao";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -97,12 +106,14 @@ export const Route = createFileRoute("/")({
       { title: "Calculadora de Impressão Digital" },
       {
         name: "description",
-        content: "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
+        content:
+          "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
       },
       { property: "og:title", content: "Calculadora de Impressão Digital" },
       {
         property: "og:description",
-        content: "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
+        content:
+          "Anexe arquivos, escolha cor e tipo de impressão e monte pedidos com vários orçamentos.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -112,7 +123,7 @@ export const Route = createFileRoute("/")({
 
 function CalculadoraPage() {
   return (
-    <AppLayout>
+    <AppLayout permissao="calculadora.visualizar">
       <Calculadora />
     </AppLayout>
   );
@@ -238,10 +249,16 @@ function Calculadora() {
       const compat: Partial<EstadoRascunho> =
         salvo["paginasAdicionais"] == null && salvo["paginas"] != null
           ? {
-              paginasAdicionais: Math.max(0, Number(salvo["paginas"] ?? 0) - Number(salvo["arquivos"] ?? 0)),
+              paginasAdicionais: Math.max(
+                0,
+                Number(salvo["paginas"] ?? 0) - Number(salvo["arquivos"] ?? 0),
+              ),
             }
           : {};
-      const hidratado: Partial<EstadoRascunho> = { ...(salvo as unknown as EstadoRascunho), ...compat };
+      const hidratado: Partial<EstadoRascunho> = {
+        ...(salvo as unknown as EstadoRascunho),
+        ...compat,
+      };
       if (typeof hidratado.clienteTelefone === "string") {
         hidratado.clienteTelefone = telefoneBR(hidratado.clienteTelefone);
       }
@@ -251,9 +268,11 @@ function Calculadora() {
   }, [hidratado, rascunhoCarregado, rascunhoSalvo]);
 
   // ----- Arquivos enviados pela tela do WhatsApp -----
-  const whatsappPendente = useRef<{ arquivos: { id: string; nome: string }[]; nome: string; telefone: string } | null>(
-    null,
-  );
+  const whatsappPendente = useRef<{
+    arquivos: { id: string; nome: string }[];
+    nome: string;
+    telefone: string;
+  } | null>(null);
   const [importacao, setImportacao] = useState<{ ativo: boolean; progresso: number }>({
     ativo: false,
     progresso: 0,
@@ -269,7 +288,11 @@ function Calculadora() {
         // Aceita também o formato antigo (lista simples de arquivos).
         whatsappPendente.current = Array.isArray(dados)
           ? { arquivos: dados, nome: "", telefone: "" }
-          : { arquivos: dados.arquivos ?? [], nome: dados.nome ?? "", telefone: dados.telefone ?? "" };
+          : {
+              arquivos: dados.arquivos ?? [],
+              nome: dados.nome ?? "",
+              telefone: dados.telefone ?? "",
+            };
       }
     } catch {
       whatsappPendente.current = null;
@@ -302,10 +325,14 @@ function Calculadora() {
       let baixados = 0;
       for (const item of itens) {
         try {
-          const resposta = await fetch(`/api/public/whatsapp/midia?id=${encodeURIComponent(item.id)}`);
+          const resposta = await fetch(
+            `/api/public/whatsapp/midia?id=${encodeURIComponent(item.id)}`,
+          );
           if (resposta.ok) {
             const blob = await resposta.blob();
-            arquivos.push(new File([blob], item.nome, { type: blob.type || "application/octet-stream" }));
+            arquivos.push(
+              new File([blob], item.nome, { type: blob.type || "application/octet-stream" }),
+            );
           }
         } catch {
           /* ignora falhas individuais de download */
@@ -332,7 +359,10 @@ function Calculadora() {
     const timer = setTimeout(() => {
       void supabase
         .from("rascunhos")
-        .upsert({ usuario_id: user.id, dados: estado as unknown as never }, { onConflict: "usuario_id" });
+        .upsert(
+          { usuario_id: user.id, dados: estado as unknown as never },
+          { onConflict: "usuario_id" },
+        );
     }, 800);
     return () => clearTimeout(timer);
   }, [estado, hidratado, user?.id]);
@@ -351,10 +381,16 @@ function Calculadora() {
       }
       const usuarioId = usuarioRef.current;
       if (usuarioId) {
-        queryClient.setQueryData(["rascunho", usuarioId], ESTADO_INICIAL as unknown as Record<string, unknown>);
+        queryClient.setQueryData(
+          ["rascunho", usuarioId],
+          ESTADO_INICIAL as unknown as Record<string, unknown>,
+        );
         void supabase
           .from("rascunhos")
-          .upsert({ usuario_id: usuarioId, dados: ESTADO_INICIAL as unknown as never }, { onConflict: "usuario_id" });
+          .upsert(
+            { usuario_id: usuarioId, dados: ESTADO_INICIAL as unknown as never },
+            { onConflict: "usuario_id" },
+          );
       }
     };
   }, [queryClient]);
@@ -416,7 +452,11 @@ function Calculadora() {
   const linhas = useMemo(() => calcularLinhas(materiais ?? [], entrada), [materiais, entrada]);
 
   const acabamentosVisiveis = useMemo(
-    () => acabamentosDoTipo(acabamentos ?? [], (estado.tipoServico || undefined) as TipoServico | undefined),
+    () =>
+      acabamentosDoTipo(
+        acabamentos ?? [],
+        (estado.tipoServico || undefined) as TipoServico | undefined,
+      ),
     [acabamentos, estado.tipoServico],
   );
 
@@ -425,7 +465,13 @@ function Calculadora() {
       calcularAcabamentos(acabamentosVisiveis, estado.selecao, {
         paginas: estado.arquivos + estado.paginasAdicionais + estado.copiasAdicionais,
       }),
-    [acabamentosVisiveis, estado.selecao, estado.arquivos, estado.paginasAdicionais, estado.copiasAdicionais],
+    [
+      acabamentosVisiveis,
+      estado.selecao,
+      estado.arquivos,
+      estado.paginasAdicionais,
+      estado.copiasAdicionais,
+    ],
   );
   const valorAcabamento = totalAcabamentos(linhasAcabamento);
   const tamanhoFinal = estado.formato;
@@ -439,14 +485,23 @@ function Calculadora() {
   const semQuantidade = quantidadeTotal <= 0;
   /** Decisões obrigatórias antes de exibir valores/resumo. */
   const acabamentoOk =
-    estado.decisaoAcabamento === "nao" || (estado.decisaoAcabamento === "sim" && linhasAcabamento.length > 0);
+    estado.decisaoAcabamento === "nao" ||
+    (estado.decisaoAcabamento === "sim" && linhasAcabamento.length > 0);
   const frenteVersoOk = estado.decisaoFrenteVerso !== "";
   /** Arquivos Word aguardando a quantidade de páginas informada manualmente. */
-  const arquivosPendentes = estado.arquivosLista.filter((a) => a.paginasManuais === true || Number(a.paginas || 0) < 1);
+  const arquivosPendentes = estado.arquivosLista.filter(
+    (a) => a.paginasManuais === true || Number(a.paginas || 0) < 1,
+  );
   /** Existe ao menos um arquivo cuja contagem foi feita automaticamente. */
-  const leituraAutomatica = estado.arquivosLista.some((a) => a.paginasManuais !== true && Number(a.paginas || 0) > 0);
+  const leituraAutomatica = estado.arquivosLista.some(
+    (a) => a.paginasManuais !== true && Number(a.paginas || 0) > 0,
+  );
   const mostrarTabela =
-    !precisaSelecionar && !semQuantidade && acabamentoOk && frenteVersoOk && arquivosPendentes.length === 0;
+    !precisaSelecionar &&
+    !semQuantidade &&
+    acabamentoOk &&
+    frenteVersoOk &&
+    arquivosPendentes.length === 0;
 
   const materialSelecionado = linhasFinais.find((l) => l.material.id === estado.materialId) ?? null;
 
@@ -569,7 +624,10 @@ function Calculadora() {
   const arquivosParaConfirmar = useMemo(
     () =>
       estado.arquivosLista.filter(
-        (a) => !a.origemTag && Number(a.paginas || 0) > 1 && !paginasConfirmadas.includes(chaveArquivo(a)),
+        (a) =>
+          !a.origemTag &&
+          Number(a.paginas || 0) > 1 &&
+          !paginasConfirmadas.includes(chaveArquivo(a)),
       ),
     [estado.arquivosLista, paginasConfirmadas],
   );
@@ -670,7 +728,10 @@ function Calculadora() {
         incluso: true,
       }));
     const naoInclusos: AcabamentoDoc[] = acabamentosVisiveis
-      .filter((a) => a.mostrar_no_orcamento !== false && a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo)
+      .filter(
+        (a) =>
+          a.mostrar_no_orcamento !== false && a.mostrar_nao_incluso && !estado.selecao[a.id]?.ativo,
+      )
       .map((a) => ({ nome: a.nome, quantidade: 0, total: 0, incluso: false }));
     return [...selecionados, ...naoInclusos];
   }
@@ -678,7 +739,11 @@ function Calculadora() {
   async function garantirPedido() {
     if (estado.pedidoId) {
       // O pedido salvo no rascunho pode ter sido excluído — valida antes de reutilizar.
-      const { data: existente } = await supabase.from("pedidos").select("id").eq("id", estado.pedidoId).maybeSingle();
+      const { data: existente } = await supabase
+        .from("pedidos")
+        .select("id")
+        .eq("id", estado.pedidoId)
+        .maybeSingle();
       if (existente) return estado.pedidoId;
       set("pedidoId", null);
     }
@@ -739,7 +804,10 @@ function Calculadora() {
       };
 
       if (estado.editandoId) {
-        const { error } = await supabase.from("orcamentos").update(registro).eq("id", estado.editandoId);
+        const { error } = await supabase
+          .from("orcamentos")
+          .update(registro)
+          .eq("id", estado.editandoId);
         if (error) throw error;
         toast.success("Orçamento atualizado no pedido.");
       } else {
@@ -775,11 +843,13 @@ function Calculadora() {
   }
 
   function editarItem(row: Record<string, unknown>) {
-    const arquivos = (Array.isArray(row["arquivos"]) ? (row["arquivos"] as ArquivoDoc[]) : []).map((a) => ({
-      ...a,
-      copias: Math.max(1, Number(a.copias ?? 1) || 1),
-      frenteVerso: a.frenteVerso === true,
-    }));
+    const arquivos = (Array.isArray(row["arquivos"]) ? (row["arquivos"] as ArquivoDoc[]) : []).map(
+      (a) => ({
+        ...a,
+        copias: Math.max(1, Number(a.copias ?? 1) || 1),
+        frenteVerso: a.frenteVerso === true,
+      }),
+    );
     const nomes = new Set(
       (Array.isArray(row["acabamentos"]) ? (row["acabamentos"] as AcabamentoDoc[]) : [])
         .filter((a) => a.incluso !== false)
@@ -797,7 +867,11 @@ function Calculadora() {
       paginasAdicionais:
         row["paginas_adicionais"] != null
           ? Number(row["paginas_adicionais"])
-          : Math.max(0, Number(row["paginas_total"] ?? 0) - Number(row["quantidade_arquivos"] ?? arquivos.length)),
+          : Math.max(
+              0,
+              Number(row["paginas_total"] ?? 0) -
+                Number(row["quantidade_arquivos"] ?? arquivos.length),
+            ),
       copiasAdicionais: Number(row["copias_adicionais"] ?? 0),
       tipoServico: (row["tipo_impressao"] as TipoServico) ?? "simples",
       copiaManual: Boolean(row["copia_manual"]),
@@ -852,7 +926,10 @@ function Calculadora() {
       queryClient.setQueryData(["rascunho", user.id], novo as unknown as Record<string, unknown>);
       void supabase
         .from("rascunhos")
-        .upsert({ usuario_id: user.id, dados: novo as unknown as never }, { onConflict: "usuario_id" });
+        .upsert(
+          { usuario_id: user.id, dados: novo as unknown as never },
+          { onConflict: "usuario_id" },
+        );
     }
   }
 
@@ -879,7 +956,9 @@ function Calculadora() {
   const textoPix = config?.pix_ativo && estado.incluirPix ? montarTextoPix(config) : "";
 
   /** Texto do prazo de entrega (vazio quando não informado). */
-  const textoPrazo = estado.precisaPrazo ? montarTextoPrazo(config, estado.prazoTipo, estado.prazoQuantidade) : "";
+  const textoPrazo = estado.precisaPrazo
+    ? montarTextoPrazo(config, estado.prazoTipo, estado.prazoQuantidade)
+    : "";
 
   /** Linha do orçamento montada com o material selecionado na sessão atual. */
   function linhaOrcamentoRapido(): Record<string, unknown> {
@@ -1041,8 +1120,12 @@ function Calculadora() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-card px-8 py-6 shadow-lg">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm font-medium text-card-foreground">Importando arquivos do WhatsApp…</p>
-            <p className="text-2xl font-extrabold tabular-nums text-primary">{Math.round(importacao.progresso)}%</p>
+            <p className="text-sm font-medium text-card-foreground">
+              Importando arquivos do WhatsApp…
+            </p>
+            <p className="text-2xl font-extrabold tabular-nums text-primary">
+              {Math.round(importacao.progresso)}%
+            </p>
           </div>
         </div>
       )}
@@ -1115,7 +1198,9 @@ function Calculadora() {
           <ResumoItem rotulo="Material" valor={materialSelecionado?.material.nome ?? "—"} pequeno />
 
           <div className="col-span-2 rounded-lg border border-success/50 bg-success/15 px-3 py-2 sm:col-span-3 lg:col-span-1">
-            <p className="text-[10px] font-bold tracking-wider text-sidebar-foreground/70">VALOR TOTAL</p>
+            <p className="text-[10px] font-bold tracking-wider text-sidebar-foreground/70">
+              VALOR TOTAL
+            </p>
             <p className="truncate text-xl font-extrabold text-success">
               {materialSelecionado ? brl(materialSelecionado.total) : "—"}
             </p>
@@ -1154,7 +1239,9 @@ function Calculadora() {
                     onChange={(e) => aplicarTagPorFolhaDesejado(e.target.value)}
                   />
                   {tagDistribuicao && (
-                    <p className="text-[11px] font-medium text-muted-foreground">{tagDistribuicao}</p>
+                    <p className="text-[11px] font-medium text-muted-foreground">
+                      {tagDistribuicao}
+                    </p>
                   )}
                 </div>
                 <div className="space-y-1">
@@ -1180,7 +1267,9 @@ function Calculadora() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-bold text-primary">Tags por folha ({estado.formato})</Label>
+                  <Label className="text-xs font-bold text-primary">
+                    Tags por folha ({estado.formato})
+                  </Label>
                   <p className="flex h-9 items-center rounded-md border-2 border-primary bg-primary/10 px-3 text-base font-extrabold text-primary">
                     {tagPorFolha}
                   </p>
@@ -1264,14 +1353,16 @@ function Calculadora() {
               </Button>
 
               <p className="text-xs text-muted-foreground">
-                As páginas dos PDFs e imagens são contadas automaticamente; cada arquivo já inclui 1 página e o
-                excedente vira páginas adicionais. Arquivos Word (.doc/.docx) sempre exigem que a quantidade de páginas
-                seja informada manualmente.
+                As páginas dos PDFs e imagens são contadas automaticamente; cada arquivo já inclui 1
+                página e o excedente vira páginas adicionais. Arquivos Word (.doc/.docx) sempre
+                exigem que a quantidade de páginas seja informada manualmente.
               </p>
 
               <div className="rounded-xl border border-border p-3">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <p className="text-xs font-bold tracking-wider text-muted-foreground">ARQUIVOS ANEXADOS</p>
+                  <p className="text-xs font-bold tracking-wider text-muted-foreground">
+                    ARQUIVOS ANEXADOS
+                  </p>
 
                   <div className="ml-auto flex flex-wrap items-center gap-2">
                     <Button
@@ -1315,7 +1406,9 @@ function Calculadora() {
 
                 {arquivosParaConfirmar.length > 0 && (
                   <div className="mb-2 space-y-2 rounded-lg border-2 border-primary bg-primary/10 p-2.5">
-                    <p className="text-sm font-bold text-primary">Confirme a quantidade de páginas lida</p>
+                    <p className="text-sm font-bold text-primary">
+                      Confirme a quantidade de páginas lida
+                    </p>
                     <ul className="space-y-0.5 text-xs font-medium text-primary">
                       {arquivosParaConfirmar.map((a, i) => (
                         <li key={`conf-${a.nome}-${i}`} className="break-all">
@@ -1330,7 +1423,9 @@ function Calculadora() {
                 )}
 
                 {estado.arquivosLista.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">Nenhum arquivo anexado.</p>
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    Nenhum arquivo anexado.
+                  </p>
                 ) : (
                   <div className="max-h-[430px] space-y-2 overflow-y-auto pr-1">
                     {estado.arquivosLista.map((a, i) => {
@@ -1341,7 +1436,9 @@ function Calculadora() {
                         <div
                           key={`${a.nome}-${i}`}
                           className={`rounded-lg border p-2.5 ${
-                            pendente ? "border-2 border-destructive bg-destructive/5" : "border-border bg-accent/30"
+                            pendente
+                              ? "border-2 border-destructive bg-destructive/5"
+                              : "border-border bg-accent/30"
                           }`}
                         >
                           <p className="text-sm font-semibold break-all">{a.nome}</p>
@@ -1391,7 +1488,9 @@ function Calculadora() {
                                     type="button"
                                     variant="ghost"
                                     className="h-full rounded-none px-2"
-                                    onClick={() => atualizarArquivo(i, { copias: Math.max(1, copias - 1) })}
+                                    onClick={() =>
+                                      atualizarArquivo(i, { copias: Math.max(1, copias - 1) })
+                                    }
                                   >
                                     −
                                   </Button>
@@ -1428,7 +1527,9 @@ function Calculadora() {
                               <label className="flex items-center gap-2 text-xs font-medium">
                                 <Checkbox
                                   checked={a.frenteVerso ?? false}
-                                  onCheckedChange={(v) => atualizarArquivo(i, { frenteVerso: v === true })}
+                                  onCheckedChange={(v) =>
+                                    atualizarArquivo(i, { frenteVerso: v === true })
+                                  }
                                 />
                                 Frente e verso
                               </label>
@@ -1440,7 +1541,11 @@ function Calculadora() {
                               rotuloConfirmar="Remover"
                               onConfirmar={() => removerArquivo(i)}
                             >
-                              <Button variant="ghost" size="sm" className="ml-auto text-destructive">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="ml-auto text-destructive"
+                              >
                                 <Trash2 className="h-4 w-4" /> Remover
                               </Button>
                             </ConfirmarExclusao>
@@ -1461,7 +1566,10 @@ function Calculadora() {
 
             {/* ---------- COLUNA DIREITA: CONFIGURAÇÃO ---------- */}
             <div className="space-y-4">
-              <Campo icon={<Files className="h-4 w-4 text-cyan-ink" />} label="Quantidade de arquivos">
+              <Campo
+                icon={<Files className="h-4 w-4 text-cyan-ink" />}
+                label="Quantidade de arquivos"
+              >
                 <div className="flex h-8 overflow-hidden rounded-md border border-border bg-background">
                   <Button
                     type="button"
@@ -1498,7 +1606,9 @@ function Calculadora() {
                     type="button"
                     variant="ghost"
                     className="h-full w-9 shrink-0 rounded-none border-r text-base"
-                    onClick={() => set("paginasAdicionais", Math.max(0, estado.paginasAdicionais - 1))}
+                    onClick={() =>
+                      set("paginasAdicionais", Math.max(0, estado.paginasAdicionais - 1))
+                    }
                   >
                     −
                   </Button>
@@ -1563,7 +1673,9 @@ function Calculadora() {
               </Campo>
 
               <div className="space-y-2 rounded-lg border border-border p-3">
-                <Label className="text-xs font-semibold text-muted-foreground">Tipo de impressão *</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">
+                  Tipo de impressão *
+                </Label>
                 {arquivosParaConfirmar.length > 0 && (
                   <p className="text-xs font-semibold text-destructive">
                     Confirme a quantidade de páginas dos arquivos para liberar.
@@ -1613,8 +1725,9 @@ function Calculadora() {
                   Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Ativado, mostra em valores de impressão apenas os materiais da categoria &quot;Cópia&quot;.
-                  Desativado, mostra os materiais da categoria &quot;Impressão&quot;.
+                  Ativado, mostra em valores de impressão apenas os materiais da categoria
+                  &quot;Cópia&quot;. Desativado, mostra os materiais da categoria
+                  &quot;Impressão&quot;.
                 </p>
               </div>
 
@@ -1659,7 +1772,9 @@ function Calculadora() {
                     type="button"
                     size="sm"
                     variant={estado.decisaoAcabamento === "nao" ? "default" : "outline"}
-                    onClick={() => setEstado((p) => ({ ...p, decisaoAcabamento: "nao", selecao: {} }))}
+                    onClick={() =>
+                      setEstado((p) => ({ ...p, decisaoAcabamento: "nao", selecao: {} }))
+                    }
                   >
                     Não
                   </Button>
@@ -1713,7 +1828,9 @@ function Calculadora() {
 
                                 <p className="truncate text-[11px] text-muted-foreground">
                                   {rotuloCobranca[a.cobranca]} · {brl(Number(a.valor) || 0)}
-                                  {a.cobranca === "bloco" ? ` a cada ${a.paginas_bloco} páginas` : ""}
+                                  {a.cobranca === "bloco"
+                                    ? ` a cada ${a.paginas_bloco} páginas`
+                                    : ""}
                                 </p>
                               </div>
                             </label>
@@ -1763,7 +1880,9 @@ function Calculadora() {
                             )}
 
                             {sel.ativo && (
-                              <span className="shrink-0 text-sm font-bold text-success">{brl(linha?.total ?? 0)}</span>
+                              <span className="shrink-0 text-sm font-bold text-success">
+                                {brl(linha?.total ?? 0)}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -1780,7 +1899,9 @@ function Calculadora() {
                     type="button"
                     size="sm"
                     variant={estado.decisaoFrenteVerso === "sim" ? "default" : "outline"}
-                    onClick={() => setEstado((p) => ({ ...p, decisaoFrenteVerso: "sim", frenteVerso: true }))}
+                    onClick={() =>
+                      setEstado((p) => ({ ...p, decisaoFrenteVerso: "sim", frenteVerso: true }))
+                    }
                   >
                     Sim
                   </Button>
@@ -1788,7 +1909,9 @@ function Calculadora() {
                     type="button"
                     size="sm"
                     variant={estado.decisaoFrenteVerso === "nao" ? "default" : "outline"}
-                    onClick={() => setEstado((p) => ({ ...p, decisaoFrenteVerso: "nao", frenteVerso: false }))}
+                    onClick={() =>
+                      setEstado((p) => ({ ...p, decisaoFrenteVerso: "nao", frenteVerso: false }))
+                    }
                   >
                     Não
                   </Button>
@@ -1823,7 +1946,11 @@ function Calculadora() {
                   Atualizar
                 </Button>
 
-                <Button size="sm" disabled={!mostrarTabela || salvandoItem} onClick={adicionarAoPedido}>
+                <Button
+                  size="sm"
+                  disabled={!mostrarTabela || salvandoItem}
+                  onClick={adicionarAoPedido}
+                >
                   <Plus className="h-4 w-4" />
 
                   {estado.editandoId ? "Salvar alterações" : "Adicionar ao Pedido"}
@@ -1880,7 +2007,9 @@ function Calculadora() {
                         key={l.material.id}
                         onClick={() => set("materialId", l.material.id)}
                         className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-colors ${
-                          ativa ? "border-primary bg-accent/50" : "border-border bg-card hover:bg-accent/30"
+                          ativa
+                            ? "border-primary bg-accent/50"
+                            : "border-border bg-card hover:bg-accent/30"
                         }`}
                       >
                         <input
@@ -1898,7 +2027,9 @@ function Calculadora() {
                           </p>
                         </div>
 
-                        <span className="shrink-0 text-sm font-extrabold text-success">{brl(l.total)}</span>
+                        <span className="shrink-0 text-sm font-extrabold text-success">
+                          {brl(l.total)}
+                        </span>
                       </button>
                     );
                   })}
@@ -1935,16 +2066,26 @@ function Calculadora() {
                     <dd className="truncate font-semibold">{materialSelecionado.material.nome}</dd>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <dt className="text-muted-foreground">Arquivos ({numeroBR(estado.arquivos)})</dt>
+                    <dt className="text-muted-foreground">
+                      Arquivos ({numeroBR(estado.arquivos)})
+                    </dt>
                     <dd className="font-semibold">{brl(materialSelecionado.totalArquivos)}</dd>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <dt className="text-muted-foreground">Páginas adicionais ({numeroBR(paginasAdicionais)})</dt>
-                    <dd className="font-semibold">{brl(materialSelecionado.totalPaginasAdicionais)}</dd>
+                    <dt className="text-muted-foreground">
+                      Páginas adicionais ({numeroBR(paginasAdicionais)})
+                    </dt>
+                    <dd className="font-semibold">
+                      {brl(materialSelecionado.totalPaginasAdicionais)}
+                    </dd>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <dt className="text-muted-foreground">Cópias adicionais ({numeroBR(estado.copiasAdicionais)})</dt>
-                    <dd className="font-semibold">{brl(materialSelecionado.totalCopiasAdicionais)}</dd>
+                    <dt className="text-muted-foreground">
+                      Cópias adicionais ({numeroBR(estado.copiasAdicionais)})
+                    </dt>
+                    <dd className="font-semibold">
+                      {brl(materialSelecionado.totalCopiasAdicionais)}
+                    </dd>
                   </div>
 
                   <div className="flex justify-between gap-2 border-t border-border pt-2">
@@ -1960,7 +2101,9 @@ function Calculadora() {
 
                   {linhasAcabamento.length > 0 && (
                     <div className="space-y-1 border-t border-border pt-2">
-                      <p className="text-[11px] font-bold tracking-wider text-muted-foreground">ACABAMENTOS</p>
+                      <p className="text-[11px] font-bold tracking-wider text-muted-foreground">
+                        ACABAMENTOS
+                      </p>
                       {linhasAcabamento.map((l) => (
                         <div key={l.acabamento.id} className="flex justify-between gap-2">
                           <dt className="truncate text-muted-foreground">
@@ -1979,7 +2122,9 @@ function Calculadora() {
 
                   <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-success/40 bg-success/10 px-3 py-3">
                     <dt className="text-sm font-bold">TOTAL</dt>
-                    <dd className="text-2xl font-extrabold text-success">{brl(materialSelecionado.total)}</dd>
+                    <dd className="text-2xl font-extrabold text-success">
+                      {brl(materialSelecionado.total)}
+                    </dd>
                   </div>
                 </dl>
               )}
@@ -2027,8 +2172,12 @@ function Calculadora() {
                     <td className="px-3 py-3">{o.material_nome}</td>
                     <td className="px-3 py-3 capitalize">{o.tipo_impressao}</td>
                     <td className="px-3 py-3">{o.tamanho}</td>
-                    <td className="px-3 py-3 text-right">{numeroBR(Number(o.paginas_adicionais ?? 0))}</td>
-                    <td className="px-3 py-3 text-right font-bold text-success">{brl(Number(o.valor_total))}</td>
+                    <td className="px-3 py-3 text-right">
+                      {numeroBR(Number(o.paginas_adicionais ?? 0))}
+                    </td>
+                    <td className="px-3 py-3 text-right font-bold text-success">
+                      {brl(Number(o.valor_total))}
+                    </td>
                     <td className="px-3 py-3 text-right">
                       <Button
                         variant="ghost"
@@ -2051,7 +2200,9 @@ function Calculadora() {
                   <td colSpan={5} className="px-3 py-3 text-right font-bold">
                     TOTAL DO PEDIDO
                   </td>
-                  <td className="px-3 py-3 text-right text-lg font-extrabold text-success">{brl(totalPedido)}</td>
+                  <td className="px-3 py-3 text-right text-lg font-extrabold text-success">
+                    {brl(totalPedido)}
+                  </td>
                   <td />
                 </tr>
               </tfoot>
@@ -2098,7 +2249,9 @@ function Calculadora() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Gerar orçamento</DialogTitle>
-            <DialogDescription>Informe os dados do cliente para gerar o documento do pedido.</DialogDescription>
+            <DialogDescription>
+              Informe os dados do cliente para gerar o documento do pedido.
+            </DialogDescription>
           </DialogHeader>
 
           {leituraAutomaticaPedido && (
@@ -2126,7 +2279,12 @@ function Calculadora() {
                 <Button
                   type="button"
                   variant={estado.clienteNome === "CLIENTE PADRÃO" ? "default" : "outline"}
-                  onClick={() => set("clienteNome", estado.clienteNome === "CLIENTE PADRÃO" ? "" : "CLIENTE PADRÃO")}
+                  onClick={() =>
+                    set(
+                      "clienteNome",
+                      estado.clienteNome === "CLIENTE PADRÃO" ? "" : "CLIENTE PADRÃO",
+                    )
+                  }
                 >
                   Cliente Padrão
                 </Button>
@@ -2144,11 +2302,19 @@ function Calculadora() {
 
             <div className="space-y-2">
               <Label>Validade</Label>
-              <Input type="date" value={estado.validade} onChange={(e) => set("validade", e.target.value)} />
+              <Input
+                type="date"
+                value={estado.validade}
+                onChange={(e) => set("validade", e.target.value)}
+              />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label>Observação</Label>
-              <Textarea rows={2} value={estado.observacao} onChange={(e) => set("observacao", e.target.value)} />
+              <Textarea
+                rows={2}
+                value={estado.observacao}
+                onChange={(e) => set("observacao", e.target.value)}
+              />
             </div>
             <div className="rounded-xl border border-border p-3 sm:col-span-2">
               <div className="flex items-center justify-between gap-3">
@@ -2190,14 +2356,18 @@ function Calculadora() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold">Incluir pagamento via PIX? *</p>
-                    <p className="text-xs text-muted-foreground">Adiciona os dados do PIX no documento do orçamento.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Adiciona os dados do PIX no documento do orçamento.
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <Button
                       type="button"
                       size="sm"
                       variant={estado.decisaoPix === "sim" ? "default" : "outline"}
-                      onClick={() => setEstado((p) => ({ ...p, decisaoPix: "sim", incluirPix: true }))}
+                      onClick={() =>
+                        setEstado((p) => ({ ...p, decisaoPix: "sim", incluirPix: true }))
+                      }
                     >
                       Sim
                     </Button>
@@ -2205,14 +2375,18 @@ function Calculadora() {
                       type="button"
                       size="sm"
                       variant={estado.decisaoPix === "nao" ? "default" : "outline"}
-                      onClick={() => setEstado((p) => ({ ...p, decisaoPix: "nao", incluirPix: false }))}
+                      onClick={() =>
+                        setEstado((p) => ({ ...p, decisaoPix: "nao", incluirPix: false }))
+                      }
                     >
                       Não
                     </Button>
                   </div>
                 </div>
                 {estado.incluirPix && textoPix && (
-                  <pre className="mt-2 rounded-md bg-muted p-2 text-xs whitespace-pre-wrap">{textoPix}</pre>
+                  <pre className="mt-2 rounded-md bg-muted p-2 text-xs whitespace-pre-wrap">
+                    {textoPix}
+                  </pre>
                 )}
               </div>
             )}
@@ -2221,14 +2395,18 @@ function Calculadora() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold">Informar prazo de entrega? *</p>
-                  <p className="text-xs text-muted-foreground">Escolha entre horas ou dias e a quantidade.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Escolha entre horas ou dias e a quantidade.
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <Button
                     type="button"
                     size="sm"
                     variant={estado.decisaoPrazo === "sim" ? "default" : "outline"}
-                    onClick={() => setEstado((p) => ({ ...p, decisaoPrazo: "sim", precisaPrazo: true }))}
+                    onClick={() =>
+                      setEstado((p) => ({ ...p, decisaoPrazo: "sim", precisaPrazo: true }))
+                    }
                   >
                     Sim
                   </Button>
@@ -2253,7 +2431,10 @@ function Calculadora() {
 
               {estado.precisaPrazo && (
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  <Select value={estado.prazoTipo} onValueChange={(v) => set("prazoTipo", v as PrazoTipo)}>
+                  <Select
+                    value={estado.prazoTipo}
+                    onValueChange={(v) => set("prazoTipo", v as PrazoTipo)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Horas ou dias" />
                     </SelectTrigger>
@@ -2268,15 +2449,26 @@ function Calculadora() {
                     value={estado.prazoQuantidade ? String(estado.prazoQuantidade) : ""}
                     onChange={(e) => set("prazoQuantidade", num(e.target.value))}
                   />
-                  {textoPrazo && <p className="text-xs text-muted-foreground sm:col-span-2">{textoPrazo}</p>}
+                  {textoPrazo && (
+                    <p className="text-xs text-muted-foreground sm:col-span-2">{textoPrazo}</p>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
           <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" disabled={enviandoZap} onClick={enviarOrcamentoZap}>
-              {enviandoZap ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={enviandoZap}
+              onClick={enviarOrcamentoZap}
+            >
+              {enviandoZap ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
               Envia Zap
             </Button>
             <Button
@@ -2433,7 +2625,9 @@ function ResumoItem({
 }) {
   return (
     <div className="min-w-0 rounded-lg border border-sidebar-border bg-sidebar-accent/60 px-3 py-2">
-      <p className="truncate text-[10px] font-bold tracking-wider text-sidebar-foreground/60">{rotulo.toUpperCase()}</p>
+      <p className="truncate text-[10px] font-bold tracking-wider text-sidebar-foreground/60">
+        {rotulo.toUpperCase()}
+      </p>
       <p
         className={`truncate font-extrabold ${pequeno ? "text-sm" : "text-lg"} ${
           destaque ? "text-success" : "text-sidebar-foreground"

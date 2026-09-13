@@ -95,9 +95,7 @@ function montarLinhas(d: DadosDocumento): Linha[] {
     }
 
     for (const a of item.acabamentos) {
-      acabInfo.push(
-        `${a.nome}: ${a.incluso ? `${a.quantidade}x · Incluso` : "Não incluso"}`,
-      );
+      acabInfo.push(`${a.nome}: ${a.incluso ? `${a.quantidade}x · Incluso` : "Não incluso"}`);
     }
 
     if (acabInfo.length) {
@@ -199,7 +197,6 @@ function montarLinhas(d: DadosDocumento): Linha[] {
     }
   }
 
-
   return linhas;
 }
 
@@ -288,7 +285,6 @@ export function gerarOrcamentoImagem(d: DadosDocumento, baixar = true) {
         ...(i === 0 && linha.valor ? { valor: linha.valor } : {}),
       });
     });
-
   }
 
   const altura = topo + linhas.length * alturaLinha + 110;
@@ -298,7 +294,6 @@ export function gerarOrcamentoImagem(d: DadosDocumento, baixar = true) {
   canvas.height = altura * escala;
 
   ctx.scale(escala, escala);
-
 
   // ============================================================
   // FUNDO
@@ -330,7 +325,9 @@ export function gerarOrcamentoImagem(d: DadosDocumento, baixar = true) {
 
   ctx.font = "14px Helvetica, Arial, sans-serif";
 
-  const contato = [d.empresaTelefone, d.empresaEmail, d.empresaEndereco].filter(Boolean).join("  •  ");
+  const contato = [d.empresaTelefone, d.empresaEmail, d.empresaEndereco]
+    .filter(Boolean)
+    .join("  •  ");
 
   if (contato) {
     ctx.fillText(contato, MARGEM, 78);

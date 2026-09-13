@@ -35,7 +35,9 @@ export function resumoDoPedido(itens: Record<string, unknown>[]): ResumoEtiqueta
     paginasAdicionais += adicionais;
     copiasAdicionais += copias;
 
-    const lista = Array.isArray(item["acabamentos"]) ? (item["acabamentos"] as AcabamentoDoc[]) : [];
+    const lista = Array.isArray(item["acabamentos"])
+      ? (item["acabamentos"] as AcabamentoDoc[])
+      : [];
     for (const a of lista) {
       if (a && a.incluso !== false && a.nome) acabamentos.add(a.nome);
     }

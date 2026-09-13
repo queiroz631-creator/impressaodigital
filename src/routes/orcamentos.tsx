@@ -19,7 +19,6 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { gerarLinkOrcamento } from "@/lib/link.functions";
 
-
 import { supabase } from "@/integrations/supabase/client";
 
 import { AppLayout, PageHeader } from "@/components/AppLayout";
@@ -43,7 +42,13 @@ import {
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { ImprimirEtiqueta } from "@/components/ImprimirEtiqueta";
 
-import { useConfiguracao, useOrcamentos, usePedidos, useMateriais, usePerfisImpressao } from "@/hooks/useDados";
+import {
+  useConfiguracao,
+  useOrcamentos,
+  usePedidos,
+  useMateriais,
+  usePerfisImpressao,
+} from "@/hooks/useDados";
 import {
   ImprimirDocumentosDialog,
   type DocumentoParaImprimir,
@@ -51,7 +56,6 @@ import {
 import { PERFIL_VAZIO, type PerfilImpressao } from "@/lib/perfil-impressao";
 import type { ArquivoDoc } from "@/lib/documento";
 import { useAuth } from "@/hooks/useAuth";
-
 
 import { brl, dataBR } from "@/lib/format";
 import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
@@ -61,7 +65,7 @@ import { STATUS_ORCAMENTO, normalizarStatus, rotuloStatus } from "@/lib/status";
 
 export const Route = createFileRoute("/orcamentos")({
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="orcamentos.visualizar">
       <Orcamentos />
     </AppLayout>
   ),
@@ -71,7 +75,8 @@ export const Route = createFileRoute("/orcamentos")({
       { title: "Orçamentos | Impressão Digital" },
       {
         name: "description",
-        content: "Consulte por data e status, altere o andamento e imprima etiquetas térmicas dos pedidos.",
+        content:
+          "Consulte por data e status, altere o andamento e imprima etiquetas térmicas dos pedidos.",
       },
       { property: "og:title", content: "Orçamentos | Impressão Digital" },
       { property: "og:description", content: "Gestão dos pedidos de orçamento do sistema." },
@@ -93,7 +98,8 @@ function dataLocalISO(valor: Date | string | null | undefined) {
 
 /** Situação do pagamento de um pedido. */
 function situacaoPagamento(total: number, pago: number) {
-  if (pago <= 0) return { rotulo: "NÃO PAGO", classe: "bg-destructive text-destructive-foreground" };
+  if (pago <= 0)
+    return { rotulo: "NÃO PAGO", classe: "bg-destructive text-destructive-foreground" };
   if (pago + 0.009 < total) return { rotulo: "PARCIAL", classe: "bg-yellow-ink text-sidebar" };
   return { rotulo: "PAGO", classe: "bg-success text-success-foreground" };
 }
@@ -107,8 +113,6 @@ function Orcamentos() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const navigate = useNavigate();
-
-
 
   const hoje = dataLocalISO(new Date());
   const criarLink = useServerFn(gerarLinkOrcamento);
@@ -153,7 +157,8 @@ function Orcamentos() {
           numero: String(pedidoBase?.["numero"] ?? orc.numero ?? "-"),
           data: String(pedidoBase?.["created_at"] ?? orc.created_at ?? ""),
           clienteNome: String(pedidoBase?.["cliente_nome"] ?? orc.cliente_nome ?? ""),
-          clienteTelefone: String(pedidoBase?.["cliente_telefone"] ?? orc.cliente_telefone ?? "") || null,
+          clienteTelefone:
+            String(pedidoBase?.["cliente_telefone"] ?? orc.cliente_telefone ?? "") || null,
           validade: (orc.validade as string | null) ?? null,
           observacao: (orc.observacao as string | null) ?? null,
           itens: [],
@@ -279,7 +284,10 @@ function Orcamentos() {
 
     setSalvandoStatus(true);
     try {
-      const { error } = await supabase.from("orcamentos").update({ status: novoStatus }).in("id", ids);
+      const { error } = await supabase
+        .from("orcamentos")
+        .update({ status: novoStatus })
+        .in("id", ids);
       if (error) throw error;
 
       if (pedido.temPedido) {
@@ -384,7 +392,6 @@ function Orcamentos() {
     void navigate({ to: "/" });
   }
 
-
   async function excluirPedido(pedido: PedidoAgrupado) {
     const ids = pedido.itens.map((item) => String(item["id"])).filter(Boolean);
     if (ids.length === 0) return;
@@ -442,7 +449,10 @@ function Orcamentos() {
             />
           </div>
 
-          <Button variant={todasAsDatas ? "default" : "outline"} onClick={() => setTodasAsDatas((v) => !v)}>
+          <Button
+            variant={todasAsDatas ? "default" : "outline"}
+            onClick={() => setTodasAsDatas((v) => !v)}
+          >
             Todas as datas
           </Button>
 
@@ -533,7 +543,9 @@ function Orcamentos() {
                         <div>
                           <p className="font-semibold">{pedido.clienteNome}</p>
                           {pedido.clienteTelefone && (
-                            <p className="text-xs text-muted-foreground">{pedido.clienteTelefone}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {pedido.clienteTelefone}
+                            </p>
                           )}
                         </div>
                       </td>
@@ -543,7 +555,9 @@ function Orcamentos() {
                       </td>
 
                       <td className="px-4 py-4 text-right">
-                        <span className="text-base font-extrabold text-success">{brl(pedido.total)}</span>
+                        <span className="text-base font-extrabold text-success">
+                          {brl(pedido.total)}
+                        </span>
                       </td>
 
                       <td className="px-4 py-4 text-center">
@@ -582,7 +596,6 @@ function Orcamentos() {
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
-
 
                           <Button
                             variant="ghost"
@@ -755,11 +768,19 @@ function Orcamentos() {
                   <tbody>
                     {pedidoItensAberto.itens.map((item, index) => (
                       <tr key={String(item["id"])} className="border-b border-border last:border-0">
-                        <td className="px-4 py-3 font-bold">{String(index + 1).padStart(2, "0")}</td>
-                        <td className="px-4 py-3 font-semibold">{String(item["material_nome"] ?? "-")}</td>
-                        <td className="px-4 py-3 capitalize">{String(item["tipo_impressao"] ?? "-")}</td>
+                        <td className="px-4 py-3 font-bold">
+                          {String(index + 1).padStart(2, "0")}
+                        </td>
+                        <td className="px-4 py-3 font-semibold">
+                          {String(item["material_nome"] ?? "-")}
+                        </td>
+                        <td className="px-4 py-3 capitalize">
+                          {String(item["tipo_impressao"] ?? "-")}
+                        </td>
                         <td className="px-4 py-3">{String(item["tamanho"] ?? "-")}</td>
-                        <td className="px-4 py-3 text-right">{Number(item["paginas_total"] ?? 0)}</td>
+                        <td className="px-4 py-3 text-right">
+                          {Number(item["paginas_total"] ?? 0)}
+                        </td>
                         <td className="px-4 py-3 text-right font-bold text-success">
                           {brl(Number(item["valor_total"] ?? 0))}
                         </td>
@@ -788,7 +809,10 @@ function Orcamentos() {
               )}
 
               <div className="flex flex-wrap justify-end gap-2">
-                <Button variant="outline" onClick={() => gerarOrcamentoImagem(documentoPedido(pedidoItensAberto))}>
+                <Button
+                  variant="outline"
+                  onClick={() => gerarOrcamentoImagem(documentoPedido(pedidoItensAberto))}
+                >
                   <ImageIcon className="h-4 w-4" />
                   Gerar Imagem
                 </Button>
@@ -810,7 +834,6 @@ function Orcamentos() {
         impressoraPadrao={(config?.impressora_padrao_nome ?? null) as string | null}
       />
     </>
-
   );
 }
 

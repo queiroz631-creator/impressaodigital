@@ -35,7 +35,8 @@ export const Route = createFileRoute("/api/public/whatsapp/midia")({
         }
 
         const nome = (data.arquivo_nome ?? "arquivo").replace(/["\\\r\n]/g, "");
-        const tipo = data.mime_type ?? origem.headers.get("content-type") ?? "application/octet-stream";
+        const tipo =
+          data.mime_type ?? origem.headers.get("content-type") ?? "application/octet-stream";
 
         return new Response(origem.body, {
           headers: {

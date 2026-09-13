@@ -79,7 +79,8 @@ export async function gerarTextoIA(
           }),
         },
       );
-      if (!r.ok) return { status: r.status, conteudo: null, erroBruto: await r.text().catch(() => "") };
+      if (!r.ok)
+        return { status: r.status, conteudo: null, erroBruto: await r.text().catch(() => "") };
       return { status: 200, conteudo: textoGemini(await r.json()) };
     } catch {
       return { status: 0, conteudo: null };
@@ -103,7 +104,8 @@ export async function gerarTextoIA(
         ],
       }),
     });
-    if (!r.ok) return { status: r.status, conteudo: null, erroBruto: await r.text().catch(() => "") };
+    if (!r.ok)
+      return { status: r.status, conteudo: null, erroBruto: await r.text().catch(() => "") };
     const j = (await r.json()) as { choices?: { message?: { content?: string } }[] };
     return { status: 200, conteudo: (j.choices?.[0]?.message?.content ?? "").trim() };
   } catch {
@@ -140,7 +142,8 @@ export async function transcreverAudioIA(
           }),
         },
       );
-      if (!r.ok) return { status: r.status, conteudo: null, erroBruto: await r.text().catch(() => "") };
+      if (!r.ok)
+        return { status: r.status, conteudo: null, erroBruto: await r.text().catch(() => "") };
       return { status: 200, conteudo: textoGemini(await r.json()) };
     } catch {
       return { status: 0, conteudo: null };
@@ -168,7 +171,8 @@ export async function transcreverAudioIA(
         ],
       }),
     });
-    if (!r.ok) return { status: r.status, conteudo: null, erroBruto: await r.text().catch(() => "") };
+    if (!r.ok)
+      return { status: r.status, conteudo: null, erroBruto: await r.text().catch(() => "") };
     const j = (await r.json()) as { choices?: { message?: { content?: unknown } }[] };
     const c = j.choices?.[0]?.message?.content;
     return { status: 200, conteudo: (typeof c === "string" ? c : "").trim() };

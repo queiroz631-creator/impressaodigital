@@ -163,7 +163,7 @@ export async function conectarQz(): Promise<boolean> {
     ultimoErro = "Componente de impressão direta indisponível.";
     return false;
   }
-  
+
   if (await conexaoPronta(api)) {
     ultimoErro = null;
     vigiarConexao(api);
@@ -192,13 +192,13 @@ export async function conectarQz(): Promise<boolean> {
       await api.websocket.connect({
         retries: 0,
       });
-      
+
       if (await conexaoPronta(api)) {
         ultimoErro = null;
         vigiarConexao(api);
         return true;
       }
-      
+
       ultimoErro = "Conexão estabelecida, mas o agente não respondeu como esperado.";
       return false;
     } catch (erro) {
@@ -247,7 +247,6 @@ export async function listarImpressoras(): Promise<string[]> {
   }
 }
 
-
 /** Primeira impressora configurada que estiver realmente disponível. */
 export async function obterImpressoraPadrao(configuradas: string[]): Promise<string | null> {
   const validas = configuradas.map((n) => n.trim()).filter(Boolean);
@@ -279,10 +278,7 @@ async function imprimirViaQz(texto: string, impressora: string): Promise<boolean
   try {
     const api = qz();
     const config = api.configs.create(impressora);
-    await api.print(config, [
-      { type: "raw", format: "plain", data: `${texto}\n` },
-      ...DADOS_CORTE,
-    ]);
+    await api.print(config, [{ type: "raw", format: "plain", data: `${texto}\n` }, ...DADOS_CORTE]);
     return true;
   } catch (erro) {
     ultimoErro = mensagemErro(erro);
@@ -377,7 +373,6 @@ export async function motivoFalhaQz(impressora: string): Promise<string> {
     : `Falha ao enviar para "${impressora}". Verifique se a impressora está ligada.`;
 }
 
-
 /** Força a caixa de diálogo do navegador (permite escolher a impressora). */
 export function escolherImpressora(): ResultadoImpressao {
   imprimirPeloNavegador();
@@ -440,7 +435,12 @@ export function opcoesDoPerfil(perfil: PerfilImpressao, impressora: string) {
   return {
     colorType: perfil.cor,
     duplex: perfil.duplex !== "nao",
-    duplexing: perfil.duplex === "longa" ? "duplex-long" : perfil.duplex === "curta" ? "duplex-short" : undefined,
+    duplexing:
+      perfil.duplex === "longa"
+        ? "duplex-long"
+        : perfil.duplex === "curta"
+          ? "duplex-short"
+          : undefined,
     orientation: perfil.orientacao === "paisagem" ? "landscape" : "portrait",
     copies: Math.max(1, Number(perfil.copias) || 1),
     density: densidadeQualidade[perfil.qualidade],

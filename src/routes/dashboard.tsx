@@ -1,14 +1,6 @@
 import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Calculator, FileText, DollarSign, Printer } from "lucide-react";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,7 +55,11 @@ function Dashboard() {
       <PageHeader titulo="DASHBOARD" subtitulo="Visão geral dos cálculos e orçamentos." />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Indicador icon={<Calculator className="h-5 w-5 text-primary" />} titulo="Cálculos hoje" valor={String(stats.doDia)} />
+        <Indicador
+          icon={<Calculator className="h-5 w-5 text-primary" />}
+          titulo="Cálculos hoje"
+          valor={String(stats.doDia)}
+        />
         <Indicador
           icon={<FileText className="h-5 w-5 text-cyan-ink" />}
           titulo="Orçamentos gerados"

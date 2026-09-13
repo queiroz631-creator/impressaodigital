@@ -43,7 +43,6 @@ export function rotuloAcaoSemResposta(valor: string) {
   return ACOES_SEM_RESPOSTA.find((a) => a.valor === valor)?.rotulo ?? valor;
 }
 
-
 export interface FluxoEtapa {
   id: string;
   fluxo_id: string;
@@ -140,7 +139,10 @@ export const ACOES_ETAPA: { valor: string; rotulo: string }[] = [
   { valor: "transferir_atendente", rotulo: "Transferir para atendente" },
   { valor: "transferir_silencioso", rotulo: "Transferir para atendente (sem mensagem)" },
   { valor: "esperando_impressao", rotulo: "Enviar para fila de impressão" },
-  { valor: "esperando_impressao_silencioso", rotulo: "Enviar para fila de impressão (sem mensagem)" },
+  {
+    valor: "esperando_impressao_silencioso",
+    rotulo: "Enviar para fila de impressão (sem mensagem)",
+  },
   { valor: "criar_pendente", rotulo: "Criar atendimento pendente" },
   { valor: "iniciar_fluxo", rotulo: "Iniciar outro fluxo" },
   { valor: "voltar_inicio_fluxo", rotulo: "Voltar ao início do fluxo" },
@@ -156,7 +158,10 @@ export const ACOES_OPCAO: { valor: string; rotulo: string }[] = [
   { valor: "transferir_atendente", rotulo: "Transferir para atendente" },
   { valor: "transferir_silencioso", rotulo: "Transferir para atendente (sem mensagem)" },
   { valor: "esperando_impressao", rotulo: "Enviar para fila de impressão" },
-  { valor: "esperando_impressao_silencioso", rotulo: "Enviar para fila de impressão (sem mensagem)" },
+  {
+    valor: "esperando_impressao_silencioso",
+    rotulo: "Enviar para fila de impressão (sem mensagem)",
+  },
   { valor: "voltar_inicio_fluxo", rotulo: "Voltar ao início do fluxo" },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
   { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
@@ -169,7 +174,10 @@ export const ACOES_RESPOSTA: { valor: string; rotulo: string }[] = [
   { valor: "resposta", rotulo: "Enviar outra resposta automática" },
   { valor: "atendente", rotulo: "Transferir para atendente" },
   { valor: "esperando_impressao", rotulo: "Enviar para fila de impressão" },
-  { valor: "esperando_impressao_silencioso", rotulo: "Enviar para fila de impressão (sem mensagem)" },
+  {
+    valor: "esperando_impressao_silencioso",
+    rotulo: "Enviar para fila de impressão (sem mensagem)",
+  },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
   { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
 ];
@@ -179,25 +187,29 @@ export function rotuloAcaoResposta(valor: string) {
 }
 
 /** Condições de identificação da primeira mensagem do cliente. */
-export const CONDICOES_PRIMEIRO_CONTATO: { valor: string; rotulo: string; usaPalavras: boolean }[] = [
-  { valor: "saudacao", rotulo: "Só uma saudação (oi, olá, bom dia...)", usaPalavras: false },
-  { valor: "arquivo", rotulo: "Só arquivos (sem texto)", usaPalavras: false },
-  { valor: "arquivo_palavra", rotulo: "Arquivos + palavras-chave", usaPalavras: true },
-  { valor: "texto_palavra", rotulo: "Texto com palavras-chave", usaPalavras: true },
-  { valor: "qualquer", rotulo: "Qualquer mensagem", usaPalavras: false },
-];
+export const CONDICOES_PRIMEIRO_CONTATO: { valor: string; rotulo: string; usaPalavras: boolean }[] =
+  [
+    { valor: "saudacao", rotulo: "Só uma saudação (oi, olá, bom dia...)", usaPalavras: false },
+    { valor: "arquivo", rotulo: "Só arquivos (sem texto)", usaPalavras: false },
+    { valor: "arquivo_palavra", rotulo: "Arquivos + palavras-chave", usaPalavras: true },
+    { valor: "texto_palavra", rotulo: "Texto com palavras-chave", usaPalavras: true },
+    { valor: "qualquer", rotulo: "Qualquer mensagem", usaPalavras: false },
+  ];
 
 /** Ações possíveis em uma regra de primeiro contato. */
 export const ACOES_PRIMEIRO_CONTATO: { valor: string; rotulo: string }[] = [
   { valor: "aguardar", rotulo: "Só enviar a mensagem e aguardar" },
   { valor: "confirmar_fluxo", rotulo: "Perguntar SIM/NÃO e iniciar um fluxo" },
   { valor: "iniciar_fluxo", rotulo: "Iniciar um fluxo" },
-  
+
   { valor: "resposta", rotulo: "Enviar uma resposta automática" },
   { valor: "atendente", rotulo: "Transferir para atendente" },
   { valor: "transferir_silencioso", rotulo: "Transferir para atendente (sem mensagem)" },
   { valor: "esperando_impressao", rotulo: "Enviar para fila de impressão" },
-  { valor: "esperando_impressao_silencioso", rotulo: "Enviar para fila de impressão (sem mensagem)" },
+  {
+    valor: "esperando_impressao_silencioso",
+    rotulo: "Enviar para fila de impressão (sem mensagem)",
+  },
   { valor: "finalizar", rotulo: "Finalizar atendimento" },
   { valor: "finalizar_silencioso", rotulo: "Finalizar atendimento (sem mensagem)" },
 ];
@@ -216,8 +228,6 @@ export const ENVIOS_PRIMEIRO_CONTATO: { valor: string; rotulo: string }[] = [
   { valor: "uma_vez_atendimento", rotulo: "Uma vez por atendimento" },
   { valor: "primeira_do_dia", rotulo: "Somente no 1º contato do dia" },
 ];
-
-
 
 /** Ações da etapa que são executadas por módulos do sistema. */
 export const ACOES_SISTEMA = new Set([

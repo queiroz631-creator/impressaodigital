@@ -120,7 +120,14 @@ export interface PayloadEtapa {
   finalizar?: boolean;
 }
 
-export const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União estável", "Outros"];
+export const ESTADOS_CIVIS = [
+  "Solteiro(a)",
+  "Casado(a)",
+  "Divorciado(a)",
+  "Viúvo(a)",
+  "União estável",
+  "Outros",
+];
 
 export const ESCOLARIDADES = [
   "Ensino Fundamental Incompleto",
@@ -176,7 +183,11 @@ export function capitalizarTexto(valor: string): string {
   return limpo
     .split(" ")
     .map((palavra, indice) => {
-      if (SIGLAS.has(palavra.toUpperCase()) && palavra.length <= 4 && palavra === palavra.toUpperCase()) {
+      if (
+        SIGLAS.has(palavra.toUpperCase()) &&
+        palavra.length <= 4 &&
+        palavra === palavra.toUpperCase()
+      ) {
         return palavra;
       }
       const lower = palavra.toLowerCase();
@@ -210,7 +221,10 @@ export function cpfValido(valor: string) {
     const resto = (soma * 10) % 11;
     return resto === 10 ? 0 : resto;
   };
-  return digito(cpf.slice(0, 9), 10) === Number(cpf[9]) && digito(cpf.slice(0, 10), 11) === Number(cpf[10]);
+  return (
+    digito(cpf.slice(0, 9), 10) === Number(cpf[9]) &&
+    digito(cpf.slice(0, 10), 11) === Number(cpf[10])
+  );
 }
 
 /* --------------------------------------------------------- Telefone */
@@ -268,7 +282,12 @@ export function observacaoHabilidades(c: CurriculoRegistro): string {
 
 /** Monta uma linha única com o endereço completo, quando houver. */
 export function enderecoCompleto(c: CurriculoRegistro): string {
-  return [ruaComNumero(c), c.bairro, [c.cidade, c.uf].filter(Boolean).join(" - "), c.cep ? `CEP ${c.cep}` : ""]
+  return [
+    ruaComNumero(c),
+    c.bairro,
+    [c.cidade, c.uf].filter(Boolean).join(" - "),
+    c.cep ? `CEP ${c.cep}` : "",
+  ]
     .filter(Boolean)
     .join(", ");
 }
@@ -291,7 +310,9 @@ export function informacoesAdicionais(c: CurriculoRegistro) {
   if (c.documentacao_completa === false) linhas.push("Documentação incompleta.");
   if (c.habilitacao) {
     linhas.push(
-      c.categoria_habilitacao ? `Possui habilitação — categoria ${c.categoria_habilitacao}.` : "Possui habilitação.",
+      c.categoria_habilitacao
+        ? `Possui habilitação — categoria ${c.categoria_habilitacao}.`
+        : "Possui habilitação.",
     );
   }
   return linhas;

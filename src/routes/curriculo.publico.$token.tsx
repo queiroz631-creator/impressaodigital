@@ -11,7 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { carregarCurriculoPublico, criarCurriculoPublico, salvarCurriculoPublico } from "@/lib/curriculo.functions";
+import {
+  carregarCurriculoPublico,
+  criarCurriculoPublico,
+  salvarCurriculoPublico,
+} from "@/lib/curriculo.functions";
 import {
   cpfValido,
   formatarCpf,
@@ -25,7 +29,10 @@ export const Route = createFileRoute("/curriculo/publico/$token")({
   head: () => ({
     meta: [
       { title: "Preencha seu currículo" },
-      { name: "description", content: "Preencha os dados do seu currículo profissional em poucos passos." },
+      {
+        name: "description",
+        content: "Preencha os dados do seu currículo profissional em poucos passos.",
+      },
       { property: "og:title", content: "Preencha seu currículo" },
       { property: "og:description", content: "Formulário rápido para montar o seu currículo." },
       { property: "og:type", content: "website" },
@@ -84,7 +91,8 @@ function CurriculoPublico() {
             <CheckCircle2 className="h-10 w-10 text-primary" />
             <p className="text-lg font-semibold">Currículo enviado com sucesso!</p>
             <p className="text-sm text-muted-foreground">
-              Obrigado. Entre em contato com nossa equipe para preparar a impressão do seu currículo.
+              Obrigado. Entre em contato com nossa equipe para preparar a impressão do seu
+              currículo.
             </p>
           </CardContent>
         </Card>
@@ -130,7 +138,9 @@ function CurriculoPublico() {
     <div className="notranslate min-h-screen bg-muted/40 py-8" translate="no">
       <div className="mx-auto w-full max-w-3xl px-4">
         <header className="mb-6 text-center">
-          <p className="text-sm uppercase tracking-widest text-muted-foreground">{data?.empresaNome ?? ""}</p>
+          <p className="text-sm uppercase tracking-widest text-muted-foreground">
+            {data?.empresaNome ?? ""}
+          </p>
           <h1 className="text-2xl font-extrabold">Preencha seu currículo</h1>
         </header>
         {conteudo()}

@@ -43,7 +43,9 @@ export const confirmarLinkOrcamento = createServerFn({ method: "POST" })
 export const gerarLinkOrcamento = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ orcamentoId: z.string().uuid(), enviarWhatsapp: z.boolean().optional() }).parse(input),
+    z
+      .object({ orcamentoId: z.string().uuid(), enviarWhatsapp: z.boolean().optional() })
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const { gerarParaOrcamento } = await import("@/lib/link-dados.server");

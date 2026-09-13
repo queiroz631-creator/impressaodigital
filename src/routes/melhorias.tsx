@@ -22,7 +22,7 @@ import { dataHoraBR } from "@/lib/format";
 
 export const Route = createFileRoute("/melhorias")({
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="melhorias.visualizar">
       <Melhorias />
     </AppLayout>
   ),
@@ -248,71 +248,74 @@ function Melhorias() {
             {melhorias?.map((m, idx) => {
               const numero = (melhorias?.length ?? 0) - idx;
               return (
-              <div
-                key={m.id}
-                className={
-                  m.executada && m.status !== "concluida"
-                    ? "flex items-start justify-between gap-3 rounded-lg border-2 border-green-500 p-3"
-                    : "flex items-start justify-between gap-3 rounded-lg border p-3"
-                }
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium text-muted-foreground min-w-[1.5rem]">
-                      {numero}.
-                    </span>
-                    <span
-                      className={
-                        m.status === "concluida"
-                          ? "font-semibold line-through text-muted-foreground"
-                          : "font-semibold"
-                      }
-                    >
-                      {m.titulo}
-                    </span>
-                    <Badge variant="secondary">{m.tela}</Badge>
-                    {m.executada && m.status !== "concluida" && (
-                      <Badge className="bg-green-600 text-white hover:bg-green-600">Executada</Badge>
+                <div
+                  key={m.id}
+                  className={
+                    m.executada && m.status !== "concluida"
+                      ? "flex items-start justify-between gap-3 rounded-lg border-2 border-green-500 p-3"
+                      : "flex items-start justify-between gap-3 rounded-lg border p-3"
+                  }
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium text-muted-foreground min-w-[1.5rem]">
+                        {numero}.
+                      </span>
+                      <span
+                        className={
+                          m.status === "concluida"
+                            ? "font-semibold line-through text-muted-foreground"
+                            : "font-semibold"
+                        }
+                      >
+                        {m.titulo}
+                      </span>
+                      <Badge variant="secondary">{m.tela}</Badge>
+                      {m.executada && m.status !== "concluida" && (
+                        <Badge className="bg-green-600 text-white hover:bg-green-600">
+                          Executada
+                        </Badge>
+                      )}
+                    </div>
+                    {m.descricao && (
+                      <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                        {m.descricao}
+                      </p>
                     )}
+                    <p className="mt-1 text-xs text-muted-foreground">{dataHoraBR(m.created_at)}</p>
                   </div>
-                  {m.descricao && (
-                    <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
-                      {m.descricao}
-                    </p>
-                  )}
-                  <p className="mt-1 text-xs text-muted-foreground">{dataHoraBR(m.created_at)}</p>
-                </div>
 
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => alternarStatus.mutate(m)}
-                    disabled={alternarStatus.isPending}
-                  >
-                    {m.status === "concluida" ? "Reabrir" : "Concluir"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Editar melhoria"
-                    onClick={() => iniciarEdicao(m)}
-                    disabled={editandoId === m.id}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Excluir melhoria"
-                    onClick={() => excluir.mutate(m.id)}
-                    disabled={excluir.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => alternarStatus.mutate(m)}
+                      disabled={alternarStatus.isPending}
+                    >
+                      {m.status === "concluida" ? "Reabrir" : "Concluir"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Editar melhoria"
+                      onClick={() => iniciarEdicao(m)}
+                      disabled={editandoId === m.id}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Excluir melhoria"
+                      onClick={() => excluir.mutate(m.id)}
+                      disabled={excluir.isPending}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )})}
+              );
+            })}
           </CardContent>
         </Card>
       </div>

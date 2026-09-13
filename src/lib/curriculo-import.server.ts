@@ -51,7 +51,12 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
   const bruto = r.conteudo;
   let obj: Record<string, unknown>;
   try {
-    obj = JSON.parse(bruto.replace(/^```json/i, "").replace(/```$/, "").trim());
+    obj = JSON.parse(
+      bruto
+        .replace(/^```json/i, "")
+        .replace(/```$/, "")
+        .trim(),
+    );
   } catch {
     throw new Error("IA_INDISPONIVEL");
   }
@@ -66,7 +71,9 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
         e.toLowerCase() === civilBruto ||
         (civilBruto.length > 3 && e.toLowerCase().startsWith(civilBruto.slice(0, 5))),
     ) ?? "";
-  const categoria = CATEGORIAS_HABILITACAO.includes(texto(obj["categoria_habilitacao"]).toUpperCase())
+  const categoria = CATEGORIAS_HABILITACAO.includes(
+    texto(obj["categoria_habilitacao"]).toUpperCase(),
+  )
     ? texto(obj["categoria_habilitacao"]).toUpperCase()
     : "";
   const nascimento = /^\d{4}-\d{2}-\d{2}$/.test(texto(obj["data_nascimento"]))
@@ -128,7 +135,8 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
         if (!f.nome_curso) return false;
         const chave = (t: string) => t.toLowerCase().replace(/\s+/g, " ").trim();
         if (escolaridade && chave(f.nome_curso) === chave(escolaridade)) return false;
-        if (escolaridade && f.nivel && chave(f.nivel) === chave(escolaridade) && !f.instituicao) return false;
+        if (escolaridade && f.nivel && chave(f.nivel) === chave(escolaridade) && !f.instituicao)
+          return false;
         return true;
       }),
     experiencias: lista(obj["experiencias"])
@@ -146,7 +154,11 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
       .map((h) =>
         typeof h === "string"
           ? texto(h, 300)
-          : texto((h as Record<string, unknown>)?.["descricao"] ?? (h as Record<string, unknown>)?.["nome"], 300),
+          : texto(
+              (h as Record<string, unknown>)?.["descricao"] ??
+                (h as Record<string, unknown>)?.["nome"],
+              300,
+            ),
       )
       .filter(Boolean),
     confiancaBaixa: lista(obj["confianca_baixa"])
@@ -204,9 +216,9 @@ async function habilidadesImportadas(descricoes: string[]) {
   });
 }
 
-function payloadDoImportado(dados: CurriculoImportado): Required<
-  Pick<PayloadEtapa, "campos" | "telefones" | "cursos" | "formacoes" | "experiencias">
-> {
+function payloadDoImportado(
+  dados: CurriculoImportado,
+): Required<Pick<PayloadEtapa, "campos" | "telefones" | "cursos" | "formacoes" | "experiencias">> {
   const c = dados.campos;
   return {
     campos: {
@@ -228,8 +240,7 @@ function payloadDoImportado(dados: CurriculoImportado): Required<
       curso_superior: c.curso_superior || null,
       pos_graduacao_nome: c.pos_graduacao_nome || null,
       objetivo_tipo: (c.objetivo_texto ? "personalizado" : "nao_informar") as
-        | "personalizado"
-        | "nao_informar",
+        "personalizado" | "nao_informar",
       objetivo_texto: c.objetivo_texto || null,
       experiencia_possui: dados.experiencias.length > 0,
     },
@@ -301,11 +312,31 @@ export async function atualizarImportado(
 
   if (!substituirListas) {
     const [cur, form, exp, hab, tel] = await Promise.all([
-      supabaseAdmin.from("curriculo_cursos").select("nome_curso, instituicao, ano").eq("curriculo_id", curriculoId).order("ordem"),
-      supabaseAdmin.from("curriculo_formacoes").select("nome_curso, instituicao, ano, nivel").eq("curriculo_id", curriculoId).order("ordem"),
-      supabaseAdmin.from("curriculo_experiencias").select("empresa, cargo, periodo, atividades").eq("curriculo_id", curriculoId).order("ordem"),
-      supabaseAdmin.from("curriculo_habilidades").select("habilidade_id, descricao").eq("curriculo_id", curriculoId).order("ordem"),
-      supabaseAdmin.from("curriculo_telefones").select("telefone").eq("curriculo_id", curriculoId).order("ordem"),
+      supabaseAdmin
+        .from("curriculo_cursos")
+        .select("nome_curso, instituicao, ano")
+        .eq("curriculo_id", curriculoId)
+        .order("ordem"),
+      supabaseAdmin
+        .from("curriculo_formacoes")
+        .select("nome_curso, instituicao, ano, nivel")
+        .eq("curriculo_id", curriculoId)
+        .order("ordem"),
+      supabaseAdmin
+        .from("curriculo_experiencias")
+        .select("empresa, cargo, periodo, atividades")
+        .eq("curriculo_id", curriculoId)
+        .order("ordem"),
+      supabaseAdmin
+        .from("curriculo_habilidades")
+        .select("habilidade_id, descricao")
+        .eq("curriculo_id", curriculoId)
+        .order("ordem"),
+      supabaseAdmin
+        .from("curriculo_telefones")
+        .select("telefone")
+        .eq("curriculo_id", curriculoId)
+        .order("ordem"),
     ]);
 
     const chave = (t?: string | null) => (t ?? "").toLowerCase().replace(/\s+/g, " ").trim();

@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.profiles_bloquear_escalada() FROM anon, authenticated, PUBLIC;

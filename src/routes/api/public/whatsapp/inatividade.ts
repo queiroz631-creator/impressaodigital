@@ -12,7 +12,11 @@ export const Route = createFileRoute("/api/public/whatsapp/inatividade")({
         const token = url.searchParams.get("token") ?? "";
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data } = await supabaseAdmin.from("whatsapp_config").select("webhook_token").limit(1).maybeSingle();
+        const { data } = await supabaseAdmin
+          .from("whatsapp_config")
+          .select("webhook_token")
+          .limit(1)
+          .maybeSingle();
 
         if (!token || !data?.webhook_token || token !== data.webhook_token) {
           return new Response("Não autorizado", { status: 401 });

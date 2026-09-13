@@ -155,7 +155,6 @@ export function gerarOrcamentoPdf(d: DadosDocumento, baixar = true) {
     y += 16 + linhas.length * 14;
   }
 
-
   doc.setFontSize(9);
   doc.setTextColor(110, 110, 130);
   doc.text(d.rodape, width / 2, doc.internal.pageSize.getHeight() - 40, { align: "center" });

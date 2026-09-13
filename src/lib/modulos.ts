@@ -229,8 +229,8 @@ export const MODULOS: Modulo[] = [
         descricao: "Atendentes, perfis e permissões",
         icone: UsersRound,
         ordem: 1,
-        ativo: false,
-        rota: null,
+        ativo: true,
+        rota: "/usuarios",
         permissao: "usuarios.visualizar",
       },
       {
@@ -256,6 +256,20 @@ export const MODULOS: Modulo[] = [
     ],
   },
 ];
+
+/** Permissões sensíveis (ações, não telas). Editáveis nos perfis de acesso. */
+export const PERMISSOES_SENSIVEIS: { chave: string; nome: string }[] = [
+  { chave: "pedido.excluir", nome: "Excluir pedido" },
+  { chave: "precos.alterar", nome: "Alterar preços" },
+  { chave: "conexoes.gerenciar", nome: "Gerenciar conexões" },
+  { chave: "usuarios.gerenciar", nome: "Gerenciar usuários" },
+];
+
+/** Todas as chaves de permissão do sistema (módulos + telas + sensíveis). */
+export function todasPermissoes(): string[] {
+  const chaves = MODULOS.flatMap((m) => [m.permissao, ...m.itens.map((i) => i.permissao)]);
+  return [...chaves, ...PERMISSOES_SENSIVEIS.map((p) => p.chave)];
+}
 
 /** Módulos ativos com itens ativos, prontos para o menu. */
 export function modulosVisiveis(pode: (permissao?: string) => boolean) {

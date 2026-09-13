@@ -22,18 +22,21 @@ export const simularBot = createServerFn({ method: "POST" })
     const { processarMenu, dentroDoHorario } = await import("@/lib/bot-motor");
 
     const dados = await carregarDadosBot();
-    if (!dados) return { mensagens: [], etapa: data.etapa, aviso: "Configuração do bot não encontrada." };
+    if (!dados)
+      return { mensagens: [], etapa: data.etapa, aviso: "Configuração do bot não encontrada." };
 
     const agora = new Date();
     const mensagens: { texto: string; botoes?: string[] }[] = [];
 
     // A mensagem global "Fora do horário" foi desativada: o bot não a envia mais.
 
-
-
     const saida = await processarMenu(
       dados,
-      { etapa: data.etapa, pendenteTipo: data.pendenteTipo ?? null, pendenteId: data.pendenteId ?? null },
+      {
+        etapa: data.etapa,
+        pendenteTipo: data.pendenteTipo ?? null,
+        pendenteId: data.pendenteId ?? null,
+      },
       {
         texto: data.texto,
         tipo: data.tipo,
@@ -114,14 +117,21 @@ export const simularFluxo = createServerFn({ method: "POST" })
 
     const mensagens = saida.mensagens.map((m) => ({ texto: m.texto, botoes: m.botoes ?? [] }));
 
-    if (saida.naoEntendi) mensagens.unshift({ texto: "⚠️ O bot não entendeu esta resposta nesta etapa.", botoes: [] });
+    if (saida.naoEntendi)
+      mensagens.unshift({ texto: "⚠️ O bot não entendeu esta resposta nesta etapa.", botoes: [] });
     if (saida.acao) {
       const rotulo = ACOES_ETAPA.find((a) => a.valor === saida.acao)?.rotulo ?? saida.acao;
       mensagens.push({ texto: `➡️ Ação do sistema: ${rotulo}.`, botoes: [] });
     }
-    if (saida.transferir) mensagens.push({ texto: "➡️ A conversa iria para a fila de atendimento humano.", botoes: [] });
-    if (saida.pendente) mensagens.push({ texto: "➡️ A conversa ficaria como atendimento pendente.", botoes: [] });
-    if (saida.finalizar) mensagens.push({ texto: "➡️ O atendimento seria finalizado.", botoes: [] });
+    if (saida.transferir)
+      mensagens.push({
+        texto: "➡️ A conversa iria para a fila de atendimento humano.",
+        botoes: [],
+      });
+    if (saida.pendente)
+      mensagens.push({ texto: "➡️ A conversa ficaria como atendimento pendente.", botoes: [] });
+    if (saida.finalizar)
+      mensagens.push({ texto: "➡️ O atendimento seria finalizado.", botoes: [] });
 
     return { mensagens, estado: saida.estado, fim: saida.estado === null };
   });

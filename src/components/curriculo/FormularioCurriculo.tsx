@@ -164,7 +164,8 @@ export function FormularioCurriculo({
 
   const atualizarFormacao = (i: number, patch: Partial<FormacaoItem>) => {
     setFormacoes((a) => {
-      const base = i >= a.length ? [...a, { nome_curso: "", instituicao: "", ano: "", nivel: "" }] : [...a];
+      const base =
+        i >= a.length ? [...a, { nome_curso: "", instituicao: "", ano: "", nivel: "" }] : [...a];
       base[i] = { ...base[i]!, ...patch };
       return base;
     });
@@ -216,8 +217,12 @@ export function FormularioCurriculo({
         return {
           campos: {
             escolaridade: escolaridade || null,
-            curso_superior: escolaridadeTemCurso(escolaridade) ? capitalizarTexto(cursoSuperior) || null : null,
-            pos_graduacao_nome: escolaridadeTemPos(escolaridade) ? capitalizarTexto(posGraduacaoNome) || null : null,
+            curso_superior: escolaridadeTemCurso(escolaridade)
+              ? capitalizarTexto(cursoSuperior) || null
+              : null,
+            pos_graduacao_nome: escolaridadeTemPos(escolaridade)
+              ? capitalizarTexto(posGraduacaoNome) || null
+              : null,
           },
           formacoes: formacoes
             .filter((f) => (f.nivel ?? "").trim() || f.nome_curso.trim())
@@ -246,10 +251,10 @@ export function FormularioCurriculo({
           },
           experiencias: possuiExperiencia
             ? experiencias.map((exp) => ({
-            empresa: capitalizarTexto(exp.empresa ?? "") || null,
-            cargo: capitalizarTexto(exp.cargo ?? "") || null,
-            periodo: exp.periodo?.trim() || null,
-            atividades: exp.atividades?.trim() || null,
+                empresa: capitalizarTexto(exp.empresa ?? "") || null,
+                cargo: capitalizarTexto(exp.cargo ?? "") || null,
+                periodo: exp.periodo?.trim() || null,
+                atividades: exp.atividades?.trim() || null,
               }))
             : [],
         };
@@ -361,7 +366,11 @@ export function FormularioCurriculo({
               <div className="flex items-center gap-4">
                 <div className="flex h-[70px] w-[50px] shrink-0 items-center justify-center overflow-hidden rounded border bg-muted">
                   {foto ? (
-                    <img src={foto} alt="Foto do currículo" className="h-full w-full object-cover" />
+                    <img
+                      src={foto}
+                      alt="Foto do currículo"
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <span className="text-[10px] text-muted-foreground">3x4</span>
                   )}
@@ -397,11 +406,7 @@ export function FormularioCurriculo({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Label htmlFor="nome">Nome completo *</Label>
-                  <Input
-                    id="nome"
-                    value={nome}
-                    onChange={(e) => setNome(e.target.value)}
-                  />
+                  <Input id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
                 </div>
                 <div>
                   <Label htmlFor="tel">Telefone principal *</Label>
@@ -476,11 +481,7 @@ export function FormularioCurriculo({
                 </div>
                 <div>
                   <Label htmlFor="bairro">Bairro</Label>
-                  <Input
-                    id="bairro"
-                    value={bairro}
-                    onChange={(e) => setBairro(e.target.value)}
-                  />
+                  <Input id="bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} />
                 </div>
                 <div>
                   <Label htmlFor="cep">CEP</Label>
@@ -493,11 +494,7 @@ export function FormularioCurriculo({
                 </div>
                 <div>
                   <Label htmlFor="cidade">Cidade</Label>
-                  <Input
-                    id="cidade"
-                    value={cidade}
-                    onChange={(e) => setCidade(e.target.value)}
-                  />
+                  <Input id="cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} />
                 </div>
                 <div>
                   <Label htmlFor="uf">UF</Label>
@@ -561,7 +558,11 @@ export function FormularioCurriculo({
             <>
               <div>
                 <Label>Possui documentação completa?</Label>
-                <RadioGroup value={documentacao} onValueChange={setDocumentacao} className="mt-2 flex gap-6">
+                <RadioGroup
+                  value={documentacao}
+                  onValueChange={setDocumentacao}
+                  className="mt-2 flex gap-6"
+                >
                   <label className="flex items-center gap-2 text-sm">
                     <RadioGroupItem value="sim" /> Sim
                   </label>
@@ -686,7 +687,9 @@ export function FormularioCurriculo({
                             <Label>Instituição</Label>
                             <Input
                               value={f.instituicao ?? ""}
-                              onChange={(e) => atualizarFormacao(i, { instituicao: e.target.value })}
+                              onChange={(e) =>
+                                atualizarFormacao(i, { instituicao: e.target.value })
+                              }
                             />
                           </div>
                           <div>
@@ -762,7 +765,9 @@ export function FormularioCurriculo({
               <Button
                 variant="default"
                 size="sm"
-                onClick={() => setCursos((a) => [...a, { nome_curso: "", instituicao: "", ano: "" }])}
+                onClick={() =>
+                  setCursos((a) => [...a, { nome_curso: "", instituicao: "", ano: "" }])
+                }
               >
                 <Plus className="mr-1 h-4 w-4" /> Adicionar curso
               </Button>
@@ -806,90 +811,91 @@ export function FormularioCurriculo({
                 </div>
               )}
 
-              {possuiExperiencia && experiencias.map((exp, i) => (
-                <div
-                  key={i}
-                  className={`space-y-2 rounded-lg border p-3 ${
-                    exp.empresa?.trim() ? "border-primary/40 bg-primary/5" : ""
-                  }`}
-                >
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    <div>
-                      <Label>Empresa</Label>
-                      <Input
-                        value={exp.empresa ?? ""}
-                        onChange={(e) =>
-                          setExperiencias((a) =>
-                            a.map((v, j) => (j === i ? { ...v, empresa: e.target.value } : v)),
-                          )
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label>Cargo</Label>
-                      <Input
-                        value={exp.cargo ?? ""}
-                        onChange={(e) =>
-                          setExperiencias((a) =>
-                            a.map((v, j) => (j === i ? { ...v, cargo: e.target.value } : v)),
-                          )
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label>Período</Label>
-                      <Input
-                        value={exp.periodo ?? ""}
-                        placeholder="Ex.: 01/2022 a 05/2024 ou 2 anos"
-                        onChange={(e) =>
-                          setExperiencias((a) =>
-                            a.map((v, j) => (j === i ? { ...v, periodo: e.target.value } : v)),
-                          )
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Label className="mb-0">Informar atividades?</Label>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={mostrarAtividades(i) ? "default" : "outline"}
-                        onClick={() => definirAtividades(i, true)}
-                      >
-                        Sim
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={!mostrarAtividades(i) ? "default" : "outline"}
-                        onClick={() => definirAtividades(i, false)}
-                      >
-                        Não
-                      </Button>
-                    </div>
-                    {mostrarAtividades(i) && (
-                      <Textarea
-                        rows={3}
-                        value={exp.atividades ?? ""}
-                        onChange={(e) =>
-                          setExperiencias((a) =>
-                            a.map((v, j) => (j === i ? { ...v, atividades: e.target.value } : v)),
-                          )
-                        }
-                      />
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setExperiencias((a) => a.filter((_, j) => j !== i))}
+              {possuiExperiencia &&
+                experiencias.map((exp, i) => (
+                  <div
+                    key={i}
+                    className={`space-y-2 rounded-lg border p-3 ${
+                      exp.empresa?.trim() ? "border-primary/40 bg-primary/5" : ""
+                    }`}
                   >
-                    <Trash2 className="mr-1 h-4 w-4" /> Remover
-                  </Button>
-                </div>
-              ))}
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      <div>
+                        <Label>Empresa</Label>
+                        <Input
+                          value={exp.empresa ?? ""}
+                          onChange={(e) =>
+                            setExperiencias((a) =>
+                              a.map((v, j) => (j === i ? { ...v, empresa: e.target.value } : v)),
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Cargo</Label>
+                        <Input
+                          value={exp.cargo ?? ""}
+                          onChange={(e) =>
+                            setExperiencias((a) =>
+                              a.map((v, j) => (j === i ? { ...v, cargo: e.target.value } : v)),
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Período</Label>
+                        <Input
+                          value={exp.periodo ?? ""}
+                          placeholder="Ex.: 01/2022 a 05/2024 ou 2 anos"
+                          onChange={(e) =>
+                            setExperiencias((a) =>
+                              a.map((v, j) => (j === i ? { ...v, periodo: e.target.value } : v)),
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Label className="mb-0">Informar atividades?</Label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={mostrarAtividades(i) ? "default" : "outline"}
+                          onClick={() => definirAtividades(i, true)}
+                        >
+                          Sim
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={!mostrarAtividades(i) ? "default" : "outline"}
+                          onClick={() => definirAtividades(i, false)}
+                        >
+                          Não
+                        </Button>
+                      </div>
+                      {mostrarAtividades(i) && (
+                        <Textarea
+                          rows={3}
+                          value={exp.atividades ?? ""}
+                          onChange={(e) =>
+                            setExperiencias((a) =>
+                              a.map((v, j) => (j === i ? { ...v, atividades: e.target.value } : v)),
+                            )
+                          }
+                        />
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setExperiencias((a) => a.filter((_, j) => j !== i))}
+                    >
+                      <Trash2 className="mr-1 h-4 w-4" /> Remover
+                    </Button>
+                  </div>
+                ))}
               {possuiExperiencia && (
                 <Button
                   variant="default"
@@ -912,7 +918,11 @@ export function FormularioCurriculo({
 
           {etapa === 6 && (
             <>
-              <RadioGroup value={objetivoTipo} onValueChange={setObjetivoTipo} className="space-y-2">
+              <RadioGroup
+                value={objetivoTipo}
+                onValueChange={setObjetivoTipo}
+                className="space-y-2"
+              >
                 <label className="flex items-center gap-2 text-sm">
                   <RadioGroupItem value="sugerido" /> Escolher objetivo sugerido
                 </label>
@@ -965,10 +975,20 @@ export function FormularioCurriculo({
               ))}
 
               {habilidades
-                .filter((h) => !catalogo.some((c2) => c2.descricao.toLowerCase() === h.descricao.toLowerCase()))
+                .filter(
+                  (h) =>
+                    !catalogo.some(
+                      (c2) => c2.descricao.toLowerCase() === h.descricao.toLowerCase(),
+                    ),
+                )
                 .map((h, i) => (
                   <label key={`extra-${i}`} className="flex items-start gap-3 text-sm">
-                    <Checkbox checked onCheckedChange={() => alternarHabilidade({ id: null, descricao: h.descricao })} />
+                    <Checkbox
+                      checked
+                      onCheckedChange={() =>
+                        alternarHabilidade({ id: null, descricao: h.descricao })
+                      }
+                    />
                     <span>{h.descricao}</span>
                   </label>
                 ))}
@@ -1042,7 +1062,9 @@ export function FormularioCurriculo({
                 </p>
                 <p className="text-muted-foreground">{email || "-"}</p>
                 <p className="text-muted-foreground">
-                  {[nascimento ? dataBR(nascimento) : "", estadoCivil].filter(Boolean).join(" • ") || "-"}
+                  {[nascimento ? dataBR(nascimento) : "", estadoCivil]
+                    .filter(Boolean)
+                    .join(" • ") || "-"}
                 </p>
                 {(endereco || bairro || cidade || cep) && (
                   <p className="text-muted-foreground">
@@ -1055,7 +1077,11 @@ export function FormularioCurriculo({
 
               <ResumoLinha titulo="Documentação" etapa={2} ir={irParaEtapa}>
                 <p>
-                  {documentacao === "" ? "Não informado" : documentacao === "sim" ? "Documentação completa" : "Documentação incompleta"}
+                  {documentacao === ""
+                    ? "Não informado"
+                    : documentacao === "sim"
+                      ? "Documentação completa"
+                      : "Documentação incompleta"}
                 </p>
                 <p className="text-muted-foreground">
                   {habilitacao ? `Habilitação categoria ${categoria || "-"}` : "Sem habilitação"}
@@ -1067,10 +1093,11 @@ export function FormularioCurriculo({
                 {escolaridadeTemPos(escolaridade) && posGraduacaoNome && (
                   <p className="text-muted-foreground">{posGraduacaoNome}</p>
                 )}
-                {escolaridadeTemCurso(escolaridade) && !escolaridadeTemPos(escolaridade) && cursoSuperior && (
-                  <p className="text-muted-foreground">{cursoSuperior}</p>
-                )}
-                {formacoes.filter((f) => (f.nivel ?? "").trim() || f.nome_curso.trim()).length > 0 && (
+                {escolaridadeTemCurso(escolaridade) &&
+                  !escolaridadeTemPos(escolaridade) &&
+                  cursoSuperior && <p className="text-muted-foreground">{cursoSuperior}</p>}
+                {formacoes.filter((f) => (f.nivel ?? "").trim() || f.nome_curso.trim()).length >
+                  0 && (
                   <div className="mt-1 space-y-0.5">
                     {formacoes
                       .filter((f) => (f.nivel ?? "").trim() || f.nome_curso.trim())
@@ -1129,7 +1156,9 @@ export function FormularioCurriculo({
               {modo === "admin" && (
                 <div className="flex items-center gap-3 border-t pt-4">
                   <Switch id="exibir-data" checked={exibirData} onCheckedChange={setExibirData} />
-                  <Label htmlFor="exibir-data">Exibir data da última atualização no currículo</Label>
+                  <Label htmlFor="exibir-data">
+                    Exibir data da última atualização no currículo
+                  </Label>
                 </div>
               )}
             </div>

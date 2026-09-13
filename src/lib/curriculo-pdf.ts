@@ -68,7 +68,6 @@ function renderizar(
   escala: number,
   folga: Folga,
 ): RenderResult {
-
   const c = dados.curriculo;
   let y = MARGEM;
   let secoes = 0;
@@ -78,7 +77,13 @@ function renderizar(
     doc.setFontSize(tamanho * escala);
   };
 
-  const texto = (linha: string, x: number, tamanho: number, negrito = false, cor: [number, number, number] = TEXTO) => {
+  const texto = (
+    linha: string,
+    x: number,
+    tamanho: number,
+    negrito = false,
+    cor: [number, number, number] = TEXTO,
+  ) => {
     setFont(negrito, tamanho);
     doc.setTextColor(...cor);
     doc.text(linha, x, y);
@@ -112,7 +117,12 @@ function renderizar(
   };
 
   const centro = largura / 2;
-  const centrado = (linha: string, tamanho: number, negrito = false, cor: [number, number, number] = TEXTO) => {
+  const centrado = (
+    linha: string,
+    tamanho: number,
+    negrito = false,
+    cor: [number, number, number] = TEXTO,
+  ) => {
     setFont(negrito, tamanho);
     doc.setTextColor(...cor);
     doc.text(linha, centro, y, { align: "center" });
@@ -135,7 +145,9 @@ function renderizar(
   y += 4 * escala + folga.cabecalho;
 
   const telefones = [
-    c.telefone_principal ? telefoneComDescricao(c.telefone_principal, c.telefone_principal_descricao) : "",
+    c.telefone_principal
+      ? telefoneComDescricao(c.telefone_principal, c.telefone_principal_descricao)
+      : "",
     ...dados.telefones.map((t) => telefoneComDescricao(t.telefone, t.tipo)),
   ].filter(Boolean);
   if (telefones.length) centrado(telefones.join("  •  "), 12);
@@ -154,7 +166,6 @@ function renderizar(
     }
     if (y < topoFaixa + fotoA + 8) y = topoFaixa + fotoA + 8;
   }
-
 
   // ===== Dados pessoais =====
   const pessoais: string[] = [];
@@ -233,7 +244,10 @@ function renderizar(
         if (exp.atividades) {
           setFont(false, 10);
           doc.setTextColor(...TEXTO);
-          for (const linha of doc.splitTextToSize(`Atividade(s): ${exp.atividades}`, larg) as string[]) {
+          for (const linha of doc.splitTextToSize(
+            `Atividade(s): ${exp.atividades}`,
+            larg,
+          ) as string[]) {
             doc.text(linha, x, yi);
             yi += (10 + 4) * escala;
           }
@@ -283,7 +297,6 @@ function renderizar(
     paragrafo(`OBS.: ${obsHabilidades}`, MARGEM, util, 12, true, NAVY);
   }
 
-
   if (c.exibir_data_atualizacao) {
     y += 16 * escala + folga.secao;
     setFont(false, 9);
@@ -294,7 +307,11 @@ function renderizar(
   return { total: y - MARGEM, secoes };
 }
 
-function formatarCurso(curso: { nome_curso: string; instituicao: string | null; ano: string | null }) {
+function formatarCurso(curso: {
+  nome_curso: string;
+  instituicao: string | null;
+  ano: string | null;
+}) {
   const partes = [curso.nome_curso];
   if (curso.instituicao) partes.push(curso.instituicao);
   if (curso.ano) partes.push(curso.ano);
@@ -350,9 +367,7 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
     return;
   }
 
-  const estilos = Array.from(
-    document.querySelectorAll('link[rel="stylesheet"], style'),
-  )
+  const estilos = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
     .map((n) => n.outerHTML)
     .join("\n");
 
@@ -449,7 +464,6 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
     }
   };
 
-
   const disparar = () => {
     ajustarEscala();
     frame.contentWindow?.focus();
@@ -465,4 +479,3 @@ export function imprimirCurriculo(elemento: HTMLElement | null) {
     window.setTimeout(disparar, 400);
   }
 }
-

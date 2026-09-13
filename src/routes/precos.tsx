@@ -21,7 +21,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { AcabamentosTabela } from "@/components/AcabamentosTabela";
 import { PrecosExcel } from "@/components/PrecosExcel";
@@ -41,10 +47,9 @@ import {
   type CategoriaMaterial,
 } from "@/lib/calc";
 
-
 export const Route = createFileRoute("/precos")({
   component: () => (
-    <AppLayout>
+    <AppLayout permissao="precos.visualizar">
       <Precos />
     </AppLayout>
   ),
@@ -122,7 +127,9 @@ function Precos() {
       })),
     );
 
-    setFaixasTexto(Object.fromEntries(materiais.map((m) => [m.id, faixasParaTexto(m.faixas ?? [])])));
+    setFaixasTexto(
+      Object.fromEntries(materiais.map((m) => [m.id, faixasParaTexto(m.faixas ?? [])])),
+    );
 
     setFaixasArquivosTexto(
       Object.fromEntries(materiais.map((m) => [m.id, faixasParaTexto(m.faixas_por_arquivo ?? [])])),
@@ -134,7 +141,6 @@ function Precos() {
       ),
     );
   }, [materiais]);
-
 
   function atualizar(id: string, campo: keyof Material, valor: unknown) {
     setLinhas((atual) => atual.map((m) => (m.id === id ? { ...m, [campo]: valor } : m)));
@@ -187,9 +193,6 @@ function Precos() {
         formato: m.formato ?? "A4",
 
         perfil_impressao_id: m.perfil_impressao_id ?? null,
-
-
-
 
         ativo: m.ativo,
         ordem: m.ordem,
@@ -313,9 +316,9 @@ function Precos() {
         </TabsList>
         <TabsContent value="materiais">
           <p className="mb-4 text-xs text-muted-foreground">
-            Faixas: uma por linha no formato <span className="font-mono">quantidade = valor</span> (ex.:{" "}
-            <span className="font-mono">500 = 0,08</span>). Pode colar vários valores de uma vez. A partir da quantidade
-            informada, o preço unitário passa a ser o da faixa.
+            Faixas: uma por linha no formato <span className="font-mono">quantidade = valor</span>{" "}
+            (ex.: <span className="font-mono">500 = 0,08</span>). Pode colar vários valores de uma
+            vez. A partir da quantidade informada, o preço unitário passa a ser o da faixa.
           </p>
           <div className="mb-4 flex flex-wrap gap-2">
             <Button variant="outline" onClick={adicionar}>
@@ -358,7 +361,10 @@ function Precos() {
                     {linhas.map((m, i) => (
                       <tr key={m.id} className="border-b border-border">
                         <td className="px-2 py-2">
-                          <Input value={m.nome} onChange={(e) => atualizar(m.id, "nome", e.target.value)} />
+                          <Input
+                            value={m.nome}
+                            onChange={(e) => atualizar(m.id, "nome", e.target.value)}
+                          />
                         </td>
                         <td className="px-2 py-2">
                           <Input
@@ -388,7 +394,9 @@ function Precos() {
                         <td className="px-2 py-2">
                           <Select
                             value={m.tipo_impressao ?? "simples"}
-                            onValueChange={(v) => atualizar(m.id, "tipo_impressao", v as TipoServico)}
+                            onValueChange={(v) =>
+                              atualizar(m.id, "tipo_impressao", v as TipoServico)
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -418,7 +426,10 @@ function Precos() {
                           </Select>
                         </td>
                         <td className="px-2 py-2">
-                          <Switch checked={m.ativo} onCheckedChange={(v) => atualizar(m.id, "ativo", v)} />
+                          <Switch
+                            checked={m.ativo}
+                            onCheckedChange={(v) => atualizar(m.id, "ativo", v)}
+                          />
                         </td>
                         <td className="px-2 py-2">
                           <div className="flex items-center gap-1">
@@ -474,7 +485,10 @@ function Precos() {
                         onChange={(e) =>
                           setAreas({
                             ...areas,
-                            [f.valor]: { ...areas[f.valor], largura: Math.max(1, Number(e.target.value) || 0) },
+                            [f.valor]: {
+                              ...areas[f.valor],
+                              largura: Math.max(1, Number(e.target.value) || 0),
+                            },
                           })
                         }
                       />
@@ -490,7 +504,10 @@ function Precos() {
                         onChange={(e) =>
                           setAreas({
                             ...areas,
-                            [f.valor]: { ...areas[f.valor], altura: Math.max(1, Number(e.target.value) || 0) },
+                            [f.valor]: {
+                              ...areas[f.valor],
+                              altura: Math.max(1, Number(e.target.value) || 0),
+                            },
                           })
                         }
                       />
@@ -499,7 +516,8 @@ function Precos() {
                 ))}
               <div>
                 <Button onClick={salvarAreas} disabled={salvandoAreas || !areas}>
-                  <Save className="h-4 w-4" /> {salvandoAreas ? "Salvando..." : "Salvar Área de Impressão"}
+                  <Save className="h-4 w-4" />{" "}
+                  {salvandoAreas ? "Salvando..." : "Salvar Área de Impressão"}
                 </Button>
               </div>
             </CardContent>
@@ -600,9 +618,7 @@ function Precos() {
                     <Textarea
                       rows={4}
                       value={faixasTexto[m.id] ?? ""}
-                      onChange={(e) =>
-                        setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))
-                      }
+                      onChange={(e) => setFaixasTexto((f) => ({ ...f, [m.id]: e.target.value }))}
                       className="font-mono text-xs"
                     />
                   </div>

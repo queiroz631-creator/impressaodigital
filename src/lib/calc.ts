@@ -27,7 +27,6 @@ export const CATEGORIAS_MATERIAL: { valor: CategoriaMaterial; rotulo: string }[]
   { valor: "copia", rotulo: "Cópia" },
 ];
 
-
 export const rotuloTipoServico: Record<TipoServicoAcabamento, string> = {
   simples: "Impressão Simples",
   especial: "Impressão Especial",
@@ -53,7 +52,6 @@ export interface Material {
 
   /** Faixas de preço por quantidade de CÓPIAS ADICIONAIS. */
   faixas_por_copia_adicional: FaixaPreco[];
-
 
   /**
    * Quantidade inicial de arquivos que utiliza o preço fixo.
@@ -135,7 +133,6 @@ export function precoPorQuantidade(material: Material, quantidade: number) {
   return preco;
 }
 
-
 /**
  * Retorna o preço aplicável aos arquivos excedentes.
  *
@@ -210,8 +207,6 @@ export function precoPorCopiasAdicionais(
 
   return preco;
 }
-
-
 
 /**
  * Calcula o valor dos arquivos considerando:
@@ -422,7 +417,6 @@ export interface EntradaCalculo {
    * somente os da categoria "impressao".
    */
   copiaManual?: boolean;
-
 }
 
 /**
@@ -437,91 +431,91 @@ export interface EntradaCalculo {
  * valor das cópias adicionais
  */
 export function calcularLinhas(materiais: Material[], entrada: EntradaCalculo): LinhaCalculo[] {
-  return materiais
-    .filter((m) => m.ativo)
+  return (
+    materiais
+      .filter((m) => m.ativo)
 
-    .filter((m) => !entrada.tipoServico || (m.tipo_impressao ?? "simples") === entrada.tipoServico)
+      .filter(
+        (m) => !entrada.tipoServico || (m.tipo_impressao ?? "simples") === entrada.tipoServico,
+      )
 
-    .filter((m) => !entrada.formato || (m.formato ?? "A4") === entrada.formato)
-
-    /**
-     * Cópia manual ativa: somente materiais da categoria "copia".
-     * Cópia manual inativa: somente materiais da categoria "impressao".
-     */
-    .filter(
-      (m) => (m.categoria ?? "impressao") === (entrada.copiaManual ? "copia" : "impressao"),
-    )
-
-    .sort((a, b) => a.ordem - b.ordem)
-
-    .map((material) => {
-      const paginasAdicionais = Math.max(0, Number(entrada.paginasAdicionais) || 0);
-
-      const copiasAdicionais = Math.max(0, Number(entrada.copiasAdicionais) || 0);
-
-      const quantidadeArquivos = Math.max(0, Number(entrada.arquivos) || 0);
+      .filter((m) => !entrada.formato || (m.formato ?? "A4") === entrada.formato)
 
       /**
-       * Somente as páginas adicionais e cópias
-       * adicionais determinam a faixa de preço.
+       * Cópia manual ativa: somente materiais da categoria "copia".
+       * Cópia manual inativa: somente materiais da categoria "impressao".
        */
-      const quantidadeParaFaixa = paginasAdicionais + copiasAdicionais;
+      .filter((m) => (m.categoria ?? "impressao") === (entrada.copiaManual ? "copia" : "impressao"))
 
-      /**
-       * Preço das páginas.
-       */
-      const preco = precoPorQuantidade(material, quantidadeParaFaixa);
+      .sort((a, b) => a.ordem - b.ordem)
 
-      /**
-       * Valor das páginas adicionais.
-       */
-      const totalPaginasAdicionais = paginasAdicionais * preco;
+      .map((material) => {
+        const paginasAdicionais = Math.max(0, Number(entrada.paginasAdicionais) || 0);
 
-      /**
-       * Valor das cópias adicionais.
-       *
-       * Usa as faixas por cópias adicionais quando cadastradas
-       * (baseadas somente nas cópias adicionais); caso contrário
-       * mantém o preço unitário de página.
-       */
-      const precoCopia = precoPorCopiasAdicionais(material, copiasAdicionais, preco);
+        const copiasAdicionais = Math.max(0, Number(entrada.copiasAdicionais) || 0);
 
-      const totalCopiasAdicionais = copiasAdicionais * precoCopia;
+        const quantidadeArquivos = Math.max(0, Number(entrada.arquivos) || 0);
 
+        /**
+         * Somente as páginas adicionais e cópias
+         * adicionais determinam a faixa de preço.
+         */
+        const quantidadeParaFaixa = paginasAdicionais + copiasAdicionais;
 
-      /**
-       * ================================
-       * VALOR DOS ARQUIVOS
-       * ================================
-       *
-       * Utiliza quantidade fixa + excedentes.
-       */
-      const totalArquivos = calcularValorArquivos(material, quantidadeArquivos);
+        /**
+         * Preço das páginas.
+         */
+        const preco = precoPorQuantidade(material, quantidadeParaFaixa);
 
+        /**
+         * Valor das páginas adicionais.
+         */
+        const totalPaginasAdicionais = paginasAdicionais * preco;
 
-      /**
-       * TOTAL DO MATERIAL
-       */
-      const total = totalArquivos + totalPaginasAdicionais + totalCopiasAdicionais;
+        /**
+         * Valor das cópias adicionais.
+         *
+         * Usa as faixas por cópias adicionais quando cadastradas
+         * (baseadas somente nas cópias adicionais); caso contrário
+         * mantém o preço unitário de página.
+         */
+        const precoCopia = precoPorCopiasAdicionais(material, copiasAdicionais, preco);
 
-      return {
-        material,
+        const totalCopiasAdicionais = copiasAdicionais * precoCopia;
 
-        valorUnitario: preco,
+        /**
+         * ================================
+         * VALOR DOS ARQUIVOS
+         * ================================
+         *
+         * Utiliza quantidade fixa + excedentes.
+         */
+        const totalArquivos = calcularValorArquivos(material, quantidadeArquivos);
 
-        paginas: paginasAdicionais,
+        /**
+         * TOTAL DO MATERIAL
+         */
+        const total = totalArquivos + totalPaginasAdicionais + totalCopiasAdicionais;
 
-        totalPaginas: quantidadeParaFaixa,
+        return {
+          material,
 
-        totalArquivos,
+          valorUnitario: preco,
 
-        totalPaginasAdicionais,
+          paginas: paginasAdicionais,
 
-        totalCopiasAdicionais,
+          totalPaginas: quantidadeParaFaixa,
 
-        total,
-      };
-    });
+          totalArquivos,
+
+          totalPaginasAdicionais,
+
+          totalCopiasAdicionais,
+
+          total,
+        };
+      })
+  );
 }
 
 export function resumoLinhas(linhas: LinhaCalculo[]) {
@@ -651,7 +645,8 @@ export function normalizarAreasImpressao(valor: unknown): AreasImpressao {
   };
   if (valor && typeof valor === "object") {
     for (const formato of ["A3", "A4", "A5"] as FormatoPapel[]) {
-      const entrada = (valor as Record<string, unknown>)[formato] as Record<string, unknown> | undefined;
+      const entrada = (valor as Record<string, unknown>)[formato] as
+        Record<string, unknown> | undefined;
       if (entrada) {
         const largura = Number(entrada["largura"]);
         const altura = Number(entrada["altura"]);
@@ -668,7 +663,12 @@ export function normalizarAreasImpressao(valor: unknown): AreasImpressao {
  * Espaçamento de 1 mm entre peças (entra na conta de cada peça).
  * Testa também a peça girada 90° e usa o melhor aproveitamento.
  */
-export function tagsPorFolha(larguraTag: number, alturaTag: number, area: AreaImpressao, espacamento = 1) {
+export function tagsPorFolha(
+  larguraTag: number,
+  alturaTag: number,
+  area: AreaImpressao,
+  espacamento = 1,
+) {
   const l = Number(larguraTag) || 0;
   const a = Number(alturaTag) || 0;
   if (l <= 0 || a <= 0) return 0;
