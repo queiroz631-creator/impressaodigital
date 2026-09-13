@@ -57,19 +57,28 @@ export interface RespostaZapi {
  * Mostra o indicador "digitando..." no WhatsApp do cliente por `duracaoMs`
  * milissegundos. Falha silenciosa: nunca interrompe o envio da mensagem.
  */
-export async function enviarPresencaDigitando(telefone: string, duracaoMs: number): Promise<void> {
+export async function enviarPresencaDigitando(
+  telefone: string,
+  duracaoMs: number,
+  conexaoId?: string | null,
+): Promise<void> {
   const delay = Math.min(15000, Math.max(500, Math.round(duracaoMs)));
   await chamarZapi("send-presence", {
     metodo: "POST",
     corpo: { phone: telefone, presence: "composing", delay },
+    conexaoId,
   }).catch(() => undefined);
 }
 
 export async function chamarZapi(
   caminho: string,
-  opcoes: { metodo?: "GET" | "POST" | "PUT" | "DELETE"; corpo?: unknown } = {},
+  opcoes: {
+    metodo?: "GET" | "POST" | "PUT" | "DELETE";
+    corpo?: unknown;
+    conexaoId?: string | null;
+  } = {},
 ): Promise<RespostaZapi> {
-  const cred = lerCredenciaisZapi();
+  const cred = await credenciaisDaConexao(opcoes.conexaoId);
   if (!cred) {
     return { ok: false, status: 0, dados: null, erro: "Credenciais da Z-API não configuradas." };
   }
