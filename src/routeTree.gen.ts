@@ -19,6 +19,7 @@ import { Route as MelhoriasRouteImport } from './routes/melhorias'
 import { Route as MensagensRapidasRouteImport } from './routes/mensagens-rapidas'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as PrecosRouteImport } from './routes/precos'
+import { Route as UsuariosRouteImport } from './routes/usuarios'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
 import { Route as CurriculosIndexRouteImport } from './routes/curriculos.index'
 import { Route as CurriculosIdRouteImport } from './routes/curriculos.$id'
@@ -78,6 +79,11 @@ const OrcamentosRoute = OrcamentosRouteImport.update({
 const PrecosRoute = PrecosRouteImport.update({
   id: '/precos',
   path: '/precos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsuariosRoute = UsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WhatsappRoute = WhatsappRouteImport.update({
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/mensagens-rapidas': typeof MensagensRapidasRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
+  '/usuarios': typeof UsuariosRoute
   '/whatsapp': typeof WhatsappRoute
   '/curriculos/$id': typeof CurriculosIdRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/mensagens-rapidas': typeof MensagensRapidasRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
+  '/usuarios': typeof UsuariosRoute
   '/whatsapp': typeof WhatsappRoute
   '/curriculos/$id': typeof CurriculosIdRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/mensagens-rapidas': typeof MensagensRapidasRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
+  '/usuarios': typeof UsuariosRoute
   '/whatsapp': typeof WhatsappRoute
   '/curriculos/$id': typeof CurriculosIdRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/mensagens-rapidas'
     | '/orcamentos'
     | '/precos'
+    | '/usuarios'
     | '/whatsapp'
     | '/curriculos/$id'
     | '/orcamento/$token'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/mensagens-rapidas'
     | '/orcamentos'
     | '/precos'
+    | '/usuarios'
     | '/whatsapp'
     | '/curriculos/$id'
     | '/orcamento/$token'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/mensagens-rapidas'
     | '/orcamentos'
     | '/precos'
+    | '/usuarios'
     | '/whatsapp'
     | '/curriculos/$id'
     | '/orcamento/$token'
@@ -280,6 +292,7 @@ export interface RootRouteChildren {
   MensagensRapidasRoute: typeof MensagensRapidasRoute
   OrcamentosRoute: typeof OrcamentosRoute
   PrecosRoute: typeof PrecosRoute
+  UsuariosRoute: typeof UsuariosRoute
   WhatsappRoute: typeof WhatsappRoute
   CurriculosIdRoute: typeof CurriculosIdRoute
   OrcamentoTokenRoute: typeof OrcamentoTokenRoute
@@ -362,6 +375,13 @@ declare module '@tanstack/react-router' {
       path: '/precos'
       fullPath: '/precos'
       preLoaderRoute: typeof PrecosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/usuarios': {
+      id: '/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof UsuariosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/whatsapp': {
@@ -448,6 +468,7 @@ const rootRouteChildren: RootRouteChildren = {
   MensagensRapidasRoute: MensagensRapidasRoute,
   OrcamentosRoute: OrcamentosRoute,
   PrecosRoute: PrecosRoute,
+  UsuariosRoute: UsuariosRoute,
   WhatsappRoute: WhatsappRoute,
   CurriculosIdRoute: CurriculosIdRoute,
   OrcamentoTokenRoute: OrcamentoTokenRoute,
