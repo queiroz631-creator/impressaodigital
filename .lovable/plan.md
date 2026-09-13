@@ -58,13 +58,14 @@ Trocar perfil de usuário, ativar/desativar usuário, criar/editar/desativar per
 
 ## Detalhes técnicos
 
-- Migração nova em `supabase/migrations/`, idempotente (`if not exists`, `insert ... where not exists`, `update` por mapa de chaves). Nada destrutivo; migrações antigas intactas.
+- Migração nova em `supabase/migrations/`, idempotente (`if not exists`, `insert ... where not exists`, `update` por mapa de chaves). Nada destrutivo; migrações antigas intactas. Antes de aplicar, conferência da estrutura e das regras atuais: nenhuma regra existente ainda necessária será apagada ou recriada sem motivo.
 - Gatilho `profiles_bloquear_escalada` (BEFORE UPDATE, security definer) barra mudança de `perfil_id`/`ativo` por não administrador; `profiles_update_own` continua para o próprio nome.
+- `tem_permissao` já existe e será mantida (administrador por `user_roles` sempre verdadeiro; senão a chave no perfil, exigindo usuário e perfil ativos); ajuste apenas se as chaves novas exigirem.
 - Novos arquivos: `src/routes/usuarios.tsx`, `src/components/usuarios/UsuariosPainel.tsx`, `src/components/usuarios/PerfisPainel.tsx`, `src/components/PermissaoGuard.tsx`.
 - Modificados: `src/lib/modulos.ts` (permissões sensíveis + item Usuários ativo), `src/hooks/usePermissoes.ts` (consulta real), `src/components/AppLayout.tsx` (apenas aceitar a chave da página e envolver o conteúdo no guard), e cada rota passa a declarar sua chave — uma linha por rota, sem tocar em regra de negócio.
 - Sem alterações em WhatsApp, Z-API, Gemini, Storage, calculadora, orçamentos, clientes, currículos, preços (além do controle de acesso), `.env` ou segredos.
-- Ao final: typecheck, lint e build; testes no preview como administrador; nenhum commit ou push.
+- Ao final: typecheck, lint e build; validação no preview com o administrador atual; nenhum commit ou push.
 
-## Ponto a confirmar antes da próxima etapa
+## Teste com segundo usuário
 
-Para testar de verdade um Atendente é preciso um segundo usuário. Posso validar administrador e as regras do banco; se você quiser, crio um usuário de teste e faço a verificação completa do menu restrito e do bloqueio por URL.
+Nenhum usuário novo será criado nesta etapa. A validação será feita com o administrador atual e com as regras do banco; o teste de Atendente fica para um passo separado, quando você quiser.
