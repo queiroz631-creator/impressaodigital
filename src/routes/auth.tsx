@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import logo from "@/assets/logo-impressao.png";
 
 export const Route = createFileRoute("/auth")({
@@ -34,7 +33,6 @@ function AuthPage() {
   const { user, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [nome, setNome] = useState("");
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
@@ -51,23 +49,6 @@ function AuthPage() {
       return;
     }
     toast.success("Bem-vindo de volta!");
-    navigate({ to: "/" });
-  }
-
-  async function cadastrar(e: React.FormEvent) {
-    e.preventDefault();
-    setEnviando(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password: senha,
-      options: { data: { nome }, emailRedirectTo: window.location.origin },
-    });
-    setEnviando(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Conta criada com sucesso.");
     navigate({ to: "/" });
   }
 
