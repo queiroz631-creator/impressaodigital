@@ -308,7 +308,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
             .from("whatsapp_conversas")
             .select(colunasConversa)
             .eq("chat_lid", lidNormalizado ?? "")
-            .eq("conexao_id", conexaoId ?? "")
+            .eq("conexao_id", conexaoId)
             .maybeSingle();
           if (!data) return Response.json({ ok: true, ignorado: true, motivo: "lid_sem_conversa" });
           conversaAberta = data as ConversaBase;
@@ -341,7 +341,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
               .from("whatsapp_conversas")
               .select(colunasConversa)
               .eq("telefone", telefone)
-              .eq("conexao_id", conexaoId ?? "")
+              .eq("conexao_id", conexaoId)
               .maybeSingle();
 
             if (data) {
