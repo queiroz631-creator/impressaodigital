@@ -2142,7 +2142,7 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
   const limite = new Date(agora.getTime() - min1 * 60_000).toISOString();
 
   const CAMPOS =
-    "id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, inatividade_avisada, ultima_mensagem_em, finalizacao_em";
+    "id, telefone, nome_contato, cliente_id, status, etapa, contexto, pedido_id, saudacao_em, conexao_id, inatividade_avisada, ultima_mensagem_em, finalizacao_em";
 
   // Nada reconhecido: depois do tempo configurado, o bot inicia o fluxo inicial.
   const minFallback = Math.max(0, Number(dados.config.fallback_inicial_minutos ?? 0));
