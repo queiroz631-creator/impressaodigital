@@ -44,7 +44,11 @@ Todas derivadas de `src/lib/modulos.ts`, sem lista paralela. O catálogo ganha:
 
 ### 4. Proteção de acesso direto por URL
 
-Um único componente de proteção envolvendo o conteúdo dentro do `AppLayout`: cada página informa a chave que exige e, sem permissão, aparece uma tela de "Acesso negado" com botão para o Painel. Sem duplicar lógica página por página. Usuário inativo recebe a mesma tela em qualquer página protegida.
+Um único componente de proteção envolvendo o conteúdo dentro do `AppLayout`: cada página informa a chave que exige e, sem permissão, aparece uma tela de "Acesso negado" com botão para o Painel. Sem duplicar lógica página por página. Usuário inativo recebe a mesma tela em qualquer página protegida. O Painel não exige permissão.
+
+### 4b. Segurança no banco (não só na tela)
+
+Trocar perfil de usuário, ativar/desativar usuário, criar/editar/desativar perfil e alterar permissões de perfil só funcionam para administrador confirmado no banco. Esconder botões é apenas conveniência: quem tentar pela API direta recebe erro. As regras atuais de administrador já cobrem isso e serão mantidas; o gatilho fecha a brecha da atualização da própria linha.
 
 ### 5. Nova página Usuários (`/usuarios`), só para administrador
 
