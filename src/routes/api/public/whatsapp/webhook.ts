@@ -83,15 +83,40 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        const { data: config } = await supabaseAdmin
-          .from("whatsapp_config")
-          .select("id, webhook_token")
-          .limit(1)
+        // O token identifica a conexão: cada número tem o seu endereço de
+        // webhook. Conexões antigas continuam válidas pelo token da config.
+        const { data: conexao } = await supabaseAdmin
+          .from("whatsapp_conexoes")
+          .select("id, ativo")
+          .eq("webhook_token", token)
           .maybeSingle();
 
-        if (!config?.webhook_token || config.webhook_token !== token) {
-          return new Response("Token inválido", { status: 401 });
+        let conexaoId: string | null = conexao?.id ?? null;
+
+        if (!conexaoId) {
+          const { data: config } = await supabaseAdmin
+            .from("whatsapp_config")
+            .select("id, webhook_token, conexao_id")
+            .eq("webhook_token", token)
+            .limit(1)
+            .maybeSingle();
+          if (!config?.webhook_token) return new Response("Token inválido", { status: 401 });
+          conexaoId = (config as { conexao_id?: string | null }).conexao_id ?? null;
+        } else if (conexao && conexao.ativo === false) {
+          return Response.json({ ok: true, ignorado: true, motivo: "conexao_inativa" });
         }
+
+        // Token antigo sem conexão vinculada: cai na primeira conexão cadastrada.
+        if (!conexaoId) {
+          const { data: primeira } = await supabaseAdmin
+            .from("whatsapp_conexoes")
+            .select("id")
+            .order("ordem")
+            .limit(1)
+            .maybeSingle();
+          conexaoId = primeira?.id ?? null;
+        }
+        if (!conexaoId) return new Response("Nenhuma conexão cadastrada", { status: 409 });
 
         let bruto: unknown;
         try {
@@ -215,9 +240,23 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
         // "todos": responde a todos, menos os bloqueados.
         // "somente_liberados": responde apenas aos liberados e ativos.
         const [{ data: cfgBot }, { data: regraNumero }] = await Promise.all([
-          supabaseAdmin.from("whatsapp_config").select("modo_numeros, ignorar_agradecimentos").limit(1).maybeSingle(),
+          conexaoId
+            ? supabaseAdmin
+                .from("whatsapp_config")
+                .select("modo_numeros, ignorar_agradecimentos")
+                .eq("conexao_id", conexaoId)
+                .limit(1)
+                .maybeSingle()
+            : supabaseAdmin.from("whatsapp_config").select("modo_numeros, ignorar_agradecimentos").limit(1).maybeSingle(),
           telefone
-            ? supabaseAdmin.from("bot_numeros").select("permitido, ativo").eq("telefone", telefone).maybeSingle()
+            ? (conexaoId
+                ? supabaseAdmin
+                    .from("bot_numeros")
+                    .select("permitido, ativo")
+                    .eq("telefone", telefone)
+                    .eq("conexao_id", conexaoId)
+                    .maybeSingle()
+                : supabaseAdmin.from("bot_numeros").select("permitido, ativo").eq("telefone", telefone).maybeSingle())
             : Promise.resolve({ data: null as { permitido: boolean; ativo: boolean } | null }),
         ]);
         const modoNumeros = cfgBot?.modo_numeros ?? "todos";
@@ -269,6 +308,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
             .from("whatsapp_conversas")
             .select(colunasConversa)
             .eq("chat_lid", lidNormalizado ?? "")
+            .eq("conexao_id", conexaoId)
             .maybeSingle();
           if (!data) return Response.json({ ok: true, ignorado: true, motivo: "lid_sem_conversa" });
           conversaAberta = data as ConversaBase;
@@ -301,6 +341,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
               .from("whatsapp_conversas")
               .select(colunasConversa)
               .eq("telefone", telefone)
+              .eq("conexao_id", conexaoId)
               .maybeSingle();
 
             if (data) {
@@ -310,6 +351,7 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
 
             const { error: erroNova } = await supabaseAdmin.from("whatsapp_conversas").insert({
               telefone,
+              conexao_id: conexaoId,
               cliente_id: clienteId,
               nome_contato: nomeContato,
               status: "automatico",

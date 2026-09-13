@@ -66,7 +66,7 @@ export async function enviarPresencaDigitando(
   await chamarZapi("send-presence", {
     metodo: "POST",
     corpo: { phone: telefone, presence: "composing", delay },
-    conexaoId,
+    conexaoId: conexaoId ?? null,
   }).catch(() => undefined);
 }
 
