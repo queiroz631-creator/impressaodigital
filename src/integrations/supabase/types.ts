@@ -217,6 +217,7 @@ export type Database = {
       bot_fluxos: {
         Row: {
           ativo: boolean
+          conexao_id: string | null
           created_at: string
           descricao: string
           finalizacao_delay_minutos: number
@@ -235,6 +236,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          conexao_id?: string | null
           created_at?: string
           descricao?: string
           finalizacao_delay_minutos?: number
@@ -253,6 +255,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          conexao_id?: string | null
           created_at?: string
           descricao?: string
           finalizacao_delay_minutos?: number
@@ -271,6 +274,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "bot_fluxos_conexao_id_fkey"
+            columns: ["conexao_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conexoes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bot_fluxos_sem_resposta_fluxo_id_fkey"
             columns: ["sem_resposta_fluxo_id"]
             isOneToOne: false
@@ -282,6 +292,7 @@ export type Database = {
       bot_horarios: {
         Row: {
           abre: string
+          conexao_id: string | null
           created_at: string
           dia_semana: number
           fecha: string
@@ -291,6 +302,7 @@ export type Database = {
         }
         Insert: {
           abre?: string
+          conexao_id?: string | null
           created_at?: string
           dia_semana: number
           fecha?: string
@@ -300,6 +312,7 @@ export type Database = {
         }
         Update: {
           abre?: string
+          conexao_id?: string | null
           created_at?: string
           dia_semana?: number
           fecha?: string
@@ -307,12 +320,21 @@ export type Database = {
           id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bot_horarios_conexao_id_fkey"
+            columns: ["conexao_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conexoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bot_menu_opcoes: {
         Row: {
           acao: string
           ativo: boolean
+          conexao_id: string | null
           created_at: string
           id: string
           mensagem: string
@@ -324,6 +346,7 @@ export type Database = {
         Insert: {
           acao?: string
           ativo?: boolean
+          conexao_id?: string | null
           created_at?: string
           id?: string
           mensagem?: string
@@ -335,6 +358,7 @@ export type Database = {
         Update: {
           acao?: string
           ativo?: boolean
+          conexao_id?: string | null
           created_at?: string
           id?: string
           mensagem?: string
@@ -343,11 +367,20 @@ export type Database = {
           permitir_palavra_chave?: boolean
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bot_menu_opcoes_conexao_id_fkey"
+            columns: ["conexao_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conexoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bot_numeros: {
         Row: {
           ativo: boolean
+          conexao_id: string | null
           created_at: string
           id: string
           nome: string | null
@@ -358,6 +391,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          conexao_id?: string | null
           created_at?: string
           id?: string
           nome?: string | null
@@ -368,6 +402,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          conexao_id?: string | null
           created_at?: string
           id?: string
           nome?: string | null
@@ -376,7 +411,15 @@ export type Database = {
           telefone?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bot_numeros_conexao_id_fkey"
+            columns: ["conexao_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conexoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bot_palavras_chave: {
         Row: {
@@ -422,6 +465,7 @@ export type Database = {
           acao: string
           ativo: boolean
           condicao: string
+          conexao_id: string | null
           created_at: string
           delay_mensagem_segundos: number
           delay_segundos: number
@@ -439,6 +483,7 @@ export type Database = {
           acao?: string
           ativo?: boolean
           condicao?: string
+          conexao_id?: string | null
           created_at?: string
           delay_mensagem_segundos?: number
           delay_segundos?: number
@@ -456,6 +501,7 @@ export type Database = {
           acao?: string
           ativo?: boolean
           condicao?: string
+          conexao_id?: string | null
           created_at?: string
           delay_mensagem_segundos?: number
           delay_segundos?: number
@@ -470,6 +516,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bot_primeiro_contato_conexao_id_fkey"
+            columns: ["conexao_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conexoes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bot_primeiro_contato_destino_fluxo_id_fkey"
             columns: ["destino_fluxo_id"]
@@ -491,6 +544,7 @@ export type Database = {
           acao_nao: string
           acao_sim: string
           ativo: boolean
+          conexao_id: string | null
           created_at: string
           delay_acao_segundos: number
           destino_nao_fluxo_id: string | null
@@ -512,6 +566,7 @@ export type Database = {
           acao_nao?: string
           acao_sim?: string
           ativo?: boolean
+          conexao_id?: string | null
           created_at?: string
           delay_acao_segundos?: number
           destino_nao_fluxo_id?: string | null
@@ -533,6 +588,7 @@ export type Database = {
           acao_nao?: string
           acao_sim?: string
           ativo?: boolean
+          conexao_id?: string | null
           created_at?: string
           delay_acao_segundos?: number
           destino_nao_fluxo_id?: string | null
@@ -551,6 +607,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bot_respostas_conexao_id_fkey"
+            columns: ["conexao_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conexoes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bot_respostas_destino_nao_fluxo_id_fkey"
             columns: ["destino_nao_fluxo_id"]
@@ -585,6 +648,7 @@ export type Database = {
         Row: {
           agendado_em: string | null
           ativo: boolean
+          conexao_id: string | null
           cor_fundo: string
           created_at: string
           dias_semana: number[]
@@ -603,6 +667,7 @@ export type Database = {
         Insert: {
           agendado_em?: string | null
           ativo?: boolean
+          conexao_id?: string | null
           cor_fundo?: string
           created_at?: string
           dias_semana?: number[]
@@ -621,6 +686,7 @@ export type Database = {
         Update: {
           agendado_em?: string | null
           ativo?: boolean
+          conexao_id?: string | null
           cor_fundo?: string
           created_at?: string
           dias_semana?: number[]
@@ -636,7 +702,15 @@ export type Database = {
           ultimo_erro?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bot_status_whatsapp_conexao_id_fkey"
+            columns: ["conexao_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conexoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calculo_itens: {
         Row: {
@@ -1713,6 +1787,33 @@ export type Database = {
           },
         ]
       }
+      perfis_acesso: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          permissoes: Json
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          permissoes?: Json
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          permissoes?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       perfis_impressao: {
         Row: {
           altura_mm: number
@@ -1775,24 +1876,48 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ativo: boolean
+          conexao_id: string | null
           created_at: string
           email: string | null
           id: string
           nome: string | null
+          perfil_id: string | null
         }
         Insert: {
+          ativo?: boolean
+          conexao_id?: string | null
           created_at?: string
           email?: string | null
           id: string
           nome?: string | null
+          perfil_id?: string | null
         }
         Update: {
+          ativo?: boolean
+          conexao_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
           nome?: string | null
+          perfil_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_conexao_id_fkey"
+            columns: ["conexao_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conexoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_acesso"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rascunhos: {
         Row: {
@@ -1957,12 +2082,61 @@ export type Database = {
           },
         ]
       }
+      whatsapp_conexoes: {
+        Row: {
+          ativo: boolean
+          base_url: string
+          client_token: string
+          cor: string
+          created_at: string
+          id: string
+          instance_id: string
+          instance_token: string
+          nome: string
+          ordem: number
+          telefone: string
+          updated_at: string
+          webhook_token: string
+        }
+        Insert: {
+          ativo?: boolean
+          base_url?: string
+          client_token?: string
+          cor?: string
+          created_at?: string
+          id?: string
+          instance_id?: string
+          instance_token?: string
+          nome: string
+          ordem?: number
+          telefone?: string
+          updated_at?: string
+          webhook_token?: string
+        }
+        Update: {
+          ativo?: boolean
+          base_url?: string
+          client_token?: string
+          cor?: string
+          created_at?: string
+          id?: string
+          instance_id?: string
+          instance_token?: string
+          nome?: string
+          ordem?: number
+          telefone?: string
+          updated_at?: string
+          webhook_token?: string
+        }
+        Relationships: []
+      }
       whatsapp_config: {
         Row: {
           app_url: string
           base_url: string
           bot_24h: boolean
           bot_ativo: boolean
+          conexao_id: string | null
           conexao_nome: string
           enviar_msg_finalizacao: boolean
           exigir_revisao_humana: boolean
@@ -2025,6 +2199,7 @@ export type Database = {
           base_url?: string
           bot_24h?: boolean
           bot_ativo?: boolean
+          conexao_id?: string | null
           conexao_nome?: string
           enviar_msg_finalizacao?: boolean
           exigir_revisao_humana?: boolean
@@ -2087,6 +2262,7 @@ export type Database = {
           base_url?: string
           bot_24h?: boolean
           bot_ativo?: boolean
+          conexao_id?: string | null
           conexao_nome?: string
           enviar_msg_finalizacao?: boolean
           exigir_revisao_humana?: boolean
@@ -2146,6 +2322,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "whatsapp_config_conexao_id_fkey"
+            columns: ["conexao_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conexoes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "whatsapp_config_fallback_fluxo_id_fkey"
             columns: ["fallback_fluxo_id"]
             isOneToOne: false
@@ -2171,6 +2354,7 @@ export type Database = {
           bot_pendente_em: string | null
           chat_lid: string | null
           cliente_id: string | null
+          conexao_id: string | null
           contexto: Json
           created_at: string
           data_finalizacao: string | null
@@ -2206,6 +2390,7 @@ export type Database = {
           bot_pendente_em?: string | null
           chat_lid?: string | null
           cliente_id?: string | null
+          conexao_id?: string | null
           contexto?: Json
           created_at?: string
           data_finalizacao?: string | null
@@ -2241,6 +2426,7 @@ export type Database = {
           bot_pendente_em?: string | null
           chat_lid?: string | null
           cliente_id?: string | null
+          conexao_id?: string | null
           contexto?: Json
           created_at?: string
           data_finalizacao?: string | null
@@ -2273,6 +2459,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_conversas_conexao_id_fkey"
+            columns: ["conexao_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conexoes"
             referencedColumns: ["id"]
           },
           {
@@ -2403,12 +2596,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      conexao_do_usuario: { Args: { _user_id: string }; Returns: string }
       disparar_rotina_bot: { Args: { rota: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      tem_permissao: {
+        Args: { _chave: string; _user_id: string }
         Returns: boolean
       }
     }
