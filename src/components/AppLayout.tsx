@@ -10,10 +10,17 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo-impressao.png";
 
-export function AppLayout({ children }: { children: ReactNode }) {
+export function AppLayout({
+  children,
+  permissao,
+}: {
+  children: ReactNode;
+  /** Chave exigida para ver esta página. Sem ela, o conteúdo não é renderizado. */
+  permissao?: string;
+}) {
   const { user, loading } = useAuth();
   const { data: isAdmin } = useIsAdmin(user?.id);
-  const { pode } = usePermissoes(user?.id);
+  const { pode, carregando: carregandoPermissoes } = usePermissoes(user?.id);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [aberto, setAberto] = useState(false);
