@@ -157,7 +157,17 @@ export function AppLayout({
           <span className="text-sm font-semibold text-navy-foreground">Impressão Digital</span>
         </header>
 
-        <main className="min-w-0 flex-1 p-4 sm:p-6">{children}</main>
+        <main className="min-w-0 flex-1 p-4 sm:p-6">
+          {permissao && carregandoPermissoes ? (
+            <div className="flex min-h-[40vh] items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+            </div>
+          ) : permissao && !pode(permissao) ? (
+            <AcessoNegado />
+          ) : (
+            children
+          )}
+        </main>
       </div>
     </div>
   );
