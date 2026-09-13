@@ -39,7 +39,7 @@ Todas derivadas de `src/lib/modulos.ts`, sem lista paralela. O catálogo ganha:
 
 ### 3. Permissões no aplicativo
 
-- `usePermissoes` passa a carregar, uma vez por sessão, se o usuário é administrador, se está ativo e quais chaves o perfil concede (respeitando perfil inativo). Mesma assinatura de hoje (`pode`, `isAdmin`), então o menu não muda de forma.
+- `usePermissoes` consulta o banco (administrador, usuário ativo, perfil e suas chaves) com cache curto em memória, revalidado quando a sessão/usuário carrega de novo e após qualquer alteração de perfis ou usuários. Nada é guardado no navegador de forma manipulável. Mesma assinatura de hoje (`pode`, `isAdmin`), então o menu não muda de forma.
 - O menu lateral continua idêntico no visual e com os grupos recolhíveis; só passa a esconder o que o usuário não pode ver.
 
 ### 4. Proteção de acesso direto por URL
