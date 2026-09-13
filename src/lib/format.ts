@@ -43,4 +43,3 @@ export const telefoneBR = (value?: string | null) => {
   }
   return digits;
 };
-

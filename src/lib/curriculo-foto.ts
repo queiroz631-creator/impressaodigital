@@ -31,7 +31,13 @@ export function lerFotoCurriculo(arquivo: File): Promise<string> {
         const escala = Math.max(canvas.width / img.width, canvas.height / img.height);
         const largura = img.width * escala;
         const altura = img.height * escala;
-        ctx.drawImage(img, (canvas.width - largura) / 2, (canvas.height - altura) / 2, largura, altura);
+        ctx.drawImage(
+          img,
+          (canvas.width - largura) / 2,
+          (canvas.height - altura) / 2,
+          largura,
+          altura,
+        );
 
         resolve(canvas.toDataURL("image/jpeg", 0.82));
       };

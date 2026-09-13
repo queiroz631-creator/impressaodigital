@@ -1,6 +1,13 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { urlBase } from "@/lib/link-dados.server";
-import { capitalizarTexto, cpfValido, formatarTelefone, somenteNumeros, type CurriculoCompleto, type PayloadEtapa } from "@/lib/curriculo";
+import {
+  capitalizarTexto,
+  cpfValido,
+  formatarTelefone,
+  somenteNumeros,
+  type CurriculoCompleto,
+  type PayloadEtapa,
+} from "@/lib/curriculo";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 
 const CAMPOS =
@@ -116,7 +123,10 @@ export async function gravarEtapa(curriculoId: string, payload: PayloadEtapa) {
       "curriculo_telefones",
       payload.telefones
         .filter((t) => t.telefone.trim())
-        .map((t) => ({ telefone: t.telefone.trim(), tipo: capitalizarTexto(t.tipo ?? "") || null })),
+        .map((t) => ({
+          telefone: t.telefone.trim(),
+          tipo: capitalizarTexto(t.tipo ?? "") || null,
+        })),
     );
   }
   if (payload.cursos) {
@@ -214,7 +224,11 @@ export async function gerarLinkNovo() {
 export async function carregarPublico(token: string): Promise<DadosPublicos | DadosPublicosNovo> {
   const link = await lerLink(token);
 
-  const cfg = await supabaseAdmin.from("configuracoes").select("empresa_nome").limit(1).maybeSingle();
+  const cfg = await supabaseAdmin
+    .from("configuracoes")
+    .select("empresa_nome")
+    .limit(1)
+    .maybeSingle();
   const empresaNome = cfg.data?.empresa_nome ?? "Currículo";
 
   // Link de criação: ainda não há currículo atrelado.
@@ -312,7 +326,10 @@ export async function criarPublico(
     .single();
   if (error) throw new Error(error.message);
 
-  await supabaseAdmin.from("curriculo_links").update({ curriculo_id: curriculo.id }).eq("id", link.id);
+  await supabaseAdmin
+    .from("curriculo_links")
+    .update({ curriculo_id: curriculo.id })
+    .eq("id", link.id);
 
   return (await carregarPublico(token)) as DadosPublicos;
 }

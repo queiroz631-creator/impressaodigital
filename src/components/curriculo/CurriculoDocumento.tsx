@@ -28,7 +28,9 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
   function CurriculoDocumento({ dados }, ref) {
     const c = dados.curriculo;
     const telefones = [
-      c.telefone_principal ? telefoneComDescricao(c.telefone_principal, c.telefone_principal_descricao) : "",
+      c.telefone_principal
+        ? telefoneComDescricao(c.telefone_principal, c.telefone_principal_descricao)
+        : "",
       ...dados.telefones.map((t) => telefoneComDescricao(t.telefone, t.tipo)),
     ].filter(Boolean);
 
@@ -44,7 +46,10 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
     const observacao = observacaoHabilidades(c);
 
     return (
-      <div ref={ref} className="mx-auto w-full max-w-[210mm] bg-white p-8 text-foreground shadow-sm">
+      <div
+        ref={ref}
+        className="mx-auto w-full max-w-[210mm] bg-white p-8 text-foreground shadow-sm"
+      >
         <header className="relative mb-2 text-center">
           <p className="cv-secao block w-full rounded bg-navy px-3 py-1.5 text-center text-[12pt] font-bold uppercase tracking-widest text-navy-foreground">
             Currículo Vitae
@@ -56,17 +61,16 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
               className="cv-foto absolute right-0 top-0 h-[3.5cm] w-[2.5cm] rounded-sm border border-navy object-cover"
             />
           )}
-          <div className={`text-center ${c.foto_exibir && c.foto_url ? "cv-header-com-foto pr-[2.7cm]" : ""}`}>
+          <div
+            className={`text-center ${c.foto_exibir && c.foto_url ? "cv-header-com-foto pr-[2.7cm]" : ""}`}
+          >
             <h1 className="mt-5 text-[18pt] font-bold uppercase leading-tight text-navy">
               {c.nome_completo || "Currículo"}
             </h1>
-            {telefones.length > 0 && (
-              <p className="mt-2 text-[12pt]">{telefones.join("  •  ")}</p>
-            )}
+            {telefones.length > 0 && <p className="mt-2 text-[12pt]">{telefones.join("  •  ")}</p>}
             {c.email && <p className="text-[10.5pt]">{c.email}</p>}
           </div>
         </header>
-
 
         {pessoais.length > 0 && (
           <Secao titulo="Dados pessoais">
@@ -111,21 +115,27 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
           <Secao titulo="Experiência profissional">
             <p className="cv-empresa text-[12pt] font-bold text-navy">{fraseSemExperiencia(c)}</p>
           </Secao>
-        ) : dados.experiencias.length > 0 && (
-          <Secao titulo="Experiência profissional">
-            <div className={dados.experiencias.length > 3 ? "grid grid-cols-2 gap-x-6 gap-y-2" : "space-y-2"}>
-              {dados.experiencias.map((exp, i) => (
-                <div key={i} className="mb-2">
-                  {exp.empresa && <p className="cv-empresa font-bold text-navy">{exp.empresa}</p>}
-                  {exp.cargo && <p className="font-medium">Cargo/Função: {exp.cargo}</p>}
-                  {exp.periodo && (
-                    <p className="text-[9.5pt] text-muted-foreground">Período: {exp.periodo}</p>
-                  )}
-                  {exp.atividades && <p className="mt-0.5">Atividade(s): {exp.atividades}</p>}
-                </div>
-              ))}
-            </div>
-          </Secao>
+        ) : (
+          dados.experiencias.length > 0 && (
+            <Secao titulo="Experiência profissional">
+              <div
+                className={
+                  dados.experiencias.length > 3 ? "grid grid-cols-2 gap-x-6 gap-y-2" : "space-y-2"
+                }
+              >
+                {dados.experiencias.map((exp, i) => (
+                  <div key={i} className="mb-2">
+                    {exp.empresa && <p className="cv-empresa font-bold text-navy">{exp.empresa}</p>}
+                    {exp.cargo && <p className="font-medium">Cargo/Função: {exp.cargo}</p>}
+                    {exp.periodo && (
+                      <p className="text-[9.5pt] text-muted-foreground">Período: {exp.periodo}</p>
+                    )}
+                    {exp.atividades && <p className="mt-0.5">Atividade(s): {exp.atividades}</p>}
+                  </div>
+                ))}
+              </div>
+            </Secao>
+          )
         )}
 
         {dados.habilidades.length > 0 && (
@@ -149,7 +159,6 @@ export const CurriculoDocumento = forwardRef<HTMLDivElement, { dados: CurriculoC
             OBS.: {observacao}
           </p>
         )}
-
 
         {c.exibir_data_atualizacao && (
           <p className="mt-6 text-[9pt] italic text-muted-foreground">

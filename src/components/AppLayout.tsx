@@ -198,7 +198,6 @@ function AcessoNegado() {
   );
 }
 
-
 /** Conversas com mensagens não lidas, exibidas como contador no menu. */
 function useConversasPendentes(habilitado: boolean) {
   const { data } = useQuery({

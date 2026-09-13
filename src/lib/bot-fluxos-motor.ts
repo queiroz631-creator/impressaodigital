@@ -9,7 +9,12 @@
 
 import { chave, escolherOpcao, primeiroNumero, simOuNao } from "@/lib/bot-parse";
 import { aplicarVariaveis, type MensagemBot } from "@/lib/bot-motor";
-import { ACOES_SISTEMA, type DadosFluxos, type FluxoEtapa, type FluxoOpcao } from "@/lib/bot-fluxos";
+import {
+  ACOES_SISTEMA,
+  type DadosFluxos,
+  type FluxoEtapa,
+  type FluxoOpcao,
+} from "@/lib/bot-fluxos";
 
 export interface EstadoFluxo {
   fluxoId: string;
@@ -55,11 +60,17 @@ function unirMensagens(mensagens: MensagemBot[]): MensagemBot[] {
   if (textos.length <= 1) return mensagens;
   const botoes = [...mensagens].reverse().find((m) => (m.botoes ?? []).length > 0)?.botoes;
   const espera = mensagens.reduce((s, m) => s + (m.espera ?? 0), 0);
-  return [{ texto: textos.join("\n\n"), ...(botoes ? { botoes } : {}), ...(espera ? { espera } : {}) }];
+  return [
+    { texto: textos.join("\n\n"), ...(botoes ? { botoes } : {}), ...(espera ? { espera } : {}) },
+  ];
 }
 
 /** Aplica a mensagem única quando o fluxo de origem estiver configurado assim. */
-function unirSaida(dados: DadosFluxos, saida: SaidaFluxo, fluxoId: string | null | undefined): SaidaFluxo {
+function unirSaida(
+  dados: DadosFluxos,
+  saida: SaidaFluxo,
+  fluxoId: string | null | undefined,
+): SaidaFluxo {
   const fluxo = fluxoPorId(dados, fluxoId);
   if (!fluxo || fluxo.mensagem_unica === false) return saida;
   return { ...saida, mensagens: unirMensagens(saida.mensagens) };
@@ -72,7 +83,6 @@ function unirSaida(dados: DadosFluxos, saida: SaidaFluxo, fluxoId: string | null
 export function fluxoInicial(dados: DadosFluxos) {
   return [...dados.fluxos].filter((f) => f.ativo).sort((a, b) => a.ordem - b.ordem)[0] ?? null;
 }
-
 
 export function fluxoPorId(dados: DadosFluxos, id: string | null | undefined) {
   return dados.fluxos.find((f) => f.id === id) ?? null;
@@ -115,7 +125,8 @@ function mensagemDaEtapa(
 ): MensagemBot | null {
   const opcoes = opcoesDaEtapa(dados, etapa.id);
   const midia = midiaDaEtapa(etapa);
-  const espera = etapa.modo_avanco === "automatico" ? Math.min(60, Math.max(0, etapa.espera_segundos ?? 0)) : 0;
+  const espera =
+    etapa.modo_avanco === "automatico" ? Math.min(60, Math.max(0, etapa.espera_segundos ?? 0)) : 0;
   const extras = { ...(midia ? { midia } : {}), ...(espera ? { espera } : {}) };
   let texto = aplicarVariaveis(etapa.mensagem ?? "", vars).trim();
 
@@ -191,7 +202,12 @@ function executar(
   const msg = mensagemDaEtapa(dados, etapa, vars);
   if (msg) mensagens.push(msg);
 
-  const base: EstadoFluxo = { ...estado, fluxoId: etapa.fluxo_id, etapaId: etapa.id, aguardando: false };
+  const base: EstadoFluxo = {
+    ...estado,
+    fluxoId: etapa.fluxo_id,
+    etapaId: etapa.id,
+    aguardando: false,
+  };
 
   if (aguardaResposta(dados, etapa) && !ACOES_SISTEMA.has(etapa.acao)) {
     return { mensagens, estado: { ...base, aguardando: true } };
@@ -261,9 +277,12 @@ export function avancar(
 ): SaidaFluxo {
   const proxima = proximaEtapa(dados, etapa);
   if (!proxima || profundidade >= LIMITE_ENCADEAMENTO) return { mensagens: [], estado: null };
-  return unirSaida(dados, executar(dados, proxima, estado, vars, profundidade + 1), proxima.fluxo_id);
+  return unirSaida(
+    dados,
+    executar(dados, proxima, estado, vars, profundidade + 1),
+    proxima.fluxo_id,
+  );
 }
-
 
 /**
  * Inicia um fluxo pelo id. O texto de abertura é o da primeira etapa (a
@@ -293,10 +312,6 @@ export function iniciar(
   return unirSaida(dados, saida, fluxo.id);
 }
 
-
-
-
-
 /** Processa a resposta do cliente na etapa em que a conversa parou. */
 export function processarFluxo(
   dados: DadosFluxos,
@@ -308,7 +323,9 @@ export function processarFluxo(
   const etapa = dados.etapas.find((e) => e.id === estado.etapaId);
   if (!etapa) {
     const inicialFluxo = fluxoInicial(dados);
-    return inicialFluxo ? iniciar(dados, inicialFluxo.id, estado, vars) : { mensagens: [], estado: null };
+    return inicialFluxo
+      ? iniciar(dados, inicialFluxo.id, estado, vars)
+      : { mensagens: [], estado: null };
   }
 
   const opcoes = opcoesDaEtapa(dados, etapa.id);
@@ -330,7 +347,6 @@ export function processarFluxo(
   );
 }
 
-
 function escolherOpcaoDaEtapa(texto: string, opcoes: FluxoOpcao[]): FluxoOpcao | null {
   const alvo = chave(texto);
   if (!alvo) return null;
@@ -345,7 +361,10 @@ function escolherOpcaoDaEtapa(texto: string, opcoes: FluxoOpcao[]): FluxoOpcao |
     if (r !== null) return r ? sim : nao;
   }
 
-  const i = escolherOpcao(texto, opcoes.map((o) => o.titulo));
+  const i = escolherOpcao(
+    texto,
+    opcoes.map((o) => o.titulo),
+  );
   return i === null ? null : (opcoes[i] ?? null);
 }
 
@@ -361,7 +380,13 @@ function aplicarOpcao(
 
   switch (opcao.acao) {
     case "transferir_atendente":
-      return { mensagens: [], estado: null, transferir: true, acao: "transferir_atendente", etapaAcao: etapa };
+      return {
+        mensagens: [],
+        estado: null,
+        transferir: true,
+        acao: "transferir_atendente",
+        etapaAcao: etapa,
+      };
     case "transferir_silencioso":
       return {
         mensagens: [],
@@ -374,7 +399,12 @@ function aplicarOpcao(
     case "esperando_impressao":
       return { mensagens: [], estado: null, acao: "esperando_impressao", etapaAcao: etapa };
     case "esperando_impressao_silencioso":
-      return { mensagens: [], estado: null, acao: "esperando_impressao_silencioso", etapaAcao: etapa };
+      return {
+        mensagens: [],
+        estado: null,
+        acao: "esperando_impressao_silencioso",
+        etapaAcao: etapa,
+      };
     case "finalizar":
       return { mensagens: [], estado: null, finalizar: true };
     case "finalizar_silencioso":

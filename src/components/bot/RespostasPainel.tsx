@@ -13,8 +13,20 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Resposta {
   id: string;
@@ -36,7 +48,6 @@ interface Resposta {
   midia_url: string | null;
   midia_nome: string | null;
 }
-
 
 interface Palavra {
   id: string;
@@ -90,7 +101,10 @@ export function RespostasPainel() {
 
   async function atualizar(r: Resposta, dados: Partial<Resposta>) {
     const { error } = await supabase.from("bot_respostas").update(dados).eq("id", r.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await recarregar();
   }
 
@@ -102,7 +116,10 @@ export function RespostasPainel() {
       .insert({ titulo: "Nova resposta", resposta: "", ordem })
       .select("*")
       .maybeSingle();
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await recarregar();
     if (data) setEditando(data as unknown as Resposta);
   }
@@ -132,7 +149,10 @@ export function RespostasPainel() {
 
       .select("id")
       .maybeSingle();
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
 
     const chaves = (palavras.data ?? []).filter((p) => p.resposta_id === r.id);
     if (data && chaves.length > 0) {
@@ -146,7 +166,10 @@ export function RespostasPainel() {
 
   async function excluir(r: Resposta) {
     const { error } = await supabase.from("bot_respostas").delete().eq("id", r.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Resposta removida.");
     await recarregar();
   }
@@ -159,7 +182,8 @@ export function RespostasPainel() {
     <div className="grid gap-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          O bot procura estas respostas no primeiro contato e confirma com o cliente antes de seguir.
+          O bot procura estas respostas no primeiro contato e confirma com o cliente antes de
+          seguir.
         </p>
         <Button size="sm" onClick={adicionar}>
           <Plus className="h-4 w-4" /> Nova resposta
@@ -183,14 +207,21 @@ export function RespostasPainel() {
                 <CardTitle className="flex items-center gap-2 text-base">
                   <MessageSquare className="h-4 w-4 text-primary" /> {r.titulo}
                 </CardTitle>
-                <Switch checked={r.ativo} onCheckedChange={(v) => void atualizar(r, { ativo: v })} />
+                <Switch
+                  checked={r.ativo}
+                  onCheckedChange={(v) => void atualizar(r, { ativo: v })}
+                />
               </CardHeader>
               <CardContent className="grid gap-2">
-                <p className="line-clamp-2 text-sm text-muted-foreground">{r.resposta || "Sem texto definido."}</p>
+                <p className="line-clamp-2 text-sm text-muted-foreground">
+                  {r.resposta || "Sem texto definido."}
+                </p>
                 <div className="flex flex-wrap gap-1">
                   {chaves.length === 0 && <Badge variant="outline">Sem palavras-chave</Badge>}
                   {chaves.map((p) => (
-                    <Badge key={p.id} variant="secondary">{p.texto}</Badge>
+                    <Badge key={p.id} variant="secondary">
+                      {p.texto}
+                    </Badge>
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-2 pt-1">
@@ -258,9 +289,19 @@ function RespostaDialog({
     try {
       const extensao = arquivo.name.split(".").pop() ?? "jpg";
       const caminho = `respostas/${crypto.randomUUID()}.${extensao}`;
-      const { error } = await supabase.storage.from("bot-midia").upload(caminho, arquivo, { upsert: true });
-      if (error) { toast.error(error.message); return; }
-      setForm((f) => ({ ...f, tipo_midia: "imagem", midia_url: caminho, midia_nome: arquivo.name }));
+      const { error } = await supabase.storage
+        .from("bot-midia")
+        .upload(caminho, arquivo, { upsert: true });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      setForm((f) => ({
+        ...f,
+        tipo_midia: "imagem",
+        midia_url: caminho,
+        midia_nome: arquivo.name,
+      }));
       toast.success("Imagem anexada.");
     } finally {
       setEnviando(false);
@@ -290,12 +331,21 @@ function RespostaDialog({
 
       .eq("id", form.id);
 
-    if (error) { setSalvando(false); toast.error(error.message); return; }
+    if (error) {
+      setSalvando(false);
+      toast.error(error.message);
+      return;
+    }
 
     await supabase.from("bot_palavras_chave").delete().eq("resposta_id", form.id);
-    const lista = chaves.split(",").map((t) => t.trim()).filter(Boolean);
+    const lista = chaves
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
     if (lista.length > 0) {
-      await supabase.from("bot_palavras_chave").insert(lista.map((texto) => ({ texto, resposta_id: form.id })));
+      await supabase
+        .from("bot_palavras_chave")
+        .insert(lista.map((texto) => ({ texto, resposta_id: form.id })));
     }
 
     setSalvando(false);
@@ -316,7 +366,10 @@ function RespostaDialog({
         <div className="grid gap-4">
           <div className="grid gap-1">
             <Label>Título</Label>
-            <Input value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
+            <Input
+              value={form.titulo}
+              onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+            />
           </div>
 
           <div className="grid gap-1">
@@ -330,7 +383,11 @@ function RespostaDialog({
 
           <div className="grid gap-1">
             <Label>Resposta 1 — primeira conversa do dia</Label>
-            <Textarea rows={3} value={form.resposta} onChange={(e) => setForm({ ...form, resposta: e.target.value })} />
+            <Textarea
+              rows={3}
+              value={form.resposta}
+              onChange={(e) => setForm({ ...form, resposta: e.target.value })}
+            />
           </div>
 
           <div className="grid gap-1">
@@ -340,7 +397,9 @@ function RespostaDialog({
               value={form.resposta_retorno_dia ?? ""}
               onChange={(e) => setForm({ ...form, resposta_retorno_dia: e.target.value })}
             />
-            <p className="text-xs text-muted-foreground">Se ficar em branco, o bot usa a resposta 1.</p>
+            <p className="text-xs text-muted-foreground">
+              Se ficar em branco, o bot usa a resposta 1.
+            </p>
           </div>
 
           <div className="grid gap-1">
@@ -365,7 +424,9 @@ function RespostaDialog({
                 <Button
                   size="icon"
                   variant="ghost"
-                  onClick={() => setForm({ ...form, tipo_midia: "texto", midia_url: null, midia_nome: null })}
+                  onClick={() =>
+                    setForm({ ...form, tipo_midia: "texto", midia_url: null, midia_nome: null })
+                  }
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -440,14 +501,16 @@ function RespostaDialog({
               onChange={(e) => setForm({ ...form, delay_acao_segundos: Number(e.target.value) })}
             />
             <p className="text-xs text-muted-foreground">
-              Tempo de espera depois que o cliente responde SIM ou NÃO, antes do bot executar a ação. 0 = imediato.
+              Tempo de espera depois que o cliente responde SIM ou NÃO, antes do bot executar a
+              ação. 0 = imediato.
             </p>
           </div>
         </div>
 
-
         <DialogFooter>
-          <Button variant="outline" onClick={onFechar}>Cancelar</Button>
+          <Button variant="outline" onClick={onFechar}>
+            Cancelar
+          </Button>
           <Button onClick={() => void salvar()} disabled={salvando}>
             {salvando ? "Salvando..." : "Salvar resposta"}
           </Button>
@@ -478,10 +541,14 @@ function AcaoCampos({
     <div className="grid gap-2 rounded-lg border p-3">
       <Label className="text-sm font-semibold">{titulo}</Label>
       <Select value={acao} onValueChange={(v) => onChange({ acao: v, fluxoId, respostaId })}>
-        <SelectTrigger><SelectValue /></SelectTrigger>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
         <SelectContent>
           {ACOES_RESPOSTA.map((a) => (
-            <SelectItem key={a.valor} value={a.valor}>{a.rotulo}</SelectItem>
+            <SelectItem key={a.valor} value={a.valor}>
+              {a.rotulo}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -491,11 +558,15 @@ function AcaoCampos({
           value={fluxoId ?? VAZIO}
           onValueChange={(v) => onChange({ acao, fluxoId: v === VAZIO ? null : v, respostaId })}
         >
-          <SelectTrigger><SelectValue placeholder="Escolha o fluxo" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Escolha o fluxo" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value={VAZIO}>Nenhum fluxo</SelectItem>
             {fluxos.map((f) => (
-              <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+              <SelectItem key={f.id} value={f.id}>
+                {f.nome}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -506,11 +577,15 @@ function AcaoCampos({
           value={respostaId ?? VAZIO}
           onValueChange={(v) => onChange({ acao, fluxoId, respostaId: v === VAZIO ? null : v })}
         >
-          <SelectTrigger><SelectValue placeholder="Escolha a resposta" /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue placeholder="Escolha a resposta" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value={VAZIO}>Nenhuma resposta</SelectItem>
             {respostas.map((r) => (
-              <SelectItem key={r.id} value={r.id}>{r.titulo}</SelectItem>
+              <SelectItem key={r.id} value={r.id}>
+                {r.titulo}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>

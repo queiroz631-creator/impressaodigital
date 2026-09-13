@@ -55,7 +55,6 @@ export interface BotResposta {
   midia_nome?: string | null;
 }
 
-
 export interface BotConfig {
   bot_ativo: boolean;
   bot_24h: boolean;
@@ -143,7 +142,7 @@ export const ETAPAS_MENU = new Set([
   "saudacao",
   "menu",
   "confirmar_intencao",
-  
+
   "pos_resposta",
 ]);
 
@@ -182,7 +181,11 @@ export interface Interpretes {
 
 export function saudacaoDoDia(agora: Date) {
   const h = Number(
-    agora.toLocaleString("pt-BR", { hour: "2-digit", hour12: false, timeZone: "America/Sao_Paulo" }),
+    agora.toLocaleString("pt-BR", {
+      hour: "2-digit",
+      hour12: false,
+      timeZone: "America/Sao_Paulo",
+    }),
   );
   if (h < 12) return "Bom dia";
   if (h < 18) return "Boa tarde";
@@ -198,7 +201,16 @@ function partesLocais(agora: Date) {
     hour12: false,
   }).formatToParts(agora);
   const pega = (t: string) => fmt.find((p) => p.type === t)?.value ?? "";
-  const dias: Record<string, number> = { dom: 0, seg: 1, ter: 2, qua: 3, qui: 4, sex: 5, sáb: 6, sab: 6 };
+  const dias: Record<string, number> = {
+    dom: 0,
+    seg: 1,
+    ter: 2,
+    qua: 3,
+    qui: 4,
+    sex: 5,
+    sáb: 6,
+    sab: 6,
+  };
   const dia = dias[chave(pega("weekday")).replace(/\.$/, "")] ?? agora.getDay();
   return { dia, minutos: Number(pega("hour")) * 60 + Number(pega("minute")) };
 }
@@ -220,7 +232,10 @@ export function dentroDoHorario(dados: BotDados, agora: Date): boolean {
 }
 
 /** Substitui as variáveis disponíveis nas mensagens configuráveis. */
-export function aplicarVariaveis(texto: string, dados: { nome: string; telefone: string; agora: Date }) {
+export function aplicarVariaveis(
+  texto: string,
+  dados: { nome: string; telefone: string; agora: Date },
+) {
   return String(texto ?? "")
     .replace(/\{nome\}/g, dados.nome || "tudo bem")
     .replace(/\{telefone\}/g, dados.telefone || "")
@@ -239,7 +254,9 @@ function tokens(texto: string) {
 /** Pontuação de 0 a 1 entre a mensagem do cliente e uma palavra/frase. */
 export function pontuar(mensagem: string, palavra: string): number {
   const m = chave(mensagem).replace(/[^\p{L}\p{N}\s]/gu, " ");
-  const p = chave(palavra).replace(/[^\p{L}\p{N}\s]/gu, " ").trim();
+  const p = chave(palavra)
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .trim();
   if (!m || !p) return 0;
   if (m.includes(p)) return 1;
 
@@ -247,7 +264,9 @@ export function pontuar(mensagem: string, palavra: string): number {
   const tm = new Set(tokens(m));
   if (tp.length === 0) return 0;
 
-  const acertos = tp.filter((t) => tm.has(t) || [...tm].some((x) => x.startsWith(t) || t.startsWith(x))).length;
+  const acertos = tp.filter(
+    (t) => tm.has(t) || [...tm].some((x) => x.startsWith(t) || t.startsWith(x)),
+  ).length;
   return acertos / tp.length;
 }
 
@@ -303,7 +322,9 @@ export function ehSaudacao(texto: string): boolean {
     .trim();
   if (!t) return false;
   if (t.split(" ").length > 4) return false;
-  return SAUDACOES.some((s) => t === chave(s) || t.startsWith(`${chave(s)} `) || t.endsWith(` ${chave(s)}`));
+  return SAUDACOES.some(
+    (s) => t === chave(s) || t.startsWith(`${chave(s)} `) || t.endsWith(` ${chave(s)}`),
+  );
 }
 
 /**
@@ -382,15 +403,26 @@ async function decidirSimNao(
 
 function acaoDaOpcao(opcao: BotOpcao): AcaoBot {
   const a = opcao.acao as AcaoBot;
-  return (["orcamento", "consultar_pedido", "curriculo", "atendente", "mensagem"] as AcaoBot[]).includes(a)
+  return (
+    ["orcamento", "consultar_pedido", "curriculo", "atendente", "mensagem"] as AcaoBot[]
+  ).includes(a)
     ? a
     : "mensagem";
 }
 
-function executar(dados: BotDados, opcao: BotOpcao, entrada: EntradaMotor, agora: Date): SaidaMotor {
+function executar(
+  dados: BotDados,
+  opcao: BotOpcao,
+  entrada: EntradaMotor,
+  agora: Date,
+): SaidaMotor {
   const acao = acaoDaOpcao(opcao);
   const mensagens: MensagemBot[] = [];
-  const texto = aplicarVariaveis(opcao.mensagem, { nome: entrada.nome, telefone: entrada.telefone, agora });
+  const texto = aplicarVariaveis(opcao.mensagem, {
+    nome: entrada.nome,
+    telefone: entrada.telefone,
+    agora,
+  });
   if (texto.trim()) mensagens.push({ texto });
 
   if (acao === "mensagem") {
@@ -398,7 +430,13 @@ function executar(dados: BotDados, opcao: BotOpcao, entrada: EntradaMotor, agora
     return { mensagens, estado: { etapa: "pos_resposta" }, acao, opcaoId: opcao.id };
   }
 
-  return { mensagens, estado: { etapa: "menu" }, acao, opcaoId: opcao.id, transferir: acao === "atendente" };
+  return {
+    mensagens,
+    estado: { etapa: "menu" },
+    acao,
+    opcaoId: opcao.id,
+    transferir: acao === "atendente",
+  };
 }
 
 /**
@@ -423,7 +461,9 @@ export async function processarMenu(
 
   if (estado.etapa === "saudacao" || estado.etapa === "pos_resposta") {
     const pergunta =
-      estado.etapa === "saudacao" ? "Posso te mandar o menu de atendimento?" : "Posso ajudar em algo mais?";
+      estado.etapa === "saudacao"
+        ? "Posso te mandar o menu de atendimento?"
+        : "Posso ajudar em algo mais?";
     const r = await decidirSimNao(texto, pergunta, dados, ia);
     if (r === true) return { mensagens: [menu(dados)], estado: { etapa: "menu" } };
     if (r === false && estado.etapa === "pos_resposta") {

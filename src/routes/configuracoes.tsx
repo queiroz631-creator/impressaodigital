@@ -41,8 +41,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
-
 export const Route = createFileRoute("/configuracoes")({
   component: () => (
     <AppLayout permissao="configuracoes.visualizar">
@@ -52,9 +50,15 @@ export const Route = createFileRoute("/configuracoes")({
   head: () => ({
     meta: [
       { title: "Configurações | Impressão Digital" },
-      { name: "description", content: "Dados da empresa, contatos e padrões usados nos orçamentos." },
+      {
+        name: "description",
+        content: "Dados da empresa, contatos e padrões usados nos orçamentos.",
+      },
       { property: "og:title", content: "Configurações | Impressão Digital" },
-      { property: "og:description", content: "Personalize os dados exibidos nos orçamentos em PDF." },
+      {
+        property: "og:description",
+        content: "Personalize os dados exibidos nos orçamentos em PDF.",
+      },
     ],
   }),
 });
@@ -97,7 +101,6 @@ const vazio: Form = {
   mensagem_prazo_orcamento: PRAZO_MENSAGEM_PADRAO,
 };
 
-
 function Configuracoes() {
   const { user } = useAuth();
   const { data: isAdmin, isLoading: carregandoPapel } = useIsAdmin(user?.id);
@@ -137,7 +140,6 @@ function Configuracoes() {
     set("impressoras_padrao", [...form.impressoras_padrao, limpo]);
     toast.success(`"${limpo}" adicionada. Clique em Salvar Alterações.`);
   }
-
 
   useEffect(() => {
     void verificarQz();
@@ -184,7 +186,6 @@ function Configuracoes() {
       pix_mensagem: config.pix_mensagem || PIX_MENSAGEM_PADRAO,
       mensagem_prazo_orcamento: config.mensagem_prazo_orcamento || PRAZO_MENSAGEM_PADRAO,
     });
-
   }, [config]);
 
   function set<K extends keyof Form>(campo: K, valor: Form[K]) {
@@ -199,9 +200,7 @@ function Configuracoes() {
     }
     const impressoras = form.impressoras_padrao.map((n) => n.trim()).filter(Boolean);
     if (form.impressora_padrao_tipo === "qz" && impressoras.length === 0) {
-      toast.error(
-        "Adicione ao menos uma impressora para usar a impressão direta via QZ Tray.",
-      );
+      toast.error("Adicione ao menos uma impressora para usar a impressão direta via QZ Tray.");
       return;
     }
     setSalvando(true);
@@ -243,7 +242,6 @@ function Configuracoes() {
     toast.success("Configurações salvas com sucesso.");
   }
 
-
   if (carregandoPapel || isLoading) return <Skeleton className="h-96 w-full" />;
 
   if (!isAdmin) {
@@ -265,7 +263,10 @@ function Configuracoes() {
 
   return (
     <>
-      <PageHeader titulo="CONFIGURAÇÕES" subtitulo="Dados usados no cabeçalho e rodapé dos orçamentos." />
+      <PageHeader
+        titulo="CONFIGURAÇÕES"
+        subtitulo="Dados usados no cabeçalho e rodapé dos orçamentos."
+      />
 
       <Tabs defaultValue="empresa" className="max-w-3xl">
         <TabsList className="mb-4 flex h-auto flex-wrap justify-start gap-1">
@@ -277,391 +278,404 @@ function Configuracoes() {
         </TabsList>
 
         <TabsContent value="empresa">
-        <Card className="max-w-3xl shadow-card">
-        <CardHeader>
-          <CardTitle className="text-base">Dados da empresa</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="empresa">Nome da empresa</Label>
-            <Input
-              id="empresa"
-              value={form.empresa_nome}
-              onChange={(e) => set("empresa_nome", e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="telefone">Telefone</Label>
-            <Input id="telefone" value={form.telefone} onChange={(e) => set("telefone", e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="whatsapp">WhatsApp</Label>
-            <Input id="whatsapp" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
-            <Input
-              id="email"
-              type="email"
-              value={form.email}
-              onChange={(e) => set("email", e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="instagram">Instagram</Label>
-            <Input
-              id="instagram"
-              value={form.instagram}
-              onChange={(e) => set("instagram", e.target.value)}
-            />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="endereco">Endereço</Label>
-            <Input id="endereco" value={form.endereco} onChange={(e) => set("endereco", e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="validade">Validade padrão (dias)</Label>
-            <Input
-              id="validade"
-              type="number"
-              min="1"
-              value={form.validade_padrao_dias}
-              onChange={(e) => set("validade_padrao_dias", Number(e.target.value))}
-            />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="rodape">Rodapé do orçamento</Label>
-            <Textarea
-              id="rodape"
-              rows={3}
-              value={form.rodape_orcamento}
-              onChange={(e) => set("rodape_orcamento", e.target.value)}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <Button onClick={salvar} disabled={salvando}>
-              <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
+          <Card className="max-w-3xl shadow-card">
+            <CardHeader>
+              <CardTitle className="text-base">Dados da empresa</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="empresa">Nome da empresa</Label>
+                <Input
+                  id="empresa"
+                  value={form.empresa_nome}
+                  onChange={(e) => set("empresa_nome", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input
+                  id="telefone"
+                  value={form.telefone}
+                  onChange={(e) => set("telefone", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp">WhatsApp</Label>
+                <Input
+                  id="whatsapp"
+                  value={form.whatsapp}
+                  onChange={(e) => set("whatsapp", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => set("email", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="instagram">Instagram</Label>
+                <Input
+                  id="instagram"
+                  value={form.instagram}
+                  onChange={(e) => set("instagram", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="endereco">Endereço</Label>
+                <Input
+                  id="endereco"
+                  value={form.endereco}
+                  onChange={(e) => set("endereco", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="validade">Validade padrão (dias)</Label>
+                <Input
+                  id="validade"
+                  type="number"
+                  min="1"
+                  value={form.validade_padrao_dias}
+                  onChange={(e) => set("validade_padrao_dias", Number(e.target.value))}
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="rodape">Rodapé do orçamento</Label>
+                <Textarea
+                  id="rodape"
+                  rows={3}
+                  value={form.rodape_orcamento}
+                  onChange={(e) => set("rodape_orcamento", e.target.value)}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Button onClick={salvar} disabled={salvando}>
+                  <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="pix">
-        <Card className="max-w-3xl shadow-card">
-        <CardHeader>
-          <CardTitle className="text-base">Pagamento PIX e prazo de entrega</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2 flex items-center justify-between rounded-md border p-3">
-            <div>
-              <Label className="text-sm">Habilitar PIX nos orçamentos</Label>
-              <p className="text-xs text-muted-foreground">
-                Quando ativo, é possível incluir os dados do PIX ao gerar o orçamento.
-              </p>
-            </div>
-            <Switch checked={form.pix_ativo} onCheckedChange={(v) => set("pix_ativo", v)} />
-          </div>
-          <div>
-            <Label htmlFor="pix_chave">Chave PIX</Label>
-            <Input
-              id="pix_chave"
-              value={form.pix_chave}
-              onChange={(e) => set("pix_chave", e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="pix_nome">Nome do beneficiário</Label>
-            <Input
-              id="pix_nome"
-              value={form.pix_nome}
-              onChange={(e) => set("pix_nome", e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="pix_banco">Banco</Label>
-            <Input
-              id="pix_banco"
-              value={form.pix_banco}
-              onChange={(e) => set("pix_banco", e.target.value)}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="pix_mensagem">Mensagem do PIX</Label>
-            <Textarea
-              id="pix_mensagem"
-              rows={4}
-              value={form.pix_mensagem}
-              onChange={(e) => set("pix_mensagem", e.target.value)}
-            />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Variáveis: {"{chave_pix}"}, {"{nome_pix}"}, {"{banco_pix}"}, {"{empresa}"}
-            </p>
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="msg_prazo">Mensagem do prazo de entrega</Label>
-            <Textarea
-              id="msg_prazo"
-              rows={2}
-              value={form.mensagem_prazo_orcamento}
-              onChange={(e) => set("mensagem_prazo_orcamento", e.target.value)}
-            />
-            <p className="mt-1 text-xs text-muted-foreground">Variável: {"{prazo}"}</p>
-          </div>
-          <div className="sm:col-span-2">
-            <Button onClick={salvar} disabled={salvando}>
-              <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-
-
+          <Card className="max-w-3xl shadow-card">
+            <CardHeader>
+              <CardTitle className="text-base">Pagamento PIX e prazo de entrega</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2 flex items-center justify-between rounded-md border p-3">
+                <div>
+                  <Label className="text-sm">Habilitar PIX nos orçamentos</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Quando ativo, é possível incluir os dados do PIX ao gerar o orçamento.
+                  </p>
+                </div>
+                <Switch checked={form.pix_ativo} onCheckedChange={(v) => set("pix_ativo", v)} />
+              </div>
+              <div>
+                <Label htmlFor="pix_chave">Chave PIX</Label>
+                <Input
+                  id="pix_chave"
+                  value={form.pix_chave}
+                  onChange={(e) => set("pix_chave", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="pix_nome">Nome do beneficiário</Label>
+                <Input
+                  id="pix_nome"
+                  value={form.pix_nome}
+                  onChange={(e) => set("pix_nome", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="pix_banco">Banco</Label>
+                <Input
+                  id="pix_banco"
+                  value={form.pix_banco}
+                  onChange={(e) => set("pix_banco", e.target.value)}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="pix_mensagem">Mensagem do PIX</Label>
+                <Textarea
+                  id="pix_mensagem"
+                  rows={4}
+                  value={form.pix_mensagem}
+                  onChange={(e) => set("pix_mensagem", e.target.value)}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Variáveis: {"{chave_pix}"}, {"{nome_pix}"}, {"{banco_pix}"}, {"{empresa}"}
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="msg_prazo">Mensagem do prazo de entrega</Label>
+                <Textarea
+                  id="msg_prazo"
+                  rows={2}
+                  value={form.mensagem_prazo_orcamento}
+                  onChange={(e) => set("mensagem_prazo_orcamento", e.target.value)}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">Variável: {"{prazo}"}</p>
+              </div>
+              <div className="sm:col-span-2">
+                <Button onClick={salvar} disabled={salvando}>
+                  <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="impressao" className="grid gap-4">
-        <Card className="max-w-3xl shadow-card">
-        <CardHeader>
-          <CardTitle className="text-base">Impressão</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <p className="text-sm text-muted-foreground">
-            Estas impressoras serão utilizadas como padrão para impressão de etiquetas e recibos
-            térmicos de 80mm. A impressão usa a ordem da lista: a primeira disponível é escolhida.
-          </p>
-
-          {/*
-           * STATUS DA CONEXÃO COM O QZ TRAY
-           */}
-          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border p-3">
-            <span
-              className={`inline-block h-2.5 w-2.5 rounded-full ${
-                qz === "conectado"
-                  ? "bg-green-500"
-                  : qz === "verificando"
-                    ? "bg-muted-foreground"
-                    : "bg-amber-500"
-              }`}
-            />
-            <div className="min-w-40 flex-1 text-sm">
-              <p className="font-medium">
-                {qz === "conectado" && "QZ Tray conectado"}
-                {qz === "verificando" && "Verificando QZ Tray..."}
-                {qz === "agente_ausente" && "QZ Tray não detectado"}
-                {qz === "script_indisponivel" && "Integração QZ Tray indisponível"}
+          <Card className="max-w-3xl shadow-card">
+            <CardHeader>
+              <CardTitle className="text-base">Impressão</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <p className="text-sm text-muted-foreground">
+                Estas impressoras serão utilizadas como padrão para impressão de etiquetas e recibos
+                térmicos de 80mm. A impressão usa a ordem da lista: a primeira disponível é
+                escolhida.
               </p>
-              <p className="text-xs text-muted-foreground">
-                {qz === "conectado" &&
-                  `${impressorasDetectadas.length} impressora(s) encontrada(s). Impressão direta ativa.`}
-                {qz === "verificando" && "Aguarde enquanto a conexão é estabelecida."}
-                {qz === "agente_ausente" &&
-                  "Não foi possível concluir a conexão local. Confirme a solicitação de acesso exibida pelo QZ Tray e clique em Reconectar. Se o navegador estiver em outro computador, a impressão direta não funciona."}
-                {qz === "script_indisponivel" &&
-                  "Não foi possível carregar o componente de impressão. Usando o navegador."}
-              </p>
-              {qz === "agente_ausente" && (
-                <a
-                  href="https://qz.io/download/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-medium text-primary underline"
-                >
-                  Baixar o QZ Tray (gratuito)
-                </a>
-              )}
-            </div>
-            <Button variant="outline" size="sm" onClick={() => void verificarQz()}>
-              <RefreshCw className="h-4 w-4" /> Reconectar
-            </Button>
-          </div>
 
-          <div className="space-y-2">
-            <Label>Impressoras padrão</Label>
-            <div className="flex flex-col gap-2">
-              {form.impressoras_padrao.map((nome, i) => (
-                <div key={`${nome}-${i}`} className="flex items-center gap-2">
-                  <Input
-                    value={nome}
-                    onChange={(e) =>
-                      set(
-                        "impressoras_padrao",
-                        form.impressoras_padrao.map((n, idx) => (idx === i ? e.target.value : n)),
-                      )
-                    }
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    title="Remover impressora"
-                    onClick={() =>
-                      set(
-                        "impressoras_padrao",
-                        form.impressoras_padrao.filter((_, idx) => idx !== i),
-                      )
-                    }
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+              {/*
+               * STATUS DA CONEXÃO COM O QZ TRAY
+               */}
+              <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border p-3">
+                <span
+                  className={`inline-block h-2.5 w-2.5 rounded-full ${
+                    qz === "conectado"
+                      ? "bg-green-500"
+                      : qz === "verificando"
+                        ? "bg-muted-foreground"
+                        : "bg-amber-500"
+                  }`}
+                />
+                <div className="min-w-40 flex-1 text-sm">
+                  <p className="font-medium">
+                    {qz === "conectado" && "QZ Tray conectado"}
+                    {qz === "verificando" && "Verificando QZ Tray..."}
+                    {qz === "agente_ausente" && "QZ Tray não detectado"}
+                    {qz === "script_indisponivel" && "Integração QZ Tray indisponível"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {qz === "conectado" &&
+                      `${impressorasDetectadas.length} impressora(s) encontrada(s). Impressão direta ativa.`}
+                    {qz === "verificando" && "Aguarde enquanto a conexão é estabelecida."}
+                    {qz === "agente_ausente" &&
+                      "Não foi possível concluir a conexão local. Confirme a solicitação de acesso exibida pelo QZ Tray e clique em Reconectar. Se o navegador estiver em outro computador, a impressão direta não funciona."}
+                    {qz === "script_indisponivel" &&
+                      "Não foi possível carregar o componente de impressão. Usando o navegador."}
+                  </p>
+                  {qz === "agente_ausente" && (
+                    <a
+                      href="https://qz.io/download/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-medium text-primary underline"
+                    >
+                      Baixar o QZ Tray (gratuito)
+                    </a>
+                  )}
                 </div>
-              ))}
-              {form.impressoras_padrao.length === 0 && (
-                <p className="text-xs text-muted-foreground">Nenhuma impressora configurada.</p>
-              )}
-            </div>
-
-            <div className="space-y-2 rounded-lg border border-border p-3">
-              <div className="flex items-center justify-between gap-2">
-                <Label className="text-xs">Impressoras encontradas no computador</Label>
                 <Button variant="outline" size="sm" onClick={() => void verificarQz()}>
-                  <RefreshCw className="h-4 w-4" /> Buscar
+                  <RefreshCw className="h-4 w-4" /> Reconectar
                 </Button>
               </div>
 
-              {impressorasDetectadas.length > 0 ? (
-                <div className="flex flex-col gap-1">
-                  {impressorasDetectadas.map((nome) => {
-                    const jaAdicionada = form.impressoras_padrao.some(
-                      (n) => n.toLowerCase() === nome.toLowerCase(),
-                    );
-                    return (
-                      <div
-                        key={nome}
-                        className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-2 py-1.5"
+              <div className="space-y-2">
+                <Label>Impressoras padrão</Label>
+                <div className="flex flex-col gap-2">
+                  {form.impressoras_padrao.map((nome, i) => (
+                    <div key={`${nome}-${i}`} className="flex items-center gap-2">
+                      <Input
+                        value={nome}
+                        onChange={(e) =>
+                          set(
+                            "impressoras_padrao",
+                            form.impressoras_padrao.map((n, idx) =>
+                              idx === i ? e.target.value : n,
+                            ),
+                          )
+                        }
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Remover impressora"
+                        onClick={() =>
+                          set(
+                            "impressoras_padrao",
+                            form.impressoras_padrao.filter((_, idx) => idx !== i),
+                          )
+                        }
                       >
-                        <span className="truncate text-sm">{nome}</span>
-                        <Button
-                          variant={jaAdicionada ? "ghost" : "outline"}
-                          size="sm"
-                          disabled={jaAdicionada}
-                          onClick={() => adicionarImpressora(nome)}
-                        >
-                          <Plus className="h-4 w-4" />
-                          {jaAdicionada ? "Adicionada" : "Adicionar"}
-                        </Button>
-                      </div>
-                    );
-                  })}
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {form.impressoras_padrao.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Nenhuma impressora configurada.</p>
+                  )}
+                </div>
+
+                <div className="space-y-2 rounded-lg border border-border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs">Impressoras encontradas no computador</Label>
+                    <Button variant="outline" size="sm" onClick={() => void verificarQz()}>
+                      <RefreshCw className="h-4 w-4" /> Buscar
+                    </Button>
+                  </div>
+
+                  {impressorasDetectadas.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                      {impressorasDetectadas.map((nome) => {
+                        const jaAdicionada = form.impressoras_padrao.some(
+                          (n) => n.toLowerCase() === nome.toLowerCase(),
+                        );
+                        return (
+                          <div
+                            key={nome}
+                            className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-2 py-1.5"
+                          >
+                            <span className="truncate text-sm">{nome}</span>
+                            <Button
+                              variant={jaAdicionada ? "ghost" : "outline"}
+                              size="sm"
+                              disabled={jaAdicionada}
+                              onClick={() => adicionarImpressora(nome)}
+                            >
+                              <Plus className="h-4 w-4" />
+                              {jaAdicionada ? "Adicionada" : "Adicionar"}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="mt-1 self-start"
+                        onClick={() => {
+                          const novas = impressorasDetectadas.filter(
+                            (nome) =>
+                              !form.impressoras_padrao.some(
+                                (n) => n.toLowerCase() === nome.toLowerCase(),
+                              ),
+                          );
+                          if (novas.length === 0) {
+                            toast.error("Todas já estão na lista.");
+                            return;
+                          }
+                          set("impressoras_padrao", [...form.impressoras_padrao, ...novas]);
+                          toast.success(`${novas.length} impressora(s) adicionada(s).`);
+                        }}
+                      >
+                        Adicionar todas
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      {qz === "verificando"
+                        ? "Procurando impressoras..."
+                        : "Nenhuma impressora encontrada. Verifique se o QZ Tray está em execução e clique em Buscar."}
+                    </p>
+                  )}
+
+                  {erroQz && <p className="text-xs text-amber-600">Detalhe técnico: {erroQz}</p>}
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <Input
+                    value={novaImpressora}
+                    placeholder="Informar nome manualmente (ex.: POS-80)"
+                    onChange={(e) => setNovaImpressora(e.target.value)}
+                  />
                   <Button
-                    variant="secondary"
-                    size="sm"
-                    className="mt-1 self-start"
+                    variant="outline"
                     onClick={() => {
-                      const novas = impressorasDetectadas.filter(
-                        (nome) =>
-                          !form.impressoras_padrao.some(
-                            (n) => n.toLowerCase() === nome.toLowerCase(),
-                          ),
-                      );
-                      if (novas.length === 0) {
-                        toast.error("Todas já estão na lista.");
+                      const nome = novaImpressora.trim();
+                      if (!nome) return;
+                      if (form.impressoras_padrao.includes(nome)) {
+                        toast.error("Essa impressora já está na lista.");
                         return;
                       }
-                      set("impressoras_padrao", [...form.impressoras_padrao, ...novas]);
-                      toast.success(`${novas.length} impressora(s) adicionada(s).`);
+                      set("impressoras_padrao", [...form.impressoras_padrao, nome]);
+                      setNovaImpressora("");
                     }}
                   >
-                    Adicionar todas
+                    <Plus className="h-4 w-4" /> Adicionar
                   </Button>
                 </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {qz === "verificando"
-                    ? "Procurando impressoras..."
-                    : "Nenhuma impressora encontrada. Verifique se o QZ Tray está em execução e clique em Buscar."}
-                </p>
-              )}
-
-              {erroQz && <p className="text-xs text-amber-600">Detalhe técnico: {erroQz}</p>}
-            </div>
-
-
-            <div className="flex items-center gap-2 pt-2">
-              <Input
-                value={novaImpressora}
-                placeholder="Informar nome manualmente (ex.: POS-80)"
-                onChange={(e) => setNovaImpressora(e.target.value)}
-              />
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const nome = novaImpressora.trim();
-                  if (!nome) return;
-                  if (form.impressoras_padrao.includes(nome)) {
-                    toast.error("Essa impressora já está na lista.");
-                    return;
-                  }
-                  set("impressoras_padrao", [...form.impressoras_padrao, nome]);
-                  setNovaImpressora("");
-                }}
-              >
-                <Plus className="h-4 w-4" /> Adicionar
-              </Button>
-            </div>
-            {!impressaoDireta && (
-              <p className="text-xs text-muted-foreground">
-                Impressão direta não disponível neste computador. Você pode informar o nome da
-                impressora manualmente, mas a seleção automática depende do QZ Tray em execução.
-              </p>
-            )}
-            {alteracoesPendentes && (
-              <p className="text-xs font-medium text-amber-600">
-                Há alterações não salvas. Clique em "Salvar Alterações" antes de sair da tela.
-              </p>
-            )}
-
-          </div>
-
-          <div className="space-y-2">
-            <Label>Formato da etiqueta</Label>
-            <Input value="80mm" readOnly disabled />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Método de impressão</Label>
-            <RadioGroup
-              value={form.impressora_padrao_tipo}
-              onValueChange={(v) => set("impressora_padrao_tipo", v)}
-              className="gap-2"
-            >
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="navegador" id="metodo-navegador" />
-                <Label htmlFor="metodo-navegador">Impressão pelo navegador</Label>
+                {!impressaoDireta && (
+                  <p className="text-xs text-muted-foreground">
+                    Impressão direta não disponível neste computador. Você pode informar o nome da
+                    impressora manualmente, mas a seleção automática depende do QZ Tray em execução.
+                  </p>
+                )}
+                {alteracoesPendentes && (
+                  <p className="text-xs font-medium text-amber-600">
+                    Há alterações não salvas. Clique em "Salvar Alterações" antes de sair da tela.
+                  </p>
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="qz" id="metodo-qz" disabled={!impressaoDireta} />
-                <Label htmlFor="metodo-qz">Impressão direta via QZ Tray</Label>
+
+              <div className="space-y-2">
+                <Label>Formato da etiqueta</Label>
+                <Input value="80mm" readOnly disabled />
               </div>
-            </RadioGroup>
-          </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={async () => {
-                const resultado = await testarImpressora(form.impressoras_padrao[0] ?? null, 80);
-                if (resultado.metodo === "qz") {
-                  toast.success("Teste enviado para a impressora.");
-                } else {
-                  toast.error(resultado.mensagem ?? "Não foi possível enviar o teste pelo QZ Tray.");
-                }
-              }}
-            >
-              <Printer className="h-4 w-4" /> Testar impressão
-            </Button>
-            <Button onClick={salvar} disabled={salvando}>
-              <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <div className="space-y-2">
+                <Label>Método de impressão</Label>
+                <RadioGroup
+                  value={form.impressora_padrao_tipo}
+                  onValueChange={(v) => set("impressora_padrao_tipo", v)}
+                  className="gap-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="navegador" id="metodo-navegador" />
+                    <Label htmlFor="metodo-navegador">Impressão pelo navegador</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="qz" id="metodo-qz" disabled={!impressaoDireta} />
+                    <Label htmlFor="metodo-qz">Impressão direta via QZ Tray</Label>
+                  </div>
+                </RadioGroup>
+              </div>
 
-      <PerfisImpressao
-        impressorasDetectadas={impressorasDetectadas}
-        impressorasConfiguradas={form.impressoras_padrao}
-      />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    const resultado = await testarImpressora(
+                      form.impressoras_padrao[0] ?? null,
+                      80,
+                    );
+                    if (resultado.metodo === "qz") {
+                      toast.success("Teste enviado para a impressora.");
+                    } else {
+                      toast.error(
+                        resultado.mensagem ?? "Não foi possível enviar o teste pelo QZ Tray.",
+                      );
+                    }
+                  }}
+                >
+                  <Printer className="h-4 w-4" /> Testar impressão
+                </Button>
+                <Button onClick={salvar} disabled={salvando}>
+                  <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar Alterações"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
+          <PerfisImpressao
+            impressorasDetectadas={impressorasDetectadas}
+            impressorasConfiguradas={form.impressoras_padrao}
+          />
         </TabsContent>
 
         <TabsContent value="whatsapp" className="grid gap-4">
@@ -680,7 +694,6 @@ function Configuracoes() {
             </CardContent>
           </Card>
         </TabsContent>
-
 
         <TabsContent value="link">
           <CardLinkPublico />
@@ -705,17 +718,61 @@ interface FormLink {
 }
 
 const CAMPOS_LINK: { chave: keyof FormLink; rotulo: string; ajuda: string }[] = [
-  { chave: "permitir_link", rotulo: "Link ativo", ajuda: "Habilita o link público do orçamento enviado ao cliente." },
-  { chave: "mostrar_precos_link", rotulo: "Mostrar valores", ajuda: "Exibe o total do orçamento na página do cliente." },
-  { chave: "link_permitir_material", rotulo: "Alterar material", ajuda: "O cliente pode trocar o papel/material." },
-  { chave: "link_permitir_copias", rotulo: "Alterar cópias", ajuda: "O cliente pode mudar a quantidade de cópias." },
-  { chave: "link_permitir_frente_verso", rotulo: "Alterar frente e verso", ajuda: "O cliente pode ligar/desligar frente e verso." },
-  { chave: "link_permitir_acabamento", rotulo: "Alterar acabamentos", ajuda: "O cliente pode escolher acabamentos." },
-  { chave: "link_permitir_formato", rotulo: "Alterar formato", ajuda: "Permite trocar A3/A4/A5 pelo link." },
-  { chave: "link_permitir_tipo", rotulo: "Alterar tipo de impressão", ajuda: "Permite trocar impressão simples/especial." },
-  { chave: "link_permitir_upload", rotulo: "Enviar arquivos pelo link", ajuda: "Reservado para envio de novos arquivos pelo cliente." },
-  { chave: "link_permitir_confirmacao", rotulo: "Confirmar pelo link", ajuda: "O cliente pode aprovar o pedido pela página." },
-  { chave: "link_exigir_telefone", rotulo: "Exigir telefone", ajuda: "Pede confirmação do telefone antes de aprovar." },
+  {
+    chave: "permitir_link",
+    rotulo: "Link ativo",
+    ajuda: "Habilita o link público do orçamento enviado ao cliente.",
+  },
+  {
+    chave: "mostrar_precos_link",
+    rotulo: "Mostrar valores",
+    ajuda: "Exibe o total do orçamento na página do cliente.",
+  },
+  {
+    chave: "link_permitir_material",
+    rotulo: "Alterar material",
+    ajuda: "O cliente pode trocar o papel/material.",
+  },
+  {
+    chave: "link_permitir_copias",
+    rotulo: "Alterar cópias",
+    ajuda: "O cliente pode mudar a quantidade de cópias.",
+  },
+  {
+    chave: "link_permitir_frente_verso",
+    rotulo: "Alterar frente e verso",
+    ajuda: "O cliente pode ligar/desligar frente e verso.",
+  },
+  {
+    chave: "link_permitir_acabamento",
+    rotulo: "Alterar acabamentos",
+    ajuda: "O cliente pode escolher acabamentos.",
+  },
+  {
+    chave: "link_permitir_formato",
+    rotulo: "Alterar formato",
+    ajuda: "Permite trocar A3/A4/A5 pelo link.",
+  },
+  {
+    chave: "link_permitir_tipo",
+    rotulo: "Alterar tipo de impressão",
+    ajuda: "Permite trocar impressão simples/especial.",
+  },
+  {
+    chave: "link_permitir_upload",
+    rotulo: "Enviar arquivos pelo link",
+    ajuda: "Reservado para envio de novos arquivos pelo cliente.",
+  },
+  {
+    chave: "link_permitir_confirmacao",
+    rotulo: "Confirmar pelo link",
+    ajuda: "O cliente pode aprovar o pedido pela página.",
+  },
+  {
+    chave: "link_exigir_telefone",
+    rotulo: "Exigir telefone",
+    ajuda: "Pede confirmação do telefone antes de aprovar.",
+  },
 ];
 
 /** Link público do orçamento enviado ao cliente. */
@@ -727,7 +784,11 @@ function CardLinkPublico() {
   const config = useQuery({
     queryKey: ["whatsapp-config-link"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("whatsapp_config").select("*").limit(1).maybeSingle();
+      const { data, error } = await supabase
+        .from("whatsapp_config")
+        .select("*")
+        .limit(1)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -856,7 +917,6 @@ function CardWhatsapp() {
     },
   });
 
-
   const status = useQuery({
     queryKey: ["whatsapp-status"],
     queryFn: async () => consultarStatus(),
@@ -916,7 +976,6 @@ function CardWhatsapp() {
       .catch(() => undefined);
   }, [webhooks.data, webhooks, reconfiguracao]);
 
-
   const token = config.data?.webhook_token ?? "";
   const urlWebhook = origem && token ? `${origem}/api/public/whatsapp/webhook?token=${token}` : "";
 
@@ -944,7 +1003,12 @@ function CardWhatsapp() {
                   : "Desconectado"}
           </span>
 
-          <Button variant="outline" size="sm" onClick={() => status.refetch()} disabled={status.isFetching}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => status.refetch()}
+            disabled={status.isFetching}
+          >
             <RefreshCw className="h-4 w-4" /> Testar conexão
           </Button>
 
@@ -956,7 +1020,12 @@ function CardWhatsapp() {
         <div className="grid gap-2">
           <Label>URL do webhook (cole no painel da Z-API)</Label>
           <div className="flex gap-2">
-            <Input readOnly value={urlWebhook} placeholder="Gerando..." className="font-mono text-xs" />
+            <Input
+              readOnly
+              value={urlWebhook}
+              placeholder="Gerando..."
+              className="font-mono text-xs"
+            />
             <Button
               variant="outline"
               size="sm"
@@ -970,8 +1039,9 @@ function CardWhatsapp() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Configure este endereço em <strong>Ao receber</strong> na Z-API. Depois, ative abaixo a notificação
-            de mensagens enviadas pelo próprio número para sincronizar celular e WhatsApp Web.
+            Configure este endereço em <strong>Ao receber</strong> na Z-API. Depois, ative abaixo a
+            notificação de mensagens enviadas pelo próprio número para sincronizar celular e
+            WhatsApp Web.
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -994,7 +1064,13 @@ function CardWhatsapp() {
               <span className="text-muted-foreground">Lendo o que está gravado na Z-API...</span>
             ) : webhooks.data ? (
               <>
-                <span className={webhooks.data.correto ? "text-muted-foreground" : "font-semibold text-destructive"}>
+                <span
+                  className={
+                    webhooks.data.correto
+                      ? "text-muted-foreground"
+                      : "font-semibold text-destructive"
+                  }
+                >
                   {webhooks.data.correto
                     ? corrigidoAutomaticamente
                       ? "O endereço estava errado e foi corrigido automaticamente."
@@ -1045,8 +1121,9 @@ function CardWhatsapp() {
             ) : null}
           </div>
           <p className="text-xs text-muted-foreground">
-            É o endereço em que o sistema está publicado. As respostas automáticas do bot e os avisos de
-            inatividade são disparados por aqui — se estiver diferente do endereço em uso, o bot não responde.
+            É o endereço em que o sistema está publicado. As respostas automáticas do bot e os
+            avisos de inatividade são disparados por aqui — se estiver diferente do endereço em uso,
+            o bot não responde.
           </p>
           {origem && enderecoSistema.replace(/\/+$/, "") !== origem ? (
             <p className="text-xs font-semibold text-destructive">
@@ -1055,14 +1132,15 @@ function CardWhatsapp() {
           ) : null}
         </div>
 
-
         <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
           <Button
             variant="outline"
             onClick={() => ativacaoMensagensExternas.mutate()}
             disabled={!status.data?.conectado || ativacaoMensagensExternas.isPending}
           >
-            <RefreshCw className={`h-4 w-4 ${ativacaoMensagensExternas.isPending ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-4 w-4 ${ativacaoMensagensExternas.isPending ? "animate-spin" : ""}`}
+            />
             {ativacaoMensagensExternas.isPending ? "Ativando..." : "Ativar mensagens do celular"}
           </Button>
           <span className="text-xs text-muted-foreground">
@@ -1076,11 +1154,12 @@ function CardWhatsapp() {
             <strong>ZAPI_INSTANCE_ID</strong>, <strong>ZAPI_INSTANCE_TOKEN</strong>,{" "}
             <strong>ZAPI_CLIENT_TOKEN</strong> e, opcionalmente, <strong>ZAPI_BASE_URL</strong>.
           </p>
-          <p>Conexão: {config.data?.conexao_nome ?? "Principal"} · Base: {config.data?.base_url ?? "https://api.z-api.io"}</p>
+          <p>
+            Conexão: {config.data?.conexao_nome ?? "Principal"} · Base:{" "}
+            {config.data?.base_url ?? "https://api.z-api.io"}
+          </p>
         </div>
       </CardContent>
     </Card>
   );
 }
-
-

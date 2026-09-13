@@ -1,7 +1,17 @@
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowDown, ArrowLeft, ArrowUp, Paperclip, Pencil, Play, Plus, Send, Trash2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  Paperclip,
+  Pencil,
+  Play,
+  Plus,
+  Send,
+  Trash2,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { simularFluxo } from "@/lib/bot.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +22,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   ACOES_ETAPA,
@@ -146,25 +162,35 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
   }
 
   async function salvarFluxo() {
-    if (!dadosFluxo.nome.trim()) { toast.error("Informe o nome do fluxo."); return; }
+    if (!dadosFluxo.nome.trim()) {
+      toast.error("Informe o nome do fluxo.");
+      return;
+    }
     const { error } = await supabase.from("bot_fluxos").update(dadosFluxo).eq("id", fluxo.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Fluxo salvo.");
     await recarregar();
   }
 
   async function salvarEtapa() {
     if (!form) return;
-    if (!form.nome.trim()) { toast.error("Informe o nome da etapa."); return; }
+    if (!form.nome.trim()) {
+      toast.error("Informe o nome da etapa.");
+      return;
+    }
 
     const dados = {
       nome: form.nome,
       mensagem: form.mensagem,
       tipo_mensagem: form.tipo_mensagem,
-      midia_url: form.tipo_mensagem === "texto" ? null : (form.midia_url || null),
-      midia_nome: form.tipo_mensagem === "texto" ? null : (form.midia_nome || null),
+      midia_url: form.tipo_mensagem === "texto" ? null : form.midia_url || null,
+      midia_nome: form.tipo_mensagem === "texto" ? null : form.midia_nome || null,
       modo_avanco: form.modo_avanco,
-      espera_segundos: form.modo_avanco === "automatico" ? Math.min(60, Math.max(0, form.espera_segundos)) : 0,
+      espera_segundos:
+        form.modo_avanco === "automatico" ? Math.min(60, Math.max(0, form.espera_segundos)) : 0,
       tipo_resposta: form.tipo_resposta,
       acao: form.acao,
       ativo: form.ativo,
@@ -175,14 +201,24 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
     let etapaId = form.id ?? null;
     if (etapaId) {
       const { error } = await supabase.from("bot_fluxo_etapas").update(dados).eq("id", etapaId);
-      if (error) { toast.error(error.message); return; }
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
     } else {
       const { data, error } = await supabase
         .from("bot_fluxo_etapas")
-        .insert({ ...dados, fluxo_id: fluxo.id, ordem: Math.max(0, ...ordenadas.map((e) => e.ordem)) + 1 })
+        .insert({
+          ...dados,
+          fluxo_id: fluxo.id,
+          ordem: Math.max(0, ...ordenadas.map((e) => e.ordem)) + 1,
+        })
         .select("id")
         .single();
-      if (error || !data) { toast.error(error?.message ?? "Falha ao salvar etapa."); return; }
+      if (error || !data) {
+        toast.error(error?.message ?? "Falha ao salvar etapa.");
+        return;
+      }
       etapaId = data.id;
     }
 
@@ -204,7 +240,10 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
       const { error } = o.id
         ? await supabase.from("bot_fluxo_opcoes").update(dadosOpcao).eq("id", o.id)
         : await supabase.from("bot_fluxo_opcoes").insert({ ...dadosOpcao, etapa_id: etapaId });
-      if (error) { toast.error(error.message); return; }
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
     }
 
     toast.success("Etapa salva.");
@@ -215,8 +254,14 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
 
   async function excluirEtapa(e: FluxoEtapa) {
     const { error } = await supabase.from("bot_fluxo_etapas").delete().eq("id", e.id);
-    if (error) { toast.error(error.message); return; }
-    if (aberta === e.id) { setAberta(null); setForm(null); }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    if (aberta === e.id) {
+      setAberta(null);
+      setForm(null);
+    }
     await recarregar();
   }
 
@@ -235,7 +280,12 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
   }
 
   const modalEtapa = (
-    <Dialog open={!!form} onOpenChange={(v) => { if (!v) fecharModal(); }}>
+    <Dialog
+      open={!!form}
+      onOpenChange={(v) => {
+        if (!v) fecharModal();
+      }}
+    >
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{aberta === "nova" ? "Nova etapa" : "Editar etapa"}</DialogTitle>
@@ -273,7 +323,10 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
         <CardContent className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-1">
             <Label>Nome do fluxo *</Label>
-            <Input value={dadosFluxo.nome} onChange={(e) => setDadosFluxo({ ...dadosFluxo, nome: e.target.value })} />
+            <Input
+              value={dadosFluxo.nome}
+              onChange={(e) => setDadosFluxo({ ...dadosFluxo, nome: e.target.value })}
+            />
           </div>
           <div className="grid gap-1">
             <Label>Descrição</Label>
@@ -284,17 +337,29 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
           </div>
           <div className="grid gap-1">
             <Label>Ícone</Label>
-            <Select value={dadosFluxo.icone} onValueChange={(v) => setDadosFluxo({ ...dadosFluxo, icone: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select
+              value={dadosFluxo.icone}
+              onValueChange={(v) => setDadosFluxo({ ...dadosFluxo, icone: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {ICONES.map((i) => <SelectItem key={i.valor} value={i.valor}>{i.emoji} {i.rotulo}</SelectItem>)}
+                {ICONES.map((i) => (
+                  <SelectItem key={i.valor} value={i.valor}>
+                    {i.emoji} {i.rotulo}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="grid content-end gap-2">
             <label className="flex items-center justify-between gap-4 text-sm">
               <strong>Fluxo ativo</strong>
-              <Switch checked={dadosFluxo.ativo} onCheckedChange={(v) => setDadosFluxo({ ...dadosFluxo, ativo: v })} />
+              <Switch
+                checked={dadosFluxo.ativo}
+                onCheckedChange={(v) => setDadosFluxo({ ...dadosFluxo, ativo: v })}
+              />
             </label>
             <label className="flex items-center justify-between gap-4 text-sm">
               <strong>Enviar tudo em uma única mensagem</strong>
@@ -336,7 +401,10 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
                     <Button size="icon" variant="ghost" onClick={() => void moverEtapa(i, 1)}>
                       <ArrowDown className="h-4 w-4" />
                     </Button>
-                    <ConfirmarExclusao descricao="Excluir esta etapa e suas opções?" onConfirmar={() => excluirEtapa(e)}>
+                    <ConfirmarExclusao
+                      descricao="Excluir esta etapa e suas opções?"
+                      onConfirmar={() => excluirEtapa(e)}
+                    >
                       <Button size="icon" variant="ghost" className="text-destructive">
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -347,7 +415,9 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
                 {e.mensagem && <p className="whitespace-pre-wrap text-sm">{e.mensagem}</p>}
                 <p className="text-xs text-muted-foreground">
                   {rotuloModoAvanco(e.modo_avanco)}
-                  {e.modo_avanco === "automatico" && e.espera_segundos > 0 ? ` · ${e.espera_segundos}s` : ""}
+                  {e.modo_avanco === "automatico" && e.espera_segundos > 0
+                    ? ` · ${e.espera_segundos}s`
+                    : ""}
                   {lista.length > 0 ? ` · ${lista.length} opção(ões)` : ""}
                 </p>
               </CardContent>
@@ -370,7 +440,9 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
 
       {/* ---------- Visualização ---------- */}
       <Card className="shadow-card">
-        <CardHeader className="pb-2"><CardTitle className="text-base">Visualização</CardTitle></CardHeader>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Visualização</CardTitle>
+        </CardHeader>
         <CardContent className="grid gap-1 text-sm">
           <span className="font-bold">INÍCIO</span>
           {ordenadas.map((e) => (
@@ -415,8 +487,13 @@ function EditorEtapa({
     try {
       const extensao = arquivo.name.split(".").pop() ?? "bin";
       const caminho = `etapas/${crypto.randomUUID()}.${extensao}`;
-      const { error } = await supabase.storage.from("bot-midia").upload(caminho, arquivo, { upsert: true });
-      if (error) { toast.error(error.message); return; }
+      const { error } = await supabase.storage
+        .from("bot-midia")
+        .upload(caminho, arquivo, { upsert: true });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       setForm({ ...form, midia_url: caminho, midia_nome: arquivo.name });
       toast.success("Arquivo anexado.");
     } finally {
@@ -433,10 +510,19 @@ function EditorEtapa({
 
       <div className="grid gap-1">
         <Label>Tipo de mensagem</Label>
-        <Select value={form.tipo_mensagem} onValueChange={(v) => setForm({ ...form, tipo_mensagem: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+        <Select
+          value={form.tipo_mensagem}
+          onValueChange={(v) => setForm({ ...form, tipo_mensagem: v })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {TIPOS_MENSAGEM.map((t) => <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>)}
+            {TIPOS_MENSAGEM.map((t) => (
+              <SelectItem key={t.valor} value={t.valor}>
+                {t.rotulo}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -456,10 +542,17 @@ function EditorEtapa({
                 e.target.value = "";
               }}
             />
-            <Button size="sm" variant="outline" disabled={enviando} onClick={() => arquivoRef.current?.click()}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={enviando}
+              onClick={() => arquivoRef.current?.click()}
+            >
               <Paperclip className="h-4 w-4" /> {enviando ? "ENVIANDO..." : "ANEXAR ARQUIVO"}
             </Button>
-            {form.midia_nome && <span className="text-xs text-muted-foreground">{form.midia_nome}</span>}
+            {form.midia_nome && (
+              <span className="text-xs text-muted-foreground">{form.midia_nome}</span>
+            )}
             {form.midia_url && (
               <Button
                 size="sm"
@@ -481,16 +574,31 @@ function EditorEtapa({
 
       <div className="grid gap-1">
         <Label>{form.tipo_mensagem === "texto" ? "Texto da etapa" : "Texto / legenda"}</Label>
-        <Textarea rows={4} value={form.mensagem} onChange={(e) => setForm({ ...form, mensagem: e.target.value })} />
-        <p className="text-xs text-muted-foreground">Use {"{nome}"}, {"{telefone}"} e {"{saudacao}"}.</p>
+        <Textarea
+          rows={4}
+          value={form.mensagem}
+          onChange={(e) => setForm({ ...form, mensagem: e.target.value })}
+        />
+        <p className="text-xs text-muted-foreground">
+          Use {"{nome}"}, {"{telefone}"} e {"{saudacao}"}.
+        </p>
       </div>
 
       <div className="grid gap-1">
         <Label>Próxima etapa — como avança</Label>
-        <Select value={form.modo_avanco} onValueChange={(v) => setForm({ ...form, modo_avanco: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+        <Select
+          value={form.modo_avanco}
+          onValueChange={(v) => setForm({ ...form, modo_avanco: v })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {MODOS_AVANCO.map((m) => <SelectItem key={m.valor} value={m.valor}>{m.rotulo}</SelectItem>)}
+            {MODOS_AVANCO.map((m) => (
+              <SelectItem key={m.valor} value={m.valor}>
+                {m.rotulo}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -520,8 +628,22 @@ function EditorEtapa({
                   ...form,
                   tipo_resposta: v,
                   opcoes: [
-                    { titulo: "SIM", valor: "sim", acao: "proxima_etapa", destino_fluxo_id: NENHUM, destino_etapa_id: NENHUM, ativo: true },
-                    { titulo: "NÃO", valor: "nao", acao: "proxima_etapa", destino_fluxo_id: NENHUM, destino_etapa_id: NENHUM, ativo: true },
+                    {
+                      titulo: "SIM",
+                      valor: "sim",
+                      acao: "proxima_etapa",
+                      destino_fluxo_id: NENHUM,
+                      destino_etapa_id: NENHUM,
+                      ativo: true,
+                    },
+                    {
+                      titulo: "NÃO",
+                      valor: "nao",
+                      acao: "proxima_etapa",
+                      destino_fluxo_id: NENHUM,
+                      destino_etapa_id: NENHUM,
+                      ativo: true,
+                    },
                   ],
                 });
                 return;
@@ -529,9 +651,15 @@ function EditorEtapa({
               setForm({ ...form, tipo_resposta: v });
             }}
           >
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              {TIPOS_RESPOSTA.map((t) => <SelectItem key={t.valor} value={t.valor}>{t.rotulo}</SelectItem>)}
+              {TIPOS_RESPOSTA.map((t) => (
+                <SelectItem key={t.valor} value={t.valor}>
+                  {t.rotulo}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -540,9 +668,15 @@ function EditorEtapa({
       <div className="grid gap-1">
         <Label>Ação da etapa</Label>
         <Select value={form.acao} onValueChange={(v) => setForm({ ...form, acao: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {ACOES_ETAPA.map((a) => <SelectItem key={a.valor} value={a.valor}>{a.rotulo}</SelectItem>)}
+            {ACOES_ETAPA.map((a) => (
+              <SelectItem key={a.valor} value={a.valor}>
+                {a.rotulo}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -550,11 +684,20 @@ function EditorEtapa({
       {form.acao === "iniciar_fluxo" && (
         <div className="grid gap-1">
           <Label>Fluxo destino</Label>
-          <Select value={form.destino_fluxo_id} onValueChange={(v) => setForm({ ...form, destino_fluxo_id: v })}>
-            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+          <Select
+            value={form.destino_fluxo_id}
+            onValueChange={(v) => setForm({ ...form, destino_fluxo_id: v })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value={NENHUM}>Nenhum</SelectItem>
-              {outrosFluxos.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+              {outrosFluxos.map((f) => (
+                <SelectItem key={f.id} value={f.id}>
+                  {f.nome}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -562,13 +705,22 @@ function EditorEtapa({
 
       <div className="grid gap-1">
         <Label>Seguir para</Label>
-        <Select value={form.proxima_etapa_id} onValueChange={(v) => setForm({ ...form, proxima_etapa_id: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+        <Select
+          value={form.proxima_etapa_id}
+          onValueChange={(v) => setForm({ ...form, proxima_etapa_id: v })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value={NENHUM}>Seguir a ordem das etapas</SelectItem>
-            {etapas.filter((e) => e.id !== form.id).map((e) => (
-              <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-            ))}
+            {etapas
+              .filter((e) => e.id !== form.id)
+              .map((e) => (
+                <SelectItem key={e.id} value={e.id}>
+                  {e.nome}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
       </div>
@@ -585,12 +737,17 @@ function EditorEtapa({
         </p>
 
         {form.opcoes.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Sem opções. O cliente responde livremente nesta etapa.</p>
+          <p className="text-xs text-muted-foreground">
+            Sem opções. O cliente responde livremente nesta etapa.
+          </p>
         ) : (
           <div className="grid divide-y rounded-lg border">
             {form.opcoes.map((o, i) => {
               const alterar = (patch: Partial<FormOpcao>) =>
-                setForm({ ...form, opcoes: form.opcoes.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
+                setForm({
+                  ...form,
+                  opcoes: form.opcoes.map((x, j) => (j === i ? { ...x, ...patch } : x)),
+                });
               const mover = (d: number) => {
                 const j = i + d;
                 if (j < 0 || j >= form.opcoes.length) return;
@@ -626,7 +783,11 @@ function EditorEtapa({
                       <Button size="icon" variant="ghost" onClick={() => mover(1)}>
                         <ArrowDown className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setOpcaoAberta(aberta ? null : i)}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setOpcaoAberta(aberta ? null : i)}
+                      >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
@@ -660,26 +821,50 @@ function EditorEtapa({
                         onChange={(e) => alterar({ valor: e.target.value })}
                       />
                       <Select value={o.acao} onValueChange={(v) => alterar({ acao: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
-                          {ACOES_OPCAO.map((a) => <SelectItem key={a.valor} value={a.valor}>{a.rotulo}</SelectItem>)}
+                          {ACOES_OPCAO.map((a) => (
+                            <SelectItem key={a.valor} value={a.valor}>
+                              {a.rotulo}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       {o.acao === "iniciar_fluxo" && (
-                        <Select value={o.destino_fluxo_id} onValueChange={(v) => alterar({ destino_fluxo_id: v })}>
-                          <SelectTrigger><SelectValue placeholder="Fluxo destino" /></SelectTrigger>
+                        <Select
+                          value={o.destino_fluxo_id}
+                          onValueChange={(v) => alterar({ destino_fluxo_id: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Fluxo destino" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value={NENHUM}>Nenhum</SelectItem>
-                            {outrosFluxos.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                            {outrosFluxos.map((f) => (
+                              <SelectItem key={f.id} value={f.id}>
+                                {f.nome}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       )}
                       {o.acao === "ir_para_etapa" && (
-                        <Select value={o.destino_etapa_id} onValueChange={(v) => alterar({ destino_etapa_id: v })}>
-                          <SelectTrigger><SelectValue placeholder="Etapa destino" /></SelectTrigger>
+                        <Select
+                          value={o.destino_etapa_id}
+                          onValueChange={(v) => alterar({ destino_etapa_id: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Etapa destino" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value={NENHUM}>Nenhuma</SelectItem>
-                            {etapas.map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                            {etapas.map((e) => (
+                              <SelectItem key={e.id} value={e.id}>
+                                {e.nome}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       )}
@@ -688,7 +873,9 @@ function EditorEtapa({
                         <Switch checked={o.ativo} onCheckedChange={(v) => alterar({ ativo: v })} />
                       </label>
                       <div>
-                        <Button size="sm" variant="outline" onClick={() => setOpcaoAberta(null)}>CONCLUIR</Button>
+                        <Button size="sm" variant="outline" onClick={() => setOpcaoAberta(null)}>
+                          CONCLUIR
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -715,7 +902,14 @@ function EditorEtapa({
                 ...form,
                 opcoes: [
                   ...form.opcoes,
-                  { titulo: "", valor: "", acao: "proxima_etapa", destino_fluxo_id: NENHUM, destino_etapa_id: NENHUM, ativo: true },
+                  {
+                    titulo: "",
+                    valor: "",
+                    acao: "proxima_etapa",
+                    destino_fluxo_id: NENHUM,
+                    destino_etapa_id: NENHUM,
+                    ativo: true,
+                  },
                 ],
               });
               setOpcaoAberta(form.opcoes.length);
@@ -726,10 +920,11 @@ function EditorEtapa({
         </div>
       </div>
 
-
       <div className="flex flex-wrap gap-2">
         <Button onClick={onSalvar}>SALVAR ETAPA</Button>
-        <Button variant="outline" onClick={onCancelar}>CANCELAR</Button>
+        <Button variant="outline" onClick={onCancelar}>
+          CANCELAR
+        </Button>
       </div>
     </div>
   );
@@ -748,13 +943,22 @@ function SimuladorFluxo({ fluxoId }: { fluxoId: string }) {
     setCarregando(true);
     try {
       const r = await simular({
-        data: { fluxoId, texto: mensagem ?? "", tipo: "texto", estado: mensagem === null ? null : estado },
+        data: {
+          fluxoId,
+          texto: mensagem ?? "",
+          tipo: "texto",
+          estado: mensagem === null ? null : estado,
+        },
       });
       const novas = r.mensagens.map((m) => ({
         de: "bot" as const,
         texto: m.botoes.length > 0 ? `${m.texto}\n[${m.botoes.join("] [")}]` : m.texto,
       }));
-      setConversa((c) => [...c, ...(mensagem ? [{ de: "cliente" as const, texto: mensagem }] : []), ...novas]);
+      setConversa((c) => [
+        ...c,
+        ...(mensagem ? [{ de: "cliente" as const, texto: mensagem }] : []),
+        ...novas,
+      ]);
       setEstado((r.estado as EstadoFluxo | null) ?? null);
       setIniciado(true);
     } catch (e) {
@@ -771,7 +975,12 @@ function SimuladorFluxo({ fluxoId }: { fluxoId: string }) {
         <Button
           size="sm"
           variant="outline"
-          onClick={() => { setConversa([]); setEstado(null); setIniciado(false); void enviar(null); }}
+          onClick={() => {
+            setConversa([]);
+            setEstado(null);
+            setIniciado(false);
+            void enviar(null);
+          }}
         >
           <Play className="h-4 w-4" /> {iniciado ? "Reiniciar" : "Iniciar"}
         </Button>
@@ -779,7 +988,9 @@ function SimuladorFluxo({ fluxoId }: { fluxoId: string }) {
       <CardContent className="grid gap-3">
         <div className="grid max-h-80 gap-2 overflow-y-auto rounded-lg border p-3">
           {conversa.length === 0 && (
-            <p className="text-sm text-muted-foreground">Clique em Iniciar para simular a conversa.</p>
+            <p className="text-sm text-muted-foreground">
+              Clique em Iniciar para simular a conversa.
+            </p>
           )}
           {conversa.map((m, i) => (
             <div

@@ -50,7 +50,13 @@ export interface DadosLink {
     acabamentosSelecionados: string[];
   };
   opcoes?: {
-    materiais: { id: string; nome: string; descricao: string | null; formato: string; tipo: string }[];
+    materiais: {
+      id: string;
+      nome: string;
+      descricao: string | null;
+      formato: string;
+      tipo: string;
+    }[];
     acabamentos: { id: string; nome: string }[];
   };
 }
@@ -98,7 +104,8 @@ async function lerOrcamento(id: string) {
 async function montar(token: string): Promise<DadosLink> {
   const link = await lerLink(token);
   if (!link || link.cancelado) return { ok: false, motivo: "Link inválido ou cancelado." };
-  if (new Date(link.expira_em).getTime() < Date.now()) return { ok: false, motivo: "Este link expirou." };
+  if (new Date(link.expira_em).getTime() < Date.now())
+    return { ok: false, motivo: "Este link expirou." };
 
   const config = await lerConfigLink();
   if (!config?.permitir_link) return { ok: false, motivo: "O link de orçamento está desativado." };
@@ -148,7 +155,9 @@ async function montar(token: string): Promise<DadosLink> {
       status: orc.status,
       confirmado: Boolean(link.confirmado_em) || orc.status === "aprovado",
       arquivos: arquivos.map((a) => ({ nome: a.nome, paginas: a.paginas })),
-      acabamentosSelecionados: acabamentos.filter((a) => selecionadosNomes.has(a.nome)).map((a) => a.id),
+      acabamentosSelecionados: acabamentos
+        .filter((a) => selecionadosNomes.has(a.nome))
+        .map((a) => a.id),
     },
     opcoes: {
       materiais: materiaisCompativeis(materiais, tipoServico, formato).map((m) => ({
@@ -188,7 +197,8 @@ export interface EntradaAtualizacao {
 export async function atualizarPorToken(entrada: EntradaAtualizacao): Promise<DadosLink> {
   const link = await lerLink(entrada.token);
   if (!link || link.cancelado) return { ok: false, motivo: "Link inválido ou cancelado." };
-  if (new Date(link.expira_em).getTime() < Date.now()) return { ok: false, motivo: "Este link expirou." };
+  if (new Date(link.expira_em).getTime() < Date.now())
+    return { ok: false, motivo: "Este link expirou." };
   if (link.confirmado_em) return { ok: false, motivo: "Este orçamento já foi confirmado." };
 
   const config = await lerConfigLink();
@@ -243,7 +253,10 @@ export async function atualizarPorToken(entrada: EntradaAtualizacao): Promise<Da
   await persistirCalculo(orc.id, orc.pedido_id, arquivos, resultado);
 
   if (entrada.observacao) {
-    await supabaseAdmin.from("orcamentos").update({ observacao: entrada.observacao }).eq("id", orc.id);
+    await supabaseAdmin
+      .from("orcamentos")
+      .update({ observacao: entrada.observacao })
+      .eq("id", orc.id);
   }
 
   if (link.conversa_id) {
@@ -261,11 +274,13 @@ export async function atualizarPorToken(entrada: EntradaAtualizacao): Promise<Da
 export async function confirmarPorToken(token: string): Promise<DadosLink> {
   const link = await lerLink(token);
   if (!link || link.cancelado) return { ok: false, motivo: "Link inválido ou cancelado." };
-  if (new Date(link.expira_em).getTime() < Date.now()) return { ok: false, motivo: "Este link expirou." };
+  if (new Date(link.expira_em).getTime() < Date.now())
+    return { ok: false, motivo: "Este link expirou." };
 
   const config = await lerConfigLink();
   if (!config?.permitir_link) return { ok: false, motivo: "O link de orçamento está desativado." };
-  if (!config.link_permitir_confirmacao) return { ok: false, motivo: "A confirmação pelo link está desativada." };
+  if (!config.link_permitir_confirmacao)
+    return { ok: false, motivo: "A confirmação pelo link está desativada." };
 
   const agora = new Date().toISOString();
   await supabaseAdmin.from("orcamento_links").update({ confirmado_em: agora }).eq("id", link.id);
@@ -280,7 +295,11 @@ export async function confirmarPorToken(token: string): Promise<DadosLink> {
   if (link.conversa_id) {
     await supabaseAdmin
       .from("whatsapp_conversas")
-      .update({ status: "pendente", etapa: "aguardando_atendente", motivo_pendencia: "orçamento confirmado pelo link" })
+      .update({
+        status: "pendente",
+        etapa: "aguardando_atendente",
+        motivo_pendencia: "orçamento confirmado pelo link",
+      })
       .eq("id", link.conversa_id);
     await supabaseAdmin.from("whatsapp_auditoria").insert({
       conversa_id: link.conversa_id,
@@ -295,7 +314,12 @@ export async function confirmarPorToken(token: string): Promise<DadosLink> {
 const HOSTS_LOCAIS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
 
 /** Endereços internos (preview/editor) que nunca devem ir para o cliente. */
-const HOSTS_INTERNOS = [/^id-preview--/i, /^project--/i, /-dev\.lovable\.app$/i, /\.lovableproject\.com$/i];
+const HOSTS_INTERNOS = [
+  /^id-preview--/i,
+  /^project--/i,
+  /-dev\.lovable\.app$/i,
+  /\.lovableproject\.com$/i,
+];
 
 function hostPublico(hostname: string): boolean {
   if (HOSTS_LOCAIS.has(hostname)) return false;
@@ -315,7 +339,6 @@ export function urlBase(): string {
   }
   return process.env["SITE_URL"] ?? "https://impressaodigital.lovable.app";
 }
-
 
 export async function gerarParaOrcamento(orcamentoId: string, enviarWhatsapp: boolean) {
   const orc = await lerOrcamento(orcamentoId);

@@ -94,9 +94,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Calculadora de Impressão Digital" },
-      { name: "twitter:description", content: "Informe arquivos, páginas e tipo de impressão e veja o valor por página e o total de cada tipo de papel." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bb85489fc6c7e6f5f8e21962cfe5e09f/id-preview-4aa02b04--794a07c8-8935-4198-8eda-84887ff3d9f1.lovable.app-1786680621605.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bb85489fc6c7e6f5f8e21962cfe5e09f/id-preview-4aa02b04--794a07c8-8935-4198-8eda-84887ff3d9f1.lovable.app-1786680621605.png" },
+      {
+        name: "twitter:description",
+        content:
+          "Informe arquivos, páginas e tipo de impressão e veja o valor por página e o total de cada tipo de papel.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bb85489fc6c7e6f5f8e21962cfe5e09f/id-preview-4aa02b04--794a07c8-8935-4198-8eda-84887ff3d9f1.lovable.app-1786680621605.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bb85489fc6c7e6f5f8e21962cfe5e09f/id-preview-4aa02b04--794a07c8-8935-4198-8eda-84887ff3d9f1.lovable.app-1786680621605.png",
+      },
     ],
     links: [
       {

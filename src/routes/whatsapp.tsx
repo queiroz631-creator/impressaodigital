@@ -22,8 +22,6 @@ import {
   Mic,
   Paperclip,
   Pencil,
-
-
   Trash2,
   Printer,
   Search,
@@ -47,7 +45,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { apagarMensagemWhatsapp, editarMensagemWhatsapp, enviarArquivoWhatsapp, enviarDigitandoWhatsapp, enviarMensagemRapidaWhatsapp, enviarParaFinalizacao, enviarTextoWhatsapp, transcreverAudioWhatsapp } from "@/lib/whatsapp.functions";
+import {
+  apagarMensagemWhatsapp,
+  editarMensagemWhatsapp,
+  enviarArquivoWhatsapp,
+  enviarDigitandoWhatsapp,
+  enviarMensagemRapidaWhatsapp,
+  enviarParaFinalizacao,
+  enviarTextoWhatsapp,
+  transcreverAudioWhatsapp,
+} from "@/lib/whatsapp.functions";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { cn } from "@/lib/utils";
 import {
@@ -67,9 +74,15 @@ export const Route = createFileRoute("/whatsapp")({
   head: () => ({
     meta: [
       { title: "Atendimento WhatsApp | Impressão Digital" },
-      { name: "description", content: "Converse com os clientes pelo WhatsApp e transforme mensagens em orçamentos." },
+      {
+        name: "description",
+        content: "Converse com os clientes pelo WhatsApp e transforme mensagens em orçamentos.",
+      },
       { property: "og:title", content: "Atendimento WhatsApp | Impressão Digital" },
-      { property: "og:description", content: "Central de atendimento integrada ao WhatsApp da gráfica." },
+      {
+        property: "og:description",
+        content: "Central de atendimento integrada ao WhatsApp da gráfica.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -260,7 +273,6 @@ function Atendimento() {
     localStorage.setItem("whatsapp:largura-lista", String(LARGURA_PADRAO));
   }
 
-
   useEffect(() => {
     const canal = supabase
 
@@ -295,14 +307,12 @@ function Atendimento() {
     return base;
   }, [conversas, hojeTexto]);
 
-
   const naoLidasPorStatus = useMemo(() => {
     const base: Record<string, number> = {};
     for (const s of STATUS_CONVERSA) base[s.valor] = 0;
     for (const c of conversas ?? []) base[c.status] = (base[c.status] ?? 0) + (c.nao_lidas ?? 0);
     return base;
   }, [conversas]);
-
 
   const termo = normalizar(busca.trim());
 
@@ -314,7 +324,10 @@ function Atendimento() {
     }
     let ativo = true;
     const espera = setTimeout(async () => {
-      const alvo = busca.trim().replace(/[%,()]/g, " ").trim();
+      const alvo = busca
+        .trim()
+        .replace(/[%,()]/g, " ")
+        .trim();
       if (!alvo) {
         if (ativo) setIdsBuscaMensagem(null);
         return;
@@ -343,11 +356,7 @@ function Atendimento() {
       // O telefone só entra na comparação quando o termo tem dígitos; caso
       // contrário a busca vazia casaria com todos os contatos.
       const casaTelefone = digitosBusca.length > 0 && telefone.includes(digitosBusca);
-      return (
-        nome.includes(termo) ||
-        casaTelefone ||
-        (idsBuscaMensagem?.has(c.id) ?? false)
-      );
+      return nome.includes(termo) || casaTelefone || (idsBuscaMensagem?.has(c.id) ?? false);
     }
 
     if (c.status !== aba) return false;
@@ -377,7 +386,6 @@ function Atendimento() {
   useEffect(() => {
     if (termo === "" && statusAberta === "em_atendimento") setAba("em_atendimento");
   }, [statusAberta, termo]);
-
 
   const painelContatos = (
     <div className="flex min-h-0 flex-col gap-3">
@@ -423,7 +431,6 @@ function Atendimento() {
             </button>
           );
         })}
-
       </div>
 
       <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
@@ -453,7 +460,14 @@ function Atendimento() {
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
-                  <span className={cn("min-w-0 flex-1 truncate text-sm", c.nao_lidas > 0 ? "font-bold" : "font-semibold")}>{nome}</span>
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1 truncate text-sm",
+                      c.nao_lidas > 0 ? "font-bold" : "font-semibold",
+                    )}
+                  >
+                    {nome}
+                  </span>
                   {termo !== "" && c.status !== aba && (
                     <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[10px]">
                       {rotuloStatusConversa[c.status] ?? c.status}
@@ -467,7 +481,9 @@ function Atendimento() {
                   <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
                     {c.ultima_mensagem ?? "Sem mensagens"}
                   </span>
-                  {c.nao_lidas > 0 && <Badge className="shrink-0 px-1.5 py-0 text-[10px]">{c.nao_lidas}</Badge>}
+                  {c.nao_lidas > 0 && (
+                    <Badge className="shrink-0 px-1.5 py-0 text-[10px]">{c.nao_lidas}</Badge>
+                  )}
                 </span>
               </span>
             </button>
@@ -506,7 +522,10 @@ function Atendimento() {
     }
     return (
       <>
-        <PageHeader titulo="Atendimento WhatsApp" subtitulo="Conversas recebidas pelo WhatsApp da loja" />
+        <PageHeader
+          titulo="Atendimento WhatsApp"
+          subtitulo="Conversas recebidas pelo WhatsApp da loja"
+        />
         <div className="flex h-[calc(100vh-14rem)] flex-col">{painelContatos}</div>
       </>
     );
@@ -514,7 +533,10 @@ function Atendimento() {
 
   return (
     <>
-      <PageHeader titulo="Atendimento WhatsApp" subtitulo="Conversas recebidas pelo WhatsApp da loja" />
+      <PageHeader
+        titulo="Atendimento WhatsApp"
+        subtitulo="Conversas recebidas pelo WhatsApp da loja"
+      />
       <div
         className="grid h-[calc(100vh-12rem)] gap-0"
         style={{ gridTemplateColumns: `${larguraLista}px 12px 1fr` }}
@@ -533,8 +555,6 @@ function Atendimento() {
         >
           <span className="h-16 w-1 rounded-full bg-border transition-colors group-hover:bg-primary" />
         </div>
-
-
 
         <div className="min-h-0">
           {aberta ? (
@@ -651,7 +671,11 @@ function Conversa({
             telefone: conversa.telefone,
             base64,
             nomeArquivo: arquivo.name,
-            tipo: ehImagem ? ("imagem" as const) : ehPdf ? ("pdf" as const) : ("documento" as const),
+            tipo: ehImagem
+              ? ("imagem" as const)
+              : ehPdf
+                ? ("pdf" as const)
+                : ("documento" as const),
             mimeType: arquivo.type || undefined,
             legenda: i === 0 && legenda ? legenda : undefined,
             autor: atendente,
@@ -676,7 +700,6 @@ function Conversa({
       await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
     }
   }
-
 
   const editarMsg = useMutation({
     mutationFn: async (novo: string) => {
@@ -722,7 +745,6 @@ function Conversa({
     // Foco direto na caixa de digitação ao abrir a conversa.
     const t = setTimeout(() => campoTexto.current?.focus(), 80);
     return () => clearTimeout(t);
-
   }, [conversa.id]);
 
   function alternarSelecao(id: string) {
@@ -752,7 +774,9 @@ function Conversa({
   }
 
   /** Retorna os IDs dos arquivos do atendimento mais recente (após o último divisor "ATENDIMENTO N"). Somente arquivos recebidos do cliente. */
-  function arquivosDoUltimoAtendimento(msgs: Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto" | "direcao">[]) {
+  function arquivosDoUltimoAtendimento(
+    msgs: Pick<Mensagem, "id" | "arquivo_url" | "tipo" | "texto" | "direcao">[],
+  ) {
     let inicio = 0;
     msgs.forEach((m, i) => {
       if (m.tipo === "sistema" && /^ATENDIMENTO\s+\d+/i.test(m.texto ?? "")) inicio = i + 1;
@@ -776,7 +800,10 @@ function Conversa({
       return;
     }
 
-    const todas = (data ?? []) as unknown as Pick<Conversa, "id" | "status" | "atendimento_numero" | "created_at">[];
+    const todas = (data ?? []) as unknown as Pick<
+      Conversa,
+      "id" | "status" | "atendimento_numero" | "created_at"
+    >[];
     const maisRecente = todas[0];
     if (!maisRecente) {
       toast("Nenhuma conversa encontrada para este número.");
@@ -818,7 +845,11 @@ function Conversa({
     if (itens.length === 0) return;
     sessionStorage.setItem(
       "calc-arquivos-whatsapp",
-      JSON.stringify({ arquivos: itens, nome: conversa.nome_contato ?? "", telefone: conversa.telefone }),
+      JSON.stringify({
+        arquivos: itens,
+        nome: conversa.nome_contato ?? "",
+        telefone: conversa.telefone,
+      }),
     );
     setSelecionando(false);
     setSelecionados(new Set());
@@ -835,9 +866,18 @@ function Conversa({
 
   async function enviarFinalizacao(fluxoId?: string) {
     try {
-      const r = await finalizacao({ data: { conversaId: conversa.id, atendente: atendente, fluxoId } });
-      if (!r.ok) { toast.error(r.erro ?? "Falha ao enviar para finalização."); return; }
-      toast.success(r.fluxo ? "Conversa enviada para finalização." : "Conversa movida (nenhum fluxo de finalização configurado).");
+      const r = await finalizacao({
+        data: { conversaId: conversa.id, atendente: atendente, fluxoId },
+      });
+      if (!r.ok) {
+        toast.error(r.erro ?? "Falha ao enviar para finalização.");
+        return;
+      }
+      toast.success(
+        r.fluxo
+          ? "Conversa enviada para finalização."
+          : "Conversa movida (nenhum fluxo de finalização configurado).",
+      );
       await queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao enviar para finalização.");
@@ -931,8 +971,13 @@ function Conversa({
       },
       { onConflict: "telefone" },
     );
-    if (error) { toast.error(error.message); return; }
-    toast.success(!botLiberado ? "Bot ligado para este número." : "Bot desligado para este número.");
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(
+      !botLiberado ? "Bot ligado para este número." : "Bot desligado para este número.",
+    );
     await queryClient.invalidateQueries({ queryKey: ["bot-numero", conversa.telefone] });
   }
 
@@ -944,7 +989,9 @@ function Conversa({
 
   const envio = useMutation({
     mutationFn: async (mensagem: string) =>
-      enviarTexto({ data: { conversaId: conversa.id, telefone: conversa.telefone, mensagem, autor: atendente } }),
+      enviarTexto({
+        data: { conversaId: conversa.id, telefone: conversa.telefone, mensagem, autor: atendente },
+      }),
     onSuccess: async (r) => {
       if (!r.ok) {
         toast.error(r.erro ?? "Falha ao enviar.");
@@ -977,10 +1024,17 @@ function Conversa({
     mutationFn: async (m: MensagemRapida) => {
       if (m.tipo === "texto") {
         return enviarTexto({
-          data: { conversaId: conversa.id, telefone: conversa.telefone, mensagem: m.texto ?? "", autor: atendente },
+          data: {
+            conversaId: conversa.id,
+            telefone: conversa.telefone,
+            mensagem: m.texto ?? "",
+            autor: atendente,
+          },
         });
       }
-      return enviarRapida({ data: { conversaId: conversa.id, mensagemId: m.id, autor: atendente } });
+      return enviarRapida({
+        data: { conversaId: conversa.id, mensagemId: m.id, autor: atendente },
+      });
     },
     onSuccess: async (r) => {
       if (!r.ok) {
@@ -1011,7 +1065,6 @@ function Conversa({
     setIndiceSugestao(0);
   }, [termoAtalho]);
 
-
   /** Atalho "/": texto preenche a caixa para revisão; imagem já é enviada. */
   function aplicarRapida(m: MensagemRapida) {
     if (m.tipo === "texto") {
@@ -1025,7 +1078,6 @@ function Conversa({
   useEffect(() => {
     sugestaoRefs.current[indiceSugestao]?.scrollIntoView({ block: "nearest" });
   }, [indiceSugestao]);
-
 
   /** Modal do botão de raio: envia imediatamente a mensagem escolhida. */
   function enviarRapidaDoModal(m: MensagemRapida) {
@@ -1115,24 +1167,50 @@ function Conversa({
             {conversa.nome_contato || formatarTelefone(conversa.telefone)}
           </p>
           <p className="text-xs text-muted-foreground">
-            {formatarTelefone(conversa.telefone)} · {rotuloStatusConversa[conversa.status] ?? conversa.status}
+            {formatarTelefone(conversa.telefone)} ·{" "}
+            {rotuloStatusConversa[conversa.status] ?? conversa.status}
             {conversa.atendente_nome ? ` · ${conversa.atendente_nome}` : ""}
           </p>
         </div>
 
-        <Button size="sm" variant="secondary" title="Assumir" onClick={() => alterarStatus("em_atendimento", "assumiu")}>
+        <Button
+          size="sm"
+          variant="secondary"
+          title="Assumir"
+          onClick={() => alterarStatus("em_atendimento", "assumiu")}
+        >
           <UserCheck className="h-4 w-4" />
         </Button>
-        <Button size="sm" variant="outline" title="Devolver ao bot" onClick={() => alterarStatus("automatico", "devolveu_bot")}>
+        <Button
+          size="sm"
+          variant="outline"
+          title="Devolver ao bot"
+          onClick={() => alterarStatus("automatico", "devolveu_bot")}
+        >
           <BotIcon className="h-4 w-4" />
         </Button>
-        <Button size="sm" variant="outline" title="Pendente" onClick={() => alterarStatus("pendente", "marcou_pendente")}>
+        <Button
+          size="sm"
+          variant="outline"
+          title="Pendente"
+          onClick={() => alterarStatus("pendente", "marcou_pendente")}
+        >
           <AlertCircle className="h-4 w-4" />
         </Button>
-        <Button size="sm" variant="outline" title="Fila de impressão" onClick={() => alterarStatus("esperando_impressao", "fila_impressao")}>
+        <Button
+          size="sm"
+          variant="outline"
+          title="Fila de impressão"
+          onClick={() => alterarStatus("esperando_impressao", "fila_impressao")}
+        >
           <Printer className="h-4 w-4" />
         </Button>
-        <Button size="sm" variant="outline" title="Enviar para Aguardando Finalização" onClick={() => void enviarFinalizacao()}>
+        <Button
+          size="sm"
+          variant="outline"
+          title="Enviar para Aguardando Finalização"
+          onClick={() => void enviarFinalizacao()}
+        >
           <Flag className="h-4 w-4" />
         </Button>
         <Button size="sm" title="Finalizar" onClick={() => setFinalizarAberto(true)}>
@@ -1197,7 +1275,11 @@ function Conversa({
           >
             <Calculator className="mr-1 h-4 w-4" /> Calculadora
           </Button>
-          <Button size="sm" disabled={selecionados.size === 0} onClick={() => void baixarSelecionados()}>
+          <Button
+            size="sm"
+            disabled={selecionados.size === 0}
+            onClick={() => void baixarSelecionados()}
+          >
             <Download className="mr-1 h-4 w-4" /> Baixar
           </Button>
           <Button
@@ -1214,417 +1296,459 @@ function Conversa({
       )}
 
       <div className="flex min-h-0 flex-1 gap-3">
-      <Card className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
-          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-            {isLoading && <Skeleton className="h-20 w-full" />}
-            {!isLoading && (mensagens ?? []).length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma mensagem nesta conversa.</p>
-            )}
+        <Card className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+              {isLoading && <Skeleton className="h-20 w-full" />}
+              {!isLoading && (mensagens ?? []).length === 0 && (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  Nenhuma mensagem nesta conversa.
+                </p>
+              )}
 
-            {(mensagens ?? []).map((m) =>
-              m.tipo === "sistema" ? (
-                <div key={m.id} className="flex items-center gap-2 py-2">
-                  <span className="h-px flex-1 bg-border" />
-                  <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {m.texto ?? "Novo atendimento"}
-                  </span>
-                  <span className="h-px flex-1 bg-border" />
-                </div>
-              ) : (
-              <div key={m.id} className={cn("group flex items-center gap-1", m.direcao === "saida" ? "justify-end" : "justify-start")}>
-                {m.direcao === "saida" && !m.apagada && !selecionando && (m.whatsapp_message_id || podeImprimirMidia(m)) && (
-                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    {podeImprimirMidia(m) && <BotaoImprimirMidia mensagem={m} />}
-                    {m.tipo === "texto" && m.whatsapp_message_id && (
-
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        title="Editar mensagem"
-                        onClick={() => {
-                          setMsgEditando(m);
-                          setTextoEdicao(m.texto ?? "");
-                        }}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                    {m.whatsapp_message_id && (
-                      <ConfirmarExclusao
-                        titulo="Apagar mensagem"
-                        descricao="A mensagem será apagada no WhatsApp do cliente e ficará marcada como apagada aqui."
-                        rotuloConfirmar="Apagar"
-                        onConfirmar={() => apagarMsg.mutate(m.id)}
-                      >
-                        <Button size="icon" variant="ghost" className="h-7 w-7" title="Apagar mensagem">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </ConfirmarExclusao>
-                    )}
-
-                  </div>
-                )}
-                <div
-                  onClick={selecionando && m.arquivo_url ? () => alternarSelecao(m.id) : undefined}
-                  className={cn(
-                    "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm",
-                    m.direcao === "saida" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
-                    selecionando && m.arquivo_url && "cursor-pointer",
-                    selecionando && selecionados.has(m.id) && "ring-2 ring-offset-1 ring-primary",
-                    m.apagada && "opacity-50",
-                  )}
-                >
-                  {selecionando && m.arquivo_url && (
-                    <span className="mb-1 flex items-center gap-1 text-[11px] font-semibold opacity-90">
-                      {selecionados.has(m.id) ? "☑" : "☐"} {selecionados.has(m.id) ? "Selecionado" : "Selecionar"}
+              {(mensagens ?? []).map((m) =>
+                m.tipo === "sistema" ? (
+                  <div key={m.id} className="flex items-center gap-2 py-2">
+                    <span className="h-px flex-1 bg-border" />
+                    <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {m.texto ?? "Novo atendimento"}
                     </span>
-                  )}
-                  {!m.apagada && <MidiaMensagem mensagem={m} selecionando={selecionando} />}
-                  {m.texto && (
-                    <p className={cn("whitespace-pre-wrap break-words", m.apagada && "line-through")}>{m.texto}</p>
-                  )}
-                  {m.apagada && <p className="mt-1 text-[10px] italic opacity-80">mensagem apagada</p>}
-
-                  <p className="mt-1 text-[10px] opacity-70">
-                    {dataHoraCurta(m.data_hora)}
-                    {m.editada && !m.apagada ? " · editada" : ""}
-                    {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
-                  </p>
-                </div>
-                {m.direcao === "entrada" && !m.apagada && !selecionando && podeImprimirMidia(m) && (
-                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <BotaoImprimirMidia mensagem={m} />
+                    <span className="h-px flex-1 bg-border" />
                   </div>
-                )}
-              </div>
-
-              ),
-            )}
-            <div ref={fim} />
-          </div>
-
-          <div
-            className={cn(
-              "relative flex items-end gap-2 rounded-lg border-t pt-3",
-              arrastando && "bg-primary/5 ring-2 ring-primary",
-            )}
-            onDragOver={(e) => {
-              if (!Array.from(e.dataTransfer.types).includes("Files")) return;
-              e.preventDefault();
-              setArrastando(true);
-            }}
-            onDragLeave={(e) => {
-              if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
-              setArrastando(false);
-            }}
-            onDrop={(e) => {
-              const arquivos = Array.from(e.dataTransfer.files ?? []);
-              if (arquivos.length === 0) return;
-              e.preventDefault();
-              setArrastando(false);
-              adicionarAnexos(arquivos);
-            }}
-          >
-            {sugestoesRapidas.length > 0 && (
-              <div className="absolute bottom-full left-0 z-20 mb-1 max-h-64 w-full overflow-y-auto rounded-lg border bg-popover p-1 shadow-md">
-                {sugestoesRapidas.map((m, idx) => (
-                  <button
+                ) : (
+                  <div
                     key={m.id}
-                    ref={(el) => { sugestaoRefs.current[idx] = el; }}
-                    type="button"
                     className={cn(
-                      "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm",
-                      idx === indiceSugestao ? "bg-accent" : "hover:bg-accent",
+                      "group flex items-center gap-1",
+                      m.direcao === "saida" ? "justify-end" : "justify-start",
                     )}
-                    onMouseEnter={() => setIndiceSugestao(idx)}
-                    onClick={() => aplicarRapida(m)}
                   >
-                    <Zap className="h-4 w-4 shrink-0 text-primary" />
-                    <Badge variant="secondary">/{m.atalho}</Badge>
-                    <span className="shrink-0 font-medium">{m.titulo}</span>
-                    <span className="truncate text-xs text-muted-foreground">{m.texto ?? m.imagem_nome ?? ""}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {anexos.length > 0 && (
-              <div className="absolute bottom-full left-0 z-10 mb-1 flex w-full flex-wrap gap-2 rounded-lg border bg-muted/60 p-2">
-                {anexos.map((a, idx) => (
-                  <span
-                    key={`${a.name}-${idx}`}
-                    className="flex max-w-[16rem] items-center gap-1 rounded-md border bg-background px-2 py-1 text-xs"
-                  >
-                    <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{a.name}</span>
-                    <button
-                      type="button"
-                      aria-label={`Remover ${a.name}`}
-                      className="shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => setAnexos((atual) => atual.filter((_, i) => i !== idx))}
+                    {m.direcao === "saida" &&
+                      !m.apagada &&
+                      !selecionando &&
+                      (m.whatsapp_message_id || podeImprimirMidia(m)) && (
+                        <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          {podeImprimirMidia(m) && <BotaoImprimirMidia mensagem={m} />}
+                          {m.tipo === "texto" && m.whatsapp_message_id && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7"
+                              title="Editar mensagem"
+                              onClick={() => {
+                                setMsgEditando(m);
+                                setTextoEdicao(m.texto ?? "");
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {m.whatsapp_message_id && (
+                            <ConfirmarExclusao
+                              titulo="Apagar mensagem"
+                              descricao="A mensagem será apagada no WhatsApp do cliente e ficará marcada como apagada aqui."
+                              rotuloConfirmar="Apagar"
+                              onConfirmar={() => apagarMsg.mutate(m.id)}
+                            >
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                title="Apagar mensagem"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </ConfirmarExclusao>
+                          )}
+                        </div>
+                      )}
+                    <div
+                      onClick={
+                        selecionando && m.arquivo_url ? () => alternarSelecao(m.id) : undefined
+                      }
+                      className={cn(
+                        "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+                        m.direcao === "saida"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-foreground",
+                        selecionando && m.arquivo_url && "cursor-pointer",
+                        selecionando &&
+                          selecionados.has(m.id) &&
+                          "ring-2 ring-offset-1 ring-primary",
+                        m.apagada && "opacity-50",
+                      )}
                     >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
+                      {selecionando && m.arquivo_url && (
+                        <span className="mb-1 flex items-center gap-1 text-[11px] font-semibold opacity-90">
+                          {selecionados.has(m.id) ? "☑" : "☐"}{" "}
+                          {selecionados.has(m.id) ? "Selecionado" : "Selecionar"}
+                        </span>
+                      )}
+                      {!m.apagada && <MidiaMensagem mensagem={m} selecionando={selecionando} />}
+                      {m.texto && (
+                        <p
+                          className={cn(
+                            "whitespace-pre-wrap break-words",
+                            m.apagada && "line-through",
+                          )}
+                        >
+                          {m.texto}
+                        </p>
+                      )}
+                      {m.apagada && (
+                        <p className="mt-1 text-[10px] italic opacity-80">mensagem apagada</p>
+                      )}
 
-            <input
-              ref={inputArquivo}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                adicionarAnexos(Array.from(e.target.files ?? []));
-                e.target.value = "";
+                      <p className="mt-1 text-[10px] opacity-70">
+                        {dataHoraCurta(m.data_hora)}
+                        {m.editada && !m.apagada ? " · editada" : ""}
+                        {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
+                      </p>
+                    </div>
+                    {m.direcao === "entrada" &&
+                      !m.apagada &&
+                      !selecionando &&
+                      podeImprimirMidia(m) && (
+                        <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          <BotaoImprimirMidia mensagem={m} />
+                        </div>
+                      )}
+                  </div>
+                ),
+              )}
+              <div ref={fim} />
+            </div>
+
+            <div
+              className={cn(
+                "relative flex items-end gap-2 rounded-lg border-t pt-3",
+                arrastando && "bg-primary/5 ring-2 ring-primary",
+              )}
+              onDragOver={(e) => {
+                if (!Array.from(e.dataTransfer.types).includes("Files")) return;
+                e.preventDefault();
+                setArrastando(true);
               }}
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Anexar arquivos"
-              title="Anexar arquivos"
-              onClick={() => inputArquivo.current?.click()}
-            >
-              <Paperclip className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Mensagens rápidas"
-              title="Mensagens rápidas"
-              onClick={() => setRapidasAberto(true)}
-            >
-              <Zap className="h-4 w-4" />
-            </Button>
-            <Textarea
-              ref={campoTexto}
-              value={texto}
-              onChange={(e) => {
-                setTexto(e.target.value);
-                if (e.target.value.trim()) avisarDigitando();
+              onDragLeave={(e) => {
+                if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+                setArrastando(false);
               }}
-              onPaste={(e) => {
-                const arquivos = Array.from(e.clipboardData.files ?? []);
+              onDrop={(e) => {
+                const arquivos = Array.from(e.dataTransfer.files ?? []);
                 if (arquivos.length === 0) return;
                 e.preventDefault();
+                setArrastando(false);
                 adicionarAnexos(arquivos);
               }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+            >
+              {sugestoesRapidas.length > 0 && (
+                <div className="absolute bottom-full left-0 z-20 mb-1 max-h-64 w-full overflow-y-auto rounded-lg border bg-popover p-1 shadow-md">
+                  {sugestoesRapidas.map((m, idx) => (
+                    <button
+                      key={m.id}
+                      ref={(el) => {
+                        sugestaoRefs.current[idx] = el;
+                      }}
+                      type="button"
+                      className={cn(
+                        "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm",
+                        idx === indiceSugestao ? "bg-accent" : "hover:bg-accent",
+                      )}
+                      onMouseEnter={() => setIndiceSugestao(idx)}
+                      onClick={() => aplicarRapida(m)}
+                    >
+                      <Zap className="h-4 w-4 shrink-0 text-primary" />
+                      <Badge variant="secondary">/{m.atalho}</Badge>
+                      <span className="shrink-0 font-medium">{m.titulo}</span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {m.texto ?? m.imagem_nome ?? ""}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {anexos.length > 0 && (
+                <div className="absolute bottom-full left-0 z-10 mb-1 flex w-full flex-wrap gap-2 rounded-lg border bg-muted/60 p-2">
+                  {anexos.map((a, idx) => (
+                    <span
+                      key={`${a.name}-${idx}`}
+                      className="flex max-w-[16rem] items-center gap-1 rounded-md border bg-background px-2 py-1 text-xs"
+                    >
+                      <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{a.name}</span>
+                      <button
+                        type="button"
+                        aria-label={`Remover ${a.name}`}
+                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => setAnexos((atual) => atual.filter((_, i) => i !== idx))}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <input
+                ref={inputArquivo}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  adicionarAnexos(Array.from(e.target.files ?? []));
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Anexar arquivos"
+                title="Anexar arquivos"
+                onClick={() => inputArquivo.current?.click()}
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Mensagens rápidas"
+                title="Mensagens rápidas"
+                onClick={() => setRapidasAberto(true)}
+              >
+                <Zap className="h-4 w-4" />
+              </Button>
+              <Textarea
+                ref={campoTexto}
+                value={texto}
+                onChange={(e) => {
+                  setTexto(e.target.value);
+                  if (e.target.value.trim()) avisarDigitando();
+                }}
+                onPaste={(e) => {
+                  const arquivos = Array.from(e.clipboardData.files ?? []);
+                  if (arquivos.length === 0) return;
                   e.preventDefault();
-                  if (sugestoesRapidas.length > 0) {
-                    aplicarRapida(sugestoesRapidas[indiceSugestao]!);
+                  adicionarAnexos(arquivos);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (sugestoesRapidas.length > 0) {
+                      aplicarRapida(sugestoesRapidas[indiceSugestao]!);
+                      return;
+                    }
+                    if (anexos.length > 0) {
+                      if (!enviandoAnexos) void enviarAnexos();
+                      return;
+                    }
+                    const msg = texto.trim();
+                    if (msg && !envio.isPending) envio.mutate(msg);
+                  }
+                  if (e.key === "ArrowDown" && sugestoesRapidas.length > 0) {
+                    e.preventDefault();
+                    setIndiceSugestao((i) => Math.min(i + 1, sugestoesRapidas.length - 1));
                     return;
                   }
+                  if (e.key === "ArrowUp" && sugestoesRapidas.length > 0) {
+                    e.preventDefault();
+                    setIndiceSugestao((i) => Math.max(i - 1, 0));
+                    return;
+                  }
+                  if (e.key === "Escape" && termoAtalho !== null) setTexto("");
+                }}
+
+                placeholder="Escreva a mensagem... (digite / para mensagens rápidas)"
+                rows={2}
+                className="min-h-0 flex-1 resize-none"
+              />
+              <Button
+                onClick={() => {
                   if (anexos.length > 0) {
                     if (!enviandoAnexos) void enviarAnexos();
                     return;
                   }
-                  const msg = texto.trim();
-                  if (msg && !envio.isPending) envio.mutate(msg);
+                  if (texto.trim()) envio.mutate(texto.trim());
+                }}
+                disabled={
+                  enviandoAnexos || envio.isPending || (anexos.length === 0 && !texto.trim())
                 }
-                if (e.key === "ArrowDown" && sugestoesRapidas.length > 0) {
-                  e.preventDefault();
-                  setIndiceSugestao((i) => Math.min(i + 1, sugestoesRapidas.length - 1));
-                  return;
-                }
-                if (e.key === "ArrowUp" && sugestoesRapidas.length > 0) {
-                  e.preventDefault();
-                  setIndiceSugestao((i) => Math.max(i - 1, 0));
-                  return;
-                }
-                if (e.key === "Escape" && termoAtalho !== null) setTexto("");
-              }}
-
-              placeholder="Escreva a mensagem... (digite / para mensagens rápidas)"
-              rows={2}
-              className="min-h-0 flex-1 resize-none"
-            />
-            <Button
-              onClick={() => {
-                if (anexos.length > 0) {
-                  if (!enviandoAnexos) void enviarAnexos();
-                  return;
-                }
-                if (texto.trim()) envio.mutate(texto.trim());
-              }}
-              disabled={enviandoAnexos || envio.isPending || (anexos.length === 0 && !texto.trim())}
-            >
-              <Send className="mr-1 h-4 w-4" />
-              {enviandoAnexos ? "Enviando..." : "Enviar"}
-            </Button>
-          </div>
-
-
-          <Dialog open={Boolean(msgEditando)} onOpenChange={(a) => !a && setMsgEditando(null)}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Editar mensagem</DialogTitle>
-              </DialogHeader>
-              <Textarea
-                value={textoEdicao}
-                onChange={(e) => setTextoEdicao(e.target.value)}
-                rows={5}
-                className="resize-none"
-              />
-              <p className="text-xs text-muted-foreground">
-                A mensagem antiga será apagada no WhatsApp do cliente e o texto corrigido será reenviado.
-              </p>
-              <div className="flex justify-end gap-2">
-                <Button variant="ghost" onClick={() => setMsgEditando(null)}>
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={() => textoEdicao.trim() && editarMsg.mutate(textoEdicao.trim())}
-                  disabled={!textoEdicao.trim() || editarMsg.isPending}
-                >
-                  Salvar
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={rapidasAberto} onOpenChange={setRapidasAberto}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Mensagens rápidas</DialogTitle>
-              </DialogHeader>
-              <div className="max-h-96 space-y-2 overflow-y-auto">
-                {rapidasBotao.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    Nenhuma mensagem configurada para este botão. Cadastre em Mensagens Rápidas.
-                  </p>
-                )}
-                {rapidasBotao.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    disabled={envio.isPending || envioRapida.isPending}
-                    className="w-full rounded-lg border p-3 text-left hover:bg-accent disabled:opacity-50"
-                    onClick={() => enviarRapidaDoModal(m)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 shrink-0 text-primary" />
-                      <span className="font-medium">{m.titulo}</span>
-                      <Badge variant="secondary">/{m.atalho}</Badge>
-                    </div>
-                    {m.texto && (
-                      <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-xs text-muted-foreground">{m.texto}</p>
-                    )}
-                    {!m.texto && m.imagem_nome && (
-                      <p className="mt-1 text-xs text-muted-foreground">{m.imagem_nome}</p>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </DialogContent>
-          </Dialog>
-        </CardContent>
-      </Card>
-
-      {notasAbertas && (
-        <Card className="flex min-h-0 w-64 shrink-0 flex-col md:w-72">
-          <CardContent className="flex min-h-0 flex-1 flex-col gap-2 p-3">
-            <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <StickyNote className="h-3.5 w-3.5" /> Anotações do cliente
-            </p>
-
-            {editandoNome ? (
-              <div className="flex items-center gap-1">
-                <Input
-                  autoFocus
-                  value={nomeEdicao}
-                  onChange={(e) => setNomeEdicao(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") salvarNome.mutate(nomeEdicao);
-                    if (e.key === "Escape") setEditandoNome(false);
-                  }}
-                  placeholder="Nome do cliente"
-                  className="h-8 text-sm"
-                />
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="h-8 w-8 shrink-0"
-                  title="Salvar nome"
-                  onClick={() => salvarNome.mutate(nomeEdicao)}
-                  disabled={salvarNome.isPending}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 shrink-0"
-                  title="Cancelar"
-                  onClick={() => setEditandoNome(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {conversa.nome_contato || formatarTelefone(conversa.telefone)}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">{formatarTelefone(conversa.telefone)}</p>
-                </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 shrink-0"
-                  title="Editar nome do cliente"
-                  onClick={() => {
-                    setNomeEdicao(conversa.nome_contato ?? "");
-                    setEditandoNome(true);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-
-            <Textarea
-              value={notaTexto}
-              onChange={(e) => setNotaTexto(e.target.value)}
-              placeholder="Escreva observações sobre este cliente..."
-              disabled={!editandoNota}
-              className="min-h-0 flex-1 resize-none text-sm disabled:opacity-100"
-            />
-            {editandoNota ? (
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => salvarNota.mutate(notaTexto)}
-                  disabled={salvarNota.isPending || notaTexto === (notaCliente.data ?? "")}
-                >
-                  Salvar
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setNotaTexto(notaCliente.data ?? "");
-                    setEditandoNota(false);
-                  }}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            ) : (
-              <Button size="sm" variant="outline" onClick={() => setEditandoNota(true)}>
-                <Pencil className="mr-1 h-4 w-4" /> Editar
+              >
+                <Send className="mr-1 h-4 w-4" />
+                {enviandoAnexos ? "Enviando..." : "Enviar"}
               </Button>
-            )}
+            </div>
+
+            <Dialog open={Boolean(msgEditando)} onOpenChange={(a) => !a && setMsgEditando(null)}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Editar mensagem</DialogTitle>
+                </DialogHeader>
+                <Textarea
+                  value={textoEdicao}
+                  onChange={(e) => setTextoEdicao(e.target.value)}
+                  rows={5}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  A mensagem antiga será apagada no WhatsApp do cliente e o texto corrigido será
+                  reenviado.
+                </p>
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" onClick={() => setMsgEditando(null)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={() => textoEdicao.trim() && editarMsg.mutate(textoEdicao.trim())}
+                    disabled={!textoEdicao.trim() || editarMsg.isPending}
+                  >
+                    Salvar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={rapidasAberto} onOpenChange={setRapidasAberto}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Mensagens rápidas</DialogTitle>
+                </DialogHeader>
+                <div className="max-h-96 space-y-2 overflow-y-auto">
+                  {rapidasBotao.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma mensagem configurada para este botão. Cadastre em Mensagens Rápidas.
+                    </p>
+                  )}
+                  {rapidasBotao.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      disabled={envio.isPending || envioRapida.isPending}
+                      className="w-full rounded-lg border p-3 text-left hover:bg-accent disabled:opacity-50"
+                      onClick={() => enviarRapidaDoModal(m)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 shrink-0 text-primary" />
+                        <span className="font-medium">{m.titulo}</span>
+                        <Badge variant="secondary">/{m.atalho}</Badge>
+                      </div>
+                      {m.texto && (
+                        <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-xs text-muted-foreground">
+                          {m.texto}
+                        </p>
+                      )}
+                      {!m.texto && m.imagem_nome && (
+                        <p className="mt-1 text-xs text-muted-foreground">{m.imagem_nome}</p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
-      )}
+
+        {notasAbertas && (
+          <Card className="flex min-h-0 w-64 shrink-0 flex-col md:w-72">
+            <CardContent className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+              <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <StickyNote className="h-3.5 w-3.5" /> Anotações do cliente
+              </p>
+
+              {editandoNome ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    autoFocus
+                    value={nomeEdicao}
+                    onChange={(e) => setNomeEdicao(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") salvarNome.mutate(nomeEdicao);
+                      if (e.key === "Escape") setEditandoNome(false);
+                    }}
+                    placeholder="Nome do cliente"
+                    className="h-8 text-sm"
+                  />
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-8 w-8 shrink-0"
+                    title="Salvar nome"
+                    onClick={() => salvarNome.mutate(nomeEdicao)}
+                    disabled={salvarNome.isPending}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 shrink-0"
+                    title="Cancelar"
+                    onClick={() => setEditandoNome(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {conversa.nome_contato || formatarTelefone(conversa.telefone)}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {formatarTelefone(conversa.telefone)}
+                    </p>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 shrink-0"
+                    title="Editar nome do cliente"
+                    onClick={() => {
+                      setNomeEdicao(conversa.nome_contato ?? "");
+                      setEditandoNome(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+
+              <Textarea
+                value={notaTexto}
+                onChange={(e) => setNotaTexto(e.target.value)}
+                placeholder="Escreva observações sobre este cliente..."
+                disabled={!editandoNota}
+                className="min-h-0 flex-1 resize-none text-sm disabled:opacity-100"
+              />
+              {editandoNota ? (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => salvarNota.mutate(notaTexto)}
+                    disabled={salvarNota.isPending || notaTexto === (notaCliente.data ?? "")}
+                  >
+                    Salvar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setNotaTexto(notaCliente.data ?? "");
+                      setEditandoNota(false);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => setEditandoNota(true)}>
+                  <Pencil className="mr-1 h-4 w-4" /> Editar
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Escolha da finalização: imediata ou por fluxo configurado em Configurar Bot. */}
@@ -1659,7 +1783,8 @@ function Conversa({
             ))}
             {(fluxosFinalizacao.data ?? []).length === 0 && (
               <p className="text-xs text-muted-foreground">
-                Para oferecer outros fluxos aqui, ative "Mostrar na finalização" no fluxo em Configurar Bot.
+                Para oferecer outros fluxos aqui, ative "Mostrar na finalização" no fluxo em
+                Configurar Bot.
               </p>
             )}
           </div>
@@ -1771,11 +1896,14 @@ function BotaoImprimirMidia({ mensagem }: { mensagem: Mensagem }) {
   );
 }
 
-
-
-
 /** Renderiza imagem, documento ou áudio anexado a uma mensagem. */
-function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem; selecionando?: boolean }) {
+function MidiaMensagem({
+  mensagem,
+  selecionando = false,
+}: {
+  mensagem: Mensagem;
+  selecionando?: boolean;
+}) {
   const [aberto, setAberto] = useState(false);
   const [transcricao, setTranscricao] = useState<string | null>(mensagem.transcricao);
   const [transcricaoAberta, setTranscricaoAberta] = useState(false);
@@ -1844,7 +1972,11 @@ function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem;
             <DialogHeader>
               <DialogTitle className="truncate text-sm">{nome}</DialogTitle>
             </DialogHeader>
-            <img src={urlMidia(mensagem.id)} alt={nome} className="max-h-[70vh] w-full object-contain" />
+            <img
+              src={urlMidia(mensagem.id)}
+              alt={nome}
+              className="max-h-[70vh] w-full object-contain"
+            />
             <a
               href={urlMidia(mensagem.id, true)}
               className="inline-flex items-center gap-1 text-sm underline"
@@ -1886,7 +2018,8 @@ function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem;
                 disabled={carregandoTranscricao}
                 className="inline-flex items-center gap-1 underline opacity-90 disabled:opacity-50"
               >
-                <Mic className="h-3 w-3" /> {carregandoTranscricao ? "Transcrevendo..." : "Transcrever"}
+                <Mic className="h-3 w-3" />{" "}
+                {carregandoTranscricao ? "Transcrevendo..." : "Transcrever"}
               </button>
             )}
           </div>
@@ -1902,7 +2035,9 @@ function MidiaMensagem({ mensagem, selecionando = false }: { mensagem: Mensagem;
               className="w-full"
               onClick={() => {
                 if (!transcricao) return;
-                void navigator.clipboard.writeText(transcricao).then(() => toast.success("Transcrição copiada."));
+                void navigator.clipboard
+                  .writeText(transcricao)
+                  .then(() => toast.success("Transcrição copiada."));
               }}
             >
               <Copy className="mr-2 h-4 w-4" /> Copiar transcrição

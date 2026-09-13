@@ -9,7 +9,22 @@ export function chave(valor: string | null | undefined) {
     .trim();
 }
 
-const SIM = ["sim", "s", "isso", "claro", "quero", "pode", "positivo", "ok", "confirmo", "confirmar", "certo", "aham", "yes", "1"];
+const SIM = [
+  "sim",
+  "s",
+  "isso",
+  "claro",
+  "quero",
+  "pode",
+  "positivo",
+  "ok",
+  "confirmo",
+  "confirmar",
+  "certo",
+  "aham",
+  "yes",
+  "1",
+];
 const NAO = ["nao", "n", "negativo", "nunca", "sem", "no", "2"];
 
 /** Retorna true/false para respostas de sim ou não, ou null quando indefinido. */
@@ -62,21 +77,29 @@ export function escolherOpcao(texto: string, opcoes: string[]): number | null {
 export function pediuAtendente(texto: string): boolean {
   const t = chave(texto);
   if (!t) return false;
-  return /atendente|humano|pessoa|falar com alguem|nao sou robo|atendimento humano|gerente|reclama/.test(t);
+  return /atendente|humano|pessoa|falar com alguem|nao sou robo|atendimento humano|gerente|reclama/.test(
+    t,
+  );
 }
 
 /** Detecta que o cliente terminou de enviar os arquivos. */
 export function terminouEnvio(texto: string): boolean {
   const t = chave(texto);
   if (!t) return false;
-  return /^(pronto|ok|acabou|so isso|somente isso|terminei|enviei|finalizei|e so|fim|nada mais)$/.test(t) ||
-    /terminei|acabei de enviar|so esses|somente esses|nao tenho mais/.test(t);
+  return (
+    /^(pronto|ok|acabou|so isso|somente isso|terminei|enviei|finalizei|e so|fim|nada mais)$/.test(
+      t,
+    ) || /terminei|acabei de enviar|so esses|somente esses|nao tenho mais/.test(t)
+  );
 }
 
 /** Nome informado pelo cliente, limpo de saudações. */
 export function extrairNome(texto: string): string {
   const limpo = String(texto ?? "")
-    .replace(/^\s*(ola|olá|oi|bom dia|boa tarde|boa noite|meu nome e|meu nome é|me chamo|sou o|sou a|aqui e|aqui é)\s*[,:-]?\s*/i, "")
+    .replace(
+      /^\s*(ola|olá|oi|bom dia|boa tarde|boa noite|meu nome e|meu nome é|me chamo|sou o|sou a|aqui e|aqui é)\s*[,:-]?\s*/i,
+      "",
+    )
     .replace(/[.!,;]+$/, "")
     .trim();
   return limpo.slice(0, 80);
@@ -84,7 +107,10 @@ export function extrairNome(texto: string): string {
 
 /** Substitui marcadores {nome}, {total} etc. em um modelo de mensagem. */
 export function aplicarModelo(modelo: string, valores: Record<string, string>) {
-  return String(modelo ?? "").replace(/\{(\w+)\}/g, (todo, chaveVar: string) => valores[chaveVar] ?? todo);
+  return String(modelo ?? "").replace(
+    /\{(\w+)\}/g,
+    (todo, chaveVar: string) => valores[chaveVar] ?? todo,
+  );
 }
 
 export function moeda(valor: number) {

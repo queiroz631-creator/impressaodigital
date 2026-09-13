@@ -22,7 +22,9 @@ export function lerCredenciaisZapi(): CredenciaisZapi | null {
  * Credenciais de uma conexão cadastrada em "Conexões". Quando a conexão não
  * tiver credenciais próprias, usa as variáveis de ambiente (conexão principal).
  */
-export async function credenciaisDaConexao(conexaoId?: string | null): Promise<CredenciaisZapi | null> {
+export async function credenciaisDaConexao(
+  conexaoId?: string | null,
+): Promise<CredenciaisZapi | null> {
   if (!conexaoId) return lerCredenciaisZapi();
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -32,9 +34,12 @@ export async function credenciaisDaConexao(conexaoId?: string | null): Promise<C
     .eq("id", conexaoId)
     .maybeSingle();
 
-  const c = data as
-    | { base_url: string | null; instance_id: string | null; instance_token: string | null; client_token: string | null }
-    | null;
+  const c = data as {
+    base_url: string | null;
+    instance_id: string | null;
+    instance_token: string | null;
+    client_token: string | null;
+  } | null;
 
   if (!c || !c.instance_id || !c.instance_token || !c.client_token) return lerCredenciaisZapi();
 
@@ -113,6 +118,11 @@ export async function chamarZapi(
 
     return { ok: true, status: resposta.status, dados };
   } catch (e) {
-    return { ok: false, status: 0, dados: null, erro: e instanceof Error ? e.message : "Falha de conexão" };
+    return {
+      ok: false,
+      status: 0,
+      dados: null,
+      erro: e instanceof Error ? e.message : "Falha de conexão",
+    };
   }
 }

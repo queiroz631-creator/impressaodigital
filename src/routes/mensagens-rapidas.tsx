@@ -83,7 +83,9 @@ function MensagensRapidas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mensagens_rapidas")
-        .select("id, titulo, atalho, tipo, texto, imagem_path, imagem_nome, mostrar_no_botao, ativo, ordem")
+        .select(
+          "id, titulo, atalho, tipo, texto, imagem_path, imagem_nome, mostrar_no_botao, ativo, ordem",
+        )
         .order("ordem", { ascending: true })
         .order("titulo", { ascending: true });
       if (error) throw error;
@@ -154,7 +156,10 @@ function MensagensRapidas() {
         ativo,
       };
       if (editandoId) {
-        const { error } = await supabase.from("mensagens_rapidas").update(registro).eq("id", editandoId);
+        const { error } = await supabase
+          .from("mensagens_rapidas")
+          .update(registro)
+          .eq("id", editandoId);
         if (error) throw error;
       } else {
         const { error } = await supabase.from("mensagens_rapidas").insert(registro);
@@ -171,7 +176,10 @@ function MensagensRapidas() {
 
   const alternarAtivo = useMutation({
     mutationFn: async (m: MensagemRapida) => {
-      const { error } = await supabase.from("mensagens_rapidas").update({ ativo: !m.ativo }).eq("id", m.id);
+      const { error } = await supabase
+        .from("mensagens_rapidas")
+        .update({ ativo: !m.ativo })
+        .eq("id", m.id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["mensagens-rapidas"] }),
@@ -273,11 +281,13 @@ function MensagensRapidas() {
                   accept="image/*"
                   onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
                 />
-                {editandoId && !arquivo && mensagens?.find((m) => m.id === editandoId)?.imagem_nome && (
-                  <p className="text-xs text-muted-foreground">
-                    Imagem atual: {mensagens.find((m) => m.id === editandoId)?.imagem_nome}
-                  </p>
-                )}
+                {editandoId &&
+                  !arquivo &&
+                  mensagens?.find((m) => m.id === editandoId)?.imagem_nome && (
+                    <p className="text-xs text-muted-foreground">
+                      Imagem atual: {mensagens.find((m) => m.id === editandoId)?.imagem_nome}
+                    </p>
+                  )}
               </div>
             )}
 
@@ -295,10 +305,19 @@ function MensagensRapidas() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="ordem">Ordem</Label>
-                <Input id="ordem" type="number" value={ordem} onChange={(e) => setOrdem(e.target.value)} />
+                <Input
+                  id="ordem"
+                  type="number"
+                  value={ordem}
+                  onChange={(e) => setOrdem(e.target.value)}
+                />
               </div>
               <div className="flex items-center gap-2 pt-7">
-                <Checkbox id="ativo" checked={ativo} onCheckedChange={(v) => setAtivo(v === true)} />
+                <Checkbox
+                  id="ativo"
+                  checked={ativo}
+                  onCheckedChange={(v) => setAtivo(v === true)}
+                />
                 <Label htmlFor="ativo" className="cursor-pointer font-normal">
                   Ativa
                 </Label>
@@ -307,7 +326,11 @@ function MensagensRapidas() {
 
             {editandoId ? (
               <div className="flex gap-2">
-                <Button className="flex-1" disabled={!formularioValido || salvar.isPending} onClick={() => salvar.mutate()}>
+                <Button
+                  className="flex-1"
+                  disabled={!formularioValido || salvar.isPending}
+                  onClick={() => salvar.mutate()}
+                >
                   <Pencil className="mr-2 h-4 w-4" />
                   Salvar alterações
                 </Button>
@@ -317,7 +340,11 @@ function MensagensRapidas() {
                 </Button>
               </div>
             ) : (
-              <Button className="w-full" disabled={!formularioValido || salvar.isPending} onClick={() => salvar.mutate()}>
+              <Button
+                className="w-full"
+                disabled={!formularioValido || salvar.isPending}
+                onClick={() => salvar.mutate()}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 Adicionar mensagem
               </Button>
@@ -334,7 +361,9 @@ function MensagensRapidas() {
           <CardContent className="space-y-3">
             {isLoading && <p className="text-sm text-muted-foreground">Carregando...</p>}
             {!isLoading && !mensagens?.length && (
-              <p className="text-sm text-muted-foreground">Nenhuma mensagem rápida cadastrada ainda.</p>
+              <p className="text-sm text-muted-foreground">
+                Nenhuma mensagem rápida cadastrada ainda.
+              </p>
             )}
             {mensagens?.map((m) => (
               <div
@@ -344,15 +373,25 @@ function MensagensRapidas() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <Zap className="h-4 w-4 text-primary" />
-                    <span className={m.ativo ? "font-semibold" : "font-semibold text-muted-foreground line-through"}>
+                    <span
+                      className={
+                        m.ativo
+                          ? "font-semibold"
+                          : "font-semibold text-muted-foreground line-through"
+                      }
+                    >
                       {m.titulo}
                     </span>
                     <Badge variant="secondary">/{m.atalho}</Badge>
                     <Badge variant="outline">{rotuloTipo(m.tipo)}</Badge>
-                    {m.mostrar_no_botao && <Badge className="bg-green-600 text-white hover:bg-green-600">No botão</Badge>}
+                    {m.mostrar_no_botao && (
+                      <Badge className="bg-green-600 text-white hover:bg-green-600">No botão</Badge>
+                    )}
                   </div>
                   {m.texto && (
-                    <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-muted-foreground">{m.texto}</p>
+                    <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                      {m.texto}
+                    </p>
                   )}
                   {m.imagem_nome && (
                     <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">

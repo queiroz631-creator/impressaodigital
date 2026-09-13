@@ -160,7 +160,10 @@ export function AcabamentosTabela() {
                 {linhas.map((a) => (
                   <tr key={a.id} className="border-b border-border">
                     <td className="px-2 py-2">
-                      <Input value={a.nome} onChange={(e) => atualizar(a.id, "nome", e.target.value)} />
+                      <Input
+                        value={a.nome}
+                        onChange={(e) => atualizar(a.id, "nome", e.target.value)}
+                      />
                     </td>
                     <td className="px-2 py-2">
                       <Select
@@ -212,9 +215,7 @@ export function AcabamentosTabela() {
                         rows={3}
                         placeholder={"1 = 3,00\n6 = 2,50\n21 = 2,00"}
                         value={faixasTexto[a.id] ?? ""}
-                        onChange={(e) =>
-                          setFaixasTexto((f) => ({ ...f, [a.id]: e.target.value }))
-                        }
+                        onChange={(e) => setFaixasTexto((f) => ({ ...f, [a.id]: e.target.value }))}
                         onBlur={() =>
                           setFaixasTexto((f) => ({
                             ...f,
@@ -246,7 +247,10 @@ export function AcabamentosTabela() {
                       />
                     </td>
                     <td className="px-2 py-2">
-                      <Switch checked={a.ativo} onCheckedChange={(v) => atualizar(a.id, "ativo", v)} />
+                      <Switch
+                        checked={a.ativo}
+                        onCheckedChange={(v) => atualizar(a.id, "ativo", v)}
+                      />
                     </td>
                     <td className="px-2 py-2">
                       <Input

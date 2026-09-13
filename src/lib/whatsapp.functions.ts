@@ -12,7 +12,6 @@ function idDaResposta(dados: unknown): string | null {
   return bruto ? String(bruto) : null;
 }
 
-
 /**
  * Quando alguém da loja envia mensagem pelo sistema, conversas finalizadas,
  * automáticas, aguardando resposta ou aguardando finalização passam para
@@ -54,19 +53,33 @@ export const statusInstanciaZapi = createServerFn({ method: "GET" })
 
     const cred = lerCredenciaisZapi();
     if (!cred) {
-      return { configurado: false, conectado: false, detalhe: "Credenciais da Z-API não configuradas." };
+      return {
+        configurado: false,
+        conectado: false,
+        detalhe: "Credenciais da Z-API não configuradas.",
+      };
     }
 
     const r = await chamarZapi("status");
     if (!r.ok) {
-      return { configurado: true, conectado: false, detalhe: r.erro ?? "Não foi possível consultar o status." };
+      return {
+        configurado: true,
+        conectado: false,
+        detalhe: r.erro ?? "Não foi possível consultar o status.",
+      };
     }
 
-    const dados = (r.dados ?? {}) as { connected?: boolean; smartphoneConnected?: boolean; error?: string };
+    const dados = (r.dados ?? {}) as {
+      connected?: boolean;
+      smartphoneConnected?: boolean;
+      error?: string;
+    };
     return {
       configurado: true,
       conectado: Boolean(dados.connected),
-      detalhe: dados.error ?? (dados.connected ? "Instância conectada." : "Instância desconectada — leia o QR Code."),
+      detalhe:
+        dados.error ??
+        (dados.connected ? "Instância conectada." : "Instância desconectada — leia o QR Code."),
     };
   });
 
@@ -122,7 +135,10 @@ export const enviarTextoWhatsapp = createServerFn({ method: "POST" })
     const telefone = normalizarTelefone(data.telefone);
     if (!telefone) throw new Error("Telefone inválido.");
 
-    const r = await chamarZapi("send-text", { metodo: "POST", corpo: { phone: telefone, message: data.mensagem } });
+    const r = await chamarZapi("send-text", {
+      metodo: "POST",
+      corpo: { phone: telefone, message: data.mensagem },
+    });
 
     if (data.conversaId) {
       const idMensagem =
@@ -146,7 +162,12 @@ export const enviarTextoWhatsapp = createServerFn({ method: "POST" })
           .from("whatsapp_conversas")
           .update({ ultima_mensagem: data.mensagem, ultima_mensagem_em: new Date().toISOString() })
           .eq("id", data.conversaId);
-        await promoverParaEmAtendimento(context.supabase, data.conversaId, context.userId, data.autor);
+        await promoverParaEmAtendimento(
+          context.supabase,
+          data.conversaId,
+          context.userId,
+          data.autor,
+        );
       }
     }
 
@@ -203,7 +224,8 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
       : `data:${mimePadrao};base64,${data.base64}`;
 
     // Documentos genéricos usam a extensão do nome do arquivo na rota da Z-API.
-    const extensao = (data.nomeArquivo.split(".").pop() ?? "").toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
+    const extensao =
+      (data.nomeArquivo.split(".").pop() ?? "").toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
 
     const r =
       data.tipo === "imagem"
@@ -213,7 +235,12 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
           })
         : await chamarZapi(`send-document/${data.tipo === "pdf" ? "pdf" : extensao}`, {
             metodo: "POST",
-            corpo: { phone: telefone, document: conteudo, fileName: data.nomeArquivo, caption: data.legenda ?? "" },
+            corpo: {
+              phone: telefone,
+              document: conteudo,
+              fileName: data.nomeArquivo,
+              caption: data.legenda ?? "",
+            },
           });
 
     if (data.conversaId) {
@@ -230,10 +257,14 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
       });
 
       if (r.ok) {
-        await promoverParaEmAtendimento(context.supabase, data.conversaId, context.userId, data.autor);
+        await promoverParaEmAtendimento(
+          context.supabase,
+          data.conversaId,
+          context.userId,
+          data.autor,
+        );
       }
     }
-
 
     if (!r.ok) return { ok: false as const, erro: r.erro ?? "Falha ao enviar o arquivo." };
     return { ok: true as const, erro: null };
@@ -278,11 +309,14 @@ export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
       .eq("id", data.mensagemId)
       .maybeSingle();
 
-    if (!msg?.arquivo_url) return { ok: false as const, texto: null, erro: "Áudio não encontrado." };
-    if (msg.transcricao) return { ok: true as const, texto: msg.transcricao, erro: null as string | null };
+    if (!msg?.arquivo_url)
+      return { ok: false as const, texto: null, erro: "Áudio não encontrado." };
+    if (msg.transcricao)
+      return { ok: true as const, texto: msg.transcricao, erro: null as string | null };
 
     const resposta = await fetch(msg.arquivo_url);
-    if (!resposta.ok) return { ok: false as const, texto: null, erro: "Não foi possível baixar o áudio." };
+    if (!resposta.ok)
+      return { ok: false as const, texto: null, erro: "Não foi possível baixar o áudio." };
 
     const buffer = Buffer.from(await resposta.arrayBuffer());
     if (buffer.length > 18 * 1024 * 1024) {
@@ -307,13 +341,25 @@ export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
         console.error("Falha na transcrição de áudio", r.status, detalhe.slice(0, 500));
 
         if (r.status === 429 || r.status >= 500) {
-          return { ok: false as const, texto: null, erro: "Serviço de IA ocupado. Tente novamente em instantes." };
+          return {
+            ok: false as const,
+            texto: null,
+            erro: "Serviço de IA ocupado. Tente novamente em instantes.",
+          };
         }
         if (r.status === 402) {
-          return { ok: false as const, texto: null, erro: "Créditos de IA insuficientes para transcrever." };
+          return {
+            ok: false as const,
+            texto: null,
+            erro: "Créditos de IA insuficientes para transcrever.",
+          };
         }
         if (r.status === 403) {
-          return { ok: false as const, texto: null, erro: "Transcrição bloqueada pelas configurações de IA." };
+          return {
+            ok: false as const,
+            texto: null,
+            erro: "Transcrição bloqueada pelas configurações de IA.",
+          };
         }
 
         let mensagem = "";
@@ -326,26 +372,33 @@ export const transcreverAudioWhatsapp = createServerFn({ method: "POST" })
         return {
           ok: false as const,
           texto: null,
-          erro: mensagem ? `A transcrição falhou: ${mensagem}` : "A transcrição falhou. Tente novamente.",
+          erro: mensagem
+            ? `A transcrição falhou: ${mensagem}`
+            : "A transcrição falhou. Tente novamente.",
         };
       }
 
       const texto = r.conteudo.trim();
-      if (!texto) return { ok: false as const, texto: null, erro: "Não foi possível entender o áudio." };
+      if (!texto)
+        return { ok: false as const, texto: null, erro: "Não foi possível entender o áudio." };
 
-      await context.supabase.from("whatsapp_mensagens").update({ transcricao: texto }).eq("id", msg.id);
+      await context.supabase
+        .from("whatsapp_mensagens")
+        .update({ transcricao: texto })
+        .eq("id", msg.id);
       return { ok: true as const, texto, erro: null as string | null };
     } catch (e) {
       console.error("Erro ao transcrever áudio", e);
       return { ok: false as const, texto: null, erro: "A transcrição falhou. Tente novamente." };
     }
-
-
   });
 
 /** Endereço público fixo usado nos webhooks da Z-API. */
 function urlWebhookProducao(token: string): string {
-  const base = (process.env["SITE_URL"] ?? "https://impressaodigital.lovable.app").replace(/\/+$/, "");
+  const base = (process.env["SITE_URL"] ?? "https://impressaodigital.lovable.app").replace(
+    /\/+$/,
+    "",
+  );
   return `${base}/api/public/whatsapp/webhook?token=${token}`;
 }
 
@@ -362,7 +415,11 @@ async function tokenWebhook(supabase: SupabaseClient): Promise<string | null> {
 const CAMINHOS_WEBHOOK = [
   { ler: "webhook-received", gravar: "update-webhook-received", rotulo: "Ao receber" },
   { ler: "webhook-delivery", gravar: "update-webhook-delivery", rotulo: "Ao enviar" },
-  { ler: "webhook-message-status", gravar: "update-webhook-message-status", rotulo: "Status da mensagem" },
+  {
+    ler: "webhook-message-status",
+    gravar: "update-webhook-message-status",
+    rotulo: "Status da mensagem",
+  },
   { ler: "webhook-disconnected", gravar: "update-webhook-disconnected", rotulo: "Ao desconectar" },
 ] as const;
 
@@ -409,12 +466,20 @@ export const reconfigurarWebhooksZapi = createServerFn({ method: "POST" })
       _role: "admin",
     });
     if (erroPermissao || !ehAdmin) {
-      return { ok: false as const, erro: "Somente administradores podem alterar a integração.", url: null };
+      return {
+        ok: false as const,
+        erro: "Somente administradores podem alterar a integração.",
+        url: null,
+      };
     }
 
     const token = await tokenWebhook(context.supabase);
     if (!token) {
-      return { ok: false as const, erro: "Token do webhook não encontrado nas configurações.", url: null };
+      return {
+        ok: false as const,
+        erro: "Token do webhook não encontrado nas configurações.",
+        url: null,
+      };
     }
 
     const url = urlWebhookProducao(token);
@@ -430,10 +495,17 @@ export const reconfigurarWebhooksZapi = createServerFn({ method: "POST" })
     }
 
     // Garante que as mensagens enviadas pelo celular também cheguem ao sistema.
-    await chamarZapi("update-notify-sent-by-me", { metodo: "PUT", corpo: { notifySentByMe: true } });
+    await chamarZapi("update-notify-sent-by-me", {
+      metodo: "PUT",
+      corpo: { notifySentByMe: true },
+    });
 
     if (falhas.length === CAMINHOS_WEBHOOK.length) {
-      return { ok: false as const, erro: "A Z-API não aceitou a atualização dos endereços.", url: null };
+      return {
+        ok: false as const,
+        erro: "A Z-API não aceitou a atualização dos endereços.",
+        url: null,
+      };
     }
     if (falhas.length > 0) {
       return { ok: true as const, erro: `Não foi possível atualizar: ${falhas.join(", ")}.`, url };
@@ -470,12 +542,15 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
       .eq("id", data.mensagemId)
       .maybeSingle();
     if (errBusca) return { ok: false as const, erro: errBusca.message };
-    if (!rapida || !rapida.ativo) return { ok: false as const, erro: "Mensagem rápida não encontrada ou inativa." };
+    if (!rapida || !rapida.ativo)
+      return { ok: false as const, erro: "Mensagem rápida não encontrada ou inativa." };
 
     const texto = rapida.texto?.trim() || null;
     const comImagem = rapida.tipo !== "texto" && Boolean(rapida.imagem_path);
-    if (rapida.tipo === "texto" && !texto) return { ok: false as const, erro: "Mensagem rápida sem texto." };
-    if (rapida.tipo !== "texto" && !comImagem) return { ok: false as const, erro: "Mensagem rápida sem imagem." };
+    if (rapida.tipo === "texto" && !texto)
+      return { ok: false as const, erro: "Mensagem rápida sem texto." };
+    if (rapida.tipo !== "texto" && !comImagem)
+      return { ok: false as const, erro: "Mensagem rápida sem imagem." };
 
     let mime: string | null = null;
     let r: Awaited<ReturnType<typeof chamarZapi>>;
@@ -483,7 +558,8 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
       const { data: blob, error: errImg } = await context.supabase.storage
         .from("mensagens-rapidas")
         .download(rapida.imagem_path as string);
-      if (errImg || !blob) return { ok: false as const, erro: "Não foi possível ler a imagem salva." };
+      if (errImg || !blob)
+        return { ok: false as const, erro: "Não foi possível ler a imagem salva." };
       mime = blob.type || "image/jpeg";
       const base64 = Buffer.from(await blob.arrayBuffer()).toString("base64");
       r = await chamarZapi("send-image", {
@@ -495,7 +571,10 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
         },
       });
     } else {
-      r = await chamarZapi("send-text", { metodo: "POST", corpo: { phone: telefone, message: texto as string } });
+      r = await chamarZapi("send-text", {
+        metodo: "POST",
+        corpo: { phone: telefone, message: texto as string },
+      });
     }
 
     await context.supabase.from("whatsapp_mensagens").insert({
@@ -514,9 +593,17 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
     if (r.ok) {
       await context.supabase
         .from("whatsapp_conversas")
-        .update({ ultima_mensagem: texto ?? "📷 Imagem", ultima_mensagem_em: new Date().toISOString() })
+        .update({
+          ultima_mensagem: texto ?? "📷 Imagem",
+          ultima_mensagem_em: new Date().toISOString(),
+        })
         .eq("id", data.conversaId);
-      await promoverParaEmAtendimento(context.supabase, data.conversaId, context.userId, data.autor);
+      await promoverParaEmAtendimento(
+        context.supabase,
+        data.conversaId,
+        context.userId,
+        data.autor,
+      );
     }
 
     if (!r.ok) return { ok: false as const, erro: r.erro ?? "Falha ao enviar a mensagem rápida." };
@@ -534,15 +621,20 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
 
     const { data: msg, error } = await context.supabase
       .from("whatsapp_mensagens")
-      .select("id, conversa_id, direcao, tipo, texto, texto_original, apagada, whatsapp_message_id, data_hora")
+      .select(
+        "id, conversa_id, direcao, tipo, texto, texto_original, apagada, whatsapp_message_id, data_hora",
+      )
       .eq("id", data.mensagemId)
       .maybeSingle();
     if (error) return { ok: false as const, erro: error.message };
     if (!msg) return { ok: false as const, erro: "Mensagem não encontrada." };
-    if (msg.direcao !== "saida") return { ok: false as const, erro: "Só é possível editar mensagens enviadas pela loja." };
-    if (msg.tipo !== "texto") return { ok: false as const, erro: "Só é possível editar mensagens de texto." };
+    if (msg.direcao !== "saida")
+      return { ok: false as const, erro: "Só é possível editar mensagens enviadas pela loja." };
+    if (msg.tipo !== "texto")
+      return { ok: false as const, erro: "Só é possível editar mensagens de texto." };
     if (msg.apagada) return { ok: false as const, erro: "Esta mensagem já foi apagada." };
-    if (!msg.whatsapp_message_id) return { ok: false as const, erro: "Mensagem sem identificação no WhatsApp." };
+    if (!msg.whatsapp_message_id)
+      return { ok: false as const, erro: "Mensagem sem identificação no WhatsApp." };
 
     const { data: conversa } = await context.supabase
       .from("whatsapp_conversas")
@@ -559,7 +651,9 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
     if (!rApagar.ok) {
       return {
         ok: false as const,
-        erro: rApagar.erro ?? "O WhatsApp recusou apagar a mensagem original (o prazo pode ter expirado).",
+        erro:
+          rApagar.erro ??
+          "O WhatsApp recusou apagar a mensagem original (o prazo pode ter expirado).",
       };
     }
 
@@ -574,7 +668,8 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
         .eq("id", msg.id);
       return {
         ok: false as const,
-        erro: r.erro ?? "A mensagem antiga foi apagada, mas o texto corrigido não pôde ser enviado.",
+        erro:
+          r.erro ?? "A mensagem antiga foi apagada, mas o texto corrigido não pôde ser enviado.",
       };
     }
 
@@ -589,7 +684,8 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
       })
       .eq("id", msg.id);
 
-    const ultimaEm = (conversa as { ultima_mensagem_em?: string | null } | null)?.ultima_mensagem_em;
+    const ultimaEm = (conversa as { ultima_mensagem_em?: string | null } | null)
+      ?.ultima_mensagem_em;
     if (!ultimaEm || !msg.data_hora || new Date(msg.data_hora) >= new Date(ultimaEm)) {
       await context.supabase
         .from("whatsapp_conversas")
@@ -621,9 +717,11 @@ export const apagarMensagemWhatsapp = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) return { ok: false as const, erro: error.message };
     if (!msg) return { ok: false as const, erro: "Mensagem não encontrada." };
-    if (msg.direcao !== "saida") return { ok: false as const, erro: "Só é possível apagar mensagens enviadas pela loja." };
+    if (msg.direcao !== "saida")
+      return { ok: false as const, erro: "Só é possível apagar mensagens enviadas pela loja." };
     if (msg.apagada) return { ok: true as const, erro: null as string | null };
-    if (!msg.whatsapp_message_id) return { ok: false as const, erro: "Mensagem sem identificação no WhatsApp." };
+    if (!msg.whatsapp_message_id)
+      return { ok: false as const, erro: "Mensagem sem identificação no WhatsApp." };
 
     const { data: conversa } = await context.supabase
       .from("whatsapp_conversas")
@@ -644,7 +742,8 @@ export const apagarMensagemWhatsapp = createServerFn({ method: "POST" })
       .update({ apagada: true, apagada_em: new Date().toISOString() })
       .eq("id", msg.id);
 
-    const ultimaEm = (conversa as { ultima_mensagem_em?: string | null } | null)?.ultima_mensagem_em;
+    const ultimaEm = (conversa as { ultima_mensagem_em?: string | null } | null)
+      ?.ultima_mensagem_em;
     if (!ultimaEm || !msg.data_hora || new Date(msg.data_hora) >= new Date(ultimaEm)) {
       await context.supabase
         .from("whatsapp_conversas")

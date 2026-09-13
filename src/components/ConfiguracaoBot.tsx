@@ -61,7 +61,6 @@ function UltimaRotina() {
   );
 }
 
-
 const ACOES: { valor: string; rotulo: string }[] = [
   { valor: "orcamento", rotulo: "Fazer orçamento" },
   { valor: "consultar_pedido", rotulo: "Consultar pedido" },
@@ -130,11 +129,36 @@ const MSG_TRANSFERENCIA_FORA_HORARIO_PADRAO =
 
 const CAMPOS: { chave: keyof FormBot; ativo: keyof FormBot; rotulo: string; ajuda: string }[] = [
   // "Fora do horário" foi descontinuada: o bot não envia mais essa mensagem.
-  { chave: "msg_transferencia", ativo: "msg_transferencia_ativo", rotulo: "Transferência para atendente", ajuda: "Ao encaminhar para a fila humana." },
-  { chave: "msg_finalizacao", ativo: "msg_finalizacao_ativo", rotulo: "Finalização", ajuda: "Ao encerrar o atendimento." },
-  { chave: "msg_orcamento_gerado", ativo: "msg_orcamento_gerado_ativo", rotulo: "Orçamento gerado", ajuda: "Texto antes do resumo do orçamento." },
-  { chave: "msg_revisao", ativo: "msg_revisao_ativo", rotulo: "Em revisão", ajuda: "Quando o orçamento aguarda revisão da equipe." },
-  { chave: "msg_orcamento_confirmado", ativo: "msg_orcamento_confirmado_ativo", rotulo: "Orçamento confirmado", ajuda: "Quando o cliente confirma o pedido." },
+  {
+    chave: "msg_transferencia",
+    ativo: "msg_transferencia_ativo",
+    rotulo: "Transferência para atendente",
+    ajuda: "Ao encaminhar para a fila humana.",
+  },
+  {
+    chave: "msg_finalizacao",
+    ativo: "msg_finalizacao_ativo",
+    rotulo: "Finalização",
+    ajuda: "Ao encerrar o atendimento.",
+  },
+  {
+    chave: "msg_orcamento_gerado",
+    ativo: "msg_orcamento_gerado_ativo",
+    rotulo: "Orçamento gerado",
+    ajuda: "Texto antes do resumo do orçamento.",
+  },
+  {
+    chave: "msg_revisao",
+    ativo: "msg_revisao_ativo",
+    rotulo: "Em revisão",
+    ajuda: "Quando o orçamento aguarda revisão da equipe.",
+  },
+  {
+    chave: "msg_orcamento_confirmado",
+    ativo: "msg_orcamento_confirmado_ativo",
+    rotulo: "Orçamento confirmado",
+    ajuda: "Quando o cliente confirma o pedido.",
+  },
 ];
 
 interface Horario {
@@ -168,7 +192,11 @@ export function ConfiguracaoBot() {
   const config = useQuery({
     queryKey: ["whatsapp-config-bot"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("whatsapp_config").select("*").limit(1).maybeSingle();
+      const { data, error } = await supabase
+        .from("whatsapp_config")
+        .select("*")
+        .limit(1)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -205,8 +233,6 @@ export function ConfiguracaoBot() {
     },
   });
 
-
-
   useEffect(() => {
     const d = config.data;
     if (!d || form) return;
@@ -237,7 +263,8 @@ export function ConfiguracaoBot() {
         (d as { msg_transferencia_fora_horario?: string | null }).msg_transferencia_fora_horario ??
         MSG_TRANSFERENCIA_FORA_HORARIO_PADRAO,
       msg_transferencia_fora_horario_ativo: Boolean(
-        (d as { msg_transferencia_fora_horario_ativo?: boolean | null }).msg_transferencia_fora_horario_ativo,
+        (d as { msg_transferencia_fora_horario_ativo?: boolean | null })
+          .msg_transferencia_fora_horario_ativo,
       ),
       msg_finalizacao: d.msg_finalizacao ?? "",
       msg_finalizacao_ativo: d.msg_finalizacao_ativo !== false,
@@ -248,9 +275,12 @@ export function ConfiguracaoBot() {
       msg_orcamento_confirmado: d.msg_orcamento_confirmado ?? "",
       msg_orcamento_confirmado_ativo: d.msg_orcamento_confirmado_ativo !== false,
       msg_link_curriculo:
-        (d as { msg_link_curriculo?: string | null }).msg_link_curriculo || MSG_LINK_CURRICULO_PADRAO,
+        (d as { msg_link_curriculo?: string | null }).msg_link_curriculo ||
+        MSG_LINK_CURRICULO_PADRAO,
       ignorar_agradecimentos: (() => {
-        const c = lerCfgCortesia((d as { ignorar_agradecimentos?: unknown }).ignorar_agradecimentos);
+        const c = lerCfgCortesia(
+          (d as { ignorar_agradecimentos?: unknown }).ignorar_agradecimentos,
+        );
         return { ativo: c.ativo, janela_minutos: c.janela_minutos, frases: c.frases.join("\n") };
       })(),
     });
@@ -268,7 +298,8 @@ export function ConfiguracaoBot() {
       .from("whatsapp_config")
       .update({
         ...restante,
-        fallback_fluxo_id: restante.fallback_fluxo_id === "inicial" ? null : restante.fallback_fluxo_id,
+        fallback_fluxo_id:
+          restante.fallback_fluxo_id === "inicial" ? null : restante.fallback_fluxo_id,
         ignorar_agradecimentos: {
           ativo: ignorar_agradecimentos.ativo,
           janela_minutos: Math.max(0, Number(ignorar_agradecimentos.janela_minutos) || 0),
@@ -280,14 +311,20 @@ export function ConfiguracaoBot() {
       } as never)
       .eq("id", id);
     setSalvando(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Atendimento automático atualizado.");
     await queryClient.invalidateQueries({ queryKey: ["whatsapp-config-bot"] });
   }
 
   async function salvarHorario(h: Horario, dados: Partial<Horario>) {
     const { error } = await supabase.from("bot_horarios").update(dados).eq("id", h.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await queryClient.invalidateQueries({ queryKey: ["bot-horarios"] });
   }
 
@@ -311,7 +348,6 @@ export function ConfiguracaoBot() {
           <TabsTrigger value="numeros">Números</TabsTrigger>
           <TabsTrigger value="status">Status WhatsApp</TabsTrigger>
           <TabsTrigger value="simulador">Simulador</TabsTrigger>
-
         </TabsList>
 
         {/* ---------- Geral ---------- */}
@@ -370,13 +406,18 @@ export function ConfiguracaoBot() {
               {!form.bot_24h && (
                 <div className="grid gap-2">
                   {(horarios.data ?? []).map((h) => (
-                    <div key={h.id} className="flex flex-wrap items-center gap-3 rounded-lg border p-2">
+                    <div
+                      key={h.id}
+                      className="flex flex-wrap items-center gap-3 rounded-lg border p-2"
+                    >
                       <span className="w-24 text-sm font-semibold">{DIAS[h.dia_semana]}</span>
                       <Switch
                         checked={!h.fechado}
                         onCheckedChange={(v) => void salvarHorario(h, { fechado: !v })}
                       />
-                      <span className="text-xs text-muted-foreground">{h.fechado ? "Fechado" : "Aberto"}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {h.fechado ? "Fechado" : "Aberto"}
+                      </span>
                       {!h.fechado && (
                         <div className="flex items-center gap-2">
                           <Input
@@ -411,9 +452,7 @@ export function ConfiguracaoBot() {
                     <Textarea
                       rows={3}
                       value={form.msg_fora_horario}
-                      onChange={(e) =>
-                        setForm({ ...form, msg_fora_horario: e.target.value })
-                      }
+                      onChange={(e) => setForm({ ...form, msg_fora_horario: e.target.value })}
                     />
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-xs text-muted-foreground">
@@ -423,9 +462,7 @@ export function ConfiguracaoBot() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() =>
-                          setForm({ ...form, msg_fora_horario: MSG_AUSENCIA_PADRAO })
-                        }
+                        onClick={() => setForm({ ...form, msg_fora_horario: MSG_AUSENCIA_PADRAO })}
                       >
                         Restaurar padrão
                       </Button>
@@ -452,8 +489,8 @@ export function ConfiguracaoBot() {
                     />
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-xs text-muted-foreground">
-                        Aceita {"{nome}"}, {"{telefone}"} e {"{saudacao}"}. Enviada somente no momento da
-                        transferência.
+                        Aceita {"{nome}"}, {"{telefone}"} e {"{saudacao}"}. Enviada somente no
+                        momento da transferência.
                       </p>
                       <Button
                         size="sm"
@@ -514,7 +551,9 @@ export function ConfiguracaoBot() {
                     variant="ghost"
                     size="sm"
                     className="h-7 text-xs"
-                    onClick={() => setForm({ ...form, msg_link_curriculo: MSG_LINK_CURRICULO_PADRAO })}
+                    onClick={() =>
+                      setForm({ ...form, msg_link_curriculo: MSG_LINK_CURRICULO_PADRAO })
+                    }
                   >
                     Restaurar padrão
                   </Button>
@@ -538,7 +577,6 @@ export function ConfiguracaoBot() {
           <FluxosPainel />
         </TabsContent>
 
-
         {/* ---------- Respostas automáticas ---------- */}
         <TabsContent value="primeiro">
           <PrimeiroContatoPainel />
@@ -558,7 +596,6 @@ export function ConfiguracaoBot() {
           <StatusWhatsappPainel />
         </TabsContent>
 
-
         {/* ---------- Inatividade e finalização ---------- */}
         <TabsContent value="inatividade">
           <Card className="shadow-card">
@@ -567,11 +604,10 @@ export function ConfiguracaoBot() {
             </CardHeader>
             <CardContent className="grid gap-3">
               <p className="text-xs text-muted-foreground">
-                A inatividade só é contada nas conversas da aba <strong>Automático</strong> em que o bot está
-                aguardando a resposta do cliente.
+                A inatividade só é contada nas conversas da aba <strong>Automático</strong> em que o
+                bot está aguardando a resposta do cliente.
               </p>
               <UltimaRotina />
-
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="grid gap-1">
@@ -580,7 +616,9 @@ export function ConfiguracaoBot() {
                     type="number"
                     min={1}
                     value={form.inatividade1_minutos}
-                    onChange={(e) => setForm({ ...form, inatividade1_minutos: Number(e.target.value || 1) })}
+                    onChange={(e) =>
+                      setForm({ ...form, inatividade1_minutos: Number(e.target.value || 1) })
+                    }
                   />
                 </div>
                 <div className="grid gap-1">
@@ -589,7 +627,9 @@ export function ConfiguracaoBot() {
                     type="number"
                     min={1}
                     value={form.inatividade2_minutos}
-                    onChange={(e) => setForm({ ...form, inatividade2_minutos: Number(e.target.value || 1) })}
+                    onChange={(e) =>
+                      setForm({ ...form, inatividade2_minutos: Number(e.target.value || 1) })
+                    }
                   />
                 </div>
               </div>
@@ -601,7 +641,9 @@ export function ConfiguracaoBot() {
                     type="number"
                     min={0}
                     value={form.fallback_inicial_minutos}
-                    onChange={(e) => setForm({ ...form, fallback_inicial_minutos: Number(e.target.value || 0) })}
+                    onChange={(e) =>
+                      setForm({ ...form, fallback_inicial_minutos: Number(e.target.value || 0) })
+                    }
                   />
                 </div>
                 <div className="grid gap-1">
@@ -610,22 +652,25 @@ export function ConfiguracaoBot() {
                     value={form.fallback_fluxo_id}
                     onValueChange={(v) => setForm({ ...form, fallback_fluxo_id: v })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Fluxo inicial" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Fluxo inicial" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="inicial">Fluxo inicial (padrão)</SelectItem>
                       {(fluxos.data ?? []).map((f) => (
-                        <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.nome}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Quando o bot não reconhece nenhum fluxo ou resposta automática, ele inicia o fluxo escolhido após
-                esse tempo. Use 0 para desativar. Conversas aguardando confirmação Sim/Não seguem a regra de
-                inatividade.
+                Quando o bot não reconhece nenhum fluxo ou resposta automática, ele inicia o fluxo
+                escolhido após esse tempo. Use 0 para desativar. Conversas aguardando confirmação
+                Sim/Não seguem a regra de inatividade.
               </p>
-
 
               <div className="grid gap-1">
                 <Label>Mensagem da 1ª inatividade</Label>
@@ -642,17 +687,22 @@ export function ConfiguracaoBot() {
                   value={form.inatividade_status}
                   onValueChange={(v) => setForm({ ...form, inatividade_status: v })}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {STATUS_INATIVIDADE.map((s) => (
-                      <SelectItem key={s.valor} value={s.valor}>{s.rotulo}</SelectItem>
+                      <SelectItem key={s.valor} value={s.valor}>
+                        {s.rotulo}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               {MSG_STATUS.map((m) => {
-                const rotulo = STATUS_INATIVIDADE.find((s) => s.valor === m.valor)?.rotulo ?? m.valor;
+                const rotulo =
+                  STATUS_INATIVIDADE.find((s) => s.valor === m.valor)?.rotulo ?? m.valor;
                 return (
                   <div key={m.valor} className="grid gap-1">
                     <Label className="text-xs">Mensagem ao mover para {rotulo}</Label>
@@ -690,7 +740,10 @@ export function ConfiguracaoBot() {
                 ajuda="Mensagens de cortesia enviadas logo após o encerramento não reabrem o atendimento nem acionam o bot."
                 valor={form.ignorar_agradecimentos.ativo}
                 ao={(v) =>
-                  setForm({ ...form, ignorar_agradecimentos: { ...form.ignorar_agradecimentos, ativo: v } })
+                  setForm({
+                    ...form,
+                    ignorar_agradecimentos: { ...form.ignorar_agradecimentos, ativo: v },
+                  })
                 }
               />
 
@@ -713,8 +766,9 @@ export function ConfiguracaoBot() {
                       }
                     />
                     <p className="text-xs text-muted-foreground">
-                      Cortesias recebidas dentro desse tempo após a finalização são ignoradas. Depois dela, o
-                      cliente inicia um novo atendimento normalmente. Use 0 para desativar.
+                      Cortesias recebidas dentro desse tempo após a finalização são ignoradas.
+                      Depois dela, o cliente inicia um novo atendimento normalmente. Use 0 para
+                      desativar.
                     </p>
                   </div>
 
@@ -726,14 +780,17 @@ export function ConfiguracaoBot() {
                       onChange={(e) =>
                         setForm({
                           ...form,
-                          ignorar_agradecimentos: { ...form.ignorar_agradecimentos, frases: e.target.value },
+                          ignorar_agradecimentos: {
+                            ...form.ignorar_agradecimentos,
+                            frases: e.target.value,
+                          },
                         })
                       }
                     />
                     <p className="text-xs text-muted-foreground">
-                      A comparação ignora acentos, maiúsculas, pontuação e emojis — mas a mensagem precisa ser só a
-                      frase. Ex.: "obrigado" é ignorado; "obrigado, quanto fica 10 cópias?" reabre o atendimento.
-                      Arquivos nunca são ignorados.
+                      A comparação ignora acentos, maiúsculas, pontuação e emojis — mas a mensagem
+                      precisa ser só a frase. Ex.: "obrigado" é ignorado; "obrigado, quanto fica 10
+                      cópias?" reabre o atendimento. Arquivos nunca são ignorados.
                     </p>
                   </div>
                 </>
@@ -750,7 +807,6 @@ export function ConfiguracaoBot() {
     </div>
   );
 }
-
 
 function Alternar({
   titulo,
@@ -800,7 +856,10 @@ function Simulador() {
   async function enviar(mensagem: string, tipo: "texto" | "documento" = "texto") {
     if (ocupado) return;
     setOcupado(true);
-    setBolhas((b) => [...b, { de: "cliente", texto: tipo === "documento" ? "📎 arquivo.pdf" : mensagem }]);
+    setBolhas((b) => [
+      ...b,
+      { de: "cliente", texto: tipo === "documento" ? "📎 arquivo.pdf" : mensagem },
+    ]);
     setTexto("");
 
     try {
@@ -815,7 +874,10 @@ function Simulador() {
         },
       });
       setEstado({ etapa: r.etapa, pendenteTipo: r.pendenteTipo, pendenteId: r.pendenteId });
-      setBolhas((b) => [...b, ...r.mensagens.map((m) => ({ de: "bot" as const, texto: m.texto, botoes: m.botoes }))]);
+      setBolhas((b) => [
+        ...b,
+        ...r.mensagens.map((m) => ({ de: "bot" as const, texto: m.texto, botoes: m.botoes })),
+      ]);
       if (r.aviso) toast.error(r.aviso);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha na simulação.");
@@ -846,18 +908,29 @@ function Simulador() {
 
         <div className="h-80 overflow-y-auto rounded-lg bg-muted/40 p-3">
           {bolhas.length === 0 && (
-            <p className="text-center text-xs text-muted-foreground">Envie uma mensagem para começar.</p>
+            <p className="text-center text-xs text-muted-foreground">
+              Envie uma mensagem para começar.
+            </p>
           )}
           <div className="grid gap-2">
             {bolhas.map((b, i) => (
-              <div key={i} className={b.de === "cliente" ? "flex justify-end" : "flex justify-start"}>
+              <div
+                key={i}
+                className={b.de === "cliente" ? "flex justify-end" : "flex justify-start"}
+              >
                 <div
                   className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${
-                    b.de === "cliente" ? "bg-primary text-primary-foreground" : "bg-background border"
+                    b.de === "cliente"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-background border"
                   }`}
                 >
                   <span className="mb-1 flex items-center gap-1 text-[10px] uppercase opacity-70">
-                    {b.de === "cliente" ? <User className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
+                    {b.de === "cliente" ? (
+                      <User className="h-3 w-3" />
+                    ) : (
+                      <Bot className="h-3 w-3" />
+                    )}
                     {b.de === "cliente" ? "Cliente" : "Bot"}
                   </span>
                   {b.texto}

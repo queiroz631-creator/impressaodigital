@@ -74,16 +74,28 @@ export function arquivosDoOrcamento(valor: unknown): ArquivoOrcamento[] {
 }
 
 export async function listarMateriais() {
-  const { data } = await supabaseAdmin.from("materiais").select("*").eq("ativo", true).order("ordem");
+  const { data } = await supabaseAdmin
+    .from("materiais")
+    .select("*")
+    .eq("ativo", true)
+    .order("ordem");
   return (data ?? []) as unknown as Material[];
 }
 
 export async function listarAcabamentos() {
-  const { data } = await supabaseAdmin.from("acabamentos").select("*").eq("ativo", true).order("ordem");
+  const { data } = await supabaseAdmin
+    .from("acabamentos")
+    .select("*")
+    .eq("ativo", true)
+    .order("ordem");
   return (data ?? []) as unknown as Acabamento[];
 }
 
-export function materiaisCompativeis(materiais: Material[], tipo: TipoServico, formato: FormatoPapel) {
+export function materiaisCompativeis(
+  materiais: Material[],
+  tipo: TipoServico,
+  formato: FormatoPapel,
+) {
   return materiais.filter(
     (m) => (m.tipo_impressao ?? "simples") === tipo && (m.formato ?? "A4") === formato,
   );
@@ -202,7 +214,11 @@ export async function persistirCalculo(
 }
 
 /** Cria (ou reaproveita) o link público de um orçamento e devolve o token. */
-export async function criarLink(orcamentoId: string, pedidoId: string | null, conversaId: string | null) {
+export async function criarLink(
+  orcamentoId: string,
+  pedidoId: string | null,
+  conversaId: string | null,
+) {
   const { data: existente } = await supabaseAdmin
     .from("orcamento_links")
     .select("token, expira_em, cancelado")

@@ -17,7 +17,8 @@ export const Route = createFileRoute("/bot")({
       { title: "Configuração do Bot | Impressão Digital" },
       {
         name: "description",
-        content: "Configure o atendimento automático do WhatsApp: horários, menu, palavras-chave e mensagens.",
+        content:
+          "Configure o atendimento automático do WhatsApp: horários, menu, palavras-chave e mensagens.",
       },
       { property: "og:title", content: "Configuração do Bot | Impressão Digital" },
       { property: "og:description", content: "Atendimento automático do WhatsApp da gráfica." },

@@ -11,10 +11,33 @@ export interface IgnorarAgradecimentosCfg {
 }
 
 export const FRASES_CORTESIA_PADRAO: string[] = [
-  "obrigado", "obrigada", "obg", "muito obrigado", "muito obrigada",
-  "valeu", "vlw", "ok", "okay", "tá bom", "ta bom", "blz", "beleza",
-  "agradeço", "grato", "grata", "show", "perfeito", "ótimo", "otimo",
-  "maravilha", "combinado", "certo", "deus abençoe", "amém", "👍", "🙏",
+  "obrigado",
+  "obrigada",
+  "obg",
+  "muito obrigado",
+  "muito obrigada",
+  "valeu",
+  "vlw",
+  "ok",
+  "okay",
+  "tá bom",
+  "ta bom",
+  "blz",
+  "beleza",
+  "agradeço",
+  "grato",
+  "grata",
+  "show",
+  "perfeito",
+  "ótimo",
+  "otimo",
+  "maravilha",
+  "combinado",
+  "certo",
+  "deus abençoe",
+  "amém",
+  "👍",
+  "🙏",
 ];
 
 export function cfgCortesiaPadrao(): IgnorarAgradecimentosCfg {
@@ -24,7 +47,9 @@ export function cfgCortesiaPadrao(): IgnorarAgradecimentosCfg {
 /** Lê o campo jsonb da configuração com tolerância a formatos antigos/vazios. */
 export function lerCfgCortesia(valor: unknown): IgnorarAgradecimentosCfg {
   const v = (valor ?? {}) as Partial<IgnorarAgradecimentosCfg>;
-  const frases = Array.isArray(v.frases) ? v.frases.filter((f) => typeof f === "string" && f.trim()) : [];
+  const frases = Array.isArray(v.frases)
+    ? v.frases.filter((f) => typeof f === "string" && f.trim())
+    : [];
   return {
     ativo: v.ativo !== false,
     janela_minutos: Math.max(0, Number(v.janela_minutos ?? 30) || 0),
@@ -62,7 +87,11 @@ export function ehMensagemCortesia(texto: string, frases: string[]): boolean {
 }
 
 /** Dentro da janela de encerramento após a finalização? */
-export function dentroDaJanela(dataFinalizacao: string | null | undefined, janelaMinutos: number, agora: Date): boolean {
+export function dentroDaJanela(
+  dataFinalizacao: string | null | undefined,
+  janelaMinutos: number,
+  agora: Date,
+): boolean {
   if (janelaMinutos <= 0 || !dataFinalizacao) return false;
   const fim = new Date(dataFinalizacao).getTime() + janelaMinutos * 60_000;
   return Number.isFinite(fim) && agora.getTime() <= fim;

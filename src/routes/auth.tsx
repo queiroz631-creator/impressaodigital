@@ -75,7 +75,13 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-navy px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center text-navy-foreground">
-          <img src={logo} alt="Logo Impressão Digital" width={80} height={80} className="h-20 w-20" />
+          <img
+            src={logo}
+            alt="Logo Impressão Digital"
+            width={80}
+            height={80}
+            className="h-20 w-20"
+          />
           <h1 className="mt-3 text-2xl font-extrabold tracking-tight">
             CALCULADORA DE IMPRESSÃO DIGITAL
           </h1>

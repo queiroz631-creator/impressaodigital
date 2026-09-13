@@ -97,18 +97,23 @@ export function PrecosExcel({ tipo, dados, aoImportar }: Props) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmar importação</DialogTitle>
-            <DialogDescription>Nada é excluído: linhas sem id viram novos registros.</DialogDescription>
+            <DialogDescription>
+              Nada é excluído: linhas sem id viram novos registros.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 text-sm">
             <p>
               <span className="font-bold">{previa?.novos ?? 0}</span> registro(s) serão criados.
             </p>
             <p>
-              <span className="font-bold">{previa?.atualizados ?? 0}</span> registro(s) serão atualizados.
+              <span className="font-bold">{previa?.atualizados ?? 0}</span> registro(s) serão
+              atualizados.
             </p>
             {!!previa?.erros.length && (
               <div className="rounded-lg border-2 border-destructive bg-destructive/10 p-2 text-xs text-destructive">
-                <p className="font-bold">{previa.erros.length} linha(s) com erro (serão ignoradas):</p>
+                <p className="font-bold">
+                  {previa.erros.length} linha(s) com erro (serão ignoradas):
+                </p>
                 <ul>
                   {previa.erros.slice(0, 8).map((e) => (
                     <li key={e}>{e}</li>

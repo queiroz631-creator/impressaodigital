@@ -86,15 +86,24 @@ export function NumerosPainel() {
   async function alterarModo(valor: string) {
     const id = config.data?.id;
     if (!id) return;
-    const { error } = await supabase.from("whatsapp_config").update({ modo_numeros: valor }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    const { error } = await supabase
+      .from("whatsapp_config")
+      .update({ modo_numeros: valor })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Modo de operação atualizado.");
     await queryClient.invalidateQueries({ queryKey: ["whatsapp-config-numeros"] });
   }
 
   async function adicionar() {
     const telefone = normalizarTelefone(novoTelefone);
-    if (!telefone) { toast.error("Informe um número válido com DDD."); return; }
+    if (!telefone) {
+      toast.error("Informe um número válido com DDD.");
+      return;
+    }
     setSalvando(true);
     const { error } = await supabase.from("bot_numeros").insert({
       telefone,
@@ -115,13 +124,19 @@ export function NumerosPainel() {
 
   async function atualizar(n: Numero, dados: Partial<Numero>) {
     const { error } = await supabase.from("bot_numeros").update(dados).eq("id", n.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await queryClient.invalidateQueries({ queryKey: ["bot-numeros"] });
   }
 
   async function excluir(n: Numero) {
     const { error } = await supabase.from("bot_numeros").delete().eq("id", n.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await queryClient.invalidateQueries({ queryKey: ["bot-numeros"] });
     toast.success("Número removido.");
   }
@@ -186,7 +201,11 @@ export function NumerosPainel() {
             />
           </div>
           <div className="flex items-center gap-2 pb-1">
-            <Switch id="numero-permitido" checked={novoPermitido} onCheckedChange={setNovoPermitido} />
+            <Switch
+              id="numero-permitido"
+              checked={novoPermitido}
+              onCheckedChange={setNovoPermitido}
+            />
             <Label htmlFor="numero-permitido">{novoPermitido ? "Liberado" : "Bloqueado"}</Label>
           </div>
           <Button onClick={() => void adicionar()} disabled={salvando}>
@@ -202,7 +221,8 @@ export function NumerosPainel() {
         <CardContent className="grid gap-2">
           {lista.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Nenhum número cadastrado. No modo "Todos os números" o bot responde a qualquer contato.
+              Nenhum número cadastrado. No modo "Todos os números" o bot responde a qualquer
+              contato.
             </p>
           ) : (
             lista.map((n) => (
@@ -229,7 +249,10 @@ export function NumerosPainel() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Switch checked={n.ativo} onCheckedChange={(v) => void atualizar(n, { ativo: v })} />
+                    <Switch
+                      checked={n.ativo}
+                      onCheckedChange={(v) => void atualizar(n, { ativo: v })}
+                    />
                     <span className="text-sm">{n.ativo ? "Regra ativa" : "Regra inativa"}</span>
                   </div>
 
@@ -243,13 +266,15 @@ export function NumerosPainel() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Remover número?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          A regra de {formatarTelefone(n.telefone)} será apagada e o número passa a seguir o
-                          modo de operação escolhido.
+                          A regra de {formatarTelefone(n.telefone)} será apagada e o número passa a
+                          seguir o modo de operação escolhido.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => void excluir(n)}>Remover</AlertDialogAction>
+                        <AlertDialogAction onClick={() => void excluir(n)}>
+                          Remover
+                        </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>

@@ -20,8 +20,20 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FluxoConfigurador } from "@/components/bot/FluxoConfigurador";
 import {
   ACOES_SEM_RESPOSTA,
@@ -80,7 +92,6 @@ function formDoFluxo(f: Fluxo): FormFluxo {
   };
 }
 
-
 /** Aba FLUXOS: cadastro e administração das conversas que o bot conduz. */
 export function FluxosPainel() {
   const queryClient = useQueryClient();
@@ -124,9 +135,11 @@ export function FluxosPainel() {
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return (data ?? null) as
-        | { id: string; fluxo_finalizacao_id: string | null; finalizacao_delay_minutos: number }
-        | null;
+      return (data ?? null) as {
+        id: string;
+        fluxo_finalizacao_id: string | null;
+        finalizacao_delay_minutos: number;
+      } | null;
     },
   });
 
@@ -136,7 +149,10 @@ export function FluxosPainel() {
       .from("whatsapp_config")
       .update({ fluxo_finalizacao_id: valor === "nenhum" ? null : valor })
       .eq("id", config.data.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Fluxo de finalização salvo.");
     await queryClient.invalidateQueries({ queryKey: ["bot-config-finalizacao"] });
   }
@@ -147,7 +163,10 @@ export function FluxosPainel() {
       .from("whatsapp_config")
       .update({ finalizacao_delay_minutos: Math.max(0, Math.trunc(valor) || 0) })
       .eq("id", config.data.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Tempo de espera salvo.");
     await queryClient.invalidateQueries({ queryKey: ["bot-config-finalizacao"] });
   }
@@ -160,7 +179,8 @@ export function FluxosPainel() {
     const mapa = new Map<string, string[]>();
     const nome = (id: string) => lista.find((f) => f.id === id)?.nome ?? "";
     for (const e of todasEtapas) {
-      if (e.destino_fluxo_id) mapa.set(e.destino_fluxo_id, [...(mapa.get(e.destino_fluxo_id) ?? []), nome(e.fluxo_id)]);
+      if (e.destino_fluxo_id)
+        mapa.set(e.destino_fluxo_id, [...(mapa.get(e.destino_fluxo_id) ?? []), nome(e.fluxo_id)]);
     }
     for (const o of todasOpcoes) {
       if (!o.destino_fluxo_id) continue;
@@ -181,11 +201,17 @@ export function FluxosPainel() {
 
   async function salvarFluxo() {
     if (!form) return;
-    if (!form.nome.trim()) { toast.error("Informe o nome do fluxo."); return; }
+    if (!form.nome.trim()) {
+      toast.error("Informe o nome do fluxo.");
+      return;
+    }
 
     if (editando) {
       const { error } = await supabase.from("bot_fluxos").update(form).eq("id", editando.id);
-      if (error) { toast.error(error.message); return; }
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       toast.success("Fluxo atualizado.");
       setForm(null);
       setEditando(null);
@@ -194,8 +220,15 @@ export function FluxosPainel() {
     }
 
     const ordem = Math.max(0, ...lista.map((f) => f.ordem)) + 1;
-    const { data, error } = await supabase.from("bot_fluxos").insert({ ...form, ordem }).select("id").single();
-    if (error) { toast.error(error.message); return; }
+    const { data, error } = await supabase
+      .from("bot_fluxos")
+      .insert({ ...form, ordem })
+      .select("id")
+      .single();
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Fluxo criado. Adicione as etapas.");
     setForm(null);
     await recarregar();
@@ -204,12 +237,14 @@ export function FluxosPainel() {
 
   async function alternarAtivo(f: Fluxo) {
     const { error } = await supabase.from("bot_fluxos").update({ ativo: !f.ativo }).eq("id", f.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await recarregar();
   }
 
   async function duplicar(f: Fluxo) {
-
     const ordem = Math.max(0, ...lista.map((x) => x.ordem)) + 1;
     const { data: novo, error } = await supabase
       .from("bot_fluxos")
@@ -230,9 +265,14 @@ export function FluxosPainel() {
       })
       .select("id")
       .single();
-    if (error || !novo) { toast.error(error?.message ?? "Falha ao duplicar."); return; }
+    if (error || !novo) {
+      toast.error(error?.message ?? "Falha ao duplicar.");
+      return;
+    }
 
-    const originais = todasEtapas.filter((e) => e.fluxo_id === f.id).sort((a, b) => a.ordem - b.ordem);
+    const originais = todasEtapas
+      .filter((e) => e.fluxo_id === f.id)
+      .sort((a, b) => a.ordem - b.ordem);
     const mapaEtapas = new Map<string, string>();
 
     for (const e of originais) {
@@ -257,7 +297,8 @@ export function FluxosPainel() {
     for (const e of originais) {
       const destino = e.proxima_etapa_id ? mapaEtapas.get(e.proxima_etapa_id) : null;
       const id = mapaEtapas.get(e.id);
-      if (id && destino) await supabase.from("bot_fluxo_etapas").update({ proxima_etapa_id: destino }).eq("id", id);
+      if (id && destino)
+        await supabase.from("bot_fluxo_etapas").update({ proxima_etapa_id: destino }).eq("id", id);
 
       for (const o of todasOpcoes.filter((x) => x.etapa_id === e.id)) {
         await supabase.from("bot_fluxo_opcoes").insert({
@@ -267,7 +308,9 @@ export function FluxosPainel() {
           ordem: o.ordem,
           acao: o.acao,
           destino_fluxo_id: o.destino_fluxo_id,
-          destino_etapa_id: o.destino_etapa_id ? (mapaEtapas.get(o.destino_etapa_id) ?? null) : null,
+          destino_etapa_id: o.destino_etapa_id
+            ? (mapaEtapas.get(o.destino_etapa_id) ?? null)
+            : null,
           configuracao: o.configuracao as never,
           ativo: o.ativo,
         });
@@ -287,7 +330,10 @@ export function FluxosPainel() {
       return;
     }
     const { error } = await supabase.from("bot_fluxos").delete().eq("id", f.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Fluxo excluído.");
     await recarregar();
   }
@@ -313,9 +359,16 @@ export function FluxosPainel() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold">FLUXOS</h2>
-          <p className="text-sm text-muted-foreground">Configure as conversas que o Bot poderá realizar.</p>
+          <p className="text-sm text-muted-foreground">
+            Configure as conversas que o Bot poderá realizar.
+          </p>
         </div>
-        <Button onClick={() => { setEditando(null); setForm(VAZIO); }}>
+        <Button
+          onClick={() => {
+            setEditando(null);
+            setForm(VAZIO);
+          }}
+        >
           <Plus className="h-4 w-4" /> ADICIONAR FLUXO
         </Button>
       </div>
@@ -333,9 +386,13 @@ export function FluxosPainel() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="nenhum">Nenhum</SelectItem>
-                {lista.filter((f) => f.ativo).map((f) => (
-                  <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                ))}
+                {lista
+                  .filter((f) => f.ativo)
+                  .map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.nome}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
@@ -366,7 +423,9 @@ export function FluxosPainel() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-lg">{emojiIcone(f.icone)}</span>
                   <strong className="uppercase">{f.nome}</strong>
-                  <Badge variant={f.ativo ? "default" : "outline"}>{f.ativo ? "Ativo" : "Inativo"}</Badge>
+                  <Badge variant={f.ativo ? "default" : "outline"}>
+                    {f.ativo ? "Ativo" : "Inativo"}
+                  </Badge>
                 </div>
                 <p className="line-clamp-2 text-sm text-muted-foreground">{f.descricao}</p>
                 <p className="text-xs text-muted-foreground">{qtdEtapas} etapa(s)</p>
@@ -375,7 +434,14 @@ export function FluxosPainel() {
                   <Button size="sm" onClick={() => setConfigurando(f.id)}>
                     <Settings2 className="h-4 w-4" /> CONFIGURAR
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => { setEditando(f); setForm(formDoFluxo(f)); }}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditando(f);
+                      setForm(formDoFluxo(f));
+                    }}
+                  >
                     EDITAR
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => void duplicar(f)}>
@@ -403,7 +469,15 @@ export function FluxosPainel() {
         )}
       </div>
 
-      <Dialog open={form !== null} onOpenChange={(v) => { if (!v) { setForm(null); setEditando(null); } }}>
+      <Dialog
+        open={form !== null}
+        onOpenChange={(v) => {
+          if (!v) {
+            setForm(null);
+            setEditando(null);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editando ? "Editar fluxo" : "Criar novo fluxo"}</DialogTitle>
@@ -412,19 +486,29 @@ export function FluxosPainel() {
             <div className="grid gap-3">
               <div className="grid gap-1">
                 <Label>Nome do fluxo *</Label>
-                <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
+                <Input
+                  value={form.nome}
+                  onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                />
               </div>
               <div className="grid gap-1">
                 <Label>Descrição</Label>
-                <Input value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+                <Input
+                  value={form.descricao}
+                  onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                />
               </div>
               <div className="grid gap-1">
                 <Label>Ícone</Label>
                 <Select value={form.icone} onValueChange={(v) => setForm({ ...form, icone: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {ICONES.map((i) => (
-                      <SelectItem key={i.valor} value={i.valor}>{i.emoji} {i.rotulo}</SelectItem>
+                      <SelectItem key={i.valor} value={i.valor}>
+                        {i.emoji} {i.rotulo}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -433,8 +517,6 @@ export function FluxosPainel() {
                 Os textos das mensagens são configurados nas etapas, em CONFIGURAR.
               </p>
               <div className="grid gap-1 rounded-lg border p-3">
-
-
                 <label className="flex items-center justify-between gap-4 text-sm">
                   <strong>Enviar tudo em uma única mensagem</strong>
                   <Switch
@@ -465,12 +547,15 @@ export function FluxosPainel() {
                       min={0}
                       value={form.finalizacao_delay_minutos}
                       onChange={(e) =>
-                        setForm({ ...form, finalizacao_delay_minutos: Math.max(0, Number(e.target.value) || 0) })
+                        setForm({
+                          ...form,
+                          finalizacao_delay_minutos: Math.max(0, Number(e.target.value) || 0),
+                        })
                       }
                     />
                     <p className="text-xs text-muted-foreground">
-                      0 inicia o fluxo assim que a conversa entra em Aguardando Finalização. Sem valor próprio,
-                      vale o tempo geral configurado acima.
+                      0 inicia o fluxo assim que a conversa entra em Aguardando Finalização. Sem
+                      valor próprio, vale o tempo geral configurado acima.
                     </p>
                   </div>
                 )}
@@ -485,11 +570,15 @@ export function FluxosPainel() {
                     min={0}
                     value={form.sem_resposta_minutos}
                     onChange={(e) =>
-                      setForm({ ...form, sem_resposta_minutos: Math.max(0, Number(e.target.value) || 0) })
+                      setForm({
+                        ...form,
+                        sem_resposta_minutos: Math.max(0, Number(e.target.value) || 0),
+                      })
                     }
                   />
                   <p className="text-xs text-muted-foreground">
-                    0 desliga. Vale enquanto este fluxo estiver em execução — também destrava conversas paradas.
+                    0 desliga. Vale enquanto este fluxo estiver em execução — também destrava
+                    conversas paradas.
                   </p>
                 </div>
                 {form.sem_resposta_minutos > 0 && (
@@ -500,10 +589,14 @@ export function FluxosPainel() {
                         value={form.sem_resposta_acao}
                         onValueChange={(v) => setForm({ ...form, sem_resposta_acao: v })}
                       >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           {ACOES_SEM_RESPOSTA.map((a) => (
-                            <SelectItem key={a.valor} value={a.valor}>{a.rotulo}</SelectItem>
+                            <SelectItem key={a.valor} value={a.valor}>
+                              {a.rotulo}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -512,7 +605,9 @@ export function FluxosPainel() {
                       <Label>Mensagem (opcional)</Label>
                       <Input
                         value={form.sem_resposta_mensagem}
-                        onChange={(e) => setForm({ ...form, sem_resposta_mensagem: e.target.value })}
+                        onChange={(e) =>
+                          setForm({ ...form, sem_resposta_mensagem: e.target.value })
+                        }
                         placeholder="Enviada antes da ação"
                       />
                     </div>
@@ -525,13 +620,17 @@ export function FluxosPainel() {
                             setForm({ ...form, sem_resposta_fluxo_id: v === "nenhum" ? null : v })
                           }
                         >
-                          <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="nenhum">Nenhum</SelectItem>
                             {lista
                               .filter((f) => f.id !== editando?.id)
                               .map((f) => (
-                                <SelectItem key={f.id} value={f.id}>{emojiIcone(f.icone)} {f.nome}</SelectItem>
+                                <SelectItem key={f.id} value={f.id}>
+                                  {emojiIcone(f.icone)} {f.nome}
+                                </SelectItem>
                               ))}
                           </SelectContent>
                         </Select>
@@ -542,14 +641,27 @@ export function FluxosPainel() {
               </div>
               <label className="flex items-center justify-between gap-4 text-sm">
                 <strong>Ativo</strong>
-                <Switch checked={form.ativo} onCheckedChange={(v) => setForm({ ...form, ativo: v })} />
+                <Switch
+                  checked={form.ativo}
+                  onCheckedChange={(v) => setForm({ ...form, ativo: v })}
+                />
               </label>
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setForm(null); setEditando(null); }}>CANCELAR</Button>
-            <Button onClick={() => void salvarFluxo()}>{editando ? "SALVAR" : "CRIAR FLUXO"}</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setForm(null);
+                setEditando(null);
+              }}
+            >
+              CANCELAR
+            </Button>
+            <Button onClick={() => void salvarFluxo()}>
+              {editando ? "SALVAR" : "CRIAR FLUXO"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

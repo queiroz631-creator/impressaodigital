@@ -48,14 +48,20 @@ export async function interpretarOpcao(
 }
 
 /** Interpreta uma resposta de sim/não em linguagem natural. */
-export async function interpretarSimNao(pergunta: string, respostaCliente: string): Promise<boolean | null> {
+export async function interpretarSimNao(
+  pergunta: string,
+  respostaCliente: string,
+): Promise<boolean | null> {
   const i = await interpretarOpcao(pergunta, respostaCliente, ["Sim", "Não"]);
   if (i === null) return null;
   return i === 0;
 }
 
 /** Interpreta uma quantidade informada em texto livre ("duas cópias" → 2). */
-export async function interpretarQuantidade(pergunta: string, respostaCliente: string): Promise<number | null> {
+export async function interpretarQuantidade(
+  pergunta: string,
+  respostaCliente: string,
+): Promise<number | null> {
   const r = await chamarIA(
     "Você extrai quantidades numéricas de respostas de clientes em português do Brasil. " +
       "Responda SOMENTE com o número inteiro, ou -1 se não for possível identificar.",

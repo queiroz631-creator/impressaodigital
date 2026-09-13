@@ -44,8 +44,8 @@ function lerAcabamentos(valor: unknown): AcabamentoDoc[] {
 
 export function itemDeOrcamento(row: Row, indice: number): ItemDoc {
   const arquivos = lerArquivos(row["arquivos"]);
-  const paginas = Number(row["paginas_total"] ?? 0) ||
-    arquivos.reduce((acc, a) => acc + a.paginas, 0);
+  const paginas =
+    Number(row["paginas_total"] ?? 0) || arquivos.reduce((acc, a) => acc + a.paginas, 0);
   const quantidadeArquivos = Number(row["quantidade_arquivos"] ?? arquivos.length);
   const paginasAdicionais =
     row["paginas_adicionais"] != null
