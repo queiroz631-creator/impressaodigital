@@ -229,8 +229,8 @@ export const MODULOS: Modulo[] = [
         descricao: "Atendentes, perfis e permissões",
         icone: UsersRound,
         ordem: 1,
-        ativo: false,
-        rota: null,
+        ativo: true,
+        rota: "/usuarios",
         permissao: "usuarios.visualizar",
       },
       {
