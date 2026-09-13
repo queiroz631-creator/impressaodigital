@@ -32,7 +32,7 @@ Criação de `src/modules/` contendo **somente** um documento curto (`README.md`
 
 ## Detalhes técnicos
 
-- Novos arquivos: `src/lib/modulos.ts` (tipos + registro), `src/hooks/usePermissoes.ts` (wrapper sobre `useIsAdmin`, mesma regra de hoje), `src/modules/README.md` (convenção de isolamento e módulos públicos vs. administrativos).
+- Novos arquivos: `src/lib/modulos.ts` (tipos + registro), `src/hooks/usePermissoes.ts` (wrapper sobre `useIsAdmin`, mesma regra de hoje), `src/modules/README.md` (único arquivo em `src/modules/`; sem subpastas vazias — cada módulo cria a sua estrutura quando for implementado).
 - Modificado: `src/components/AppLayout.tsx` — a constante `itens` sai e o `nav` passa a iterar grupos do registro; markup e classes preservados.
 - Rotas em `src/routes` só aceitam caminhos existentes na tipagem do roteador, então o registro guarda a rota como texto e o menu só renderiza itens ativos, mantendo o typecheck limpo.
 - Sem alterações em banco, backend do WhatsApp, Z-API, Gemini, Storage, `.env` ou segredos.
