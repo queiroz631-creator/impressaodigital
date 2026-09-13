@@ -28,7 +28,7 @@ O menu passa a consultar uma única função de verificação que hoje devolve a
 
 **5. Preparação para isolamento e módulos públicos**
 
-Criação de `src/modules/` apenas com a marcação dos espaços de cada módulo e um documento curto explicando a convenção (rotas, componentes, hooks e serviços por módulo) e a diferença entre módulo administrativo e módulo público. Nenhuma página existente será movida.
+Criação de `src/modules/` contendo **somente** um documento curto (`README.md`) com a convenção arquitetural: rotas, componentes, hooks e serviços por módulo, e a diferença entre módulo administrativo e módulo público. Nenhuma pasta vazia será criada para módulos que ainda não existem; a estrutura específica de cada módulo será criada apenas quando ele for efetivamente implementado. Nenhuma página existente será movida, e nenhuma abstração ou componente genérico adicional será criado nesta etapa.
 
 ## Detalhes técnicos
 
