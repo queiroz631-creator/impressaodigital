@@ -52,7 +52,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </Link>
 
       {grupos.map((grupo) => {
-        const expandido = gruposAbertos[grupo.id] !== false;
+        const expandido = gruposAbertos[grupo.id] === true;
         return (
           <div key={grupo.id} className="flex flex-col">
             <button
