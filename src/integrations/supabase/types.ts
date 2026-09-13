@@ -1791,6 +1791,7 @@ export type Database = {
         Row: {
           ativo: boolean
           created_at: string
+          descricao: string | null
           id: string
           nome: string
           permissoes: Json
@@ -1799,6 +1800,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           created_at?: string
+          descricao?: string | null
           id?: string
           nome: string
           permissoes?: Json
@@ -1807,6 +1809,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           created_at?: string
+          descricao?: string | null
           id?: string
           nome?: string
           permissoes?: Json
