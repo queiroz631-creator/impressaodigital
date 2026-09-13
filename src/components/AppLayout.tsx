@@ -173,6 +173,24 @@ export function AppLayout({
   );
 }
 
+/** Tela exibida quando o usuário abre uma página sem ter permissão. */
+function AcessoNegado() {
+  return (
+    <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-card">
+      <ShieldAlert className="mx-auto h-10 w-10 text-muted-foreground" />
+      <h1 className="mt-4 text-xl font-bold">Acesso negado</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Você não tem permissão para acessar esta página. Fale com um administrador se precisar desse
+        acesso.
+      </p>
+      <Button asChild className="mt-6">
+        <Link to="/dashboard">Ir para o Dashboard</Link>
+      </Button>
+    </div>
+  );
+}
+
+
 /** Conversas com mensagens não lidas, exibidas como contador no menu. */
 function useConversasPendentes(habilitado: boolean) {
   const { data } = useQuery({
