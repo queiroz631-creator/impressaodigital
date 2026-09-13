@@ -83,14 +83,27 @@ export const Route = createFileRoute("/api/public/whatsapp/webhook")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        const { data: config } = await supabaseAdmin
-          .from("whatsapp_config")
-          .select("id, webhook_token")
-          .limit(1)
+        // O token identifica a conexão: cada número tem o seu endereço de
+        // webhook. Conexões antigas continuam válidas pelo token da config.
+        const { data: conexao } = await supabaseAdmin
+          .from("whatsapp_conexoes")
+          .select("id, ativo")
+          .eq("webhook_token", token)
           .maybeSingle();
 
-        if (!config?.webhook_token || config.webhook_token !== token) {
-          return new Response("Token inválido", { status: 401 });
+        let conexaoId: string | null = conexao?.id ?? null;
+
+        if (!conexaoId) {
+          const { data: config } = await supabaseAdmin
+            .from("whatsapp_config")
+            .select("id, webhook_token, conexao_id")
+            .eq("webhook_token", token)
+            .limit(1)
+            .maybeSingle();
+          if (!config?.webhook_token) return new Response("Token inválido", { status: 401 });
+          conexaoId = (config as { conexao_id?: string | null }).conexao_id ?? null;
+        } else if (conexao && conexao.ativo === false) {
+          return Response.json({ ok: true, ignorado: true, motivo: "conexao_inativa" });
         }
 
         let bruto: unknown;
