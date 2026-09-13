@@ -172,8 +172,13 @@ function DialogNovoUsuario({ perfis }: { perfis: PerfilOpcao[] }) {
           perfilId: perfilId === SEM_PERFIL ? null : perfilId,
         },
       }),
-    onSuccess: () => {
-      toast.success("Usuário criado. Ele já pode entrar com o e-mail e a senha.");
+    onSuccess: (r) => {
+      toast.success(
+        r?.existente
+          ? "Este e-mail já existia; o acesso foi atualizado com a nova senha e perfil."
+          : "Usuário criado. Ele já pode entrar com o e-mail e a senha.",
+      );
+
       setAberto(false);
       setNome("");
       setEmail("");
