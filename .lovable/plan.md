@@ -28,11 +28,11 @@ O menu passa a consultar uma única função de verificação que hoje devolve a
 
 **5. Preparação para isolamento e módulos públicos**
 
-Criação de `src/modules/` apenas com a marcação dos espaços de cada módulo e um documento curto explicando a convenção (rotas, componentes, hooks e serviços por módulo) e a diferença entre módulo administrativo e módulo público. Nenhuma página existente será movida.
+Criação de `src/modules/` contendo **somente** um documento curto (`README.md`) com a convenção arquitetural: rotas, componentes, hooks e serviços por módulo, e a diferença entre módulo administrativo e módulo público. Nenhuma pasta vazia será criada para módulos que ainda não existem; a estrutura específica de cada módulo será criada apenas quando ele for efetivamente implementado. Nenhuma página existente será movida, e nenhuma abstração ou componente genérico adicional será criado nesta etapa.
 
 ## Detalhes técnicos
 
-- Novos arquivos: `src/lib/modulos.ts` (tipos + registro), `src/hooks/usePermissoes.ts` (wrapper sobre `useIsAdmin`, mesma regra de hoje), `src/modules/README.md` (convenção de isolamento e módulos públicos vs. administrativos).
+- Novos arquivos: `src/lib/modulos.ts` (tipos + registro), `src/hooks/usePermissoes.ts` (wrapper sobre `useIsAdmin`, mesma regra de hoje), `src/modules/README.md` (único arquivo em `src/modules/`; sem subpastas vazias — cada módulo cria a sua estrutura quando for implementado).
 - Modificado: `src/components/AppLayout.tsx` — a constante `itens` sai e o `nav` passa a iterar grupos do registro; markup e classes preservados.
 - Rotas em `src/routes` só aceitam caminhos existentes na tipagem do roteador, então o registro guarda a rota como texto e o menu só renderiza itens ativos, mantendo o typecheck limpo.
 - Sem alterações em banco, backend do WhatsApp, Z-API, Gemini, Storage, `.env` ou segredos.
