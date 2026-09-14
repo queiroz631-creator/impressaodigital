@@ -49,14 +49,15 @@ Endpoints internos protegidos por token, aceitando **lotes** (ex.: 500 notas em 
 
 ## Clientes nos dois sentidos
 
-- **Loja → sistema:** endpoint de lote que cria ou atualiza clientes conforme as regras atuais, sem duplicar e sem excluir.
-- **Sistema → loja:** endpoint de leitura que devolve apenas os itens pendentes a partir do cursor informado pela API local, mais um endpoint de confirmação que avança o cursor. Nada de "buscar todos os clientes".
+- **Loja → sistema:** endpoint de lote que cria ou atualiza clientes conforme as regras atuais, sem duplicar e sem excluir, usando o identificador permanente da loja.
+- **Sistema → loja:** endpoint de leitura que devolve apenas os itens pendentes a partir do cursor informado pela API local, mais um endpoint de confirmação. O cursor **nunca avança antes da confirmação da API local**: se ela ler até o 102 e falhar, o cursor permanece em 100 (último ponto confirmado) e os itens são reentregues; a idempotência garante que o reprocessamento não duplique nada. Nada de "buscar todos os clientes".
 
 ## 5C — Processamento por eventos
 
-Quando um lote de notas é confirmado: registra o evento, atualiza a marca da base, identifica **os sorteios afetados** e aciona imediatamente a validação apenas das notas pendentes desses sorteios. Nenhuma varredura geral.
+Quando um lote de notas é confirmado: registra o evento, atualiza a marca da base, identifica **exatamente o(s) sorteio(s) do lote** e valida apenas as notas pendentes **desse** sorteio. Lote do Sorteio 1 nunca dispara consulta de pendentes de outros sorteios, e nunca faz varredura geral.
 
 Alteração de cliente feita no sistema entra na fila no mesmo instante, para a API local buscar somente o que mudou.
+
 
 ## Reconciliação (rede de segurança)
 
@@ -64,7 +65,7 @@ A rotina atual de validação de 1 minuto passa para **15 minutos** e muda de fu
 
 ## Segurança e registros
 
-Todos os endpoints exigem token; token nunca aparece em log e nenhuma configuração é devolvida. Nenhum segredo em código ou migração. O log de sincronização (origem, destino, entidade, lote, quantidades, sucesso/erro, tentativas, duração, data/hora) fica separado da auditoria de negócio, e a estrutura já permite listar pendentes, com erro, última sincronização, tentativas e último erro — sem criar tela nesta etapa.
+Todos os endpoints exigem token; token nunca aparece em log e nenhuma configuração é devolvida. Nenhum segredo em código ou migração. O log de sincronização (origem, destino, entidade, lote, quantidades, sucesso/erro, tentativas, duração, data/hora) fica separado da auditoria de negócio e é igualmente fechado a usuários autenticados. A estrutura permite montar depois um painel de pendentes, erros e última sincronização a partir de um resumo agregado, sem expor registros internos.
 
 ## Fora do escopo
 
