@@ -43,12 +43,18 @@ import { Route as SorteiosIdNotasRouteImport } from './routes/sorteios.$id.notas
 import { Route as SorteiosIdParticipantesRouteImport } from './routes/sorteios.$id.participantes'
 import { Route as SorteiosIdPremiosRouteImport } from './routes/sorteios.$id.premios'
 import { Route as SorteiosIdTermosRouteImport } from './routes/sorteios.$id.termos'
+import { Route as ApiPublicSorteiosReconciliarRouteImport } from './routes/api/public/sorteios/reconciliar'
 import { Route as ApiPublicSorteiosValidarNotasRouteImport } from './routes/api/public/sorteios/validar-notas'
 import { Route as ApiPublicWhatsappFilaRouteImport } from './routes/api/public/whatsapp/fila'
 import { Route as ApiPublicWhatsappInatividadeRouteImport } from './routes/api/public/whatsapp/inatividade'
 import { Route as ApiPublicWhatsappMidiaRouteImport } from './routes/api/public/whatsapp/midia'
 import { Route as ApiPublicWhatsappStatusRouteImport } from './routes/api/public/whatsapp/status'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
+import { Route as ApiPublicSorteiosSyncClientesAlteracoesRouteImport } from './routes/api/public/sorteios/sync/clientes-alteracoes'
+import { Route as ApiPublicSorteiosSyncClientesConfirmarRouteImport } from './routes/api/public/sorteios/sync/clientes-confirmar'
+import { Route as ApiPublicSorteiosSyncClientesReceberRouteImport } from './routes/api/public/sorteios/sync/clientes-receber'
+import { Route as ApiPublicSorteiosSyncNotasConfirmarRouteImport } from './routes/api/public/sorteios/sync/notas-confirmar'
+import { Route as ApiPublicSorteiosSyncNotasLoteRouteImport } from './routes/api/public/sorteios/sync/notas-lote'
 import { Route as ApiPublicWhatsappWebhookTokenRouteImport } from './routes/api/public/whatsapp/webhook/$token'
 
 const IndexRoute = IndexRouteImport.update({
@@ -222,6 +228,12 @@ const SorteiosIdTermosRoute = SorteiosIdTermosRouteImport.update({
   path: '/sorteios/$id/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSorteiosReconciliarRoute =
+  ApiPublicSorteiosReconciliarRouteImport.update({
+    id: '/api/public/sorteios/reconciliar',
+    path: '/api/public/sorteios/reconciliar',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSorteiosValidarNotasRoute =
   ApiPublicSorteiosValidarNotasRouteImport.update({
     id: '/api/public/sorteios/validar-notas',
@@ -253,6 +265,36 @@ const ApiPublicWhatsappWebhookRoute =
   ApiPublicWhatsappWebhookRouteImport.update({
     id: '/api/public/whatsapp/webhook',
     path: '/api/public/whatsapp/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSorteiosSyncClientesAlteracoesRoute =
+  ApiPublicSorteiosSyncClientesAlteracoesRouteImport.update({
+    id: '/api/public/sorteios/sync/clientes-alteracoes',
+    path: '/api/public/sorteios/sync/clientes-alteracoes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSorteiosSyncClientesConfirmarRoute =
+  ApiPublicSorteiosSyncClientesConfirmarRouteImport.update({
+    id: '/api/public/sorteios/sync/clientes-confirmar',
+    path: '/api/public/sorteios/sync/clientes-confirmar',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSorteiosSyncClientesReceberRoute =
+  ApiPublicSorteiosSyncClientesReceberRouteImport.update({
+    id: '/api/public/sorteios/sync/clientes-receber',
+    path: '/api/public/sorteios/sync/clientes-receber',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSorteiosSyncNotasConfirmarRoute =
+  ApiPublicSorteiosSyncNotasConfirmarRouteImport.update({
+    id: '/api/public/sorteios/sync/notas-confirmar',
+    path: '/api/public/sorteios/sync/notas-confirmar',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSorteiosSyncNotasLoteRoute =
+  ApiPublicSorteiosSyncNotasLoteRouteImport.update({
+    id: '/api/public/sorteios/sync/notas-lote',
+    path: '/api/public/sorteios/sync/notas-lote',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicWhatsappWebhookTokenRoute =
@@ -297,12 +339,18 @@ export interface FileRoutesByFullPath {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
+  '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
   '/api/public/sorteios/validar-notas': typeof ApiPublicSorteiosValidarNotasRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/api/public/sorteios/sync/clientes-alteracoes': typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
+  '/api/public/sorteios/sync/clientes-confirmar': typeof ApiPublicSorteiosSyncClientesConfirmarRoute
+  '/api/public/sorteios/sync/clientes-receber': typeof ApiPublicSorteiosSyncClientesReceberRoute
+  '/api/public/sorteios/sync/notas-confirmar': typeof ApiPublicSorteiosSyncNotasConfirmarRoute
+  '/api/public/sorteios/sync/notas-lote': typeof ApiPublicSorteiosSyncNotasLoteRoute
   '/api/public/whatsapp/webhook/$token': typeof ApiPublicWhatsappWebhookTokenRoute
 }
 export interface FileRoutesByTo {
@@ -340,12 +388,18 @@ export interface FileRoutesByTo {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id': typeof SorteiosIdIndexRoute
+  '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
   '/api/public/sorteios/validar-notas': typeof ApiPublicSorteiosValidarNotasRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/api/public/sorteios/sync/clientes-alteracoes': typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
+  '/api/public/sorteios/sync/clientes-confirmar': typeof ApiPublicSorteiosSyncClientesConfirmarRoute
+  '/api/public/sorteios/sync/clientes-receber': typeof ApiPublicSorteiosSyncClientesReceberRoute
+  '/api/public/sorteios/sync/notas-confirmar': typeof ApiPublicSorteiosSyncNotasConfirmarRoute
+  '/api/public/sorteios/sync/notas-lote': typeof ApiPublicSorteiosSyncNotasLoteRoute
   '/api/public/whatsapp/webhook/$token': typeof ApiPublicWhatsappWebhookTokenRoute
 }
 export interface FileRoutesById {
@@ -384,12 +438,18 @@ export interface FileRoutesById {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
+  '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
   '/api/public/sorteios/validar-notas': typeof ApiPublicSorteiosValidarNotasRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/api/public/sorteios/sync/clientes-alteracoes': typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
+  '/api/public/sorteios/sync/clientes-confirmar': typeof ApiPublicSorteiosSyncClientesConfirmarRoute
+  '/api/public/sorteios/sync/clientes-receber': typeof ApiPublicSorteiosSyncClientesReceberRoute
+  '/api/public/sorteios/sync/notas-confirmar': typeof ApiPublicSorteiosSyncNotasConfirmarRoute
+  '/api/public/sorteios/sync/notas-lote': typeof ApiPublicSorteiosSyncNotasLoteRoute
   '/api/public/whatsapp/webhook/$token': typeof ApiPublicWhatsappWebhookTokenRoute
 }
 export interface FileRouteTypes {
@@ -429,12 +489,18 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/termos'
     | '/sorteios/$id/'
+    | '/api/public/sorteios/reconciliar'
     | '/api/public/sorteios/validar-notas'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/api/public/sorteios/sync/clientes-alteracoes'
+    | '/api/public/sorteios/sync/clientes-confirmar'
+    | '/api/public/sorteios/sync/clientes-receber'
+    | '/api/public/sorteios/sync/notas-confirmar'
+    | '/api/public/sorteios/sync/notas-lote'
     | '/api/public/whatsapp/webhook/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -472,12 +538,18 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/termos'
     | '/sorteios/$id'
+    | '/api/public/sorteios/reconciliar'
     | '/api/public/sorteios/validar-notas'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/api/public/sorteios/sync/clientes-alteracoes'
+    | '/api/public/sorteios/sync/clientes-confirmar'
+    | '/api/public/sorteios/sync/clientes-receber'
+    | '/api/public/sorteios/sync/notas-confirmar'
+    | '/api/public/sorteios/sync/notas-lote'
     | '/api/public/whatsapp/webhook/$token'
   id:
     | '__root__'
@@ -515,12 +587,18 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/termos'
     | '/sorteios/$id/'
+    | '/api/public/sorteios/reconciliar'
     | '/api/public/sorteios/validar-notas'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/api/public/sorteios/sync/clientes-alteracoes'
+    | '/api/public/sorteios/sync/clientes-confirmar'
+    | '/api/public/sorteios/sync/clientes-receber'
+    | '/api/public/sorteios/sync/notas-confirmar'
+    | '/api/public/sorteios/sync/notas-lote'
     | '/api/public/whatsapp/webhook/$token'
   fileRoutesById: FileRoutesById
 }
@@ -559,12 +637,18 @@ export interface RootRouteChildren {
   SorteiosIdPremiosRoute: typeof SorteiosIdPremiosRoute
   SorteiosIdTermosRoute: typeof SorteiosIdTermosRoute
   SorteiosIdIndexRoute: typeof SorteiosIdIndexRoute
+  ApiPublicSorteiosReconciliarRoute: typeof ApiPublicSorteiosReconciliarRoute
   ApiPublicSorteiosValidarNotasRoute: typeof ApiPublicSorteiosValidarNotasRoute
   ApiPublicWhatsappFilaRoute: typeof ApiPublicWhatsappFilaRoute
   ApiPublicWhatsappInatividadeRoute: typeof ApiPublicWhatsappInatividadeRoute
   ApiPublicWhatsappMidiaRoute: typeof ApiPublicWhatsappMidiaRoute
   ApiPublicWhatsappStatusRoute: typeof ApiPublicWhatsappStatusRoute
   ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRouteWithChildren
+  ApiPublicSorteiosSyncClientesAlteracoesRoute: typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
+  ApiPublicSorteiosSyncClientesConfirmarRoute: typeof ApiPublicSorteiosSyncClientesConfirmarRoute
+  ApiPublicSorteiosSyncClientesReceberRoute: typeof ApiPublicSorteiosSyncClientesReceberRoute
+  ApiPublicSorteiosSyncNotasConfirmarRoute: typeof ApiPublicSorteiosSyncNotasConfirmarRoute
+  ApiPublicSorteiosSyncNotasLoteRoute: typeof ApiPublicSorteiosSyncNotasLoteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -807,6 +891,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SorteiosIdTermosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sorteios/reconciliar': {
+      id: '/api/public/sorteios/reconciliar'
+      path: '/api/public/sorteios/reconciliar'
+      fullPath: '/api/public/sorteios/reconciliar'
+      preLoaderRoute: typeof ApiPublicSorteiosReconciliarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sorteios/validar-notas': {
       id: '/api/public/sorteios/validar-notas'
       path: '/api/public/sorteios/validar-notas'
@@ -847,6 +938,41 @@ declare module '@tanstack/react-router' {
       path: '/api/public/whatsapp/webhook'
       fullPath: '/api/public/whatsapp/webhook'
       preLoaderRoute: typeof ApiPublicWhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sorteios/sync/clientes-alteracoes': {
+      id: '/api/public/sorteios/sync/clientes-alteracoes'
+      path: '/api/public/sorteios/sync/clientes-alteracoes'
+      fullPath: '/api/public/sorteios/sync/clientes-alteracoes'
+      preLoaderRoute: typeof ApiPublicSorteiosSyncClientesAlteracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sorteios/sync/clientes-confirmar': {
+      id: '/api/public/sorteios/sync/clientes-confirmar'
+      path: '/api/public/sorteios/sync/clientes-confirmar'
+      fullPath: '/api/public/sorteios/sync/clientes-confirmar'
+      preLoaderRoute: typeof ApiPublicSorteiosSyncClientesConfirmarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sorteios/sync/clientes-receber': {
+      id: '/api/public/sorteios/sync/clientes-receber'
+      path: '/api/public/sorteios/sync/clientes-receber'
+      fullPath: '/api/public/sorteios/sync/clientes-receber'
+      preLoaderRoute: typeof ApiPublicSorteiosSyncClientesReceberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sorteios/sync/notas-confirmar': {
+      id: '/api/public/sorteios/sync/notas-confirmar'
+      path: '/api/public/sorteios/sync/notas-confirmar'
+      fullPath: '/api/public/sorteios/sync/notas-confirmar'
+      preLoaderRoute: typeof ApiPublicSorteiosSyncNotasConfirmarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sorteios/sync/notas-lote': {
+      id: '/api/public/sorteios/sync/notas-lote'
+      path: '/api/public/sorteios/sync/notas-lote'
+      fullPath: '/api/public/sorteios/sync/notas-lote'
+      preLoaderRoute: typeof ApiPublicSorteiosSyncNotasLoteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/whatsapp/webhook/$token': {
@@ -908,12 +1034,22 @@ const rootRouteChildren: RootRouteChildren = {
   SorteiosIdPremiosRoute: SorteiosIdPremiosRoute,
   SorteiosIdTermosRoute: SorteiosIdTermosRoute,
   SorteiosIdIndexRoute: SorteiosIdIndexRoute,
+  ApiPublicSorteiosReconciliarRoute: ApiPublicSorteiosReconciliarRoute,
   ApiPublicSorteiosValidarNotasRoute: ApiPublicSorteiosValidarNotasRoute,
   ApiPublicWhatsappFilaRoute: ApiPublicWhatsappFilaRoute,
   ApiPublicWhatsappInatividadeRoute: ApiPublicWhatsappInatividadeRoute,
   ApiPublicWhatsappMidiaRoute: ApiPublicWhatsappMidiaRoute,
   ApiPublicWhatsappStatusRoute: ApiPublicWhatsappStatusRoute,
   ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRouteWithChildren,
+  ApiPublicSorteiosSyncClientesAlteracoesRoute:
+    ApiPublicSorteiosSyncClientesAlteracoesRoute,
+  ApiPublicSorteiosSyncClientesConfirmarRoute:
+    ApiPublicSorteiosSyncClientesConfirmarRoute,
+  ApiPublicSorteiosSyncClientesReceberRoute:
+    ApiPublicSorteiosSyncClientesReceberRoute,
+  ApiPublicSorteiosSyncNotasConfirmarRoute:
+    ApiPublicSorteiosSyncNotasConfirmarRoute,
+  ApiPublicSorteiosSyncNotasLoteRoute: ApiPublicSorteiosSyncNotasLoteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

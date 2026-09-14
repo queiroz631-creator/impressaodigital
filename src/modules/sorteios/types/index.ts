@@ -10,9 +10,19 @@ export type StatusSorteio = "RASCUNHO" | "ATIVO" | "ENCERRADO" | "CANCELADO" | "
 export type StatusNota = "PENDENTE" | "VALIDA" | "INVALIDA" | "CANCELADA";
 export type StatusCupom = "ATIVO" | "CANCELADO" | "UTILIZADO";
 export type StatusSincronizacaoParticipante = "PENDENTE" | "SINCRONIZADO" | "ERRO";
-export type TipoSincronizacao = "CLIENTES" | "NOTAS";
+export type TipoSincronizacao =
+  | "CLIENTES"
+  | "NOTAS"
+  | "NOTAS_LOJA_SUPABASE"
+  | "CLIENTES_LOJA_SUPABASE"
+  | "CLIENTES_SUPABASE_LOJA"
+  | "RECONCILIACAO";
 export type DirecaoSincronizacao = "SUPABASE_PARA_LOCAL" | "LOCAL_PARA_SUPABASE";
 export type StatusSincronizacao = "EXECUTANDO" | "CONCLUIDA" | "ERRO" | "PARCIAL";
+/** Estados da fila de itens de sincronização (Etapa 5). */
+export type StatusFilaSincronizacao = "PENDENTE" | "PROCESSANDO" | "SINCRONIZADO" | "ERRO";
+export type OrigemDestinoSincronizacao = "LOJA" | "SUPABASE";
+
 
 export const STATUS_SORTEIO: StatusSorteio[] = [
   "RASCUNHO",
