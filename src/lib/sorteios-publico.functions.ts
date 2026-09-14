@@ -11,9 +11,11 @@ import {
   ErroPortal,
   admin,
   auditarPortal,
+  buscarClientePorTelefone,
   carregarSessao,
   criarSessaoParticipante,
   etapaAposIdentificacao,
+  garantirCpfLivre,
   garantirParticipacao,
   limitarTentativas,
   mascararCpf,
@@ -22,8 +24,10 @@ import {
   periodoAberto,
   revogarSessaoAtual,
   telefoneConfere,
+  ultimosQuatro,
   type SorteioRow,
 } from "./sorteios-publico.server";
+
 import { EVENTOS_AUDITORIA } from "@/modules/sorteios/types";
 import {
   normalizarCpf,
