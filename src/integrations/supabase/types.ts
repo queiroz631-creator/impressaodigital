@@ -841,6 +841,8 @@ export type Database = {
           id: string
           nome: string
           observacao: string | null
+          origem_alteracao: string | null
+          origem_id: string | null
           telefone: string | null
           telefone_normalizado: string | null
           updated_at: string
@@ -853,6 +855,8 @@ export type Database = {
           id?: string
           nome?: string
           observacao?: string | null
+          origem_alteracao?: string | null
+          origem_id?: string | null
           telefone?: string | null
           telefone_normalizado?: string | null
           updated_at?: string
@@ -865,6 +869,8 @@ export type Database = {
           id?: string
           nome?: string
           observacao?: string | null
+          origem_alteracao?: string | null
+          origem_id?: string | null
           telefone?: string | null
           telefone_normalizado?: string | null
           updated_at?: string
@@ -2498,47 +2504,171 @@ export type Database = {
           },
         ]
       }
+      sorteio_sincronizacao_cursores: {
+        Row: {
+          atualizado_em: string
+          consumidor: string
+          criado_em: string
+          sequencia: number
+        }
+        Insert: {
+          atualizado_em?: string
+          consumidor: string
+          criado_em?: string
+          sequencia?: number
+        }
+        Update: {
+          atualizado_em?: string
+          consumidor?: string
+          criado_em?: string
+          sequencia?: number
+        }
+        Relationships: []
+      }
+      sorteio_sincronizacao_fila: {
+        Row: {
+          alterado_em: string
+          atualizado_em: string
+          criado_em: string
+          destino: string
+          entidade: string
+          entidade_id: string
+          erro: string | null
+          id: string
+          metadados: Json | null
+          operacao: string
+          operacao_id: string | null
+          origem: string
+          processado_em: string | null
+          sequencia: number
+          sorteio_id: string | null
+          status: string
+          tentativas: number
+          tipo: string
+          ultima_tentativa_em: string | null
+        }
+        Insert: {
+          alterado_em?: string
+          atualizado_em?: string
+          criado_em?: string
+          destino: string
+          entidade: string
+          entidade_id: string
+          erro?: string | null
+          id?: string
+          metadados?: Json | null
+          operacao: string
+          operacao_id?: string | null
+          origem: string
+          processado_em?: string | null
+          sequencia?: number
+          sorteio_id?: string | null
+          status?: string
+          tentativas?: number
+          tipo: string
+          ultima_tentativa_em?: string | null
+        }
+        Update: {
+          alterado_em?: string
+          atualizado_em?: string
+          criado_em?: string
+          destino?: string
+          entidade?: string
+          entidade_id?: string
+          erro?: string | null
+          id?: string
+          metadados?: Json | null
+          operacao?: string
+          operacao_id?: string | null
+          origem?: string
+          processado_em?: string | null
+          sequencia?: number
+          sorteio_id?: string | null
+          status?: string
+          tentativas?: number
+          tipo?: string
+          ultima_tentativa_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_sincronizacao_fila_sorteio_id_fkey"
+            columns: ["sorteio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sorteio_sincronizacoes: {
         Row: {
+          atualizado_em: string
           criado_em: string
+          destino: string | null
           direcao: string
+          duracao_ms: number | null
           erro: string | null
           finalizado_em: string | null
           id: string
           iniciado_em: string
+          lote_id: string | null
+          operacao_id: string | null
+          origem: string | null
           registros_enviados: number
           registros_processados: number
           registros_recebidos: number
+          sorteio_id: string | null
           status: string
           tipo: string
         }
         Insert: {
+          atualizado_em?: string
           criado_em?: string
+          destino?: string | null
           direcao: string
+          duracao_ms?: number | null
           erro?: string | null
           finalizado_em?: string | null
           id?: string
           iniciado_em?: string
+          lote_id?: string | null
+          operacao_id?: string | null
+          origem?: string | null
           registros_enviados?: number
           registros_processados?: number
           registros_recebidos?: number
+          sorteio_id?: string | null
           status?: string
           tipo: string
         }
         Update: {
+          atualizado_em?: string
           criado_em?: string
+          destino?: string | null
           direcao?: string
+          duracao_ms?: number | null
           erro?: string | null
           finalizado_em?: string | null
           id?: string
           iniciado_em?: string
+          lote_id?: string | null
+          operacao_id?: string | null
+          origem?: string | null
           registros_enviados?: number
           registros_processados?: number
           registros_recebidos?: number
+          sorteio_id?: string | null
           status?: string
           tipo?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_sincronizacoes_sorteio_id_fkey"
+            columns: ["sorteio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sorteio_tentativas: {
         Row: {
