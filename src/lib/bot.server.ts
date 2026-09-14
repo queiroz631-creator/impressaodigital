@@ -227,7 +227,12 @@ async function responder(
   // Texto simples sempre: listas de botões não são entregues de forma confiável.
   const cabecalho = "_🤖 mensagem do bot_";
   const complemento = botoes && botoes.length > 0 ? `\n\n_Responda: ${botoes.join(" ou ")}_` : "";
-  const mensagem = texto.trim() ? `${cabecalho}\n\n${texto}${complemento}` : cabecalho;
+  const temTexto = Boolean(texto.trim());
+  // Sem texto, sem mídia e sem botões não há nada para enviar: evita que o
+  // cliente receba uma mensagem em branco (só o cabeçalho do bot).
+  if (!temTexto && !midia?.url && !complemento) return false;
+  const mensagem = temTexto ? `${cabecalho}\n\n${texto}${complemento}` : `${cabecalho}${complemento}`;
+
 
   let envio: { caminho: string; corpo: Record<string, unknown> } | null = null;
   if (midia?.url) {
