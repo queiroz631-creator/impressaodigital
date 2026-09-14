@@ -3325,6 +3325,17 @@ export type Database = {
         Args: { _termos_id: string }
         Returns: undefined
       }
+      sorteio_portal_criar_participacao: {
+        Args: {
+          _cpf: string
+          _data_nascimento: string
+          _nome: string
+          _sorteio_id: string
+          _telefone: string
+          _telefone_normalizado: string
+        }
+        Returns: string
+      }
       tem_permissao: {
         Args: { _chave: string; _user_id: string }
         Returns: boolean
