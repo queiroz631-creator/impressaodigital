@@ -52,5 +52,15 @@
 - [x] RLS por `public.pode_sorteios()` (admin ou permissão `sorteios.visualizar`)
 - [x] Gatilho: nota CANCELADA cancela seus cupons (nunca o contrário), sem recálculo de saldo
 - [x] `src/modules/sorteios/` (types, validations, services/saldo.ts, README)
-- [ ] Etapa 2: telas administrativas do módulo
+- [x] Etapa 2: telas administrativas do módulo
+
+## Módulo Sorteios — Etapa 2 (administração, concluída)
+- [x] Menu Sorteios no grupo Marketing abrindo /sorteios
+- [x] Permissão `sorteios.gerenciar` no catálogo (concedida manualmente; admin já tem acesso)
+- [x] Telas: lista, novo, painel, editar, termos, prêmios, participantes, notas, cupons
+- [x] Situações: RASCUNHO → ATIVO → ENCERRADO → SORTEADO; CANCELADO; sem retorno
+- [x] Proteção de dados críticos (número, datas de início/fim, valor por cupom) com movimentação
+- [x] Termos com várias versões e uma única versão atual (troca atômica no banco)
+- [x] Auditoria de criação, alteração, mudança de situação, termos e prêmios
+- [x] Validação no servidor em toda gravação (permissão, situação e movimentação relidas)
 - [ ] Etapa 3: portal público do participante (RLS própria), cupons aleatórios, API local e sincronização

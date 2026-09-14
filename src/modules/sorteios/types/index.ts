@@ -63,6 +63,10 @@ export interface SorteioTermos {
   id: string;
   sorteio_id: string;
   versao: number;
+  /** Título da versão (opcional). */
+  titulo: string;
+  /** Versão vigente: no máximo uma por sorteio (índice único parcial). */
+  atual: boolean;
   regras: string;
   informacoes: string;
   premios: string;

@@ -198,8 +198,8 @@ export const MODULOS: Modulo[] = [
         descricao: "Campanhas de sorteio com página pública",
         icone: Gift,
         ordem: 2,
-        ativo: false,
-        rota: null,
+        ativo: true,
+        rota: "/sorteios",
         permissao: "sorteios.visualizar",
       },
       {
@@ -263,6 +263,8 @@ export const PERMISSOES_SENSIVEIS: { chave: string; nome: string }[] = [
   { chave: "precos.alterar", nome: "Alterar preços" },
   { chave: "conexoes.gerenciar", nome: "Gerenciar conexões" },
   { chave: "usuarios.gerenciar", nome: "Gerenciar usuários" },
+  // Concedida manualmente nos perfis; administradores já têm acesso total.
+  { chave: "sorteios.gerenciar", nome: "Gerenciar sorteios" },
 ];
 
 /** Todas as chaves de permissão do sistema (módulos + telas + sensíveis). */

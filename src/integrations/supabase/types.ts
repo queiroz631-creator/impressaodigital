@@ -2458,6 +2458,7 @@ export type Database = {
       }
       sorteio_termos: {
         Row: {
+          atual: boolean
           atualizado_em: string
           como_participar: string
           como_sera_realizado: string
@@ -2469,10 +2470,12 @@ export type Database = {
           publicado_em: string | null
           regras: string
           sorteio_id: string
+          titulo: string
           validade: string
           versao: number
         }
         Insert: {
+          atual?: boolean
           atualizado_em?: string
           como_participar?: string
           como_sera_realizado?: string
@@ -2484,10 +2487,12 @@ export type Database = {
           publicado_em?: string | null
           regras?: string
           sorteio_id: string
+          titulo?: string
           validade?: string
           versao?: number
         }
         Update: {
+          atual?: boolean
           atualizado_em?: string
           como_participar?: string
           como_sera_realizado?: string
@@ -2499,6 +2504,7 @@ export type Database = {
           publicado_em?: string | null
           regras?: string
           sorteio_id?: string
+          titulo?: string
           validade?: string
           versao?: number
         }
@@ -3224,6 +3230,10 @@ export type Database = {
         Returns: boolean
       }
       pode_sorteios: { Args: never; Returns: boolean }
+      sorteio_definir_termos_atual: {
+        Args: { _termos_id: string }
+        Returns: undefined
+      }
       tem_permissao: {
         Args: { _chave: string; _user_id: string }
         Returns: boolean
