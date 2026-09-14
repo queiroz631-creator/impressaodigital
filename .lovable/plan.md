@@ -76,7 +76,15 @@ Continua **um cron de cada rotina**. Fila, inatividade e status passam a percorr
 
 ## Verificação
 
-Typecheck, lint e build; teste no preview com a conexão atual (receber, enviar, arquivo, bot, fila, áudio, status) e conferência de isolamento entre um atendente vinculado e o administrador. Sem commit e sem push.
+Typecheck, lint e build. Teste no preview com a conexão atual (receber, enviar, arquivo, bot, fila, áudio, status) e o cenário de isolamento montado explicitamente:
+
+- Conexão A (Impressão Digital) e conexão B (segunda conexão), cada uma com uma conversa.
+- Atendente vinculado à A: vê A, não vê B.
+- Atendente sem conexão: não vê nenhuma conversa, nem pela tela nem por chamada direta ao banco/API.
+- Administrador: vê as duas e consegue alternar entre elas.
+
+O isolamento é verificado nas duas frentes: na tela e por chamada direta (regras do banco). Nenhum usuário novo é criado automaticamente — o vínculo é feito na tela Usuários com os usuários que já existem. Sem commit e sem push; o relatório com migrações, regras de acesso, funções do servidor e testes vem antes de qualquer publicação.
+
 
 ## Ponto que precisa de decisão sua
 
