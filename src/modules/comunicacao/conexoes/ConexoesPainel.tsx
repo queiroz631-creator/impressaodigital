@@ -34,9 +34,14 @@ export default function ConexoesPainel() {
   const [status, setStatus] = useState<Record<string, boolean | null>>({});
   const [ocupado, setOcupado] = useState<string | null>(null);
 
+  const { session } = useAuth();
+
   const { data: conexoes = [], isLoading } = useQuery({
     queryKey: [CHAVE_CONEXOES],
     queryFn: () => listar(),
+    // Aguarda o token da sessão para não chamar o servidor sem autorização.
+    enabled: Boolean(session?.access_token),
+    retry: 1,
   });
 
   const recarregar = () => qc.invalidateQueries({ queryKey: [CHAVE_CONEXOES] });
