@@ -347,6 +347,20 @@ function normalizarDigitos(valor?: string | null): string {
   return d;
 }
 
+/** Telefone somente com dígitos, no formato usado para busca no cadastro. */
+export function normalizarTelefone(valor?: string | null): string {
+  return normalizarDigitos(valor);
+}
+
+/** Os 4 últimos dígitos do telefone do cadastro (nunca o número completo). */
+export function ultimosQuatro(
+  telefone?: string | null,
+  telefoneNormalizado?: string | null,
+): string | null {
+  const d = normalizarDigitos(telefoneNormalizado) || normalizarDigitos(telefone);
+  return d.length >= 4 ? d.slice(-4) : null;
+}
+
 /** Compara o telefone informado com o cadastro (formato exibido e normalizado). */
 export function telefoneConfere(
   informado: string,
@@ -359,6 +373,35 @@ export function telefoneConfere(
   const c = normalizarDigitos(telefoneNormalizado);
   return (b.length > 0 && a === b) || (c.length > 0 && a === c);
 }
+
+/**
+ * Cliente cujo telefone normalizado coincide com o informado. Usado apenas
+ * para evitar duplicidade de cadastro; nunca revela dados de terceiros.
+ */
+export async function buscarClientePorTelefone(
+  supabase: Admin,
+  informado: string,
+): Promise<ClienteRow | null> {
+  const digitos = normalizarDigitos(informado);
+  if (digitos.length < 10) return null;
+  const { data } = await supabase
+    .from("clientes")
+    .select("*")
+    .or(`telefone_normalizado.eq.${digitos},telefone.eq.${digitos}`)
+    .limit(1);
+  return data?.[0] ?? null;
+}
+
+/** Bloqueio genérico quando o telefone já pertence a um cadastro com CPF. */
+export function garantirCpfLivre(cliente: ClienteRow): void {
+  if (cliente.cpf && cliente.cpf.trim() !== "") {
+    throw new ErroPortal(
+      "DADOS_NAO_CONFEREM",
+      "Os dados informados não correspondem a um cadastro válido.",
+    );
+  }
+}
+
 
 // ---------------------------------------------------------------------------
 // Limite de tentativas (por IP e ação, janela de 10 minutos)
