@@ -10,10 +10,10 @@
 function baseConfigurada(): string {
   const navegador =
     typeof import.meta !== "undefined"
-      ? ((import.meta.env?.VITE_SORTEIOS_PUBLIC_URL as string | undefined) ?? "")
+      ? ((import.meta.env?.["VITE_SORTEIOS_PUBLIC_URL"] as string | undefined) ?? "")
       : "";
   const servidor =
-    typeof process !== "undefined" ? (process.env.SORTEIOS_PUBLIC_URL ?? "") : "";
+    typeof process !== "undefined" ? (process.env["SORTEIOS_PUBLIC_URL"] ?? "") : "";
   return (navegador || servidor).trim().replace(/\/+$/, "");
 }
 

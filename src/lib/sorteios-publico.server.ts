@@ -269,7 +269,7 @@ export async function obterSorteioAtivo(): Promise<SorteioRow> {
       "O sorteio está temporariamente indisponível. Tente novamente mais tarde.",
     );
   }
-  return data[0];
+  return data[0]!;
 }
 
 /** Período de participação (usado na entrada e no registro de notas). */

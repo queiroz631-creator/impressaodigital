@@ -15,8 +15,8 @@ export function LayoutPublico({
   children: ReactNode;
   /** Exibe a navegação inferior (somente telas do participante). */
   autenticado?: boolean;
-  titulo?: string;
-  subtitulo?: string;
+  titulo?: string | undefined;
+  subtitulo?: string | undefined;
 }) {
   return (
     <div className="min-h-screen bg-muted/40 flex flex-col">
