@@ -32,7 +32,7 @@ function Conexoes() {
     <div className="space-y-6">
       <PageHeader
         titulo="Conexões de WhatsApp"
-        descricao="Números independentes, cada um com credenciais e bot próprios."
+        subtitulo="Números independentes, cada um com credenciais e bot próprios."
       />
       <ConexoesPainel />
     </div>
