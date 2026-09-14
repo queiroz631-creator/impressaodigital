@@ -63,4 +63,14 @@
 - [x] Termos com várias versões e uma única versão atual (troca atômica no banco)
 - [x] Auditoria de criação, alteração, mudança de situação, termos e prêmios
 - [x] Validação no servidor em toda gravação (permissão, situação e movimentação relidas)
-- [ ] Etapa 3: portal público do participante (RLS própria), cupons aleatórios, API local e sincronização
+- [ ] Etapa 4: geração de cupons, números aleatórios, API local e sincronização
+
+## Módulo Sorteios — Etapa 3 (portal público, em verificação)
+- [x] Rotas públicas `/sorteios-publico` (CPF, telefone, cadastro, termos, painel, notas, cupons, informações)
+- [x] Sessão do participante em cookie HttpOnly (2h, renovação "lembrar neste dispositivo" 30 dias)
+- [x] Tabelas `sorteio_sessoes` e `sorteio_tentativas` (somente servidor; limite de tentativas por IP)
+- [x] Cadastro/complemento de cliente + participação atômicos no banco (`sorteio_portal_criar_participacao`)
+- [x] Registro e correção de nota PENDENTE, sem validação automática nem cupons
+- [x] Sorteio em RASCUNHO nunca exposto; mais de um ATIVO bloqueia o portal
+- [x] URL pública centralizada (`SORTEIOS_PUBLIC_URL`), redirecionamento do domínio e docs no deploy
+- [ ] Rodar os 22 testes funcionais + testes de segurança e limpar dados de teste
