@@ -8,8 +8,7 @@ import {
 } from "@/modules/sorteios/validations/sorteio";
 import {
   CAMPOS_CRITICOS,
-  MENSAGEM_BLOQUEIO_CRITICO,
-  podeEditarCriticos,
+  motivoBloqueioCriticos,
   podeTransicionar,
   somenteConsulta,
 } from "@/modules/sorteios/services/status";
@@ -168,7 +167,8 @@ export const atualizarSorteio = createServerFn({ method: "POST" })
       throw new Error("Este sorteio está somente para consulta e não pode ser alterado.");
     }
 
-    const criticosLiberados = podeEditarCriticos(atual.status, atual.movimentacoes);
+    const motivoBloqueio = motivoBloqueioCriticos(atual.status, atual.movimentacoes);
+    const criticosLiberados = motivoBloqueio === null;
 
     const alteracao: Database["public"]["Tables"]["sorteios"]["Update"] = {
       nome: data.dados.nome,
@@ -199,7 +199,7 @@ export const atualizarSorteio = createServerFn({ method: "POST" })
         }
         return enviado === gravado;
       });
-      if (!iguais) throw new Error(MENSAGEM_BLOQUEIO_CRITICO);
+      if (!iguais) throw new Error(motivoBloqueio);
     }
 
     const { error } = await context.supabase
