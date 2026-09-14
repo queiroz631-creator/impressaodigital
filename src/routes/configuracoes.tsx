@@ -1,15 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import {
-  ativarMensagensEnviadasPorMim,
-  lerWebhooksZapi,
-  reconfigurarWebhooksZapi,
-  statusInstanciaZapi,
-} from "@/lib/whatsapp.functions";
 import { toast } from "sonner";
-import { Copy, Plus, Printer, RefreshCw, Save, ShieldAlert, Trash2 } from "lucide-react";
+import { Plus, Printer, RefreshCw, Save, ShieldAlert, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -857,13 +850,9 @@ function CardLinkPublico() {
     </Card>
   );
 }
-/** Conexão com a Z-API e endereço do webhook do WhatsApp. */
+/** Endereço público do sistema. Conexões, credenciais e webhooks ficam na página Conexões. */
 function CardWhatsapp() {
   const [origem, setOrigem] = useState("");
-  const consultarStatus = useServerFn(statusInstanciaZapi);
-  const ativarMensagensExternas = useServerFn(ativarMensagensEnviadasPorMim);
-  const lerWebhooks = useServerFn(lerWebhooksZapi);
-  const reconfigurarWebhooks = useServerFn(reconfigurarWebhooksZapi);
 
   useEffect(() => setOrigem(window.location.origin), []);
 
@@ -872,7 +861,7 @@ function CardWhatsapp() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("whatsapp_config")
-        .select("id, conexao_nome, base_url, webhook_token, app_url")
+        .select("id, app_url")
         .limit(1)
         .maybeSingle();
       if (error) throw error;
@@ -917,179 +906,14 @@ function CardWhatsapp() {
     },
   });
 
-  const status = useQuery({
-    queryKey: ["whatsapp-status"],
-    queryFn: async () => consultarStatus(),
-    retry: false,
-  });
-
-  const ativacaoMensagensExternas = useMutation({
-    mutationFn: () => ativarMensagensExternas(),
-    onSuccess: (resultado) => {
-      if (resultado.ok) {
-        toast.success("Mensagens enviadas pelo celular foram ativadas.");
-        return;
-      }
-      toast.error(resultado.erro);
-    },
-    onError: () => toast.error("Não foi possível ativar as mensagens enviadas pelo celular."),
-  });
-
-  const webhooks = useQuery({
-    queryKey: ["whatsapp-webhooks"],
-    queryFn: async () => lerWebhooks(),
-    retry: false,
-  });
-
-  const tentouCorrigirAutomaticamente = useRef(false);
-  const [corrigidoAutomaticamente, setCorrigidoAutomaticamente] = useState(false);
-
-  const reconfiguracao = useMutation({
-    mutationFn: () => reconfigurarWebhooks(),
-    onSuccess: (resultado) => {
-      if (resultado.ok) {
-        toast.success(resultado.erro ?? "Webhook reconfigurado na Z-API.");
-        webhooks.refetch();
-        return;
-      }
-      toast.error(resultado.erro ?? "Não foi possível reconfigurar o webhook.");
-    },
-    onError: () => toast.error("Não foi possível reconfigurar o webhook."),
-  });
-
-  // Corrige automaticamente quando o endereço gravado na Z-API está diferente do correto.
-  useEffect(() => {
-    if (!webhooks.data) return;
-    if (webhooks.data.correto) return;
-    // Enquanto continuar errado, não pode aparecer aviso de correção.
-    setCorrigidoAutomaticamente(false);
-    if (tentouCorrigirAutomaticamente.current || reconfiguracao.isPending) return;
-    tentouCorrigirAutomaticamente.current = true;
-    reconfiguracao
-      .mutateAsync()
-      .then(async (resultado) => {
-        if (!resultado.ok) return;
-        // Só avisa que corrigiu depois de reler e confirmar na Z-API.
-        const confirmado = await webhooks.refetch();
-        if (confirmado.data?.correto) setCorrigidoAutomaticamente(true);
-      })
-      .catch(() => undefined);
-  }, [webhooks.data, webhooks, reconfiguracao]);
-
-  const token = config.data?.webhook_token ?? "";
-  const urlWebhook = origem && token ? `${origem}/api/public/whatsapp/webhook?token=${token}` : "";
-
-  const cor = !status.data?.configurado
-    ? "bg-muted text-muted-foreground"
-    : status.data.conectado
-      ? "bg-success text-success-foreground"
-      : "bg-destructive text-destructive-foreground";
-
   return (
     <Card className="max-w-3xl shadow-card">
       <CardHeader>
-        <CardTitle className="text-base">WhatsApp (Z-API)</CardTitle>
+        <CardTitle className="text-base">WhatsApp</CardTitle>
       </CardHeader>
 
       <CardContent className="grid gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${cor}`}>
-            {status.isFetching
-              ? "Verificando..."
-              : !status.data?.configurado
-                ? "Não configurado"
-                : status.data.conectado
-                  ? "Conectado"
-                  : "Desconectado"}
-          </span>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => status.refetch()}
-            disabled={status.isFetching}
-          >
-            <RefreshCw className="h-4 w-4" /> Testar conexão
-          </Button>
-
-          <span className="text-xs text-muted-foreground">
-            {status.data?.detalhe ?? "Credenciais guardadas com segurança no servidor."}
-          </span>
-        </div>
-
         <div className="grid gap-2">
-          <Label>URL do webhook (cole no painel da Z-API)</Label>
-          <div className="flex gap-2">
-            <Input
-              readOnly
-              value={urlWebhook}
-              placeholder="Gerando..."
-              className="font-mono text-xs"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                if (!urlWebhook) return;
-                await navigator.clipboard.writeText(urlWebhook);
-                toast.success("URL copiada.");
-              }}
-            >
-              <Copy className="h-4 w-4" /> Copiar
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Configure este endereço em <strong>Ao receber</strong> na Z-API. Depois, ative abaixo a
-            notificação de mensagens enviadas pelo próprio número para sincronizar celular e
-            WhatsApp Web.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => reconfiguracao.mutate()}
-              disabled={reconfiguracao.isPending}
-            >
-              <RefreshCw className={`h-4 w-4 ${reconfiguracao.isPending ? "animate-spin" : ""}`} />
-              {reconfiguracao.isPending ? "Reconfigurando..." : "Reconfigurar webhook"}
-            </Button>
-            <span className="text-xs text-muted-foreground">
-              Grava o endereço correto direto na Z-API, sem precisar abrir o painel.
-            </span>
-          </div>
-
-          <div className="grid gap-1 text-xs">
-            {webhooks.isFetching ? (
-              <span className="text-muted-foreground">Lendo o que está gravado na Z-API...</span>
-            ) : webhooks.data ? (
-              <>
-                <span
-                  className={
-                    webhooks.data.correto
-                      ? "text-muted-foreground"
-                      : "font-semibold text-destructive"
-                  }
-                >
-                  {webhooks.data.correto
-                    ? corrigidoAutomaticamente
-                      ? "O endereço estava errado e foi corrigido automaticamente."
-                      : "O endereço gravado na Z-API está correto."
-                    : reconfiguracao.isPending
-                      ? "Endereço diferente do correto. Corrigindo automaticamente..."
-                      : "O endereço gravado na Z-API está diferente do correto."}
-                </span>
-                {webhooks.data.itens.map((item) => (
-                  <span key={item.rotulo} className="font-mono text-muted-foreground break-all">
-                    {item.rotulo}: {item.url || "(vazio)"}
-                  </span>
-                ))}
-              </>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="grid gap-2 border-t border-border pt-4">
           <Label>Endereço do sistema</Label>
           <div className="flex flex-wrap gap-2">
             <Input
@@ -1122,8 +946,8 @@ function CardWhatsapp() {
           </div>
           <p className="text-xs text-muted-foreground">
             É o endereço em que o sistema está publicado. As respostas automáticas do bot e os
-            avisos de inatividade são disparados por aqui — se estiver diferente do endereço em uso,
-            o bot não responde.
+            avisos de inatividade são disparados por aqui — se estiver diferente do endereço em
+            uso, o bot não responde.
           </p>
           {origem && enderecoSistema.replace(/\/+$/, "") !== origem ? (
             <p className="text-xs font-semibold text-destructive">
@@ -1132,32 +956,14 @@ function CardWhatsapp() {
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
-          <Button
-            variant="outline"
-            onClick={() => ativacaoMensagensExternas.mutate()}
-            disabled={!status.data?.conectado || ativacaoMensagensExternas.isPending}
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${ativacaoMensagensExternas.isPending ? "animate-spin" : ""}`}
-            />
-            {ativacaoMensagensExternas.isPending ? "Ativando..." : "Ativar mensagens do celular"}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-muted/40 p-3">
+          <p className="text-xs text-muted-foreground">
+            Conexões, credenciais, teste de conexão, status e webhook de cada número agora ficam na
+            página Conexões.
+          </p>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/conexoes">Abrir Conexões</Link>
           </Button>
-          <span className="text-xs text-muted-foreground">
-            Necessário para exibir mensagens enviadas fora do sistema.
-          </span>
-        </div>
-
-        <div className="grid gap-1 text-xs text-muted-foreground">
-          <p>
-            Credenciais necessárias (guardadas como segredos do backend):{" "}
-            <strong>ZAPI_INSTANCE_ID</strong>, <strong>ZAPI_INSTANCE_TOKEN</strong>,{" "}
-            <strong>ZAPI_CLIENT_TOKEN</strong> e, opcionalmente, <strong>ZAPI_BASE_URL</strong>.
-          </p>
-          <p>
-            Conexão: {config.data?.conexao_nome ?? "Principal"} · Base:{" "}
-            {config.data?.base_url ?? "https://api.z-api.io"}
-          </p>
         </div>
       </CardContent>
     </Card>
