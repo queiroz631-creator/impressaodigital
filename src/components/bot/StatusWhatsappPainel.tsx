@@ -83,18 +83,19 @@ function descreverAgenda(s: Status) {
 }
 
 /** Programa textos e imagens para publicação automática no Status do WhatsApp. */
-export function StatusWhatsappPainel() {
+export function StatusWhatsappPainel({ conexaoId }: { conexaoId: string }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ ...VAZIO });
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [enviandoArquivo, setEnviandoArquivo] = useState(false);
 
   const lista = useQuery({
-    queryKey: ["bot-status-whatsapp"],
+    queryKey: ["bot-status-whatsapp", conexaoId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bot_status_whatsapp")
         .select("*")
+        .eq("conexao_id", conexaoId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Status[];
@@ -107,7 +108,7 @@ export function StatusWhatsappPainel() {
     } catch {
       /* o arquivo é recriado na próxima verificação */
     }
-    queryClient.invalidateQueries({ queryKey: ["bot-status-whatsapp"] });
+    queryClient.invalidateQueries({ queryKey: ["bot-status-whatsapp", conexaoId] });
   }
 
   const salvar = useMutation({
@@ -131,6 +132,7 @@ export function StatusWhatsappPainel() {
         dias_semana: form.modo === "recorrente" ? form.dias_semana : [],
         hora: form.modo === "recorrente" ? form.hora : null,
         ativo: form.ativo,
+        conexao_id: conexaoId,
       };
 
       const { error } = editandoId
@@ -169,7 +171,7 @@ export function StatusWhatsappPainel() {
   });
 
   const publicar = useMutation({
-    mutationFn: async (id: string) => publicarStatusAgora({ data: { id } }),
+    mutationFn: async (id: string) => publicarStatusAgora({ data: { id, conexaoId } }),
     onSuccess: async (r) => {
       if (r.ok) toast.success("Status publicado.");
       else toast.error(r.erro ?? "Não foi possível publicar.");

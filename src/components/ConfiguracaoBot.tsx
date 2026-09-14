@@ -317,6 +317,11 @@ export function ConfiguracaoBot() {
     });
   }, [config.data, form, idForm]);
 
+  useEffect(() => {
+    setForm(null);
+    setIdForm(null);
+  }, [conexaoAtual]);
+
   const seletorConexao = isAdmin ? (
     <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground">Conexão:</span>
@@ -327,8 +332,13 @@ export function ConfiguracaoBot() {
         <SelectContent>
           {conexoes.map((c) => (
             <SelectItem key={c.id} value={c.id}>
-              {c.nome}
-              {c.telefone ? ` — ${c.telefone}` : ""}
+              <span className="flex items-center gap-2">
+                <span
+                  className="h-3 w-3 shrink-0 rounded-full border border-border"
+                  style={{ backgroundColor: c.cor }}
+                />
+                <span>{c.nome}{c.telefone ? ` — ${c.telefone}` : ""}</span>
+              </span>
             </SelectItem>
           ))}
         </SelectContent>
@@ -634,26 +644,26 @@ export function ConfiguracaoBot() {
 
         {/* ---------- Fluxos ---------- */}
         <TabsContent value="menu">
-          <FluxosPainel />
+          {conexaoAtual && <FluxosPainel conexaoId={conexaoAtual} />}
         </TabsContent>
 
         {/* ---------- Respostas automáticas ---------- */}
         <TabsContent value="primeiro">
-          <PrimeiroContatoPainel />
+          {conexaoAtual && <PrimeiroContatoPainel conexaoId={conexaoAtual} />}
         </TabsContent>
 
         <TabsContent value="respostas">
-          <RespostasPainel />
+          {conexaoAtual && <RespostasPainel conexaoId={conexaoAtual} />}
         </TabsContent>
 
         {/* ---------- Números atendidos pelo bot ---------- */}
         <TabsContent value="numeros">
-          <NumerosPainel />
+          {conexaoAtual && <NumerosPainel conexaoId={conexaoAtual} />}
         </TabsContent>
 
         {/* ---------- Status do WhatsApp ---------- */}
         <TabsContent value="status">
-          <StatusWhatsappPainel />
+          {conexaoAtual && <StatusWhatsappPainel conexaoId={conexaoAtual} />}
         </TabsContent>
 
         {/* ---------- Inatividade e finalização ---------- */}
@@ -861,7 +871,7 @@ export function ConfiguracaoBot() {
 
         {/* ---------- Simulador ---------- */}
         <TabsContent value="simulador">
-          <Simulador />
+          {conexaoAtual && <Simulador conexaoId={conexaoAtual} />}
         </TabsContent>
       </Tabs>
     </div>
@@ -897,7 +907,7 @@ interface Bolha {
 }
 
 /** Simulador de conversa usando as configurações já salvas. */
-function Simulador() {
+function Simulador({ conexaoId }: { conexaoId: string }) {
   const simular = useServerFn(simularBot);
   const [bolhas, setBolhas] = useState<Bolha[]>([]);
   const [texto, setTexto] = useState("");
@@ -925,6 +935,7 @@ function Simulador() {
     try {
       const r = await simular({
         data: {
+          conexaoId,
           texto: mensagem,
           tipo,
           etapa: estado.etapa,

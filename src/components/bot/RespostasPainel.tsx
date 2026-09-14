@@ -63,21 +63,21 @@ interface FluxoBasico {
 const VAZIO = "__nenhum__";
 
 /** Respostas automáticas em cards, com as ações de SIM e NÃO configuráveis. */
-export function RespostasPainel() {
+export function RespostasPainel({ conexaoId }: { conexaoId: string }) {
   const queryClient = useQueryClient();
   const [editando, setEditando] = useState<Resposta | null>(null);
 
   const respostas = useQuery({
-    queryKey: ["bot-respostas"],
+    queryKey: ["bot-respostas", conexaoId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bot_respostas").select("*").order("ordem");
+      const { data, error } = await supabase.from("bot_respostas").select("*").eq("conexao_id", conexaoId).order("ordem");
       if (error) throw error;
       return (data ?? []) as unknown as Resposta[];
     },
   });
 
   const palavras = useQuery({
-    queryKey: ["bot-palavras"],
+    queryKey: ["bot-palavras", conexaoId],
     queryFn: async () => {
       const { data, error } = await supabase.from("bot_palavras_chave").select("*");
       if (error) throw error;
@@ -86,17 +86,17 @@ export function RespostasPainel() {
   });
 
   const fluxos = useQuery({
-    queryKey: ["bot-fluxos-lista"],
+    queryKey: ["bot-fluxos-lista", conexaoId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bot_fluxos").select("id, nome").order("ordem");
+      const { data, error } = await supabase.from("bot_fluxos").select("id, nome").eq("conexao_id", conexaoId).order("ordem");
       if (error) throw error;
       return (data ?? []) as FluxoBasico[];
     },
   });
 
   async function recarregar() {
-    await queryClient.invalidateQueries({ queryKey: ["bot-respostas"] });
-    await queryClient.invalidateQueries({ queryKey: ["bot-palavras"] });
+    await queryClient.invalidateQueries({ queryKey: ["bot-respostas", conexaoId] });
+    await queryClient.invalidateQueries({ queryKey: ["bot-palavras", conexaoId] });
   }
 
   async function atualizar(r: Resposta, dados: Partial<Resposta>) {
@@ -113,7 +113,7 @@ export function RespostasPainel() {
     const ordem = Math.max(0, ...lista.map((r) => r.ordem)) + 1;
     const { data, error } = await supabase
       .from("bot_respostas")
-      .insert({ titulo: "Nova resposta", resposta: "", ordem })
+      .insert({ titulo: "Nova resposta", resposta: "", ordem, conexao_id: conexaoId })
       .select("*")
       .maybeSingle();
     if (error) {
@@ -145,6 +145,7 @@ export function RespostasPainel() {
         midia_url: r.midia_url,
         midia_nome: r.midia_nome,
         ordem,
+        conexao_id: conexaoId,
       })
 
       .select("id")

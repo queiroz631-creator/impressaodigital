@@ -93,23 +93,23 @@ function formDoFluxo(f: Fluxo): FormFluxo {
 }
 
 /** Aba FLUXOS: cadastro e administração das conversas que o bot conduz. */
-export function FluxosPainel() {
+export function FluxosPainel({ conexaoId }: { conexaoId: string }) {
   const queryClient = useQueryClient();
   const [editando, setEditando] = useState<Fluxo | null>(null);
   const [form, setForm] = useState<FormFluxo | null>(null);
   const [configurando, setConfigurando] = useState<string | null>(null);
 
   const fluxos = useQuery({
-    queryKey: ["bot-fluxos"],
+    queryKey: ["bot-fluxos", conexaoId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bot_fluxos").select("*").order("ordem");
+      const { data, error } = await supabase.from("bot_fluxos").select("*").eq("conexao_id", conexaoId).order("ordem");
       if (error) throw error;
       return (data ?? []) as unknown as Fluxo[];
     },
   });
 
   const etapas = useQuery({
-    queryKey: ["bot-fluxo-etapas"],
+    queryKey: ["bot-fluxo-etapas", conexaoId],
     queryFn: async () => {
       const { data, error } = await supabase.from("bot_fluxo_etapas").select("*").order("ordem");
       if (error) throw error;
@@ -118,7 +118,7 @@ export function FluxosPainel() {
   });
 
   const opcoes = useQuery({
-    queryKey: ["bot-fluxo-opcoes"],
+    queryKey: ["bot-fluxo-opcoes", conexaoId],
     queryFn: async () => {
       const { data, error } = await supabase.from("bot_fluxo_opcoes").select("*").order("ordem");
       if (error) throw error;
@@ -127,11 +127,12 @@ export function FluxosPainel() {
   });
 
   const config = useQuery({
-    queryKey: ["bot-config-finalizacao"],
+    queryKey: ["bot-config-finalizacao", conexaoId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("whatsapp_config")
         .select("id, fluxo_finalizacao_id, finalizacao_delay_minutos")
+        .eq("conexao_id", conexaoId)
         .limit(1)
         .maybeSingle();
       if (error) throw error;
@@ -193,9 +194,9 @@ export function FluxosPainel() {
 
   async function recarregar() {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["bot-fluxos"] }),
-      queryClient.invalidateQueries({ queryKey: ["bot-fluxo-etapas"] }),
-      queryClient.invalidateQueries({ queryKey: ["bot-fluxo-opcoes"] }),
+      queryClient.invalidateQueries({ queryKey: ["bot-fluxos", conexaoId] }),
+      queryClient.invalidateQueries({ queryKey: ["bot-fluxo-etapas", conexaoId] }),
+      queryClient.invalidateQueries({ queryKey: ["bot-fluxo-opcoes", conexaoId] }),
     ]);
   }
 
@@ -222,7 +223,7 @@ export function FluxosPainel() {
     const ordem = Math.max(0, ...lista.map((f) => f.ordem)) + 1;
     const { data, error } = await supabase
       .from("bot_fluxos")
-      .insert({ ...form, ordem })
+      .insert({ ...form, ordem, conexao_id: conexaoId })
       .select("id")
       .single();
     if (error) {
@@ -261,6 +262,7 @@ export function FluxosPainel() {
         sem_resposta_acao: f.sem_resposta_acao || "nenhuma",
         sem_resposta_mensagem: f.sem_resposta_mensagem ?? "",
         sem_resposta_fluxo_id: f.sem_resposta_fluxo_id ?? null,
+        conexao_id: conexaoId,
         ordem,
       })
       .select("id")
@@ -344,6 +346,7 @@ export function FluxosPainel() {
   if (fluxoConfig) {
     return (
       <FluxoConfigurador
+        conexaoId={conexaoId}
         fluxo={fluxoConfig}
         fluxos={lista}
         etapas={todasEtapas.filter((e) => e.fluxo_id === fluxoConfig.id)}
