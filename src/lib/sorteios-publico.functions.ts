@@ -119,7 +119,7 @@ export const verificarTelefonePublico = createServerFn({ method: "POST" })
     executar(async (): Promise<EtapaAcesso> => {
       await limitarTentativas("telefone");
       const cpf = normalizarCpf(data.cpf);
-      if (!validarCpf(cpf).ok) throw new ErroPortal("VALIDACAO", "CPF inválido.");
+      if (!cpf || !validarCpf(cpf).ok) throw new ErroPortal("VALIDACAO", "CPF inválido.");
 
       const sorteio = await obterSorteioAtivo();
       const periodo = periodoAberto(sorteio);
@@ -172,7 +172,7 @@ export const concluirCadastroPublico = createServerFn({ method: "POST" })
     executar(async (): Promise<EtapaAcesso> => {
       await limitarTentativas("cadastro");
       const cpf = normalizarCpf(data.cpf);
-      if (!validarCpf(cpf).ok) throw new ErroPortal("VALIDACAO", "CPF inválido.");
+      if (!cpf || !validarCpf(cpf).ok) throw new ErroPortal("VALIDACAO", "CPF inválido.");
 
       const sorteio = await obterSorteioAtivo();
       const periodo = periodoAberto(sorteio);
