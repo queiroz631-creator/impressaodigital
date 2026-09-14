@@ -24,34 +24,39 @@ menu cadastrados.
 
 ## O que será feito
 
-1. **Respostas rápidas funcionam sem fluxo cadastrado.** Quando a conexão não
-   tiver fluxo inicial ativo, o bot passa a usar o mesmo caminho de primeiro
-   contato/confirmação: reconhece a palavra-chave, envia a pergunta de
-   confirmação com SIM/NÃO, e no SIM envia a mensagem da resposta e executa a
-   ação configurada (atendente, finalizar, outra resposta, fluxo).
-2. **Nunca enviar mensagem em branco.** Se não houver texto a enviar (menu sem
-   opções, por exemplo), o bot não envia nada em vez de mandar uma mensagem
-   vazia.
-3. **Palavra-chave continua valendo depois do aviso de fora do horário.**
-   Quando o cliente escreve algo que combina com uma resposta rápida, o bot
-   responde mesmo que o atendimento tenha ficado "aguardando" por causa do
-   aviso de ausência, sem interferir em conversas já assumidas por um
-   atendente.
-4. Tudo continua isolado por conexão: as configurações lidas e gravadas são
-   sempre as da conexão da conversa.
+Regra principal: a conexão que já tem fluxo inicial ativo (a principal) não
+muda em nada. A nova regra é uma exceção que só vale quando a conexão não tem
+fluxo inicial ativo.
+
+1. **Mapear antes de mexer.** Registrar o caminho atual de cada estado
+   (inicio, triagem, finalizado, menu, aguardando, em_atendimento) e conferir,
+   depois da mudança, que cada um continua igual quando existe fluxo inicial.
+2. **Exceção para conexão sem fluxo inicial.** Nessa situação o bot primeiro
+   procura uma resposta rápida pela palavra-chave; se encontrar, inicia a
+   confirmação (pergunta com SIM/NÃO e, no SIM, a mensagem e a ação
+   configurada). Se não encontrar, segue exatamente o comportamento atual.
+3. **Nunca enviar mensagem em branco.** Sem texto para enviar (menu sem
+   opções, por exemplo), o bot não envia nada.
+4. **Atendimento humano intocado.** A exceção nunca assume uma conversa em
+   atendimento humano e não altera as regras de transferência.
+5. **Sempre por conexão.** O reconhecimento da palavra-chave usa apenas as
+   respostas rápidas da conexão da conversa.
 
 ## Detalhes técnicos
 
-- `src/lib/bot.server.ts`, em `atenderMensagem`: quando `fluxoInicial(fluxos)`
-  for nulo, chamar `triagem`/`resolverTriagem` (etapas `inicio`, `triagem`,
-  `finalizado`) em vez de cair direto em `processarMenu`; manter
-  `processarMenu` apenas para as etapas de menu já existentes.
-- `responder`: não enviar quando o texto estiver vazio e não houver mídia nem
-  botões (hoje envia só o cabeçalho).
-- Bloco de ausência (~linha 1775): quando `ehRespostaRapida` for verdadeiro,
-  seguir para a triagem em vez de encerrar por causa do status `aguardando`,
-  desde que a conversa não esteja com atendente humano (`em_atendimento`).
+- `src/lib/bot.server.ts`, `atenderMensagem`: no bloco de fluxos, quando
+  `fluxoInicial(fluxos)` for nulo e a etapa for `inicio`/`triagem`/`finalizado`,
+  chamar `triagem`/`resolverTriagem` antes do caminho de `processarMenu`.
+  Quando existir fluxo inicial, o `rodarFluxo` atual continua sendo chamado
+  sem alteração.
+- `ehRespostaRapida` e a triagem usam `carregarDadosBot(conversa.conexao_id)`,
+  garantindo que as respostas rápidas são as da conexão da conversa.
+- Bloco de ausência (~linha 1775): a exceção só age quando o status é
+  `automatico`, `aguardando` ou `aguardando_finalizacao` — nunca
+  `em_atendimento`, `pendente` ou `esperando_impressao`.
+- `responder`: não envia quando não há texto, mídia nem botões.
 - Sem mudanças de banco, de credenciais ou de outros módulos.
+
 
 ## Verificação
 
