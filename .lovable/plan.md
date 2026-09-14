@@ -24,20 +24,21 @@ Onde ainda não houver dados, cada tela mostra um aviso de lista vazia — nenhu
 
 ## Regras de situação
 
-- Rascunho: edição livre, pode ativar ou cancelar.
-- Ativo: pode encerrar ou cancelar.
-- Encerrado: pode passar a sorteado ou cancelado; não volta para ativo.
-- Sorteado e cancelado: somente consulta.
+- Rascunho → ativo ou cancelado.
+- Ativo → encerrado ou cancelado.
+- Encerrado → sorteado ou cancelado.
+- Sorteado → somente consulta.
+- Cancelado → somente consulta.
 
-Toda mudança de situação é conferida no servidor, não apenas na tela.
+Nunca é possível voltar para uma situação anterior. Toda mudança de situação é conferida no servidor imediatamente antes da gravação, relendo a situação atual do banco — a tela nunca decide sozinha.
 
 ## Proteção do sorteio com movimentação
 
-Quando o sorteio já estiver ativo e já existirem participantes, notas ou cupons, os campos críticos (número, data de início, data de fim e valor por cupom) ficam bloqueados na tela e recusados no servidor, com a mensagem: "Este sorteio já possui movimentações e seus dados críticos não podem ser alterados." Nome, descrição, data do sorteio e limite de cupons continuam editáveis.
+Assim que o sorteio deixa de ser rascunho ou passa a ter qualquer movimentação — participantes, notas ou cupons, inclusive registros já cancelados ou registros no histórico —, os campos críticos (número, data de início, data de fim e valor por cupom) ficam bloqueados na tela e recusados no servidor, com a mensagem: "Este sorteio já possui movimentações e seus dados críticos não podem ser alterados." Cancelar ou apagar registros não libera a proteção, porque a verificação considera toda a movimentação histórica. Nome, descrição, data do sorteio e limite de cupons continuam editáveis. A checagem é refeita no servidor imediatamente antes de gravar.
 
 ## Exclusões
 
-Sorteios não são excluídos — são cancelados. Notas, cupons, participantes com movimentação, histórico e auditoria nunca são apagados. Termos antigos são preservados; um prêmio só pode ser removido enquanto não tiver relacionamento, caso contrário é desativado.
+Sorteios não são excluídos — são cancelados. Notas, cupons, participantes com movimentação, histórico e auditoria nunca são apagados. Versões de termos nunca são apagadas, nem as antigas nem as substituídas; um prêmio só pode ser removido enquanto não tiver relacionamento, caso contrário é desativado.
 
 ## Registro de eventos
 
