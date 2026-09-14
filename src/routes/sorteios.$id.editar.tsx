@@ -7,7 +7,7 @@ import { atualizarSorteio } from "@/lib/sorteios.functions";
 import { FormularioSorteio } from "@/modules/sorteios/components/FormularioSorteio";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
 import { useSorteio } from "@/modules/sorteios/hooks/useSorteios";
-import { podeEditarCriticos, somenteConsulta } from "@/modules/sorteios/services/status";
+import { motivoBloqueioCriticos, somenteConsulta } from "@/modules/sorteios/services/status";
 import type { DadosSorteio } from "@/modules/sorteios/validations/sorteio";
 
 export const Route = createFileRoute("/sorteios/$id/editar")({
@@ -54,7 +54,7 @@ function EditarSorteio() {
   if (!sorteio) return null;
 
   const movimentacoes = sorteio.participantes + sorteio.notas + sorteio.cupons;
-  const bloqueado = !podeEditarCriticos(sorteio.status, movimentacoes);
+  const motivoBloqueio = motivoBloqueioCriticos(sorteio.status, movimentacoes);
 
   return (
     <>
@@ -68,7 +68,7 @@ function EditarSorteio() {
       ) : (
         <FormularioSorteio
           sorteio={sorteio}
-          criticosBloqueados={bloqueado}
+          motivoBloqueio={motivoBloqueio}
           salvando={mutation.isPending}
           onSalvar={(dados) => mutation.mutate(dados)}
           onCancelar={() => navigate({ to: "/sorteios/$id", params: { id } })}

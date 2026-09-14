@@ -13,7 +13,7 @@ import {
   textoDeCentavos,
   type DadosSorteio,
 } from "../validations/sorteio";
-import { MENSAGEM_BLOQUEIO_CRITICO } from "../services/status";
+
 import type { Sorteio } from "../types";
 
 export type ValoresSorteio = {
@@ -48,13 +48,13 @@ function valoresIniciais(sorteio?: Sorteio | null): ValoresSorteio {
  */
 export function FormularioSorteio({
   sorteio,
-  criticosBloqueados = false,
+  motivoBloqueio = null,
   salvando,
   onSalvar,
   onCancelar,
 }: {
   sorteio?: Sorteio | null;
-  criticosBloqueados?: boolean;
+  motivoBloqueio?: string | null;
   salvando: boolean;
   onSalvar: (dados: DadosSorteio) => void;
   onCancelar: () => void;
@@ -102,10 +102,10 @@ export function FormularioSorteio({
         <CardTitle>{sorteio ? "Editar sorteio" : "Novo sorteio"}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {criticosBloqueados && (
+        {motivoBloqueio && (
           <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
             <Lock className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{MENSAGEM_BLOQUEIO_CRITICO}</span>
+            <span>{motivoBloqueio}</span>
           </div>
         )}
 
@@ -129,7 +129,7 @@ export function FormularioSorteio({
               min={1}
               value={valores.numero_sorteio}
               onChange={(e) => set("numero_sorteio")(e.target.value)}
-              disabled={criticosBloqueados}
+              disabled={Boolean(motivoBloqueio)}
             />
             {erro("numero_sorteio")}
           </div>
@@ -142,7 +142,7 @@ export function FormularioSorteio({
               placeholder="20,00"
               value={valores.valor_por_cupom}
               onChange={(e) => set("valor_por_cupom")(e.target.value)}
-              disabled={criticosBloqueados}
+              disabled={Boolean(motivoBloqueio)}
             />
             {erro("valor_por_cupom_centavos")}
           </div>
@@ -165,7 +165,7 @@ export function FormularioSorteio({
               type="datetime-local"
               value={valores.data_inicio}
               onChange={(e) => set("data_inicio")(e.target.value)}
-              disabled={criticosBloqueados}
+              disabled={Boolean(motivoBloqueio)}
             />
             {erro("data_inicio")}
           </div>
@@ -177,7 +177,7 @@ export function FormularioSorteio({
               type="datetime-local"
               value={valores.data_fim}
               onChange={(e) => set("data_fim")(e.target.value)}
-              disabled={criticosBloqueados}
+              disabled={Boolean(motivoBloqueio)}
             />
             {erro("data_fim")}
           </div>
