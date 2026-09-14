@@ -292,39 +292,80 @@ export const concluirCadastroPublico = createServerFn({ method: "POST" })
         clienteId = existente.id;
         participante = await garantirParticipacao(supabase, sorteio.id, clienteId);
       } else {
-        const nome = data.nome.replace(/\s+/g, " ").trim();
-        const vNome = validarNomeCompleto(nome);
-        if (!vNome.ok) throw new ErroPortal("VALIDACAO", vNome.erro ?? "Nome inválido.");
-        const vNascimento = validarDataNascimento(data.data_nascimento);
-        if (!vNascimento.ok) {
-          throw new ErroPortal("VALIDACAO", vNascimento.erro ?? "Data inválida.");
-        }
+        // CPF novo: antes de criar, verifica se o telefone já tem cadastro.
+        const porTelefone = await buscarClientePorTelefone(supabase, data.telefone);
+        if (porTelefone) {
+          // Telefone já vinculado a algum CPF: bloqueia sem alterar nada.
+          garantirCpfLivre(porTelefone);
 
-        const telefoneDigitos = (data.telefone ?? "").replace(/\D/g, "");
-        // Cliente + participação numa única transação no banco.
-        const { data: participanteId, error } = await supabase.rpc(
-          "sorteio_portal_criar_participacao",
-          {
-            _nome: nome,
-            _telefone: telefoneDigitos,
-            _telefone_normalizado: telefoneDigitos,
-            _cpf: cpf!,
-            _data_nascimento: data.data_nascimento,
-            _sorteio_id: sorteio.id,
-          },
-        );
-        if (error || !participanteId) {
-          throw new ErroPortal("ERRO", "Não foi possível concluir seu cadastro. Tente novamente.");
+          const atualizacao: { cpf: string; nome?: string; data_nascimento?: string } = { cpf };
+          if (!porTelefone.nome?.trim()) {
+            const nome = data.nome.replace(/\s+/g, " ").trim();
+            const v = validarNomeCompleto(nome);
+            if (!v.ok) throw new ErroPortal("VALIDACAO", v.erro ?? "Nome inválido.");
+            atualizacao.nome = nome;
+          }
+          if (!porTelefone.data_nascimento) {
+            const v = validarDataNascimento(data.data_nascimento);
+            if (!v.ok) throw new ErroPortal("VALIDACAO", v.erro ?? "Data inválida.");
+            atualizacao.data_nascimento = data.data_nascimento;
+          }
+          const { data: vinculado, error } = await supabase
+            .from("clientes")
+            .update(atualizacao)
+            .eq("id", porTelefone.id)
+            .is("cpf", null)
+            .select("id")
+            .maybeSingle();
+          if (error || !vinculado) {
+            throw new ErroPortal("ERRO", "Não foi possível salvar seus dados. Tente novamente.");
+          }
+          clienteId = porTelefone.id;
+          participante = await garantirParticipacao(supabase, sorteio.id, clienteId);
+          await auditarPortal({
+            sorteio_id: sorteio.id,
+            participante_id: participante.id,
+            cliente_id: clienteId,
+            evento: EVENTOS_AUDITORIA.portalEntrada,
+            detalhe: { cpf: mascararCpf(cpf), vinculo: "cliente_existente_sem_cpf" },
+          });
+        } else {
+          const nome = data.nome.replace(/\s+/g, " ").trim();
+          const vNome = validarNomeCompleto(nome);
+          if (!vNome.ok) throw new ErroPortal("VALIDACAO", vNome.erro ?? "Nome inválido.");
+          const vNascimento = validarDataNascimento(data.data_nascimento);
+          if (!vNascimento.ok) {
+            throw new ErroPortal("VALIDACAO", vNascimento.erro ?? "Data inválida.");
+          }
+
+          const telefoneDigitos = normalizarTelefone(data.telefone);
+          // Cliente + participação numa única transação no banco (a função
+          // também reaproveita cliente sem CPF em caso de concorrência).
+          const { data: participanteId, error } = await supabase.rpc(
+            "sorteio_portal_criar_participacao",
+            {
+              _nome: nome,
+              _telefone: telefoneDigitos,
+              _telefone_normalizado: telefoneDigitos,
+              _cpf: cpf!,
+              _data_nascimento: data.data_nascimento,
+              _sorteio_id: sorteio.id,
+            },
+          );
+          if (error || !participanteId) {
+            throw new ErroPortal("ERRO", "Não foi possível concluir seu cadastro. Tente novamente.");
+          }
+          novoCliente = true;
+          const { data: cliente } = await supabase
+            .from("clientes")
+            .select("id")
+            .eq("cpf", cpf)
+            .single();
+          clienteId = cliente!.id;
+          participante = await garantirParticipacao(supabase, sorteio.id, clienteId);
         }
-        novoCliente = true;
-        const { data: cliente } = await supabase
-          .from("clientes")
-          .select("id")
-          .eq("cpf", cpf)
-          .single();
-        clienteId = cliente!.id;
-        participante = await garantirParticipacao(supabase, sorteio.id, clienteId);
       }
+
 
       if (novoCliente) {
         await auditarPortal({
