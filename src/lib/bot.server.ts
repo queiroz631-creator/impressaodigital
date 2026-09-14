@@ -527,7 +527,7 @@ async function usuarioResponsavel(): Promise<string | null> {
 }
 
 async function calcularOrcamento(conversa: ConversaBot, ctx: ContextoBot) {
-  const config = await lerConfig();
+  const config = await lerConfig(conversa.conexao_id ?? null);
   if (!config) return;
 
   const materiais = await materiaisDisponiveis(ctx);
@@ -1749,9 +1749,6 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
 }
 
 async function processarBotInterno(conversaId: string, entrada: EntradaBot): Promise<void> {
-  const config = await lerConfig();
-  if (!config?.bot_ativo) return;
-
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
     .select(
@@ -1762,6 +1759,9 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
 
   const conversa = (data ?? null) as ConversaBot | null;
   if (!conversa) return;
+
+  const config = await lerConfig(conversa.conexao_id ?? null);
+  if (!config?.bot_ativo) return;
 
   const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
 
@@ -2171,7 +2171,7 @@ export async function iniciarFinalizacao(
     .eq("id", conversa.id);
   conversa.status = "aguardando_finalizacao";
 
-  const config = await lerConfig();
+  const config = await lerConfig(conversa.conexao_id ?? null);
   if (!fluxoId || !config) return { ok: true, fluxo: false };
   if (espera > 0) return { ok: true, fluxo: false };
 
