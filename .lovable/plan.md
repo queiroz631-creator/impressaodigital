@@ -28,6 +28,8 @@ Hoje qualquer pessoa logada consegue ler a lista de conexões inteira — inclus
 - A leitura direta da tabela de conexões passa a ser exclusiva do administrador no servidor.
 - As telas passam a ler uma lista sem credenciais (nome, número, cor, situação, ordem e endereço do webhook).
 - Ao editar uma conexão, os campos de token aparecem em branco com aviso "deixe em branco para manter"; o valor salvo nunca volta para a tela.
+- Cada pessoa recebe apenas as conexões que pode usar: administrador recebe todas (sem credenciais), atendente recebe só a dele, atendente sem vínculo recebe nenhuma.
+
 
 ## 3. Nova página Conexões (só administrador)
 
