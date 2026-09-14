@@ -45,7 +45,8 @@ export function useConexaoDoUsuario() {
  * devolve null); o atendente fica sempre na conexão vinculada a ele.
  */
 export function useConexaoSelecionada() {
-  const { isAdmin, carregando: carregandoPermissoes } = usePermissoes();
+  const { user } = useAuth();
+  const { isAdmin, carregando: carregandoPermissoes } = usePermissoes(user?.id);
   const { conexaoId, carregando } = useConexaoDoUsuario();
   const [escolha, setEscolha] = useState<string>("todas");
 
