@@ -23,13 +23,20 @@ export function PaginaPrivada({
   const contexto = useContextoPortal();
 
   if (!contexto.data || !contexto.data.ok) {
+    const erro = contexto.data && !contexto.data.ok ? contexto.data : null;
+    const redirecionando =
+      erro?.codigo === "SESSAO" || erro?.codigo === "SORTEIO_INDISPONIVEL";
     return (
       <LayoutPublico autenticado>
-        <div className="space-y-3">
-          <Skeleton className="h-6 w-40" />
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-        </div>
+        {erro && !redirecionando ? (
+          <p className="text-sm text-muted-foreground">{erro.mensagem}</p>
+        ) : (
+          <div className="space-y-3">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-28 w-full" />
+            <Skeleton className="h-28 w-full" />
+          </div>
+        )}
       </LayoutPublico>
     );
   }
