@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Plus, Gift } from "lucide-react";
+import { Plus, Gift, Link2 } from "lucide-react";
+import { toast } from "sonner";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { brl, dataBR } from "@/lib/format";
 import { useListaSorteios } from "@/modules/sorteios/hooks/useSorteios";
 import { StatusSorteioBadge } from "@/modules/sorteios/components/StatusSorteioBadge";
 import { somenteConsulta } from "@/modules/sorteios/services/status";
+import { urlPublicaSorteios } from "@/modules/sorteios/services/url-publica";
 
 export const Route = createFileRoute("/sorteios/")({
   component: () => (
@@ -46,6 +48,26 @@ function ListaSorteios() {
           <Plus className="mr-2 h-4 w-4" /> Novo sorteio
         </Button>
       </div>
+
+      <Card className="mb-4">
+        <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Link público do portal</p>
+            <p className="truncate text-xs text-muted-foreground">{urlPublicaSorteios()}</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void navigator.clipboard
+                .writeText(urlPublicaSorteios())
+                .then(() => toast.success("Link do portal copiado."));
+            }}
+          >
+            <Link2 className="mr-2 h-4 w-4" /> Copiar link
+          </Button>
+        </CardContent>
+      </Card>
 
       {error && <p className="text-sm text-destructive">{(error as Error).message}</p>}
       {isLoading && <p className="text-sm text-muted-foreground">Carregando...</p>}
