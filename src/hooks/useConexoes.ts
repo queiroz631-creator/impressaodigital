@@ -12,11 +12,14 @@ const ARMAZEM = "whatsapp:conexao";
 /** Conexões que o usuário logado pode ver (sem credenciais). */
 export function useConexoesVisiveis() {
   const listar = useServerFn(listarConexoes);
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   return useQuery({
     queryKey: [CHAVE_CONEXOES_VISIVEIS, user?.id ?? null],
     queryFn: () => listar(),
-    enabled: Boolean(user?.id),
+    // Só chama o servidor quando o token da sessão já está disponível:
+    // sem ele a requisição vai sem autorização e falha.
+    enabled: Boolean(session?.access_token),
+    retry: 1,
     staleTime: 60_000,
   });
 }
