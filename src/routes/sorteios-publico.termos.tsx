@@ -127,10 +127,14 @@ function TermosPortal() {
             <Checkbox checked={aceito} onCheckedChange={(v) => setAceito(v === true)} />
             Li e aceito os termos e condições do sorteio (versão {termos.versao}).
           </label>
+          <label className="flex items-start gap-3 text-sm text-foreground">
+            <Checkbox checked={aceito} onCheckedChange={(v) => setAceito(v === true)} />
+            Li e aceito os termos do sorteio (versão {termos.versao}).
+          </label>
           {erro && <p className="text-sm text-destructive">{erro}</p>}
           <Button
             className="w-full h-12 text-base"
-            disabled={enviando}
+            disabled={enviando || !aceito}
             onClick={() => void confirmar()}
           >
             {enviando && <Loader2 className="h-5 w-5 animate-spin" />}
