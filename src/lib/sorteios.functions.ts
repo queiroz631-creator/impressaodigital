@@ -44,7 +44,7 @@ async function exigirGestao(context: { supabase: Cliente; userId: string }) {
 }
 
 async function registrarAuditoria(
-  supabase: any,
+  supabase: Cliente,
   dados: {
     sorteio_id?: string | null;
     evento: string;
