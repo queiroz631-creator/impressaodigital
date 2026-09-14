@@ -63,9 +63,23 @@ function semAcento(texto: string) {
 
 function ParticipantesSorteio() {
   const { id } = Route.useParams();
+  const qc = useQueryClient();
   const { data: sorteio } = useSorteio(id);
   const { data: participantes, isLoading } = useParticipantesSorteio(id);
   const [busca, setBusca] = useState("");
+  const definirElegibilidade = useServerFn(definirElegibilidadeParticipante);
+
+  const consulta = sorteio ? somenteConsulta(sorteio.status) : true;
+
+  const mElegibilidade = useMutation({
+    mutationFn: (payload: { participanteId: string; concorre: boolean }) =>
+      definirElegibilidade({ data: { sorteioId: id, ...payload } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sorteio-participantes", id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   const filtrados = useMemo(() => {
     const termo = semAcento(busca.trim());
