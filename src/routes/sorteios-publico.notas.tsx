@@ -147,7 +147,7 @@ function NotasPortal() {
                     inputMode="decimal"
                     placeholder="0,00"
                     value={valor}
-                    onChange={(e) => setValor(e.target.value)}
+                    onChange={(e) => setValor(formatarMoedaDigitando(e.target.value))}
                   />
                 </div>
                 {erro && <p className="text-sm text-destructive">{erro}</p>}
