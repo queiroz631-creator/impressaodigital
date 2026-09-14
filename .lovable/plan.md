@@ -29,7 +29,7 @@ CPF, telefone e identificadores nunca aparecem no endereço da página nem em pa
 
 ## Sorteio ativo
 
-O servidor decide qual é o sorteio; o navegador nunca informa. Sem sorteio ativo: "Não há nenhum sorteio disponível no momento." Com mais de um ativo por erro de cadastro: mensagem de configuração indisponível, sem escolher nenhum e sem expor dados. Encerrado, cancelado ou sorteado: informações públicas visíveis, participação e registro de nota bloqueados. Antes da data de início também não aceita participação.
+O servidor decide qual é o sorteio; o navegador nunca informa. A consulta pública busca **somente** sorteios com situação ATIVO — **RASCUNHO nunca é exposto no portal**: para o participante é como se não existisse ("Não há nenhum sorteio disponível no momento."), sem revelar nome, número, datas ou qualquer dado do rascunho. Com mais de um ativo por erro de cadastro: mensagem de configuração indisponível, sem escolher nenhum e sem expor dados. Encerrado, cancelado ou sorteado: informações públicas visíveis, participação e registro de nota bloqueados. Antes da data de início também não aceita participação. Mesmo quem já tem sessão de um sorteio que voltou a Rascunho ou foi cancelado é bloqueado: a situação do sorteio é relida do banco em cada função protegida, nunca confiada à sessão antiga.
 
 ## Termos
 
