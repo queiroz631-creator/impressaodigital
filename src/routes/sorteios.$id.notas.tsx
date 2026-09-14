@@ -56,6 +56,21 @@ function NotasSorteio() {
   const { data: sorteio } = useSorteio(id);
   const { data: notas, isLoading } = useNotasSorteio(id);
   const [filtro, setFiltro] = useState<StatusNota | "TODAS">("TODAS");
+  const qc = useQueryClient();
+  const validar = useServerFn(validarNotaSorteio);
+  const sorteioAtivo = sorteio?.status === "ATIVO";
+
+  const mValidar = useMutation({
+    mutationFn: (notaId: string) => validar({ data: { notaId } }),
+    onSuccess: (r) => {
+      if (r.resultado === "VALIDA") toast.success(r.mensagem);
+      else if (r.resultado === "INVALIDA") toast.warning(r.mensagem);
+      else toast.info(r.mensagem);
+      void qc.invalidateQueries({ queryKey: ["sorteio-notas", id] });
+      void qc.invalidateQueries({ queryKey: ["sorteio-indicadores", id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const filtradas = useMemo(
     () => (notas ?? []).filter((n) => filtro === "TODAS" || n.status === filtro),
