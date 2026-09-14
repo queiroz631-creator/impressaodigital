@@ -18,6 +18,14 @@ import { RespostasPainel } from "@/components/bot/RespostasPainel";
 import { NumerosPainel } from "@/components/bot/NumerosPainel";
 import { PrimeiroContatoPainel } from "@/components/bot/PrimeiroContatoPainel";
 import { StatusWhatsappPainel } from "@/components/bot/StatusWhatsappPainel";
+import { useConexaoSelecionada, useConexoesVisiveis } from "@/hooks/useConexoes";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { lerCfgCortesia } from "@/lib/whatsapp-cortesia";
 import { MSG_LINK_CURRICULO_PADRAO } from "@/lib/curriculo";
 
@@ -343,7 +351,8 @@ export function ConfiguracaoBot() {
     );
   }
 
-  if (config.isLoading || carregandoConexao || !form) return <Skeleton className="h-64 max-w-4xl" />;
+  if (config.isLoading || carregandoConexao || !form)
+    return <Skeleton className="h-64 max-w-4xl" />;
 
   const id = config.data?.id;
 
