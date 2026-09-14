@@ -28,9 +28,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useConexoesVisiveis } from "@/hooks/useConexoes";
 import { CHAVE_PERMISSOES } from "@/hooks/usePermissoes";
 
 const SEM_PERFIL = "sem-perfil";
+const SEM_CONEXAO = "sem-conexao";
 
 interface UsuarioLinha {
   id: string;
@@ -38,6 +40,7 @@ interface UsuarioLinha {
   email: string | null;
   ativo: boolean;
   perfil_id: string | null;
+  conexao_id: string | null;
 }
 
 export function UsuariosPainel() {
@@ -48,7 +51,7 @@ export function UsuariosPainel() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, nome, email, ativo, perfil_id")
+        .select("id, nome, email, ativo, perfil_id, conexao_id")
         .order("nome", { nullsFirst: false });
       if (error) throw error;
       return (data ?? []) as UsuarioLinha[];
@@ -66,6 +69,8 @@ export function UsuariosPainel() {
       return data ?? [];
     },
   });
+
+  const { data: conexoes = [] } = useConexoesVisiveis();
 
   const salvar = useMutation({
     mutationFn: async ({ id, campos }: { id: string; campos: Partial<UsuarioLinha> }) => {
@@ -121,6 +126,28 @@ export function UsuariosPainel() {
                     <SelectItem key={p.id} value={p.id}>
                       {p.nome}
                       {p.ativo ? "" : " (inativo)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={u.conexao_id ?? SEM_CONEXAO}
+                onValueChange={(valor) =>
+                  salvar.mutate({
+                    id: u.id,
+                    campos: { conexao_id: valor === SEM_CONEXAO ? null : valor },
+                  })
+                }
+              >
+                <SelectTrigger className="w-52">
+                  <SelectValue placeholder="Conexão de WhatsApp" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SEM_CONEXAO}>Sem conexão</SelectItem>
+                  {conexoes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>
