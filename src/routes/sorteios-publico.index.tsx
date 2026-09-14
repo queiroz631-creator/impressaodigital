@@ -64,8 +64,15 @@ function EntradaPortal() {
         setErro(resultado.mensagem);
         return;
       }
-      gravarFluxo({ cpf });
+      // Guardado só para a saudação da próxima tela; o servidor refaz tudo.
+      gravarFluxo({
+        cpf,
+        cadastroEncontrado: resultado.dados.cadastro.encontrado,
+        nomeExibicao: resultado.dados.cadastro.nome,
+        telefoneFinal: resultado.dados.cadastro.telefone_final,
+      });
       void navigate({ to: "/sorteios-publico/telefone" });
+
     } finally {
       setEnviando(false);
     }

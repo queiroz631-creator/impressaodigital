@@ -71,14 +71,27 @@ function TelefonePortal() {
     }
   }
 
+  const nome = fluxo.nomeExibicao?.trim();
+  const final = fluxo.telefoneFinal;
+
   return (
     <LayoutPublico
-      titulo="Confirme seu telefone"
-      subtitulo="Informe o telefone usado no seu cadastro."
+      titulo={fluxo.cadastroEncontrado && nome ? `Olá, ${nome}!` : "Confirme seu telefone"}
+      subtitulo={
+        fluxo.cadastroEncontrado
+          ? "Confirmamos que encontramos seu cadastro."
+          : "Informe seu telefone para continuar."
+      }
     >
       <Card>
         <CardContent className="pt-6 space-y-5">
+          {fluxo.cadastroEncontrado && final && (
+            <p className="text-sm text-muted-foreground">
+              Telefone cadastrado termina em: ****-{final}
+            </p>
+          )}
           <CampoTelefone valor={telefone} aoMudar={setTelefone} autoFocus />
+
           <label className="flex items-center gap-3 text-sm text-foreground">
             <Checkbox checked={lembrar} onCheckedChange={(v) => setLembrar(v === true)} />
             Lembrar neste dispositivo
