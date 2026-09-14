@@ -64,7 +64,13 @@ async function registrarAuditoria(
 }
 
 /** Situação atual + total de movimentação histórica do sorteio, lidos do banco. */
-async function lerSorteioAtual(supabase: any, sorteioId: string) {
+type TabelaMovimentacao =
+  | "sorteio_participantes"
+  | "sorteio_notas"
+  | "sorteio_cupons"
+  | "sorteio_historico";
+
+async function lerSorteioAtual(supabase: Cliente, sorteioId: string) {
   const { data: sorteio, error } = await supabase
     .from("sorteios")
     .select("id, status, numero_sorteio")
