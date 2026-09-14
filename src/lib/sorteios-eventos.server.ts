@@ -9,12 +9,16 @@
  */
 import type { Json } from "@/integrations/supabase/types";
 
-type ClienteAdmin = Awaited<
-  ReturnType<typeof import("@/integrations/supabase/client.server")["supabaseAdmin"]["from"]>
-> extends never
-  ? never
-  : ReturnType<typeof obterTipo>;
-declare function obterTipo(): never;
+/** Cliente com privilégio de servidor (service role). */
+type ClienteServidor = {
+  from: (tabela: "sorteio_sincronizacao_fila") => {
+    upsert: (
+      valores: Record<string, unknown>,
+      opcoes: { onConflict: string; ignoreDuplicates: boolean },
+    ) => Promise<{ error: { message: string } | null }>;
+  };
+};
+
 
 export interface EventoFila {
   tipo: string;
