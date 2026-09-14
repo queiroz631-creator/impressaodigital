@@ -173,7 +173,7 @@ export const atualizarSorteio = createServerFn({ method: "POST" })
 
     const criticosLiberados = podeEditarCriticos(atual.status, atual.movimentacoes);
 
-    const alteracao: Record<string, unknown> = {
+    const alteracao: Database["public"]["Tables"]["sorteios"]["Update"] = {
       nome: data.dados.nome,
       descricao: data.dados.descricao,
       data_sorteio: data.dados.data_sorteio,
@@ -181,10 +181,10 @@ export const atualizarSorteio = createServerFn({ method: "POST" })
     };
 
     if (criticosLiberados) {
-      alteracao["numero_sorteio"] = data.dados.numero_sorteio;
-      alteracao["data_inicio"] = data.dados.data_inicio;
-      alteracao["data_fim"] = data.dados.data_fim;
-      alteracao["valor_por_cupom_centavos"] = data.dados.valor_por_cupom_centavos;
+      alteracao.numero_sorteio = data.dados.numero_sorteio;
+      alteracao.data_inicio = data.dados.data_inicio;
+      alteracao.data_fim = data.dados.data_fim;
+      alteracao.valor_por_cupom_centavos = data.dados.valor_por_cupom_centavos;
     } else {
       // Confere no servidor se o navegador tentou mexer em campo crítico.
       const { data: antes, error: erroAntes } = await context.supabase
