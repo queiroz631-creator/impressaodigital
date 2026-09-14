@@ -197,7 +197,7 @@ export const concluirCadastroPublico = createServerFn({ method: "POST" })
             "Os dados informados não correspondem ao cadastro. Confira o CPF e o telefone.",
           );
         }
-        const atualizacao: Record<string, string> = {};
+        const atualizacao: { nome?: string; data_nascimento?: string } = {};
         if (!existente.nome?.trim()) {
           const nome = data.nome.replace(/\s+/g, " ").trim();
           const v = validarNomeCompleto(nome);

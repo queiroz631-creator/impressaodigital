@@ -103,7 +103,8 @@ function InformacoesPortal() {
                 <CardContent className="pt-6 space-y-4">
                   <h2 className="font-semibold">{termos.titulo || "Termos e condições"}</h2>
                   {SECOES.map(({ chave, titulo }) => {
-                    const texto = (termos as unknown as Record<string, string | null>)[chave];
+                    const secoes = termos as unknown as Record<string, string | null>;
+                    const texto = secoes[chave];
                     if (!texto?.trim()) return null;
                     return (
                       <section key={chave}>
