@@ -90,7 +90,34 @@ Ex.: R$ 20,00 por cupom, R$ 45,00 em notas válidas → 2 cupons e saldo R$ 5,00
 `UNIQUE (sorteio_id, numero)`. Os números serão **aleatórios** — nunca 1, 2, 3.
 A geração fica para a etapa seguinte.
 
-## Sincronização bidirecional
+## Portal público do participante (Etapa 3)
+
+Rotas públicas em `/sorteios-publico` (entrada por CPF, telefone, cadastro,
+termos, painel, notas, cupons e informações), independentes do painel
+administrativo. A URL pública sai de `urlPublicaSorteios()`
+(`SORTEIOS_PUBLIC_URL`/`VITE_SORTEIOS_PUBLIC_URL`, com retorno ao próprio
+endereço do site quando não configurada); ao abrir o domínio público, a raiz
+redireciona para o portal.
+
+- Descoberta do sorteio somente no servidor: apenas um `ATIVO` por vez;
+  `RASCUNHO` nunca é exposto; mais de um ativo deixa o portal indisponível.
+- Sessão do participante em cookie HttpOnly/SameSite (`sp_sessao`, 2h), com
+  token hasheado em `sorteio_sessoes` e "lembrar neste dispositivo" (30 dias,
+  revogável ao sair). A sessão relê o sorteio a cada acesso: se virar
+  RASCUNHO ou houver outro ativo, é bloqueada.
+- Acesso em etapas: CPF → telefone → cadastro/identificação → termos →
+  painel. Cadastro e participação são atômicos
+  (`sorteio_portal_criar_participacao`, executável apenas pelo servidor).
+- Notas ficam `PENDENTE` no registro; só nota `INVALIDA` pode ser corrigida;
+  cupons são somente leitura. Em `ENCERRADO`/`CANCELADO`/`SORTEADO` as ações
+  são bloqueadas e as informações continuam visíveis.
+- Limite de tentativas por IP (`sorteio_tentativas`), auditoria com origem
+  `portal` e nenhuma política RLS pública: as tabelas de sessão/tentativas só
+  são acessíveis pelo servidor.
+- As páginas do portal usam `noindex, nofollow` e nunca carregam CPF,
+  telefone ou IDs nas URLs.
+
+
 
 Arquitetura preparada para `SUPABASE_PARA_LOCAL` e `LOCAL_PARA_SUPABASE`,
 sempre correspondendo clientes por CPF. `sorteio_participantes.sincronizacao_status`
@@ -113,8 +140,6 @@ foi criada e nenhuma permissão de outro módulo foi alterada.
 
 ## Próximas etapas
 
-1. Telas administrativas (sorteios, prêmios, termos, notas, cupons).
-2. Portal público do participante com acesso apenas aos próprios dados.
-3. Geração aleatória de cupons e validação automática de notas.
-4. API local e sincronização bidirecional por CPF.
-5. Mecanismo do sorteio e registro de ganhadores.
+1. Geração aleatória de cupons e validação automática de notas.
+2. API local e sincronização bidirecional por CPF.
+3. Mecanismo do sorteio e registro de ganhadores.
