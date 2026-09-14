@@ -28,3 +28,10 @@
 - [x] Seletor de conexão no WhatsApp e na Configuração do Bot; vínculo do atendente na tela Usuários
 - [ ] Colar as credenciais da Z-API da Impressão Digital na tela Conexões (hoje usa as variáveis do servidor)
 - [ ] Reconfigurar o webhook da conexão atual quando quiser migrar para o novo endereço
+
+## Correção — Configuração do Bot por conexão
+- [ ] Isolar todas as abas e simuladores pela conexão selecionada
+- [ ] Validar no servidor todo acesso e alteração pela conexão autorizada
+- [ ] Reforçar RLS das tabelas do bot por conexão
+- [ ] Mostrar a cor cadastrada no seletor de conexão
+- [ ] Validar administrador, atendente, telas e compilação
