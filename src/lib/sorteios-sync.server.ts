@@ -1,0 +1,551 @@
+/**
+ * Etapa 5 — Infraestrutura de sincronização (loja ⇄ Supabase).
+ *
+ * Princípios:
+ * - o estado oficial é o banco (fila + cursores + log de execuções);
+ * - a fila guarda apenas metadados de processamento, nunca cópia do cadastro;
+ * - lotes são confirmados de forma independente e `sorteios.base_sincronizada_em`
+ *   só avança na confirmação;
+ * - tudo é idempotente: reenviar o mesmo lote não duplica nada;
+ * - alteração vinda da LOJA nunca volta para a LOJA (sem loop).
+ *
+ * Nada aqui gera cupom, número de cupom ou saldo.
+ */
+import { enfileirar, dispararValidacaoDoSorteio } from "@/lib/sorteios-eventos.server";
+
+export const ORIGENS = ["LOJA", "SUPABASE"] as const;
+export type OrigemSync = (typeof ORIGENS)[number];
+
+export interface NotaLoja {
+  numero: string;
+  valorCentavos: number;
+  origemId?: string | null;
+  dataNota?: string | null;
+}
+
+export interface ClienteLoja {
+  origemId: string;
+  nome: string;
+  cpf?: string | null;
+  telefone?: string | null;
+  email?: string | null;
+  dataNascimento?: string | null;
+}
+
+async function cliente() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+
+type ClienteAdmin = Awaited<ReturnType<typeof cliente>>;
+
+function somenteDigitos(valor: string | null | undefined): string | null {
+  if (!valor) return null;
+  const d = valor.replace(/\D/g, "");
+  return d.length > 0 ? d : null;
+}
+
+/* -------------------------------------------------------------- log de lote */
+
+/** Abre (ou reencontra) o registro de execução do lote. Idempotente por `loteId`. */
+async function abrirLote(
+  supabase: ClienteAdmin,
+  dados: {
+    loteId: string;
+    tipo: string;
+    direcao: string;
+    origem: OrigemSync;
+    destino: OrigemSync;
+    sorteioId?: string | null;
+    enviados: number;
+  },
+) {
+  const { data: existente } = await supabase
+    .from("sorteio_sincronizacoes")
+    .select("id, status")
+    .eq("lote_id", dados.loteId)
+    .maybeSingle();
+  if (existente) return existente;
+
+  const { data, error } = await supabase
+    .from("sorteio_sincronizacoes")
+    .insert({
+      lote_id: dados.loteId,
+      operacao_id: dados.loteId,
+      tipo: dados.tipo,
+      direcao: dados.direcao,
+      origem: dados.origem,
+      destino: dados.destino,
+      sorteio_id: dados.sorteioId ?? null,
+      status: "EXECUTANDO",
+      registros_enviados: dados.enviados,
+      registros_recebidos: dados.enviados,
+    })
+    .select("id, status")
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function fecharLote(
+  supabase: ClienteAdmin,
+  loteId: string,
+  dados: { status: "CONCLUIDA" | "ERRO" | "PARCIAL"; processados?: number; erro?: string | null },
+) {
+  const { data: registro } = await supabase
+    .from("sorteio_sincronizacoes")
+    .select("iniciado_em")
+    .eq("lote_id", loteId)
+    .maybeSingle();
+
+  const inicio = registro?.iniciado_em ? new Date(registro.iniciado_em).getTime() : null;
+  const agora = new Date();
+
+  await supabase
+    .from("sorteio_sincronizacoes")
+    .update({
+      status: dados.status,
+      finalizado_em: agora.toISOString(),
+      duracao_ms: inicio ? agora.getTime() - inicio : null,
+      registros_processados: dados.processados ?? 0,
+      erro: dados.erro ?? null,
+    })
+    .eq("lote_id", loteId);
+}
+
+/* ------------------------------------------------- NOTAS: loja → Supabase */
+
+export interface ResultadoNotasLote {
+  loteId: string;
+  recebidas: number;
+  gravadas: number;
+}
+
+/**
+ * Recebe um lote de notas da base do sorteio. NÃO atualiza
+ * `base_sincronizada_em` — isso só acontece em `confirmarNotasLote`.
+ */
+export async function receberNotasLote(entrada: {
+  loteId: string;
+  sorteioId: string;
+  notas: NotaLoja[];
+}): Promise<ResultadoNotasLote> {
+  const supabase = await cliente();
+
+  const { data: sorteio, error: erroSorteio } = await supabase
+    .from("sorteios")
+    .select("id")
+    .eq("id", entrada.sorteioId)
+    .maybeSingle();
+  if (erroSorteio) throw new Error(erroSorteio.message);
+  if (!sorteio) throw new Error("Sorteio não encontrado.");
+
+  await abrirLote(supabase, {
+    loteId: entrada.loteId,
+    tipo: "NOTAS_LOJA_SUPABASE",
+    direcao: "LOCAL_PARA_SUPABASE",
+    origem: "LOJA",
+    destino: "SUPABASE",
+    sorteioId: entrada.sorteioId,
+    enviados: entrada.notas.length,
+  });
+
+  try {
+    const linhas = entrada.notas.map((n) => ({
+      sorteio_id: entrada.sorteioId,
+      numero: n.numero,
+      valor_centavos: n.valorCentavos,
+      data_nota: n.dataNota ?? null,
+      origem_id: n.origemId ?? null,
+      sincronizado_em: new Date().toISOString(),
+    }));
+
+    // Idempotência: a unicidade (sorteio_id, numero) impede duplicar a nota.
+    const { data, error } = await supabase
+      .from("sorteio_notas_base")
+      .upsert(linhas, { onConflict: "sorteio_id,numero" })
+      .select("id");
+    if (error) throw new Error(error.message);
+
+    return {
+      loteId: entrada.loteId,
+      recebidas: entrada.notas.length,
+      gravadas: data?.length ?? 0,
+    };
+  } catch (e) {
+    const mensagem = e instanceof Error ? e.message : "Erro inesperado";
+    await fecharLote(supabase, entrada.loteId, { status: "ERRO", erro: mensagem });
+    throw new Error(mensagem);
+  }
+}
+
+export interface ResultadoConfirmacao {
+  loteId: string;
+  sorteioId: string;
+  baseSincronizadaEm: string;
+  validacao: { analisadas: number; validas: number; invalidas: number; pendentes: number };
+}
+
+/**
+ * Confirma o lote: só aqui `base_sincronizada_em` avança, o evento é
+ * registrado e a validação das notas PENDENTES é acionada — somente para o
+ * sorteio do lote.
+ */
+export async function confirmarNotasLote(entrada: {
+  loteId: string;
+  sorteioId: string;
+  processadas?: number;
+}): Promise<ResultadoConfirmacao> {
+  const supabase = await cliente();
+
+  const { data: lote, error: erroLote } = await supabase
+    .from("sorteio_sincronizacoes")
+    .select("id, status, sorteio_id, registros_recebidos")
+    .eq("lote_id", entrada.loteId)
+    .maybeSingle();
+  if (erroLote) throw new Error(erroLote.message);
+  if (!lote) throw new Error("Lote não encontrado.");
+  if (lote.sorteio_id && lote.sorteio_id !== entrada.sorteioId) {
+    throw new Error("Lote pertence a outro sorteio.");
+  }
+
+  const agora = new Date().toISOString();
+
+  await fecharLote(supabase, entrada.loteId, {
+    status: "CONCLUIDA",
+    processados: entrada.processadas ?? lote.registros_recebidos ?? 0,
+  });
+
+  const { error: erroMarca } = await supabase
+    .from("sorteios")
+    .update({ base_sincronizada_em: agora })
+    .eq("id", entrada.sorteioId);
+  if (erroMarca) throw new Error(erroMarca.message);
+
+  // Evento (idempotente por lote) + validação apenas deste sorteio.
+  await enfileirar(supabase, {
+    tipo: "NOTAS_LOJA_SUPABASE",
+    entidade: "BASE_NOTAS",
+    entidadeId: entrada.sorteioId,
+    sorteioId: entrada.sorteioId,
+    origem: "LOJA",
+    destino: "SUPABASE",
+    operacao: "BASE_CONFIRMADA",
+    operacaoId: `lote:${entrada.loteId}`,
+    status: "SINCRONIZADO",
+    metadados: { lote_id: entrada.loteId },
+  });
+
+  const validacao = await dispararValidacaoDoSorteio(entrada.sorteioId);
+
+  return {
+    loteId: entrada.loteId,
+    sorteioId: entrada.sorteioId,
+    baseSincronizadaEm: agora,
+    validacao,
+  };
+}
+
+/* ---------------------------------------------- CLIENTES: loja → Supabase */
+
+export interface ResultadoClientesLote {
+  loteId: string;
+  recebidos: number;
+  criados: number;
+  atualizados: number;
+  ignorados: number;
+}
+
+/**
+ * Cria/atualiza clientes vindos da loja. Nunca exclui. Identificação:
+ * 1) identificador permanente da loja (`origem_id`);
+ * 2) CPF;
+ * 3) telefone normalizado.
+ * As alterações são marcadas com origem LOJA para não voltarem à loja.
+ */
+export async function receberClientesLote(entrada: {
+  loteId: string;
+  clientes: ClienteLoja[];
+}): Promise<ResultadoClientesLote> {
+  const supabase = await cliente();
+
+  await abrirLote(supabase, {
+    loteId: entrada.loteId,
+    tipo: "CLIENTES_LOJA_SUPABASE",
+    direcao: "LOCAL_PARA_SUPABASE",
+    origem: "LOJA",
+    destino: "SUPABASE",
+    enviados: entrada.clientes.length,
+  });
+
+  const resumo: ResultadoClientesLote = {
+    loteId: entrada.loteId,
+    recebidos: entrada.clientes.length,
+    criados: 0,
+    atualizados: 0,
+    ignorados: 0,
+  };
+
+  try {
+    for (const c of entrada.clientes) {
+      const cpf = somenteDigitos(c.cpf);
+      const telefone = somenteDigitos(c.telefone);
+
+      let existenteId: string | null = null;
+
+      const porOrigem = await supabase
+        .from("clientes")
+        .select("id")
+        .eq("origem_id", c.origemId)
+        .maybeSingle();
+      existenteId = porOrigem.data?.id ?? null;
+
+      if (!existenteId && cpf) {
+        const porCpf = await supabase.from("clientes").select("id").eq("cpf", cpf).maybeSingle();
+        existenteId = porCpf.data?.id ?? null;
+      }
+      if (!existenteId && telefone) {
+        const porTelefone = await supabase
+          .from("clientes")
+          .select("id")
+          .eq("telefone_normalizado", telefone)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        existenteId = porTelefone.data?.id ?? null;
+      }
+
+      const campos = {
+        nome: c.nome,
+        cpf,
+        telefone: c.telefone ?? null,
+        telefone_normalizado: telefone,
+        email: c.email ?? null,
+        data_nascimento: c.dataNascimento ?? null,
+        origem_id: c.origemId,
+        origem_alteracao: "LOJA",
+      };
+
+      if (existenteId) {
+        const { error } = await supabase.from("clientes").update(campos).eq("id", existenteId);
+        if (error) {
+          resumo.ignorados += 1;
+          continue;
+        }
+        resumo.atualizados += 1;
+      } else {
+        const { error } = await supabase.from("clientes").insert(campos);
+        if (error) {
+          resumo.ignorados += 1;
+          continue;
+        }
+        resumo.criados += 1;
+      }
+    }
+
+    await fecharLote(supabase, entrada.loteId, {
+      status: resumo.ignorados > 0 ? "PARCIAL" : "CONCLUIDA",
+      processados: resumo.criados + resumo.atualizados,
+    });
+    return resumo;
+  } catch (e) {
+    const mensagem = e instanceof Error ? e.message : "Erro inesperado";
+    await fecharLote(supabase, entrada.loteId, { status: "ERRO", erro: mensagem });
+    throw new Error(mensagem);
+  }
+}
+
+/* ---------------------------------------------- CLIENTES: Supabase → loja */
+
+export interface AlteracaoCliente {
+  sequencia: number;
+  operacao: string;
+  cliente: {
+    id: string;
+    origem_id: string | null;
+    nome: string;
+    cpf: string | null;
+    telefone: string | null;
+    email: string | null;
+    data_nascimento: string | null;
+  };
+}
+
+/**
+ * Devolve só as alterações após o cursor confirmado. O cursor NÃO avança aqui:
+ * a API local precisa confirmar depois de aplicar.
+ */
+export async function lerAlteracoesClientes(entrada: {
+  consumidor: string;
+  limite: number;
+}): Promise<{ cursor: number; proximoCursor: number; itens: AlteracaoCliente[] }> {
+  const supabase = await cliente();
+
+  const { data: cursorAtual } = await supabase
+    .from("sorteio_sincronizacao_cursores")
+    .select("sequencia")
+    .eq("consumidor", entrada.consumidor)
+    .maybeSingle();
+  const cursor = Number(cursorAtual?.sequencia ?? 0);
+
+  const { data: itens, error } = await supabase
+    .from("sorteio_sincronizacao_fila")
+    .select("sequencia, entidade_id, operacao")
+    .eq("tipo", "CLIENTES_SUPABASE_LOJA")
+    .eq("destino", "LOJA")
+    .gt("sequencia", cursor)
+    .order("sequencia", { ascending: true })
+    .limit(Math.min(Math.max(entrada.limite, 1), 500));
+  if (error) throw new Error(error.message);
+
+  const linhas = itens ?? [];
+  if (linhas.length === 0) return { cursor, proximoCursor: cursor, itens: [] };
+
+  const ids = linhas.map((i) => i.entidade_id);
+  const { data: clientes, error: erroClientes } = await supabase
+    .from("clientes")
+    .select("id, origem_id, nome, cpf, telefone, email, data_nascimento")
+    .in("id", ids);
+  if (erroClientes) throw new Error(erroClientes.message);
+
+  const porId = new Map((clientes ?? []).map((c) => [c.id, c]));
+  const resultado: AlteracaoCliente[] = [];
+  for (const item of linhas) {
+    const c = porId.get(item.entidade_id);
+    if (!c) continue; // cliente removido: nada a aplicar na loja
+    resultado.push({
+      sequencia: Number(item.sequencia),
+      operacao: item.operacao,
+      cliente: c,
+    });
+  }
+
+  return {
+    cursor,
+    proximoCursor: Number(linhas[linhas.length - 1]!.sequencia),
+    itens: resultado,
+  };
+}
+
+/**
+ * Confirma até onde a API local aplicou. Só aqui o cursor avança; nunca
+ * retrocede. Itens confirmados são marcados como SINCRONIZADO.
+ */
+export async function confirmarCursorClientes(entrada: {
+  consumidor: string;
+  sequencia: number;
+}): Promise<{ cursor: number }> {
+  const supabase = await cliente();
+
+  const { data: atual } = await supabase
+    .from("sorteio_sincronizacao_cursores")
+    .select("sequencia")
+    .eq("consumidor", entrada.consumidor)
+    .maybeSingle();
+  const anterior = Number(atual?.sequencia ?? 0);
+  const nova = Math.max(anterior, entrada.sequencia);
+
+  const { error } = await supabase
+    .from("sorteio_sincronizacao_cursores")
+    .upsert({ consumidor: entrada.consumidor, sequencia: nova }, { onConflict: "consumidor" });
+  if (error) throw new Error(error.message);
+
+  const agora = new Date().toISOString();
+  await supabase
+    .from("sorteio_sincronizacao_fila")
+    .update({ status: "SINCRONIZADO", processado_em: agora, erro: null })
+    .eq("tipo", "CLIENTES_SUPABASE_LOJA")
+    .lte("sequencia", nova)
+    .neq("status", "SINCRONIZADO");
+
+  return { cursor: nova };
+}
+
+/** Registra falha de um item, mantendo-o disponível para nova tentativa. */
+export async function registrarErroItem(sequencia: number, erro: string) {
+  const supabase = await cliente();
+  const { data: item } = await supabase
+    .from("sorteio_sincronizacao_fila")
+    .select("id, tentativas")
+    .eq("sequencia", sequencia)
+    .maybeSingle();
+  if (!item) return;
+
+  await supabase
+    .from("sorteio_sincronizacao_fila")
+    .update({
+      status: "ERRO",
+      erro,
+      tentativas: (item.tentativas ?? 0) + 1,
+      ultima_tentativa_em: new Date().toISOString(),
+    })
+    .eq("id", item.id);
+}
+
+/* -------------------------------------------------------- reconciliação */
+
+export interface ResumoReconciliacao {
+  sorteiosVerificados: number;
+  notasAnalisadas: number;
+  validas: number;
+  invalidas: number;
+  pendentes: number;
+  itensDesbloqueados: number;
+}
+
+/**
+ * Rede de segurança de baixa frequência: procura apenas situações
+ * potencialmente presas (evento perdido, fila travada, API desligada).
+ * Não faz varredura completa.
+ */
+export async function reconciliar(): Promise<ResumoReconciliacao> {
+  const supabase = await cliente();
+  const resumo: ResumoReconciliacao = {
+    sorteiosVerificados: 0,
+    notasAnalisadas: 0,
+    validas: 0,
+    invalidas: 0,
+    pendentes: 0,
+    itensDesbloqueados: 0,
+  };
+
+  // 1) itens presos em PROCESSANDO há mais de 15 minutos voltam para PENDENTE.
+  const limite = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const { data: presos } = await supabase
+    .from("sorteio_sincronizacao_fila")
+    .update({ status: "PENDENTE" })
+    .eq("status", "PROCESSANDO")
+    .lt("atualizado_em", limite)
+    .select("id");
+  resumo.itensDesbloqueados = presos?.length ?? 0;
+
+  // 2) somente sorteios ATIVOS cuja base já foi sincronizada alguma vez.
+  const { data: sorteios } = await supabase
+    .from("sorteios")
+    .select("id")
+    .eq("status", "ATIVO")
+    .not("base_sincronizada_em", "is", null);
+
+  const { validarNotasPendentesDoSorteio } = await import("@/lib/sorteios-validacao.server");
+  for (const s of sorteios ?? []) {
+    resumo.sorteiosVerificados += 1;
+    const r = await validarNotasPendentesDoSorteio(s.id, 100);
+    resumo.notasAnalisadas += r.analisadas;
+    resumo.validas += r.validas;
+    resumo.invalidas += r.invalidas;
+    resumo.pendentes += r.pendentes;
+  }
+
+  const agora = new Date().toISOString();
+  await supabase.from("sorteio_sincronizacoes").insert({
+    tipo: "RECONCILIACAO",
+    direcao: "SUPABASE_PARA_LOCAL",
+    origem: "SUPABASE",
+    destino: "SUPABASE",
+    status: "CONCLUIDA",
+    finalizado_em: agora,
+    registros_processados: resumo.notasAnalisadas,
+  });
+
+  return resumo;
+}
