@@ -19,6 +19,8 @@ import {
   garantirParticipacao,
   limitarTentativas,
   mascararCpf,
+  normalizarTelefone,
+
   obterSorteioAtivo,
   obterTermosAtual,
   periodoAberto,
