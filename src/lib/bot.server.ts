@@ -1777,20 +1777,28 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
   // Mensagem de ausência: fora do horário, responde uma vez por atendimento
   // nas filas de espera, antes de qualquer primeiro contato. Respostas
   // automáticas (palavras-chave) têm prioridade e substituem a ausência.
+  // Quando a palavra-chave é reconhecida e a conversa só está "aguardando" por
+  // causa do aviso de ausência, o bot segue atendendo (nunca em atendimento
+  // humano, pendente ou esperando impressão).
+  let liberarPorRespostaRapida = false;
   if (
     entrada.tipo !== "acao_sistema" &&
     ["automatico", "aguardando", "pendente", "aguardando_finalizacao"].includes(conversa.status)
   ) {
     const dadosAus = await carregarDadosBot(conversa.conexao_id ?? null);
     const agoraAus = new Date();
+    const textoAus = (entrada.texto ?? "").trim();
+    // Respostas rápidas sempre da conexão da conversa.
+    const ehRespostaRapida = Boolean(dadosAus && textoAus && reconhecerResposta(dadosAus, textoAus));
+    if (ehRespostaRapida && conversa.status === "aguardando" && ctx.ausenciaEnviada) {
+      liberarPorRespostaRapida = true;
+    }
     if (
       dadosAus &&
       dadosAus.config.msg_fora_horario_ativo &&
       dadosAus.config.msg_fora_horario.trim() &&
       !dentroDoHorario(dadosAus, agoraAus)
     ) {
-      const textoAus = (entrada.texto ?? "").trim();
-      const ehRespostaRapida = Boolean(textoAus && reconhecerResposta(dadosAus, textoAus));
       const emFluxo = conversa.etapa === "fluxo" && Boolean(ctx.fluxo);
       const aguardandoResposta = Boolean(
         ctx.pendenteTipo || (conversa.etapa === "triagem" && (ctx.triagem || ctx.regra)),
@@ -1821,8 +1829,15 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
     }
   }
 
+  // Volta ao modo automático para responder a palavra-chave reconhecida.
+  if (liberarPorRespostaRapida && conversa.status === "aguardando") {
+    await salvar(conversa, { status: "automatico" });
+    conversa.status = "automatico";
+  }
+
   // O bot só atua no modo automático ou durante o fluxo de finalização.
   if (conversa.status !== "automatico" && conversa.status !== "aguardando_finalizacao") return;
+
   const texto = (entrada.texto ?? "").trim();
   const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
   const agora = new Date();
