@@ -21,15 +21,6 @@ export interface ConexaoPublica {
   tem_credenciais: boolean;
 }
 
-async function ehAdmin(supabase: {
-  rpc: (
-    nome: string,
-    args: Record<string, unknown>,
-  ) => Promise<{ data: unknown; error: unknown | null }>;
-}): Promise<boolean> {
-  return false as never;
-}
-
 /** Endereço público usado como base dos webhooks. */
 async function urlBaseWebhook(): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
