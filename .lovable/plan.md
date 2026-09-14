@@ -77,8 +77,10 @@ Criação de `src/modules/sorteios/` com `components/`, `services/`, `hooks/`, `
 
 ## Detalhes técnicos
 
-- Migrations versionadas em `supabase/migrations/`: (1) campos `cpf` + `data_nascimento` em `clientes` com índice único parcial `WHERE cpf IS NOT NULL`; (2) tabelas do módulo com `GRANT`, RLS e políticas; (3) gatilhos de `updated_at` reaproveitando `public.set_updated_at()` e gatilho de propagação de cancelamento nota → cupons.
+- Migrations versionadas em `supabase/migrations/`: (1) `clientes.cpf` (texto só dígitos, `CHECK` de 11 dígitos + `NULLIF` para vazio) e `clientes.data_nascimento`, com índice único parcial `WHERE cpf IS NOT NULL` aplicado após conferência de duplicidades; validação dos dígitos verificadores por função `public.cpf_valido(text)` usada no `CHECK`; (2) tabelas do módulo com `GRANT`, RLS e políticas; (3) gatilhos de `updated_at` reaproveitando `public.set_updated_at()` e gatilho unidirecional de cancelamento nota → cupons (nunca cupom → nota), sem recálculo de saldo.
+- Unicidades: `UNIQUE (sorteio_id, cliente_id)` em participantes, `UNIQUE (cliente_id, sorteio_id)` em histórico, `UNIQUE (sorteio_id, numero)` em cupons e em notas, `UNIQUE (numero_sorteio)` em sorteios.
 - Chaves estrangeiras: participantes → `sorteios`/`clientes`; notas → `sorteios`/`sorteio_participantes`/`sorteio_notas_base`; cupons → `sorteios`/`sorteio_participantes`/`sorteio_notas`; histórico → `clientes`/`sorteios`; prêmios/ganhadores → `sorteios` e cupom/participante.
+
 - Políticas baseadas em `public.has_role(auth.uid(),'admin')` ou `public.tem_permissao(auth.uid(),'sorteios.visualizar')`, sem tocar em políticas existentes.
 - CPF como chave de negócio na sincronização; o identificador interno de cada banco nunca é usado para correspondência entre bancos.
 - Sem cron, sem endpoints, sem alteração em WhatsApp, Bot, Conexões, Usuários, Orçamentos, Calculadora, Preços ou Currículos. Sem commit e sem push.
