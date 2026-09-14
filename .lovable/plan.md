@@ -18,11 +18,15 @@ Por isso, o único ajuste indispensável em clientes é acrescentar dois campos 
 
 ## Ajuste em clientes (mínimo e explicitado)
 
-- Novo campo de CPF, sempre guardado só com números (sem pontos e sem traço).
+- Novo campo de CPF, guardado **somente com números** (sem pontos e sem traço).
+- Regra no banco: quando preenchido, o CPF precisa ter **exatamente 11 dígitos** e passar na verificação dos dígitos verificadores; CPF em branco é gravado como vazio (nulo), nunca como texto vazio.
 - Novo campo de data de nascimento.
-- Unicidade de CPF aplicada **apenas quando o CPF estiver preenchido**, para que os 470 clientes atuais sem CPF continuem válidos.
+- Antes de aplicar a unicidade, é feita a conferência de CPFs repetidos e o resultado é relatado; a unicidade vale **apenas quando o CPF estiver preenchido**, para que os 470 clientes atuais continuem válidos.
 - Índice de busca por CPF.
-- Nenhum cliente será apagado, mesclado ou modificado.
+- Os 470 clientes existentes não são alterados, apagados nem mesclados.
+- O cadastro de clientes continua sendo o cadastro mestre; a participação no sorteio apenas aponta para ele, sem repetir CPF, nome, telefone ou nascimento.
+- Campos já preenchidos nunca serão sobrescritos automaticamente pelo futuro cadastro público; apenas campos vazios poderão ser completados mais adiante.
+
 
 ## Tabelas novas do módulo
 
