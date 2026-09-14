@@ -22,9 +22,8 @@ export const Route = createFileRoute("/api/public/sorteios/sync/clientes-confirm
         if (!entrada.success) return new Response("Dados inválidos", { status: 400 });
 
         try {
-          const { confirmarCursorClientes, registrarErroItem } = await import(
-            "@/lib/sorteios-sync.server"
-          );
+          const { confirmarCursorClientes, registrarErroItem } =
+            await import("@/lib/sorteios-sync.server");
           if (entrada.data.erro) {
             await registrarErroItem(entrada.data.sequencia + 1, entrada.data.erro);
           }

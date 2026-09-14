@@ -19,7 +19,6 @@ type ClienteServidor = {
   };
 };
 
-
 export interface EventoFila {
   tipo: string;
   entidade: string;
@@ -38,10 +37,7 @@ export interface EventoFila {
  * Insere ou atualiza o item da fila sem duplicar: o mesmo evento recebido
  * duas vezes não cria dois registros nem dois processamentos.
  */
-export async function enfileirar(
-  supabase: ClienteServidor,
-  evento: EventoFila,
-): Promise<void> {
+export async function enfileirar(supabase: ClienteServidor, evento: EventoFila): Promise<void> {
   const { error } = await supabase.from("sorteio_sincronizacao_fila").upsert(
     {
       tipo: evento.tipo,

@@ -254,7 +254,6 @@ export async function validarNotasPendentesDoSorteio(
   return resumo;
 }
 
-
 type ClienteAdmin = Awaited<ReturnType<typeof cliente>>;
 
 async function auditar(
