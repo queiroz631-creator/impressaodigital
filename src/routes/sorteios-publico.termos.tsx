@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutPublico } from "@/modules/sorteios/components/publico/LayoutPublico";
 import {
   aceitarTermosSorteio,
+  obterContextoParticipante,
   obterInformacoesPublicasSorteio,
 } from "@/lib/sorteios-publico.functions";
 import { useContextoPortal } from "@/modules/sorteios/hooks/usePortalParticipante";
@@ -123,10 +124,6 @@ function TermosPortal() {
               })}
             </CardContent>
           </Card>
-          <label className="flex items-start gap-3 text-sm text-foreground">
-            <Checkbox checked={aceito} onCheckedChange={(v) => setAceito(v === true)} />
-            Li e aceito os termos e condições do sorteio (versão {termos.versao}).
-          </label>
           <label className="flex items-start gap-3 text-sm text-foreground">
             <Checkbox checked={aceito} onCheckedChange={(v) => setAceito(v === true)} />
             Li e aceito os termos do sorteio (versão {termos.versao}).
