@@ -126,7 +126,17 @@ async function listarAtivos(): Promise<StatusRegistro[]> {
       "id, tipo, texto, cor_fundo, imagem_url, legenda, modo, agendado_em, dias_semana, hora, ativo, ultima_publicacao_em, conexao_id",
     )
     .eq("ativo", true);
-  return (data ?? []) as StatusRegistro[];
+
+  // Status de conexão desativada não é publicado.
+  const { data: conexoes } = await supabaseAdmin
+    .from("whatsapp_conexoes")
+    .select("id")
+    .eq("ativo", true);
+  const ativas = new Set((conexoes ?? []).map((c) => c.id));
+
+  return ((data ?? []) as StatusRegistro[]).filter(
+    (r) => !r.conexao_id || ativas.has(r.conexao_id),
+  );
 }
 
 /** Regrava o arquivo de controle a partir dos agendamentos atuais. */
