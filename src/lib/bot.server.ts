@@ -227,7 +227,13 @@ async function responder(
   // Texto simples sempre: listas de botões não são entregues de forma confiável.
   const cabecalho = "_🤖 mensagem do bot_";
   const complemento = botoes && botoes.length > 0 ? `\n\n_Responda: ${botoes.join(" ou ")}_` : "";
-  const mensagem = texto.trim() ? `${cabecalho}\n\n${texto}${complemento}` : cabecalho;
+  const temTexto = Boolean(texto.trim());
+  // Sem texto, sem mídia e sem botões não há nada para enviar: evita que o
+  // cliente receba uma mensagem em branco (só o cabeçalho do bot).
+  if (!temTexto && !midia?.url && !complemento) return false;
+  const mensagem = temTexto
+    ? `${cabecalho}\n\n${texto}${complemento}`
+    : `${cabecalho}${complemento}`;
 
   let envio: { caminho: string; corpo: Record<string, unknown> } | null = null;
   if (midia?.url) {
@@ -1772,20 +1778,30 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
   // Mensagem de ausência: fora do horário, responde uma vez por atendimento
   // nas filas de espera, antes de qualquer primeiro contato. Respostas
   // automáticas (palavras-chave) têm prioridade e substituem a ausência.
+  // Quando a palavra-chave é reconhecida e a conversa só está "aguardando" por
+  // causa do aviso de ausência, o bot segue atendendo (nunca em atendimento
+  // humano, pendente ou esperando impressão).
+  let liberarPorRespostaRapida = false;
   if (
     entrada.tipo !== "acao_sistema" &&
     ["automatico", "aguardando", "pendente", "aguardando_finalizacao"].includes(conversa.status)
   ) {
     const dadosAus = await carregarDadosBot(conversa.conexao_id ?? null);
     const agoraAus = new Date();
+    const textoAus = (entrada.texto ?? "").trim();
+    // Respostas rápidas sempre da conexão da conversa.
+    const ehRespostaRapida = Boolean(
+      dadosAus && textoAus && reconhecerResposta(dadosAus, textoAus),
+    );
+    if (ehRespostaRapida && conversa.status === "aguardando" && ctx.ausenciaEnviada) {
+      liberarPorRespostaRapida = true;
+    }
     if (
       dadosAus &&
       dadosAus.config.msg_fora_horario_ativo &&
       dadosAus.config.msg_fora_horario.trim() &&
       !dentroDoHorario(dadosAus, agoraAus)
     ) {
-      const textoAus = (entrada.texto ?? "").trim();
-      const ehRespostaRapida = Boolean(textoAus && reconhecerResposta(dadosAus, textoAus));
       const emFluxo = conversa.etapa === "fluxo" && Boolean(ctx.fluxo);
       const aguardandoResposta = Boolean(
         ctx.pendenteTipo || (conversa.etapa === "triagem" && (ctx.triagem || ctx.regra)),
@@ -1816,8 +1832,15 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
     }
   }
 
+  // Volta ao modo automático para responder a palavra-chave reconhecida.
+  if (liberarPorRespostaRapida && conversa.status === "aguardando") {
+    await salvar(conversa, { status: "automatico" });
+    conversa.status = "automatico";
+  }
+
   // O bot só atua no modo automático ou durante o fluxo de finalização.
   if (conversa.status !== "automatico" && conversa.status !== "aguardando_finalizacao") return;
+
   const texto = (entrada.texto ?? "").trim();
   const ehArquivo = entrada.tipo === "documento" || entrada.tipo === "imagem";
   const agora = new Date();
@@ -1845,6 +1868,42 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
     if (raiz) {
       await rodarFluxo(conversa, config, ctx, fluxos, raiz.id, entrada, agora);
       return;
+    }
+
+    // Exceção: conexão sem fluxo inicial ativo. As respostas rápidas da própria
+    // conexão passam pela mesma triagem (pergunta de confirmação SIM/NÃO) usada
+    // quando existe fluxo. Sem palavra-chave reconhecida, segue o caminho atual.
+    if (
+      conversa.etapa === "inicio" ||
+      conversa.etapa === "triagem" ||
+      conversa.etapa === "finalizado"
+    ) {
+      const cfgRapidas = await carregarDadosBot(conversa.conexao_id ?? null);
+      const aguardandoConfirmacao =
+        conversa.etapa === "triagem" && Boolean(ctx.triagem || ctx.regra);
+      const reconhecida = Boolean(cfgRapidas && texto && reconhecerResposta(cfgRapidas, texto));
+      if (cfgRapidas && (aguardandoConfirmacao || reconhecida)) {
+        const varsRapidas: Vars = {
+          nome: conversa.nome_contato ?? "",
+          telefone: conversa.telefone,
+          agora,
+        };
+        const primeiraDoDiaRapida = !mesmoDia(conversa.saudacao_em, agora);
+        if (aguardandoConfirmacao) {
+          await resolverTriagem(
+            conversa,
+            config,
+            ctx,
+            fluxos,
+            entrada,
+            primeiraDoDiaRapida,
+            varsRapidas,
+          );
+        } else {
+          await triagem(conversa, config, ctx, fluxos, entrada, primeiraDoDiaRapida, varsRapidas);
+        }
+        return;
+      }
     }
   }
 
