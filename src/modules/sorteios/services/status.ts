@@ -31,6 +31,19 @@ export type CampoCritico = (typeof CAMPOS_CRITICOS)[number];
 export const MENSAGEM_BLOQUEIO_CRITICO =
   "Este sorteio já possui movimentações e seus dados críticos não podem ser alterados.";
 
+export const MENSAGEM_BLOQUEIO_ATIVADO =
+  "Este sorteio já foi ativado e seus dados críticos não podem mais ser alterados.";
+
+/** Explica por que os campos críticos estão bloqueados (null = liberados). */
+export function motivoBloqueioCriticos(
+  status: StatusSorteio,
+  movimentacoes: number,
+): string | null {
+  if (movimentacoes > 0) return MENSAGEM_BLOQUEIO_CRITICO;
+  if (status !== "RASCUNHO") return MENSAGEM_BLOQUEIO_ATIVADO;
+  return null;
+}
+
 /**
  * Campos críticos só são editáveis em RASCUNHO e sem nenhuma movimentação
  * histórica (participantes, notas, cupons ou histórico — inclusive cancelados).
