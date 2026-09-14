@@ -10,9 +10,16 @@ Boa parte da base já está pronta de etapas anteriores. Confirmei no banco:
 
 Então esta etapa é sobretudo **telas + isolamento das rotinas + segurança das credenciais**.
 
-## 1. Renomear a conexão atual
+## 1. Regra definitiva de acesso e conexão atual
 
-"Principal" passa a se chamar **Impressão Digital**, guardando o número atual. Nada mais muda nela: todo o histórico e toda a configuração continuam onde estão.
+- **Administrador:** vê todas as conexões.
+- **Atendente com conexão vinculada:** vê somente a conexão dele.
+- **Atendente sem conexão vinculada:** não vê nenhuma conversa, mensagem ou arquivo — de nenhuma conexão. Na tela WhatsApp recebe: "Seu usuário ainda não possui uma conexão de WhatsApp vinculada. Solicite ao administrador."
+
+Essa regra vale no banco, não só na tela: as regras de acesso deixam de ter a exceção "sem conexão vê tudo". Nenhum atendente existente fica com acesso amplo por estar sem vínculo — o administrador passa a escolher a conexão dele na tela Usuários. O administrador **não** é vinculado automaticamente a nenhuma conexão; continua vendo todas.
+
+"Principal" passa a se chamar **Impressão Digital**, guardando o número atual. Nada mais muda nela: todo o histórico e toda a configuração continuam onde estão. O webhook dela **não** é reconfigurado por migração nem por publicação — só muda se você clicar em "Reconfigurar webhook".
+
 
 ## 2. Proteger as credenciais (correção importante)
 
