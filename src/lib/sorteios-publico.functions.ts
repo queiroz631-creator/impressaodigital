@@ -22,6 +22,7 @@ import {
   periodoAberto,
   revogarSessaoAtual,
   telefoneConfere,
+  type SorteioRow,
 } from "./sorteios-publico.server";
 import { EVENTOS_AUDITORIA } from "@/modules/sorteios/types";
 import {
@@ -66,18 +67,7 @@ const esquemaNota = z.object({
     .max(100000000, "Valor acima do permitido."),
 });
 
-function dadosPublicosSorteio(s: {
-  id: string;
-  numero_sorteio: number;
-  nome: string;
-  descricao: string | null;
-  data_inicio: string;
-  data_fim: string;
-  data_sorteio: string;
-  valor_por_cupom_centavos: number;
-  quantidade_maxima_cupons: number | null;
-  status: string;
-}) {
+function dadosPublicosSorteio(s: SorteioRow) {
   return {
     numero_sorteio: s.numero_sorteio,
     nome: s.nome,
