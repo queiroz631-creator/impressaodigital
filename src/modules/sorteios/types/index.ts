@@ -89,7 +89,10 @@ export interface SorteioParticipante {
   sincronizado_em: string | null;
   aceite_termos_em: string | null;
   aceite_termos_versao: number | null;
+  /** Elegibilidade nesta participação: false = fora deste sorteio. */
+  concorre_sorteio: boolean;
   criado_em: string;
+
   atualizado_em: string;
 }
 
