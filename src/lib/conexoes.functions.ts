@@ -24,7 +24,11 @@ export interface ConexaoPublica {
 /** Endereço público usado como base dos webhooks. */
 async function urlBaseWebhook(): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin.from("whatsapp_config").select("app_url").limit(1).maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("whatsapp_config")
+    .select("app_url")
+    .limit(1)
+    .maybeSingle();
   const bruto =
     (data as { app_url?: string | null } | null)?.app_url?.trim() ||
     process.env["SITE_URL"] ||
@@ -245,7 +249,8 @@ export const testarConexao = createServerFn({ method: "POST" })
       _user_id: context.userId,
       _role: "admin",
     });
-    if (!admin) return { ok: false as const, conectado: false, detalhe: "Somente administradores." };
+    if (!admin)
+      return { ok: false as const, conectado: false, detalhe: "Somente administradores." };
 
     const { chamarZapi } = await import("@/lib/zapi.server");
     const r = await chamarZapi("status", { conexaoId: data.id });

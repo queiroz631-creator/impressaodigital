@@ -940,7 +940,11 @@ async function entregarFluxo(
       // Espera configurada na etapa antes de seguir automaticamente (teto de 60s).
       const espera = Math.min(60, Math.max(0, m.espera ?? 0));
       if (espera > 0) {
-        await enviarPresencaDigitando(conversa.telefone, espera * 1000, conversa.conexao_id ?? null);
+        await enviarPresencaDigitando(
+          conversa.telefone,
+          espera * 1000,
+          conversa.conexao_id ?? null,
+        );
         await new Promise((r) => setTimeout(r, espera * 1000));
       }
     }
