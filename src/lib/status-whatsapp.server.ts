@@ -23,6 +23,7 @@ export interface StatusRegistro {
   hora: string | null;
   ativo: boolean;
   ultima_publicacao_em: string | null;
+  conexao_id: string | null;
 }
 
 export interface AgendaArquivo {
@@ -122,7 +123,7 @@ async function listarAtivos(): Promise<StatusRegistro[]> {
   const { data } = await supabaseAdmin
     .from("bot_status_whatsapp")
     .select(
-      "id, tipo, texto, cor_fundo, imagem_url, legenda, modo, agendado_em, dias_semana, hora, ativo, ultima_publicacao_em",
+      "id, tipo, texto, cor_fundo, imagem_url, legenda, modo, agendado_em, dias_semana, hora, ativo, ultima_publicacao_em, conexao_id",
     )
     .eq("ativo", true);
   return (data ?? []) as StatusRegistro[];
@@ -205,6 +206,7 @@ export async function publicarStatus(
     const ri = await chamarZapi("send-image-status", {
       metodo: "POST",
       corpo: { image: url, caption: reg.legenda || "" },
+      conexaoId: reg.conexao_id,
     });
     return { ok: ri.ok, erro: ri.ok ? null : (ri.erro ?? "Falha ao publicar o status.") };
   }
@@ -212,6 +214,7 @@ export async function publicarStatus(
   const r = await chamarZapi("send-text-status", {
     metodo: "POST",
     corpo: { message: reg.texto, backgroundColor: reg.cor_fundo },
+    conexaoId: reg.conexao_id,
   });
 
   return { ok: r.ok, erro: r.ok ? null : (r.erro ?? "Falha ao publicar o status.") };

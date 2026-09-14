@@ -191,17 +191,20 @@ export const enviarCurriculoWhatsapp = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { chamarZapi } = await import("@/lib/zapi.server");
+    const { chamarZapi, conexaoPorTelefone } = await import("@/lib/zapi.server");
     const { normalizarTelefone } = await import("@/lib/whatsapp-comum");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const telefone = normalizarTelefone(data.telefone);
     if (!telefone) throw new Error("Telefone inválido.");
 
+    const conexaoId = await conexaoPorTelefone(telefone);
+
     if (data.mensagem?.trim()) {
       await chamarZapi("send-text", {
         metodo: "POST",
         corpo: { phone: telefone, message: data.mensagem.trim() },
+        conexaoId,
       });
     }
 
@@ -212,6 +215,7 @@ export const enviarCurriculoWhatsapp = createServerFn({ method: "POST" })
     const r = await chamarZapi("send-document/pdf", {
       metodo: "POST",
       corpo: { phone: telefone, document: documento, fileName: data.nomeArquivo },
+      conexaoId,
     });
 
     await supabaseAdmin.from("whatsapp_auditoria").insert({

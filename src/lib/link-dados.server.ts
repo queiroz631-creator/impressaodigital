@@ -357,9 +357,11 @@ export async function gerarParaOrcamento(orcamentoId: string, enviarWhatsapp: bo
   let detalhe: string | null = null;
 
   if (enviarWhatsapp && orc.cliente_telefone) {
-    const { chamarZapi } = await import("@/lib/zapi.server");
+    const { chamarZapi, conexaoPorTelefone } = await import("@/lib/zapi.server");
+    const conexaoId = await conexaoPorTelefone(orc.cliente_telefone);
     const r = await chamarZapi("send-text", {
       metodo: "POST",
+      conexaoId,
       corpo: {
         phone: orc.cliente_telefone.replace(/\D/g, ""),
         message: `Seu orçamento *${orc.numero}* está pronto! 📄\n\nAcesse pelo link para conferir e confirmar:\n${url}`,
