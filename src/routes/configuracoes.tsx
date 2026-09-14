@@ -946,8 +946,8 @@ function CardWhatsapp() {
           </div>
           <p className="text-xs text-muted-foreground">
             É o endereço em que o sistema está publicado. As respostas automáticas do bot e os
-            avisos de inatividade são disparados por aqui — se estiver diferente do endereço em
-            uso, o bot não responde.
+            avisos de inatividade são disparados por aqui — se estiver diferente do endereço em uso,
+            o bot não responde.
           </p>
           {origem && enderecoSistema.replace(/\/+$/, "") !== origem ? (
             <p className="text-xs font-semibold text-destructive">
