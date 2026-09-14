@@ -19,17 +19,17 @@ export type OrigemSync = (typeof ORIGENS)[number];
 export interface NotaLoja {
   numero: string;
   valorCentavos: number;
-  origemId?: string | null;
-  dataNota?: string | null;
+  origemId?: string | null | undefined;
+  dataNota?: string | null | undefined;
 }
 
 export interface ClienteLoja {
   origemId: string;
   nome: string;
-  cpf?: string | null;
-  telefone?: string | null;
-  email?: string | null;
-  dataNascimento?: string | null;
+  cpf?: string | null | undefined;
+  telefone?: string | null | undefined;
+  email?: string | null | undefined;
+  dataNascimento?: string | null | undefined;
 }
 
 async function cliente() {
@@ -56,7 +56,7 @@ async function abrirLote(
     direcao: string;
     origem: OrigemSync;
     destino: OrigemSync;
-    sorteioId?: string | null;
+    sorteioId?: string | null | undefined;
     enviados: number;
   },
 ) {
@@ -194,7 +194,7 @@ export interface ResultadoConfirmacao {
 export async function confirmarNotasLote(entrada: {
   loteId: string;
   sorteioId: string;
-  processadas?: number;
+  processadas?: number | undefined;
 }): Promise<ResultadoConfirmacao> {
   const supabase = await cliente();
 

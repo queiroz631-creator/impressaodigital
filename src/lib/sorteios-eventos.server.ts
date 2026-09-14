@@ -13,9 +13,9 @@ import type { Json } from "@/integrations/supabase/types";
 type ClienteServidor = {
   from: (tabela: "sorteio_sincronizacao_fila") => {
     upsert: (
-      valores: Record<string, unknown>,
+      valores: never,
       opcoes: { onConflict: string; ignoreDuplicates: boolean },
-    ) => Promise<{ error: { message: string } | null }>;
+    ) => PromiseLike<{ error: { message: string } | null }>;
   };
 };
 
@@ -24,14 +24,14 @@ export interface EventoFila {
   tipo: string;
   entidade: string;
   entidadeId: string;
-  sorteioId?: string | null;
+  sorteioId?: string | null | undefined;
   origem: "LOJA" | "SUPABASE";
   destino: "LOJA" | "SUPABASE";
   operacao: string;
   /** Chave de idempotência do evento. */
   operacaoId: string;
-  status?: "PENDENTE" | "PROCESSANDO" | "SINCRONIZADO" | "ERRO";
-  metadados?: Record<string, unknown>;
+  status?: "PENDENTE" | "PROCESSANDO" | "SINCRONIZADO" | "ERRO" | undefined;
+  metadados?: Record<string, unknown> | undefined;
 }
 
 /**
@@ -55,7 +55,7 @@ export async function enfileirar(
       status: evento.status ?? "PENDENTE",
       alterado_em: new Date().toISOString(),
       metadados: (evento.metadados ?? null) as Json,
-    },
+    } as never,
     { onConflict: "origem,entidade,operacao_id", ignoreDuplicates: false },
   );
   if (error) throw new Error(error.message);
