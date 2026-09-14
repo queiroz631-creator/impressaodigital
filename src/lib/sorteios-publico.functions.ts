@@ -11,19 +11,24 @@ import {
   ErroPortal,
   admin,
   auditarPortal,
+  buscarClientePorTelefone,
   carregarSessao,
   criarSessaoParticipante,
   etapaAposIdentificacao,
+  garantirCpfLivre,
   garantirParticipacao,
   limitarTentativas,
   mascararCpf,
+  normalizarTelefone,
   obterSorteioAtivo,
   obterTermosAtual,
   periodoAberto,
   revogarSessaoAtual,
   telefoneConfere,
+  ultimosQuatro,
   type SorteioRow,
 } from "./sorteios-publico.server";
+
 import { EVENTOS_AUDITORIA } from "@/modules/sorteios/types";
 import {
   normalizarCpf,
@@ -91,7 +96,12 @@ export const obterSorteioAtivoPublico = createServerFn({ method: "GET" }).handle
   }),
 );
 
-/** Etapa 1 do acesso: valida o CPF e a disponibilidade do sorteio. */
+/**
+ * Etapa 1 do acesso: valida o CPF, a disponibilidade do sorteio e informa se
+ * já existe cadastro (nome e 4 últimos dígitos do telefone, nada além disso).
+ * O que volta aqui serve somente para exibição — a identificação é refeita
+ * pelo servidor no passo seguinte.
+ */
 export const iniciarAcessoPublico = createServerFn({ method: "POST" })
   .inputValidator((data) => esquemaCpf.parse(data))
   .handler(async ({ data }) =>
@@ -104,7 +114,23 @@ export const iniciarAcessoPublico = createServerFn({ method: "POST" })
       const sorteio = await obterSorteioAtivo();
       const periodo = periodoAberto(sorteio);
       if (!periodo.aberto) throw new ErroPortal("PERIODO", periodo.mensagem ?? "Indisponível.");
-      return { sorteio: dadosPublicosSorteio(sorteio) };
+
+      const supabase = await admin();
+      const { data: cliente } = await supabase
+        .from("clientes")
+        .select("nome, telefone, telefone_normalizado")
+        .eq("cpf", cpf!)
+        .maybeSingle();
+
+      const cadastro = cliente
+        ? {
+            encontrado: true,
+            nome: cliente.nome?.trim() || null,
+            telefone_final: ultimosQuatro(cliente.telefone, cliente.telefone_normalizado),
+          }
+        : { encontrado: false, nome: null, telefone_final: null };
+
+      return { sorteio: dadosPublicosSorteio(sorteio), cadastro };
     }),
   );
 
@@ -113,6 +139,16 @@ type EtapaAcesso =
   | { etapa: "completar"; faltantes: ("nome" | "data_nascimento")[] }
   | { etapa: "termos" }
   | { etapa: "painel" };
+
+function faltantesDoCliente(cliente: {
+  nome?: string | null;
+  data_nascimento?: string | null;
+}): ("nome" | "data_nascimento")[] {
+  const faltantes: ("nome" | "data_nascimento")[] = [];
+  if (!cliente.nome?.trim()) faltantes.push("nome");
+  if (!cliente.data_nascimento) faltantes.push("data_nascimento");
+  return faltantes;
+}
 
 /** Etapa 2 do acesso: confere o telefone com o cadastro e inicia a sessão. */
 export const verificarTelefonePublico = createServerFn({ method: "POST" })
@@ -134,7 +170,47 @@ export const verificarTelefonePublico = createServerFn({ method: "POST" })
         .eq("cpf", cpf)
         .maybeSingle();
 
-      if (!cliente) return { etapa: "cadastro" };
+      // CPF ainda não cadastrado: antes de criar um cliente novo, procura pelo
+      // telefone para não duplicar quem já existe sem CPF.
+      if (!cliente) {
+        const porTelefone = await buscarClientePorTelefone(supabase, data.telefone);
+        if (!porTelefone) return { etapa: "cadastro" };
+        // Telefone já vinculado a um CPF: bloqueia sem revelar nada.
+        garantirCpfLivre(porTelefone);
+
+        const faltantesTelefone = faltantesDoCliente(porTelefone);
+        if (faltantesTelefone.length > 0)
+          return { etapa: "completar", faltantes: faltantesTelefone };
+
+        const { error: erroVinculo } = await supabase
+          .from("clientes")
+          .update({ cpf })
+          .eq("id", porTelefone.id)
+          .is("cpf", null);
+        if (erroVinculo) {
+          throw new ErroPortal("ERRO", "Não foi possível concluir agora. Tente novamente.");
+        }
+
+        const participanteVinculo = await garantirParticipacao(
+          supabase,
+          sorteio.id,
+          porTelefone.id,
+        );
+        await criarSessaoParticipante({
+          participante_id: participanteVinculo.id,
+          cliente_id: porTelefone.id,
+          sorteio_id: sorteio.id,
+          lembrar: data.lembrar,
+        });
+        await auditarPortal({
+          sorteio_id: sorteio.id,
+          participante_id: participanteVinculo.id,
+          cliente_id: porTelefone.id,
+          evento: EVENTOS_AUDITORIA.portalEntrada,
+          detalhe: { cpf: mascararCpf(cpf), vinculo: "cliente_existente_sem_cpf" },
+        });
+        return { etapa: await etapaAposIdentificacao(supabase, sorteio, participanteVinculo) };
+      }
 
       if (!telefoneConfere(data.telefone, cliente.telefone, cliente.telefone_normalizado)) {
         throw new ErroPortal(
@@ -143,9 +219,7 @@ export const verificarTelefonePublico = createServerFn({ method: "POST" })
         );
       }
 
-      const faltantes: ("nome" | "data_nascimento")[] = [];
-      if (!cliente.nome?.trim()) faltantes.push("nome");
-      if (!cliente.data_nascimento) faltantes.push("data_nascimento");
+      const faltantes = faltantesDoCliente(cliente);
       if (faltantes.length > 0) return { etapa: "completar", faltantes };
 
       const participante = await garantirParticipacao(supabase, sorteio.id, cliente.id);
@@ -223,38 +297,81 @@ export const concluirCadastroPublico = createServerFn({ method: "POST" })
         clienteId = existente.id;
         participante = await garantirParticipacao(supabase, sorteio.id, clienteId);
       } else {
-        const nome = data.nome.replace(/\s+/g, " ").trim();
-        const vNome = validarNomeCompleto(nome);
-        if (!vNome.ok) throw new ErroPortal("VALIDACAO", vNome.erro ?? "Nome inválido.");
-        const vNascimento = validarDataNascimento(data.data_nascimento);
-        if (!vNascimento.ok) {
-          throw new ErroPortal("VALIDACAO", vNascimento.erro ?? "Data inválida.");
-        }
+        // CPF novo: antes de criar, verifica se o telefone já tem cadastro.
+        const porTelefone = await buscarClientePorTelefone(supabase, data.telefone);
+        if (porTelefone) {
+          // Telefone já vinculado a algum CPF: bloqueia sem alterar nada.
+          garantirCpfLivre(porTelefone);
 
-        const telefoneDigitos = (data.telefone ?? "").replace(/\D/g, "");
-        // Cliente + participação numa única transação no banco.
-        const { data: participanteId, error } = await supabase.rpc(
-          "sorteio_portal_criar_participacao",
-          {
-            _nome: nome,
-            _telefone: telefoneDigitos,
-            _telefone_normalizado: telefoneDigitos,
-            _cpf: cpf!,
-            _data_nascimento: data.data_nascimento,
-            _sorteio_id: sorteio.id,
-          },
-        );
-        if (error || !participanteId) {
-          throw new ErroPortal("ERRO", "Não foi possível concluir seu cadastro. Tente novamente.");
+          const atualizacao: { cpf: string; nome?: string; data_nascimento?: string } = { cpf };
+          if (!porTelefone.nome?.trim()) {
+            const nome = data.nome.replace(/\s+/g, " ").trim();
+            const v = validarNomeCompleto(nome);
+            if (!v.ok) throw new ErroPortal("VALIDACAO", v.erro ?? "Nome inválido.");
+            atualizacao.nome = nome;
+          }
+          if (!porTelefone.data_nascimento) {
+            const v = validarDataNascimento(data.data_nascimento);
+            if (!v.ok) throw new ErroPortal("VALIDACAO", v.erro ?? "Data inválida.");
+            atualizacao.data_nascimento = data.data_nascimento;
+          }
+          const { data: vinculado, error } = await supabase
+            .from("clientes")
+            .update(atualizacao)
+            .eq("id", porTelefone.id)
+            .is("cpf", null)
+            .select("id")
+            .maybeSingle();
+          if (error || !vinculado) {
+            throw new ErroPortal("ERRO", "Não foi possível salvar seus dados. Tente novamente.");
+          }
+          clienteId = porTelefone.id;
+          participante = await garantirParticipacao(supabase, sorteio.id, clienteId);
+          await auditarPortal({
+            sorteio_id: sorteio.id,
+            participante_id: participante.id,
+            cliente_id: clienteId,
+            evento: EVENTOS_AUDITORIA.portalEntrada,
+            detalhe: { cpf: mascararCpf(cpf), vinculo: "cliente_existente_sem_cpf" },
+          });
+        } else {
+          const nome = data.nome.replace(/\s+/g, " ").trim();
+          const vNome = validarNomeCompleto(nome);
+          if (!vNome.ok) throw new ErroPortal("VALIDACAO", vNome.erro ?? "Nome inválido.");
+          const vNascimento = validarDataNascimento(data.data_nascimento);
+          if (!vNascimento.ok) {
+            throw new ErroPortal("VALIDACAO", vNascimento.erro ?? "Data inválida.");
+          }
+
+          const telefoneDigitos = normalizarTelefone(data.telefone);
+          // Cliente + participação numa única transação no banco (a função
+          // também reaproveita cliente sem CPF em caso de concorrência).
+          const { data: participanteId, error } = await supabase.rpc(
+            "sorteio_portal_criar_participacao",
+            {
+              _nome: nome,
+              _telefone: telefoneDigitos,
+              _telefone_normalizado: telefoneDigitos,
+              _cpf: cpf!,
+              _data_nascimento: data.data_nascimento,
+              _sorteio_id: sorteio.id,
+            },
+          );
+          if (error || !participanteId) {
+            throw new ErroPortal(
+              "ERRO",
+              "Não foi possível concluir seu cadastro. Tente novamente.",
+            );
+          }
+          novoCliente = true;
+          const { data: cliente } = await supabase
+            .from("clientes")
+            .select("id")
+            .eq("cpf", cpf)
+            .single();
+          clienteId = cliente!.id;
+          participante = await garantirParticipacao(supabase, sorteio.id, clienteId);
         }
-        novoCliente = true;
-        const { data: cliente } = await supabase
-          .from("clientes")
-          .select("id")
-          .eq("cpf", cpf)
-          .single();
-        clienteId = cliente!.id;
-        participante = await garantirParticipacao(supabase, sorteio.id, clienteId);
       }
 
       if (novoCliente) {
