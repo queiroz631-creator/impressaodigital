@@ -30,8 +30,8 @@
 - [ ] Reconfigurar o webhook da conexão atual quando quiser migrar para o novo endereço
 
 ## Correção — Configuração do Bot por conexão
-- [ ] Isolar todas as abas e simuladores pela conexão selecionada
-- [ ] Validar no servidor todo acesso e alteração pela conexão autorizada
-- [ ] Reforçar RLS das tabelas do bot por conexão
-- [ ] Mostrar a cor cadastrada no seletor de conexão
+- [x] Isolar todas as abas e simuladores pela conexão selecionada
+- [x] Validar no servidor todo acesso e alteração pela conexão autorizada
+- [x] Reforçar RLS das tabelas do bot por conexão
+- [x] Mostrar a cor cadastrada no seletor de conexão
 - [ ] Validar administrador, atendente, telas e compilação

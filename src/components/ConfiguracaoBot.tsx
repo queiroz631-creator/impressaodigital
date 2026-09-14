@@ -209,10 +209,11 @@ export function ConfiguracaoBot() {
     queryKey: ["whatsapp-config-bot", conexaoAtual],
     enabled: Boolean(conexaoAtual),
     queryFn: async () => {
+      if (!conexaoAtual) throw new Error("Selecione uma conexão.");
       const { data, error } = await supabase
         .from("whatsapp_config")
         .select("*")
-        .eq("conexao_id", conexaoAtual!)
+        .eq("conexao_id", conexaoAtual)
         .limit(1)
         .maybeSingle();
       if (error) throw error;
@@ -224,10 +225,11 @@ export function ConfiguracaoBot() {
     queryKey: ["bot-horarios", conexaoAtual],
     enabled: Boolean(conexaoAtual),
     queryFn: async () => {
+      if (!conexaoAtual) throw new Error("Selecione uma conexão.");
       const { data, error } = await supabase
         .from("bot_horarios")
         .select("*")
-        .eq("conexao_id", conexaoAtual!)
+        .eq("conexao_id", conexaoAtual)
         .order("dia_semana");
       if (error) throw error;
       return (data ?? []) as Horario[];
@@ -238,10 +240,11 @@ export function ConfiguracaoBot() {
     queryKey: ["bot-opcoes", conexaoAtual],
     enabled: Boolean(conexaoAtual),
     queryFn: async () => {
+      if (!conexaoAtual) throw new Error("Selecione uma conexão.");
       const { data, error } = await supabase
         .from("bot_menu_opcoes")
         .select("*")
-        .eq("conexao_id", conexaoAtual!)
+        .eq("conexao_id", conexaoAtual)
         .order("ordem");
       if (error) throw error;
       return (data ?? []) as Opcao[];
@@ -252,10 +255,11 @@ export function ConfiguracaoBot() {
     queryKey: ["bot-fluxos-select", conexaoAtual],
     enabled: Boolean(conexaoAtual),
     queryFn: async () => {
+      if (!conexaoAtual) throw new Error("Selecione uma conexão.");
       const { data, error } = await supabase
         .from("bot_fluxos")
         .select("id, nome")
-        .eq("conexao_id", conexaoAtual!)
+        .eq("conexao_id", conexaoAtual)
         .eq("ativo", true)
         .order("ordem");
       if (error) throw error;
