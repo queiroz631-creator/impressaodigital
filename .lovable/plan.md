@@ -28,6 +28,10 @@ A alteração é feita na tela Participantes do sorteio (administração), com o
 controle de permissão usado nas outras ações de sorteio. Sorteios somente para
 consulta (encerrado, cancelado, sorteado) não permitem alterar.
 
+A marcação pertence à participação naquele sorteio, não ao cadastro do cliente:
+vale somente para o sorteio em que foi feita, não é copiada para sorteios futuros,
+e todo novo participante de um novo sorteio começa concorrendo.
+
 ## Detalhes técnicos
 
 **Exclusão de cliente** — `src/routes/clientes.tsx`, `confirmarExclusao`: acrescentar
