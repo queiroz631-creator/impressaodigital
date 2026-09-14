@@ -19,6 +19,31 @@ import {
 import { centavosDeTexto, textoDeCentavos } from "@/modules/sorteios/validations/sorteio";
 import { brl, dataHoraBR } from "@/lib/format";
 
+/** Formata o campo de valor durante a digitação no padrão moeda brasileira.
+ *  1 → 1,00 | 1234 → 1.234,00 | 1234,56 → 1.234,56
+ */
+function formatarMoedaDigitando(valor: string): string {
+  if (!valor) return "";
+  const temVirgula = valor.includes(",");
+  const digitos = valor.replace(/\D/g, "");
+  if (!digitos) return "";
+  if (!temVirgula) {
+    const inteiro = digitos.replace(/^0+/, "") || "0";
+    return `${Number(inteiro).toLocaleString("pt-BR")},00`;
+  }
+  const partes = valor.split(",");
+  const depois = partes[partes.length - 1]
+    .replace(/\D/g, "")
+    .padEnd(2, "0")
+    .slice(0, 2);
+  const antes = partes
+    .slice(0, -1)
+    .join("")
+    .replace(/\D/g, "");
+  const inteiro = antes.replace(/^0+/, "") || "0";
+  return `${Number(inteiro).toLocaleString("pt-BR")},${depois}`;
+}
+
 const META_PRIVADA = [
   { title: "Minhas notas | Portal de Sorteios" },
   { name: "robots", content: "noindex, nofollow" },
