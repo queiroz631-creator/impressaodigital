@@ -43,3 +43,14 @@
 - [x] Palavra-chave volta a ser atendida depois do aviso de fora do horário (nunca em atendimento humano)
 - [x] Reconhecimento sempre com as respostas rápidas da conexão da conversa
 - [ ] Testar pelo WhatsApp real da Queiroz Papelaria (envio depende do número)
+
+## Módulo Sorteios — Etapa 1 (fundação, concluída)
+- [x] `clientes.cpf` (11 dígitos, dígito verificador, único quando preenchido) e `clientes.data_nascimento`
+- [x] Tabelas: sorteios, sorteio_termos, sorteio_participantes, sorteio_notas_base,
+      sorteio_notas, sorteio_cupons, sorteio_historico, sorteio_premios,
+      sorteio_ganhadores, sorteio_sincronizacoes, sorteio_auditoria
+- [x] RLS por `public.pode_sorteios()` (admin ou permissão `sorteios.visualizar`)
+- [x] Gatilho: nota CANCELADA cancela seus cupons (nunca o contrário), sem recálculo de saldo
+- [x] `src/modules/sorteios/` (types, validations, services/saldo.ts, README)
+- [ ] Etapa 2: telas administrativas do módulo
+- [ ] Etapa 3: portal público do participante (RLS própria), cupons aleatórios, API local e sincronização
