@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/hooks/useAuth";
 import {
   atualizarConexao,
   excluirConexao,
@@ -34,9 +35,14 @@ export default function ConexoesPainel() {
   const [status, setStatus] = useState<Record<string, boolean | null>>({});
   const [ocupado, setOcupado] = useState<string | null>(null);
 
+  const { session } = useAuth();
+
   const { data: conexoes = [], isLoading } = useQuery({
     queryKey: [CHAVE_CONEXOES],
     queryFn: () => listar(),
+    // Aguarda o token da sessão para não chamar o servidor sem autorização.
+    enabled: Boolean(session?.access_token),
+    retry: 1,
   });
 
   const recarregar = () => qc.invalidateQueries({ queryKey: [CHAVE_CONEXOES] });
