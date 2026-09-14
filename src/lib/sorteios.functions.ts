@@ -14,6 +14,8 @@ import {
   somenteConsulta,
 } from "@/modules/sorteios/services/status";
 import type { StatusSorteio } from "@/modules/sorteios/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 /**
  * Operações administrativas do módulo Sorteios.
@@ -22,16 +24,10 @@ import type { StatusSorteio } from "@/modules/sorteios/types";
  * atual e movimentação são relidos do banco imediatamente antes de gravar.
  */
 
-type Contexto = { supabase: SupabaseAutenticado; userId: string };
-type SupabaseAutenticado = Parameters<typeof registrarAuditoria>[0] extends never
-  ? never
-  : ReturnType<typeof nunca>;
-function nunca(): never {
-  throw new Error("tipo auxiliar");
-}
+type Cliente = SupabaseClient<Database>;
 
 /** Exige administrador OU permissão sensível de gerenciamento de sorteios. */
-async function exigirGestao(context: { supabase: any; userId: string }) {
+async function exigirGestao(context: { supabase: Cliente; userId: string }) {
   const { data: isAdmin, error: erroRole } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
