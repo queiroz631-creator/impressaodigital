@@ -42,6 +42,7 @@ function TermosPortal() {
   const contexto = useContextoPortal();
   const infoFn = useServerFn(obterInformacoesPublicasSorteio);
   const aceitar = useServerFn(aceitarTermosSorteio);
+  const contextoFn = useServerFn(obterContextoParticipante);
   const info = useQuery({
     queryKey: ["portal-informacoes"],
     queryFn: () => infoFn({}),
