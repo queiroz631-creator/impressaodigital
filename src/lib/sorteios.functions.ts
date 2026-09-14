@@ -79,7 +79,7 @@ async function lerSorteioAtual(supabase: Cliente, sorteioId: string) {
   if (error) throw new Error(error.message);
   if (!sorteio) throw new Error("Sorteio não encontrado.");
 
-  const contar = async (tabela: string) => {
+  const contar = async (tabela: TabelaMovimentacao) => {
     const { count, error: erroCount } = await supabase
       .from(tabela)
       .select("id", { count: "exact", head: true })
