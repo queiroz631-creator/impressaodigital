@@ -2608,6 +2608,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      pode_acessar_conexao: {
+        Args: { _conexao_id: string; _user_id: string }
+        Returns: boolean
+      }
       tem_permissao: {
         Args: { _chave: string; _user_id: string }
         Returns: boolean
