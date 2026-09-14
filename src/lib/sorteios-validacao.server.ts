@@ -202,6 +202,59 @@ export async function validarNotasPendentes(limite = 100): Promise<ResumoRodada>
   return resumo;
 }
 
+/**
+ * Validação orientada a evento: processa APENAS as notas PENDENTES do sorteio
+ * informado (usada quando um lote da base daquele sorteio é confirmado).
+ * A regra de validação é exatamente a mesma — nada aqui a altera.
+ */
+export async function validarNotasPendentesDoSorteio(
+  sorteioId: string,
+  limite = 200,
+): Promise<ResumoRodada> {
+  const supabase = await cliente();
+  const resumo: ResumoRodada = {
+    analisadas: 0,
+    validas: 0,
+    invalidas: 0,
+    pendentes: 0,
+    ignoradas: 0,
+  };
+
+  const { data: sorteio, error: erroSorteio } = await supabase
+    .from("sorteios")
+    .select("id, status")
+    .eq("id", sorteioId)
+    .maybeSingle();
+  if (erroSorteio) throw new Error(erroSorteio.message);
+  if (!sorteio || sorteio.status !== "ATIVO") return resumo;
+
+  const { data: notas, error } = await supabase
+    .from("sorteio_notas")
+    .select("id")
+    .eq("sorteio_id", sorteioId)
+    .eq("status", "PENDENTE")
+    .order("cadastrado_em", { ascending: true })
+    .limit(Math.min(Math.max(limite, 1), 500));
+  if (error) throw new Error(error.message);
+
+  for (const nota of notas ?? []) {
+    resumo.analisadas += 1;
+    try {
+      const r = await validarNotaPorId(nota.id, "rotina", null);
+      if (r.resultado === "VALIDA") resumo.validas += 1;
+      else if (r.resultado === "INVALIDA") resumo.invalidas += 1;
+      else if (r.resultado === "PENDENTE") resumo.pendentes += 1;
+      else resumo.ignoradas += 1;
+    } catch (e) {
+      resumo.ignoradas += 1;
+      console.error("[sorteios-validacao] falha ao validar nota", nota.id, e);
+    }
+  }
+
+  return resumo;
+}
+
+
 type ClienteAdmin = Awaited<ReturnType<typeof cliente>>;
 
 async function auditar(
