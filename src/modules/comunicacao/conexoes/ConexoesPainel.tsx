@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, Loader2, Pencil, Plus, RefreshCw, Trash2, Wifi } from "lucide-react";
+import { Copy, Loader2, Pencil, Plus, RefreshCw, Settings, Trash2, Wifi } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   type ConexaoPublica,
 } from "@/lib/conexoes.functions";
 import DialogConexao from "./DialogConexao";
+import DialogConfiguracaoWhatsapp from "./DialogConfiguracaoWhatsapp";
 
 export const CHAVE_CONEXOES = "conexoes-whatsapp";
 
@@ -29,6 +30,7 @@ export default function ConexoesPainel() {
 
   const [editando, setEditando] = useState<ConexaoPublica | null>(null);
   const [novoAberto, setNovoAberto] = useState(false);
+  const [configuracaoAberta, setConfiguracaoAberta] = useState(false);
   const [status, setStatus] = useState<Record<string, boolean | null>>({});
   const [ocupado, setOcupado] = useState<string | null>(null);
 
@@ -98,10 +100,16 @@ export default function ConexoesPainel() {
         <p className="text-sm text-muted-foreground">
           Cada conexão tem número, credenciais e bot próprios.
         </p>
-        <Button onClick={() => setNovoAberto(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova conexão
-        </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="outline" onClick={() => setConfiguracaoAberta(true)}>
+            <Settings className="mr-2 h-4 w-4" />
+            Configuração
+          </Button>
+          <Button onClick={() => setNovoAberto(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova conexão
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -206,6 +214,10 @@ export default function ConexoesPainel() {
         conexao={editando}
         onFechar={() => setEditando(null)}
         onSalvo={recarregar}
+      />
+      <DialogConfiguracaoWhatsapp
+        aberto={configuracaoAberta}
+        onFechar={() => setConfiguracaoAberta(false)}
       />
     </div>
   );
