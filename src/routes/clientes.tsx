@@ -258,7 +258,6 @@ function Clientes() {
       await queryClient.invalidateQueries({ queryKey: ["clientes"] });
     } catch {
       toast.error("Não foi possível excluir o cliente.");
-
     } finally {
       setExcluindo(false);
     }

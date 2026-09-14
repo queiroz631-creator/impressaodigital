@@ -494,4 +494,3 @@ export const definirElegibilidadeParticipante = createServerFn({ method: "POST" 
 
     return { ok: true, alterado: true };
   });
-

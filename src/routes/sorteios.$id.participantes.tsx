@@ -23,7 +23,6 @@ import { somenteConsulta } from "@/modules/sorteios/services/status";
 import { useParticipantesSorteio, useSorteio } from "@/modules/sorteios/hooks/useSorteios";
 import { mascararCpf, mascararTelefone } from "@/modules/sorteios/validations/sorteio";
 
-
 export const Route = createFileRoute("/sorteios/$id/participantes")({
   component: () => (
     <AppLayout permissao="sorteios.visualizar">
@@ -79,7 +78,6 @@ function ParticipantesSorteio() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
 
   const filtrados = useMemo(() => {
     const termo = semAcento(busca.trim());
@@ -161,7 +159,6 @@ function ParticipantesSorteio() {
                       </div>
                     </TableCell>
                     <TableCell>{dataHoraBR(p.criado_em)}</TableCell>
-
                   </TableRow>
                 ))}
               </TableBody>
