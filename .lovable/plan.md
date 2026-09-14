@@ -4,7 +4,15 @@ Somente o portal do participante. Nada de API local, sincronização, validaçã
 
 ## Endereço e visual
 
-Portal em `/sorteios-publico`, com layout próprio (mobile-first, sem o menu lateral administrativo): topo com logo e nome do sorteio, cartões grandes, barra de navegação inferior no celular. O endereço `sorteios.queiroztecno.com.br` poderá apontar para esse caminho quando o domínio for ligado; nada nas telas administrativas muda.
+Portal em `/sorteios-publico`, com layout próprio (mobile-first, sem o menu lateral administrativo): topo com logo e nome do sorteio, cartões grandes, barra de navegação inferior no celular. Nada nas telas administrativas muda.
+
+### Endereço público configurável
+
+- A URL pública do portal vem da variável de ambiente `SORTEIOS_PUBLIC_URL` (produção: `https://sorteios.queiroztecno.com.br`). Sem a variável, usa automaticamente a origem atual (Lovable, preview ou localhost) — o portal continua funcionando em todos os ambientes.
+- Função centralizada `urlPublicaSorteios(caminho)` monta qualquer link do portal (portal, QR Code, compartilhamento, links exibidos no administrativo, redirecionamentos). O domínio nunca aparece escrito diretamente no código.
+- Quando o acesso chega pelo host `sorteios.queiroztecno.com.br`, a raiz `/` redireciona para `/sorteios-publico`; em qualquer outro host (localhost, Lovable, domínio administrativo) o comportamento atual é preservado.
+- O domínio público exibe somente o portal — nenhuma tela ou menu administrativo. O domínio administrativo (`queiroztecno.com.br`) não é alterado.
+- DNS, Nginx e SSL ficam fora do Lovable: a configuração na VPS é feita separadamente. O `deploy/README.md` e o `deploy/.env.example` ganham a documentação da variável `SORTEIOS_PUBLIC_URL` (sem nenhum valor secreto).
 
 ## Fluxo de entrada
 
@@ -57,4 +65,5 @@ Uma migração pequena, só do módulo Sorteios: duas tabelas novas de infraestr
 - Rate limit: contagem em `sorteio_tentativas` por (ip, acao) em janela de 10 minutos (20 tentativas de CPF/telefone, 5 cadastros, 30 notas), com mensagem genérica de "tente novamente em alguns minutos".
 - Reuso: `validations/cliente.ts` (CPF, nome completo, nascimento, máscaras), `validations/sorteio.ts` (`centavosDeTexto`, `textoDeCentavos`), `services/status.ts`, `types/index.ts`, `src/lib/format.ts` (`brl`, `dataBR`); `EVENTOS_AUDITORIA` ganha os eventos do portal (`portal.entrada`, `participante.criado`, `portal.saida`) e a auditoria usa `origem: "portal"`.
 - Transações: criação de cliente + participação numa única função no banco (`SECURITY DEFINER`) chamada pelo servidor, para não sobrar cliente sem participação; registro de nota e aceite em operação única com releitura da situação do sorteio imediatamente antes de gravar.
-- Verificação: os 22 testes funcionais e os testes de segurança da lista (manipulação de identificadores, acesso sem sessão, sessão expirada, isolamento entre participantes) com dados temporários removidos ao fim; typecheck, lint e build. Sem commit, sem push, sem deploy.
+- URL pública: `src/modules/sorteios/services/url-publica.ts` com `urlPublicaSorteios(caminho = "/sorteios-publico")` — lê `process.env.SORTEIOS_PUBLIC_URL` no servidor e `import.meta.env.VITE_SORTEIOS_PUBLIC_URL` no navegador; ausentes, cai na origem atual (`window.location.origin`, ou `urlPublica` existente). Redirecionamento do host: em `src/routes/index.tsx`, se `location.hostname === "sorteios.queiroztecno.com.br"`, `redirect({ to: "/sorteios-publico" })`; demais hosts intactos. `deploy/README.md` (seção da variável + passo de `.env` na VPS) e `deploy/.env.example` (linha comentada `SORTEIOS_PUBLIC_URL=`) atualizados.
+- Verificação: os 22 testes funcionais e os testes de segurança da lista (manipulação de identificadores, acesso sem sessão, sessão expirada, isolamento entre participantes) com dados temporários removidos ao fim; portal funcionando sem a variável, links usando o domínio com a variável definida, nenhuma URL hardcoded (`rg -n "sorteios.queiroztecno.com.br" src/`), rotas administrativas intactas; typecheck, lint e build. Sem commit, sem push, sem deploy.
