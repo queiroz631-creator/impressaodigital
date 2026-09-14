@@ -143,7 +143,7 @@ function TermosSorteio() {
 
   return (
     <>
-      <PageHeader titulo="Termos do sorteio" subtitulo={sorteio?.nome} />
+      <PageHeader titulo="Termos do sorteio" subtitulo={sorteio?.nome ?? ""} />
       <NavSorteio id={id} />
 
       {!consulta && (

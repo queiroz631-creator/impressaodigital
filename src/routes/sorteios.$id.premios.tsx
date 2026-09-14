@@ -115,7 +115,7 @@ function PremiosSorteio() {
 
   return (
     <>
-      <PageHeader titulo="Prêmios do sorteio" subtitulo={sorteio?.nome} />
+      <PageHeader titulo="Prêmios do sorteio" subtitulo={sorteio?.nome ?? ""} />
       <NavSorteio id={id} />
 
       {!consulta && (

@@ -10,8 +10,8 @@ export function IndicadorCard({
 }: {
   titulo: string;
   valor: ReactNode;
-  icone?: ReactNode;
-  descricao?: string;
+  icone?: ReactNode | undefined;
+  descricao?: string | undefined;
 }) {
   return (
     <Card>

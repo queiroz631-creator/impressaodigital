@@ -15,7 +15,7 @@ import {
 } from "@/modules/sorteios/services/status";
 import type { StatusSorteio } from "@/modules/sorteios/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Json } from "@/integrations/supabase/types";
 
 /**
  * Operações administrativas do módulo Sorteios.
@@ -57,7 +57,7 @@ async function registrarAuditoria(
     evento: dados.evento,
     origem: "painel",
     usuario_id: dados.usuario_id,
-    detalhe: dados.detalhe ?? {},
+    detalhe: (dados.detalhe ?? {}) as Json,
   });
   // Auditoria nunca deve ser silenciosa.
   if (error) throw new Error(`Falha ao registrar auditoria: ${error.message}`);

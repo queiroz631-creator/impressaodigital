@@ -73,7 +73,7 @@ function ParticipantesSorteio() {
 
   return (
     <>
-      <PageHeader titulo="Participantes" subtitulo={sorteio?.nome} />
+      <PageHeader titulo="Participantes" subtitulo={sorteio?.nome ?? ""} />
       <NavSorteio id={id} />
 
       <div className="mb-4 max-w-sm">

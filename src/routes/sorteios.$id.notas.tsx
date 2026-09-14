@@ -60,7 +60,7 @@ function NotasSorteio() {
 
   return (
     <>
-      <PageHeader titulo="Notas" subtitulo={sorteio?.nome} />
+      <PageHeader titulo="Notas" subtitulo={sorteio?.nome ?? ""} />
       <NavSorteio id={id} />
 
       <div className="mb-4 flex flex-wrap gap-2">

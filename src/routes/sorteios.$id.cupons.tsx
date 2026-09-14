@@ -59,7 +59,7 @@ function CuponsSorteio() {
 
   return (
     <>
-      <PageHeader titulo="Cupons" subtitulo={sorteio?.nome} />
+      <PageHeader titulo="Cupons" subtitulo={sorteio?.nome ?? ""} />
       <NavSorteio id={id} />
 
       <div className="mb-4 flex flex-wrap gap-2">
