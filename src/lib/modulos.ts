@@ -263,6 +263,8 @@ export const PERMISSOES_SENSIVEIS: { chave: string; nome: string }[] = [
   { chave: "precos.alterar", nome: "Alterar preços" },
   { chave: "conexoes.gerenciar", nome: "Gerenciar conexões" },
   { chave: "usuarios.gerenciar", nome: "Gerenciar usuários" },
+  // Concedida manualmente nos perfis; administradores já têm acesso total.
+  { chave: "sorteios.gerenciar", nome: "Gerenciar sorteios" },
 ];
 
 /** Todas as chaves de permissão do sistema (módulos + telas + sensíveis). */
