@@ -198,8 +198,8 @@ export const MODULOS: Modulo[] = [
         descricao: "Campanhas de sorteio com página pública",
         icone: Gift,
         ordem: 2,
-        ativo: false,
-        rota: null,
+        ativo: true,
+        rota: "/sorteios",
         permissao: "sorteios.visualizar",
       },
       {
