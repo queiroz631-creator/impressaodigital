@@ -88,7 +88,6 @@ function TermosPortal() {
     }
   }
 
-
   return (
     <LayoutPublico
       autenticado

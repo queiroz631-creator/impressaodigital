@@ -358,7 +358,6 @@ export const aceitarTermosSorteio = createServerFn({ method: "POST" })
     }),
   );
 
-
 /** Painel: resumo do participante autenticado. */
 export const obterPainelParticipante = createServerFn({ method: "GET" }).handler(async () =>
   executar(async () => {

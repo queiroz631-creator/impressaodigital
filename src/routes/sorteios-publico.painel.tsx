@@ -93,7 +93,6 @@ function PainelPortal() {
                   </p>
                 </CardContent>
               </Card>
-
             </>
           )}
         </div>
