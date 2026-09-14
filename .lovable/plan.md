@@ -49,11 +49,20 @@ Nada é apagado: notas e cupons cancelados permanecem no banco com sua situaçã
 ## Regras que já ficam garantidas pelo banco nesta etapa
 
 - Cliente não pode ter duas participações no mesmo sorteio.
+- Um cliente só tem um registro de histórico por sorteio, e o histórico é preservado permanentemente.
 - Número de cupom não repete dentro do mesmo sorteio.
-- Número de nota não repete dentro do mesmo sorteio (evita revalidar a mesma nota).
-- Ao cancelar uma nota, os cupons daquela nota passam a cancelados automaticamente, sem apagar nada.
+- Número de nota só pode ser usado uma vez dentro do mesmo sorteio; uma nota já validada não pode ser cadastrada nem validada de novo.
+- A validação da nota, quando for implementada, continua exclusivamente por número + valor — a data nunca é usada para validar.
+- Ao cancelar uma nota, os cupons daquela nota passam a cancelados; cancelar um cupom **não** cancela a nota.
+- Nesta etapa nenhum saldo é recalculado automaticamente.
+- Nenhum registro de nota ou cupom é apagado em qualquer situação.
 - Ao registrar uma participação nova, saldo, notas e cupons começam em zero.
 - A situação de sincronização de uma participação começa como pendente — nada é considerado sincronizado por padrão.
+
+## Fora do escopo desta etapa
+
+API local, sincronização, cron, geração de cupons, validação automática de notas, portal público, login do participante e o mecanismo do sorteio. Somente fundação: banco, segurança e estrutura.
+
 
 ## Segurança
 
