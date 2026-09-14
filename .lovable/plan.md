@@ -4,7 +4,7 @@ Boa parte da base já está pronta de etapas anteriores. Confirmei no banco:
 
 - A tabela de conexões já existe, com **1 conexão** chamada "Principal" (ordem 0, ativa) e endereço de webhook próprio já gerado. As credenciais dela estão **vazias** — hoje o sistema usa as credenciais guardadas no servidor (variáveis de ambiente), com esse caminho de reserva já funcionando.
 - Todos os dados atuais já estão vinculados a essa conexão: conversas, configuração, horários, fluxos, respostas, menu, primeiro contato, números e status — **zero registros sem conexão**. Nenhum backfill novo é necessário.
-- As regras de acesso por conexão já existem em conversas, mensagens e arquivos (administrador vê tudo; atendente vinculado vê só a sua; atendente sem vínculo vê tudo — mantemos isso para não travar quem já usa).
+- As regras de acesso por conexão já existem em conversas, mensagens e arquivos, mas hoje contêm uma exceção permissiva: atendente **sem** conexão vinculada vê tudo. Isso será removido nesta etapa.
 - As rotinas automáticas (inatividade a cada minuto, status a cada 5 minutos) já existem e continuam sendo únicas.
 - Os 2 usuários atuais ainda não têm conexão vinculada.
 
