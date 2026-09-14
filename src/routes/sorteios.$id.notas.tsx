@@ -136,6 +136,20 @@ function NotasSorteio() {
                     <TableCell>{dataHoraBR(n.cadastrado_em)}</TableCell>
                     <TableCell>{n.validado_em ? dataHoraBR(n.validado_em) : "—"}</TableCell>
                     <TableCell className="text-right">{n.cupons_gerados}</TableCell>
+                    <TableCell className="text-right">
+                      {n.status === "PENDENTE" ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={!sorteioAtivo || mValidar.isPending}
+                          onClick={() => mValidar.mutate(n.id)}
+                        >
+                          Validar
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
