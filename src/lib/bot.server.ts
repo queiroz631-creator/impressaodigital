@@ -231,8 +231,9 @@ async function responder(
   // Sem texto, sem mídia e sem botões não há nada para enviar: evita que o
   // cliente receba uma mensagem em branco (só o cabeçalho do bot).
   if (!temTexto && !midia?.url && !complemento) return false;
-  const mensagem = temTexto ? `${cabecalho}\n\n${texto}${complemento}` : `${cabecalho}${complemento}`;
-
+  const mensagem = temTexto
+    ? `${cabecalho}\n\n${texto}${complemento}`
+    : `${cabecalho}${complemento}`;
 
   let envio: { caminho: string; corpo: Record<string, unknown> } | null = null;
   if (midia?.url) {
@@ -1789,7 +1790,9 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
     const agoraAus = new Date();
     const textoAus = (entrada.texto ?? "").trim();
     // Respostas rápidas sempre da conexão da conversa.
-    const ehRespostaRapida = Boolean(dadosAus && textoAus && reconhecerResposta(dadosAus, textoAus));
+    const ehRespostaRapida = Boolean(
+      dadosAus && textoAus && reconhecerResposta(dadosAus, textoAus),
+    );
     if (ehRespostaRapida && conversa.status === "aguardando" && ctx.ausenciaEnviada) {
       liberarPorRespostaRapida = true;
     }
@@ -1876,7 +1879,8 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
       conversa.etapa === "finalizado"
     ) {
       const cfgRapidas = await carregarDadosBot(conversa.conexao_id ?? null);
-      const aguardandoConfirmacao = conversa.etapa === "triagem" && Boolean(ctx.triagem || ctx.regra);
+      const aguardandoConfirmacao =
+        conversa.etapa === "triagem" && Boolean(ctx.triagem || ctx.regra);
       const reconhecida = Boolean(cfgRapidas && texto && reconhecerResposta(cfgRapidas, texto));
       if (cfgRapidas && (aguardandoConfirmacao || reconhecida)) {
         const varsRapidas: Vars = {
@@ -1902,7 +1906,6 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
       }
     }
   }
-
 
   // Etapas de saudação, menu, palavras-chave e respostas automáticas.
   if (ETAPAS_MENU.has(conversa.etapa) || conversa.etapa === "finalizado") {
