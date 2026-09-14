@@ -65,7 +65,7 @@
 - [x] Validação no servidor em toda gravação (permissão, situação e movimentação relidas)
 - [ ] Etapa 4: geração de cupons, números aleatórios, API local e sincronização
 
-## Módulo Sorteios — Etapa 3 (portal público, em verificação)
+## Módulo Sorteios — Etapa 3 (portal público, concluída e verificada)
 - [x] Rotas públicas `/sorteios-publico` (CPF, telefone, cadastro, termos, painel, notas, cupons, informações)
 - [x] Sessão do participante em cookie HttpOnly (2h, renovação "lembrar neste dispositivo" 30 dias)
 - [x] Tabelas `sorteio_sessoes` e `sorteio_tentativas` (somente servidor; limite de tentativas por IP)
