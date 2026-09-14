@@ -1,8 +1,12 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -13,7 +17,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { brl, dataHoraBR } from "@/lib/format";
+import { definirElegibilidadeParticipante } from "@/lib/sorteios.functions";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
+import { somenteConsulta } from "@/modules/sorteios/services/status";
 import { useParticipantesSorteio, useSorteio } from "@/modules/sorteios/hooks/useSorteios";
 import { mascararCpf, mascararTelefone } from "@/modules/sorteios/validations/sorteio";
 
@@ -56,9 +62,22 @@ function semAcento(texto: string) {
 
 function ParticipantesSorteio() {
   const { id } = Route.useParams();
+  const qc = useQueryClient();
   const { data: sorteio } = useSorteio(id);
   const { data: participantes, isLoading } = useParticipantesSorteio(id);
   const [busca, setBusca] = useState("");
+  const definirElegibilidade = useServerFn(definirElegibilidadeParticipante);
+
+  const consulta = sorteio ? somenteConsulta(sorteio.status) : true;
+
+  const mElegibilidade = useMutation({
+    mutationFn: (payload: { participanteId: string; concorre: boolean }) =>
+      definirElegibilidade({ data: { sorteioId: id, ...payload } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sorteio-participantes", id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const filtrados = useMemo(() => {
     const termo = semAcento(busca.trim());
@@ -108,6 +127,7 @@ function ParticipantesSorteio() {
                   <TableHead className="text-right">Notas</TableHead>
                   <TableHead className="text-right">Cupons</TableHead>
                   <TableHead>Sincronização</TableHead>
+                  <TableHead>Concorre ao sorteio</TableHead>
                   <TableHead>Participação</TableHead>
                 </TableRow>
               </TableHeader>
@@ -124,6 +144,19 @@ function ParticipantesSorteio() {
                       <Badge variant="outline">
                         {ROTULO_SINC[p.sincronizacao_status] ?? p.sincronizacao_status}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={p.concorre_sorteio}
+                          disabled={consulta || mElegibilidade.isPending}
+                          aria-label="Concorre ao sorteio"
+                          onCheckedChange={(valor) =>
+                            mElegibilidade.mutate({ participanteId: p.id, concorre: valor })
+                          }
+                        />
+                        {!p.concorre_sorteio && <Badge variant="secondary">Não concorre</Badge>}
+                      </div>
                     </TableCell>
                     <TableCell>{dataHoraBR(p.criado_em)}</TableCell>
                   </TableRow>

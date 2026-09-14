@@ -214,7 +214,7 @@ function Clientes() {
     if (!excluir) return;
     setExcluindo(true);
     try {
-      const [cur, orc, ped] = await Promise.all([
+      const [cur, orc, ped, part, hist] = await Promise.all([
         supabase
           .from("curriculos")
           .select("id", { count: "exact", head: true })
@@ -227,16 +227,26 @@ function Clientes() {
           .from("pedidos")
           .select("id", { count: "exact", head: true })
           .eq("cliente_id", excluir.id),
+        supabase
+          .from("sorteio_participantes")
+          .select("id", { count: "exact", head: true })
+          .eq("cliente_id", excluir.id),
+        supabase
+          .from("sorteio_historico")
+          .select("id", { count: "exact", head: true })
+          .eq("cliente_id", excluir.id),
       ]);
 
       const vinculos: string[] = [];
       if ((cur.count ?? 0) > 0) vinculos.push(`${cur.count} currículo(s)`);
       if ((orc.count ?? 0) > 0) vinculos.push(`${orc.count} orçamento(s)`);
       if ((ped.count ?? 0) > 0) vinculos.push(`${ped.count} pedido(s)`);
+      if ((part.count ?? 0) > 0) vinculos.push(`${part.count} participação em sorteio`);
+      if ((hist.count ?? 0) > 0) vinculos.push(`${hist.count} histórico de sorteio`);
 
       if (vinculos.length > 0) {
         toast.error(
-          `Não é possível excluir: o cliente possui ${vinculos.join(", ")} vinculado(s).`,
+          `Não é possível excluir: o cliente possui ${vinculos.join(", ")} vinculada(s).`,
         );
         return;
       }
@@ -246,8 +256,8 @@ function Clientes() {
       toast.success("Cliente excluído.");
       setExcluir(null);
       await queryClient.invalidateQueries({ queryKey: ["clientes"] });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível excluir o cliente.");
+    } catch {
+      toast.error("Não foi possível excluir o cliente.");
     } finally {
       setExcluindo(false);
     }

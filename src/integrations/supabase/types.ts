@@ -2322,6 +2322,7 @@ export type Database = {
           aceite_termos_versao: number | null
           atualizado_em: string
           cliente_id: string
+          concorre_sorteio: boolean
           criado_em: string
           id: string
           saldo_centavos: number
@@ -2334,6 +2335,7 @@ export type Database = {
           aceite_termos_versao?: number | null
           atualizado_em?: string
           cliente_id: string
+          concorre_sorteio?: boolean
           criado_em?: string
           id?: string
           saldo_centavos?: number
@@ -2346,6 +2348,7 @@ export type Database = {
           aceite_termos_versao?: number | null
           atualizado_em?: string
           cliente_id?: string
+          concorre_sorteio?: boolean
           criado_em?: string
           id?: string
           saldo_centavos?: number

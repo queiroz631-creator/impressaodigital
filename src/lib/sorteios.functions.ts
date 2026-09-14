@@ -432,3 +432,65 @@ export const alternarPremio = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/* ----------------------------------------------------------- participantes */
+
+/**
+ * Liga/desliga a elegibilidade do participante NESTE sorteio.
+ * Não altera cliente, notas, cupons, saldo nem outros sorteios.
+ */
+export const definirElegibilidadeParticipante = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        sorteioId: z.string().uuid(),
+        participanteId: z.string().uuid(),
+        concorre: z.boolean(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await exigirGestao(context);
+
+    const atual = await lerSorteioAtual(context.supabase, data.sorteioId);
+    if (somenteConsulta(atual.status)) {
+      throw new Error("Este sorteio está somente para consulta.");
+    }
+
+    const { data: participante, error: erroLeitura } = await context.supabase
+      .from("sorteio_participantes")
+      .select("id, concorre_sorteio")
+      .eq("id", data.participanteId)
+      .eq("sorteio_id", data.sorteioId)
+      .maybeSingle();
+    if (erroLeitura) throw new Error(erroLeitura.message);
+    if (!participante) throw new Error("Participante não encontrado neste sorteio.");
+
+    const anterior = participante.concorre_sorteio as boolean;
+    if (anterior === data.concorre) return { ok: true, alterado: false };
+
+    const { data: atualizados, error } = await context.supabase
+      .from("sorteio_participantes")
+      .update({ concorre_sorteio: data.concorre })
+      .eq("id", data.participanteId)
+      .eq("sorteio_id", data.sorteioId)
+      .select("id");
+    if (error) throw new Error(error.message);
+    if ((atualizados?.length ?? 0) !== 1) {
+      throw new Error("Não foi possível alterar a participação. Tente novamente.");
+    }
+
+    await registrarAuditoria(context.supabase, {
+      sorteio_id: data.sorteioId,
+      evento: "participante.elegibilidade_alterada",
+      usuario_id: context.userId,
+      detalhe: {
+        participante_id: data.participanteId,
+        anterior,
+        novo: data.concorre,
+      },
+    });
+
+    return { ok: true, alterado: true };
+  });
