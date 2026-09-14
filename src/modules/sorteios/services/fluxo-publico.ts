@@ -11,7 +11,12 @@ export interface FluxoPublico {
   telefone?: string;
   lembrar?: boolean;
   faltantes?: ("nome" | "data_nascimento")[];
+  /** Somente para exibição na tela de telefone — nunca autoriza nada. */
+  cadastroEncontrado?: boolean;
+  nomeExibicao?: string | null;
+  telefoneFinal?: string | null;
 }
+
 
 export function lerFluxo(): FluxoPublico {
   try {
