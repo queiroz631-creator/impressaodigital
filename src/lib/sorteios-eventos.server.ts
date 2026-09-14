@@ -39,7 +39,7 @@ export interface EventoFila {
  * duas vezes não cria dois registros nem dois processamentos.
  */
 export async function enfileirar(
-  supabase: { from: (t: string) => any },
+  supabase: ClienteServidor,
   evento: EventoFila,
 ): Promise<void> {
   const { error } = await supabase.from("sorteio_sincronizacao_fila").upsert(
