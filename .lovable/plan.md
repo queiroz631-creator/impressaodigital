@@ -6,6 +6,7 @@ Somente a área administrativa: criar, configurar e acompanhar sorteios. Nada de
 
 - O item **Sorteios** já existe no grupo Marketing como planejado (inativo, sem página). Passa a ficar ativo apontando para `/sorteios`, mantendo a chave de permissão já criada na Etapa 1.
 - Ver as telas exige a permissão de Sorteios (administrador vê tudo). Criar, alterar e mudar situação exige uma permissão adicional de gerenciamento, acrescentada à lista de permissões sensíveis já existente — nenhuma permissão de outro módulo é tocada.
+- A nova permissão de gerenciamento entra apenas no catálogo: nenhum perfil ou usuário existente a recebe automaticamente. Só administradores já têm acesso; os demais dependem de concessão manual.
 - Quem não tem permissão continua vendo a tela padrão de acesso negado.
 
 ## Páginas
