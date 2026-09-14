@@ -177,7 +177,7 @@ export const atualizarConexao = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin
       .from("whatsapp_conexoes")
-      .update(campos)
+      .update(campos as never)
       .eq("id", data.id);
 
     if (error) {
