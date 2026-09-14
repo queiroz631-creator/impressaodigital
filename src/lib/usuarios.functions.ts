@@ -62,7 +62,6 @@ export const criarUsuario = createServerFn({ method: "POST" })
 
     if (!id) throw new Error("Não foi possível criar o usuário.");
 
-
     const { error: erroPerfil } = await supabaseAdmin.from("profiles").upsert(
       {
         id,
