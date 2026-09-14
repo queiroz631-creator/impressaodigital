@@ -1,45 +1,69 @@
-# Corrigir troca de conexão na Configuração do Bot
+# Corrigir troca de conexão e proteger a Configuração do Bot
 
 ## Resultado
 
-- Ao trocar a conexão no topo da página **Configuração do Bot**, todas as abas passam a mostrar e alterar somente o bot da conexão escolhida.
-- A conexão selecionada terá um indicador visual com a cor cadastrada, tanto no campo fechado quanto na lista de opções.
-- A troca continuará disponível apenas conforme as permissões atuais: administrador escolhe a conexão; atendente usa somente a conexão vinculada.
+- Ao trocar a conexão no topo da página **Configuração do Bot**, todas as abas mostrarão e alterarão somente o bot da conexão escolhida.
+- O seletor mostrará um círculo com a cor cadastrada ao lado do nome da conexão, no campo fechado e em cada opção.
+- Nenhuma leitura ou alteração confiará apenas na conexão enviada pela tela.
 
-## Correção do isolamento
+## Problema confirmado
 
-Hoje, **Geral**, **Horários** e parte de **Inatividade** já consultam a conexão escolhida. Porém, **Fluxos**, **Primeiro contato**, **Respostas automáticas**, **Números**, **Status WhatsApp** e **Simulador** ainda consultam dados sem informar a conexão, fazendo parecer que o bot não mudou.
+- **Geral**, **Horários** e parte de **Inatividade** já filtram pela conexão escolhida.
+- **Fluxos**, **Primeiro contato**, **Respostas automáticas**, **Números**, **Status WhatsApp** e **Simulador** ainda fazem consultas gerais ou usam a primeira configuração encontrada.
+- As regras atuais do banco para várias tabelas do bot permitem acesso amplo a qualquer usuário autenticado. Portanto, somente acrescentar filtros na tela não atenderia à segurança solicitada.
+- As tabelas já possuem `conexao_id` direto ou relacionamento com um registro pai que possui esse vínculo.
 
-A correção irá:
+## Autorização obrigatória no servidor
 
-- repassar a conexão selecionada para todos esses painéis;
-- incluir a conexão nas chaves de atualização da tela, para recarregar imediatamente ao trocar;
-- filtrar todas as consultas pela conexão atual;
-- gravar `conexao_id` ao criar novos fluxos, regras, respostas, números e publicações de status;
-- manter etapas, opções e palavras-chave limitadas aos registros pertencentes aos fluxos ou respostas da conexão escolhida;
-- limpar formulários e edições abertas ao trocar de conexão, evitando salvar algo iniciado em outra conexão;
-- enviar a conexão atual ao simulador, para ele testar exatamente o bot selecionado.
+Criar um ponto central de validação para toda operação do bot:
 
-## Indicador de cor
+1. validar a sessão autenticada;
+2. consultar o papel real em `user_roles` por `has_role`;
+3. confirmar que a conexão recebida existe e está autorizada;
+4. permitir ao administrador a conexão válida conforme as regras administrativas;
+5. permitir ao atendente somente a conexão vinculada em `profiles.conexao_id`, com perfil ativo;
+6. rejeitar qualquer `conexaoId` diferente antes de consultar ou alterar dados.
 
-- Exibir um pequeno círculo com a cor cadastrada ao lado do nome da conexão.
-- Mostrar o círculo no seletor fechado e em cada opção da lista.
-- Manter nome e telefone atuais, sem mudar o restante do visual da página.
+Todas as leituras, criações, edições, duplicações, ordenações e exclusões da Configuração do Bot passarão por funções protegidas no servidor. Em operações sobre etapas, opções, palavras-chave ou IDs existentes, o servidor também confirmará que o registro pai pertence à conexão autorizada. IDs e `conexao_id` enviados pela tela nunca serão considerados prova de acesso.
 
-## Detalhes técnicos
+## Isolamento completo por conexão
 
-- `ConfiguracaoBot` será a fonte única da conexão atual e passará `conexaoId` aos painéis internos.
-- As consultas usarão chaves no formato `[..., conexaoId]` e filtros por `conexao_id` ou pelos IDs pais já filtrados.
-- `simularBot` e `simularFluxo` receberão a conexão validada e carregarão os dados correspondentes.
-- As ações existentes de editar, duplicar, ordenar e excluir permanecerão, mas restritas aos registros já carregados da conexão atual.
-- Nenhuma alteração em credenciais, webhook, conversas, permissões ou outros módulos.
-- Não será necessária alteração no banco: as tabelas envolvidas já possuem o vínculo necessário, direto ou por relacionamento.
+Aplicar a conexão validada em:
+
+- configuração geral, horários e inatividade;
+- fluxos, etapas e opções;
+- regras de primeiro contato;
+- respostas automáticas e palavras-chave;
+- números atendidos pelo bot;
+- publicações e agenda do Status WhatsApp;
+- simulador do bot e simulador de fluxos.
+
+Ao criar novos registros, o servidor gravará o `conexao_id` autorizado. Ao trocar de conexão, a tela limpará formulários, edições e estado do simulador, mudará as chaves de atualização e recarregará todos os painéis.
+
+## Proteção no banco
+
+Criar uma migration versionada para substituir as regras amplas atuais das tabelas do bot por regras por conexão:
+
+- administrador autorizado pode acessar os registros permitidos;
+- atendente ativo acessa somente registros da conexão vinculada;
+- etapas e opções são protegidas pela conexão do fluxo pai;
+- palavras-chave são protegidas pela conexão da resposta/opção pai;
+- `WITH CHECK` impede inserir ou mover registros para outra conexão.
+
+A camada do banco será uma segunda proteção; a validação explícita no servidor continuará obrigatória.
+
+## Indicador visual
+
+- Mostrar um pequeno círculo com `conexao.cor` ao lado do nome.
+- Preservar o nome, telefone, tamanho e disposição atual do seletor.
+- Não alterar o restante do visual da página.
 
 ## Verificação
 
-- Alternar entre **Impressão Digital** e **Queiroz Papelaria** e confirmar que Geral, Horários, Fluxos, Primeiro contato, Respostas, Números, Status e Simulador mudam juntos.
-- Confirmar que uma conexão sem cadastros mostra listas vazias, sem reutilizar dados da outra.
-- Criar um registro temporário em cada tipo necessário, conferir o vínculo correto e removê-lo após o teste.
+- Administrador: alternar entre **Impressão Digital** e **Queiroz Papelaria** e confirmar que todas as abas e simuladores mudam juntas.
+- Atendente: confirmar acesso somente à conexão vinculada.
+- Segurança: tentar enviar manualmente o ID da outra conexão em leitura, criação, edição, duplicação, ordenação e exclusão; todas devem retornar erro de autorização sem alterar dados.
+- Confirmar no banco que registros criados ficam vinculados à conexão correta e remover os dados temporários de teste.
 - Validar o indicador de cor em tela larga e estreita.
 - Executar verificação de tipos, lint e build.
-- Não fazer commit nem push.
+- Não alterar credenciais, webhooks, conversas ou outros módulos; não fazer commit nem push.
