@@ -100,6 +100,7 @@ export const Route = createFileRoute("/whatsapp")({
 
 interface Conversa {
   id: string;
+  conexao_id: string | null;
   telefone: string;
   nome_contato: string | null;
   status: string;
@@ -313,6 +314,11 @@ function Atendimento() {
 
   const hojeTexto = new Date().toDateString();
 
+  const conexoesPorId = useMemo(
+    () => new Map(conexoes.map((conexao) => [conexao.id, conexao])),
+    [conexoes],
+  );
+
   const contagem = useMemo(() => {
     const base: Record<string, number> = {};
     for (const s of STATUS_CONVERSA) base[s.valor] = 0;
@@ -464,6 +470,8 @@ function Atendimento() {
 
         {lista.map((c) => {
           const nome = c.nome_contato || formatarTelefone(c.telefone);
+          const conexao = c.conexao_id ? conexoesPorId.get(c.conexao_id) : undefined;
+          const inicialConexao = conexao?.nome.trim().charAt(0).toUpperCase() || "?";
           const selecionado = c.id === abertaId;
           return (
             <button
@@ -475,8 +483,16 @@ function Atendimento() {
                 selecionado ? "border-primary bg-muted" : "border-transparent hover:bg-muted/60",
               )}
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+              <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                 {nome.trim().charAt(0).toUpperCase() || "?"}
+                <span
+                  className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-card text-[10px] font-bold text-primary-foreground"
+                  style={{ backgroundColor: conexao?.cor ?? "var(--muted-foreground)" }}
+                  title={conexao ? `Conexão: ${conexao.nome}` : "Conexão não identificada"}
+                  aria-label={conexao ? `Conexão: ${conexao.nome}` : "Conexão não identificada"}
+                >
+                  {inicialConexao}
+                </span>
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
