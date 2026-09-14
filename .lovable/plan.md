@@ -1,56 +1,62 @@
-# Aceite dos termos + posição das informações no painel
+# Aceite dos termos + posição do bloco de informações no painel
 
-## O que verifiquei no código atual
+Correção pontual. Nada da Etapa 3 é refeito e nenhuma tabela, campo ou regra de acesso muda.
 
-O aceite dos termos existe e grava nos campos já presentes em `sorteio_participantes`
-(`aceite_termos_em`, `aceite_termos_versao`), comparados sempre com a versão marcada
-como atual em `sorteio_termos`. Não é preciso criar nenhuma tabela ou campo novo.
+## Causa do problema (verificada no código atual)
 
-Três pontos frágeis encontrados, que explicam o aceite parecendo "não funcionar":
+O aceite já grava nos campos existentes da participação (`aceite_termos_em`,
+`aceite_termos_versao`), sempre comparados com a versão marcada como atual dos termos.
+O que quebra o fluxo:
 
-1. O servidor exige que a versão enviada pelo navegador seja igual à versão atual do
-   banco. Se o administrador publicar uma nova versão enquanto a tela estiver aberta,
-   o aceite é recusado com "A versão dos termos não confere".
-2. O botão de aceitar fica sempre clicável; a caixa de seleção só é checada depois do
-   clique, com mensagem de erro.
-3. Se ocorrer falha no servidor, o erro não é capturado na tela — o participante fica
-   sem mensagem alguma e sem saber que pode tentar de novo.
+1. O servidor exige que a versão enviada pela tela seja igual à atual do banco. Se o
+   administrador publicar uma nova versão com a tela aberta, o aceite é recusado com
+   "A versão dos termos não confere".
+2. O botão de aceitar fica sempre clicável; a caixa de seleção só é conferida depois do clique.
+3. Falhas do servidor não são capturadas na tela: o participante fica sem mensagem nenhuma.
 
-## Correções
+## Correção no servidor (função de aceite existente)
 
-**Servidor (`aceitarTermosSorteio`)**
-- Passar a ignorar a versão enviada pelo navegador: ler a versão atual direto do banco
-  e gravar essa. Continuar exigindo apenas a confirmação de aceite.
-- Sessão, participante e sorteio continuam vindo somente da sessão (já é o caso).
-- Se não houver termos publicados, retornar mensagem amigável em vez de gravar aceite.
-- Falha de gravação retorna "Não foi possível registrar seu aceite. Tente novamente."
-  e o painel não é liberado.
-- Aceite já feito na versão atual: nada é regravado, segue para o painel.
-- Histórico: o aceite anterior continua registrado na auditoria do sorteio (evento de
-  termos aceitos com a versão), portanto nada é perdido ao surgir uma nova versão.
+- A tela passa a enviar apenas a confirmação de aceite. Qualquer versão vinda do navegador
+  é ignorada.
+- Sessão válida → participante, cliente e sorteio vêm somente da sessão (já é o caso hoje).
+- Releitura imediata da versão atual dos termos no banco, no instante da confirmação; é
+  essa versão que fica gravada, junto com a data/hora.
+- Sem versão atual publicada: nada é gravado, painel não é liberado, mensagem
+  "Não há termos disponíveis para aceite no momento."
+- Aceite já existente na versão atual: nada é regravado, nenhum evento duplicado, painel liberado.
+- Cada aceite efetivo gera um novo evento de auditoria com participante, sorteio, versão,
+  data/hora e origem "portal". Eventos anteriores permanecem — a auditoria é o histórico;
+  os campos da participação guardam apenas o aceite vigente.
+- Qualquer falha de gravação: painel não liberado e mensagem
+  "Não foi possível registrar seu aceite. Tente novamente." sem detalhes técnicos.
 
-**Tela de termos (`/sorteios-publico/termos`)**
-- Botão desabilitado enquanto a caixa "Li e aceito os termos do sorteio" não estiver marcada.
-- Envolver a confirmação em tratamento de erro, mostrando mensagem amigável e permitindo
-  nova tentativa, sem detalhes técnicos.
-- Depois do aceite, revalidar a sessão e ir para o painel (comportamento atual mantido).
+## Correção na tela de termos
+
+- Botão de aceitar desabilitado enquanto a caixa "Li e aceito os termos do sorteio" não
+  estiver marcada; habilitado ao marcar.
+- Erros tratados na própria página, com mensagem amigável e possibilidade de tentar de novo.
+- Redireciona ao painel só depois de o servidor confirmar e o contexto ser revalidado
+  mostrando o aceite da versão atual gravado.
+- Conteúdo exibido dos termos permanece igual.
 
 ## Painel do participante
 
 Mover o bloco com número do sorteio, período, data do sorteio e valor por cupom para
-**abaixo** do botão "Registrar nota" e dos atalhos (Minhas notas, Meus cupons,
-Informações do sorteio). Nenhuma outra mudança de conteúdo.
+**abaixo** do botão "Registrar nota" e dos atalhos Minhas notas, Meus cupons e Informações
+do sorteio. Nenhum texto, dado ou regra é alterado.
 
 ## Testes
 
-Fluxo verificado no navegador com um sorteio de teste: participante sem aceite é levado
-para os termos; botão bloqueado sem marcar; aceite grava versão e data no banco; painel
-liberado; reabrir o portal não pede aceite de novo; publicar nova versão exige novo
-aceite e a auditoria mantém o registro anterior; envio de versão diferente pelo
-navegador é ignorado; sessão inválida não permite aceitar. Ao final: typecheck, lint e
-build, e remoção dos dados de teste. Sem commit, push ou deploy.
+Os 16 cenários solicitados, com um sorteio de teste: sem aceite vai para termos; botão
+bloqueado e liberado conforme a caixa; versão e data/hora gravadas; evento de auditoria com
+origem "portal"; reabrir não pede aceite; nova versão exige novo aceite e mantém o evento
+anterior; tela com versão antiga + nova versão publicada grava a nova sem erro; versão e
+participante falsos enviados pelo navegador ignorados; sessão inválida não aceita; falha de
+gravação e ausência de termos com mensagem amigável e painel bloqueado.
+Depois: typecheck, lint, build e remoção de todos os dados de teste. Sem commit, push ou deploy.
 
 ## Fora do escopo
 
-CPF, telefone, cadastro, sessão, notas, cupons, informações, limite de tentativas, URL
-pública, administração de Sorteios, WhatsApp, Bot e Conexões permanecem intactos.
+CPF, telefone, cadastro, sessão, lembrar dispositivo, notas, correção de notas, cupons,
+informações, limite de tentativas, URL pública e domínio, administração de Sorteios,
+WhatsApp, Bot, Z-API, Conexões e demais módulos permanecem intactos.
