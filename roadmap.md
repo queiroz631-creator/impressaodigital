@@ -34,4 +34,5 @@
 - [x] Validar no servidor todo acesso e alteração pela conexão autorizada
 - [x] Reforçar RLS das tabelas do bot por conexão
 - [x] Mostrar a cor cadastrada no seletor de conexão
-- [ ] Validar administrador, atendente, telas e compilação
+- [x] Validar administrador, tela e compilação
+- [ ] Validar com um usuário atendente vinculado — pendente por falta de sessão desse perfil
