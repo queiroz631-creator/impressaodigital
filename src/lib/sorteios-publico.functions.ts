@@ -308,20 +308,34 @@ export const obterContextoParticipante = createServerFn({ method: "GET" }).handl
   }),
 );
 
-/** Aceite da versão atual dos termos (nunca sobrescreve o aceite da mesma versão). */
+/**
+ * Aceite dos termos. O navegador envia apenas a confirmação; a versão vigente é
+ * relida do banco no momento da gravação (a tela pode estar desatualizada).
+ */
 export const aceitarTermosSorteio = createServerFn({ method: "POST" })
   .inputValidator((data) =>
-    z.object({ versao: z.number().int().positive(), aceito: z.literal(true) }).parse(data),
+    // `versao` é aceita por compatibilidade da tela, mas ignorada: o servidor é a
+    // única fonte de verdade sobre qual versão está vigente.
+    z
+      .object({ aceito: z.literal(true), versao: z.number().int().positive().optional() })
+      .parse(data),
   )
-  .handler(async ({ data }) =>
+  .handler(async () =>
     executar(async () => {
       const { participante, sorteio } = await carregarSessao();
       const supabase = await admin();
       const termos = await obterTermosAtual(supabase, sorteio.id);
-      if (!termos || termos.versao !== data.versao) {
-        throw new ErroPortal("VALIDACAO", "A versão dos termos não confere. Recarregue a página.");
+      if (!termos) {
+        throw new ErroPortal("VALIDACAO", "Não há termos disponíveis para aceite no momento.");
       }
-      if (participante.aceite_termos_versao !== termos.versao || !participante.aceite_termos_em) {
+      // Releitura da participação: evita regravar um aceite feito em outra aba.
+      const { data: atual } = await supabase
+        .from("sorteio_participantes")
+        .select("aceite_termos_em, aceite_termos_versao")
+        .eq("id", participante.id)
+        .maybeSingle();
+      const jaAceito = atual?.aceite_termos_versao === termos.versao && !!atual?.aceite_termos_em;
+      if (!jaAceito) {
         const { error } = await supabase
           .from("sorteio_participantes")
           .update({
@@ -329,7 +343,9 @@ export const aceitarTermosSorteio = createServerFn({ method: "POST" })
             aceite_termos_versao: termos.versao,
           })
           .eq("id", participante.id);
-        if (error) throw new ErroPortal("ERRO", "Não foi possível registrar o aceite.");
+        if (error) {
+          throw new ErroPortal("ERRO", "Não foi possível registrar seu aceite. Tente novamente.");
+        }
         await auditarPortal({
           sorteio_id: sorteio.id,
           participante_id: participante.id,
@@ -338,9 +354,10 @@ export const aceitarTermosSorteio = createServerFn({ method: "POST" })
           detalhe: { versao: termos.versao },
         });
       }
-      return { aceito: true };
+      return { aceito: true, versao: termos.versao };
     }),
   );
+
 
 /** Painel: resumo do participante autenticado. */
 export const obterPainelParticipante = createServerFn({ method: "GET" }).handler(async () =>
