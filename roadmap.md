@@ -74,3 +74,12 @@
 - [x] Sorteio em RASCUNHO nunca exposto; mais de um ATIVO bloqueia o portal
 - [x] URL pública centralizada (`SORTEIOS_PUBLIC_URL`), redirecionamento do domínio e docs no deploy
 - [x] Rodar os testes funcionais + testes de segurança e limpar dados de teste (27 verificações aprovadas)
+
+## Módulo Sorteios — Etapa 5 (infraestrutura de sincronização, concluída)
+- [x] Fila de itens de sincronização (fechada; só o servidor lê) com sequência usada como marca d'água
+- [x] Cursores por consumidor, avançando somente após confirmação da API da loja
+- [x] Recebimento de notas em lotes; `base_sincronizada_em` só na confirmação
+- [x] Validação orientada a evento: apenas o sorteio do lote confirmado
+- [x] Clientes nos dois sentidos: identificador permanente da loja + marca de origem (sem eco/loop)
+- [x] Reconciliação de 15 minutos como rede de segurança (antes 1 minuto)
+- [ ] Próxima etapa: geração de cupons, números aleatórios e saldo
