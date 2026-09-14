@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Printer, RefreshCw, Save, ShieldAlert, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -266,7 +266,6 @@ function Configuracoes() {
           <TabsTrigger value="empresa">Empresa</TabsTrigger>
           <TabsTrigger value="pix">PIX e prazo</TabsTrigger>
           <TabsTrigger value="impressao">Impressão</TabsTrigger>
-          <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
           <TabsTrigger value="link">Link do orçamento</TabsTrigger>
         </TabsList>
 
@@ -671,23 +670,6 @@ function Configuracoes() {
           />
         </TabsContent>
 
-        <TabsContent value="whatsapp" className="grid gap-4">
-          <CardWhatsapp />
-          <Card className="shadow-card">
-            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-              <div>
-                <p className="text-sm font-semibold">Atendimento automático (bot)</p>
-                <p className="text-xs text-muted-foreground">
-                  Horários, menu, respostas automáticas, mensagens e simulador.
-                </p>
-              </div>
-              <Button asChild variant="outline">
-                <Link to="/bot">Abrir Configuração do Bot</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="link">
           <CardLinkPublico />
         </TabsContent>
@@ -844,125 +826,6 @@ function CardLinkPublico() {
         <div className="flex justify-end">
           <Button onClick={salvarLink} disabled={salvando}>
             <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar link do orçamento"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-/** Endereço público do sistema. Conexões, credenciais e webhooks ficam na página Conexões. */
-function CardWhatsapp() {
-  const [origem, setOrigem] = useState("");
-
-  useEffect(() => setOrigem(window.location.origin), []);
-
-  const config = useQuery({
-    queryKey: ["whatsapp-config"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("whatsapp_config")
-        .select("id, app_url")
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Endereço público do sistema, usado pelas rotinas automáticas do bot.
-  const [enderecoSistema, setEnderecoSistema] = useState("");
-  const enderecoCarregado = useRef(false);
-  useEffect(() => {
-    if (enderecoCarregado.current) return;
-    if (!config.data) return;
-    enderecoCarregado.current = true;
-    setEnderecoSistema(config.data.app_url ?? "");
-  }, [config.data]);
-
-  const salvarEndereco = useMutation({
-    mutationFn: async (valor: string) => {
-      const id = config.data?.id;
-      if (!id) throw new Error("Configuração não encontrada");
-      const { error } = await supabase
-        .from("whatsapp_config")
-        .update({ app_url: valor.trim().replace(/\/+$/, "") })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Endereço do sistema salvo.");
-      config.refetch();
-    },
-    onError: (erro: unknown) => {
-      const detalhe =
-        erro && typeof erro === "object" && "message" in erro
-          ? String((erro as { message?: unknown }).message ?? "")
-          : "";
-      toast.error(
-        detalhe
-          ? `Não foi possível salvar o endereço do sistema: ${detalhe}`
-          : "Não foi possível salvar o endereço do sistema.",
-      );
-    },
-  });
-
-  return (
-    <Card className="max-w-3xl shadow-card">
-      <CardHeader>
-        <CardTitle className="text-base">WhatsApp</CardTitle>
-      </CardHeader>
-
-      <CardContent className="grid gap-4">
-        <div className="grid gap-2">
-          <Label>Endereço do sistema</Label>
-          <div className="flex flex-wrap gap-2">
-            <Input
-              value={enderecoSistema}
-              onChange={(e) => setEnderecoSistema(e.target.value)}
-              placeholder="https://seudominio.com"
-              className="font-mono text-xs"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => salvarEndereco.mutate(enderecoSistema)}
-              disabled={salvarEndereco.isPending}
-            >
-              {salvarEndereco.isPending ? "Salvando..." : "Salvar"}
-            </Button>
-            {origem && enderecoSistema.replace(/\/+$/, "") !== origem ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setEnderecoSistema(origem);
-                  salvarEndereco.mutate(origem);
-                }}
-                disabled={salvarEndereco.isPending}
-              >
-                Usar este endereço
-              </Button>
-            ) : null}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            É o endereço em que o sistema está publicado. As respostas automáticas do bot e os
-            avisos de inatividade são disparados por aqui — se estiver diferente do endereço em uso,
-            o bot não responde.
-          </p>
-          {origem && enderecoSistema.replace(/\/+$/, "") !== origem ? (
-            <p className="text-xs font-semibold text-destructive">
-              Diferente do endereço aberto agora ({origem}).
-            </p>
-          ) : null}
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-muted/40 p-3">
-          <p className="text-xs text-muted-foreground">
-            Conexões, credenciais, teste de conexão, status e webhook de cada número agora ficam na
-            página Conexões.
-          </p>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/conexoes">Abrir Conexões</Link>
           </Button>
         </div>
       </CardContent>
