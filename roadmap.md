@@ -73,4 +73,4 @@
 - [x] Registro e correção de nota PENDENTE, sem validação automática nem cupons
 - [x] Sorteio em RASCUNHO nunca exposto; mais de um ATIVO bloqueia o portal
 - [x] URL pública centralizada (`SORTEIOS_PUBLIC_URL`), redirecionamento do domínio e docs no deploy
-- [ ] Rodar os 22 testes funcionais + testes de segurança e limpar dados de teste
+- [x] Rodar os testes funcionais + testes de segurança e limpar dados de teste (27 verificações aprovadas)

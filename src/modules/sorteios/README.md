@@ -140,8 +140,6 @@ foi criada e nenhuma permissão de outro módulo foi alterada.
 
 ## Próximas etapas
 
-1. Telas administrativas (sorteios, prêmios, termos, notas, cupons).
-2. Portal público do participante com acesso apenas aos próprios dados.
-3. Geração aleatória de cupons e validação automática de notas.
-4. API local e sincronização bidirecional por CPF.
-5. Mecanismo do sorteio e registro de ganhadores.
+1. Geração aleatória de cupons e validação automática de notas.
+2. API local e sincronização bidirecional por CPF.
+3. Mecanismo do sorteio e registro de ganhadores.
