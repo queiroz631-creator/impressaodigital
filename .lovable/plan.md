@@ -84,8 +84,9 @@ Cupons, saldo, R$ 20 = 1 cupom, sorteio, ganhadores, fechamento, portal público
 
 **Servidor**
 - `src/lib/sorteios-sync.server.ts`: `abrirLote`, `receberNotasLote`, `confirmarLote` (atualiza `base_sincronizada_em` e enfileira o evento de validação por sorteio), `receberClientesLote`, `lerAlteracoesClientes(cursor, limite)`, `confirmarCursor(consumidor, sequencia)`, `tomarItens`/`marcarSincronizado`/`marcarErro`, `reconciliar()`.
-- `src/lib/sorteios-eventos.server.ts`: enfileiramento idempotente (upsert por `(origem, entidade, operacao_id)`) e disparo da validação por sorteio via `validarNotasPendentesDoSorteio`.
-- `src/lib/sorteios-validacao.server.ts`: adiciona `validarNotasPendentesDoSorteio(sorteioId, limite)` reutilizando `validarNotaPorId` sem tocar na regra existente; `validarNotasPendentes` permanece para reconciliação.
+- `src/lib/sorteios-eventos.server.ts`: enfileiramento idempotente (upsert por `(origem, entidade, operacao_id)`, apenas metadados) e disparo da validação por sorteio via `validarNotasPendentesDoSorteio(sorteioId)`.
+- `src/lib/sorteios-validacao.server.ts`: adiciona `validarNotasPendentesDoSorteio(sorteioId, limite)` — filtra `.eq("sorteio_id", sorteioId).eq("status","PENDENTE")` e reutiliza `validarNotaPorId` sem tocar na regra existente; `validarNotasPendentes` permanece apenas para reconciliação.
+
 - Novas rotas, todas `POST` com `?token=` conferido contra `whatsapp_config.webhook_token`, 401 sem corpo detalhado: `src/routes/api/public/sorteios/sync/notas-lote.ts`, `.../notas-confirmar.ts`, `.../clientes-receber.ts`, `.../clientes-alteracoes.ts`, `.../clientes-confirmar.ts`, `src/routes/api/public/sorteios/reconciliar.ts`. Todas validam entrada com Zod e devolvem apenas resumo.
 - `src/modules/sorteios/types/index.ts`: tipos `TipoSincronizacao` ampliado, `StatusFilaSincronizacao`, `SorteioSincronizacaoItem`, `clientes.origem_id`.
 
