@@ -4,15 +4,22 @@ Boa parte da base já está pronta de etapas anteriores. Confirmei no banco:
 
 - A tabela de conexões já existe, com **1 conexão** chamada "Principal" (ordem 0, ativa) e endereço de webhook próprio já gerado. As credenciais dela estão **vazias** — hoje o sistema usa as credenciais guardadas no servidor (variáveis de ambiente), com esse caminho de reserva já funcionando.
 - Todos os dados atuais já estão vinculados a essa conexão: conversas, configuração, horários, fluxos, respostas, menu, primeiro contato, números e status — **zero registros sem conexão**. Nenhum backfill novo é necessário.
-- As regras de acesso por conexão já existem em conversas, mensagens e arquivos (administrador vê tudo; atendente vinculado vê só a sua; atendente sem vínculo vê tudo — mantemos isso para não travar quem já usa).
+- As regras de acesso por conexão já existem em conversas, mensagens e arquivos, mas hoje contêm uma exceção permissiva: atendente **sem** conexão vinculada vê tudo. Isso será removido nesta etapa.
 - As rotinas automáticas (inatividade a cada minuto, status a cada 5 minutos) já existem e continuam sendo únicas.
 - Os 2 usuários atuais ainda não têm conexão vinculada.
 
 Então esta etapa é sobretudo **telas + isolamento das rotinas + segurança das credenciais**.
 
-## 1. Renomear a conexão atual
+## 1. Regra definitiva de acesso e conexão atual
 
-"Principal" passa a se chamar **Impressão Digital**, guardando o número atual. Nada mais muda nela: todo o histórico e toda a configuração continuam onde estão.
+- **Administrador:** vê todas as conexões.
+- **Atendente com conexão vinculada:** vê somente a conexão dele.
+- **Atendente sem conexão vinculada:** não vê nenhuma conversa, mensagem ou arquivo — de nenhuma conexão. Na tela WhatsApp recebe: "Seu usuário ainda não possui uma conexão de WhatsApp vinculada. Solicite ao administrador."
+
+Essa regra vale no banco, não só na tela: as regras de acesso deixam de ter a exceção "sem conexão vê tudo". Nenhum atendente existente fica com acesso amplo por estar sem vínculo — o administrador passa a escolher a conexão dele na tela Usuários. O administrador **não** é vinculado automaticamente a nenhuma conexão; continua vendo todas.
+
+"Principal" passa a se chamar **Impressão Digital**, guardando o número atual. Nada mais muda nela: todo o histórico e toda a configuração continuam onde estão. O webhook dela **não** é reconfigurado por migração nem por publicação — só muda se você clicar em "Reconfigurar webhook".
+
 
 ## 2. Proteger as credenciais (correção importante)
 
@@ -21,6 +28,8 @@ Hoje qualquer pessoa logada consegue ler a lista de conexões inteira — inclus
 - A leitura direta da tabela de conexões passa a ser exclusiva do administrador no servidor.
 - As telas passam a ler uma lista sem credenciais (nome, número, cor, situação, ordem e endereço do webhook).
 - Ao editar uma conexão, os campos de token aparecem em branco com aviso "deixe em branco para manter"; o valor salvo nunca volta para a tela.
+- Cada pessoa recebe apenas as conexões que pode usar: administrador recebe todas (sem credenciais), atendente recebe só a dele, atendente sem vínculo recebe nenhuma.
+
 
 ## 3. Nova página Conexões (só administrador)
 
@@ -55,7 +64,9 @@ Continua **um cron de cada rotina**. Fila, inatividade e status passam a percorr
 
 ## Detalhes técnicos
 
-- Migração nova (sem apagar nada): renomear a conexão inicial; substituir a policy de leitura aberta de `whatsapp_conexoes` por leitura restrita a administrador; view/RPC `whatsapp_conexoes_publicas` (sem tokens) com `security invoker` para a lista das telas; índices em `conexao_id` onde faltarem. Nenhuma credencial real dentro de migração.
+- Migração nova (sem apagar dados): renomear a conexão inicial; substituir as policies de `whatsapp_conversas`, `whatsapp_mensagens` e `whatsapp_arquivos` removendo as cláusulas permissivas `conexao_id IS NULL` e `conexao_do_usuario(auth.uid()) IS NULL` — passam a exigir administrador **ou** conexão do usuário igual à conexão da conversa (mensagens/arquivos via relação com a conversa); substituir a leitura aberta de `whatsapp_conexoes` por leitura restrita a administrador; índices em `conexao_id` onde faltarem. Nenhuma credencial real dentro de migração, e nenhum webhook reconfigurado por migração.
+- A lista de conexões para as telas sai por server function (nunca `select` direto do navegador), montada com o cliente autenticado e filtrada por administrador/conexão do usuário, projetando só campos não sensíveis. Se uma view auxiliar for usada, ela é `security invoker` **e** as policies são testadas de fato com um atendente — `security invoker` sozinho não é considerado garantia.
+
 - `zapi.server.ts` já expõe `credenciaisDaConexao(conexaoId)` e `chamarZapi({ conexaoId })` com reserva nas variáveis de ambiente — mantidos. Passar `conexaoId` em todos os chamadores restantes: `whatsapp.functions.ts` (enviar texto/arquivo/rápida/editar/apagar/status/webhook), `status-whatsapp.server.ts`, `link-dados.server.ts`, `curriculo.functions.ts` e as chamadas de "digitando" ainda sem conexão em `bot.server.ts`.
 - Novas server functions em `src/lib/conexoes.functions.ts` com `requireSupabaseAuth` + verificação de administrador via `has_role`: listar (sem tokens), criar (cria também a config padrão), atualizar (token vazio = mantém), ativar/desativar, excluir (bloqueia com dados vinculados), testar e reconfigurar webhook.
 - Nova rota `src/routes/api/public/whatsapp/webhook/$token.ts` resolvendo a conexão pelo `webhook_token`; `webhook.ts` atual permanece como compatibilidade.
@@ -65,7 +76,15 @@ Continua **um cron de cada rotina**. Fila, inatividade e status passam a percorr
 
 ## Verificação
 
-Typecheck, lint e build; teste no preview com a conexão atual (receber, enviar, arquivo, bot, fila, áudio, status) e conferência de isolamento entre um atendente vinculado e o administrador. Sem commit e sem push.
+Typecheck, lint e build. Teste no preview com a conexão atual (receber, enviar, arquivo, bot, fila, áudio, status) e o cenário de isolamento montado explicitamente:
+
+- Conexão A (Impressão Digital) e conexão B (segunda conexão), cada uma com uma conversa.
+- Atendente vinculado à A: vê A, não vê B.
+- Atendente sem conexão: não vê nenhuma conversa, nem pela tela nem por chamada direta ao banco/API.
+- Administrador: vê as duas e consegue alternar entre elas.
+
+O isolamento é verificado nas duas frentes: na tela e por chamada direta (regras do banco). Nenhum usuário novo é criado automaticamente — o vínculo é feito na tela Usuários com os usuários que já existem. Sem commit e sem push; o relatório com migrações, regras de acesso, funções do servidor e testes vem antes de qualquer publicação.
+
 
 ## Ponto que precisa de decisão sua
 
