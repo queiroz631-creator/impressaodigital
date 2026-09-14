@@ -2414,6 +2414,76 @@ export type Database = {
           },
         ]
       }
+      sorteio_sessoes: {
+        Row: {
+          cliente_id: string
+          criado_em: string
+          expira_em: string
+          id: string
+          ip: string | null
+          participante_id: string
+          renovacao_expira_em: string | null
+          renovacao_hash: string | null
+          revogado_em: string | null
+          sorteio_id: string
+          token_hash: string
+          usado_em: string
+          user_agent: string | null
+        }
+        Insert: {
+          cliente_id: string
+          criado_em?: string
+          expira_em: string
+          id?: string
+          ip?: string | null
+          participante_id: string
+          renovacao_expira_em?: string | null
+          renovacao_hash?: string | null
+          revogado_em?: string | null
+          sorteio_id: string
+          token_hash: string
+          usado_em?: string
+          user_agent?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          criado_em?: string
+          expira_em?: string
+          id?: string
+          ip?: string | null
+          participante_id?: string
+          renovacao_expira_em?: string | null
+          renovacao_hash?: string | null
+          revogado_em?: string | null
+          sorteio_id?: string
+          token_hash?: string
+          usado_em?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_sessoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sorteio_sessoes_participante_id_fkey"
+            columns: ["participante_id"]
+            isOneToOne: false
+            referencedRelation: "sorteio_participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sorteio_sessoes_sorteio_id_fkey"
+            columns: ["sorteio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sorteio_sincronizacoes: {
         Row: {
           criado_em: string
@@ -2453,6 +2523,27 @@ export type Database = {
           registros_recebidos?: number
           status?: string
           tipo?: string
+        }
+        Relationships: []
+      }
+      sorteio_tentativas: {
+        Row: {
+          acao: string
+          criado_em: string
+          id: string
+          ip: string
+        }
+        Insert: {
+          acao: string
+          criado_em?: string
+          id?: string
+          ip: string
+        }
+        Update: {
+          acao?: string
+          criado_em?: string
+          id?: string
+          ip?: string
         }
         Relationships: []
       }
@@ -3233,6 +3324,17 @@ export type Database = {
       sorteio_definir_termos_atual: {
         Args: { _termos_id: string }
         Returns: undefined
+      }
+      sorteio_portal_criar_participacao: {
+        Args: {
+          _cpf: string
+          _data_nascimento: string
+          _nome: string
+          _sorteio_id: string
+          _telefone: string
+          _telefone_normalizado: string
+        }
+        Returns: string
       }
       tem_permissao: {
         Args: { _chave: string; _user_id: string }

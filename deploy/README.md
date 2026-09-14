@@ -316,3 +316,34 @@ docker exec -i supabase-db psql -U postgres -d postgres < deploy/vps-bot-enderec
 ```
 
 Depois abra **Configurações → WhatsApp**, clique em **Usar este endereço** e salve.
+
+## Portal público de Sorteios (domínio próprio)
+
+O portal de participantes (`/sorteios-publico`) pode responder por um domínio
+separado do administrativo. Arquitetura esperada:
+
+- `https://seudominio.com` → sistema administrativo (inalterado);
+- `https://sorteios.seudominio.com` → portal público de Sorteios;
+- a raiz do domínio de sorteios abre direto o portal (`/sorteios-publico`).
+
+Na VPS:
+
+1. No DNS, crie um registro tipo **A** para `sorteios.seudominio.com`
+   apontando para o IP da VPS.
+2. No `.env` da aplicação (raiz do projeto), adicione:
+
+   ```bash
+   SORTEIOS_PUBLIC_URL=https://sorteios.seudominio.com
+   VITE_SORTEIOS_PUBLIC_URL=https://sorteios.seudominio.com
+   ```
+
+   `VITE_` precisa existir **no momento do build** (é embutida no navegador);
+   `SORTEIOS_PUBLIC_URL` é lida pelo servidor em execução. Rode um novo build
+   depois de alterar.
+3. No Nginx, crie um `server` para `sorteios.seudominio.com` apontando para a
+   mesma aplicação (mesmo proxy do domínio principal) e emita o certificado
+   com `certbot --nginx -d sorteios.seudominio.com`.
+
+Sem a variável, nada muda: o portal continua funcionando em
+`/sorteios-publico` no localhost, no preview e no domínio principal.
+Nenhum valor secreto é necessário para essa configuração.
