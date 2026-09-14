@@ -18,11 +18,15 @@ Por isso, o único ajuste indispensável em clientes é acrescentar dois campos 
 
 ## Ajuste em clientes (mínimo e explicitado)
 
-- Novo campo de CPF, sempre guardado só com números (sem pontos e sem traço).
+- Novo campo de CPF, guardado **somente com números** (sem pontos e sem traço).
+- Regra no banco: quando preenchido, o CPF precisa ter **exatamente 11 dígitos** e passar na verificação dos dígitos verificadores; CPF em branco é gravado como vazio (nulo), nunca como texto vazio.
 - Novo campo de data de nascimento.
-- Unicidade de CPF aplicada **apenas quando o CPF estiver preenchido**, para que os 470 clientes atuais sem CPF continuem válidos.
+- Antes de aplicar a unicidade, é feita a conferência de CPFs repetidos e o resultado é relatado; a unicidade vale **apenas quando o CPF estiver preenchido**, para que os 470 clientes atuais continuem válidos.
 - Índice de busca por CPF.
-- Nenhum cliente será apagado, mesclado ou modificado.
+- Os 470 clientes existentes não são alterados, apagados nem mesclados.
+- O cadastro de clientes continua sendo o cadastro mestre; a participação no sorteio apenas aponta para ele, sem repetir CPF, nome, telefone ou nascimento.
+- Campos já preenchidos nunca serão sobrescritos automaticamente pelo futuro cadastro público; apenas campos vazios poderão ser completados mais adiante.
+
 
 ## Tabelas novas do módulo
 
@@ -45,11 +49,20 @@ Nada é apagado: notas e cupons cancelados permanecem no banco com sua situaçã
 ## Regras que já ficam garantidas pelo banco nesta etapa
 
 - Cliente não pode ter duas participações no mesmo sorteio.
+- Um cliente só tem um registro de histórico por sorteio, e o histórico é preservado permanentemente.
 - Número de cupom não repete dentro do mesmo sorteio.
-- Número de nota não repete dentro do mesmo sorteio (evita revalidar a mesma nota).
-- Ao cancelar uma nota, os cupons daquela nota passam a cancelados automaticamente, sem apagar nada.
+- Número de nota só pode ser usado uma vez dentro do mesmo sorteio; uma nota já validada não pode ser cadastrada nem validada de novo.
+- A validação da nota, quando for implementada, continua exclusivamente por número + valor — a data nunca é usada para validar.
+- Ao cancelar uma nota, os cupons daquela nota passam a cancelados; cancelar um cupom **não** cancela a nota.
+- Nesta etapa nenhum saldo é recalculado automaticamente.
+- Nenhum registro de nota ou cupom é apagado em qualquer situação.
 - Ao registrar uma participação nova, saldo, notas e cupons começam em zero.
 - A situação de sincronização de uma participação começa como pendente — nada é considerado sincronizado por padrão.
+
+## Fora do escopo desta etapa
+
+API local, sincronização, cron, geração de cupons, validação automática de notas, portal público, login do participante e o mecanismo do sorteio. Somente fundação: banco, segurança e estrutura.
+
 
 ## Segurança
 
@@ -64,8 +77,10 @@ Criação de `src/modules/sorteios/` com `components/`, `services/`, `hooks/`, `
 
 ## Detalhes técnicos
 
-- Migrations versionadas em `supabase/migrations/`: (1) campos `cpf` + `data_nascimento` em `clientes` com índice único parcial `WHERE cpf IS NOT NULL`; (2) tabelas do módulo com `GRANT`, RLS e políticas; (3) gatilhos de `updated_at` reaproveitando `public.set_updated_at()` e gatilho de propagação de cancelamento nota → cupons.
+- Migrations versionadas em `supabase/migrations/`: (1) `clientes.cpf` (texto só dígitos, `CHECK` de 11 dígitos + `NULLIF` para vazio) e `clientes.data_nascimento`, com índice único parcial `WHERE cpf IS NOT NULL` aplicado após conferência de duplicidades; validação dos dígitos verificadores por função `public.cpf_valido(text)` usada no `CHECK`; (2) tabelas do módulo com `GRANT`, RLS e políticas; (3) gatilhos de `updated_at` reaproveitando `public.set_updated_at()` e gatilho unidirecional de cancelamento nota → cupons (nunca cupom → nota), sem recálculo de saldo.
+- Unicidades: `UNIQUE (sorteio_id, cliente_id)` em participantes, `UNIQUE (cliente_id, sorteio_id)` em histórico, `UNIQUE (sorteio_id, numero)` em cupons e em notas, `UNIQUE (numero_sorteio)` em sorteios.
 - Chaves estrangeiras: participantes → `sorteios`/`clientes`; notas → `sorteios`/`sorteio_participantes`/`sorteio_notas_base`; cupons → `sorteios`/`sorteio_participantes`/`sorteio_notas`; histórico → `clientes`/`sorteios`; prêmios/ganhadores → `sorteios` e cupom/participante.
+
 - Políticas baseadas em `public.has_role(auth.uid(),'admin')` ou `public.tem_permissao(auth.uid(),'sorteios.visualizar')`, sem tocar em políticas existentes.
 - CPF como chave de negócio na sincronização; o identificador interno de cada banco nunca é usado para correspondência entre bancos.
 - Sem cron, sem endpoints, sem alteração em WhatsApp, Bot, Conexões, Usuários, Orçamentos, Calculadora, Preços ou Currículos. Sem commit e sem push.
