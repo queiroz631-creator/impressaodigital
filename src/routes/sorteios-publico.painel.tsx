@@ -54,6 +54,26 @@ function PainelPortal() {
                 />
               </div>
 
+              {painel.data.dados.acoesBloqueadas ? (
+                <p className="text-sm text-muted-foreground text-center">
+                  Este sorteio não está recebendo novas notas no momento.
+                </p>
+              ) : (
+                <Button asChild className="w-full h-12 text-base">
+                  <Link to="/sorteios-publico/notas">Registrar nota</Link>
+                </Button>
+              )}
+
+              <div className="grid gap-2">
+                <AtalhoLink to="/sorteios-publico/notas" Icone={Receipt} rotulo="Minhas notas" />
+                <AtalhoLink to="/sorteios-publico/cupons" Icone={Ticket} rotulo="Meus cupons" />
+                <AtalhoLink
+                  to="/sorteios-publico/informacoes"
+                  Icone={Info}
+                  rotulo="Informações do sorteio"
+                />
+              </div>
+
               <Card>
                 <CardContent className="pt-6 space-y-1 text-sm">
                   <p className="font-semibold text-foreground">
@@ -74,25 +94,6 @@ function PainelPortal() {
                 </CardContent>
               </Card>
 
-              {painel.data.dados.acoesBloqueadas ? (
-                <p className="text-sm text-muted-foreground text-center">
-                  Este sorteio não está recebendo novas notas no momento.
-                </p>
-              ) : (
-                <Button asChild className="w-full h-12 text-base">
-                  <Link to="/sorteios-publico/notas">Registrar nota</Link>
-                </Button>
-              )}
-
-              <div className="grid gap-2">
-                <AtalhoLink to="/sorteios-publico/notas" Icone={Receipt} rotulo="Minhas notas" />
-                <AtalhoLink to="/sorteios-publico/cupons" Icone={Ticket} rotulo="Meus cupons" />
-                <AtalhoLink
-                  to="/sorteios-publico/informacoes"
-                  Icone={Info}
-                  rotulo="Informações do sorteio"
-                />
-              </div>
             </>
           )}
         </div>
