@@ -19,29 +19,17 @@ import {
 import { centavosDeTexto, textoDeCentavos } from "@/modules/sorteios/validations/sorteio";
 import { brl, dataHoraBR } from "@/lib/format";
 
-/** Formata o campo de valor durante a digitação no padrão moeda brasileira.
- *  1 → 1,00 | 1234 → 1.234,00 | 1234,56 → 1.234,56
+/** Máscara de moeda por acúmulo de dígitos: aceita só números e considera
+ *  os dois últimos dígitos como centavos. Vírgula e milhar aparecem sozinhos.
+ *  1 → 0,01 | 1234 → 12,34 | 123456 → 1.234,56
  */
 function formatarMoedaDigitando(valor: string): string {
-  if (!valor) return "";
-  const temVirgula = valor.includes(",");
-  const digitos = valor.replace(/\D/g, "");
+  const digitos = valor.replace(/\D/g, "").replace(/^0+/, "");
   if (!digitos) return "";
-  if (!temVirgula) {
-    const inteiro = digitos.replace(/^0+/, "") || "0";
-    return `${Number(inteiro).toLocaleString("pt-BR")},00`;
-  }
-  const partes = valor.split(",");
-  const depois = (partes.at(-1) ?? "")
-    .replace(/\D/g, "")
-    .padEnd(2, "0")
-    .slice(0, 2);
-  const antes = partes
-    .slice(0, -1)
-    .join("")
-    .replace(/\D/g, "");
-  const inteiro = antes.replace(/^0+/, "") || "0";
-  return `${Number(inteiro).toLocaleString("pt-BR")},${depois}`;
+  const preenchido = digitos.padStart(3, "0");
+  const centavos = preenchido.slice(-2);
+  const inteiro = Number(preenchido.slice(0, -2)).toLocaleString("pt-BR");
+  return `${inteiro},${centavos}`;
 }
 
 const META_PRIVADA = [
@@ -136,7 +124,7 @@ function NotasPortal() {
                     inputMode="numeric"
                     placeholder="Somente o número da nota"
                     value={numero}
-                    onChange={(e) => setNumero(e.target.value)}
+                    onChange={(e) => setNumero(e.target.value.replace(/\D/g, ""))}
                   />
                 </div>
                 <div className="space-y-2">
