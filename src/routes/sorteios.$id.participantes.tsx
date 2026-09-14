@@ -1,8 +1,12 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -13,9 +17,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { brl, dataHoraBR } from "@/lib/format";
+import { definirElegibilidadeParticipante } from "@/lib/sorteios.functions";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
+import { somenteConsulta } from "@/modules/sorteios/services/status";
 import { useParticipantesSorteio, useSorteio } from "@/modules/sorteios/hooks/useSorteios";
 import { mascararCpf, mascararTelefone } from "@/modules/sorteios/validations/sorteio";
+
 
 export const Route = createFileRoute("/sorteios/$id/participantes")({
   component: () => (
