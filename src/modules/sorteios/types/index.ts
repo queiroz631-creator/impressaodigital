@@ -201,8 +201,48 @@ export interface SorteioSincronizacao {
   registros_recebidos: number;
   registros_processados: number;
   erro: string | null;
+  /** Diagnóstico do lote (Etapa 5). */
+  lote_id?: string | null;
+  operacao_id?: string | null;
+  sorteio_id?: string | null;
+  origem?: OrigemDestinoSincronizacao | null;
+  destino?: OrigemDestinoSincronizacao | null;
+  duracao_ms?: number | null;
   criado_em: string;
 }
+
+/** Item da fila de sincronização — só metadados de processamento. */
+export interface SorteioSincronizacaoItem {
+  id: string;
+  /** Marca d'água/cursor usado pela API local. */
+  sequencia: number;
+  tipo: TipoSincronizacao;
+  entidade: string;
+  entidade_id: string;
+  sorteio_id: string | null;
+  origem: OrigemDestinoSincronizacao;
+  destino: OrigemDestinoSincronizacao;
+  operacao: string;
+  /** Chave de idempotência do evento. */
+  operacao_id: string | null;
+  status: StatusFilaSincronizacao;
+  tentativas: number;
+  ultima_tentativa_em: string | null;
+  processado_em: string | null;
+  erro: string | null;
+  alterado_em: string;
+  criado_em: string;
+  atualizado_em: string;
+}
+
+/** Cursor confirmado por consumidor (ex.: API local da loja). */
+export interface SorteioSincronizacaoCursor {
+  consumidor: string;
+  sequencia: number;
+  criado_em: string;
+  atualizado_em: string;
+}
+
 
 export interface SorteioAuditoria {
   id: string;
