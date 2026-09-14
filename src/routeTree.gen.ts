@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BotRouteImport } from './routes/bot'
 import { Route as ClientesRouteImport } from './routes/clientes'
+import { Route as ConexoesRouteImport } from './routes/conexoes'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as MelhoriasRouteImport } from './routes/melhorias'
@@ -50,6 +51,11 @@ const BotRoute = BotRouteImport.update({
 const ClientesRoute = ClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConexoesRoute = ConexoesRouteImport.update({
+  id: '/conexoes',
+  path: '/conexoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
+  '/conexoes': typeof ConexoesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
+  '/conexoes': typeof ConexoesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
+  '/conexoes': typeof ConexoesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bot'
     | '/clientes'
+    | '/conexoes'
     | '/configuracoes'
     | '/dashboard'
     | '/melhorias'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bot'
     | '/clientes'
+    | '/conexoes'
     | '/configuracoes'
     | '/dashboard'
     | '/melhorias'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bot'
     | '/clientes'
+    | '/conexoes'
     | '/configuracoes'
     | '/dashboard'
     | '/melhorias'
@@ -299,6 +311,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BotRoute: typeof BotRoute
   ClientesRoute: typeof ClientesRoute
+  ConexoesRoute: typeof ConexoesRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   DashboardRoute: typeof DashboardRoute
   MelhoriasRoute: typeof MelhoriasRoute
@@ -346,6 +359,13 @@ declare module '@tanstack/react-router' {
       path: '/clientes'
       fullPath: '/clientes'
       preLoaderRoute: typeof ClientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conexoes': {
+      id: '/conexoes'
+      path: '/conexoes'
+      fullPath: '/conexoes'
+      preLoaderRoute: typeof ConexoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes': {
@@ -496,6 +516,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BotRoute: BotRoute,
   ClientesRoute: ClientesRoute,
+  ConexoesRoute: ConexoesRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   DashboardRoute: DashboardRoute,
   MelhoriasRoute: MelhoriasRoute,
