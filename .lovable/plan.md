@@ -4,7 +4,15 @@ Somente o portal do participante. Nada de API local, sincronização, validaçã
 
 ## Endereço e visual
 
-Portal em `/sorteios-publico`, com layout próprio (mobile-first, sem o menu lateral administrativo): topo com logo e nome do sorteio, cartões grandes, barra de navegação inferior no celular. O endereço `sorteios.queiroztecno.com.br` poderá apontar para esse caminho quando o domínio for ligado; nada nas telas administrativas muda.
+Portal em `/sorteios-publico`, com layout próprio (mobile-first, sem o menu lateral administrativo): topo com logo e nome do sorteio, cartões grandes, barra de navegação inferior no celular. Nada nas telas administrativas muda.
+
+### Endereço público configurável
+
+- A URL pública do portal vem da variável de ambiente `SORTEIOS_PUBLIC_URL` (produção: `https://sorteios.queiroztecno.com.br`). Sem a variável, usa automaticamente a origem atual (Lovable, preview ou localhost) — o portal continua funcionando em todos os ambientes.
+- Função centralizada `urlPublicaSorteios(caminho)` monta qualquer link do portal (portal, QR Code, compartilhamento, links exibidos no administrativo, redirecionamentos). O domínio nunca aparece escrito diretamente no código.
+- Quando o acesso chega pelo host `sorteios.queiroztecno.com.br`, a raiz `/` redireciona para `/sorteios-publico`; em qualquer outro host (localhost, Lovable, domínio administrativo) o comportamento atual é preservado.
+- O domínio público exibe somente o portal — nenhuma tela ou menu administrativo. O domínio administrativo (`queiroztecno.com.br`) não é alterado.
+- DNS, Nginx e SSL ficam fora do Lovable: a configuração na VPS é feita separadamente. O `deploy/README.md` e o `deploy/.env.example` ganham a documentação da variável `SORTEIOS_PUBLIC_URL` (sem nenhum valor secreto).
 
 ## Fluxo de entrada
 
