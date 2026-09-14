@@ -834,7 +834,9 @@ export type Database = {
       }
       clientes: {
         Row: {
+          cpf: string | null
           created_at: string
+          data_nascimento: string | null
           email: string | null
           id: string
           nome: string
@@ -844,7 +846,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
           email?: string | null
           id?: string
           nome?: string
@@ -854,7 +858,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
           email?: string | null
           id?: string
           nome?: string
@@ -2600,6 +2606,7 @@ export type Database = {
     }
     Functions: {
       conexao_do_usuario: { Args: { _user_id: string }; Returns: string }
+      cpf_valido: { Args: { _cpf: string }; Returns: boolean }
       disparar_rotina_bot: { Args: { rota: string }; Returns: undefined }
       has_role: {
         Args: {
