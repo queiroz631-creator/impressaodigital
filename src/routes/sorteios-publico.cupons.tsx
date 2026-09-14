@@ -27,7 +27,10 @@ function CuponsPortal() {
   });
 
   return (
-    <PaginaPrivada titulo="Meus cupons" subtitulo="Seus cupons são gerados após a análise das notas.">
+    <PaginaPrivada
+      titulo="Meus cupons"
+      subtitulo="Seus cupons são gerados após a análise das notas."
+    >
       {() =>
         !cupons.data ? (
           <Skeleton className="h-32 w-full" />

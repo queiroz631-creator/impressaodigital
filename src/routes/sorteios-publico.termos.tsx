@@ -9,7 +9,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutPublico } from "@/modules/sorteios/components/publico/LayoutPublico";
-import { aceitarTermosSorteio, obterInformacoesPublicasSorteio } from "@/lib/sorteios-publico.functions";
+import {
+  aceitarTermosSorteio,
+  obterInformacoesPublicasSorteio,
+} from "@/lib/sorteios-publico.functions";
 import { useContextoPortal } from "@/modules/sorteios/hooks/usePortalParticipante";
 
 const META_PRIVADA = [

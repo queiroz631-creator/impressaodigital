@@ -29,10 +29,7 @@ export function useContextoPortal() {
       }
       return;
     }
-    if (
-      resultado.dados.precisaAceitarTermos &&
-      pathname !== "/sorteios-publico/termos"
-    ) {
+    if (resultado.dados.precisaAceitarTermos && pathname !== "/sorteios-publico/termos") {
       void navigate({ to: "/sorteios-publico/termos" });
     }
   }, [resultado, pathname, navigate]);

@@ -24,8 +24,7 @@ export function PaginaPrivada({
 
   if (!contexto.data || !contexto.data.ok) {
     const erro = contexto.data && !contexto.data.ok ? contexto.data : null;
-    const redirecionando =
-      erro?.codigo === "SESSAO" || erro?.codigo === "SORTEIO_INDISPONIVEL";
+    const redirecionando = erro?.codigo === "SESSAO" || erro?.codigo === "SORTEIO_INDISPONIVEL";
     return (
       <LayoutPublico autenticado>
         {erro && !redirecionando ? (

@@ -122,11 +122,7 @@ async function buscarSessao(
   campo: "token_hash" | "renovacao_hash",
   hash: string,
 ): Promise<SessaoRow | null> {
-  const { data } = await supabase
-    .from("sorteio_sessoes")
-    .select("*")
-    .eq(campo, hash)
-    .maybeSingle();
+  const { data } = await supabase.from("sorteio_sessoes").select("*").eq(campo, hash).maybeSingle();
   return data;
 }
 
@@ -150,11 +146,7 @@ export async function carregarSessao(): Promise<ContextoParticipante> {
   const token = getCookie(COOKIE_SESSAO);
   if (token) {
     const encontrada = await buscarSessao(supabase, "token_hash", sha256(token));
-    if (
-      encontrada &&
-      !encontrada.revogado_em &&
-      new Date(encontrada.expira_em).getTime() > agora
-    ) {
+    if (encontrada && !encontrada.revogado_em && new Date(encontrada.expira_em).getTime() > agora) {
       sessao = encontrada;
     }
   }
@@ -216,10 +208,7 @@ export async function carregarSessao(): Promise<ContextoParticipante> {
     .eq("id", sessao.sorteio_id)
     .maybeSingle();
   if (!sorteio || sorteio.status === "RASCUNHO") {
-    throw new ErroPortal(
-      "SORTEIO_INDISPONIVEL",
-      "Não há nenhum sorteio disponível no momento.",
-    );
+    throw new ErroPortal("SORTEIO_INDISPONIVEL", "Não há nenhum sorteio disponível no momento.");
   }
 
   return { sessaoId: sessao.id, participante, sorteio };
@@ -398,10 +387,7 @@ export async function limitarTentativas(acao: AcaoLimitada): Promise<void> {
     .eq("ip", ip)
     .gte("criado_em", janela);
   if ((count ?? 0) > LIMITES[acao]) {
-    throw new ErroPortal(
-      "LIMITE",
-      "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
-    );
+    throw new ErroPortal("LIMITE", "Muitas tentativas. Aguarde alguns minutos e tente novamente.");
   }
 }
 

@@ -73,7 +73,9 @@ function NotasPortal() {
         setErro(resultado.mensagem);
         return;
       }
-      toast.success(corrigindo ? "Nota corrigida! Está em análise." : "Nota registrada! Está em análise.");
+      toast.success(
+        corrigindo ? "Nota corrigida! Está em análise." : "Nota registrada! Está em análise.",
+      );
       setNumero("");
       setValor("");
       setCorrigindo(null);

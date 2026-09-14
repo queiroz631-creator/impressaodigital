@@ -48,13 +48,17 @@ function PainelPortal() {
                 <Resumo rotulo="Notas registradas" valor={String(painel.data.dados.total_notas)} />
                 <Resumo rotulo="Em análise" valor={String(painel.data.dados.notas_pendentes)} />
                 <Resumo rotulo="Cupons ativos" valor={String(painel.data.dados.total_cupons)} />
-                <Resumo rotulo="Saldo acumulado" valor={brl(painel.data.dados.saldo_centavos / 100)} />
+                <Resumo
+                  rotulo="Saldo acumulado"
+                  valor={brl(painel.data.dados.saldo_centavos / 100)}
+                />
               </div>
 
               <Card>
                 <CardContent className="pt-6 space-y-1 text-sm">
                   <p className="font-semibold text-foreground">
-                    Sorteio nº {painel.data.dados.sorteio.numero_sorteio} — {painel.data.dados.sorteio.nome}
+                    Sorteio nº {painel.data.dados.sorteio.numero_sorteio} —{" "}
+                    {painel.data.dados.sorteio.nome}
                   </p>
                   <p className="text-muted-foreground">
                     Período: {dataBR(painel.data.dados.sorteio.data_inicio)} a{" "}
@@ -83,7 +87,11 @@ function PainelPortal() {
               <div className="grid gap-2">
                 <AtalhoLink to="/sorteios-publico/notas" Icone={Receipt} rotulo="Minhas notas" />
                 <AtalhoLink to="/sorteios-publico/cupons" Icone={Ticket} rotulo="Meus cupons" />
-                <AtalhoLink to="/sorteios-publico/informacoes" Icone={Info} rotulo="Informações do sorteio" />
+                <AtalhoLink
+                  to="/sorteios-publico/informacoes"
+                  Icone={Info}
+                  rotulo="Informações do sorteio"
+                />
               </div>
             </>
           )}
@@ -104,15 +112,7 @@ function Resumo({ rotulo, valor }: { rotulo: string; valor: string }) {
   );
 }
 
-function AtalhoLink({
-  to,
-  rotulo,
-  Icone,
-}: {
-  to: string;
-  rotulo: string;
-  Icone: typeof Receipt;
-}) {
+function AtalhoLink({ to, rotulo, Icone }: { to: string; rotulo: string; Icone: typeof Receipt }) {
   return (
     <Button asChild variant="outline" className="w-full h-12 justify-start text-base">
       <Link to={to}>

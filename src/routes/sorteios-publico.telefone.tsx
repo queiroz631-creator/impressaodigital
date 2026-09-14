@@ -80,10 +80,7 @@ function TelefonePortal() {
         <CardContent className="pt-6 space-y-5">
           <CampoTelefone valor={telefone} aoMudar={setTelefone} autoFocus />
           <label className="flex items-center gap-3 text-sm text-foreground">
-            <Checkbox
-              checked={lembrar}
-              onCheckedChange={(v) => setLembrar(v === true)}
-            />
+            <Checkbox checked={lembrar} onCheckedChange={(v) => setLembrar(v === true)} />
             Lembrar neste dispositivo
           </label>
           {erro && <p className="text-sm text-destructive">{erro}</p>}

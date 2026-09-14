@@ -12,15 +12,13 @@ function baseConfigurada(): string {
     typeof import.meta !== "undefined"
       ? ((import.meta.env?.["VITE_SORTEIOS_PUBLIC_URL"] as string | undefined) ?? "")
       : "";
-  const servidor =
-    typeof process !== "undefined" ? (process.env["SORTEIOS_PUBLIC_URL"] ?? "") : "";
+  const servidor = typeof process !== "undefined" ? (process.env["SORTEIOS_PUBLIC_URL"] ?? "") : "";
   return (navegador || servidor).trim().replace(/\/+$/, "");
 }
 
 /** URL completa do portal (ex.: https://sorteios.exemplo.com.br/sorteios-publico). */
 export function urlPublicaSorteios(caminho = "/sorteios-publico"): string {
-  const base =
-    baseConfigurada() || (typeof window !== "undefined" ? window.location.origin : "");
+  const base = baseConfigurada() || (typeof window !== "undefined" ? window.location.origin : "");
   const rota = caminho.startsWith("/") ? caminho : `/${caminho}`;
   return base ? `${base}${rota}` : rota;
 }

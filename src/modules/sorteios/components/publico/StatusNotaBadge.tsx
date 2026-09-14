@@ -1,6 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 
-const ESTILO: Record<string, { rotulo: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const ESTILO: Record<
+  string,
+  { rotulo: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   PENDENTE: { rotulo: "Pendente", variant: "secondary" },
   VALIDA: { rotulo: "Válida", variant: "default" },
   INVALIDA: { rotulo: "Inválida", variant: "destructive" },

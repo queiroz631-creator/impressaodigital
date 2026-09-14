@@ -32,9 +32,7 @@ import {
   validarNomeCompleto,
 } from "@/modules/sorteios/validations/cliente";
 
-export type Resultado<T> =
-  | { ok: true; dados: T }
-  | { ok: false; codigo: string; mensagem: string };
+export type Resultado<T> = { ok: true; dados: T } | { ok: false; codigo: string; mensagem: string };
 
 async function executar<T>(fn: () => Promise<T>): Promise<Resultado<T>> {
   try {
@@ -42,7 +40,11 @@ async function executar<T>(fn: () => Promise<T>): Promise<Resultado<T>> {
   } catch (e) {
     if (e instanceof ErroPortal) return { ok: false, codigo: e.codigo, mensagem: e.message };
     console.error("[sorteios-publico]", e);
-    return { ok: false, codigo: "ERRO", mensagem: "Não foi possível concluir agora. Tente novamente." };
+    return {
+      ok: false,
+      codigo: "ERRO",
+      mensagem: "Não foi possível concluir agora. Tente novamente.",
+    };
   }
 }
 
@@ -319,10 +321,7 @@ export const aceitarTermosSorteio = createServerFn({ method: "POST" })
       if (!termos || termos.versao !== data.versao) {
         throw new ErroPortal("VALIDACAO", "A versão dos termos não confere. Recarregue a página.");
       }
-      if (
-        participante.aceite_termos_versao !== termos.versao ||
-        !participante.aceite_termos_em
-      ) {
+      if (participante.aceite_termos_versao !== termos.versao || !participante.aceite_termos_em) {
         const { error } = await supabase
           .from("sorteio_participantes")
           .update({
@@ -427,9 +426,7 @@ export const listarMinhasNotas = createServerFn({ method: "GET" }).handler(async
 
 /** Correção de nota INVÁLIDA: volta para PENDENTE. CANCELADA é só consulta. */
 export const corrigirMinhaNota = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
-    esquemaNota.extend({ nota_id: z.string().uuid() }).parse(data),
-  )
+  .inputValidator((data) => esquemaNota.extend({ nota_id: z.string().uuid() }).parse(data))
   .handler(async ({ data }) =>
     executar(async () => {
       const { participante, sorteio } = await carregarSessao();
@@ -494,37 +491,36 @@ export const listarMeusCupons = createServerFn({ method: "GET" }).handler(async 
 );
 
 /** Informações públicas do sorteio da sessão + termos atuais + prêmios ativos. */
-export const obterInformacoesPublicasSorteio = createServerFn({ method: "GET" }).handler(
-  async () =>
-    executar(async () => {
-      const { sorteio } = await carregarSessao();
-      const supabase = await admin();
-      const termos = await obterTermosAtual(supabase, sorteio.id);
-      const { data: premios } = await supabase
-        .from("sorteio_premios")
-        .select("id, nome, descricao, quantidade, ordem")
-        .eq("sorteio_id", sorteio.id)
-        .eq("ativo", true)
-        .order("ordem", { ascending: true });
-      return {
-        sorteio: dadosPublicosSorteio(sorteio),
-        termos: termos
-          ? {
-              versao: termos.versao,
-              titulo: termos.titulo,
-              regras: termos.regras,
-              como_participar: termos.como_participar,
-              validade: termos.validade,
-              como_sera_realizado: termos.como_sera_realizado,
-              informacoes: termos.informacoes,
-              premios: termos.premios,
-              outras_condicoes: termos.outras_condicoes,
-              publicado_em: termos.publicado_em,
-            }
-          : null,
-        premios: premios ?? [],
-      };
-    }),
+export const obterInformacoesPublicasSorteio = createServerFn({ method: "GET" }).handler(async () =>
+  executar(async () => {
+    const { sorteio } = await carregarSessao();
+    const supabase = await admin();
+    const termos = await obterTermosAtual(supabase, sorteio.id);
+    const { data: premios } = await supabase
+      .from("sorteio_premios")
+      .select("id, nome, descricao, quantidade, ordem")
+      .eq("sorteio_id", sorteio.id)
+      .eq("ativo", true)
+      .order("ordem", { ascending: true });
+    return {
+      sorteio: dadosPublicosSorteio(sorteio),
+      termos: termos
+        ? {
+            versao: termos.versao,
+            titulo: termos.titulo,
+            regras: termos.regras,
+            como_participar: termos.como_participar,
+            validade: termos.validade,
+            como_sera_realizado: termos.como_sera_realizado,
+            informacoes: termos.informacoes,
+            premios: termos.premios,
+            outras_condicoes: termos.outras_condicoes,
+            publicado_em: termos.publicado_em,
+          }
+        : null,
+      premios: premios ?? [],
+    };
+  }),
 );
 
 /** Encerra a sessão: revoga no servidor e remove os cookies. */

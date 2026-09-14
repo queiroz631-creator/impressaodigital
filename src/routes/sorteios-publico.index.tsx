@@ -48,10 +48,7 @@ function EntradaPortal() {
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  const indisponivel =
-    sorteio.data && !sorteio.data.ok
-      ? sorteio.data.mensagem
-      : null;
+  const indisponivel = sorteio.data && !sorteio.data.ok ? sorteio.data.mensagem : null;
 
   async function continuar() {
     setErro("");
