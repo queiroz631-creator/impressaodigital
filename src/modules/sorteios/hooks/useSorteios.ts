@@ -21,7 +21,10 @@ const CAMPOS_SORTEIO =
 
 type Contagens = { participantes: number; notas: number; cupons: number };
 
-async function contar(tabela: "sorteio_participantes" | "sorteio_notas" | "sorteio_cupons", sorteioId: string) {
+async function contar(
+  tabela: "sorteio_participantes" | "sorteio_notas" | "sorteio_cupons",
+  sorteioId: string,
+) {
   const { count, error } = await supabase
     .from(tabela)
     .select("id", { count: "exact", head: true })
@@ -51,9 +54,7 @@ export function useListaSorteios() {
         .order("numero_sorteio", { ascending: false });
       if (error) throw new Error(error.message);
       const lista = (data ?? []) as Sorteio[];
-      return Promise.all(
-        lista.map(async (s) => ({ ...s, ...(await contagensDe(s.id)) })),
-      );
+      return Promise.all(lista.map(async (s) => ({ ...s, ...(await contagensDe(s.id)) })));
     },
   });
 }
@@ -82,20 +83,24 @@ export function useIndicadoresSorteio(id: string) {
     queryFn: async () => {
       const contagens = await contagensDe(id);
 
-      const [{ data: notas, error: erroNotas }, { data: cupons, error: erroCupons }, premios, ganhadores] =
-        await Promise.all([
-          supabase.from("sorteio_notas").select("status, valor_centavos").eq("sorteio_id", id),
-          supabase.from("sorteio_cupons").select("status").eq("sorteio_id", id),
-          supabase
-            .from("sorteio_premios")
-            .select("id", { count: "exact", head: true })
-            .eq("sorteio_id", id)
-            .eq("ativo", true),
-          supabase
-            .from("sorteio_ganhadores")
-            .select("id", { count: "exact", head: true })
-            .eq("sorteio_id", id),
-        ]);
+      const [
+        { data: notas, error: erroNotas },
+        { data: cupons, error: erroCupons },
+        premios,
+        ganhadores,
+      ] = await Promise.all([
+        supabase.from("sorteio_notas").select("status, valor_centavos").eq("sorteio_id", id),
+        supabase.from("sorteio_cupons").select("status").eq("sorteio_id", id),
+        supabase
+          .from("sorteio_premios")
+          .select("id", { count: "exact", head: true })
+          .eq("sorteio_id", id)
+          .eq("ativo", true),
+        supabase
+          .from("sorteio_ganhadores")
+          .select("id", { count: "exact", head: true })
+          .eq("sorteio_id", id),
+      ]);
       if (erroNotas) throw new Error(erroNotas.message);
       if (erroCupons) throw new Error(erroCupons.message);
 

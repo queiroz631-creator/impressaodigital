@@ -106,9 +106,7 @@ function CuponsSorteio() {
                     <TableCell className="font-mono font-medium">{c.numero}</TableCell>
                     <TableCell>{c.participanteNome}</TableCell>
                     <TableCell>{c.notaNumero}</TableCell>
-                    <TableCell className="text-right">
-                      {brl(c.valor_base_centavos / 100)}
-                    </TableCell>
+                    <TableCell className="text-right">{brl(c.valor_base_centavos / 100)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={CLASSE_STATUS[c.status]}>
                         {ROTULO_STATUS_CUPOM[c.status]}

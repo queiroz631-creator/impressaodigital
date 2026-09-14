@@ -40,7 +40,13 @@ export const Route = createFileRoute("/sorteios/$id/premios")({
   }),
 });
 
-type Valores = { nome: string; descricao: string; quantidade: string; ordem: string; ativo: boolean };
+type Valores = {
+  nome: string;
+  descricao: string;
+  quantidade: string;
+  ordem: string;
+  ativo: boolean;
+};
 
 const VAZIO: Valores = { nome: "", descricao: "", quantidade: "1", ordem: "0", ativo: true };
 

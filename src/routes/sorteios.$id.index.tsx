@@ -17,7 +17,11 @@ import {
   TRANSICOES_PERMITIDAS,
   somenteConsulta,
 } from "@/modules/sorteios/services/status";
-import { ROTULO_STATUS_NOTA, ROTULO_STATUS_CUPOM, type StatusSorteio } from "@/modules/sorteios/types";
+import {
+  ROTULO_STATUS_NOTA,
+  ROTULO_STATUS_CUPOM,
+  type StatusSorteio,
+} from "@/modules/sorteios/types";
 
 export const Route = createFileRoute("/sorteios/$id/")({
   component: () => (

@@ -157,7 +157,9 @@ function TermosSorteio() {
       {editando && valores && (
         <Card className="mb-4">
           <CardHeader>
-            <CardTitle>{editando === "novo" ? "Nova versão dos termos" : "Editar versão"}</CardTitle>
+            <CardTitle>
+              {editando === "novo" ? "Nova versão dos termos" : "Editar versão"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-3">
