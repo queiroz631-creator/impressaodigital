@@ -19,13 +19,19 @@ Nova tabela de **itens** de sincronização (a atual guarda execuções, não it
 - tentativas, última tentativa, processado em, erro, criado/atualizado em;
 - número sequencial próprio, usado como cursor pela API local (não depende do relógio da máquina local).
 
+O item da fila guarda **apenas os metadados necessários ao processamento** (tipo, entidade, identificador, sorteio, origem, destino, operação, controle de tentativa). O dado completo do cliente ou da nota **não** é copiado para a fila — ele é lido da tabela oficial no momento do envio.
+
+Acesso: a fila é **fechada**. Nenhum usuário autenticado lê identificadores de clientes, erros, origem/destino, metadados ou qualquer informação interna da sincronização. Só a própria rotina interna (e a API local, via token) acessa esses registros; a observabilidade futura será servida por um resumo agregado (quantidades de pendentes, com erro, última sincronização), nunca pelos registros brutos.
+
 Ordem de trabalho: item pendente mais antigo primeiro; um item só é tomado por uma execução (marcação condicional), então dois processos simultâneos não repetem o mesmo item.
 
 ## Idempotência
 
 - Chave de idempotência por evento: origem + entidade + identificador da operação. Reenvio do mesmo lote não cria um segundo item nem um segundo processamento.
 - Notas: a unicidade **sorteio + número** já existente é a garantia final — reenvio atualiza o valor, nunca duplica.
-- Clientes: identificação pelo identificador estável enviado pela loja e, na falta dele, pelas regras atuais do sistema (CPF primeiro, telefone depois). Sincronização nunca exclui cliente.
+- Clientes: o identificador enviado pela loja (ex.: cliente interno `12345` → `origem_id = "12345"`) é **permanente para aquele cliente** — alterar o cadastro na loja não muda o identificador, e é ele que impede duplicidade. Na falta dele, valem as regras atuais do sistema (CPF primeiro, telefone depois). Sincronização nunca exclui cliente.
+- Reprocessamento após falha é seguro: reenviar do último ponto confirmado reaplica os mesmos registros sem criar duplicatas.
+
 
 ## Sem loops
 
