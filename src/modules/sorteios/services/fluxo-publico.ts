@@ -17,7 +17,6 @@ export interface FluxoPublico {
   telefoneFinal?: string | null;
 }
 
-
 export function lerFluxo(): FluxoPublico {
   try {
     return JSON.parse(sessionStorage.getItem(CHAVE) ?? "{}") as FluxoPublico;

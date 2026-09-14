@@ -402,7 +402,6 @@ export function garantirCpfLivre(cliente: ClienteRow): void {
   }
 }
 
-
 // ---------------------------------------------------------------------------
 // Limite de tentativas (por IP e ação, janela de 10 minutos)
 // ---------------------------------------------------------------------------

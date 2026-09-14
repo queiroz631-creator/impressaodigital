@@ -20,7 +20,6 @@ import {
   limitarTentativas,
   mascararCpf,
   normalizarTelefone,
-
   obterSorteioAtivo,
   obterTermosAtual,
   periodoAberto,
@@ -180,7 +179,8 @@ export const verificarTelefonePublico = createServerFn({ method: "POST" })
         garantirCpfLivre(porTelefone);
 
         const faltantesTelefone = faltantesDoCliente(porTelefone);
-        if (faltantesTelefone.length > 0) return { etapa: "completar", faltantes: faltantesTelefone };
+        if (faltantesTelefone.length > 0)
+          return { etapa: "completar", faltantes: faltantesTelefone };
 
         const { error: erroVinculo } = await supabase
           .from("clientes")
@@ -191,7 +191,11 @@ export const verificarTelefonePublico = createServerFn({ method: "POST" })
           throw new ErroPortal("ERRO", "Não foi possível concluir agora. Tente novamente.");
         }
 
-        const participanteVinculo = await garantirParticipacao(supabase, sorteio.id, porTelefone.id);
+        const participanteVinculo = await garantirParticipacao(
+          supabase,
+          sorteio.id,
+          porTelefone.id,
+        );
         await criarSessaoParticipante({
           participante_id: participanteVinculo.id,
           cliente_id: porTelefone.id,
@@ -236,7 +240,6 @@ export const verificarTelefonePublico = createServerFn({ method: "POST" })
       return { etapa };
     }),
   );
-
 
 /** Etapa 3: cadastro novo ou complemento dos dados faltantes. */
 export const concluirCadastroPublico = createServerFn({ method: "POST" })
@@ -355,7 +358,10 @@ export const concluirCadastroPublico = createServerFn({ method: "POST" })
             },
           );
           if (error || !participanteId) {
-            throw new ErroPortal("ERRO", "Não foi possível concluir seu cadastro. Tente novamente.");
+            throw new ErroPortal(
+              "ERRO",
+              "Não foi possível concluir seu cadastro. Tente novamente.",
+            );
           }
           novoCliente = true;
           const { data: cliente } = await supabase
@@ -367,7 +373,6 @@ export const concluirCadastroPublico = createServerFn({ method: "POST" })
           participante = await garantirParticipacao(supabase, sorteio.id, clienteId);
         }
       }
-
 
       if (novoCliente) {
         await auditarPortal({

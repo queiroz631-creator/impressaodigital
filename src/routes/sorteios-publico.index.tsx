@@ -72,7 +72,6 @@ function EntradaPortal() {
         telefoneFinal: resultado.dados.cadastro.telefone_final,
       });
       void navigate({ to: "/sorteios-publico/telefone" });
-
     } finally {
       setEnviando(false);
     }
