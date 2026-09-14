@@ -43,6 +43,7 @@ import { Route as SorteiosIdNotasRouteImport } from './routes/sorteios.$id.notas
 import { Route as SorteiosIdParticipantesRouteImport } from './routes/sorteios.$id.participantes'
 import { Route as SorteiosIdPremiosRouteImport } from './routes/sorteios.$id.premios'
 import { Route as SorteiosIdTermosRouteImport } from './routes/sorteios.$id.termos'
+import { Route as ApiPublicSorteiosValidarNotasRouteImport } from './routes/api/public/sorteios/validar-notas'
 import { Route as ApiPublicWhatsappFilaRouteImport } from './routes/api/public/whatsapp/fila'
 import { Route as ApiPublicWhatsappInatividadeRouteImport } from './routes/api/public/whatsapp/inatividade'
 import { Route as ApiPublicWhatsappMidiaRouteImport } from './routes/api/public/whatsapp/midia'
@@ -221,6 +222,12 @@ const SorteiosIdTermosRoute = SorteiosIdTermosRouteImport.update({
   path: '/sorteios/$id/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSorteiosValidarNotasRoute =
+  ApiPublicSorteiosValidarNotasRouteImport.update({
+    id: '/api/public/sorteios/validar-notas',
+    path: '/api/public/sorteios/validar-notas',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWhatsappFilaRoute = ApiPublicWhatsappFilaRouteImport.update({
   id: '/api/public/whatsapp/fila',
   path: '/api/public/whatsapp/fila',
@@ -290,6 +297,7 @@ export interface FileRoutesByFullPath {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
+  '/api/public/sorteios/validar-notas': typeof ApiPublicSorteiosValidarNotasRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
@@ -332,6 +340,7 @@ export interface FileRoutesByTo {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id': typeof SorteiosIdIndexRoute
+  '/api/public/sorteios/validar-notas': typeof ApiPublicSorteiosValidarNotasRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
@@ -375,6 +384,7 @@ export interface FileRoutesById {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
+  '/api/public/sorteios/validar-notas': typeof ApiPublicSorteiosValidarNotasRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
@@ -419,6 +429,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/termos'
     | '/sorteios/$id/'
+    | '/api/public/sorteios/validar-notas'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
     | '/api/public/whatsapp/midia'
@@ -461,6 +472,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/termos'
     | '/sorteios/$id'
+    | '/api/public/sorteios/validar-notas'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
     | '/api/public/whatsapp/midia'
@@ -503,6 +515,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/termos'
     | '/sorteios/$id/'
+    | '/api/public/sorteios/validar-notas'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
     | '/api/public/whatsapp/midia'
@@ -546,6 +559,7 @@ export interface RootRouteChildren {
   SorteiosIdPremiosRoute: typeof SorteiosIdPremiosRoute
   SorteiosIdTermosRoute: typeof SorteiosIdTermosRoute
   SorteiosIdIndexRoute: typeof SorteiosIdIndexRoute
+  ApiPublicSorteiosValidarNotasRoute: typeof ApiPublicSorteiosValidarNotasRoute
   ApiPublicWhatsappFilaRoute: typeof ApiPublicWhatsappFilaRoute
   ApiPublicWhatsappInatividadeRoute: typeof ApiPublicWhatsappInatividadeRoute
   ApiPublicWhatsappMidiaRoute: typeof ApiPublicWhatsappMidiaRoute
@@ -793,6 +807,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SorteiosIdTermosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sorteios/validar-notas': {
+      id: '/api/public/sorteios/validar-notas'
+      path: '/api/public/sorteios/validar-notas'
+      fullPath: '/api/public/sorteios/validar-notas'
+      preLoaderRoute: typeof ApiPublicSorteiosValidarNotasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/whatsapp/fila': {
       id: '/api/public/whatsapp/fila'
       path: '/api/public/whatsapp/fila'
@@ -887,6 +908,7 @@ const rootRouteChildren: RootRouteChildren = {
   SorteiosIdPremiosRoute: SorteiosIdPremiosRoute,
   SorteiosIdTermosRoute: SorteiosIdTermosRoute,
   SorteiosIdIndexRoute: SorteiosIdIndexRoute,
+  ApiPublicSorteiosValidarNotasRoute: ApiPublicSorteiosValidarNotasRoute,
   ApiPublicWhatsappFilaRoute: ApiPublicWhatsappFilaRoute,
   ApiPublicWhatsappInatividadeRoute: ApiPublicWhatsappInatividadeRoute,
   ApiPublicWhatsappMidiaRoute: ApiPublicWhatsappMidiaRoute,

@@ -2292,6 +2292,7 @@ export type Database = {
           numero: string
           origem_id: string | null
           sincronizado_em: string | null
+          sorteio_id: string
           valor_centavos: number
         }
         Insert: {
@@ -2302,6 +2303,7 @@ export type Database = {
           numero: string
           origem_id?: string | null
           sincronizado_em?: string | null
+          sorteio_id: string
           valor_centavos: number
         }
         Update: {
@@ -2312,9 +2314,18 @@ export type Database = {
           numero?: string
           origem_id?: string | null
           sincronizado_em?: string | null
+          sorteio_id?: string
           valor_centavos?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_notas_base_sorteio_id_fkey"
+            columns: ["sorteio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sorteio_participantes: {
         Row: {
@@ -2615,6 +2626,7 @@ export type Database = {
       sorteios: {
         Row: {
           atualizado_em: string
+          base_sincronizada_em: string | null
           criado_em: string
           criado_por: string | null
           data_fim: string | null
@@ -2630,6 +2642,7 @@ export type Database = {
         }
         Insert: {
           atualizado_em?: string
+          base_sincronizada_em?: string | null
           criado_em?: string
           criado_por?: string | null
           data_fim?: string | null
@@ -2645,6 +2658,7 @@ export type Database = {
         }
         Update: {
           atualizado_em?: string
+          base_sincronizada_em?: string | null
           criado_em?: string
           criado_por?: string | null
           data_fim?: string | null
@@ -3316,6 +3330,7 @@ export type Database = {
       conexao_do_usuario: { Args: { _user_id: string }; Returns: string }
       cpf_valido: { Args: { _cpf: string }; Returns: boolean }
       disparar_rotina_bot: { Args: { rota: string }; Returns: undefined }
+      disparar_rotina_sorteios: { Args: { rota: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

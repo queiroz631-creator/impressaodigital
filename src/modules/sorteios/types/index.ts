@@ -54,6 +54,8 @@ export interface Sorteio {
   data_sorteio: string | null;
   valor_por_cupom_centavos: number;
   quantidade_maxima_cupons: number | null;
+  /** Última sincronização da base de notas deste sorteio (validação). */
+  base_sincronizada_em?: string | null;
   criado_por: string | null;
   criado_em: string;
   atualizado_em: string;
@@ -98,6 +100,8 @@ export interface SorteioParticipante {
 
 export interface SorteioNotaBase {
   id: string;
+  /** Sorteio a que a nota da base pertence: a validação nunca cruza sorteios. */
+  sorteio_id: string;
   numero: string;
   valor_centavos: number;
   /** Só sincronização/auditoria — nunca usada para validar a nota do participante. */

@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
+import { validarNotaSorteio } from "@/lib/sorteios.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,6 +56,21 @@ function NotasSorteio() {
   const { data: sorteio } = useSorteio(id);
   const { data: notas, isLoading } = useNotasSorteio(id);
   const [filtro, setFiltro] = useState<StatusNota | "TODAS">("TODAS");
+  const qc = useQueryClient();
+  const validar = useServerFn(validarNotaSorteio);
+  const sorteioAtivo = sorteio?.status === "ATIVO";
+
+  const mValidar = useMutation({
+    mutationFn: (notaId: string) => validar({ data: { notaId } }),
+    onSuccess: (r) => {
+      if (r.resultado === "VALIDA") toast.success(r.mensagem);
+      else if (r.resultado === "INVALIDA") toast.warning(r.mensagem);
+      else toast.info(r.mensagem);
+      void qc.invalidateQueries({ queryKey: ["sorteio-notas", id] });
+      void qc.invalidateQueries({ queryKey: ["sorteio-indicadores", id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const filtradas = useMemo(
     () => (notas ?? []).filter((n) => filtro === "TODAS" || n.status === filtro),
@@ -100,6 +119,7 @@ function NotasSorteio() {
                   <TableHead>Cadastro</TableHead>
                   <TableHead>Validação</TableHead>
                   <TableHead className="text-right">Cupons</TableHead>
+                  <TableHead className="text-right">Ação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -116,6 +136,20 @@ function NotasSorteio() {
                     <TableCell>{dataHoraBR(n.cadastrado_em)}</TableCell>
                     <TableCell>{n.validado_em ? dataHoraBR(n.validado_em) : "—"}</TableCell>
                     <TableCell className="text-right">{n.cupons_gerados}</TableCell>
+                    <TableCell className="text-right">
+                      {n.status === "PENDENTE" ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={!sorteioAtivo || mValidar.isPending}
+                          onClick={() => mValidar.mutate(n.id)}
+                        >
+                          Validar
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

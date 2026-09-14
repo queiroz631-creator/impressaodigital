@@ -494,3 +494,53 @@ export const definirElegibilidadeParticipante = createServerFn({ method: "POST" 
 
     return { ok: true, alterado: true };
   });
+
+/* ------------------------------------------------------- validação de notas */
+
+/**
+ * Validação manual de UMA nota pendente, pelo painel.
+ * O sorteio é obtido do próprio registro da nota; nada vem do navegador além
+ * do identificador da nota. Não gera cupons nem altera saldo.
+ */
+export const validarNotaSorteio = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ notaId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigirGestao(context);
+
+    const { data: nota, error } = await context.supabase
+      .from("sorteio_notas")
+      .select("id, sorteio_id, status")
+      .eq("id", data.notaId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!nota) throw new Error("Nota não encontrada.");
+
+    const atual = await lerSorteioAtual(context.supabase, nota.sorteio_id as string);
+    if (atual.status !== "ATIVO") {
+      throw new Error("Este sorteio não permite mais validação de notas.");
+    }
+    if (nota.status !== "PENDENTE") {
+      throw new Error("Somente notas pendentes podem ser validadas.");
+    }
+
+    const { validarNotaPorId } = await import("@/lib/sorteios-validacao.server");
+    const r = await validarNotaPorId(data.notaId, "painel", context.userId);
+
+    if (r.resultado === "PENDENTE") {
+      return {
+        resultado: r.resultado,
+        mensagem:
+          r.motivo === "sem_sincronizacao"
+            ? "A base de notas deste sorteio ainda não foi sincronizada. A nota continua pendente."
+            : "A base de notas foi sincronizada antes do cadastro desta nota. Ela continua pendente.",
+      };
+    }
+    if (r.resultado === "IGNORADA") {
+      return { resultado: r.resultado, mensagem: "A nota já havia sido processada." };
+    }
+    return {
+      resultado: r.resultado,
+      mensagem: r.resultado === "VALIDA" ? "Nota validada." : "Nota marcada como inválida.",
+    };
+  });
