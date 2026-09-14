@@ -45,6 +45,20 @@ async function promoverParaEmAtendimento(
     .eq("id", conversaId);
 }
 
+/** Conexão de WhatsApp a que a conversa pertence (define as credenciais usadas). */
+async function conexaoDaConversa(
+  supabase: SupabaseClient,
+  conversaId?: string | null,
+): Promise<string | null> {
+  if (!conversaId) return null;
+  const { data } = await supabase
+    .from("whatsapp_conversas")
+    .select("conexao_id")
+    .eq("id", conversaId)
+    .maybeSingle();
+  return (data as { conexao_id?: string | null } | null)?.conexao_id ?? null;
+}
+
 /** Verifica se a instância da Z-API está configurada e conectada. */
 export const statusInstanciaZapi = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -135,9 +149,11 @@ export const enviarTextoWhatsapp = createServerFn({ method: "POST" })
     const telefone = normalizarTelefone(data.telefone);
     if (!telefone) throw new Error("Telefone inválido.");
 
+    const conexaoId = await conexaoDaConversa(context.supabase, data.conversaId);
     const r = await chamarZapi("send-text", {
       metodo: "POST",
       corpo: { phone: telefone, message: data.mensagem },
+      conexaoId,
     });
 
     if (data.conversaId) {
@@ -179,13 +195,19 @@ export const enviarTextoWhatsapp = createServerFn({ method: "POST" })
 export const enviarDigitandoWhatsapp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ telefone: z.string().min(8).max(30) }).parse(input),
+    z
+      .object({
+        telefone: z.string().min(8).max(30),
+        conversaId: z.string().uuid().optional(),
+      })
+      .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { enviarPresencaDigitando } = await import("@/lib/zapi.server");
     const telefone = normalizarTelefone(data.telefone);
     if (!telefone) return { ok: false as const };
-    await enviarPresencaDigitando(telefone, 4000);
+    const conexaoId = await conexaoDaConversa(context.supabase, data.conversaId);
+    await enviarPresencaDigitando(telefone, 4000, conexaoId);
     return { ok: true as const };
   });
 
@@ -227,11 +249,13 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
     const extensao =
       (data.nomeArquivo.split(".").pop() ?? "").toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
 
+    const conexaoId = await conexaoDaConversa(context.supabase, data.conversaId);
     const r =
       data.tipo === "imagem"
         ? await chamarZapi("send-image", {
             metodo: "POST",
             corpo: { phone: telefone, image: conteudo, caption: data.legenda ?? "" },
+            conexaoId,
           })
         : await chamarZapi(`send-document/${data.tipo === "pdf" ? "pdf" : extensao}`, {
             metodo: "POST",
@@ -241,6 +265,7 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
               fileName: data.nomeArquivo,
               caption: data.legenda ?? "",
             },
+            conexaoId,
           });
 
     if (data.conversaId) {
@@ -530,11 +555,12 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
 
     const { data: conversa } = await context.supabase
       .from("whatsapp_conversas")
-      .select("telefone")
+      .select("telefone, conexao_id")
       .eq("id", data.conversaId)
       .maybeSingle();
     const telefone = normalizarTelefone((conversa as { telefone?: string } | null)?.telefone ?? "");
     if (!telefone) return { ok: false as const, erro: "Telefone da conversa não encontrado." };
+    const conexaoId = (conversa as { conexao_id?: string | null } | null)?.conexao_id ?? null;
 
     const { data: rapida, error: errBusca } = await context.supabase
       .from("mensagens_rapidas")
@@ -569,11 +595,13 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
           image: `data:${mime};base64,${base64}`,
           caption: rapida.tipo === "texto_imagem" ? (texto ?? "") : "",
         },
+        conexaoId,
       });
     } else {
       r = await chamarZapi("send-text", {
         metodo: "POST",
         corpo: { phone: telefone, message: texto as string },
+        conexaoId,
       });
     }
 
@@ -638,7 +666,7 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
 
     const { data: conversa } = await context.supabase
       .from("whatsapp_conversas")
-      .select("telefone, ultima_mensagem_em")
+      .select("telefone, ultima_mensagem_em, conexao_id")
       .eq("id", msg.conversa_id)
       .maybeSingle();
     const telefone = normalizarTelefone((conversa as { telefone?: string } | null)?.telefone ?? "");
@@ -647,7 +675,8 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
     // A Z-API não possui edição de mensagem: apagamos a original no WhatsApp
     // do cliente e reenviamos o texto corrigido logo em seguida.
     const consultaApagar = `messages?messageId=${encodeURIComponent(msg.whatsapp_message_id)}&phone=${encodeURIComponent(telefone)}&owner=true`;
-    const rApagar = await chamarZapi(consultaApagar, { metodo: "DELETE" });
+    const conexaoId = (conversa as { conexao_id?: string | null } | null)?.conexao_id ?? null;
+    const rApagar = await chamarZapi(consultaApagar, { metodo: "DELETE", conexaoId });
     if (!rApagar.ok) {
       return {
         ok: false as const,
@@ -660,6 +689,7 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
     const r = await chamarZapi("send-text", {
       metodo: "POST",
       corpo: { phone: telefone, message: data.texto },
+      conexaoId,
     });
     if (!r.ok) {
       await context.supabase
@@ -725,14 +755,15 @@ export const apagarMensagemWhatsapp = createServerFn({ method: "POST" })
 
     const { data: conversa } = await context.supabase
       .from("whatsapp_conversas")
-      .select("telefone, ultima_mensagem_em")
+      .select("telefone, ultima_mensagem_em, conexao_id")
       .eq("id", msg.conversa_id)
       .maybeSingle();
     const telefone = normalizarTelefone((conversa as { telefone?: string } | null)?.telefone ?? "");
     if (!telefone) return { ok: false as const, erro: "Telefone da conversa não encontrado." };
 
     const consulta = `messages?messageId=${encodeURIComponent(msg.whatsapp_message_id)}&phone=${encodeURIComponent(telefone)}&owner=true`;
-    const r = await chamarZapi(consulta, { metodo: "DELETE" });
+    const conexaoId = (conversa as { conexao_id?: string | null } | null)?.conexao_id ?? null;
+    const r = await chamarZapi(consulta, { metodo: "DELETE", conexaoId });
     if (!r.ok) {
       return { ok: false as const, erro: r.erro ?? "O WhatsApp recusou apagar esta mensagem." };
     }

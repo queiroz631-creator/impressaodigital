@@ -18,6 +18,7 @@ import { RespostasPainel } from "@/components/bot/RespostasPainel";
 import { NumerosPainel } from "@/components/bot/NumerosPainel";
 import { PrimeiroContatoPainel } from "@/components/bot/PrimeiroContatoPainel";
 import { StatusWhatsappPainel } from "@/components/bot/StatusWhatsappPainel";
+import { useConexaoSelecionada, useConexoesVisiveis } from "@/hooks/useConexoes";
 import { lerCfgCortesia } from "@/lib/whatsapp-cortesia";
 import { MSG_LINK_CURRICULO_PADRAO } from "@/lib/curriculo";
 
@@ -187,14 +188,31 @@ function hhmm(valor: string) {
 export function ConfiguracaoBot() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormBot | null>(null);
+  const [idForm, setIdForm] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
 
+  // Cada conexão tem a sua própria configuração de bot.
+  const {
+    isAdmin,
+    escolha,
+    escolher,
+    conexaoId: conexaoFiltro,
+    semVinculo,
+    carregando: carregandoConexao,
+  } = useConexaoSelecionada();
+  const { data: conexoes = [] } = useConexoesVisiveis();
+
+  // "Todas" não faz sentido aqui: o administrador começa na primeira conexão.
+  const conexaoAtual = conexaoFiltro ?? conexoes[0]?.id ?? null;
+
   const config = useQuery({
-    queryKey: ["whatsapp-config-bot"],
+    queryKey: ["whatsapp-config-bot", conexaoAtual],
+    enabled: Boolean(conexaoAtual),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("whatsapp_config")
         .select("*")
+        .eq("conexao_id", conexaoAtual!)
         .limit(1)
         .maybeSingle();
       if (error) throw error;
@@ -203,29 +221,41 @@ export function ConfiguracaoBot() {
   });
 
   const horarios = useQuery({
-    queryKey: ["bot-horarios"],
+    queryKey: ["bot-horarios", conexaoAtual],
+    enabled: Boolean(conexaoAtual),
     queryFn: async () => {
-      const { data, error } = await supabase.from("bot_horarios").select("*").order("dia_semana");
+      const { data, error } = await supabase
+        .from("bot_horarios")
+        .select("*")
+        .eq("conexao_id", conexaoAtual!)
+        .order("dia_semana");
       if (error) throw error;
       return (data ?? []) as Horario[];
     },
   });
 
   const opcoes = useQuery({
-    queryKey: ["bot-opcoes"],
+    queryKey: ["bot-opcoes", conexaoAtual],
+    enabled: Boolean(conexaoAtual),
     queryFn: async () => {
-      const { data, error } = await supabase.from("bot_menu_opcoes").select("*").order("ordem");
+      const { data, error } = await supabase
+        .from("bot_menu_opcoes")
+        .select("*")
+        .eq("conexao_id", conexaoAtual!)
+        .order("ordem");
       if (error) throw error;
       return (data ?? []) as Opcao[];
     },
   });
 
   const fluxos = useQuery({
-    queryKey: ["bot-fluxos-select"],
+    queryKey: ["bot-fluxos-select", conexaoAtual],
+    enabled: Boolean(conexaoAtual),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bot_fluxos")
         .select("id, nome")
+        .eq("conexao_id", conexaoAtual!)
         .eq("ativo", true)
         .order("ordem");
       if (error) throw error;
@@ -235,7 +265,8 @@ export function ConfiguracaoBot() {
 
   useEffect(() => {
     const d = config.data;
-    if (!d || form) return;
+    if (!d || (form && idForm === d.id)) return;
+    setIdForm(d.id);
     setForm({
       bot_ativo: Boolean(d.bot_ativo),
       bot_24h: Boolean(d.bot_24h),
@@ -284,9 +315,37 @@ export function ConfiguracaoBot() {
         return { ativo: c.ativo, janela_minutos: c.janela_minutos, frases: c.frases.join("\n") };
       })(),
     });
-  }, [config.data, form]);
+  }, [config.data, form, idForm]);
 
-  if (config.isLoading || !form) return <Skeleton className="h-64 max-w-4xl" />;
+  const seletorConexao = isAdmin ? (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-muted-foreground">Conexão:</span>
+      <Select value={conexaoAtual ?? escolha} onValueChange={escolher}>
+        <SelectTrigger className="h-9 w-64">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {conexoes.map((c) => (
+            <SelectItem key={c.id} value={c.id}>
+              {c.nome}
+              {c.telefone ? ` — ${c.telefone}` : ""}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  ) : null;
+
+  if (semVinculo && !carregandoConexao) {
+    return (
+      <p className="max-w-4xl py-10 text-center text-sm text-muted-foreground">
+        Seu usuário ainda não possui uma conexão de WhatsApp vinculada. Solicite ao administrador.
+      </p>
+    );
+  }
+
+  if (config.isLoading || carregandoConexao || !form)
+    return <Skeleton className="h-64 max-w-4xl" />;
 
   const id = config.data?.id;
 
@@ -330,7 +389,8 @@ export function ConfiguracaoBot() {
 
   return (
     <div className="grid max-w-4xl gap-4">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {seletorConexao}
         <Button onClick={salvarConfig} disabled={salvando}>
           <Save className="h-4 w-4" /> {salvando ? "Salvando..." : "Salvar configurações do bot"}
         </Button>

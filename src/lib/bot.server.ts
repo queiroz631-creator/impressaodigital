@@ -527,7 +527,7 @@ async function usuarioResponsavel(): Promise<string | null> {
 }
 
 async function calcularOrcamento(conversa: ConversaBot, ctx: ContextoBot) {
-  const config = await lerConfig();
+  const config = await lerConfig(conversa.conexao_id ?? null);
   if (!config) return;
 
   const materiais = await materiaisDisponiveis(ctx);
@@ -719,8 +719,11 @@ async function calcularOrcamento(conversa: ConversaBot, ctx: ContextoBot) {
 
 // ---------- Leitura de configuração ----------
 
-async function lerConfig(): Promise<ConfigBot | null> {
-  const { data } = await supabaseAdmin.from("whatsapp_config").select("*").limit(1).maybeSingle();
+async function lerConfig(conexaoId?: string | null): Promise<ConfigBot | null> {
+  const consulta = supabaseAdmin.from("whatsapp_config").select("*");
+  const { data } = await (conexaoId ? consulta.eq("conexao_id", conexaoId) : consulta)
+    .limit(1)
+    .maybeSingle();
   return (data ?? null) as ConfigBot | null;
 }
 
@@ -937,7 +940,11 @@ async function entregarFluxo(
       // Espera configurada na etapa antes de seguir automaticamente (teto de 60s).
       const espera = Math.min(60, Math.max(0, m.espera ?? 0));
       if (espera > 0) {
-        await enviarPresencaDigitando(conversa.telefone, espera * 1000);
+        await enviarPresencaDigitando(
+          conversa.telefone,
+          espera * 1000,
+          conversa.conexao_id ?? null,
+        );
         await new Promise((r) => setTimeout(r, espera * 1000));
       }
     }
@@ -1137,7 +1144,7 @@ async function executarAcaoRegra(
 ) {
   const espera = Math.min(60, Math.max(0, Number(regra.delay_segundos ?? 0)));
   if (espera > 0) {
-    await enviarPresencaDigitando(conversa.telefone, espera * 1000);
+    await enviarPresencaDigitando(conversa.telefone, espera * 1000, conversa.conexao_id ?? null);
     await new Promise((r) => setTimeout(r, espera * 1000));
   }
 
@@ -1228,7 +1235,11 @@ async function triagem(
           { ...ctx, ultimaRegra: regra.id, ultimaRegraEm: new Date().toISOString() },
           conversa.etapa,
         );
-        await enviarPresencaDigitando(conversa.telefone, esperaMsg * 1000);
+        await enviarPresencaDigitando(
+          conversa.telefone,
+          esperaMsg * 1000,
+          conversa.conexao_id ?? null,
+        );
         await new Promise((r) => setTimeout(r, esperaMsg * 1000));
       }
       enviada = await responder(
@@ -1377,7 +1388,7 @@ async function resolverTriagem(
 
   const espera = Math.min(60, Math.max(0, Number(resposta.delay_acao_segundos ?? 0)));
   if (espera > 0) {
-    await enviarPresencaDigitando(conversa.telefone, espera * 1000);
+    await enviarPresencaDigitando(conversa.telefone, espera * 1000, conversa.conexao_id ?? null);
     await new Promise((r) => setTimeout(r, espera * 1000));
   }
 
@@ -1742,9 +1753,6 @@ export async function drenarFilaBot(): Promise<{ processadas: number }> {
 }
 
 async function processarBotInterno(conversaId: string, entrada: EntradaBot): Promise<void> {
-  const config = await lerConfig();
-  if (!config?.bot_ativo) return;
-
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
     .select(
@@ -1755,6 +1763,9 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
 
   const conversa = (data ?? null) as ConversaBot | null;
   if (!conversa) return;
+
+  const config = await lerConfig(conversa.conexao_id ?? null);
+  if (!config?.bot_ativo) return;
 
   const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
 
@@ -2164,7 +2175,7 @@ export async function iniciarFinalizacao(
     .eq("id", conversa.id);
   conversa.status = "aguardando_finalizacao";
 
-  const config = await lerConfig();
+  const config = await lerConfig(conversa.conexao_id ?? null);
   if (!fluxoId || !config) return { ok: true, fluxo: false };
   if (espera > 0) return { ok: true, fluxo: false };
 
@@ -2183,8 +2194,13 @@ export async function iniciarFinalizacao(
  * Fluxo em execução parado: quando o cliente não responde no tempo configurado
  * no fluxo, envia a mensagem opcional e executa a ação escolhida.
  */
-async function verificarFluxoSemResposta(config: ConfigBot, agora: Date, CAMPOS: string) {
-  const fluxos = await carregarFluxos();
+async function verificarFluxoSemResposta(
+  config: ConfigBot,
+  agora: Date,
+  CAMPOS: string,
+  conexaoId: string,
+) {
+  const fluxos = await carregarFluxos(conexaoId);
   const comRegra = fluxos.fluxos.filter(
     (f) => Math.max(0, Number(f.sem_resposta_minutos ?? 0)) > 0,
   );
@@ -2193,6 +2209,7 @@ async function verificarFluxoSemResposta(config: ConfigBot, agora: Date, CAMPOS:
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
     .select(CAMPOS)
+    .eq("conexao_id", conexaoId)
     .in("status", ["automatico", "aguardando_finalizacao"])
     .not("contexto->fluxo", "is", null)
     .limit(50);
@@ -2282,11 +2299,34 @@ async function verificarFluxoSemResposta(config: ConfigBot, agora: Date, CAMPOS:
   }
 }
 
+/**
+ * Rotina de inatividade: percorre todas as conexões ativas, uma a uma, usando a
+ * configuração e a Z-API de cada uma. Continua sendo um único cron.
+ */
 export async function verificarInatividade(): Promise<{ avisadas: number; finalizadas: number }> {
-  const config = await lerConfig();
+  const { data: conexoes } = await supabaseAdmin
+    .from("whatsapp_conexoes")
+    .select("id")
+    .eq("ativo", true)
+    .order("ordem");
+
+  let avisadas = 0;
+  let finalizadas = 0;
+  for (const c of conexoes ?? []) {
+    const r = await verificarInatividadeConexao(c.id);
+    avisadas += r.avisadas;
+    finalizadas += r.finalizadas;
+  }
+  return { avisadas, finalizadas };
+}
+
+async function verificarInatividadeConexao(
+  conexaoId: string,
+): Promise<{ avisadas: number; finalizadas: number }> {
+  const config = await lerConfig(conexaoId);
   if (!config?.bot_ativo) return { avisadas: 0, finalizadas: 0 };
 
-  const dados = await carregarDadosBot();
+  const dados = await carregarDadosBot(conexaoId);
   if (!dados) return { avisadas: 0, finalizadas: 0 };
 
   const min1 = Math.max(1, Number(dados.config.inatividade1_minutos ?? 5));
@@ -2305,12 +2345,13 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
     const { data: paradas } = await supabaseAdmin
       .from("whatsapp_conversas")
       .select(CAMPOS)
+      .eq("conexao_id", conexaoId)
       .eq("status", "automatico")
       .eq("etapa", "inicio")
       .lt("ultima_mensagem_em", limiteFallback)
       .limit(50);
 
-    const fluxos = await carregarFluxos();
+    const fluxos = await carregarFluxos(conexaoId);
     const escolhido = dados.config.fallback_fluxo_id
       ? fluxos.fluxos.find((f) => f.id === dados.config.fallback_fluxo_id && f.ativo)
       : null;
@@ -2349,11 +2390,12 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
     const { data: aguardando } = await supabaseAdmin
       .from("whatsapp_conversas")
       .select(`${CAMPOS}, finalizacao_fluxo_em`)
+      .eq("conexao_id", conexaoId)
       .eq("status", "aguardando_finalizacao")
       .not("finalizacao_fluxo_em", "is", null)
       .limit(50);
 
-    const fluxos = await carregarFluxos();
+    const fluxos = await carregarFluxos(conexaoId);
     for (const linha of aguardando ?? []) {
       const conversa = linha as unknown as ConversaBot;
       const ctx: ContextoBot = (conversa.contexto ?? {}) as ContextoBot;
@@ -2395,11 +2437,12 @@ export async function verificarInatividade(): Promise<{ avisadas: number; finali
   }
 
   // Fluxo em andamento sem resposta do cliente: executa a ação do fluxo.
-  await verificarFluxoSemResposta(config, agora, CAMPOS);
+  await verificarFluxoSemResposta(config, agora, CAMPOS, conexaoId);
 
   const { data } = await supabaseAdmin
     .from("whatsapp_conversas")
     .select(CAMPOS)
+    .eq("conexao_id", conexaoId)
     .eq("status", "automatico")
     .lt("ultima_mensagem_em", limite)
     .limit(50);

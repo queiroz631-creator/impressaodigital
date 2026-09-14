@@ -65,6 +65,15 @@ import {
   type StatusConversa,
 } from "@/lib/whatsapp-comum";
 
+import { useConexaoSelecionada, useConexoesVisiveis } from "@/hooks/useConexoes";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 export const Route = createFileRoute("/whatsapp")({
   component: () => (
     <AppLayout permissao="whatsapp.visualizar">
@@ -148,15 +157,17 @@ const ICONE_STATUS: Record<StatusConversa, LucideIcon> = {
   finalizado: CheckCircle2,
 };
 
-function useConversas() {
+function useConversas(conexaoId: string | null) {
   return useQuery({
-    queryKey: ["whatsapp-conversas"],
+    queryKey: ["whatsapp-conversas", conexaoId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let consulta = supabase
         .from("whatsapp_conversas")
         .select("*")
         .order("ultima_mensagem_em", { ascending: false, nullsFirst: false })
         .limit(300);
+      if (conexaoId) consulta = consulta.eq("conexao_id", conexaoId);
+      const { data, error } = await consulta;
       if (error) throw error;
       return (data ?? []) as unknown as Conversa[];
     },
@@ -220,7 +231,16 @@ async function alterarStatusConversa(
 function Atendimento() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { data: conversas, isLoading } = useConversas();
+  const {
+    isAdmin,
+    escolha,
+    escolher,
+    conexaoId: conexaoFiltro,
+    semVinculo,
+    carregando: carregandoConexao,
+  } = useConexaoSelecionada();
+  const { data: conexoes = [] } = useConexoesVisiveis();
+  const { data: conversas, isLoading } = useConversas(conexaoFiltro);
   const isMobile = useIsMobile();
   const [aba, setAba] = useState<StatusConversa>("automatico");
   const [abertaId, setAbertaId] = useState<string | null>(null);
@@ -503,6 +523,44 @@ function Atendimento() {
     </div>
   );
 
+  // Seletor de conexão (somente administrador) e aviso de falta de vínculo.
+  const seletorConexao = isAdmin ? (
+    <div className="mb-3 flex items-center gap-2">
+      <span className="text-sm text-muted-foreground">Conexão:</span>
+      <Select value={escolha} onValueChange={escolher}>
+        <SelectTrigger className="h-9 w-64">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="todas">Todas as conexões</SelectItem>
+          {conexoes.map((c) => (
+            <SelectItem key={c.id} value={c.id}>
+              {c.nome}
+              {c.telefone ? ` — ${c.telefone}` : ""}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  ) : null;
+
+  if (semVinculo && !carregandoConexao) {
+    return (
+      <>
+        <PageHeader
+          titulo="Atendimento WhatsApp"
+          subtitulo="Conversas recebidas pelo WhatsApp da loja"
+        />
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            Seu usuário ainda não possui uma conexão de WhatsApp vinculada. Solicite ao
+            administrador.
+          </CardContent>
+        </Card>
+      </>
+    );
+  }
+
   // Mobile: lista em tela cheia e conversa substitui a lista.
   if (isMobile) {
     if (aberta) {
@@ -526,6 +584,7 @@ function Atendimento() {
           titulo="Atendimento WhatsApp"
           subtitulo="Conversas recebidas pelo WhatsApp da loja"
         />
+        {seletorConexao}
         <div className="flex h-[calc(100vh-14rem)] flex-col">{painelContatos}</div>
       </>
     );
@@ -537,6 +596,7 @@ function Atendimento() {
         titulo="Atendimento WhatsApp"
         subtitulo="Conversas recebidas pelo WhatsApp da loja"
       />
+      {seletorConexao}
       <div
         className="grid h-[calc(100vh-12rem)] gap-0"
         style={{ gridTemplateColumns: `${larguraLista}px 12px 1fr` }}

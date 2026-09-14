@@ -51,6 +51,24 @@ export async function credenciaisDaConexao(
   };
 }
 
+/**
+ * Conexão a que pertence a conversa de um telefone. Usada quando o envio parte
+ * de outra tela (orçamento, currículo) e só temos o número do cliente.
+ */
+export async function conexaoPorTelefone(telefone: string): Promise<string | null> {
+  const numero = telefone.replace(/\D/g, "");
+  if (!numero) return null;
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("whatsapp_conversas")
+    .select("conexao_id")
+    .eq("telefone", numero)
+    .maybeSingle();
+
+  return (data as { conexao_id?: string | null } | null)?.conexao_id ?? null;
+}
+
 export interface RespostaZapi {
   ok: boolean;
   status: number;

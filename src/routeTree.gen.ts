@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BotRouteImport } from './routes/bot'
 import { Route as ClientesRouteImport } from './routes/clientes'
+import { Route as ConexoesRouteImport } from './routes/conexoes'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as MelhoriasRouteImport } from './routes/melhorias'
@@ -30,6 +31,7 @@ import { Route as ApiPublicWhatsappInatividadeRouteImport } from './routes/api/p
 import { Route as ApiPublicWhatsappMidiaRouteImport } from './routes/api/public/whatsapp/midia'
 import { Route as ApiPublicWhatsappStatusRouteImport } from './routes/api/public/whatsapp/status'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
+import { Route as ApiPublicWhatsappWebhookTokenRouteImport } from './routes/api/public/whatsapp/webhook/$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -49,6 +51,11 @@ const BotRoute = BotRouteImport.update({
 const ClientesRoute = ClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConexoesRoute = ConexoesRouteImport.update({
+  id: '/conexoes',
+  path: '/conexoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
@@ -138,12 +145,19 @@ const ApiPublicWhatsappWebhookRoute =
     path: '/api/public/whatsapp/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWhatsappWebhookTokenRoute =
+  ApiPublicWhatsappWebhookTokenRouteImport.update({
+    id: '/$token',
+    path: '/$token',
+    getParentRoute: () => ApiPublicWhatsappWebhookRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
+  '/conexoes': typeof ConexoesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
@@ -160,13 +174,15 @@ export interface FileRoutesByFullPath {
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
-  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
+  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/api/public/whatsapp/webhook/$token': typeof ApiPublicWhatsappWebhookTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
+  '/conexoes': typeof ConexoesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
@@ -183,7 +199,8 @@ export interface FileRoutesByTo {
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
-  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
+  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/api/public/whatsapp/webhook/$token': typeof ApiPublicWhatsappWebhookTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -191,6 +208,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
+  '/conexoes': typeof ConexoesRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
@@ -207,7 +225,8 @@ export interface FileRoutesById {
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
-  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRoute
+  '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/api/public/whatsapp/webhook/$token': typeof ApiPublicWhatsappWebhookTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -216,6 +235,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/bot'
     | '/clientes'
+    | '/conexoes'
     | '/configuracoes'
     | '/dashboard'
     | '/melhorias'
@@ -233,12 +253,14 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/api/public/whatsapp/webhook/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/bot'
     | '/clientes'
+    | '/conexoes'
     | '/configuracoes'
     | '/dashboard'
     | '/melhorias'
@@ -256,12 +278,14 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/api/public/whatsapp/webhook/$token'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/bot'
     | '/clientes'
+    | '/conexoes'
     | '/configuracoes'
     | '/dashboard'
     | '/melhorias'
@@ -279,6 +303,7 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/api/public/whatsapp/webhook/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -286,6 +311,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BotRoute: typeof BotRoute
   ClientesRoute: typeof ClientesRoute
+  ConexoesRoute: typeof ConexoesRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   DashboardRoute: typeof DashboardRoute
   MelhoriasRoute: typeof MelhoriasRoute
@@ -302,7 +328,7 @@ export interface RootRouteChildren {
   ApiPublicWhatsappInatividadeRoute: typeof ApiPublicWhatsappInatividadeRoute
   ApiPublicWhatsappMidiaRoute: typeof ApiPublicWhatsappMidiaRoute
   ApiPublicWhatsappStatusRoute: typeof ApiPublicWhatsappStatusRoute
-  ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
+  ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -333,6 +359,13 @@ declare module '@tanstack/react-router' {
       path: '/clientes'
       fullPath: '/clientes'
       preLoaderRoute: typeof ClientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conexoes': {
+      id: '/conexoes'
+      path: '/conexoes'
+      fullPath: '/conexoes'
+      preLoaderRoute: typeof ConexoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes': {
@@ -454,14 +487,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWhatsappWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/whatsapp/webhook/$token': {
+      id: '/api/public/whatsapp/webhook/$token'
+      path: '/$token'
+      fullPath: '/api/public/whatsapp/webhook/$token'
+      preLoaderRoute: typeof ApiPublicWhatsappWebhookTokenRouteImport
+      parentRoute: typeof ApiPublicWhatsappWebhookRoute
+    }
   }
 }
+
+interface ApiPublicWhatsappWebhookRouteChildren {
+  ApiPublicWhatsappWebhookTokenRoute: typeof ApiPublicWhatsappWebhookTokenRoute
+}
+
+const ApiPublicWhatsappWebhookRouteChildren: ApiPublicWhatsappWebhookRouteChildren =
+  {
+    ApiPublicWhatsappWebhookTokenRoute: ApiPublicWhatsappWebhookTokenRoute,
+  }
+
+const ApiPublicWhatsappWebhookRouteWithChildren =
+  ApiPublicWhatsappWebhookRoute._addFileChildren(
+    ApiPublicWhatsappWebhookRouteChildren,
+  )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   BotRoute: BotRoute,
   ClientesRoute: ClientesRoute,
+  ConexoesRoute: ConexoesRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   DashboardRoute: DashboardRoute,
   MelhoriasRoute: MelhoriasRoute,
@@ -478,7 +533,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicWhatsappInatividadeRoute: ApiPublicWhatsappInatividadeRoute,
   ApiPublicWhatsappMidiaRoute: ApiPublicWhatsappMidiaRoute,
   ApiPublicWhatsappStatusRoute: ApiPublicWhatsappStatusRoute,
-  ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
+  ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
