@@ -1866,7 +1866,43 @@ async function processarBotInterno(conversaId: string, entrada: EntradaBot): Pro
       await rodarFluxo(conversa, config, ctx, fluxos, raiz.id, entrada, agora);
       return;
     }
+
+    // Exceção: conexão sem fluxo inicial ativo. As respostas rápidas da própria
+    // conexão passam pela mesma triagem (pergunta de confirmação SIM/NÃO) usada
+    // quando existe fluxo. Sem palavra-chave reconhecida, segue o caminho atual.
+    if (
+      conversa.etapa === "inicio" ||
+      conversa.etapa === "triagem" ||
+      conversa.etapa === "finalizado"
+    ) {
+      const cfgRapidas = await carregarDadosBot(conversa.conexao_id ?? null);
+      const aguardandoConfirmacao = conversa.etapa === "triagem" && Boolean(ctx.triagem || ctx.regra);
+      const reconhecida = Boolean(cfgRapidas && texto && reconhecerResposta(cfgRapidas, texto));
+      if (cfgRapidas && (aguardandoConfirmacao || reconhecida)) {
+        const varsRapidas: Vars = {
+          nome: conversa.nome_contato ?? "",
+          telefone: conversa.telefone,
+          agora,
+        };
+        const primeiraDoDiaRapida = !mesmoDia(conversa.saudacao_em, agora);
+        if (aguardandoConfirmacao) {
+          await resolverTriagem(
+            conversa,
+            config,
+            ctx,
+            fluxos,
+            entrada,
+            primeiraDoDiaRapida,
+            varsRapidas,
+          );
+        } else {
+          await triagem(conversa, config, ctx, fluxos, entrada, primeiraDoDiaRapida, varsRapidas);
+        }
+        return;
+      }
+    }
   }
+
 
   // Etapas de saudação, menu, palavras-chave e respostas automáticas.
   if (ETAPAS_MENU.has(conversa.etapa) || conversa.etapa === "finalizado") {
