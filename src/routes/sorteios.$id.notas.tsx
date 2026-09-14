@@ -119,6 +119,7 @@ function NotasSorteio() {
                   <TableHead>Cadastro</TableHead>
                   <TableHead>Validação</TableHead>
                   <TableHead className="text-right">Cupons</TableHead>
+                  <TableHead className="text-right">Ação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
