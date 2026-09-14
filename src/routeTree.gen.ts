@@ -30,6 +30,8 @@ import { Route as SorteiosNovoRouteImport } from './routes/sorteios.novo'
 import { Route as CurriculoPublicoTokenRouteImport } from './routes/curriculo.publico.$token'
 import { Route as SorteiosIdIndexRouteImport } from './routes/sorteios.$id.index'
 import { Route as SorteiosIdEditarRouteImport } from './routes/sorteios.$id.editar'
+import { Route as SorteiosIdPremiosRouteImport } from './routes/sorteios.$id.premios'
+import { Route as SorteiosIdTermosRouteImport } from './routes/sorteios.$id.termos'
 import { Route as ApiPublicWhatsappFilaRouteImport } from './routes/api/public/whatsapp/fila'
 import { Route as ApiPublicWhatsappInatividadeRouteImport } from './routes/api/public/whatsapp/inatividade'
 import { Route as ApiPublicWhatsappMidiaRouteImport } from './routes/api/public/whatsapp/midia'
@@ -142,6 +144,16 @@ const SorteiosIdEditarRoute = SorteiosIdEditarRouteImport.update({
   path: '/sorteios/$id/editar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SorteiosIdPremiosRoute = SorteiosIdPremiosRouteImport.update({
+  id: '/sorteios/$id/premios',
+  path: '/sorteios/$id/premios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SorteiosIdTermosRoute = SorteiosIdTermosRouteImport.update({
+  id: '/sorteios/$id/termos',
+  path: '/sorteios/$id/termos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWhatsappFilaRoute = ApiPublicWhatsappFilaRouteImport.update({
   id: '/api/public/whatsapp/fila',
   path: '/api/public/whatsapp/fila',
@@ -197,6 +209,8 @@ export interface FileRoutesByFullPath {
   '/sorteios/': typeof SorteiosIndexRoute
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
+  '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
+  '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
@@ -226,6 +240,8 @@ export interface FileRoutesByTo {
   '/sorteios': typeof SorteiosIndexRoute
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
+  '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
+  '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id': typeof SorteiosIdIndexRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
@@ -256,6 +272,8 @@ export interface FileRoutesById {
   '/sorteios/': typeof SorteiosIndexRoute
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
+  '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
+  '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
@@ -287,6 +305,8 @@ export interface FileRouteTypes {
     | '/sorteios/'
     | '/curriculo/publico/$token'
     | '/sorteios/$id/editar'
+    | '/sorteios/$id/premios'
+    | '/sorteios/$id/termos'
     | '/sorteios/$id/'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
@@ -316,6 +336,8 @@ export interface FileRouteTypes {
     | '/sorteios'
     | '/curriculo/publico/$token'
     | '/sorteios/$id/editar'
+    | '/sorteios/$id/premios'
+    | '/sorteios/$id/termos'
     | '/sorteios/$id'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
@@ -345,6 +367,8 @@ export interface FileRouteTypes {
     | '/sorteios/'
     | '/curriculo/publico/$token'
     | '/sorteios/$id/editar'
+    | '/sorteios/$id/premios'
+    | '/sorteios/$id/termos'
     | '/sorteios/$id/'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
@@ -375,6 +399,8 @@ export interface RootRouteChildren {
   SorteiosIndexRoute: typeof SorteiosIndexRoute
   CurriculoPublicoTokenRoute: typeof CurriculoPublicoTokenRoute
   SorteiosIdEditarRoute: typeof SorteiosIdEditarRoute
+  SorteiosIdPremiosRoute: typeof SorteiosIdPremiosRoute
+  SorteiosIdTermosRoute: typeof SorteiosIdTermosRoute
   SorteiosIdIndexRoute: typeof SorteiosIdIndexRoute
   ApiPublicWhatsappFilaRoute: typeof ApiPublicWhatsappFilaRoute
   ApiPublicWhatsappInatividadeRoute: typeof ApiPublicWhatsappInatividadeRoute
@@ -532,6 +558,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SorteiosIdEditarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sorteios/$id/premios': {
+      id: '/sorteios/$id/premios'
+      path: '/sorteios/$id/premios'
+      fullPath: '/sorteios/$id/premios'
+      preLoaderRoute: typeof SorteiosIdPremiosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sorteios/$id/termos': {
+      id: '/sorteios/$id/termos'
+      path: '/sorteios/$id/termos'
+      fullPath: '/sorteios/$id/termos'
+      preLoaderRoute: typeof SorteiosIdTermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/whatsapp/fila': {
       id: '/api/public/whatsapp/fila'
       path: '/api/public/whatsapp/fila'
@@ -612,6 +652,8 @@ const rootRouteChildren: RootRouteChildren = {
   SorteiosIndexRoute: SorteiosIndexRoute,
   CurriculoPublicoTokenRoute: CurriculoPublicoTokenRoute,
   SorteiosIdEditarRoute: SorteiosIdEditarRoute,
+  SorteiosIdPremiosRoute: SorteiosIdPremiosRoute,
+  SorteiosIdTermosRoute: SorteiosIdTermosRoute,
   SorteiosIdIndexRoute: SorteiosIdIndexRoute,
   ApiPublicWhatsappFilaRoute: ApiPublicWhatsappFilaRoute,
   ApiPublicWhatsappInatividadeRoute: ApiPublicWhatsappInatividadeRoute,
