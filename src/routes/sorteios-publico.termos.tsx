@@ -60,25 +60,32 @@ function TermosPortal() {
   const termos = info.data?.ok ? info.data.dados.termos : null;
 
   async function confirmar() {
-    if (!termos) return;
-    if (!aceito) {
-      setErro("É preciso marcar que você leu e aceita os termos.");
-      return;
-    }
+    if (!aceito) return;
     setErro("");
     setEnviando(true);
     try {
-      const resultado = await aceitar({ data: { versao: termos.versao, aceito: true } });
+      const resultado = await aceitar({ data: { aceito: true } });
       if (!resultado.ok) {
         setErro(resultado.mensagem);
         return;
       }
-      await queryClient.invalidateQueries({ queryKey: ["portal-contexto"] });
+      // Revalida o contexto no servidor antes de liberar o painel.
+      const contextoAtualizado = await queryClient.fetchQuery({
+        queryKey: ["portal-contexto"],
+        queryFn: () => contextoFn({}),
+      });
+      if (!contextoAtualizado.ok || contextoAtualizado.dados.precisaAceitarTermos) {
+        setErro("Não foi possível registrar seu aceite. Tente novamente.");
+        return;
+      }
       void navigate({ to: "/sorteios-publico/painel" });
+    } catch {
+      setErro("Não foi possível registrar seu aceite. Tente novamente.");
     } finally {
       setEnviando(false);
     }
   }
+
 
   return (
     <LayoutPublico
