@@ -32,7 +32,7 @@ function formatarMoedaDigitando(valor: string): string {
     return `${Number(inteiro).toLocaleString("pt-BR")},00`;
   }
   const partes = valor.split(",");
-  const depois = partes[partes.length - 1]
+  const depois = (partes.at(-1) ?? "")
     .replace(/\D/g, "")
     .padEnd(2, "0")
     .slice(0, 2);
