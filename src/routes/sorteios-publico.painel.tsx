@@ -54,26 +54,6 @@ function PainelPortal() {
                 />
               </div>
 
-              <Card>
-                <CardContent className="pt-6 space-y-1 text-sm">
-                  <p className="font-semibold text-foreground">
-                    Sorteio nº {painel.data.dados.sorteio.numero_sorteio} —{" "}
-                    {painel.data.dados.sorteio.nome}
-                  </p>
-                  <p className="text-muted-foreground">
-                    Período: {dataBR(painel.data.dados.sorteio.data_inicio)} a{" "}
-                    {dataBR(painel.data.dados.sorteio.data_fim)}
-                  </p>
-                  <p className="text-muted-foreground">
-                    Sorteio em {dataBR(painel.data.dados.sorteio.data_sorteio)}
-                  </p>
-                  <p className="text-muted-foreground">
-                    Cada {brl(painel.data.dados.sorteio.valor_por_cupom_centavos / 100)} em compras
-                    dá direito a 1 cupom.
-                  </p>
-                </CardContent>
-              </Card>
-
               {painel.data.dados.acoesBloqueadas ? (
                 <p className="text-sm text-muted-foreground text-center">
                   Este sorteio não está recebendo novas notas no momento.
@@ -93,6 +73,26 @@ function PainelPortal() {
                   rotulo="Informações do sorteio"
                 />
               </div>
+
+              <Card>
+                <CardContent className="pt-6 space-y-1 text-sm">
+                  <p className="font-semibold text-foreground">
+                    Sorteio nº {painel.data.dados.sorteio.numero_sorteio} —{" "}
+                    {painel.data.dados.sorteio.nome}
+                  </p>
+                  <p className="text-muted-foreground">
+                    Período: {dataBR(painel.data.dados.sorteio.data_inicio)} a{" "}
+                    {dataBR(painel.data.dados.sorteio.data_fim)}
+                  </p>
+                  <p className="text-muted-foreground">
+                    Sorteio em {dataBR(painel.data.dados.sorteio.data_sorteio)}
+                  </p>
+                  <p className="text-muted-foreground">
+                    Cada {brl(painel.data.dados.sorteio.valor_por_cupom_centavos / 100)} em compras
+                    dá direito a 1 cupom.
+                  </p>
+                </CardContent>
+              </Card>
             </>
           )}
         </div>
