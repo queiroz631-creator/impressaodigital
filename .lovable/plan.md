@@ -7,19 +7,24 @@ Dois ajustes na tela de registro de nota, apenas no comportamento de digitação
 Hoje o campo só sugere teclado numérico no celular; no computador aceita letras.
 Passa a ignorar qualquer caractere que não seja número, mantendo apenas os dígitos digitados ou colados.
 
-## 2. Valor da nota — permitir centavos
+## 2. Valor da nota — vírgula e ponto de milhar automáticos durante a digitação
 
-Hoje a formatação acontece a cada tecla, o que apaga a vírgula assim que ela é digitada e impede informar centavos.
+Máscara de moeda por acúmulo de dígitos: aceita somente números e formata a cada tecla,
+sempre considerando os dois últimos dígitos como centavos. A vírgula e os pontos de milhar
+aparecem sozinhos — não é preciso digitar vírgula nem ponto.
 
-Novo comportamento:
+Exemplos de digitação (tecla a tecla):
 
-- Enquanto digita: aceita apenas números e uma vírgula, exibindo o que foi digitado (ex: `1234,5`).
-- Ao sair do campo (ou ao registrar): formata no padrão brasileiro completo.
-  - `1234` → `1.234,00`
-  - `1234,56` → `1.234,56`
-  - `56,7` → `56,70`
-- Máximo de duas casas depois da vírgula.
+- `1` → `0,01`
+- `12` → `0,12`
+- `123` → `1,23`
+- `1234` → `12,34`
+- `12345` → `123,45`
+- `123456` → `1.234,56`
+- `1234567` → `12.345,67`
+
 - O valor continua sendo convertido internamente em centavos pela mesma regra atual.
+- Ao corrigir uma nota existente, o campo já aparece preenchido no mesmo formato.
 
 ## Fora do escopo
 
@@ -29,7 +34,9 @@ Nenhuma outra tela, módulo, regra de negócio, tabela ou campo. Sem commit, pus
 
 - Arquivo único: `src/routes/sorteios-publico.notas.tsx`.
 - `numero`: `onChange` aplica `replace(/\D/g, "")`.
-- `valor`: `onChange` sanitiza para dígitos + uma vírgula (sem formatar); `onBlur` chama a
-  formatação de moeda; `salvar()` normaliza antes de `centavosDeTexto` para o caso de envio
-  sem blur. `centavosDeTexto` / `textoDeCentavos` permanecem intactos.
+- `valor`: `formatarMoedaDigitando` passa a ser máscara por acúmulo — guarda só os dígitos
+  (`valor.replace(/\D/g, "")`), separa os 2 últimos como centavos e formata o inteiro com
+  `toLocaleString("pt-BR")`; campo continua com `inputMode="decimal"`.
+- `centavosDeTexto` / `textoDeCentavos` permanecem intactos e continuam sendo a conversão
+  final para centavos.
 - Verificação: apenas `npx tsgo --noEmit`.
