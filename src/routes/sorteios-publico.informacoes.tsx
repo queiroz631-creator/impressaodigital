@@ -44,44 +44,46 @@ function InformacoesPortal() {
 
   return (
     <PaginaPrivada titulo="Informações do sorteio">
-      {() =>
-        !info.data ? (
-          <Skeleton className="h-48 w-full" />
-        ) : !info.data.ok ? (
-          <p className="text-sm text-muted-foreground">{info.data.mensagem}</p>
-        ) : (
+      {() => {
+        const resultado = info.data;
+        if (!resultado) return <Skeleton className="h-48 w-full" />;
+        if (!resultado.ok) {
+          return <p className="text-sm text-muted-foreground">{resultado.mensagem}</p>;
+        }
+        const dados = resultado.dados;
+        const termos = dados.termos;
+        return (
           <div className="space-y-4">
             <Card>
               <CardContent className="pt-6 space-y-1 text-sm">
                 <p className="font-semibold text-foreground">
-                  Sorteio nº {info.data.dados.sorteio.numero_sorteio} — {info.data.dados.sorteio.nome}
+                  Sorteio nº {dados.sorteio.numero_sorteio} — {dados.sorteio.nome}
                 </p>
-                {info.data.dados.sorteio.descricao && (
+                {dados.sorteio.descricao && (
                   <p className="text-muted-foreground whitespace-pre-line">
-                    {info.data.dados.sorteio.descricao}
+                    {dados.sorteio.descricao}
                   </p>
                 )}
                 <p className="text-muted-foreground">
-                  Situação: {SITUACAO[info.data.dados.sorteio.status] ?? info.data.dados.sorteio.status}
+                  Situação: {SITUACAO[dados.sorteio.status] ?? dados.sorteio.status}
                 </p>
                 <p className="text-muted-foreground">
-                  Período: {dataBR(info.data.dados.sorteio.data_inicio)} a{" "}
-                  {dataBR(info.data.dados.sorteio.data_fim)}
+                  Período: {dataBR(dados.sorteio.data_inicio)} a {dataBR(dados.sorteio.data_fim)}
                 </p>
                 <p className="text-muted-foreground">
-                  Data do sorteio: {dataBR(info.data.dados.sorteio.data_sorteio)}
+                  Data do sorteio: {dataBR(dados.sorteio.data_sorteio)}
                 </p>
                 <p className="text-muted-foreground">
-                  Valor por cupom: {brl(info.data.dados.sorteio.valor_por_cupom_centavos / 100)}
+                  Valor por cupom: {brl(dados.sorteio.valor_por_cupom_centavos / 100)}
                 </p>
               </CardContent>
             </Card>
 
-            {info.data.dados.premios.length > 0 && (
+            {dados.premios.length > 0 && (
               <Card>
                 <CardContent className="pt-6 space-y-3">
                   <h2 className="font-semibold">Prêmios</h2>
-                  {info.data.dados.premios.map((premio) => (
+                  {dados.premios.map((premio) => (
                     <div key={premio.id}>
                       <p className="text-sm font-medium">
                         {premio.nome}
@@ -96,16 +98,12 @@ function InformacoesPortal() {
               </Card>
             )}
 
-            {info.data.dados.termos && (
+            {termos && (
               <Card>
                 <CardContent className="pt-6 space-y-4">
-                  <h2 className="font-semibold">
-                    {info.data.dados.termos.titulo || "Termos e condições"}
-                  </h2>
+                  <h2 className="font-semibold">{termos.titulo || "Termos e condições"}</h2>
                   {SECOES.map(({ chave, titulo }) => {
-                    const texto = (info.data!.dados.termos as unknown as Record<string, string | null>)[
-                      chave
-                    ];
+                    const texto = (termos as unknown as Record<string, string | null>)[chave];
                     if (!texto?.trim()) return null;
                     return (
                       <section key={chave}>
@@ -120,8 +118,8 @@ function InformacoesPortal() {
               </Card>
             )}
           </div>
-        )
-      }
+        );
+      }}
     </PaginaPrivada>
   );
 }
