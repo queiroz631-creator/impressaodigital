@@ -36,3 +36,10 @@
 - [x] Mostrar a cor cadastrada no seletor de conexão
 - [x] Validar administrador, tela e compilação
 - [ ] Validar com um usuário atendente vinculado — pendente por falta de sessão desse perfil
+
+## Correção — Respostas rápidas na conexão sem fluxo inicial
+- [x] Exceção: sem fluxo inicial ativo, palavra-chave reconhecida entra na triagem com confirmação SIM/NÃO
+- [x] Nunca enviar mensagem em branco (menu sem opções)
+- [x] Palavra-chave volta a ser atendida depois do aviso de fora do horário (nunca em atendimento humano)
+- [x] Reconhecimento sempre com as respostas rápidas da conexão da conversa
+- [ ] Testar pelo WhatsApp real da Queiroz Papelaria (envio depende do número)
