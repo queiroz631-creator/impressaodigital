@@ -129,6 +129,7 @@ function ParticipantesSorteio() {
                   <TableHead className="text-right">Notas</TableHead>
                   <TableHead className="text-right">Cupons</TableHead>
                   <TableHead>Sincronização</TableHead>
+                  <TableHead>Concorre ao sorteio</TableHead>
                   <TableHead>Participação</TableHead>
                 </TableRow>
               </TableHeader>
@@ -146,7 +147,21 @@ function ParticipantesSorteio() {
                         {ROTULO_SINC[p.sincronizacao_status] ?? p.sincronizacao_status}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={p.concorre_sorteio}
+                          disabled={consulta || mElegibilidade.isPending}
+                          aria-label="Concorre ao sorteio"
+                          onCheckedChange={(valor) =>
+                            mElegibilidade.mutate({ participanteId: p.id, concorre: valor })
+                          }
+                        />
+                        {!p.concorre_sorteio && <Badge variant="secondary">Não concorre</Badge>}
+                      </div>
+                    </TableCell>
                     <TableCell>{dataHoraBR(p.criado_em)}</TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>
