@@ -50,6 +50,7 @@ import {
 import type { EstadoFluxo } from "@/lib/bot-fluxos-motor";
 
 interface Props {
+  conexaoId: string;
   fluxo: Fluxo;
   fluxos: Fluxo[];
   etapas: FluxoEtapa[];
@@ -137,7 +138,7 @@ const ETAPA_VAZIA: FormEtapa = {
 };
 
 /** Tela única de configuração do fluxo: dados do fluxo, etapas e opções. */
-export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, recarregar }: Props) {
+export function FluxoConfigurador({ conexaoId, fluxo, fluxos, etapas, opcoes, onVoltar, recarregar }: Props) {
   const [dadosFluxo, setDadosFluxo] = useState({
     nome: fluxo.nome,
     descricao: fluxo.descricao,
@@ -456,7 +457,7 @@ export function FluxoConfigurador({ fluxo, fluxos, etapas, opcoes, onVoltar, rec
         </CardContent>
       </Card>
 
-      <SimuladorFluxo fluxoId={fluxo.id} />
+      <SimuladorFluxo conexaoId={conexaoId} fluxoId={fluxo.id} />
     </div>
   );
 }
@@ -931,7 +932,7 @@ function EditorEtapa({
 }
 
 /** Simulador do fluxo: roda as mesmas regras sem enviar nada pelo WhatsApp. */
-function SimuladorFluxo({ fluxoId }: { fluxoId: string }) {
+function SimuladorFluxo({ conexaoId, fluxoId }: { conexaoId: string; fluxoId: string }) {
   const simular = useServerFn(simularFluxo);
   const [conversa, setConversa] = useState<{ de: "bot" | "cliente"; texto: string }[]>([]);
   const [estado, setEstado] = useState<EstadoFluxo | null>(null);
@@ -944,6 +945,7 @@ function SimuladorFluxo({ fluxoId }: { fluxoId: string }) {
     try {
       const r = await simular({
         data: {
+          conexaoId,
           fluxoId,
           texto: mensagem ?? "",
           tipo: "texto",

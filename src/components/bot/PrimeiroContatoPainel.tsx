@@ -86,17 +86,18 @@ const VAZIO: Form = {
 };
 
 /** Aba PRIMEIRO CONTATO: regras que identificam a intenção da primeira mensagem. */
-export function PrimeiroContatoPainel() {
+export function PrimeiroContatoPainel({ conexaoId }: { conexaoId: string }) {
   const queryClient = useQueryClient();
   const [editando, setEditando] = useState<Regra | "nova" | null>(null);
   const [form, setForm] = useState<Form>(VAZIO);
 
   const regras = useQuery({
-    queryKey: ["bot-primeiro-contato"],
+    queryKey: ["bot-primeiro-contato", conexaoId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bot_primeiro_contato")
         .select("*")
+        .eq("conexao_id", conexaoId)
         .order("ordem");
       if (error) throw error;
       return (data ?? []) as unknown as Regra[];
@@ -104,20 +105,21 @@ export function PrimeiroContatoPainel() {
   });
 
   const fluxos = useQuery({
-    queryKey: ["bot-fluxos-lista"],
+    queryKey: ["bot-fluxos-lista", conexaoId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bot_fluxos").select("id, nome").order("ordem");
+      const { data, error } = await supabase.from("bot_fluxos").select("id, nome").eq("conexao_id", conexaoId).order("ordem");
       if (error) throw error;
       return (data ?? []) as Basico[];
     },
   });
 
   const respostas = useQuery({
-    queryKey: ["bot-respostas-lista"],
+    queryKey: ["bot-respostas-lista", conexaoId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bot_respostas")
         .select("id, titulo")
+        .eq("conexao_id", conexaoId)
         .order("ordem");
       if (error) throw error;
       return ((data ?? []) as { id: string; titulo: string }[]).map((r) => ({
@@ -155,7 +157,7 @@ export function PrimeiroContatoPainel() {
   const usaResposta = form.acao === "resposta";
 
   function recarregar() {
-    void queryClient.invalidateQueries({ queryKey: ["bot-primeiro-contato"] });
+    void queryClient.invalidateQueries({ queryKey: ["bot-primeiro-contato", conexaoId] });
   }
 
   async function salvar() {
@@ -191,7 +193,7 @@ export function PrimeiroContatoPainel() {
         ? (
             await supabase
               .from("bot_primeiro_contato")
-              .insert({ ...dados, ordem: Math.max(0, ...lista.map((r) => r.ordem)) + 1 })
+              .insert({ ...dados, conexao_id: conexaoId, ordem: Math.max(0, ...lista.map((r) => r.ordem)) + 1 })
           ).error
         : (
             await supabase

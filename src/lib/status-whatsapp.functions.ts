@@ -14,14 +14,15 @@ export const sincronizarAgendaStatus = createServerFn({ method: "POST" })
 /** Publica agora um agendamento (teste manual). */
 export const publicarStatusAgora = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid(), conexaoId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: reg } = await context.supabase
       .from("bot_status_whatsapp")
       .select(
-        "id, tipo, texto, cor_fundo, imagem_url, legenda, modo, agendado_em, dias_semana, hora, ativo, ultima_publicacao_em",
+        "id, tipo, texto, cor_fundo, imagem_url, legenda, modo, agendado_em, dias_semana, hora, ativo, ultima_publicacao_em, conexao_id",
       )
       .eq("id", data.id)
+      .eq("conexao_id", data.conexaoId)
       .maybeSingle();
 
     if (!reg) return { ok: false as const, erro: "Publicação não encontrada." };

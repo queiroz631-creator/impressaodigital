@@ -8,6 +8,7 @@ export const simularBot = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
+        conexaoId: z.string().uuid(),
         texto: z.string().max(1000),
         tipo: z.enum(["texto", "documento", "imagem"]).default("texto"),
         etapa: z.string().max(60).default("inicio"),
@@ -17,11 +18,14 @@ export const simularBot = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { carregarDadosBot } = await import("@/lib/bot-dados.server");
     const { processarMenu, dentroDoHorario } = await import("@/lib/bot-motor");
 
-    const dados = await carregarDadosBot();
+    const { data: autorizado } = await context.supabase.rpc("conexao_do_usuario", { _user_id: context.userId });
+    const { data: admin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!admin && autorizado !== data.conexaoId) throw new Error("Acesso não autorizado a esta conexão.");
+    const dados = await carregarDadosBot(data.conexaoId);
     if (!dados)
       return { mensagens: [], etapa: data.etapa, aviso: "Configuração do bot não encontrada." };
 
@@ -83,6 +87,7 @@ export const simularFluxo = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
+        conexaoId: z.string().uuid(),
         fluxoId: z.string(),
         texto: z.string().max(1000).default(""),
         tipo: z.enum(["texto", "documento", "imagem"]).default("texto"),
@@ -97,12 +102,15 @@ export const simularFluxo = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { carregarFluxos } = await import("@/lib/bot-dados.server");
     const motor = await import("@/lib/bot-fluxos-motor");
     const { ACOES_ETAPA } = await import("@/lib/bot-fluxos");
 
-    const dados = await carregarFluxos();
+    const { data: autorizado } = await context.supabase.rpc("conexao_do_usuario", { _user_id: context.userId });
+    const { data: admin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!admin && autorizado !== data.conexaoId) throw new Error("Acesso não autorizado a esta conexão.");
+    const dados = await carregarFluxos(data.conexaoId);
     const agora = new Date();
     const vars = { nome: "Cliente", telefone: "5500000000000", agora };
 

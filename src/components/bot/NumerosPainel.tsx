@@ -49,7 +49,7 @@ function formatarTelefone(valor: string) {
  * Modo "todos": responde a todos, menos os bloqueados.
  * Modo "somente_liberados": responde apenas aos liberados e ativos.
  */
-export function NumerosPainel() {
+export function NumerosPainel({ conexaoId }: { conexaoId: string }) {
   const queryClient = useQueryClient();
   const [novoTelefone, setNovoTelefone] = useState("");
   const [novoNome, setNovoNome] = useState("");
@@ -57,11 +57,12 @@ export function NumerosPainel() {
   const [salvando, setSalvando] = useState(false);
 
   const config = useQuery({
-    queryKey: ["whatsapp-config-numeros"],
+    queryKey: ["whatsapp-config-numeros", conexaoId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("whatsapp_config")
         .select("id, modo_numeros")
+        .eq("conexao_id", conexaoId)
         .limit(1)
         .maybeSingle();
       if (error) throw error;
@@ -70,11 +71,12 @@ export function NumerosPainel() {
   });
 
   const numeros = useQuery({
-    queryKey: ["bot-numeros"],
+    queryKey: ["bot-numeros", conexaoId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bot_numeros")
         .select("id, telefone, nome, permitido, ativo, observacao")
+        .eq("conexao_id", conexaoId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Numero[];
@@ -95,7 +97,7 @@ export function NumerosPainel() {
       return;
     }
     toast.success("Modo de operação atualizado.");
-    await queryClient.invalidateQueries({ queryKey: ["whatsapp-config-numeros"] });
+    await queryClient.invalidateQueries({ queryKey: ["whatsapp-config-numeros", conexaoId] });
   }
 
   async function adicionar() {
@@ -110,6 +112,7 @@ export function NumerosPainel() {
       nome: novoNome.trim() || null,
       permitido: novoPermitido,
       ativo: true,
+      conexao_id: conexaoId,
     });
     setSalvando(false);
     if (error) {
@@ -118,7 +121,7 @@ export function NumerosPainel() {
     }
     setNovoTelefone("");
     setNovoNome("");
-    await queryClient.invalidateQueries({ queryKey: ["bot-numeros"] });
+    await queryClient.invalidateQueries({ queryKey: ["bot-numeros", conexaoId] });
     toast.success("Número adicionado.");
   }
 
@@ -128,7 +131,7 @@ export function NumerosPainel() {
       toast.error(error.message);
       return;
     }
-    await queryClient.invalidateQueries({ queryKey: ["bot-numeros"] });
+    await queryClient.invalidateQueries({ queryKey: ["bot-numeros", conexaoId] });
   }
 
   async function excluir(n: Numero) {
@@ -137,7 +140,7 @@ export function NumerosPainel() {
       toast.error(error.message);
       return;
     }
-    await queryClient.invalidateQueries({ queryKey: ["bot-numeros"] });
+    await queryClient.invalidateQueries({ queryKey: ["bot-numeros", conexaoId] });
     toast.success("Número removido.");
   }
 
