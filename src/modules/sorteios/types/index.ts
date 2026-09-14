@@ -212,4 +212,7 @@ export const EVENTOS_AUDITORIA = {
   cupomCancelado: "cupom.cancelado",
   termosAceitos: "termos.aceitos",
   sincronizacao: "sincronizacao.executada",
+  portalEntrada: "portal.entrada",
+  participanteCriado: "participante.criado",
+  portalSaida: "portal.saida",
 } as const;
