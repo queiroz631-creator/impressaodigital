@@ -27,6 +27,10 @@ import { Route as CurriculosIdRouteImport } from './routes/curriculos.$id'
 import { Route as OrcamentoTokenRouteImport } from './routes/orcamento.$token'
 import { Route as SorteiosPublicoIndexRouteImport } from './routes/sorteios-publico.index'
 import { Route as SorteiosPublicoCadastroRouteImport } from './routes/sorteios-publico.cadastro'
+import { Route as SorteiosPublicoCuponsRouteImport } from './routes/sorteios-publico.cupons'
+import { Route as SorteiosPublicoInformacoesRouteImport } from './routes/sorteios-publico.informacoes'
+import { Route as SorteiosPublicoNotasRouteImport } from './routes/sorteios-publico.notas'
+import { Route as SorteiosPublicoPainelRouteImport } from './routes/sorteios-publico.painel'
 import { Route as SorteiosPublicoTelefoneRouteImport } from './routes/sorteios-publico.telefone'
 import { Route as SorteiosPublicoTermosRouteImport } from './routes/sorteios-publico.termos'
 import { Route as SorteiosIndexRouteImport } from './routes/sorteios.index'
@@ -134,6 +138,27 @@ const SorteiosPublicoIndexRoute = SorteiosPublicoIndexRouteImport.update({
 const SorteiosPublicoCadastroRoute = SorteiosPublicoCadastroRouteImport.update({
   id: '/sorteios-publico/cadastro',
   path: '/sorteios-publico/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SorteiosPublicoCuponsRoute = SorteiosPublicoCuponsRouteImport.update({
+  id: '/sorteios-publico/cupons',
+  path: '/sorteios-publico/cupons',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SorteiosPublicoInformacoesRoute =
+  SorteiosPublicoInformacoesRouteImport.update({
+    id: '/sorteios-publico/informacoes',
+    path: '/sorteios-publico/informacoes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const SorteiosPublicoNotasRoute = SorteiosPublicoNotasRouteImport.update({
+  id: '/sorteios-publico/notas',
+  path: '/sorteios-publico/notas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SorteiosPublicoPainelRoute = SorteiosPublicoPainelRouteImport.update({
+  id: '/sorteios-publico/painel',
+  path: '/sorteios-publico/painel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SorteiosPublicoTelefoneRoute = SorteiosPublicoTelefoneRouteImport.update({
@@ -247,6 +272,10 @@ export interface FileRoutesByFullPath {
   '/curriculos/$id': typeof CurriculosIdRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
+  '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
+  '/sorteios-publico/informacoes': typeof SorteiosPublicoInformacoesRoute
+  '/sorteios-publico/notas': typeof SorteiosPublicoNotasRoute
+  '/sorteios-publico/painel': typeof SorteiosPublicoPainelRoute
   '/sorteios-publico/telefone': typeof SorteiosPublicoTelefoneRoute
   '/sorteios-publico/termos': typeof SorteiosPublicoTermosRoute
   '/sorteios/novo': typeof SorteiosNovoRoute
@@ -285,6 +314,10 @@ export interface FileRoutesByTo {
   '/curriculos/$id': typeof CurriculosIdRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
+  '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
+  '/sorteios-publico/informacoes': typeof SorteiosPublicoInformacoesRoute
+  '/sorteios-publico/notas': typeof SorteiosPublicoNotasRoute
+  '/sorteios-publico/painel': typeof SorteiosPublicoPainelRoute
   '/sorteios-publico/telefone': typeof SorteiosPublicoTelefoneRoute
   '/sorteios-publico/termos': typeof SorteiosPublicoTermosRoute
   '/sorteios/novo': typeof SorteiosNovoRoute
@@ -324,6 +357,10 @@ export interface FileRoutesById {
   '/curriculos/$id': typeof CurriculosIdRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
+  '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
+  '/sorteios-publico/informacoes': typeof SorteiosPublicoInformacoesRoute
+  '/sorteios-publico/notas': typeof SorteiosPublicoNotasRoute
+  '/sorteios-publico/painel': typeof SorteiosPublicoPainelRoute
   '/sorteios-publico/telefone': typeof SorteiosPublicoTelefoneRoute
   '/sorteios-publico/termos': typeof SorteiosPublicoTermosRoute
   '/sorteios/novo': typeof SorteiosNovoRoute
@@ -364,6 +401,10 @@ export interface FileRouteTypes {
     | '/curriculos/$id'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
+    | '/sorteios-publico/cupons'
+    | '/sorteios-publico/informacoes'
+    | '/sorteios-publico/notas'
+    | '/sorteios-publico/painel'
     | '/sorteios-publico/telefone'
     | '/sorteios-publico/termos'
     | '/sorteios/novo'
@@ -402,6 +443,10 @@ export interface FileRouteTypes {
     | '/curriculos/$id'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
+    | '/sorteios-publico/cupons'
+    | '/sorteios-publico/informacoes'
+    | '/sorteios-publico/notas'
+    | '/sorteios-publico/painel'
     | '/sorteios-publico/telefone'
     | '/sorteios-publico/termos'
     | '/sorteios/novo'
@@ -440,6 +485,10 @@ export interface FileRouteTypes {
     | '/curriculos/$id'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
+    | '/sorteios-publico/cupons'
+    | '/sorteios-publico/informacoes'
+    | '/sorteios-publico/notas'
+    | '/sorteios-publico/painel'
     | '/sorteios-publico/telefone'
     | '/sorteios-publico/termos'
     | '/sorteios/novo'
@@ -479,6 +528,10 @@ export interface RootRouteChildren {
   CurriculosIdRoute: typeof CurriculosIdRoute
   OrcamentoTokenRoute: typeof OrcamentoTokenRoute
   SorteiosPublicoCadastroRoute: typeof SorteiosPublicoCadastroRoute
+  SorteiosPublicoCuponsRoute: typeof SorteiosPublicoCuponsRoute
+  SorteiosPublicoInformacoesRoute: typeof SorteiosPublicoInformacoesRoute
+  SorteiosPublicoNotasRoute: typeof SorteiosPublicoNotasRoute
+  SorteiosPublicoPainelRoute: typeof SorteiosPublicoPainelRoute
   SorteiosPublicoTelefoneRoute: typeof SorteiosPublicoTelefoneRoute
   SorteiosPublicoTermosRoute: typeof SorteiosPublicoTermosRoute
   SorteiosNovoRoute: typeof SorteiosNovoRoute
@@ -626,6 +679,34 @@ declare module '@tanstack/react-router' {
       path: '/sorteios-publico/cadastro'
       fullPath: '/sorteios-publico/cadastro'
       preLoaderRoute: typeof SorteiosPublicoCadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sorteios-publico/cupons': {
+      id: '/sorteios-publico/cupons'
+      path: '/sorteios-publico/cupons'
+      fullPath: '/sorteios-publico/cupons'
+      preLoaderRoute: typeof SorteiosPublicoCuponsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sorteios-publico/informacoes': {
+      id: '/sorteios-publico/informacoes'
+      path: '/sorteios-publico/informacoes'
+      fullPath: '/sorteios-publico/informacoes'
+      preLoaderRoute: typeof SorteiosPublicoInformacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sorteios-publico/notas': {
+      id: '/sorteios-publico/notas'
+      path: '/sorteios-publico/notas'
+      fullPath: '/sorteios-publico/notas'
+      preLoaderRoute: typeof SorteiosPublicoNotasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sorteios-publico/painel': {
+      id: '/sorteios-publico/painel'
+      path: '/sorteios-publico/painel'
+      fullPath: '/sorteios-publico/painel'
+      preLoaderRoute: typeof SorteiosPublicoPainelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sorteios-publico/telefone': {
@@ -788,6 +869,10 @@ const rootRouteChildren: RootRouteChildren = {
   CurriculosIdRoute: CurriculosIdRoute,
   OrcamentoTokenRoute: OrcamentoTokenRoute,
   SorteiosPublicoCadastroRoute: SorteiosPublicoCadastroRoute,
+  SorteiosPublicoCuponsRoute: SorteiosPublicoCuponsRoute,
+  SorteiosPublicoInformacoesRoute: SorteiosPublicoInformacoesRoute,
+  SorteiosPublicoNotasRoute: SorteiosPublicoNotasRoute,
+  SorteiosPublicoPainelRoute: SorteiosPublicoPainelRoute,
   SorteiosPublicoTelefoneRoute: SorteiosPublicoTelefoneRoute,
   SorteiosPublicoTermosRoute: SorteiosPublicoTermosRoute,
   SorteiosNovoRoute: SorteiosNovoRoute,

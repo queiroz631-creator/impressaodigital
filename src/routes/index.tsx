@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -98,8 +98,16 @@ import { useServerFn } from "@tanstack/react-start";
 
 import { gerarOrcamentoPdf } from "@/lib/pdf";
 import { gerarOrcamentoImagem } from "@/lib/imagem";
+import { hostPublicoSorteios } from "@/modules/sorteios/services/url-publica";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: () => {
+    // No domínio público de Sorteios (quando configurado), a raiz abre o portal.
+    const host = hostPublicoSorteios();
+    if (typeof window !== "undefined" && host && window.location.hostname === host) {
+      throw redirect({ to: "/sorteios-publico" });
+    }
+  },
   component: CalculadoraPage,
   head: () => ({
     meta: [
