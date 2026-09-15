@@ -10,9 +10,9 @@ Verificado: o registro de execuções está vazio (nenhum lote parcial ou incons
 
 Somente o arquivo que grava os lotes de sincronização (`src/lib/sorteios-sync.server.ts`):
 
-- Notas (envio do lote, confirmação, revisão de situação/cancelamento e reconciliação) passam a gravar `tipo = 'NOTAS'`.
+- Notas (envio do lote, confirmação/fechamento, revisão de situação/cancelamento e reconciliação) passam a gravar `tipo = 'NOTAS'`.
 - Clientes (recebimento da loja e alterações enviadas para a loja) passam a gravar `tipo = 'CLIENTES'`.
-- O detalhe da operação continua identificável pelos campos já existentes: origem, destino, identificador da operação, identificador do lote e sorteio.
+- O detalhe da operação continua identificável pelos campos já existentes: origem, destino, identificador da operação, identificador do lote e sorteio — nenhum deles muda de formato.
 
 Nenhum endereço de rota muda, e o Lojamix Sync continua enviando o lote exatamente como hoje — o tipo é definido pelo próprio sistema.
 
