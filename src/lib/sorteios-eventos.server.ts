@@ -14,8 +14,21 @@ import type { Json } from "@/integrations/supabase/types";
  * Tipagem mínima: a fila é acessada apenas por este módulo.
  */
 type ClienteServidor = {
-  from: (tabela: "sorteio_sincronizacao_fila") => never;
+  from(tabela: string): unknown;
 };
+
+type RespostaIds = { data: { id: string }[] | null; error: { message: string } | null };
+
+type FiltroIds = {
+  eq(coluna: string, valor: string): FiltroIds;
+  select(colunas: string): PromiseLike<RespostaIds>;
+};
+
+type TabelaFila = {
+  update(valores: Record<string, unknown>): FiltroIds;
+  insert(valores: Record<string, unknown>): PromiseLike<{ error: { message: string } | null }>;
+};
+
 
 export interface EventoFila {
   tipo: string;
