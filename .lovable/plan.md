@@ -42,8 +42,10 @@ Somente arquivos da API da loja (`api-local/`). Sem migração, sem alteração 
   - `por_origem_id` e `aplicar_alteracao` inalterados.
 - `app/utils/normalizacao.py`: `cpf()` passa a validar os dígitos verificadores (rejeita 11 dígitos repetidos); novo `telefone()` exigindo pelo menos 10 dígitos.
 - `app/services/notas.py`: `_periodo` passa a devolver limite superior exclusivo (dia seguinte quando a data final não tem horário) e fica reutilizável pelo serviço de clientes; a consulta SQL de notas não muda.
-- `app/services/clientes.py`: `enviar_para_sistema` consulta o sorteio ativo uma vez, obtém o período e faz as duas passagens (cadastro novo por `id_entidade`; clientes das notas recentes por faixa de `id_nota_fiscal`), descarta em Python quem não tem CPF válido, telefone válido ou nome, envia em lote e só depois avança os marcadores. Sem sorteio ativo, o ciclo termina sem enviar nada.
-- `app/utils/estado.py`: novo marcador local `ultimo_id_nota_cliente` (mesma gravação atômica, nunca retrocede).
-- `api-local/README.md`: seção de clientes descrevendo os critérios de elegibilidade e as duas passagens.
+- `app/services/clientes.py`: `enviar_para_sistema` consulta o sorteio ativo uma vez, obtém o período, captura `ate_id_nota` uma única vez no início do ciclo (`estado.ler()["ultimo_id_nota"]`) e faz as duas passagens (cadastro novo por `id_entidade`; clientes das notas na faixa `ultimo_id_nota_cliente < id_nota_fiscal <= ate_id_nota`), descarta em Python quem não tem CPF válido, telefone válido ou nome, envia em lote e só avança cada marcador após o lote aceito — erro/timeout mantém os marcadores. Sem sorteio ativo, o ciclo termina sem enviar nada.
+- `app/services/clientes.py`: nova `reconciliar_elegiveis()` reaproveitando a mesma consulta de elegibilidade sobre a faixa já processada (em blocos, com marcador próprio de revisão que recicla), chamada pela rotina de reconciliação já existente em `app/routes/reconciliar.py`. Mesmos critérios, mesmo envio idempotente, sem reenvio indiscriminado.
+- `app/utils/estado.py`: novos marcadores locais `ultimo_id_nota_cliente` e `ultimo_id_cliente_revisado` (mesma gravação atômica, nunca retrocedem).
+- `api-local/README.md`: seção de clientes descrevendo os critérios de elegibilidade, as duas passagens e a reconciliação.
+
 
 Sem testes, sem dados fictícios, sem commit, push, deploy ou publicação.
