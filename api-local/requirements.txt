@@ -1,0 +1,12 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pyodbc==5.2.0
+pydantic==2.10.4
+pydantic-settings==2.7.0
+httpx==0.28.1
+python-dotenv==1.0.1
+pywin32==308
+pyinstaller==6.11.1
+
+pystray>=0.19.5
+Pillow>=10.0

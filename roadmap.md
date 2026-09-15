@@ -84,7 +84,7 @@
 - [x] Reconciliação de 15 minutos como rede de segurança (antes 1 minuto)
 
 ## Módulo Sorteios — Etapa 6 (API local + SQL Server Lojamix, concluída)
-- [x] API local (Python/FastAPI): config, banco, consultas, serviços, rotas, normalização, estado — pasta removida do projeto em 15/09/2026; backup completo em `api-local-backup-2026-09-15.zip`
+- [x] API local (Python/FastAPI): config, banco, consultas, serviços, rotas, normalização, estado — pasta restaurada em 15/09/2026 a partir do `api-local.zip` enviado pelo usuário (versão com GUI, serviço Windows e instalador); backup da versão anterior em `api-local-backup-2026-09-15.zip`
 - [x] Leitura incremental de notas por `id_nota_fiscal`; data de emissão só para o período do sorteio
 - [x] Somente pessoa física; pessoa jurídica e CNPJ fora da base de notas
 - [x] Lotes idempotentes: marcador local avança só após a confirmação (gravação atômica em JSON)

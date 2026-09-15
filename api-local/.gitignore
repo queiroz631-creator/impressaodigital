@@ -1,0 +1,13 @@
+.venv/
+.venv-build/
+__pycache__/
+*.pyc
+.env
+*.log
+build/*.exe
+dist/
+config/config.json
+config/secrets.dat
+state/estado.json
+
+sql.json
