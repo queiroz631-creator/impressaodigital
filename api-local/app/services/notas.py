@@ -37,10 +37,28 @@ def sorteio_ativo() -> SorteioAtivo:
     return SorteioAtivo.model_validate(sorteio)
 
 
-def _periodo(sorteio: SorteioAtivo) -> tuple[str, str]:
+def _dia_seguinte(data: str) -> str:
+    from datetime import date, timedelta
+
+    return (date.fromisoformat(data[:10]) + timedelta(days=1)).isoformat()
+
+
+def periodo_exclusivo(sorteio: SorteioAtivo) -> tuple[str, str]:
+    """Limites do período do sorteio: início inclusivo, fim EXCLUSIVO.
+
+    Quando a data final vem sem horário, o limite vira o começo do dia
+    seguinte — o último dia do sorteio conta inteiro.
+    """
     inicio = sorteio.dataInicio or "1900-01-01"
     fim = sorteio.dataFim or "2999-12-31"
+    if "T" not in fim and ":" not in fim:
+        fim = _dia_seguinte(fim)
     return inicio, fim
+
+
+def _periodo(sorteio: SorteioAtivo) -> tuple[str, str]:
+    return periodo_exclusivo(sorteio)
+
 
 
 def _nota_para_envio(linha: dict[str, Any]) -> dict[str, Any]:

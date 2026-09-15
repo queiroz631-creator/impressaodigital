@@ -35,9 +35,31 @@ def digitos(valor: str | None) -> str | None:
     return d or None
 
 
+def _cpf_valido(digitos_cpf: str) -> bool:
+    """Dígitos verificadores do CPF (rejeita 11 dígitos repetidos)."""
+    if len(digitos_cpf) != 11 or len(set(digitos_cpf)) == 1:
+        return False
+    numeros = [int(c) for c in digitos_cpf]
+    soma = sum(numeros[i] * (10 - i) for i in range(9))
+    d1 = (soma * 10) % 11 % 10
+    if d1 != numeros[9]:
+        return False
+    soma = sum(numeros[i] * (11 - i) for i in range(10))
+    d2 = (soma * 10) % 11 % 10
+    return d2 == numeros[10]
+
+
 def cpf(valor: str | None) -> str | None:
+    """CPF: somente dígitos, 11 posições e dígitos verificadores válidos."""
     d = digitos(valor)
-    return d if d and len(d) == 11 else None
+    return d if d and _cpf_valido(d) else None
+
+
+def telefone(valor: str | None) -> str | None:
+    """Telefone: somente dígitos, com DDD — pelo menos 10 dígitos."""
+    d = digitos(valor)
+    return d if d and len(d) >= 10 else None
+
 
 
 def email(valor: str | None) -> str | None:

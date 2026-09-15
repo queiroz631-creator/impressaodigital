@@ -23,7 +23,10 @@ _PADRAO: dict[str, Any] = {
     "ultimo_id_nota": 0,
     "ultimo_id_revisado": 0,
     "ultimo_id_entidade": 0,
+    "ultimo_id_nota_cliente": 0,
+    "ultimo_id_cliente_revisado": 0,
 }
+
 
 
 
