@@ -19,9 +19,12 @@ Casos conferidos na consulta: CPF + telefone + nota no período envia; sem nota,
 
 Além da varredura por cadastro novo, passa a existir uma segunda passagem: a partir das notas fiscais do período, a API descobre os clientes que compraram agora, mesmo que o cadastro seja antigo. Assim um cliente de 2019 que comprou hoje é enviado, sem depender de cadastro novo.
 
-O limite superior dessa faixa de notas é capturado uma única vez, no começo do ciclo: notas emitidas depois dessa captura ficam para o ciclo seguinte. O marcador dessa passagem só avança quando o envio é aceito — erro, tempo esgotado ou lote recusado deixam o marcador onde estava, e a faixa é reprocessada.
+**Marcadores independentes:** o marcador da sincronização de notas (`ultimo_id_nota`) é exclusivo das notas e nunca é lido nem alterado pela passagem de clientes. A segunda passagem tem marcador próprio (`ultimo_id_nota_cliente`) e trabalha numa faixa congelada: início = marcador da passagem, fim = maior número de nota existente na loja no instante do início do ciclo (capturado uma única vez, com uma consulta do tipo "maior nota", nunca consultando o marcador das notas). Notas emitidas depois da captura ficam para o ciclo seguinte.
 
-As duas passagens usam marcadores locais próprios, e o mesmo cliente enviado duas vezes continua sendo o mesmo registro no sistema (identificação por identificador permanente da loja, depois CPF, depois telefone) — nunca duplica.
+Cada marcador avança e é gravado de forma independente, **somente depois** que o respectivo lote foi aceito pelo sistema. Erro, tempo esgotado ou lote recusado deixam o marcador onde estava, e a faixa é reprocessada.
+
+As duas passagens não criam duplicidade: o mesmo cliente enviado duas vezes continua sendo o mesmo registro no sistema (identificação por identificador permanente da loja, depois CPF, depois telefone).
+
 
 ## Rede de segurança (reconciliação)
 
