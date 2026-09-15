@@ -29,7 +29,6 @@ type TabelaFila = {
   insert(valores: Record<string, unknown>): PromiseLike<{ error: { message: string } | null }>;
 };
 
-
 export interface EventoFila {
   tipo: string;
   entidade: string;
@@ -57,7 +56,6 @@ export interface EventoFila {
 export async function enfileirar(supabase: ClienteServidor, evento: EventoFila): Promise<void> {
   const fila = () => supabase.from("sorteio_sincronizacao_fila") as TabelaFila;
 
-
   const campos = {
     tipo: evento.tipo,
     entidade: evento.entidade,
@@ -73,8 +71,7 @@ export async function enfileirar(supabase: ClienteServidor, evento: EventoFila):
   };
 
   const atualizar = async (): Promise<boolean> => {
-    const { data, error } = await db
-      .from("sorteio_sincronizacao_fila")
+    const { data, error } = await fila()
       .update(campos)
       .eq("origem", evento.origem)
       .eq("entidade", evento.entidade)
@@ -86,14 +83,13 @@ export async function enfileirar(supabase: ClienteServidor, evento: EventoFila):
 
   if (await atualizar()) return;
 
-  const { error } = await db.from("sorteio_sincronizacao_fila").insert(campos);
+  const { error } = await fila().insert(campos);
   if (!error) return;
 
   // Corrida: outra execução inseriu o mesmo evento — atualiza e segue.
   if (await atualizar()) return;
   throw new Error(error.message);
 }
-
 
 /**
  * Validação orientada a evento: processa APENAS as notas pendentes do sorteio
