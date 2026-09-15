@@ -246,7 +246,185 @@ export async function confirmarNotasLote(entrada: {
   };
 }
 
+/* ------------------------------------------- NOTAS: sorteio ativo + situação */
+
+export interface SorteioAtivoSync {
+  id: string;
+  numeroSorteio: number;
+  dataInicio: string | null;
+  dataFim: string | null;
+}
+
+/**
+ * Sorteio ATIVO para a API local consultar UMA vez por ciclo/lote.
+ * Devolve apenas o mínimo necessário — nada de configuração ou token.
+ */
+export async function lerSorteioAtivoParaSync(): Promise<SorteioAtivoSync | null> {
+  const supabase = await cliente();
+  const { data, error } = await supabase
+    .from("sorteios")
+    .select("id, numero_sorteio, data_inicio, data_fim")
+    .eq("status", "ATIVO")
+    .order("numero_sorteio", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return {
+    id: data.id,
+    numeroSorteio: data.numero_sorteio,
+    dataInicio: data.data_inicio,
+    dataFim: data.data_fim,
+  };
+}
+
+export interface NotaSituacaoLoja {
+  /** Identidade lógica da nota: sorteio + número. */
+  numero: string;
+  /** Referência adicional da origem (id interno da loja). Nunca identifica a nota. */
+  origemId?: string | null | undefined;
+  /** 1 = normal, 3 = cancelada (Lojamix). */
+  situacao: number;
+  canceladaEm?: string | null | undefined;
+}
+
+export interface ResultadoSituacaoNotas {
+  loteId: string;
+  sorteioId: string;
+  recebidas: number;
+  baseAtualizadas: number;
+  notasCanceladas: number;
+  ignoradas: number;
+}
+
+/**
+ * Aplica alteração de situação de notas já sincronizadas (principalmente
+ * cancelamento). Busca SEMPRE por sorteio + número; `origemId` é só
+ * referência. Nunca cria nota nova, nunca apaga registro; a nota do
+ * participante passa a CANCELADA com auditoria.
+ */
+export async function registrarSituacaoNotas(entrada: {
+  loteId: string;
+  sorteioId: string;
+  notas: NotaSituacaoLoja[];
+}): Promise<ResultadoSituacaoNotas> {
+  const supabase = await cliente();
+
+  const { data: sorteio, error: erroSorteio } = await supabase
+    .from("sorteios")
+    .select("id")
+    .eq("id", entrada.sorteioId)
+    .maybeSingle();
+  if (erroSorteio) throw new Error(erroSorteio.message);
+  if (!sorteio) throw new Error("Sorteio não encontrado.");
+
+  await abrirLote(supabase, {
+    loteId: entrada.loteId,
+    tipo: "NOTAS_LOJA_SUPABASE",
+    direcao: "LOCAL_PARA_SUPABASE",
+    origem: "LOJA",
+    destino: "SUPABASE",
+    sorteioId: entrada.sorteioId,
+    enviados: entrada.notas.length,
+  });
+
+  const resumo: ResultadoSituacaoNotas = {
+    loteId: entrada.loteId,
+    sorteioId: entrada.sorteioId,
+    recebidas: entrada.notas.length,
+    baseAtualizadas: 0,
+    notasCanceladas: 0,
+    ignoradas: 0,
+  };
+
+  try {
+    const { EVENTOS_AUDITORIA } = await import("@/modules/sorteios/types");
+
+    for (const n of entrada.notas) {
+      const cancelada = n.situacao === 3;
+      const quando = n.canceladaEm ?? new Date().toISOString();
+
+      const { data: base, error: erroBase } = await supabase
+        .from("sorteio_notas_base")
+        .update({
+          situacao: cancelada ? 3 : 1,
+          cancelada_em: cancelada ? quando : null,
+          ...(n.origemId ? { origem_id: n.origemId } : {}),
+        })
+        .eq("sorteio_id", entrada.sorteioId)
+        .eq("numero", n.numero)
+        .select("id");
+      if (erroBase) {
+        resumo.ignoradas += 1;
+        continue;
+      }
+      resumo.baseAtualizadas += base?.length ?? 0;
+
+      if (!cancelada) continue;
+
+      const { data: notas, error: erroNotas } = await supabase
+        .from("sorteio_notas")
+        .update({
+          status: "CANCELADA",
+          cancelado_em: quando,
+          motivo_invalidez: "Nota cancelada na loja.",
+        })
+        .eq("sorteio_id", entrada.sorteioId)
+        .eq("numero", n.numero)
+        .neq("status", "CANCELADA")
+        .select("id, participante_id, status");
+      if (erroNotas) {
+        resumo.ignoradas += 1;
+        continue;
+      }
+
+      for (const nota of notas ?? []) {
+        resumo.notasCanceladas += 1;
+        await supabase.from("sorteio_auditoria").insert({
+          sorteio_id: entrada.sorteioId,
+          participante_id: nota.participante_id,
+          nota_id: nota.id,
+          evento: EVENTOS_AUDITORIA.notaCancelada,
+          origem: "sincronizacao",
+          usuario_id: null,
+          detalhe: {
+            novo: "CANCELADA",
+            resultado: "cancelada_na_loja",
+            numero: n.numero,
+            cancelada_em: quando,
+            lote_id: entrada.loteId,
+          } as never,
+        });
+      }
+    }
+
+    await enfileirar(supabase, {
+      tipo: "NOTAS_LOJA_SUPABASE",
+      entidade: "BASE_NOTAS",
+      entidadeId: entrada.sorteioId,
+      sorteioId: entrada.sorteioId,
+      origem: "LOJA",
+      destino: "SUPABASE",
+      operacao: "SITUACAO_ATUALIZADA",
+      operacaoId: `situacao:${entrada.loteId}`,
+      status: "SINCRONIZADO",
+      metadados: { lote_id: entrada.loteId, itens: entrada.notas.length },
+    });
+
+    await fecharLote(supabase, entrada.loteId, {
+      status: resumo.ignoradas > 0 ? "PARCIAL" : "CONCLUIDA",
+      processados: resumo.baseAtualizadas,
+    });
+    return resumo;
+  } catch (e) {
+    const mensagem = e instanceof Error ? e.message : "Erro inesperado";
+    await fecharLote(supabase, entrada.loteId, { status: "ERRO", erro: mensagem });
+    throw new Error(mensagem);
+  }
+}
+
 /* ---------------------------------------------- CLIENTES: loja → Supabase */
+
 
 export interface ResultadoClientesLote {
   loteId: string;
