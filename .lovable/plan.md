@@ -17,13 +17,20 @@ Casos conferidos na consulta: CPF + telefone + nota no período envia; sem nota,
 
 ## Cliente antigo que compra de novo
 
-Além da varredura por cadastro novo, passa a existir uma segunda passagem: a partir das notas fiscais recém-lidas no período, a API descobre os clientes que compraram agora, mesmo que o cadastro seja antigo. Assim um cliente de 2019 que comprou hoje é enviado, sem depender de cadastro novo.
+Além da varredura por cadastro novo, passa a existir uma segunda passagem: a partir das notas fiscais do período, a API descobre os clientes que compraram agora, mesmo que o cadastro seja antigo. Assim um cliente de 2019 que comprou hoje é enviado, sem depender de cadastro novo.
 
-As duas passagens usam marcadores locais próprios que só avançam depois do envio aceito, e o mesmo cliente enviado duas vezes continua sendo o mesmo registro no sistema (identificação por identificador permanente da loja, depois CPF, depois telefone) — nunca duplica.
+O limite superior dessa faixa de notas é capturado uma única vez, no começo do ciclo: notas emitidas depois dessa captura ficam para o ciclo seguinte. O marcador dessa passagem só avança quando o envio é aceito — erro, tempo esgotado ou lote recusado deixam o marcador onde estava, e a faixa é reprocessada.
+
+As duas passagens usam marcadores locais próprios, e o mesmo cliente enviado duas vezes continua sendo o mesmo registro no sistema (identificação por identificador permanente da loja, depois CPF, depois telefone) — nunca duplica.
+
+## Rede de segurança (reconciliação)
+
+A rotina de reconciliação que já existe continua como proteção, agora também para o caso do cliente que tinha nota no período mas só ganhou CPF ou telefone depois. Ela não reenvia todo mundo: aplica exatamente os mesmos critérios (pessoa física, CPF válido, telefone válido e nota no período do sorteio ativo) e o envio segue idempotente.
 
 ## Período do sorteio
 
 Quando a data final do sorteio vier sem horário, o limite passa a ser o começo do dia seguinte, garantindo que o último dia conte inteiro. O limite inicial continua inclusivo.
+
 
 ## Detalhes técnicos
 
@@ -35,8 +42,10 @@ Somente arquivos da API da loja (`api-local/`). Sem migração, sem alteração 
   - `por_origem_id` e `aplicar_alteracao` inalterados.
 - `app/utils/normalizacao.py`: `cpf()` passa a validar os dígitos verificadores (rejeita 11 dígitos repetidos); novo `telefone()` exigindo pelo menos 10 dígitos.
 - `app/services/notas.py`: `_periodo` passa a devolver limite superior exclusivo (dia seguinte quando a data final não tem horário) e fica reutilizável pelo serviço de clientes; a consulta SQL de notas não muda.
-- `app/services/clientes.py`: `enviar_para_sistema` consulta o sorteio ativo uma vez, obtém o período e faz as duas passagens (cadastro novo por `id_entidade`; clientes das notas recentes por faixa de `id_nota_fiscal`), descarta em Python quem não tem CPF válido, telefone válido ou nome, envia em lote e só depois avança os marcadores. Sem sorteio ativo, o ciclo termina sem enviar nada.
-- `app/utils/estado.py`: novo marcador local `ultimo_id_nota_cliente` (mesma gravação atômica, nunca retrocede).
-- `api-local/README.md`: seção de clientes descrevendo os critérios de elegibilidade e as duas passagens.
+- `app/services/clientes.py`: `enviar_para_sistema` consulta o sorteio ativo uma vez, obtém o período, captura `ate_id_nota` uma única vez no início do ciclo (`estado.ler()["ultimo_id_nota"]`) e faz as duas passagens (cadastro novo por `id_entidade`; clientes das notas na faixa `ultimo_id_nota_cliente < id_nota_fiscal <= ate_id_nota`), descarta em Python quem não tem CPF válido, telefone válido ou nome, envia em lote e só avança cada marcador após o lote aceito — erro/timeout mantém os marcadores. Sem sorteio ativo, o ciclo termina sem enviar nada.
+- `app/services/clientes.py`: nova `reconciliar_elegiveis()` reaproveitando a mesma consulta de elegibilidade sobre a faixa já processada (em blocos, com marcador próprio de revisão que recicla), chamada pela rotina de reconciliação já existente em `app/routes/reconciliar.py`. Mesmos critérios, mesmo envio idempotente, sem reenvio indiscriminado.
+- `app/utils/estado.py`: novos marcadores locais `ultimo_id_nota_cliente` e `ultimo_id_cliente_revisado` (mesma gravação atômica, nunca retrocedem).
+- `api-local/README.md`: seção de clientes descrevendo os critérios de elegibilidade, as duas passagens e a reconciliação.
+
 
 Sem testes, sem dados fictícios, sem commit, push, deploy ou publicação.
