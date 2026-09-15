@@ -22,7 +22,9 @@ from app.utils.logging import logger
 _PADRAO: dict[str, Any] = {
     "ultimo_id_nota": 0,
     "ultimo_id_revisado": 0,
+    "ultimo_id_entidade": 0,
 }
+
 
 
 def _caminho() -> Path:
