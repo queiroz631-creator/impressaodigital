@@ -1,0 +1,210 @@
+"""Sincronização de clientes nos dois sentidos.
+
+LOJA -> SISTEMA: normaliza os dados textuais (CAIXA ALTA, sem acentos, sem
+caracteres especiais), trata os campos estruturados com regra própria e envia
+somente o essencial (nome, CPF, telefone, data de nascimento, e-mail).
+`id_entidade` vai como identificador permanente da origem (`origemId`).
+
+SISTEMA -> LOJA: lê apenas as alterações após o cursor oficial, aplica no SQL
+Server e só então confirma. Nada é excluído em nenhum dos sentidos.
+"""
+
+from typing import Any
+
+from app.config import config
+from app.repositories import clientes_repo
+from app.schemas.sync import ResumoClientes, SorteioAtivo
+from app.services.notas import _periodo, sorteio_ativo
+from app.services import sistema
+from app.services.lotes import lote_deterministico
+from app.utils import estado, normalizacao
+from app.utils.logging import erro_seguro, logger
+
+
+def _cliente_para_envio(linha: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "origemId": str(linha["id_entidade"]),
+        "nome": normalizacao.texto(linha.get("nome")) or "",
+        "cpf": normalizacao.cpf(linha.get("cpf")),
+        "telefone": normalizacao.digitos(linha.get("telefone")),
+        "email": normalizacao.email(linha.get("email")),
+        "dataNascimento": normalizacao.data_iso(linha.get("data_nascimento")),
+    }
+
+
+def _enviar_lote(clientes: list[dict[str, Any]], lote_id: str, resumo: ResumoClientes) -> bool:
+    """Envia um lote de clientes. Só retorna True após aceitação do sistema."""
+    try:
+        r = sistema.chamar(
+            sistema.CLIENTES_RECEBER,
+            {"loteId": lote_id, "clientes": clientes},
+        )
+        resumo.enviados += len(clientes)
+        resumo.criados += int(r.get("criados") or 0)
+        resumo.atualizados += int(r.get("atualizados") or 0)
+        resumo.ignorados += int(r.get("ignorados") or 0)
+        return True
+    except sistema.ErroSistema as e:
+        resumo.erros += 1
+        resumo.erroDetalhe = erro_seguro(e)
+        logger().error("clientes nao enviados: %s", resumo.erroDetalhe)
+        return False
+
+
+def _filtrar_clientes(linhas: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    clientes = []
+    for linha in linhas:
+        cliente = _cliente_para_envio(linha)
+        if not cliente["nome"]:
+            continue
+        if not cliente["cpf"] or len(cliente["cpf"]) != 11:
+            continue
+        if not cliente["telefone"] or len(cliente["telefone"]) < 10:
+            continue
+        clientes.append(cliente)
+    return clientes
+
+
+def enviar_para_sistema(lote: int | None = None, sorteio: SorteioAtivo | None = None) -> ResumoClientes:
+    """LOJA -> SISTEMA com dois cursores independentes.
+
+    Passo A: entidades novas elegíveis.
+    Passo B: entidades antigas que apareceram em novas notas do período.
+
+    O limite superior das notas é capturado uma única vez no início do ciclo,
+    evitando que o segundo passo avance sobre notas que chegaram no meio do
+    processamento.
+    """
+    cfg = config()
+    tamanho = min(lote or cfg.lote_tamanho, 500)
+    resumo = ResumoClientes()
+
+    sorteio = sorteio or sorteio_ativo()
+    inicio, fim = _periodo(sorteio)
+    dados = estado.ler()
+
+    # A) Clientes novos por id_entidade.
+    marcador_entidade = int(dados.get("ultimo_id_entidade", 0) or 0)
+    linhas = clientes_repo.alterados(tamanho, marcador_entidade, inicio, fim)
+    resumo.lidos += len(linhas)
+
+    if linhas:
+        maior_entidade = max(int(l["id_entidade"]) for l in linhas)
+        clientes = _filtrar_clientes(linhas)
+        if clientes:
+            lote_id = lote_deterministico("clientes-entidade", marcador_entidade + 1, maior_entidade)
+            if _enviar_lote(clientes, lote_id, resumo):
+                estado.avancar("ultimo_id_entidade", maior_entidade)
+                resumo.ultimoIdEntidade = maior_entidade
+            else:
+                resumo.ultimoIdEntidade = marcador_entidade
+        else:
+            # Todos os registros do lote foram avaliados e não são elegíveis.
+            estado.avancar("ultimo_id_entidade", maior_entidade)
+            resumo.ultimoIdEntidade = maior_entidade
+            resumo.ignorados += len(linhas)
+
+    # Fotografia única do limite superior do segundo cursor.
+    ate_id_nota = clientes_repo.maior_id_nota()
+    marcador_nota_cliente = int(dados.get("ultimo_id_nota_cliente", 0) or 0)
+
+    # B) Clientes antigos que tiveram novas notas no intervalo.
+    while marcador_nota_cliente < ate_id_nota:
+        linhas_nota = clientes_repo.elegiveis_por_nota(
+            tamanho,
+            marcador_nota_cliente,
+            ate_id_nota,
+            inicio,
+            fim,
+        )
+        if not linhas_nota:
+            # Ainda precisamos considerar que a faixa foi consumida.
+            estado.avancar("ultimo_id_nota_cliente", ate_id_nota)
+            resumo.ultimoIdNotaCliente = ate_id_nota
+            break
+
+        resumo.lidos += len(linhas_nota)
+        maior_nota = max(int(l["id_nota_fiscal"]) for l in linhas_nota)
+        clientes_nota = _filtrar_clientes(linhas_nota)
+
+        if clientes_nota:
+            lote_id = lote_deterministico("clientes-nota", marcador_nota_cliente + 1, maior_nota)
+            if not _enviar_lote(clientes_nota, lote_id, resumo):
+                resumo.ultimoIdNotaCliente = marcador_nota_cliente
+                break
+        estado.avancar("ultimo_id_nota_cliente", maior_nota)
+        marcador_nota_cliente = maior_nota
+        resumo.ultimoIdNotaCliente = maior_nota
+
+        if len(linhas_nota) < tamanho:
+            # Não há mais entidades elegíveis nesta faixa.
+            break
+
+    if resumo.ultimoIdEntidade == 0:
+        resumo.ultimoIdEntidade = int(estado.ler().get("ultimo_id_entidade", 0) or 0)
+    if resumo.ultimoIdNotaCliente == 0:
+        resumo.ultimoIdNotaCliente = int(estado.ler().get("ultimo_id_nota_cliente", 0) or 0)
+    return resumo
+
+
+def ler_alteracoes(limite: int | None = None) -> dict[str, Any]:
+    """Alterações do sistema a partir do cursor oficial. O cursor não avança aqui."""
+    cfg = config()
+    return sistema.chamar(
+        sistema.CLIENTES_ALTERACOES,
+        {"consumidor": cfg.consumidor_clientes, "limite": min(limite or cfg.lote_tamanho, 500)},
+    )
+
+
+def confirmar(sequencia: int, erro: str | None = None) -> dict[str, Any]:
+    """Confirma o cursor oficial — só depois de aplicado no SQL Server."""
+    cfg = config()
+    corpo: dict[str, Any] = {"consumidor": cfg.consumidor_clientes, "sequencia": sequencia}
+    if erro:
+        corpo["erro"] = erro[:500]
+    return sistema.chamar(sistema.CLIENTES_CONFIRMAR, corpo)
+
+
+def aplicar_alteracoes(limite: int | None = None) -> dict[str, Any]:
+    """Ciclo SISTEMA -> LOJA: ler, aplicar, confirmar (nesta ordem).
+
+    A alteração vem marcada com origem SUPABASE no sistema, portanto aplicar
+    aqui não gera um novo evento de volta (sem loop).
+    """
+    dados = ler_alteracoes(limite)
+    itens = dados.get("itens") or []
+    if not itens:
+        return {"aplicados": 0, "cursor": dados.get("cursor", 0), "erros": 0}
+
+    aplicados = 0
+    ultima_ok = int(dados.get("cursor") or 0)
+    falha: str | None = None
+
+    for item in itens:
+        cliente = item.get("cliente") or {}
+        origem_id = cliente.get("origem_id")
+        if not origem_id:
+            # Cliente criado no sistema e ainda sem referência na loja: ignora,
+            # mas não bloqueia o cursor dos demais.
+            ultima_ok = int(item.get("sequencia") or ultima_ok)
+            continue
+        try:
+            clientes_repo.aplicar_alteracao(
+                str(origem_id),
+                normalizacao.texto(cliente.get("nome")),
+                normalizacao.email(cliente.get("email")),
+                normalizacao.digitos(cliente.get("telefone")),
+            )
+            aplicados += 1
+            ultima_ok = int(item.get("sequencia") or ultima_ok)
+        except Exception as e:  # noqa: BLE001 - erro já sanitizado no confirmar
+            falha = erro_seguro(e)
+            logger().error("falha ao aplicar cliente no Lojamix: %s", falha)
+            break
+
+    resultado = confirmar(ultima_ok, falha)
+    return {
+        "aplicados": aplicados,
+        "cursor": resultado.get("cursor", ultima_ok),
+        "erros": 1 if falha else 0,
+    }
