@@ -117,10 +117,14 @@ export interface SorteioNotaBase {
   /** Só sincronização/auditoria — nunca usada para validar a nota do participante. */
   data_nota: string | null;
   origem_id: string | null;
+  /** Situação na loja: 1 = normal, 3 = cancelada. */
+  situacao?: number;
+  cancelada_em?: string | null;
   sincronizado_em: string | null;
   criado_em: string;
   atualizado_em: string;
 }
+
 
 export interface SorteioNota {
   id: string;
