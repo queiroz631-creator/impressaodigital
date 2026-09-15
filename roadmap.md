@@ -82,4 +82,15 @@
 - [x] Validação orientada a evento: apenas o sorteio do lote confirmado
 - [x] Clientes nos dois sentidos: identificador permanente da loja + marca de origem (sem eco/loop)
 - [x] Reconciliação de 15 minutos como rede de segurança (antes 1 minuto)
+
+## Módulo Sorteios — Etapa 6 (API local + SQL Server Lojamix, concluída)
+- [x] Projeto `api-local/` (Python/FastAPI): config, banco, consultas, serviços, rotas, normalização, estado
+- [x] Leitura incremental de notas por `id_nota_fiscal`; data de emissão só para o período do sorteio
+- [x] Somente pessoa física; pessoa jurídica e CNPJ fora da base de notas
+- [x] Lotes idempotentes: marcador local avança só após a confirmação (gravação atômica em JSON)
+- [x] Revisão de situação recicla a faixa já enviada: cancelamento posterior sempre é detectado
+- [x] Sistema: `sorteio_notas_base.situacao`/`cancelada_em`, rota de situação e rota do sorteio ativo
+- [x] Clientes nos dois sentidos com normalização (CAIXA ALTA, sem acentos) e cursor oficial
+- [ ] Preencher o `.env` da API local na máquina da loja e confirmar os nomes das colunas de cliente no Lojamix
 - [ ] Próxima etapa: geração de cupons, números aleatórios e saldo
+
