@@ -106,17 +106,14 @@ def enviar_para_sistema(lote: int | None = None) -> ResumoClientes:
             estado.avancar("ultimo_id_nota_cliente", ate_nota)
             break
         resumo.lidos += len(linhas)
-        menor_id = min(int(l["id_entidade"]) for l in linhas)
-        maior_id = max(int(l["id_entidade"]) for l in linhas)
         lote_id = lote_deterministico("clientes-nota", desde_nota + 1, ate_nota)
         if not _enviar_lote("por-nota", linhas, lote_id, resumo):
             break
         # A faixa até ate_nota foi coberta (os que não vieram não têm nota
         # elegível na faixa), então o marcador próprio pode concluí-la.
         estado.avancar("ultimo_id_nota_cliente", ate_nota)
-        desde_nota = ate_nota
-        if len(linhas) < tamanho or menor_id == maior_id:
-            break
+        break
+
 
     if resumo.ultimoIdEntidade == 0:
         resumo.ultimoIdEntidade = int(estado.ler()["ultimo_id_entidade"])
