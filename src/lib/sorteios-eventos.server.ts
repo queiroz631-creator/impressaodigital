@@ -9,14 +9,24 @@
  */
 import type { Json } from "@/integrations/supabase/types";
 
-/** Cliente com privilégio de servidor (service role). */
+/**
+ * Cliente com privilégio de servidor (service role).
+ * Tipagem mínima: a fila é acessada apenas por este módulo.
+ */
 type ClienteServidor = {
-  from: (tabela: "sorteio_sincronizacao_fila") => {
-    upsert: (
-      valores: never,
-      opcoes: { onConflict: string; ignoreDuplicates: boolean },
-    ) => PromiseLike<{ error: { message: string } | null }>;
-  };
+  from(tabela: string): unknown;
+};
+
+type RespostaIds = { data: { id: string }[] | null; error: { message: string } | null };
+
+type FiltroIds = {
+  eq(coluna: string, valor: string): FiltroIds;
+  select(colunas: string): PromiseLike<RespostaIds>;
+};
+
+type TabelaFila = {
+  update(valores: Record<string, unknown>): FiltroIds;
+  insert(valores: Record<string, unknown>): PromiseLike<{ error: { message: string } | null }>;
 };
 
 export interface EventoFila {
@@ -36,25 +46,49 @@ export interface EventoFila {
 /**
  * Insere ou atualiza o item da fila sem duplicar: o mesmo evento recebido
  * duas vezes não cria dois registros nem dois processamentos.
+ *
+ * A unicidade da fila é garantida por índice ÚNICO PARCIAL
+ * (origem, entidade, operacao_id) WHERE operacao_id IS NOT NULL — e um índice
+ * parcial não pode ser usado em ON CONFLICT. Por isso a idempotência é feita
+ * por leitura + gravação, com nova tentativa de atualização caso outra
+ * execução simultânea tenha inserido o mesmo evento primeiro.
  */
 export async function enfileirar(supabase: ClienteServidor, evento: EventoFila): Promise<void> {
-  const { error } = await supabase.from("sorteio_sincronizacao_fila").upsert(
-    {
-      tipo: evento.tipo,
-      entidade: evento.entidade,
-      entidade_id: evento.entidadeId,
-      sorteio_id: evento.sorteioId ?? null,
-      origem: evento.origem,
-      destino: evento.destino,
-      operacao: evento.operacao,
-      operacao_id: evento.operacaoId,
-      status: evento.status ?? "PENDENTE",
-      alterado_em: new Date().toISOString(),
-      metadados: (evento.metadados ?? null) as Json,
-    } as never,
-    { onConflict: "origem,entidade,operacao_id", ignoreDuplicates: false },
-  );
-  if (error) throw new Error(error.message);
+  const fila = () => supabase.from("sorteio_sincronizacao_fila") as TabelaFila;
+
+  const campos = {
+    tipo: evento.tipo,
+    entidade: evento.entidade,
+    entidade_id: evento.entidadeId,
+    sorteio_id: evento.sorteioId ?? null,
+    origem: evento.origem,
+    destino: evento.destino,
+    operacao: evento.operacao,
+    operacao_id: evento.operacaoId,
+    status: evento.status ?? "PENDENTE",
+    alterado_em: new Date().toISOString(),
+    metadados: (evento.metadados ?? null) as Json,
+  };
+
+  const atualizar = async (): Promise<boolean> => {
+    const { data, error } = await fila()
+      .update(campos)
+      .eq("origem", evento.origem)
+      .eq("entidade", evento.entidade)
+      .eq("operacao_id", evento.operacaoId)
+      .select("id");
+    if (error) throw new Error(error.message);
+    return (data?.length ?? 0) > 0;
+  };
+
+  if (await atualizar()) return;
+
+  const { error } = await fila().insert(campos);
+  if (!error) return;
+
+  // Corrida: outra execução inseriu o mesmo evento — atualiza e segue.
+  if (await atualizar()) return;
+  throw new Error(error.message);
 }
 
 /**
