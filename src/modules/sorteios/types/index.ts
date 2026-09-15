@@ -23,7 +23,6 @@ export type StatusSincronizacao = "EXECUTANDO" | "CONCLUIDA" | "ERRO" | "PARCIAL
 export type StatusFilaSincronizacao = "PENDENTE" | "PROCESSANDO" | "SINCRONIZADO" | "ERRO";
 export type OrigemDestinoSincronizacao = "LOJA" | "SUPABASE";
 
-
 export const STATUS_SORTEIO: StatusSorteio[] = [
   "RASCUNHO",
   "ATIVO",
@@ -124,7 +123,6 @@ export interface SorteioNotaBase {
   criado_em: string;
   atualizado_em: string;
 }
-
 
 export interface SorteioNota {
   id: string;
@@ -246,7 +244,6 @@ export interface SorteioSincronizacaoCursor {
   criado_em: string;
   atualizado_em: string;
 }
-
 
 export interface SorteioAuditoria {
   id: string;

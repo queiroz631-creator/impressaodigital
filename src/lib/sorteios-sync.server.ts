@@ -425,7 +425,6 @@ export async function registrarSituacaoNotas(entrada: {
 
 /* ---------------------------------------------- CLIENTES: loja → Supabase */
 
-
 export interface ResultadoClientesLote {
   loteId: string;
   recebidos: number;
