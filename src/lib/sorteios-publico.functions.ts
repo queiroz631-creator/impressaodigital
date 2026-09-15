@@ -604,6 +604,21 @@ export const corrigirMinhaNota = createServerFn({ method: "POST" })
         evento: EVENTOS_AUDITORIA.notaAlterada,
         detalhe: { motivo: "correcao_pelo_participante" },
       });
+
+      // Validação imediata reutilizando exatamente a regra da Etapa 4.
+      // Falha aqui nunca desfaz a correção: a nota fica PENDENTE e a rotina
+      // de reconciliação tenta novamente.
+      try {
+        const { validarNotaPorId } = await import("./sorteios-validacao.server");
+        await validarNotaPorId(nota.id, "portal", null);
+      } catch (e) {
+        console.error(
+          "[sorteios-publico] validação imediata falhou após correção",
+          nota.id,
+          e instanceof Error ? e.message : "erro desconhecido",
+        );
+      }
+
       return { corrigida: true };
     }),
   );
