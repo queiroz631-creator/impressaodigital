@@ -55,9 +55,8 @@ export interface EventoFila {
  * execução simultânea tenha inserido o mesmo evento primeiro.
  */
 export async function enfileirar(supabase: ClienteServidor, evento: EventoFila): Promise<void> {
-  const db = supabase as unknown as {
-    from: (t: string) => any;
-  };
+  const fila = () => supabase.from("sorteio_sincronizacao_fila") as TabelaFila;
+
 
   const campos = {
     tipo: evento.tipo,
