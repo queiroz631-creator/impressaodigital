@@ -52,7 +52,8 @@ async function abrirLote(
   supabase: ClienteAdmin,
   dados: {
     loteId: string;
-    tipo: string;
+    /** Restrito aos valores aceitos pelo registro de execuções. */
+    tipo: "NOTAS" | "CLIENTES";
     direcao: string;
     origem: OrigemSync;
     destino: OrigemSync;
@@ -142,7 +143,7 @@ export async function receberNotasLote(entrada: {
 
   await abrirLote(supabase, {
     loteId: entrada.loteId,
-    tipo: "NOTAS_LOJA_SUPABASE",
+    tipo: "NOTAS",
     direcao: "LOCAL_PARA_SUPABASE",
     origem: "LOJA",
     destino: "SUPABASE",
@@ -320,7 +321,7 @@ export async function registrarSituacaoNotas(entrada: {
 
   await abrirLote(supabase, {
     loteId: entrada.loteId,
-    tipo: "NOTAS_LOJA_SUPABASE",
+    tipo: "NOTAS",
     direcao: "LOCAL_PARA_SUPABASE",
     origem: "LOJA",
     destino: "SUPABASE",
@@ -448,7 +449,7 @@ export async function receberClientesLote(entrada: {
 
   await abrirLote(supabase, {
     loteId: entrada.loteId,
-    tipo: "CLIENTES_LOJA_SUPABASE",
+    tipo: "CLIENTES",
     direcao: "LOCAL_PARA_SUPABASE",
     origem: "LOJA",
     destino: "SUPABASE",
@@ -715,7 +716,7 @@ export async function reconciliar(): Promise<ResumoReconciliacao> {
 
   const agora = new Date().toISOString();
   await supabase.from("sorteio_sincronizacoes").insert({
-    tipo: "RECONCILIACAO",
+    tipo: "NOTAS",
     direcao: "SUPABASE_PARA_LOCAL",
     origem: "SUPABASE",
     destino: "SUPABASE",
