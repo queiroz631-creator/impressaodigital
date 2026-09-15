@@ -2292,34 +2292,40 @@ export type Database = {
       sorteio_notas_base: {
         Row: {
           atualizado_em: string
+          cancelada_em: string | null
           criado_em: string
           data_nota: string | null
           id: string
           numero: string
           origem_id: string | null
           sincronizado_em: string | null
+          situacao: number
           sorteio_id: string
           valor_centavos: number
         }
         Insert: {
           atualizado_em?: string
+          cancelada_em?: string | null
           criado_em?: string
           data_nota?: string | null
           id?: string
           numero: string
           origem_id?: string | null
           sincronizado_em?: string | null
+          situacao?: number
           sorteio_id: string
           valor_centavos: number
         }
         Update: {
           atualizado_em?: string
+          cancelada_em?: string | null
           criado_em?: string
           data_nota?: string | null
           id?: string
           numero?: string
           origem_id?: string | null
           sincronizado_em?: string | null
+          situacao?: number
           sorteio_id?: string
           valor_centavos?: number
         }
