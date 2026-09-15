@@ -104,6 +104,46 @@ criada.
   (`sorteio_sincronizacao_cursores`), aplica no SQL Server e **só então**
   confirma. Consulta completa de todos os clientes nunca acontece.
 
+### Quem é enviado (regra obrigatória)
+
+Um cliente só é enviado quando cumpre **todos** os critérios:
+
+1. é pessoa física (`entidade -> pessoa_fisica`) — pessoa jurídica e CNPJ
+   ficam totalmente fora;
+2. tem CPF preenchido e válido (11 dígitos, dígitos verificadores conferidos);
+3. tem telefone preenchido (celular com DDD ou telefone 1, somente dígitos);
+4. tem **pelo menos uma nota fiscal no período do sorteio ativo** (mesmas
+   regras das notas: não excluída, situação normal ou cancelada), ligada a
+   ele por `nota_fiscal -> entidade -> pessoa_fisica`.
+
+Cliente sem nota no período, sem CPF, sem telefone ou pessoa jurídica **não é
+enviado**. A consulta usa `EXISTS` (nunca `JOIN`), então cliente com várias
+notas não aparece duplicado. Nada é apagado: quem deixa de ser elegível
+simplesmente não é enviado, e o cadastro já existente continua intacto.
+
+### Duas passagens
+
+1. **Cadastros novos** — varredura por `id_entidade` com o marcador
+   `ultimo_id_entidade`.
+2. **Cliente antigo que comprou agora** — a partir das notas do período na
+   faixa `ultimo_id_nota_cliente < id_nota_fiscal <= maior id_nota_fiscal
+   capturado no início do ciclo`. Assim um cliente de cadastro antigo que
+   compra hoje é enviado sem depender de cadastro novo.
+
+Os marcadores são independentes: `ultimo_id_nota` é exclusivo das notas e
+nunca é lido pela passagem de clientes; `ultimo_id_nota_cliente` é exclusivo
+da segunda passagem. Cada um avança e é gravado **somente depois** que o lote
+é aceito pelo sistema — erro, timeout ou rejeição mantêm o marcador, e a
+faixa é reprocessada.
+
+### Reconciliação de elegibilidade
+
+A rotina de reconciliação (rede de segurança, não o caminho normal) também
+revê a faixa de cadastros com os **mesmos critérios**, cobrindo o caso do
+cliente que já tinha nota no período e só depois ganhou CPF/telefone válido.
+Ela não reenvia indiscriminadamente: apenas elegíveis, com envio idempotente.
+
+
 ### Normalização
 
 - Texto de cadastro (nome, logradouro, bairro, complemento, cidade, observação,
