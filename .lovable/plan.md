@@ -59,19 +59,24 @@ api-local/
   app/services/          notas.py, clientes.py, lotes.py, cursor.py, supabase_client.py
   app/repositories/      notas_repo.py, clientes_repo.py (SQL parametrizado, Lojamix)
   app/schemas/           modelos Pydantic de entrada/saída
-  app/utils/             normalizacao.py (texto/CPF/telefone/CEP), logging.py, estado.py (cursores locais em arquivo JSON)
+  app/utils/             normalizacao.py (texto/CPF/telefone/CEP), logging.py, estado.py (marcador local em JSON, gravação atômica: arquivo temporário + os.replace)
   .env.example  requirements.txt  README.md
 ```
 
-Endpoints locais (todos com token exigido no header, exceto `/health`): `GET /health`, `POST /api/sync/notas-lote`, `POST /api/sync/notas-confirmar`, `POST /api/sync/clientes-receber`, `GET /api/sync/clientes-alteracoes`, `POST /api/sync/clientes-confirmar`, `POST /api/sync/reconciliar`. Cada um dispara o ciclo correspondente contra os endpoints já existentes do sistema (`/api/public/sorteios/sync/*` e `/api/public/sorteios/reconciliar`), reaproveitando `lote_id`/`operacao_id` para idempotência.
+Endpoints locais (todos com token exigido no header, exceto `/health`): `GET /health`, `POST /api/sync/notas-lote`, `POST /api/sync/notas-confirmar`, `POST /api/sync/clientes-receber`, `GET /api/sync/clientes-alteracoes`, `POST /api/sync/clientes-confirmar`, `POST /api/sync/reconciliar`. Cada um dispara o ciclo correspondente contra os endpoints já existentes do sistema (`/api/public/sorteios/sync/*` e `/api/public/sorteios/reconciliar`), reaproveitando `lote_id`/`operacao_id` para idempotência. O sorteio ativo é consultado uma vez por ciclo e repassado ao restante do processamento.
 
-Consulta de notas (parametrizada, incremental por `id_nota_fiscal`/`data_hora_emissao`):
-`dbo.nota_fiscal` JOIN `dbo.entidade` JOIN `dbo.pessoa_fisica`, filtrando `data_hora_emissao` no período do sorteio, `id_situacao_documento_fiscal in (1,3)` e desconsiderando `registro_excluido` verdadeiro (NULL não é tratado como excluído). Campos enviados: `numero_documento_fiscal`, `valor_total` → centavos, `data_hora_emissao`, situação, `data_hora_cancelamento`, `id_filial`, `id_nota_fiscal` como `origemId`.
+Consultas ao Lojamix (parametrizadas), sempre `dbo.nota_fiscal` JOIN `dbo.entidade` JOIN `dbo.pessoa_fisica`, com `data_hora_emissao` dentro do período do sorteio e `registro_excluido` verdadeiro descartado (NULL não é tratado como excluído):
+
+- **Novas:** `WHERE id_nota_fiscal > :ultimo_id ... ORDER BY id_nota_fiscal ASC` com `TOP :lote`. O marcador local avança para o maior `id_nota_fiscal` do lote apenas após a confirmação.
+- **Situação alterada:** varredura da faixa já processada (`id_nota_fiscal <= :ultimo_id`, a partir de `ultimo_id_revisado`, em blocos) buscando `id_situacao_documento_fiscal = 3` ou `data_hora_cancelamento` preenchida, com marcador de revisão próprio que recicla a faixa — nota já enviada nunca fica invisível a alterações futuras.
+
+Campos enviados por nota: `numero_documento_fiscal`, `valor_total` → centavos, `data_hora_emissao`, `id_situacao_documento_fiscal`, `data_hora_cancelamento`, `id_filial`, `id_nota_fiscal` como `origemId`.
 
 **Lado do sistema (mínimo necessário):**
 
 - Migração: `sorteio_notas_base` ganha `situacao smallint default 1` e `cancelada_em timestamptz null` (mesmos GRANTs restritos já usados). Nada é removido nem alterado além disso.
-- Nova rota `src/routes/api/public/sorteios/sync/notas-situacao.ts` (POST, token, Zod): recebe `sorteioId` + lista de números cancelados; marca a nota da base como cancelada e coloca a nota correspondente do participante como `CANCELADA` com auditoria — sem apagar registro.
+- Nova rota `src/routes/api/public/sorteios/sync/notas-situacao.ts` (POST, token, Zod): recebe `sorteioId` + lista de itens com `numero`, `origemId` opcional, `situacao` e `canceladaEm` opcional. A busca da nota é sempre por `sorteio_id + numero`; `origemId` é apenas referência gravada. Marca a nota da base como cancelada e coloca a nota correspondente do participante como `CANCELADA`, com auditoria — sem apagar registro.
+
 - Nova rota `src/routes/api/public/sorteios/sync/sorteio-ativo.ts` (POST, token): devolve apenas `id`, `numero_sorteio`, `data_inicio`, `data_fim` do sorteio ATIVO.
 - `src/lib/sorteios-sync.server.ts`: funções `registrarSituacaoNotas` e `lerSorteioAtivoParaSync`, seguindo o padrão de lote/auditoria já existente. `receberNotasLote`/`confirmarNotasLote` permanecem inalterados.
 - Tipos: `SorteioNotaBase` ganha `situacao` e `cancelada_em`.
