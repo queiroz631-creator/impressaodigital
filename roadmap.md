@@ -91,6 +91,8 @@
 - [x] Revisão de situação recicla a faixa já enviada: cancelamento posterior sempre é detectado
 - [x] Sistema: `sorteio_notas_base.situacao`/`cancelada_em`, rota de situação e rota do sorteio ativo
 - [x] Clientes nos dois sentidos com normalização (CAIXA ALTA, sem acentos) e cursor oficial
+- [x] Clientes: enviar só pessoa física + CPF válido + telefone + nota no período (duas passagens, marcadores independentes, reconciliação de elegibilidade)
 - [ ] Preencher o `.env` da API local na máquina da loja e confirmar os nomes das colunas de cliente no Lojamix
+
 - [ ] Próxima etapa: geração de cupons, números aleatórios e saldo
 
