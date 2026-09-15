@@ -22,18 +22,25 @@ Nenhuma tabela paralela é criada.
 
 ## O que a API local faz
 
-1. Pergunta ao sistema qual é o sorteio ativo e seu período.
-2. Lê no Lojamix apenas as notas novas ou alteradas desde o último ponto processado (leitura incremental, nunca varredura completa).
-3. Considera apenas notas de **pessoa física** (nota → entidade → pessoa física). Pessoa jurídica fica de fora; CNPJ nunca é usado.
-4. Converte o valor para centavos e envia em lotes (abrir lote → enviar → confirmar). O lote só conta como sincronizado depois da confirmação.
-5. Detecta notas canceladas e envia a alteração da situação — atualiza a nota existente, nunca cria outra.
-6. Envia clientes novos/alterados da loja, com nome e textos em CAIXA ALTA, sem acentos e sem caracteres especiais; CPF, telefone, CEP, e-mail e datas têm regra própria.
-7. Busca as alterações de clientes feitas no sistema a partir do cursor, aplica no Lojamix e só então confirma o cursor.
-8. Nunca apaga cliente nem nota. Falhas ficam registradas com tentativa e erro resumido, e o item volta para nova tentativa.
+1. Pergunta ao sistema qual é o sorteio ativo e seu período — **uma vez por ciclo/lote**, nunca por nota.
+2. Lê no Lojamix apenas as notas novas, usando o número interno da nota (`id_nota_fiscal`) como marcador: `id_nota_fiscal > último processado`, em ordem crescente. A data de emissão serve só para conferir se a nota está no período do sorteio.
+3. Numa segunda leitura, revisa as notas já enviadas para detectar mudança de situação (principalmente cancelamento) — nota já sincronizada nunca fica invisível para alterações futuras.
+4. Considera apenas notas de **pessoa física** (nota → entidade → pessoa física). Pessoa jurídica fica de fora; CNPJ nunca é usado.
+5. Converte o valor para centavos e envia em lotes (abrir lote → enviar → confirmar). O lote só conta como sincronizado depois da confirmação.
+6. Envia as notas canceladas com número, referência de origem, sorteio, situação e data do cancelamento — atualiza a nota existente, nunca cria outra e nunca apaga.
+7. Envia clientes novos/alterados da loja, com nome e textos em CAIXA ALTA, sem acentos e sem caracteres especiais; CPF, telefone, CEP, e-mail e datas têm regra própria.
+8. Busca as alterações de clientes feitas no sistema a partir do cursor oficial, aplica no Lojamix e só então confirma o cursor.
+9. Nunca apaga cliente nem nota. Falhas ficam registradas com tentativa e erro resumido, e o item volta para nova tentativa.
+
+## Marcadores (cursores)
+
+- **Notas (loja → sistema):** marcador local da própria API, guardado em arquivo JSON gravado de forma atômica para não corromper em queda de energia. Guarda o último número interno de nota processado e o ponto da última revisão de situação.
+- **Clientes (sistema → loja):** continua valendo o cursor oficial do sistema (`sorteio_sincronizacao_cursores`), que só avança depois que a alteração foi aplicada no SQL Server e confirmada.
 
 ## Identificação da nota (regra absoluta)
 
-Identidade lógica: **sorteio + número do documento fiscal**. Validação: número + valor em centavos. CPF, CNPJ, nome, telefone e data **nunca** identificam nem validam a nota. A data de emissão serve só para o período e para informação.
+Identidade lógica: **sorteio + número do documento fiscal**. Validação: número + valor em centavos. A referência de origem (`origemId`, o `id_nota_fiscal`) é só informação adicional e não substitui a identidade lógica. CPF, CNPJ, nome, telefone e data **nunca** identificam nem validam a nota. A data de emissão serve só para o período e para informação.
+
 
 ## Segurança
 
