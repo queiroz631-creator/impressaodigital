@@ -15,7 +15,7 @@
 import type { Json } from "@/integrations/supabase/types";
 import { EVENTOS_AUDITORIA } from "@/modules/sorteios/types";
 
-export type OrigemValidacao = "rotina" | "painel";
+export type OrigemValidacao = "rotina" | "painel" | "portal";
 
 export type ResultadoValidacao =
   | { resultado: "VALIDA" }
