@@ -17,13 +17,20 @@ Casos conferidos na consulta: CPF + telefone + nota no período envia; sem nota,
 
 ## Cliente antigo que compra de novo
 
-Além da varredura por cadastro novo, passa a existir uma segunda passagem: a partir das notas fiscais recém-lidas no período, a API descobre os clientes que compraram agora, mesmo que o cadastro seja antigo. Assim um cliente de 2019 que comprou hoje é enviado, sem depender de cadastro novo.
+Além da varredura por cadastro novo, passa a existir uma segunda passagem: a partir das notas fiscais do período, a API descobre os clientes que compraram agora, mesmo que o cadastro seja antigo. Assim um cliente de 2019 que comprou hoje é enviado, sem depender de cadastro novo.
 
-As duas passagens usam marcadores locais próprios que só avançam depois do envio aceito, e o mesmo cliente enviado duas vezes continua sendo o mesmo registro no sistema (identificação por identificador permanente da loja, depois CPF, depois telefone) — nunca duplica.
+O limite superior dessa faixa de notas é capturado uma única vez, no começo do ciclo: notas emitidas depois dessa captura ficam para o ciclo seguinte. O marcador dessa passagem só avança quando o envio é aceito — erro, tempo esgotado ou lote recusado deixam o marcador onde estava, e a faixa é reprocessada.
+
+As duas passagens usam marcadores locais próprios, e o mesmo cliente enviado duas vezes continua sendo o mesmo registro no sistema (identificação por identificador permanente da loja, depois CPF, depois telefone) — nunca duplica.
+
+## Rede de segurança (reconciliação)
+
+A rotina de reconciliação que já existe continua como proteção, agora também para o caso do cliente que tinha nota no período mas só ganhou CPF ou telefone depois. Ela não reenvia todo mundo: aplica exatamente os mesmos critérios (pessoa física, CPF válido, telefone válido e nota no período do sorteio ativo) e o envio segue idempotente.
 
 ## Período do sorteio
 
 Quando a data final do sorteio vier sem horário, o limite passa a ser o começo do dia seguinte, garantindo que o último dia conte inteiro. O limite inicial continua inclusivo.
+
 
 ## Detalhes técnicos
 
