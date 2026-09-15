@@ -20,7 +20,7 @@ Nenhum endereço de rota muda, e o Lojamix Sync continua enviando o lote exatame
 
 1. `abrirLote` passa a receber `tipo: "NOTAS" | "CLIENTES"` (tipagem restrita, para o erro não voltar).
 2. Chamadas atualizadas: `receberNotasLote` e `registrarSituacaoNotas` → `NOTAS`; `receberClientesLote` → `CLIENTES`.
-3. Como `sorteio_sincronizacoes` não possui coluna `operacao`, a distinção fina (`ENVIAR`, `ATUALIZAR_SITUACAO`) fica no `operacao_id` com prefixo da operação (ex.: `ENVIAR:<lote_id>`, `ATUALIZAR_SITUACAO:<lote_id>`), mantendo `lote_id` intacto — a busca do lote em `confirmarNotasLote`/`fecharLote` continua por `lote_id`, então a idempotência e o retry não mudam.
+3. `operacao_id` e `lote_id` permanecem exatamente como hoje (`operacao_id = lote_id`): a busca do lote, a confirmação e o retry não mudam. A distinção da operação continua nos campos existentes (origem, destino, lote, sorteio) e no `operacao` detalhado da fila.
 4. O `INSERT` final de `reconciliar()` passa de `tipo: 'RECONCILIACAO'` para `tipo: 'NOTAS'` (é validação de notas), mantendo `direcao`, `origem`, `destino` e as contagens.
 5. A fila (`sorteio_sincronizacao_fila`) **não** tem essa restrição e não será alterada: os tipos de evento (`NOTAS_LOJA_SUPABASE`, `CLIENTES_SUPABASE_LOJA`) continuam como estão, preservando o trigger de clientes e o cursor.
 6. Nenhuma migration, nenhuma alteração de constraint, nenhum DROP, nenhuma alteração em notas, base de notas, cupons, clientes, cursor ou regras de validação.
