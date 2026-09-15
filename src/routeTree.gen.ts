@@ -44,6 +44,7 @@ import { Route as SorteiosIdParticipantesRouteImport } from './routes/sorteios.$
 import { Route as SorteiosIdPremiosRouteImport } from './routes/sorteios.$id.premios'
 import { Route as SorteiosIdTermosRouteImport } from './routes/sorteios.$id.termos'
 import { Route as ApiPublicSorteiosReconciliarRouteImport } from './routes/api/public/sorteios/reconciliar'
+import { Route as ApiPublicSorteiosReconciliarInternoRouteImport } from './routes/api/public/sorteios/reconciliar-interno'
 import { Route as ApiPublicSorteiosValidarNotasRouteImport } from './routes/api/public/sorteios/validar-notas'
 import { Route as ApiPublicWhatsappFilaRouteImport } from './routes/api/public/whatsapp/fila'
 import { Route as ApiPublicWhatsappInatividadeRouteImport } from './routes/api/public/whatsapp/inatividade'
@@ -236,6 +237,12 @@ const ApiPublicSorteiosReconciliarRoute =
     path: '/api/public/sorteios/reconciliar',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicSorteiosReconciliarInternoRoute =
+  ApiPublicSorteiosReconciliarInternoRouteImport.update({
+    id: '/api/public/sorteios/reconciliar-interno',
+    path: '/api/public/sorteios/reconciliar-interno',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSorteiosValidarNotasRoute =
   ApiPublicSorteiosValidarNotasRouteImport.update({
     id: '/api/public/sorteios/validar-notas',
@@ -354,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
+  '/api/public/sorteios/reconciliar-interno': typeof ApiPublicSorteiosReconciliarInternoRoute
   '/api/public/sorteios/validar-notas': typeof ApiPublicSorteiosValidarNotasRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
@@ -405,6 +413,7 @@ export interface FileRoutesByTo {
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
+  '/api/public/sorteios/reconciliar-interno': typeof ApiPublicSorteiosReconciliarInternoRoute
   '/api/public/sorteios/validar-notas': typeof ApiPublicSorteiosValidarNotasRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
@@ -457,6 +466,7 @@ export interface FileRoutesById {
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
+  '/api/public/sorteios/reconciliar-interno': typeof ApiPublicSorteiosReconciliarInternoRoute
   '/api/public/sorteios/validar-notas': typeof ApiPublicSorteiosValidarNotasRoute
   '/api/public/whatsapp/fila': typeof ApiPublicWhatsappFilaRoute
   '/api/public/whatsapp/inatividade': typeof ApiPublicWhatsappInatividadeRoute
@@ -510,6 +520,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/termos'
     | '/sorteios/$id/'
     | '/api/public/sorteios/reconciliar'
+    | '/api/public/sorteios/reconciliar-interno'
     | '/api/public/sorteios/validar-notas'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
@@ -561,6 +572,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/termos'
     | '/sorteios/$id'
     | '/api/public/sorteios/reconciliar'
+    | '/api/public/sorteios/reconciliar-interno'
     | '/api/public/sorteios/validar-notas'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
@@ -612,6 +624,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/termos'
     | '/sorteios/$id/'
     | '/api/public/sorteios/reconciliar'
+    | '/api/public/sorteios/reconciliar-interno'
     | '/api/public/sorteios/validar-notas'
     | '/api/public/whatsapp/fila'
     | '/api/public/whatsapp/inatividade'
@@ -664,6 +677,7 @@ export interface RootRouteChildren {
   SorteiosIdTermosRoute: typeof SorteiosIdTermosRoute
   SorteiosIdIndexRoute: typeof SorteiosIdIndexRoute
   ApiPublicSorteiosReconciliarRoute: typeof ApiPublicSorteiosReconciliarRoute
+  ApiPublicSorteiosReconciliarInternoRoute: typeof ApiPublicSorteiosReconciliarInternoRoute
   ApiPublicSorteiosValidarNotasRoute: typeof ApiPublicSorteiosValidarNotasRoute
   ApiPublicWhatsappFilaRoute: typeof ApiPublicWhatsappFilaRoute
   ApiPublicWhatsappInatividadeRoute: typeof ApiPublicWhatsappInatividadeRoute
@@ -926,6 +940,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSorteiosReconciliarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sorteios/reconciliar-interno': {
+      id: '/api/public/sorteios/reconciliar-interno'
+      path: '/api/public/sorteios/reconciliar-interno'
+      fullPath: '/api/public/sorteios/reconciliar-interno'
+      preLoaderRoute: typeof ApiPublicSorteiosReconciliarInternoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sorteios/validar-notas': {
       id: '/api/public/sorteios/validar-notas'
       path: '/api/public/sorteios/validar-notas'
@@ -1077,6 +1098,8 @@ const rootRouteChildren: RootRouteChildren = {
   SorteiosIdTermosRoute: SorteiosIdTermosRoute,
   SorteiosIdIndexRoute: SorteiosIdIndexRoute,
   ApiPublicSorteiosReconciliarRoute: ApiPublicSorteiosReconciliarRoute,
+  ApiPublicSorteiosReconciliarInternoRoute:
+    ApiPublicSorteiosReconciliarInternoRoute,
   ApiPublicSorteiosValidarNotasRoute: ApiPublicSorteiosValidarNotasRoute,
   ApiPublicWhatsappFilaRoute: ApiPublicWhatsappFilaRoute,
   ApiPublicWhatsappInatividadeRoute: ApiPublicWhatsappInatividadeRoute,

@@ -23,8 +23,8 @@ export const Route = createFileRoute("/api/public/sorteios/sync/clientes-receber
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const { tokenValido, naoAutorizado } = await import("@/lib/sorteios-sync-token.server");
-        if (!(await tokenValido(request))) return naoAutorizado();
+        const { tokenLojamixSyncValido, naoAutorizado } = await import("@/lib/sorteios-sync-token.server");
+        if (!tokenLojamixSyncValido(request)) return naoAutorizado();
 
         const entrada = esquema.safeParse(await request.json().catch(() => null));
         if (!entrada.success) return new Response("Dados inválidos", { status: 400 });

@@ -1,16 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 /**
- * Rede de segurança de baixa frequência (15 minutos).
- * O caminho normal é por evento: a confirmação do lote aciona a validação.
- * Esta rotina só recupera evento perdido, fila travada ou API desligada.
+ * Reconciliação acionada pela rotina interna agendada (a cada 15 minutos).
+ * Autenticação interna (webhook_token), separada da API do Lojamix Sync.
+ * Executa exatamente a mesma função reconciliar() da rota pública.
  */
-export const Route = createFileRoute("/api/public/sorteios/reconciliar")({
+export const Route = createFileRoute("/api/public/sorteios/reconciliar-interno")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const { tokenLojamixSyncValido, naoAutorizado } = await import("@/lib/sorteios-sync-token.server");
-        if (!tokenLojamixSyncValido(request)) return naoAutorizado();
+        const { tokenValido, naoAutorizado } = await import("@/lib/sorteios-sync-token.server");
+        if (!(await tokenValido(request))) return naoAutorizado();
 
         try {
           const { reconciliar } = await import("@/lib/sorteios-sync.server");

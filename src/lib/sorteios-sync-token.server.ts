@@ -24,4 +24,22 @@ export async function tokenValido(request: Request): Promise<boolean> {
   return diferenca === 0;
 }
 
+/**
+ * Autenticação exclusiva da API do Lojamix Sync.
+ * Lê somente LOJAMIX_SYNC_TOKEN do ambiente; sem fallback para webhook_token.
+ * O token nunca é registrado em log nem devolvido em resposta.
+ */
+export function tokenLojamixSyncValido(request: Request): boolean {
+  const token = new URL(request.url).searchParams.get("token") ?? "";
+  const esperado = process.env["LOJAMIX_SYNC_TOKEN"] ?? "";
+  if (!token || !esperado || token.length !== esperado.length) return false;
+
+  // Comparação de tempo constante.
+  let diferenca = 0;
+  for (let i = 0; i < esperado.length; i += 1) {
+    diferenca |= token.charCodeAt(i) ^ esperado.charCodeAt(i);
+  }
+  return diferenca === 0;
+}
+
 export const naoAutorizado = () => new Response("Não autorizado", { status: 401 });
