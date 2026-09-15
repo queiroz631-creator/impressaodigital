@@ -40,4 +40,16 @@ async def reconciliar():
     except Exception as e:  # noqa: BLE001
         resultado["clientes"] = {"erro": erro_seguro(e)}
 
+    # Revisão de elegibilidade: cliente com nota no período que só depois
+    # ganhou CPF/telefone válido. Mesmos critérios do envio normal.
+    try:
+        resultado["clientesElegiveis"] = clientes.reconciliar_elegiveis().model_dump()
+    except notas.SemSorteioAtivo:
+        resultado["clientesElegiveis"] = {"lidos": 0}
+    except (ErroBanco, sistema.ErroSistema) as e:
+        resultado["clientesElegiveis"] = {"erro": str(e)}
+    except Exception as e:  # noqa: BLE001
+        resultado["clientesElegiveis"] = {"erro": erro_seguro(e)}
+
+
     return resultado
