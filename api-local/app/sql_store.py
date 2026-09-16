@@ -313,7 +313,6 @@ SELECT TOP ({{limite}})
     cobrar_juros_recebimento,
     cobrar_multa_recebimento,
     entidade_estrangeira,
-    id_pais,
     bloquear_consignacao,
     bloquear_pedido_venda
 )
@@ -349,7 +348,6 @@ VALUES (
     -2,
     1,
     1,
-    0,
     0,
     0,
     0
