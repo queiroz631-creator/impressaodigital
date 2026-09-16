@@ -87,8 +87,10 @@ def criar(nome: str, cpf: str, telefone: str | None, email: str | None, nascimen
     id_entidade válido de retorno, a criação é tratada como erro.
     """
     ddd, numero = _telefone_partes(telefone)
+    # E-mail é opcional: ausente vira '' (padrão da coluna no Lojamix), nunca
+    # bloqueia a criação nem a vinculação.
     sql_entidade, params_entidade = render("cliente_criar_entidade", {
-        "nome": nome, "email": email, "ddd": ddd, "numero": numero,
+        "nome": nome, "email": email or "", "ddd": ddd, "numero": numero,
     })
     # A pessoa física depende do id gerado na entidade. O segundo passo usa um
     # marcador interno resolvido dentro da transação (abaixo).
