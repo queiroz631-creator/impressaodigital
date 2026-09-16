@@ -35,6 +35,16 @@ async def reconciliar():
         resultado["situacoes"] = {"erro": erro_seguro(e)}
 
     try:
+        sorteio_clientes = notas.sorteio_ativo()
+        resultado["clientesElegiveis"] = clientes.revisar_elegiveis(sorteio=sorteio_clientes).model_dump()
+    except notas.SemSorteioAtivo:
+        resultado["clientesElegiveis"] = {"lidos": 0}
+    except (ErroBanco, sistema.ErroSistema) as e:
+        resultado["clientesElegiveis"] = {"erro": str(e)}
+    except Exception as e:  # noqa: BLE001
+        resultado["clientesElegiveis"] = {"erro": erro_seguro(e)}
+
+    try:
         resultado["clientes"] = clientes.aplicar_alteracoes()
     except (ErroBanco, sistema.ErroSistema) as e:
         resultado["clientes"] = {"erro": str(e)}

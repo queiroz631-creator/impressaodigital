@@ -53,6 +53,9 @@ class SyncWorker:
             resultado["notas"] = notas.enviar_novas(sorteio=sorteio).model_dump()
             resultado["situacoes"] = notas.enviar_situacoes(sorteio=sorteio).model_dump()
             resultado["clientes_loja_sistema"] = clientes.enviar_para_sistema(sorteio=sorteio).model_dump()
+            # Passo de recuperação: varre o cadastro em blocos e reenvia quem é
+            # elegível, cobrindo eventos perdidos e marcadores adiantados.
+            resultado["clientes_revisao"] = clientes.revisar_elegiveis(sorteio=sorteio).model_dump()
             resultado["clientes_sistema_loja"] = clientes.aplicar_alteracoes()
 
             # As funções de sincronização tratam erros por lote para preservar
