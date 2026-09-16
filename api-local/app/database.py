@@ -77,6 +77,41 @@ def executar(sql: str, parametros: Sequence[Any] = ()) -> int:
         logger().error("falha ao gravar no SQL Server: %s", detalhe)
         raise ErroBanco("Falha ao gravar no banco da loja.", detalhe) from None
 
+
+def executar_transacao(passos: Sequence[tuple[str, Sequence[Any]]]) -> list[list[dict[str, Any]]]:
+    """Executa várias gravações como UMA transação lógica.
+
+    Cada passo é (sql, parametros). Se qualquer passo falhar, tudo é desfeito
+    (ROLLBACK) e nada é considerado gravado. Passos que devolvem linhas (por
+    exemplo, com OUTPUT INSERTED.id_entidade) têm o resultado retornado.
+    """
+    if not config().escrita_sqlserver_habilitada:
+        raise ErroBanco("Escrita no banco da loja está desabilitada.")
+    try:
+        with conexao() as conn:
+            cursor = conn.cursor()
+            resultados: list[list[dict[str, Any]]] = []
+            try:
+                for sql, parametros in passos:
+                    cursor.execute(sql, *parametros) if parametros else cursor.execute(sql)
+                    if cursor.description:
+                        colunas = [c[0] for c in cursor.description]
+                        resultados.append([dict(zip(colunas, linha)) for linha in cursor.fetchall()])
+                    else:
+                        resultados.append([])
+                conn.commit()
+                return resultados
+            except Exception:
+                conn.rollback()
+                raise
+    except ErroBanco:
+        raise
+    except pyodbc.Error as e:
+        detalhe = _diagnostico_sql(e)
+        logger().error("falha na gravação transacional no SQL Server: %s", detalhe)
+        raise ErroBanco("Falha ao gravar no banco da loja. Nada foi registrado.", detalhe) from None
+
+
 def disponivel() -> bool:
     try:
         consultar("SELECT 1 AS ok")
