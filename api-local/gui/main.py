@@ -200,6 +200,40 @@ class App(tk.Tk):
                 f"  Fora do envio: sem nome {item.get('semNome', 0)}, sem CPF {item.get('semCpf', 0)}, "
                 f"CPF inválido {item.get('cpfInvalido', 0)}, sem telefone {item.get('semTelefone', 0)}"
             )
+
+        simulacao = False
+
+        alteracoes = result.get("clientes_sistema_loja")
+        if isinstance(alteracoes, dict):
+            simulacao = simulacao or bool(alteracoes.get("bloqueadoSimulacao"))
+            linhas.append(
+                "\nClientes (sistema → loja): aplicados "
+                f"{alteracoes.get('aplicados', 0)}, criados {alteracoes.get('criados', 0)}, "
+                f"vinculados {alteracoes.get('vinculados', 0)}, "
+                f"atualizados {alteracoes.get('atualizados', 0)}, "
+                f"simulados {alteracoes.get('simulados', 0)}, erros {alteracoes.get('erros', 0)}"
+            )
+
+        pendentes = result.get("clientes_pendentes_loja")
+        if isinstance(pendentes, dict):
+            simulacao = simulacao or bool(pendentes.get("bloqueadoSimulacao"))
+            linhas.append(
+                "\nClientes pendentes (sistema → loja): recebidos "
+                f"{pendentes.get('recebidos', 0)}, criados {pendentes.get('criados', 0)}, "
+                f"vinculados {pendentes.get('vinculados', 0)}, "
+                f"atualizados {pendentes.get('atualizados', 0)}, "
+                f"simulados {pendentes.get('simulados', 0)}, erros {pendentes.get('erros', 0)}\n"
+                f"  Fora do envio: sem participação ativa "
+                f"{pendentes.get('semParticipacaoAtiva', 0)}"
+                + ("\n  Varredura reiniciada do começo." if pendentes.get("voltouAoInicio") else "")
+            )
+
+        if simulacao or bool(self.cfg.get("simulacao_criacao_cliente", True)):
+            linhas.append(
+                "\n\n*** MODO SIMULAÇÃO LIGADO: nenhum cliente novo é criado no "
+                "Lojamix. Desligue em Configurações para gravar de verdade. ***"
+            )
+
         return "".join(linhas)
 
     def reprocessar_clientes(self) -> None:
