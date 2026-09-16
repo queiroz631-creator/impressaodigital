@@ -123,6 +123,8 @@ class App(tk.Tk):
                     command=self.refresh_status).pack(side="left")
         ttk.Button(bottom, text="⚠ Detalhes do erro",
                     command=self.show_error_details).pack(side="left", padx=8)
+        ttk.Button(bottom, text="♻ Reprocessar clientes",
+                    command=self.reprocessar_clientes).pack(side="left")
         ttk.Button(bottom, text="✕ Fechar",
                     command=self.close_app).pack(side="right")
 
