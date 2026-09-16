@@ -20,6 +20,17 @@ def elegiveis_por_nota(limite: int, desde_id: int, ate_id: int, inicio: Any, fim
     return consultar(sql, params)
 
 
+def revisar_elegiveis(limite: int, desde_id: int, inicio: Any, fim: Any) -> list[dict[str, Any]]:
+    """Varredura de recuperação: elegíveis por id_entidade, sem depender de nota nova."""
+    sql, params = render("clientes_revisao", {
+        "limite": limite,
+        "desde_id": desde_id,
+        "inicio": inicio,
+        "fim": fim,
+    })
+    return consultar(sql, params)
+
+
 def maior_id_nota() -> int:
     sql, params = render("maior_id_nota", {})
     linhas = consultar(sql, params)
