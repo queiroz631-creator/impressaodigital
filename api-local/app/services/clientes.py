@@ -419,6 +419,10 @@ def _enviar_pendentes_para_loja(bloco: int | None = None) -> ResumoPendentesClie
             logger().error("falha ao processar cliente pendente: %s", resumo.erroDetalhe)
             break
 
+    # Simulação ligada: nada foi gravado no Lojamix neste bloco.
+    if resumo.simulados:
+        resumo.bloqueadoSimulacao = True
+
     # Marcador avança só com o bloco concluído; erro mantém para nova tentativa.
     if not falhou and novo_marcador and novo_marcador != marcador:
         estado.definir("ultimo_id_cliente_pendente", novo_marcador)
