@@ -71,3 +71,69 @@ def aplicar_alteracao(origem_id: str, nome: str | None, email: str | None, telef
         "numero": numero, "origem_id": origem_id
     })
     return executar(sql, params)
+
+
+def por_cpf(cpf: str) -> dict[str, Any] | None:
+    """Localiza no Lojamix a Pessoa Física com o CPF informado (somente dígitos)."""
+    sql, params = render("cliente_por_cpf", {"cpf": cpf})
+    linhas = consultar(sql, params)
+    return linhas[0] if linhas else None
+
+
+def criar(nome: str, cpf: str, telefone: str | None, email: str | None, nascimento: Any) -> int:
+    """Cria entidade + pessoa física em UMA transação lógica.
+
+    Em qualquer falha: rollback completo e nada é considerado criado. Sem um
+    id_entidade válido de retorno, a criação é tratada como erro.
+    """
+    ddd, numero = _telefone_partes(telefone)
+    sql_entidade, params_entidade = render("cliente_criar_entidade", {
+        "nome": nome, "email": email, "ddd": ddd, "numero": numero,
+    })
+    # A pessoa física depende do id gerado na entidade. O segundo passo usa um
+    # marcador interno resolvido dentro da transação (abaixo).
+    sql_pf, params_pf = render("cliente_criar_pessoa_fisica", {
+        "id_entidade": None, "cpf": cpf, "nascimento": nascimento,
+    })
+
+    from app.database import conexao, config as _cfg_mod  # import local para transação fina
+    from app.config import config
+    import pyodbc
+
+    if not config().escrita_sqlserver_habilitada:
+        raise ErroBanco("Escrita no banco da loja está desabilitada.")
+
+    try:
+        with conexao() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql_entidade, *params_entidade)
+                id_entidade = None
+                if cursor.description:
+                    linha = cursor.fetchone()
+                    if linha is not None:
+                        id_entidade = linha[0]
+                if id_entidade is None:
+                    cursor.execute("SELECT CONVERT(int, SCOPE_IDENTITY())")
+                    linha = cursor.fetchone()
+                    id_entidade = linha[0] if linha else None
+                try:
+                    id_entidade = int(id_entidade)
+                except (TypeError, ValueError):
+                    id_entidade = 0
+                if id_entidade <= 0:
+                    raise ErroBanco("A criação da entidade não devolveu um identificador válido.")
+
+                params_pf_resolvidos = tuple(id_entidade if v is None else v for v in params_pf)
+                cursor.execute(sql_pf, *params_pf_resolvidos)
+                conn.commit()
+                return id_entidade
+            except Exception:
+                conn.rollback()
+                raise
+    except ErroBanco:
+        raise
+    except pyodbc.Error as e:
+        from app.database import _diagnostico_sql
+        detalhe = _diagnostico_sql(e)
+        raise ErroBanco("Falha ao criar o cliente no banco da loja. Nada foi registrado.", detalhe) from None
