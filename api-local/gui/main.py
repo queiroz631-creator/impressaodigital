@@ -180,8 +180,63 @@ class App(tk.Tk):
             f"SQL Server: {data.get('sqlserver', 'desconhecido')}\n"
             f"Sincronização em andamento: {running}\n"
             f"Último sucesso: {data.get('last_success') or '—'}\n"
-            f"Último erro: {ultimo_erro}"
+            f"Último erro: {ultimo_erro}\n"
+            + self._resumo_clientes(result)
         )
+
+    def _resumo_clientes(self, result: dict) -> str:
+        """Mostra quantos clientes foram enviados e por que outros ficaram fora."""
+        linhas = []
+        for chave, titulo in (
+            ("clientes_loja_sistema", "Clientes (loja → sistema)"),
+            ("clientes_revisao", "Revisão de clientes"),
+        ):
+            item = result.get(chave)
+            if not isinstance(item, dict):
+                continue
+            linhas.append(
+                f"\n{titulo}: lidos {item.get('lidos', 0)}, enviados {item.get('enviados', 0)}, "
+                f"criados {item.get('criados', 0)}, atualizados {item.get('atualizados', 0)}\n"
+                f"  Fora do envio: sem nome {item.get('semNome', 0)}, sem CPF {item.get('semCpf', 0)}, "
+                f"CPF inválido {item.get('cpfInvalido', 0)}, sem telefone {item.get('semTelefone', 0)}"
+            )
+        return "".join(linhas)
+
+    def reprocessar_clientes(self) -> None:
+        if not messagebox.askyesno(
+            "Reprocessar clientes",
+            "Refazer o envio de todos os clientes elegíveis para o sistema?\n\n"
+            "Os clientes já enviados serão apenas atualizados. As notas fiscais não são afetadas.",
+        ):
+            return
+
+        def work() -> None:
+            try:
+                r = self._api("POST", "/api/local/clientes-reprocessar")
+                r.raise_for_status()
+                data = r.json()
+                self.after(0, lambda: self._reprocessar_result(data))
+            except Exception as exc:
+                detalhe = str(exc)[:250]
+                self.after(0, lambda: messagebox.showerror(
+                    "Reprocessar clientes",
+                    f"Não foi possível iniciar o reprocessamento.\n\nDetalhe: {detalhe}",
+                ))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _reprocessar_result(self, data: dict) -> None:
+        if data.get("reiniciado"):
+            messagebox.showinfo(
+                "Reprocessar clientes",
+                "Reprocessamento iniciado. O envio dos clientes elegíveis começa agora.",
+            )
+            self.refresh_status()
+        else:
+            messagebox.showwarning(
+                "Reprocessar clientes",
+                str(data.get("motivo") or "Não foi possível reprocessar agora."),
+            )
 
     def _offline(self, detail: str) -> None:
         self.status_var.set("● Serviço/API offline")
