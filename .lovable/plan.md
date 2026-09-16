@@ -12,6 +12,7 @@ Nada do site, das notas, da validação, dos cupons ou do saldo é alterado.
 4. **Correção de uma falha real na criação** — a rotina de criação usa uma mensagem de erro que não está importada no arquivo; hoje, qualquer falha nesse caminho quebraria com erro interno em vez da mensagem correta. Será corrigido.
 5. **Confirmação da pessoa física antes de concluir** — depois de gravar a pessoa física, a rotina confere que a linha foi realmente criada. Sem confirmação, desfaz tudo (nada de entidade órfã) e o cliente fica para a próxima tentativa, sem ligação e sem avanço de marcador.
 6. **Simulação** — permanece ligada por padrão: consulta o CPF, informa que vincularia/atualizaria ou que criaria, e não grava nada na loja.
+7. **E-mail sempre opcional** — nunca é exigido na elegibilidade nem na criação. Com e-mail: grava `email_principal`. Sem e-mail: cria/vincula normalmente e deixa o campo vazio/padrão do Lojamix — não é erro nem descarte. Data de nascimento também nunca bloqueia (enviada quando disponível; senão, padrão 01/01/1900). Obrigatórios continuam apenas: pessoa física, CPF válido, telefone válido, participação em sorteio ativo.
 
 ## Sequência de resolução (mantida)
 
