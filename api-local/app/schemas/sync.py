@@ -103,6 +103,7 @@ class ResumoPendentesClientes(BaseModel):
     simulados: int = 0
     ignorados: int = 0
     semParticipacaoAtiva: int = 0
+    bloqueadoSimulacao: bool = False
     ultimoIdClientePendente: str = ""
     voltouAoInicio: bool = False
     erros: int = 0
