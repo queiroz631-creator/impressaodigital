@@ -1,84 +1,20 @@
-# Criação de clientes no Lojamix a partir do cadastro real 9942
+# Corrigir o erro de país na criação do cliente no Lojamix
 
-Objetivo: montar a criação do cliente com base em todos os campos realmente exigidos pela tabela `dbo.entidade` e nos valores observados no cadastro de teste real (9942), sem duplicar o que o Lojamix já preenche por padrão.
+## O que o resultado mostra
+As duas etapas de clientes (sistema → loja) falharam com o mesmo erro do SQL Server: o valor de país enviado (0) não existe na tabela de países do Lojamix, então a criação foi recusada e desfeita (`fk_entidade_pais_exportacao`). Nenhum cliente foi criado, nenhum vínculo foi feito e nenhum marcador avançou — o comportamento de segurança funcionou.
 
-## Obrigatórios que já têm padrão — a API não preenche
+Também aparece "Clientes pendentes: recebidos 3" — os cadastros prontos estão sendo encontrados corretamente; só a gravação falhou.
 
-`data_hora_cadastro` (data/hora atual), `receber_email_promocao` (0), `saldo_valor_pontuacao` (0), `saldo_pontuacao` (0), `pontuacao_acumulada` (0), `flag_cliente` (1), `flag_profissional` (0), `flag_medico` (0), `flag_laboratorio` (0).
+## Correção
+1. Em `api-local/app/sql_store.py`, no comando de criação da entidade (`cliente_criar_entidade`): remover o campo de país da lista de campos e do seu valor, deixando o Lojamix aplicar o próprio padrão da coluna (ela é obrigatória, mas tem padrão definido no banco). Assim nenhum valor inválido é enviado.
+2. Nada mais muda no comando: continua com `OUTPUT INSERTED.id_entidade`, os dados do cliente vindos do sistema (nome, e-mail quando existir, DDD, celular) como parâmetros, e os demais valores fixos já espelhados do cadastro real.
+3. Pessoa física, transação única, conferência de exatamente um registro antes de confirmar, rollback total em qualquer erro, vínculo por CPF e modo simulação: tudo preservado.
 
-## Obrigatórios SEM padrão — a API preenche
+## Ponto de atenção (pode gerar o próximo erro igual)
+O comando envia cidade = 260. Se esse número não for um código de cidade válido no Lojamix, o próximo teste falhará com o mesmo tipo de erro, agora apontando cidade. Se acontecer, aplico a mesma solução: deixar a cidade em branco/padrão do Lojamix.
 
-| Campo | Valor |
-| --- | --- |
-| tipo_entidade | 1 (observado) |
-| nome | vem do sistema |
-| id_usuario_cadastro | 2 (observado) |
-| logradouro | '' (fica vazio) |
-| bairro | '' (fica vazio) |
-| cep | '' (fica vazio) |
-| site | '' (fica vazio) |
-| observacao | '' (fica vazio) |
-| id_cidade | 260 — a confirmar (ver abaixo) |
-| id_potencial | 1 (observado) |
-| flag_fornecedor | 0 (observado) |
-| flag_guia | 0 (observado) |
-| flag_transportadora | 0 (observado) |
-| flag_funcionario | 0 (observado) |
-| situacao_replicacao_multiloja | 1 (observado) |
-| limite_credito | 0.00 (observado) |
+## Fora do escopo
+Site, banco de dados, rotas, sincronização de notas, validação, cupons, saldo, cursores e regras de elegibilidade não são tocados. Sem commit, envio ou publicação.
 
-## Único ponto a confirmar: id_cidade
-
-`id_cidade` é obrigatório, não tem padrão e é numérico. No relato do cadastro 9942 apareceu o número 260 associado ao campo "cep", mas `cep` é texto e ficou vazio — então esse 260 é, com muita probabilidade, o código de cidade do cadastro real. Preciso da confirmação com esta leitura:
-
-```text
-SELECT cep, id_cidade FROM dbo.entidade WHERE id_entidade = 9942
-```
-
-Se confirmar 260, uso 260. Se vier outro número, uso o número real. Não vou inventar valor nenhum para esse campo.
-
-## Pessoa física — conferência da estrutura
-
-A gravação atual usa: `id_entidade`, `cpf` (do sistema), `data_nascimento` (do sistema, ou 1900-01-01 quando não houver), `rg` = '', `ie` = '', `sexo` = 1, `indicador_ie` = 9, `nome_mae` = '', `nome_pai` = '' — os mesmos valores observados no cadastro real. Para fechar a certeza de que nenhum campo obrigatório ficou de fora, incluo no plano uma leitura somente de estrutura:
-
-```text
-SELECT c.name, t.name AS tipo, c.is_nullable, d.definition AS padrao
-  FROM sys.columns c
-  JOIN sys.types t ON t.user_type_id = c.user_type_id
-  LEFT JOIN sys.default_constraints d ON d.parent_object_id = c.object_id
-                                    AND d.parent_column_id = c.column_id
- WHERE c.object_id = OBJECT_ID('dbo.pessoa_fisica')
- ORDER BY c.column_id
-```
-
-Se aparecer algum obrigatório sem padrão que a gravação não preenche, ele entra no comando com o valor observado no cadastro 9942 — nunca inventado. Se estiver tudo coberto, nada muda na pessoa física.
-
-## Opcionais preenchidos por espelho do cadastro real
-
-`Ativo` = 1, `celular_whatsapp` = 0, `cadastro_incompleto` = 1, `exibir_agenda` = 0, `id_forca_vendas` = 0, `valor_pontuacao` = 0, `quantidade_pontos` = 0, `valor_faixa_pontuacao` = 0, `valor_sobra_acumulado` = 0, `id_transportadora_padrao` = -1, `valor_limite_compra` = 0, `periodo_limite_compra` = -2, `cobrar_juros_recebimento` = 1, `cobrar_multa_recebimento` = 1, `entidade_estrangeira` = 0, `id_pais` = 0, `bloquear_consignacao` = 0, `bloquear_pedido_venda` = 0.
-
-Os demais campos opcionais continuam vazios, como no cadastro real.
-
-## Dados que continuam vindo do sistema
-
-`nome` (limitado a 80 caracteres, como a coluna), `celular_ddd` (2), `celular_numero` (18), `email_principal` (100 — vazio quando não houver; e-mail nunca bloqueia), e na pessoa física o `cpf` e a `data_nascimento` (1900-01-01 só quando não houver data).
-
-## Criação
-
-Mecânica atual mantida: mesma conexão e mesma transação — entidade com `OUTPUT INSERTED.id_entidade` → pessoa física com o identificador devolvido → conferência de que existe exatamente um registro de pessoa física para esse identificador → confirmação. Qualquer falha desfaz tudo, nada é vinculado e nenhum marcador avança. O identificador é sempre o próximo gerado pela própria tabela; o 9942 é só referência.
-
-## Vínculo e simulação
-
-Vínculo pelo fluxo atual, sem alterar a regra por CPF. Simulação preservada: ligada, consulta o CPF, informa o que faria, não grava, não vincula, não confirma a fila e não avança o processamento.
-
-## Escopo técnico
-
-Arquivo alterado: apenas `api-local/app/sql_store.py` (comando `cliente_criar_entidade` — valores fixos escritos no próprio comando, só os dados do cliente como parâmetros; e, se a conferência da pessoa física exigir, o comando `cliente_criar_pessoa_fisica` no mesmo arquivo). Nada muda no site, banco, rotas, migrações, elegibilidade, participação, fila, cursores, notas, validação, cancelamento, cupons, saldo ou cron. Nenhum cadastro de teste novo, nenhuma criação real durante a implementação, sem commit, envio ou publicação.
-
-## Ao final eu apresento
-
-- o comando final de criação da entidade;
-- todos os campos preenchidos explicitamente e seus valores;
-- os campos deixados para o padrão do Lojamix;
-- a confirmação de que todos os obrigatórios sem padrão foram tratados (entidade e pessoa física);
-- a confirmação de `OUTPUT INSERTED.id_entidade`, da transação única e do desfazimento em qualquer erro.
+## Depois de aplicar
+Se você já editou esse comando na tela de configuração do programa, clique em "restaurar padrão" nele; depois desligue a simulação e clique em "Sincronizar Agora".
