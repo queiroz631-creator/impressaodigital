@@ -179,6 +179,72 @@ def _enviar_para_sistema(lote: int | None = None, sorteio: SorteioAtivo | None =
     return resumo
 
 
+def revisar_elegiveis(bloco: int | None = None, sorteio: SorteioAtivo | None = None) -> ResumoRevisaoClientes:
+    """Rede de segurança: varre o cadastro em blocos e reenvia quem é elegível.
+
+    O envio é idempotente (identificado por `origemId`), então repetir um
+    cliente já sincronizado apenas o atualiza. Ao terminar a varredura, o
+    marcador volta ao início para recomeçar no próximo ciclo.
+    """
+    with _TRAVA_CLIENTES:
+        return _revisar_elegiveis(bloco=bloco, sorteio=sorteio)
+
+
+def _revisar_elegiveis(bloco: int | None = None, sorteio: SorteioAtivo | None = None) -> ResumoRevisaoClientes:
+    cfg = config()
+    tamanho = min(bloco or cfg.revisao_bloco, 500)
+    resumo = ResumoRevisaoClientes()
+
+    sorteio = sorteio or sorteio_ativo()
+    inicio, fim = _periodo(sorteio)
+
+    marcador = int(estado.ler().get("ultimo_id_cliente_revisado", 0) or 0)
+    linhas = clientes_repo.revisar_elegiveis(tamanho, marcador, inicio, fim)
+
+    if not linhas:
+        # Fim da varredura: recomeça do início no próximo ciclo.
+        if marcador:
+            estado.definir("ultimo_id_cliente_revisado", 0)
+            resumo.voltouAoInicio = True
+        resumo.ultimoIdClienteRevisado = 0
+        return resumo
+
+    resumo.lidos = len(linhas)
+    maior_id = max(int(l["id_entidade"]) for l in linhas)
+    clientes = _filtrar_clientes(linhas, resumo)
+
+    if clientes:
+        lote_id = lote_deterministico("clientes-revisao", marcador + 1, maior_id)
+        enviado = _enviar_lote(clientes, lote_id, resumo)  # type: ignore[arg-type]
+        if not enviado:
+            resumo.ultimoIdClienteRevisado = marcador
+            return resumo
+
+    estado.definir("ultimo_id_cliente_revisado", maior_id)
+    resumo.ultimoIdClienteRevisado = maior_id
+    return resumo
+
+
+def reprocessar() -> dict[str, Any]:
+    """Zera SOMENTE os marcadores do fluxo de clientes LOJA -> SISTEMA.
+
+    Nunca toca em `ultimo_id_nota` nem em `ultimo_id_revisado` (sincronismo de
+    notas). Não roda junto com um ciclo normal de clientes.
+    """
+    if _TRAVA_CLIENTES.locked():
+        return {
+            "reiniciado": False,
+            "motivo": "Há uma sincronização de clientes em andamento. Tente novamente em instantes.",
+        }
+    with _TRAVA_CLIENTES:
+        dados = estado.zerar_clientes()
+        logger().info("marcadores de clientes reiniciados por solicitação do operador")
+        return {
+            "reiniciado": True,
+            "marcadores": {campo: int(dados.get(campo, 0) or 0) for campo in estado.MARCADORES_CLIENTES},
+        }
+
+
 def ler_alteracoes(limite: int | None = None) -> dict[str, Any]:
     """Alterações do sistema a partir do cursor oficial. O cursor não avança aqui."""
     cfg = config()
