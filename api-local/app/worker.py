@@ -57,6 +57,10 @@ class SyncWorker:
             # elegível, cobrindo eventos perdidos e marcadores adiantados.
             resultado["clientes_revisao"] = clientes.revisar_elegiveis(sorteio=sorteio).model_dump()
             resultado["clientes_sistema_loja"] = clientes.aplicar_alteracoes()
+            # Envio pendente: clientes do sistema ainda sem ligação com a loja
+            # (pessoa física + CPF válido + telefone + participação em sorteio
+            # ATIVO). Vincula por CPF ou cria em transação; não depende de nota.
+            resultado["clientes_pendentes_loja"] = clientes.enviar_pendentes_para_loja().model_dump()
 
             # As funções de sincronização tratam erros por lote para preservar
             # os cursores. Aqui transformamos o erro registrado no resumo em
