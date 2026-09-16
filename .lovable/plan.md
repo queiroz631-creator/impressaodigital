@@ -1,87 +1,86 @@
 # Criação de clientes no Lojamix a partir do cadastro real 9942
 
-Objetivo: montar a criação da entidade usando todos os dados confiáveis observados no cadastro de teste real (id_entidade 9942), sem duplicar o que o próprio Lojamix já preenche por padrão, e sem tocar em nada do fluxo de notas.
+Objetivo: montar a criação do cliente no Lojamix com base em todos os campos realmente exigidos pela tabela `dbo.entidade` e nos valores observados no cadastro de teste real (9942), sem duplicar o que o Lojamix já preenche por padrão.
 
-## Ponto que precisa ser confirmado antes
+## Campos obrigatórios (analisados a partir da estrutura enviada)
 
-A definição da tabela `dbo.entidade` só existe no banco da loja (SQL Server na máquina da loja). Daqui não é possível ler quais colunas são obrigatórias nem quais possuem padrão. Portanto o plano tem duas partes:
+Obrigatórios que JÁ têm padrão no Lojamix — não serão preenchidos pela API:
 
-1. Uma consulta somente-leitura de estrutura, executada no banco da loja, para listar todas as colunas obrigatórias e seus padrões.
-2. O ajuste da criação, montado com os valores observados no cadastro 9942.
+| Campo | Padrão |
+| --- | --- |
+| data_hora_cadastro | data/hora atual |
+| receber_email_promocao | 0 |
+| saldo_valor_pontuacao | 0 |
+| saldo_pontuacao | 0 |
+| pontuacao_acumulada | 0 |
+| flag_cliente | 1 |
+| flag_profissional | 0 |
+| flag_medico | 0 |
+| flag_laboratorio | 0 |
 
-Consulta de estrutura (somente leitura, nenhuma alteração):
+Obrigatórios SEM padrão — precisam ser preenchidos pela API:
+
+| Campo | Valor no teste 9942 | Origem na API |
+| --- | --- | --- |
+| tipo_entidade | 1 | fixo 1 |
+| nome | "teste" | vem do sistema |
+| id_usuario_cadastro | 2 | fixo 2 |
+| id_potencial | 1 | fixo 1 |
+| flag_fornecedor | 0 | fixo 0 |
+| flag_guia | 0 | fixo 0 |
+| flag_transportadora | 0 | fixo 0 |
+| flag_funcionario | 0 | fixo 0 |
+| situacao_replicacao_multiloja | 1 | fixo 1 |
+| limite_credito | 0.00 | fixo 0 |
+| cep | 260 | a confirmar (ver abaixo) |
+| logradouro | vazio no teste | a confirmar |
+| bairro | vazio no teste | a confirmar |
+| site | vazio no teste | a confirmar |
+| observacao | vazio no teste | a confirmar |
+| id_cidade | não informado | a confirmar |
+
+## Falta um dado para fechar
+
+Seis campos são obrigatórios e não têm padrão, e os valores exatos deles no cadastro 9942 não vieram (ou vieram sem certeza): `logradouro`, `bairro`, `cep`, `site`, `observacao` e `id_cidade`. Não vou inventar nenhum deles. Preciso do resultado desta consulta somente-leitura no banco da loja:
 
 ```text
-SELECT c.name AS coluna, t.name AS tipo, c.is_nullable, c.is_identity,
-       d.definition AS padrao
-  FROM sys.columns c
-  JOIN sys.types t ON t.user_type_id = c.user_type_id
-  LEFT JOIN sys.default_constraints d ON d.parent_object_id = c.object_id
-                                    AND d.parent_column_id = c.column_id
- WHERE c.object_id = OBJECT_ID('dbo.entidade')
- ORDER BY c.column_id
+SELECT logradouro, bairro, cep, id_cidade, site, observacao
+  FROM dbo.entidade
+ WHERE id_entidade = 9942
 ```
 
-Com esse resultado eu fecho a lista definitiva: para cada coluna obrigatória, se tem padrão, qual foi o valor no 9942, e se a API preenche ou deixa o Lojamix preencher. Enquanto isso não vier, valho-me apenas dos valores realmente observados — nenhum valor inventado.
+Com esses seis valores eu completo o comando de criação exatamente como o Lojamix criou o cadastro real. Enquanto não vierem, a implementação fica pronta com os demais campos e esses seis entram no mesmo formato do cadastro real (texto vazio para os textuais e o número real de cidade/CEP), sem qualquer valor imaginado.
 
-## Comando de criação da entidade (proposto)
+## Campos opcionais preenchidos por espelho do cadastro real
 
-Preenchido explicitamente pela API — dados do sistema:
+Não são obrigatórios, mas foram observados no cadastro criado pela própria tela do Lojamix, então serão gravados igual para o registro nascer no mesmo estado:
 
-- `nome`, `email_principal` (vazio quando não houver), `celular_ddd`, `celular_numero`
+`Ativo` = 1, `celular_whatsapp` = 0, `cadastro_incompleto` = 1, `exibir_agenda` = 0, `id_forca_vendas` = 0, `valor_pontuacao` = 0, `quantidade_pontos` = 0, `valor_faixa_pontuacao` = 0, `valor_sobra_acumulado` = 0, `id_transportadora_padrao` = -1, `valor_limite_compra` = 0, `periodo_limite_compra` = -2, `cobrar_juros_recebimento` = 1, `cobrar_multa_recebimento` = 1, `entidade_estrangeira` = 0, `id_pais` = 0, `bloquear_consignacao` = 0, `bloquear_pedido_venda` = 0.
 
-Preenchido explicitamente com valores observados no cadastro real 9942 (sem padrão confirmado):
+## Dados que continuam vindo do sistema
 
-- `tipo_entidade` = 1
-- `id_usuario_cadastro` = 2
-- `id_potencial` = 1
-- `situacao_replicacao_multiloja` = 1
-- `limite_credito` = 0.00
-- `Ativo` = 1
-- `celular_whatsapp` = 0
-- `cadastro_incompleto` = 1
-- `flag_fornecedor` = 0, `flag_guia` = 0, `flag_transportadora` = 0, `flag_funcionario` = 0
-- `exibir_agenda` = 0
-- `id_forca_vendas` = 0
-- `valor_pontuacao` = 0, `quantidade_pontos` = 0, `valor_faixa_pontuacao` = 0, `valor_sobra_acumulado` = 0
-- `id_transportadora_padrao` = -1
-- `valor_limite_compra` = 0, `periodo_limite_compra` = -2
-- `cobrar_juros_recebimento` = 1, `cobrar_multa_recebimento` = 1
-- `entidade_estrangeira` = 0, `id_pais` = 0
-- `bloquear_consignacao` = 0, `bloquear_pedido_venda` = 0
-
-Deixados para o padrão do Lojamix (padrão já confirmado — não repetir):
-
-- `data_hora_cadastro`, `flag_contador`, `num_insc_crc`, `fone1_ddd`, `fone1_numero`,
-  `receber_email_promocao`, `saldo_valor_pontuacao`, `saldo_pontuacao`, `pontuacao_acumulada`,
-  `flag_cliente`, `flag_profissional`, `flag_medico`, `flag_laboratorio`
-
-Observação sobre `cep`: no cadastro 9942 apareceu o valor 260. Só incluo essa coluna se a consulta de estrutura mostrar que ela é obrigatória e sem padrão — não vou assumir.
-
-`OUTPUT INSERTED.id_entidade` continua obrigatório e a validação que já existe no programa continua recusando qualquer comando de criação que não devolva o identificador.
+`nome`, `celular_ddd`, `celular_numero`, `email_principal` (vazio quando não houver — e-mail nunca bloqueia), e em pessoa física o `cpf` e a `data_nascimento` (1900-01-01 apenas quando não houver data).
 
 ## Pessoa física
 
-Preservada exatamente como está hoje: `id_entidade`, `cpf` (do sistema), `data_nascimento` (do sistema, ou 1900-01-01 quando não houver), `rg` = '', `ie` = '', `sexo` = 1, `indicador_ie` = 9, `nome_mae` = '', `nome_pai` = ''.
+Preservada como está: `id_entidade`, `cpf`, `data_nascimento`, `rg` = '', `ie` = '', `sexo` = 1, `indicador_ie` = 9, `nome_mae` = '', `nome_pai` = ''.
 
-## Transação
+## Criação
 
-Sem mudança na mecânica já existente: mesma conexão, entidade → identificador → pessoa física → conferência de que existe exatamente um registro para o identificador criado → confirmação. Qualquer falha desfaz tudo e nada é considerado criado, nada é vinculado e nenhum marcador avança.
+Sem mudança na mecânica atual: mesma conexão e mesma transação — entidade com `OUTPUT INSERTED.id_entidade` → pessoa física com o identificador devolvido → conferência de que existe exatamente um registro de pessoa física para esse identificador → confirmação. Qualquer falha desfaz tudo; nada é vinculado e nenhum marcador avança. O identificador é sempre o próximo gerado pela própria tabela — o 9942 é só referência.
 
 ## Vínculo e simulação
 
-Vínculo pelo fluxo atual, sem alterar a regra por CPF. Simulação preservada: ligada, consulta o CPF, informa o que faria e não grava, não vincula, não confirma a fila e não avança o processamento.
+Vínculo pelo fluxo atual, sem alterar a regra por CPF. Simulação preservada: ligada, consulta o CPF, informa o que faria, não grava, não vincula, não confirma a fila e não avança o processamento.
 
 ## Escopo técnico
 
-Arquivos alterados: apenas `api-local/app/sql_store.py` (comando `cliente_criar_entidade`, com os valores fixos escritos direto no comando e apenas os dados do cliente como parâmetros) e, se necessário para o novo passo de conferência de estrutura, uma consulta somente-leitura adicional em `api-local/app/sql_store.py` + `api-local/app/repositories/clientes_repo.py`.
-
-Nada muda no site, no banco do sistema, em rotas, migrações, elegibilidade, participação, fila, cursores, notas, validação, cancelamento, cupons, saldo ou cron. Nenhum cadastro de teste novo, nenhuma criação real executada durante a implementação, e nenhum commit, envio ou publicação.
+Arquivo alterado: apenas `api-local/app/sql_store.py` (comando `cliente_criar_entidade` — valores fixos escritos no próprio comando, apenas os dados do cliente como parâmetros). Nada muda no site, banco, rotas, migrações, elegibilidade, participação, fila, cursores, notas, validação, cancelamento, cupons, saldo ou cron. Nenhum cadastro de teste novo, nenhuma criação real durante a implementação, sem commit, envio ou publicação.
 
 ## Ao final eu apresento
 
 - o comando final de criação da entidade;
-- a lista completa de colunas preenchidas explicitamente com seus valores;
-- as colunas deixadas para o padrão do Lojamix;
-- a confirmação de que todas as colunas obrigatórias sem padrão foram tratadas;
+- todos os campos preenchidos explicitamente e seus valores;
+- os campos deixados para o padrão do Lojamix;
+- a confirmação de que todos os obrigatórios sem padrão foram tratados;
 - a confirmação de `OUTPUT INSERTED.id_entidade`, da transação única e do desfazimento em qualquer erro.
