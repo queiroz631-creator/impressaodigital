@@ -9,16 +9,26 @@ SISTEMA -> LOJA: lê apenas as alterações após o cursor oficial, aplica no SQ
 Server e só então confirma. Nada é excluído em nenhum dos sentidos.
 """
 
+import threading
 from typing import Any
 
 from app.config import config
 from app.repositories import clientes_repo
-from app.schemas.sync import ResumoClientes, SorteioAtivo
+from app.schemas.sync import ResumoClientes, ResumoRevisaoClientes, SorteioAtivo
 from app.services.notas import _periodo, sorteio_ativo
 from app.services import sistema
 from app.services.lotes import lote_deterministico
 from app.utils import estado, normalizacao
 from app.utils.logging import erro_seguro, logger
+
+
+# Serializa TODO o fluxo de clientes LOJA -> SISTEMA (ciclo normal, revisão de
+# recuperação e reprocessamento nunca rodam ao mesmo tempo).
+_TRAVA_CLIENTES = threading.Lock()
+
+
+def em_execucao() -> bool:
+    return _TRAVA_CLIENTES.locked()
 
 
 def _cliente_para_envio(linha: dict[str, Any]) -> dict[str, Any]:
@@ -51,21 +61,43 @@ def _enviar_lote(clientes: list[dict[str, Any]], lote_id: str, resumo: ResumoCli
         return False
 
 
-def _filtrar_clientes(linhas: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _filtrar_clientes(linhas: list[dict[str, Any]], resumo: Any = None) -> list[dict[str, Any]]:
+    """Aplica os critérios de envio e registra o motivo de cada descarte."""
     clientes = []
     for linha in linhas:
         cliente = _cliente_para_envio(linha)
         if not cliente["nome"]:
+            if resumo is not None:
+                resumo.semNome += 1
             continue
-        if not cliente["cpf"] or len(cliente["cpf"]) != 11:
+        bruto = normalizacao.digitos(linha.get("cpf"))
+        if not cliente["cpf"]:
+            if resumo is not None:
+                if bruto and len(bruto) == 11:
+                    # 11 dígitos, mas dígitos verificadores incorretos.
+                    resumo.cpfInvalido += 1
+                else:
+                    resumo.semCpf += 1
+            continue
+        if len(cliente["cpf"]) != 11:
+            if resumo is not None:
+                resumo.cpfInvalido += 1
             continue
         if not cliente["telefone"] or len(cliente["telefone"]) < 10:
+            if resumo is not None:
+                resumo.semTelefone += 1
             continue
         clientes.append(cliente)
     return clientes
 
 
 def enviar_para_sistema(lote: int | None = None, sorteio: SorteioAtivo | None = None) -> ResumoClientes:
+    """Entrada pública: serializa o fluxo LOJA -> SISTEMA de clientes."""
+    with _TRAVA_CLIENTES:
+        return _enviar_para_sistema(lote=lote, sorteio=sorteio)
+
+
+def _enviar_para_sistema(lote: int | None = None, sorteio: SorteioAtivo | None = None) -> ResumoClientes:
     """LOJA -> SISTEMA com dois cursores independentes.
 
     Passo A: entidades novas elegíveis.
@@ -90,7 +122,7 @@ def enviar_para_sistema(lote: int | None = None, sorteio: SorteioAtivo | None = 
 
     if linhas:
         maior_entidade = max(int(l["id_entidade"]) for l in linhas)
-        clientes = _filtrar_clientes(linhas)
+        clientes = _filtrar_clientes(linhas, resumo)
         if clientes:
             lote_id = lote_deterministico("clientes-entidade", marcador_entidade + 1, maior_entidade)
             if _enviar_lote(clientes, lote_id, resumo):
@@ -125,7 +157,7 @@ def enviar_para_sistema(lote: int | None = None, sorteio: SorteioAtivo | None = 
 
         resumo.lidos += len(linhas_nota)
         maior_nota = max(int(l["id_nota_fiscal"]) for l in linhas_nota)
-        clientes_nota = _filtrar_clientes(linhas_nota)
+        clientes_nota = _filtrar_clientes(linhas_nota, resumo)
 
         if clientes_nota:
             lote_id = lote_deterministico("clientes-nota", marcador_nota_cliente + 1, maior_nota)
@@ -145,6 +177,72 @@ def enviar_para_sistema(lote: int | None = None, sorteio: SorteioAtivo | None = 
     if resumo.ultimoIdNotaCliente == 0:
         resumo.ultimoIdNotaCliente = int(estado.ler().get("ultimo_id_nota_cliente", 0) or 0)
     return resumo
+
+
+def revisar_elegiveis(bloco: int | None = None, sorteio: SorteioAtivo | None = None) -> ResumoRevisaoClientes:
+    """Rede de segurança: varre o cadastro em blocos e reenvia quem é elegível.
+
+    O envio é idempotente (identificado por `origemId`), então repetir um
+    cliente já sincronizado apenas o atualiza. Ao terminar a varredura, o
+    marcador volta ao início para recomeçar no próximo ciclo.
+    """
+    with _TRAVA_CLIENTES:
+        return _revisar_elegiveis(bloco=bloco, sorteio=sorteio)
+
+
+def _revisar_elegiveis(bloco: int | None = None, sorteio: SorteioAtivo | None = None) -> ResumoRevisaoClientes:
+    cfg = config()
+    tamanho = min(bloco or cfg.revisao_bloco, 500)
+    resumo = ResumoRevisaoClientes()
+
+    sorteio = sorteio or sorteio_ativo()
+    inicio, fim = _periodo(sorteio)
+
+    marcador = int(estado.ler().get("ultimo_id_cliente_revisado", 0) or 0)
+    linhas = clientes_repo.revisar_elegiveis(tamanho, marcador, inicio, fim)
+
+    if not linhas:
+        # Fim da varredura: recomeça do início no próximo ciclo.
+        if marcador:
+            estado.definir("ultimo_id_cliente_revisado", 0)
+            resumo.voltouAoInicio = True
+        resumo.ultimoIdClienteRevisado = 0
+        return resumo
+
+    resumo.lidos = len(linhas)
+    maior_id = max(int(l["id_entidade"]) for l in linhas)
+    clientes = _filtrar_clientes(linhas, resumo)
+
+    if clientes:
+        lote_id = lote_deterministico("clientes-revisao", marcador + 1, maior_id)
+        enviado = _enviar_lote(clientes, lote_id, resumo)  # type: ignore[arg-type]
+        if not enviado:
+            resumo.ultimoIdClienteRevisado = marcador
+            return resumo
+
+    estado.definir("ultimo_id_cliente_revisado", maior_id)
+    resumo.ultimoIdClienteRevisado = maior_id
+    return resumo
+
+
+def reprocessar() -> dict[str, Any]:
+    """Zera SOMENTE os marcadores do fluxo de clientes LOJA -> SISTEMA.
+
+    Nunca toca em `ultimo_id_nota` nem em `ultimo_id_revisado` (sincronismo de
+    notas). Não roda junto com um ciclo normal de clientes.
+    """
+    if _TRAVA_CLIENTES.locked():
+        return {
+            "reiniciado": False,
+            "motivo": "Há uma sincronização de clientes em andamento. Tente novamente em instantes.",
+        }
+    with _TRAVA_CLIENTES:
+        dados = estado.zerar_clientes()
+        logger().info("marcadores de clientes reiniciados por solicitação do operador")
+        return {
+            "reiniciado": True,
+            "marcadores": {campo: int(dados.get(campo, 0) or 0) for campo in estado.MARCADORES_CLIENTES},
+        }
 
 
 def ler_alteracoes(limite: int | None = None) -> dict[str, Any]:

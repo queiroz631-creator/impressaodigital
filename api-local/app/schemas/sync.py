@@ -66,5 +66,28 @@ class ResumoClientes(BaseModel):
     ignorados: int = 0
     ultimoIdEntidade: int = 0
     ultimoIdNotaCliente: int = 0
+    # Motivos de descarte (antes eram silenciosos).
+    semNome: int = 0
+    semCpf: int = 0
+    cpfInvalido: int = 0
+    semTelefone: int = 0
+    erros: int = 0
+    erroDetalhe: str | None = None
+
+
+class ResumoRevisaoClientes(BaseModel):
+    """Varredura de recuperação: reenvia clientes elegíveis já existentes."""
+
+    lidos: int = 0
+    enviados: int = 0
+    criados: int = 0
+    atualizados: int = 0
+    ignorados: int = 0
+    semNome: int = 0
+    semCpf: int = 0
+    cpfInvalido: int = 0
+    semTelefone: int = 0
+    ultimoIdClienteRevisado: int = 0
+    voltouAoInicio: bool = False
     erros: int = 0
     erroDetalhe: str | None = None

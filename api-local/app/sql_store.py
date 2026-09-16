@@ -189,6 +189,58 @@ SELECT TOP ({{limite}})
  WHERE rn = 1
  ORDER BY id_nota_fiscal ASC""",
     },
+    "clientes_revisao": {
+        "nome": "Revisão de clientes elegíveis",
+        "tipo": "select",
+        "descricao": "Varredura de recuperação: clientes Pessoa Física elegíveis (CPF válido, telefone e nota no período), paginada por id_entidade.",
+        "placeholders": ["limite", "desde_id", "inicio", "fim"],
+        "sql": """SELECT TOP ({{limite}})
+       e.id_entidade,
+       e.nome,
+       e.email_principal AS email,
+       CASE
+           WHEN NULLIF(LTRIM(RTRIM(e.celular_ddd)), '') IS NOT NULL
+            AND NULLIF(LTRIM(RTRIM(e.celular_numero)), '') IS NOT NULL
+             THEN CONCAT(LTRIM(RTRIM(e.celular_ddd)), LTRIM(RTRIM(e.celular_numero)))
+           WHEN NULLIF(LTRIM(RTRIM(e.fone1_ddd)), '') IS NOT NULL
+            AND NULLIF(LTRIM(RTRIM(e.fone1_numero)), '') IS NOT NULL
+             THEN CONCAT(LTRIM(RTRIM(e.fone1_ddd)), LTRIM(RTRIM(e.fone1_numero)))
+           WHEN NULLIF(LTRIM(RTRIM(e.celular_numero)), '') IS NOT NULL
+             THEN LTRIM(RTRIM(e.celular_numero))
+           WHEN NULLIF(LTRIM(RTRIM(e.fone1_numero)), '') IS NOT NULL
+             THEN LTRIM(RTRIM(e.fone1_numero))
+           ELSE NULL
+       END AS telefone,
+       pf.cpf,
+       pf.data_nascimento
+  FROM dbo.entidade AS e
+  INNER JOIN dbo.pessoa_fisica AS pf
+          ON pf.id_entidade = e.id_entidade
+ WHERE e.id_entidade > {{desde_id}}
+   AND NULLIF(LTRIM(RTRIM(pf.cpf)), '') IS NOT NULL
+   AND LEN(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(pf.cpf)), '.', ''), '-', ''), '/', ''), ' ', '')) = 11
+   AND EXISTS (
+       SELECT 1
+         FROM dbo.nota_fiscal AS nf
+        WHERE nf.id_entidade = e.id_entidade
+          AND ISNULL(nf.registro_excluido, 0) = 0
+          AND nf.data_hora_emissao >= {{inicio}}
+          AND nf.data_hora_emissao < {{fim}}
+          AND nf.id_situacao_documento_fiscal IN (1, 3)
+   )
+   AND (
+       (NULLIF(LTRIM(RTRIM(e.celular_ddd)), '') IS NOT NULL
+        AND NULLIF(LTRIM(RTRIM(e.celular_numero)), '') IS NOT NULL
+        AND LEN(REPLACE(REPLACE(REPLACE(REPLACE(CONCAT(LTRIM(RTRIM(e.celular_ddd)), LTRIM(RTRIM(e.celular_numero))), '(', ''), ')', ''), '-', ''), ' ', '')) >= 10)
+       OR
+       (NULLIF(LTRIM(RTRIM(e.fone1_ddd)), '') IS NOT NULL
+        AND NULLIF(LTRIM(RTRIM(e.fone1_numero)), '') IS NOT NULL
+        AND LEN(REPLACE(REPLACE(REPLACE(REPLACE(CONCAT(LTRIM(RTRIM(e.fone1_ddd)), LTRIM(RTRIM(e.fone1_numero))), '(', ''), ')', ''), '-', ''), ' ', '')) >= 10)
+       OR LEN(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(e.celular_numero)), '(', ''), ')', ''), '-', ''), ' ', '')) >= 10
+       OR LEN(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(e.fone1_numero)), '(', ''), ')', ''), '-', ''), ' ', '')) >= 10
+   )
+ ORDER BY e.id_entidade ASC""",
+    },
     "maior_id_nota": {
         "nome": "Maior ID de nota",
         "tipo": "select",
@@ -211,7 +263,7 @@ SELECT TOP ({{limite}})
     },
 }
 
-READ_KEYS = {"notas_novas", "notas_situacoes", "clientes_loja_sistema", "clientes_por_nota", "maior_id_nota"}
+READ_KEYS = {"notas_novas", "notas_situacoes", "clientes_loja_sistema", "clientes_por_nota", "clientes_revisao", "maior_id_nota"}
 WRITE_KEYS = {"cliente_aplicar_alteracao"}
 
 def _ensure() -> None:

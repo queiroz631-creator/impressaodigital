@@ -4,6 +4,7 @@ from app.routes.seguranca import exigir_token
 from app.runtime import snapshot
 from app.worker import SyncWorker
 from app.database import disponivel
+from app.services import clientes
 
 router = APIRouter(prefix="/api/local", tags=["controle"], dependencies=[Depends(exigir_token)])
 _worker: SyncWorker | None = None
@@ -22,3 +23,15 @@ async def status():
 async def sync_now():
     if _worker: _worker.sync_now()
     return {"ok": True}
+
+@router.post("/clientes-reprocessar")
+async def clientes_reprocessar():
+    """Zera só os marcadores de clientes (LOJA -> SISTEMA) e refaz o envio.
+
+    Nunca altera os marcadores de notas. Recusa quando há um ciclo de clientes
+    em andamento.
+    """
+    resultado = clientes.reprocessar()
+    if resultado.get("reiniciado") and _worker:
+        _worker.sync_now()
+    return resultado

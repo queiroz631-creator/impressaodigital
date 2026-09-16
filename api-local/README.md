@@ -114,3 +114,11 @@ O sincronismo Loja → Sistema de clientes usa dois cursores independentes:
 - `ultimo_id_nota_cliente`: clientes antigos que aparecem em novas notas do sorteio.
 
 O limite superior de `id_nota_fiscal` é capturado uma única vez no início do ciclo. O sincronismo de notas permanece independente do sincronismo de clientes.
+
+## V1.1.7 — recuperação de clientes elegíveis
+
+- Novo passo de **revisão de clientes** em cada ciclo: varre o cadastro em blocos (`revisao_bloco`) com os mesmos critérios de elegibilidade (Pessoa Física, CPF válido, telefone com pelo menos 10 dígitos e nota no período do sorteio ativo) e reenvia quem está elegível. O envio é idempotente por `origemId`, então clientes já sincronizados são apenas atualizados. Marcador próprio: `ultimo_id_cliente_revisado`; ao terminar a varredura, recomeça do início.
+- A tela mostra **por que** clientes ficaram fora do envio: sem nome, sem CPF, CPF inválido, sem telefone.
+- A reconciliação (`POST /api/sync/reconciliar`) voltou a revisar clientes elegíveis (`clientesElegiveis`).
+- Novo botão **Reprocessar clientes** (`POST /api/local/clientes-reprocessar`): zera **somente** `ultimo_id_entidade`, `ultimo_id_nota_cliente` e `ultimo_id_cliente_revisado`. Nunca altera `ultimo_id_nota` nem `ultimo_id_revisado`, que pertencem ao sincronismo de notas. Recusa a execução quando há um ciclo de clientes em andamento (todo o fluxo de clientes é serializado por uma trava única).
+- Nada é excluído em nenhum dos sentidos; notas fiscais não são afetadas.
