@@ -287,8 +287,8 @@ VALUES ({{nome}}, {{email}}, {{ddd}}, {{numero}})""",
         "tipo": "write",
         "descricao": "Cria o registro de pessoa física ligado ao id_entidade recém-criado (CPF e data de nascimento).",
         "placeholders": ["id_entidade", "cpf", "nascimento"],
-        "sql": """INSERT INTO dbo.pessoa_fisica (id_entidade, cpf, data_nascimento)
-VALUES ({{id_entidade}}, {{cpf}}, {{nascimento}})""",
+        "sql": """INSERT INTO dbo.pessoa_fisica (id_entidade, cpf, data_nascimento, rg, ie, sexo, indicador_ie, nome_mae, nome_pai)
+VALUES ({{id_entidade}}, {{cpf}}, {{nascimento}}, '', '', 1, 9, '', '')""",
     },
 }
 

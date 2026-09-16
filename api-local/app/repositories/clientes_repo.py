@@ -1,6 +1,6 @@
 """Consultas e gravações de clientes configuráveis pelo usuário."""
 from typing import Any
-from app.database import consultar, executar
+from app.database import ErroBanco, consultar, executar
 from app.sql_store import render
 
 def alterados(limite: int, ultimo_id: int, inicio: Any, fim: Any) -> list[dict[str, Any]]:
@@ -87,13 +87,18 @@ def criar(nome: str, cpf: str, telefone: str | None, email: str | None, nascimen
     id_entidade válido de retorno, a criação é tratada como erro.
     """
     ddd, numero = _telefone_partes(telefone)
+    # E-mail é opcional: ausente vira '' (padrão da coluna no Lojamix), nunca
+    # bloqueia a criação nem a vinculação.
     sql_entidade, params_entidade = render("cliente_criar_entidade", {
-        "nome": nome, "email": email, "ddd": ddd, "numero": numero,
+        "nome": nome, "email": email or "", "ddd": ddd, "numero": numero,
     })
     # A pessoa física depende do id gerado na entidade. O segundo passo usa um
     # marcador interno resolvido dentro da transação (abaixo).
+    # Data real do sistema quando informada; quando ausente, usa o padrão
+    # confirmado no cadastro feito pela própria tela do Lojamix (1900-01-01).
+    nascimento_final = nascimento if nascimento else "1900-01-01"
     sql_pf, params_pf = render("cliente_criar_pessoa_fisica", {
-        "id_entidade": None, "cpf": cpf, "nascimento": nascimento,
+        "id_entidade": None, "cpf": cpf, "nascimento": nascimento_final,
     })
 
     from app.database import conexao
@@ -126,6 +131,21 @@ def criar(nome: str, cpf: str, telefone: str | None, email: str | None, nascimen
 
                 params_pf_resolvidos = tuple(id_entidade if v is None else v for v in params_pf)
                 cursor.execute(sql_pf, *params_pf_resolvidos)
+
+                # Confirmação determinística antes do COMMIT: exatamente UMA
+                # pessoa física ligada ao id recém-criado. Não depende de
+                # rowcount, que pode ser enganoso em alguns drivers.
+                cursor.execute(
+                    "SELECT COUNT(*) FROM dbo.pessoa_fisica WHERE id_entidade = ?",
+                    id_entidade,
+                )
+                total_pf = int((cursor.fetchone() or [0])[0] or 0)
+                if total_pf != 1:
+                    raise ErroBanco(
+                        "A pessoa física não foi confirmada no banco da loja. "
+                        "A criação foi desfeita e nada ficou registrado."
+                    )
+
                 conn.commit()
                 return id_entidade
             except Exception:
