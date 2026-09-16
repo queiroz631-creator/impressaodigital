@@ -89,9 +89,14 @@ def criar(nome: str, cpf: str, telefone: str | None, email: str | None, nascimen
     ddd, numero = _telefone_partes(telefone)
     # E-mail é opcional: ausente vira '' (padrão da coluna no Lojamix), nunca
     # bloqueia a criação nem a vinculação.
+    # Limites das colunas do Lojamix (evita erro de truncamento no INSERT).
     sql_entidade, params_entidade = render("cliente_criar_entidade", {
-        "nome": nome, "email": email or "", "ddd": ddd, "numero": numero,
+        "nome": (nome or "")[:80],
+        "email": (email or "")[:100],
+        "ddd": (ddd or "")[:2],
+        "numero": (numero or "")[:18],
     })
+
     # A pessoa física depende do id gerado na entidade. O segundo passo usa um
     # marcador interno resolvido dentro da transação (abaixo).
     # Data real do sistema quando informada; quando ausente, usa o padrão
