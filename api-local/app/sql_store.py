@@ -261,10 +261,40 @@ SELECT TOP ({{limite}})
        celular_numero = COALESCE({{numero}}, celular_numero)
  WHERE id_entidade = {{origem_id}}""",
     },
+,
+    "cliente_por_cpf": {
+        "nome": "Cliente por CPF",
+        "tipo": "select",
+        "descricao": "Localiza no Lojamix a Pessoa Física com o CPF informado (somente dígitos).",
+        "placeholders": ["cpf"],
+        "sql": """SELECT e.id_entidade,
+       e.nome
+  FROM dbo.entidade AS e
+  INNER JOIN dbo.pessoa_fisica AS pf
+          ON pf.id_entidade = e.id_entidade
+ WHERE REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(pf.cpf)), '.', ''), '-', ''), '/', ''), ' ', '') = {{cpf}}""",
+    },
+    "cliente_criar_entidade": {
+        "nome": "Criar entidade (cliente novo)",
+        "tipo": "write",
+        "descricao": "Cria a entidade do cliente novo no Lojamix e DEVOLVE o id_entidade (obrigatório OUTPUT INSERTED.id_entidade).",
+        "placeholders": ["nome", "email", "ddd", "numero"],
+        "sql": """INSERT INTO dbo.entidade (nome, email_principal, celular_ddd, celular_numero)
+OUTPUT INSERTED.id_entidade
+VALUES ({{nome}}, {{email}}, {{ddd}}, {{numero}})""",
+    },
+    "cliente_criar_pessoa_fisica": {
+        "nome": "Criar pessoa física (cliente novo)",
+        "tipo": "write",
+        "descricao": "Cria o registro de pessoa física ligado ao id_entidade recém-criado (CPF e data de nascimento).",
+        "placeholders": ["id_entidade", "cpf", "nascimento"],
+        "sql": """INSERT INTO dbo.pessoa_fisica (id_entidade, cpf, data_nascimento)
+VALUES ({{id_entidade}}, {{cpf}}, {{nascimento}})""",
+    },
 }
 
-READ_KEYS = {"notas_novas", "notas_situacoes", "clientes_loja_sistema", "clientes_por_nota", "clientes_revisao", "maior_id_nota"}
-WRITE_KEYS = {"cliente_aplicar_alteracao"}
+READ_KEYS = {"notas_novas", "notas_situacoes", "clientes_loja_sistema", "clientes_por_nota", "clientes_revisao", "maior_id_nota", "cliente_por_cpf"}
+WRITE_KEYS = {"cliente_aplicar_alteracao", "cliente_criar_entidade", "cliente_criar_pessoa_fisica"}
 
 def _ensure() -> None:
     BASE_DIR.mkdir(parents=True, exist_ok=True)
@@ -351,6 +381,12 @@ def validate(key: str, sql: str) -> None:
     if key in WRITE_KEYS:
         if not sql.lstrip().upper().startswith(("UPDATE","INSERT","MERGE")):
             raise ValueError("Esta consulta de gravação deve começar com UPDATE, INSERT ou MERGE.")
+        proibidos_gravacao=("DELETE ","DROP ","TRUNCATE ","ALTER ","CREATE ")
+        if any(x in sql.upper() for x in proibidos_gravacao):
+            raise ValueError("Consulta de gravação não pode conter comandos destrutivos.")
+    if key == "cliente_criar_entidade":
+        if "ID_ENTIDADE" not in sql.upper() or not ("OUTPUT" in sql.upper() or "SCOPE_IDENTITY" in sql.upper()):
+            raise ValueError("A criação da entidade deve devolver o id_entidade (OUTPUT INSERTED.id_entidade ou SCOPE_IDENTITY()).")
     if len(sql)>50000:
         raise ValueError("Consulta SQL excede o limite de 50.000 caracteres.")
 
