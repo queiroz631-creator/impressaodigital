@@ -1,88 +1,35 @@
-# Enviar clientes do sistema para o Lojamix (inclusive cadastros novos)
+# Criação de clientes novos no Lojamix (somente API local)
 
-## O que está acontecendo hoje
+Objetivo: quando o cliente vem do sistema sem ligação com a loja, encontrar pelo CPF ou criar de verdade o cadastro no Lojamix (entidade + pessoa física) usando os padrões confirmados no próprio Lojamix, e só então gravar a ligação.
 
-- Só uma alteração de cliente entrou na fila do sistema para a loja (o cadastro feito no portal) e ela foi marcada como sincronizada.
-- Mas nada mudou no Lojamix: o programa da loja só sabe **atualizar** quem já existe lá (procura pela ligação `origem_id`). Como o cadastro nasceu no portal, não tem ligação — o programa pula em silêncio e ainda avança o marcador.
-- Os clientes antigos do sistema nunca entraram nessa fila (ela passou a existir depois), então também nunca foram enviados.
+Nada do site, das notas, da validação, dos cupons ou do saldo é alterado.
 
-## Ponto que precisa da sua decisão antes de codar (cursor)
+## O que muda
 
-Você pediu paginação `id > ultimo_id_cliente_pendente` com `ORDER BY id ASC`. Na tabela de clientes do sistema o `id` **não é numérico, é um identificador aleatório (uuid)**. A comparação `>` e a ordenação funcionam, e são determinísticas, mas como o identificador é aleatório um cadastro novo pode "nascer" antes do ponto onde o marcador já está e ficar para trás.
+1. **Criação da pessoa física completa** — hoje a criação grava apenas ligação, CPF e data de nascimento. Passa a gravar também os valores confirmados no cadastro feito pela tela do Lojamix: sexo 1, indicador de inscrição 9, RG, inscrição, nome da mãe e nome do pai vazios.
+2. **Data de nascimento** — usa a data real recebida do sistema; quando o sistema não tem data, usa 01/01/1900 (o mesmo que a tela do Lojamix grava). Nunca substitui uma data real.
+3. **Criação da entidade** — continua gravando somente nome, e-mail, DDD e número do celular, deixando o Lojamix aplicar os padrões dele (data do cadastro, marcações de cliente, saldos, pontuação, telefone fixo, e-mail vazio etc.). Continua obrigatório devolver o identificador criado.
+4. **Correção de uma falha real na criação** — a rotina de criação usa uma mensagem de erro que não está importada no arquivo; hoje, qualquer falha nesse caminho quebraria com erro interno em vez da mensagem correta. Será corrigido.
+5. **Confirmação da pessoa física antes de concluir** — depois de gravar a pessoa física, a rotina confere que a linha foi realmente criada. Sem confirmação, desfaz tudo (nada de entidade órfã) e o cliente fica para a próxima tentativa, sem ligação e sem avanço de marcador.
+6. **Simulação** — permanece ligada por padrão: consulta o CPF, informa que vincularia/atualizaria ou que criaria, e não grava nada na loja.
 
-Proposta (sem inventar outro cursor): manter exatamente `id > ultimo_id_cliente_pendente` + `ORDER BY id ASC` + limite, com o marcador guardando o maior `id` processado no lote, e **ao esgotar a lista o marcador volta ao início** — mesma varredura circular já usada na revisão de clientes. Assim nada fica preso para sempre. Nada será implementado nesse ponto até você confirmar.
-
-## Elegibilidade (Sistema → Lojamix)
-
-Só entram clientes que atendam **ao mesmo tempo**:
-
-- pessoa física (CNPJ/pessoa jurídica segue fora);
-- CPF com 11 dígitos e dígitos verificadores válidos;
-- telefone com 10 dígitos ou mais;
-- sem ligação com a loja (`origem_id` vazio);
-- **com participação em pelo menos um sorteio ATIVO**.
-
-Nota fiscal **não** é critério aqui. Ter só CPF e telefone **não** basta.
-
-## Como o envio vai funcionar
+## Sequência de resolução (mantida)
 
 ```text
-cliente do sistema
-   |
-   A. tem ligacao (origem_id)?  --sim-->  localiza pelo origem_id e ATUALIZA
-   |                                       so nome, e-mail e telefone
-   nao
-   |
-   B. existe no Lojamix com o mesmo CPF?  --sim-->  usa o id encontrado,
-   |                                                atualiza contato e VINCULA
-   nao
-   |
-   C. modo simulacao ligado?  --sim-->  nao grava nada, conta como "simulados"
-   |                                     e continua disponivel para depois
-   nao
-   |
-   D. CRIA em UMA transacao: entidade -> obtem id_entidade -> pessoa fisica
-      (qualquer falha = rollback total, sem sucesso, sem vinculo, marcador
-       nao avanca, tenta no proximo ciclo)
-      |
-      E. chama clientes-vincular no sistema (clienteId + origemId).
-         Só depois disso o cliente conta como concluido.
+tem ligação (origem_id)?  -> atualiza nome/e-mail/telefone
+nao -> existe CPF na loja? -> usa o id encontrado, atualiza contato, vincula
+nao -> simulação ligada?   -> apenas conta como "simulado", nada é gravado
+nao -> cria entidade + pessoa física em uma única transação, depois vincula
 ```
 
-Vinculação e anti-eco: a ligação é gravada como permanente e marcada como alteração vinda da LOJA, então ela não gera um novo envio de volta.
+## Detalhes técnicos
 
-## Clientes antigos
+Arquivos previstos:
 
-Um passo novo de **envio pendente** no ciclo: pede ao sistema, em blocos, os clientes elegíveis (regras acima) e aplica o mesmo fluxo A–E. Marcador próprio `ultimo_id_cliente_pendente`, que avança só quando o bloco termina com sucesso e nunca toca nos marcadores de notas. O botão "Reprocessar clientes" passa a zerar também esse marcador (nunca `ultimo_id_nota` nem `ultimo_id_revisado`) e continua recusando quando um ciclo de clientes está rodando.
+- `api-local/app/sql_store.py` — SQL padrão de `cliente_criar_pessoa_fisica` passa a incluir `rg`, `ie`, `sexo`, `indicador_ie`, `nome_mae`, `nome_pai` com os valores confirmados como literais fixos (não são dados do cliente, portanto não viram parâmetros). Placeholders continuam `id_entidade`, `cpf`, `nascimento`, todos por parâmetro ODBC. `cliente_criar_entidade` fica como está (já usa `OUTPUT INSERTED.id_entidade` e é validada como gravação). Validações de gravação (sem DELETE/DROP/TRUNCATE/ALTER/CREATE, marcadores obrigatórios, obrigação de devolver o id) permanecem.
+- `api-local/app/repositories/clientes_repo.py` — importar `ErroBanco` de `app.database`; em `criar(...)`, aplicar o padrão `1900-01-01` quando `nascimento` vier vazio; após o INSERT da pessoa física, validar `cursor.rowcount`/leitura de confirmação antes do `commit`; manter uma única conexão/cursor para os dois INSERTs, `rollback` completo em qualquer falha, e id inválido (≤ 0 ou ausente) tratado como erro.
+- `api-local/app/services/clientes.py` — sem mudança de regra; apenas garantir que a criação só conta como `criados` após a vinculação no sistema e que falha na vinculação não gera novo cadastro no próximo ciclo (a próxima tentativa reencontra pelo CPF).
 
-## Segurança da gravação no Lojamix
+Inalterado: elegibilidade (pessoa física, CPF válido, telefone válido, participação em sorteio ativo, sem ligação), `enviar_pendentes_para_loja()` com varredura circular por `ultimo_id_cliente_pendente`, botão de reprocessar (zera apenas os quatro marcadores de clientes), contadores do relatório, normalização (CAIXA ALTA, sem acentos, CPF/telefone só dígitos), e todo o fluxo de notas (consultas, `ultimo_id_nota`, `ultimo_id_revisado`, cancelamento, validação, cupons, saldo).
 
-- As três novas instruções (procurar por CPF, criar entidade, criar pessoa física) ficam na tela de consultas configuráveis, com padrão pronto — você ajusta campos obrigatórios do seu Lojamix sem mexer no programa. Sempre com parâmetros, nunca com o texto colado dentro do SQL; comandos destrutivos são recusados; as duas de criação são classificadas como gravação.
-- Criar entidade **tem que devolver** o identificador; se não devolver um identificador válido, é tratado como erro (não conta como criado).
-- **Modo simulação** ligado na primeira instalação: consulta por CPF, mostra quem seria vinculado, atualizado ou criado, mas não cria nada. Você confere e desliga para valer.
-- Nunca apaga cliente (nem na loja, nem no sistema); atualiza apenas nome, e-mail e telefone. Textos em CAIXA ALTA sem acentos; CPF e telefone só dígitos; CPF completo, token e senha nunca vão para log.
-
-## Relatório do ciclo
-
-Contadores: `criados`, `vinculados`, `atualizados`, `simulados`, `ignorados`, `erros`. Motivos de descarte visíveis: `semNome`, `semCpf`, `cpfInvalido`, `semTelefone` e o novo `semParticipacaoAtiva`. Cada cliente conta em um único motivo por processamento.
-
-## Fora do escopo (fluxo de notas intacto)
-
-Nada muda em: consultas de notas, `ultimo_id_nota`, `ultimo_id_revisado`, validação, cancelamentos, cupons, saldo, portal público. Notas continuam sincronizando mesmo sem cliente elegível e não passam a depender de CPF, telefone ou participação. Sem tabelas paralelas, sem dados fictícios, sem teste que crie ou altere cliente real no Lojamix, sem commit, push, deploy ou publicação. Verificação final: apenas compilação/estrutura.
-
-## Onde cada mudança entra
-
-Site (`src/`) — só o mínimo previsto, sem mudança de banco:
-- `src/lib/sorteios-sync.server.ts`: `vincularOrigemCliente({ clienteId, origemId })` grava `origem_id` + `origem_alteracao='LOJA'`; `listarClientesSemOrigem({ desdeId, limite })` filtra `origem_id IS NULL`, CPF com 11 dígitos, telefone com 10+ dígitos e `EXISTS` de participação em sorteio com status ATIVO (`sorteio_participantes` × `sorteios`), com `id > desdeId ORDER BY id ASC LIMIT`.
-- Novas rotas protegidas exclusivamente por `LOJAMIX_SYNC_TOKEN`: `POST /api/public/sorteios/sync/clientes-vincular` e `POST /api/public/sorteios/sync/clientes-pendentes-loja`.
-
-Programa da loja (`api-local/`):
-- `app/sql_store.py`: chaves `cliente_por_cpf` (select), `cliente_criar_entidade` e `cliente_criar_pessoa_fisica` (write, com `OUTPUT INSERTED.id_entidade`/`SCOPE_IDENTITY()`); validação de placeholders e bloqueio de comandos destrutivos; `WRITE_KEYS` atualizado.
-- `app/repositories/clientes_repo.py`: `por_cpf(cpf)` e `criar(nome, cpf, telefone, email, nascimento) -> id_entidade` em transação única (commit só com id válido, senão rollback e erro).
-- `app/services/clientes.py`: `aplicar_alteracoes` passa a resolver a ligação (origem_id → CPF → criar) e chamar a vinculação; novo `enviar_pendentes_para_loja()` com bloco e marcador; `reprocessar()` inclui o novo marcador; contadores e motivos no resumo.
-- `app/services/sistema.py`: rotas `CLIENTES_VINCULAR` e `CLIENTES_PENDENTES`.
-- `app/utils/estado.py`: `ultimo_id_cliente_pendente` (texto, pois é identificador aleatório) incluído em `MARCADORES_CLIENTES`.
-- `app/schemas/sync.py`: `criados`, `vinculados`, `atualizados`, `simulados`, `ignorados`, `erros`, `semParticipacaoAtiva`.
-- `app/settings_store.py`: `criar_cliente_no_lojamix`, `simulacao_criacao_cliente` (padrão ligado), `pendentes_bloco`.
-- `app/worker.py`: passo de pendentes sob a mesma trava do fluxo de clientes.
-- `app/routes/controle.py` e `gui/main.py`: disparo manual, opções de criação/simulação, contadores e as novas consultas na aba de SQL.
+Verificação final: compilação/imports do programa Python e conferência de que nenhum arquivo do fluxo de notas foi tocado. Sem criação real de cliente enquanto a simulação estiver ligada; sem commit, push, deploy ou publicação.
