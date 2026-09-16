@@ -82,6 +82,12 @@ def _filtrar_clientes(linhas: list[dict[str, Any]], resumo: Any = None) -> list[
 
 
 def enviar_para_sistema(lote: int | None = None, sorteio: SorteioAtivo | None = None) -> ResumoClientes:
+    """Entrada pública: serializa o fluxo LOJA -> SISTEMA de clientes."""
+    with _TRAVA_CLIENTES:
+        return _enviar_para_sistema(lote=lote, sorteio=sorteio)
+
+
+def _enviar_para_sistema(lote: int | None = None, sorteio: SorteioAtivo | None = None) -> ResumoClientes:
     """LOJA -> SISTEMA com dois cursores independentes.
 
     Passo A: entidades novas elegíveis.
