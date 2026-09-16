@@ -9,16 +9,26 @@ SISTEMA -> LOJA: lê apenas as alterações após o cursor oficial, aplica no SQ
 Server e só então confirma. Nada é excluído em nenhum dos sentidos.
 """
 
+import threading
 from typing import Any
 
 from app.config import config
 from app.repositories import clientes_repo
-from app.schemas.sync import ResumoClientes, SorteioAtivo
+from app.schemas.sync import ResumoClientes, ResumoRevisaoClientes, SorteioAtivo
 from app.services.notas import _periodo, sorteio_ativo
 from app.services import sistema
 from app.services.lotes import lote_deterministico
 from app.utils import estado, normalizacao
 from app.utils.logging import erro_seguro, logger
+
+
+# Serializa TODO o fluxo de clientes LOJA -> SISTEMA (ciclo normal, revisão de
+# recuperação e reprocessamento nunca rodam ao mesmo tempo).
+_TRAVA_CLIENTES = threading.Lock()
+
+
+def em_execucao() -> bool:
+    return _TRAVA_CLIENTES.locked()
 
 
 def _cliente_para_envio(linha: dict[str, Any]) -> dict[str, Any]:
