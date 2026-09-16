@@ -112,7 +112,7 @@ def _enviar_para_sistema(lote: int | None = None, sorteio: SorteioAtivo | None =
 
     if linhas:
         maior_entidade = max(int(l["id_entidade"]) for l in linhas)
-        clientes = _filtrar_clientes(linhas)
+        clientes = _filtrar_clientes(linhas, resumo)
         if clientes:
             lote_id = lote_deterministico("clientes-entidade", marcador_entidade + 1, maior_entidade)
             if _enviar_lote(clientes, lote_id, resumo):
@@ -147,7 +147,7 @@ def _enviar_para_sistema(lote: int | None = None, sorteio: SorteioAtivo | None =
 
         resumo.lidos += len(linhas_nota)
         maior_nota = max(int(l["id_nota_fiscal"]) for l in linhas_nota)
-        clientes_nota = _filtrar_clientes(linhas_nota)
+        clientes_nota = _filtrar_clientes(linhas_nota, resumo)
 
         if clientes_nota:
             lote_id = lote_deterministico("clientes-nota", marcador_nota_cliente + 1, maior_nota)
