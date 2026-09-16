@@ -1,6 +1,6 @@
 """Consultas e gravações de clientes configuráveis pelo usuário."""
 from typing import Any
-from app.database import consultar, executar
+from app.database import ErroBanco, consultar, executar
 from app.sql_store import render
 
 def alterados(limite: int, ultimo_id: int, inicio: Any, fim: Any) -> list[dict[str, Any]]:
