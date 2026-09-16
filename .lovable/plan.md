@@ -37,6 +37,22 @@ SELECT cep, id_cidade FROM dbo.entidade WHERE id_entidade = 9942
 
 Se confirmar 260, uso 260. Se vier outro número, uso o número real. Não vou inventar valor nenhum para esse campo.
 
+## Pessoa física — conferência da estrutura
+
+A gravação atual usa: `id_entidade`, `cpf` (do sistema), `data_nascimento` (do sistema, ou 1900-01-01 quando não houver), `rg` = '', `ie` = '', `sexo` = 1, `indicador_ie` = 9, `nome_mae` = '', `nome_pai` = '' — os mesmos valores observados no cadastro real. Para fechar a certeza de que nenhum campo obrigatório ficou de fora, incluo no plano uma leitura somente de estrutura:
+
+```text
+SELECT c.name, t.name AS tipo, c.is_nullable, d.definition AS padrao
+  FROM sys.columns c
+  JOIN sys.types t ON t.user_type_id = c.user_type_id
+  LEFT JOIN sys.default_constraints d ON d.parent_object_id = c.object_id
+                                    AND d.parent_column_id = c.column_id
+ WHERE c.object_id = OBJECT_ID('dbo.pessoa_fisica')
+ ORDER BY c.column_id
+```
+
+Se aparecer algum obrigatório sem padrão que a gravação não preenche, ele entra no comando com o valor observado no cadastro 9942 — nunca inventado. Se estiver tudo coberto, nada muda na pessoa física.
+
 ## Opcionais preenchidos por espelho do cadastro real
 
 `Ativo` = 1, `celular_whatsapp` = 0, `cadastro_incompleto` = 1, `exibir_agenda` = 0, `id_forca_vendas` = 0, `valor_pontuacao` = 0, `quantidade_pontos` = 0, `valor_faixa_pontuacao` = 0, `valor_sobra_acumulado` = 0, `id_transportadora_padrao` = -1, `valor_limite_compra` = 0, `periodo_limite_compra` = -2, `cobrar_juros_recebimento` = 1, `cobrar_multa_recebimento` = 1, `entidade_estrangeira` = 0, `id_pais` = 0, `bloquear_consignacao` = 0, `bloquear_pedido_venda` = 0.
@@ -46,10 +62,6 @@ Os demais campos opcionais continuam vazios, como no cadastro real.
 ## Dados que continuam vindo do sistema
 
 `nome` (limitado a 80 caracteres, como a coluna), `celular_ddd` (2), `celular_numero` (18), `email_principal` (100 — vazio quando não houver; e-mail nunca bloqueia), e na pessoa física o `cpf` e a `data_nascimento` (1900-01-01 só quando não houver data).
-
-## Pessoa física
-
-Preservada como está: `id_entidade`, `cpf`, `data_nascimento`, `rg` = '', `ie` = '', `sexo` = 1, `indicador_ie` = 9, `nome_mae` = '', `nome_pai` = ''.
 
 ## Criação
 
@@ -61,12 +73,12 @@ Vínculo pelo fluxo atual, sem alterar a regra por CPF. Simulação preservada: 
 
 ## Escopo técnico
 
-Arquivo alterado: apenas `api-local/app/sql_store.py` (comando `cliente_criar_entidade` — valores fixos escritos no próprio comando, só os dados do cliente como parâmetros). Nada muda no site, banco, rotas, migrações, elegibilidade, participação, fila, cursores, notas, validação, cancelamento, cupons, saldo ou cron. Nenhum cadastro de teste novo, nenhuma criação real durante a implementação, sem commit, envio ou publicação.
+Arquivo alterado: apenas `api-local/app/sql_store.py` (comando `cliente_criar_entidade` — valores fixos escritos no próprio comando, só os dados do cliente como parâmetros; e, se a conferência da pessoa física exigir, o comando `cliente_criar_pessoa_fisica` no mesmo arquivo). Nada muda no site, banco, rotas, migrações, elegibilidade, participação, fila, cursores, notas, validação, cancelamento, cupons, saldo ou cron. Nenhum cadastro de teste novo, nenhuma criação real durante a implementação, sem commit, envio ou publicação.
 
 ## Ao final eu apresento
 
 - o comando final de criação da entidade;
 - todos os campos preenchidos explicitamente e seus valores;
 - os campos deixados para o padrão do Lojamix;
-- a confirmação de que todos os obrigatórios sem padrão foram tratados;
+- a confirmação de que todos os obrigatórios sem padrão foram tratados (entidade e pessoa física);
 - a confirmação de `OUTPUT INSERTED.id_entidade`, da transação única e do desfazimento em qualquer erro.
