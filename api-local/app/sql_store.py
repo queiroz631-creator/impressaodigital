@@ -261,7 +261,6 @@ SELECT TOP ({{limite}})
        celular_numero = COALESCE({{numero}}, celular_numero)
  WHERE id_entidade = {{origem_id}}""",
     },
-,
     "cliente_por_cpf": {
         "nome": "Cliente por CPF",
         "tipo": "select",
