@@ -91,3 +91,19 @@ class ResumoRevisaoClientes(BaseModel):
     voltouAoInicio: bool = False
     erros: int = 0
     erroDetalhe: str | None = None
+
+
+class ResumoPendentesClientes(BaseModel):
+    """Envio SISTEMA -> LOJA dos clientes sem ligação com a loja."""
+
+    recebidos: int = 0
+    criados: int = 0
+    vinculados: int = 0
+    atualizados: int = 0
+    simulados: int = 0
+    ignorados: int = 0
+    semParticipacaoAtiva: int = 0
+    ultimoIdClientePendente: str = ""
+    voltouAoInicio: bool = False
+    erros: int = 0
+    erroDetalhe: str | None = None

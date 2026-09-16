@@ -96,7 +96,7 @@ def criar(nome: str, cpf: str, telefone: str | None, email: str | None, nascimen
         "id_entidade": None, "cpf": cpf, "nascimento": nascimento,
     })
 
-    from app.database import conexao, config as _cfg_mod  # import local para transação fina
+    from app.database import conexao
     from app.config import config
     import pyodbc
 

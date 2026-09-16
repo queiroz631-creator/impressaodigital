@@ -25,6 +25,9 @@ _PADRAO: dict[str, Any] = {
     "ultimo_id_entidade": 0,
     "ultimo_id_nota_cliente": 0,
     "ultimo_id_cliente_revisado": 0,
+    # Paginação da varredura de clientes pendentes para a loja (identificador
+    # aleatório, texto). NÃO é marcador temporal: ao fim da lista volta ao início.
+    "ultimo_id_cliente_pendente": "",
 }
 
 
@@ -75,12 +78,15 @@ def avancar(campo: str, valor: int) -> dict[str, Any]:
     return estado
 
 
-def definir(campo: str, valor: int) -> dict[str, Any]:
+def definir(campo: str, valor: int | str) -> dict[str, Any]:
     """Define um marcador (permite retroceder). Usado na varredura circular."""
     estado = ler()
     if campo not in _PADRAO:
         raise ValueError("marcador desconhecido")
-    estado[campo] = max(0, int(valor))
+    if isinstance(_PADRAO[campo], str):
+        estado[campo] = str(valor or "")
+    else:
+        estado[campo] = max(0, int(valor))
     gravar(estado)
     return estado
 
@@ -92,6 +98,7 @@ MARCADORES_CLIENTES = (
     "ultimo_id_entidade",
     "ultimo_id_nota_cliente",
     "ultimo_id_cliente_revisado",
+    "ultimo_id_cliente_pendente",
 )
 
 
@@ -99,6 +106,6 @@ def zerar_clientes() -> dict[str, Any]:
     """Zera somente os marcadores do fluxo de clientes LOJA -> SISTEMA."""
     estado = ler()
     for campo in MARCADORES_CLIENTES:
-        estado[campo] = 0
+        estado[campo] = _PADRAO[campo]
     gravar(estado)
     return estado

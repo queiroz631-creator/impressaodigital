@@ -26,6 +26,9 @@ class Config(BaseModel):
     log_nivel: str = "INFO"
     escrita_sqlserver_habilitada: bool = False
     sync_interval_seconds: int = 60
+    criar_cliente_no_lojamix: bool = True
+    simulacao_criacao_cliente: bool = True
+    pendentes_bloco: int = 100
 
     def connection_string(self) -> str:
         return (
