@@ -51,15 +51,31 @@ def _enviar_lote(clientes: list[dict[str, Any]], lote_id: str, resumo: ResumoCli
         return False
 
 
-def _filtrar_clientes(linhas: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _filtrar_clientes(linhas: list[dict[str, Any]], resumo: Any = None) -> list[dict[str, Any]]:
+    """Aplica os critérios de envio e registra o motivo de cada descarte."""
     clientes = []
     for linha in linhas:
         cliente = _cliente_para_envio(linha)
         if not cliente["nome"]:
+            if resumo is not None:
+                resumo.semNome += 1
             continue
-        if not cliente["cpf"] or len(cliente["cpf"]) != 11:
+        bruto = normalizacao.digitos(linha.get("cpf"))
+        if not cliente["cpf"]:
+            if resumo is not None:
+                if bruto and len(bruto) == 11:
+                    # 11 dígitos, mas dígitos verificadores incorretos.
+                    resumo.cpfInvalido += 1
+                else:
+                    resumo.semCpf += 1
+            continue
+        if len(cliente["cpf"]) != 11:
+            if resumo is not None:
+                resumo.cpfInvalido += 1
             continue
         if not cliente["telefone"] or len(cliente["telefone"]) < 10:
+            if resumo is not None:
+                resumo.semTelefone += 1
             continue
         clientes.append(cliente)
     return clientes
