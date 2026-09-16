@@ -73,3 +73,32 @@ def avancar(campo: str, valor: int) -> dict[str, Any]:
     estado[campo] = max(int(estado.get(campo, 0) or 0), int(valor))
     gravar(estado)
     return estado
+
+
+def definir(campo: str, valor: int) -> dict[str, Any]:
+    """Define um marcador (permite retroceder). Usado na varredura circular."""
+    estado = ler()
+    if campo not in _PADRAO:
+        raise ValueError("marcador desconhecido")
+    estado[campo] = max(0, int(valor))
+    gravar(estado)
+    return estado
+
+
+# Marcadores que pertencem exclusivamente ao fluxo de clientes LOJA -> SISTEMA.
+# Os marcadores de notas (`ultimo_id_nota`, `ultimo_id_revisado`) NUNCA entram
+# aqui: pertencem ao sincronismo de notas fiscais.
+MARCADORES_CLIENTES = (
+    "ultimo_id_entidade",
+    "ultimo_id_nota_cliente",
+    "ultimo_id_cliente_revisado",
+)
+
+
+def zerar_clientes() -> dict[str, Any]:
+    """Zera somente os marcadores do fluxo de clientes LOJA -> SISTEMA."""
+    estado = ler()
+    for campo in MARCADORES_CLIENTES:
+        estado[campo] = 0
+    gravar(estado)
+    return estado
