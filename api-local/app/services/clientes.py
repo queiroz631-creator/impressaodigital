@@ -330,11 +330,22 @@ def aplicar_alteracoes(limite: int | None = None) -> dict[str, Any]:
     aplicados = 0
     ultima_ok = int(dados.get("cursor") or 0)
     falha: str | None = None
+    bloqueado_simulacao = False
 
     for item in itens:
         cliente = item.get("cliente") or {}
         try:
-            _resolver_cliente(cliente, resumo)
+            ligacao = _resolver_cliente(cliente, resumo)
+            if ligacao is None:
+                # Simulação ligada: nada foi gravado no Lojamix. O item NÃO pode
+                # ser confirmado como aplicado — o cursor para aqui e o mesmo
+                # cliente é processado de verdade quando a simulação for
+                # desligada.
+                bloqueado_simulacao = True
+                logger().info(
+                    "modo simulacao ligado: nenhum cliente novo foi criado no Lojamix"
+                )
+                break
             aplicados += 1
             ultima_ok = int(item.get("sequencia") or ultima_ok)
         except Exception as e:  # noqa: BLE001 - erro já sanitizado no confirmar
@@ -347,10 +358,14 @@ def aplicar_alteracoes(limite: int | None = None) -> dict[str, Any]:
         "aplicados": aplicados,
         "criados": resumo.criados,
         "vinculados": resumo.vinculados,
+        "atualizados": resumo.atualizados,
         "simulados": resumo.simulados,
+        "bloqueadoSimulacao": bloqueado_simulacao,
         "cursor": resultado.get("cursor", ultima_ok),
         "erros": 1 if falha else 0,
+        "erroDetalhe": falha,
     }
+
 
 
 def enviar_pendentes_para_loja(bloco: int | None = None) -> ResumoPendentesClientes:
