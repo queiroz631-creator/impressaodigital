@@ -96,8 +96,8 @@
 
 - [ ] Próxima etapa: geração de cupons, números aleatórios e saldo
 
-## Módulo Sorteios — Recuperação de clientes elegíveis (em andamento)
-- [ ] Revisão periódica de clientes elegíveis na API da loja (marcador `ultimo_id_cliente_revisado`, varredura circular)
-- [ ] Motivos de descarte visíveis no resumo e na tela de status (sem nome, sem CPF, CPF inválido, sem telefone)
-- [ ] Reconciliação da loja revisando clientes elegíveis
-- [ ] Ação "Reprocessar clientes": zera apenas `ultimo_id_entidade`, `ultimo_id_nota_cliente` e `ultimo_id_cliente_revisado` (nunca os marcadores de notas) e nunca roda junto com um ciclo de clientes
+## Módulo Sorteios — Recuperação de clientes elegíveis (concluída)
+- [x] Revisão periódica de clientes elegíveis na API da loja (marcador `ultimo_id_cliente_revisado`, varredura circular)
+- [x] Motivos de descarte visíveis no resumo e na tela de status (sem nome, sem CPF, CPF inválido, sem telefone)
+- [x] Reconciliação da loja revisando clientes elegíveis
+- [x] Ação "Reprocessar clientes": zera apenas `ultimo_id_entidade`, `ultimo_id_nota_cliente` e `ultimo_id_cliente_revisado` (nunca os marcadores de notas) e nunca roda junto com um ciclo de clientes
