@@ -795,31 +795,52 @@ export async function listarClientesSemOrigem(entrada: {
     .from("sorteio_participantes")
     .select("cliente_id")
     .in("sorteio_id", sorteioIds);
-  const comParticipacao = new Set((participantes ?? []).map((p) => p.cliente_id));
+  const idsParticipantes = [...new Set((participantes ?? []).map((p) => p.cliente_id))].filter(
+    (id): id is string => Boolean(id),
+  );
+  if (idsParticipantes.length === 0) {
+    return { itens: [], marcador: null, descartadosSemParticipacao: 0 };
+  }
 
-  let consulta = supabase
-    .from("clientes")
-    .select("id, nome, cpf, telefone, telefone_normalizado, email, data_nascimento")
-    .is("origem_id", null)
-    .order("id", { ascending: true })
-    .limit(limite);
-  if (entrada.desdeId) consulta = consulta.gt("id", entrada.desdeId);
+  // Filtra PRIMEIRO por participação: assim o bloco já vem com candidatos reais
+  // em vez de varrer centenas de cadastros que nunca seriam enviados.
+  const FATIA = 200;
+  const encontrados: Array<{
+    id: string;
+    nome: string | null;
+    cpf: string | null;
+    telefone: string | null;
+    telefone_normalizado: string | null;
+    email: string | null;
+    data_nascimento: string | null;
+  }> = [];
 
-  const { data: clientes, error } = await consulta;
-  if (error) throw new Error(error.message);
-  const pagina = clientes ?? [];
+  for (let i = 0; i < idsParticipantes.length; i += FATIA) {
+    const fatia = idsParticipantes.slice(i, i + FATIA);
+    let consulta = supabase
+      .from("clientes")
+      .select("id, nome, cpf, telefone, telefone_normalizado, email, data_nascimento")
+      .is("origem_id", null)
+      .in("id", fatia)
+      .order("id", { ascending: true })
+      .limit(limite);
+    if (entrada.desdeId) consulta = consulta.gt("id", entrada.desdeId);
+
+    const { data, error } = await consulta;
+    if (error) throw new Error(error.message);
+    encontrados.push(...(data ?? []));
+  }
+
+  encontrados.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const pagina = encontrados.slice(0, limite);
   if (pagina.length === 0) return { itens: [], marcador: null, descartadosSemParticipacao: 0 };
 
   const marcador = pagina[pagina.length - 1]!.id;
   const { cpfValido } = await import("@/lib/curriculo");
 
-  let descartadosSemParticipacao = 0;
+  const descartadosSemParticipacao = 0;
   const itens: ClientePendenteLoja[] = [];
   for (const c of pagina) {
-    if (!comParticipacao.has(c.id)) {
-      descartadosSemParticipacao += 1;
-      continue;
-    }
     const cpf = somenteDigitos(c.cpf);
     if (!cpf || cpf.length !== 11 || !cpfValido(cpf)) continue;
     const telefone = somenteDigitos(c.telefone_normalizado) ?? somenteDigitos(c.telefone);
