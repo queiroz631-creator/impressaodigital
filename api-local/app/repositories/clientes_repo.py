@@ -129,6 +129,21 @@ def criar(nome: str, cpf: str, telefone: str | None, email: str | None, nascimen
 
                 params_pf_resolvidos = tuple(id_entidade if v is None else v for v in params_pf)
                 cursor.execute(sql_pf, *params_pf_resolvidos)
+
+                # Confirmação determinística antes do COMMIT: exatamente UMA
+                # pessoa física ligada ao id recém-criado. Não depende de
+                # rowcount, que pode ser enganoso em alguns drivers.
+                cursor.execute(
+                    "SELECT COUNT(*) FROM dbo.pessoa_fisica WHERE id_entidade = ?",
+                    id_entidade,
+                )
+                total_pf = int((cursor.fetchone() or [0])[0] or 0)
+                if total_pf != 1:
+                    raise ErroBanco(
+                        "A pessoa física não foi confirmada no banco da loja. "
+                        "A criação foi desfeita e nada ficou registrado."
+                    )
+
                 conn.commit()
                 return id_entidade
             except Exception:
