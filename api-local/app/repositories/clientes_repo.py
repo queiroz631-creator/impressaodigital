@@ -92,8 +92,11 @@ def criar(nome: str, cpf: str, telefone: str | None, email: str | None, nascimen
     })
     # A pessoa física depende do id gerado na entidade. O segundo passo usa um
     # marcador interno resolvido dentro da transação (abaixo).
+    # Data real do sistema quando informada; quando ausente, usa o padrão
+    # confirmado no cadastro feito pela própria tela do Lojamix (1900-01-01).
+    nascimento_final = nascimento if nascimento else "1900-01-01"
     sql_pf, params_pf = render("cliente_criar_pessoa_fisica", {
-        "id_entidade": None, "cpf": cpf, "nascimento": nascimento,
+        "id_entidade": None, "cpf": cpf, "nascimento": nascimento_final,
     })
 
     from app.database import conexao
