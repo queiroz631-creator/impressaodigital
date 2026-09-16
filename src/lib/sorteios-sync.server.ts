@@ -727,3 +727,113 @@ export async function reconciliar(): Promise<ResumoReconciliacao> {
 
   return resumo;
 }
+
+/* -------------------------------------------- clientes SISTEMA -> LOJA */
+
+export interface ClientePendenteLoja {
+  id: string;
+  nome: string | null;
+  cpf: string | null;
+  telefone: string | null;
+  email: string | null;
+  data_nascimento: string | null;
+}
+
+/**
+ * Registra a ligação permanente com o cadastro da loja. A alteração é marcada
+ * como originada na LOJA, então o gatilho de envio não gera um novo evento de
+ * volta (anti-eco). Recusa se o cliente já estiver ligado a outro id.
+ */
+export async function vincularOrigemCliente(entrada: {
+  clienteId: string;
+  origemId: string;
+}): Promise<{ vinculado: boolean }> {
+  const supabase = await cliente();
+
+  const { data: atual, error } = await supabase
+    .from("clientes")
+    .select("id, origem_id")
+    .eq("id", entrada.clienteId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!atual) throw new Error("Cliente não encontrado");
+
+  if (atual.origem_id && atual.origem_id !== entrada.origemId) {
+    throw new Error("Cliente já vinculado a outro cadastro da loja");
+  }
+  if (atual.origem_id === entrada.origemId) return { vinculado: true };
+
+  const { error: erroUpdate } = await supabase
+    .from("clientes")
+    .update({ origem_id: entrada.origemId, origem_alteracao: "LOJA" })
+    .eq("id", entrada.clienteId)
+    .is("origem_id", null);
+  if (erroUpdate) throw new Error(erroUpdate.message);
+
+  return { vinculado: true };
+}
+
+/**
+ * Lista clientes elegíveis ainda sem ligação com a loja, paginados por id:
+ * pessoa física com CPF válido (11 dígitos + verificadores), telefone com
+ * 10+ dígitos e participação em pelo menos um sorteio ATIVO. Nota fiscal
+ * NÃO é critério neste fluxo. O marcador é apenas de paginação da varredura:
+ * ao esgotar a lista, a API local o reinicia e recomeça do início.
+ */
+export async function listarClientesSemOrigem(entrada: {
+  desdeId: string | null;
+  limite: number;
+}): Promise<{ itens: ClientePendenteLoja[]; marcador: string | null; descartadosSemParticipacao: number }> {
+  const supabase = await cliente();
+  const limite = Math.min(Math.max(entrada.limite, 1), 500);
+
+  const { data: ativos } = await supabase.from("sorteios").select("id").eq("status", "ATIVO");
+  const sorteioIds = (ativos ?? []).map((s) => s.id);
+  if (sorteioIds.length === 0) return { itens: [], marcador: null, descartadosSemParticipacao: 0 };
+
+  const { data: participantes } = await supabase
+    .from("sorteio_participantes")
+    .select("cliente_id")
+    .in("sorteio_id", sorteioIds);
+  const comParticipacao = new Set((participantes ?? []).map((p) => p.cliente_id));
+
+  let consulta = supabase
+    .from("clientes")
+    .select("id, nome, cpf, telefone, telefone_normalizado, email, data_nascimento")
+    .is("origem_id", null)
+    .order("id", { ascending: true })
+    .limit(limite);
+  if (entrada.desdeId) consulta = consulta.gt("id", entrada.desdeId);
+
+  const { data: clientes, error } = await consulta;
+  if (error) throw new Error(error.message);
+  const pagina = clientes ?? [];
+  if (pagina.length === 0) return { itens: [], marcador: null, descartadosSemParticipacao: 0 };
+
+  const marcador = pagina[pagina.length - 1]!.id;
+  const { cpfValido } = await import("@/lib/curriculo");
+
+  let descartadosSemParticipacao = 0;
+  const itens: ClientePendenteLoja[] = [];
+  for (const c of pagina) {
+    if (!comParticipacao.has(c.id)) {
+      descartadosSemParticipacao += 1;
+      continue;
+    }
+    const cpf = somenteDigitos(c.cpf);
+    if (!cpf || cpf.length !== 11 || !cpfValido(cpf)) continue;
+    const telefone = somenteDigitos(c.telefone_normalizado) ?? somenteDigitos(c.telefone);
+    if (!telefone || telefone.length < 10) continue;
+    if (!c.nome?.trim()) continue;
+    itens.push({
+      id: c.id,
+      nome: c.nome,
+      cpf,
+      telefone,
+      email: c.email ?? null,
+      data_nascimento: c.data_nascimento ?? null,
+    });
+  }
+
+  return { itens, marcador, descartadosSemParticipacao };
+}

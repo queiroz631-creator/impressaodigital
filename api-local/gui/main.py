@@ -379,6 +379,7 @@ class ConfigWindow(tk.Toplevel):
             ("sync_interval_seconds", "Intervalo (segundos)"),
             ("lote_tamanho", "Tamanho do lote"),
             ("revisao_bloco", "Bloco de revisão"),
+            ("pendentes_bloco", "Bloco de clientes pendentes"),
         ]
         for row, (key, label) in enumerate(fields):
             self._field(conexao_tab, row, label, key, str(self.cfg.get(key, "")))
@@ -407,7 +408,28 @@ class ConfigWindow(tk.Toplevel):
             conexao_tab,
             text="Permitir escrita no SQL Server (necessário para Sistema → Loja)",
             variable=self.write_var
-        ).grid(row=row, column=0, columnspan=2, sticky="w", pady=10)
+        ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(10,0))
+        row += 1
+
+        self.criar_var = tk.BooleanVar(
+            value=bool(self.cfg.get("criar_cliente_no_lojamix", True))
+        )
+        ttk.Checkbutton(
+            conexao_tab,
+            text="Criar clientes novos no Lojamix (quando não existir por CPF)",
+            variable=self.criar_var
+        ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(4,0))
+        row += 1
+
+        self.simulacao_var = tk.BooleanVar(
+            value=bool(self.cfg.get("simulacao_criacao_cliente", True))
+        )
+        ttk.Checkbutton(
+            conexao_tab,
+            text="Modo simulação: apenas mostrar quem seria criado, sem gravar no Lojamix",
+            variable=self.simulacao_var
+        ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(4,10))
+        row += 1
 
         ttk.Label(
             conexao_tab,
@@ -426,7 +448,7 @@ class ConfigWindow(tk.Toplevel):
         self.sql_combo = ttk.Combobox(
             selector, textvariable=self.sql_key_var,
             state="readonly", width=34,
-            values=["notas_novas", "notas_situacoes", "clientes_loja_sistema", "clientes_por_nota", "maior_id_nota", "cliente_aplicar_alteracao"]
+            values=["notas_novas", "notas_situacoes", "clientes_loja_sistema", "clientes_por_nota", "clientes_revisao", "maior_id_nota", "cliente_aplicar_alteracao", "cliente_por_cpf", "cliente_criar_entidade", "cliente_criar_pessoa_fisica"]
         )
         self.sql_combo.pack(side="left")
         self.sql_combo.current(0)
@@ -549,13 +571,15 @@ class ConfigWindow(tk.Toplevel):
         try:
             numeric = {
                 "sqlserver_port", "api_local_port", "sync_interval_seconds",
-                "lote_tamanho", "revisao_bloco"
+                "lote_tamanho", "revisao_bloco", "pendentes_bloco"
             }
             data = dict(self.cfg)
             for key, var in self.vars.items():
                 value = var.get().strip()
                 data[key] = int(value) if key in numeric else value
             data["escrita_sqlserver_habilitada"] = self.write_var.get()
+            data["criar_cliente_no_lojamix"] = self.criar_var.get()
+            data["simulacao_criacao_cliente"] = self.simulacao_var.get()
 
             secrets_data = dict(self.sec)
             for key in ["sqlserver_user", "sqlserver_password", "sistema_token"]:

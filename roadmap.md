@@ -101,3 +101,4 @@
 - [x] Motivos de descarte visíveis no resumo e na tela de status (sem nome, sem CPF, CPF inválido, sem telefone)
 - [x] Reconciliação da loja revisando clientes elegíveis
 - [x] Ação "Reprocessar clientes": zera apenas `ultimo_id_entidade`, `ultimo_id_nota_cliente` e `ultimo_id_cliente_revisado` (nunca os marcadores de notas) e nunca roda junto com um ciclo de clientes
+- [x] Enviar clientes Sistema → Lojamix com criação de cadastro novo (vincular por CPF, criar entidade+pessoa_fisica em transação, modo simulação, marcador ultimo_id_cliente_pendente circular, elegibilidade = PF + CPF válido + telefone + participação em sorteio ATIVO; fluxo de notas intacto) — concluído

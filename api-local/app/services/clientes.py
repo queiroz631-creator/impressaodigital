@@ -14,7 +14,7 @@ from typing import Any
 
 from app.config import config
 from app.repositories import clientes_repo
-from app.schemas.sync import ResumoClientes, ResumoRevisaoClientes, SorteioAtivo
+from app.schemas.sync import ResumoClientes, ResumoPendentesClientes, ResumoRevisaoClientes, SorteioAtivo
 from app.services.notas import _periodo, sorteio_ativo
 from app.services import sistema
 from app.services.lotes import lote_deterministico
@@ -263,8 +263,60 @@ def confirmar(sequencia: int, erro: str | None = None) -> dict[str, Any]:
     return sistema.chamar(sistema.CLIENTES_CONFIRMAR, corpo)
 
 
+def _vincular_no_sistema(cliente_id: str, origem_id: str) -> None:
+    """Grava a ligação permanente no sistema (anti-eco: origem LOJA)."""
+    sistema.chamar(
+        sistema.CLIENTES_VINCULAR,
+        {"clienteId": cliente_id, "origemId": str(origem_id)},
+    )
+
+
+def _resolver_cliente(cliente: dict[str, Any], resumo: Any) -> str | None:
+    """Resolve a ligação do cliente com o Lojamix.
+
+    Retorna o id_entidade quando o cliente ficou pronto (atualizado/vinculado/
+    criado) e None quando ficou simulado ou indisponível neste ciclo. Lança
+    exceção em falha real de gravação.
+    """
+    cfg = config()
+    cliente_id = str(cliente.get("id") or "")
+    origem_id = cliente.get("origem_id") or cliente.get("origemId")
+    nome = normalizacao.texto(cliente.get("nome"))
+    email = normalizacao.email(cliente.get("email"))
+    telefone = normalizacao.digitos(cliente.get("telefone"))
+    cpf = normalizacao.cpf(cliente.get("cpf"))
+    nascimento = cliente.get("data_nascimento") or cliente.get("dataNascimento")
+
+    # A) Já tem ligação: apenas atualiza os campos de contato.
+    if origem_id:
+        clientes_repo.aplicar_alteracao(str(origem_id), nome, email, telefone)
+        resumo.atualizados += 1
+        return str(origem_id)
+
+    # B) Procura pelo CPF no Lojamix: encontra → vincula e atualiza contato.
+    if cpf:
+        existente = clientes_repo.por_cpf(cpf)
+        if existente and existente.get("id_entidade"):
+            id_entidade = str(existente["id_entidade"])
+            clientes_repo.aplicar_alteracao(id_entidade, nome, email, telefone)
+            _vincular_no_sistema(cliente_id, id_entidade)
+            resumo.vinculados += 1
+            return id_entidade
+
+    # C) Não existe na loja: simulação não grava nada e mantém disponível.
+    if cfg.simulacao_criacao_cliente or not cfg.criar_cliente_no_lojamix:
+        resumo.simulados += 1
+        return None
+
+    # D) Criação real em transação única + vinculação. Só conta após sucesso.
+    id_criado = clientes_repo.criar(nome or "", cpf or "", telefone, email, nascimento)
+    _vincular_no_sistema(cliente_id, str(id_criado))
+    resumo.criados += 1
+    return str(id_criado)
+
+
 def aplicar_alteracoes(limite: int | None = None) -> dict[str, Any]:
-    """Ciclo SISTEMA -> LOJA: ler, aplicar, confirmar (nesta ordem).
+    """Ciclo SISTEMA -> LOJA: ler, resolver ligação, aplicar, confirmar.
 
     A alteração vem marcada com origem SUPABASE no sistema, portanto aplicar
     aqui não gera um novo evento de volta (sem loop).
@@ -274,25 +326,15 @@ def aplicar_alteracoes(limite: int | None = None) -> dict[str, Any]:
     if not itens:
         return {"aplicados": 0, "cursor": dados.get("cursor", 0), "erros": 0}
 
+    resumo = ResumoPendentesClientes()
     aplicados = 0
     ultima_ok = int(dados.get("cursor") or 0)
     falha: str | None = None
 
     for item in itens:
         cliente = item.get("cliente") or {}
-        origem_id = cliente.get("origem_id")
-        if not origem_id:
-            # Cliente criado no sistema e ainda sem referência na loja: ignora,
-            # mas não bloqueia o cursor dos demais.
-            ultima_ok = int(item.get("sequencia") or ultima_ok)
-            continue
         try:
-            clientes_repo.aplicar_alteracao(
-                str(origem_id),
-                normalizacao.texto(cliente.get("nome")),
-                normalizacao.email(cliente.get("email")),
-                normalizacao.digitos(cliente.get("telefone")),
-            )
+            _resolver_cliente(cliente, resumo)
             aplicados += 1
             ultima_ok = int(item.get("sequencia") or ultima_ok)
         except Exception as e:  # noqa: BLE001 - erro já sanitizado no confirmar
@@ -303,6 +345,69 @@ def aplicar_alteracoes(limite: int | None = None) -> dict[str, Any]:
     resultado = confirmar(ultima_ok, falha)
     return {
         "aplicados": aplicados,
+        "criados": resumo.criados,
+        "vinculados": resumo.vinculados,
+        "simulados": resumo.simulados,
         "cursor": resultado.get("cursor", ultima_ok),
         "erros": 1 if falha else 0,
     }
+
+
+def enviar_pendentes_para_loja(bloco: int | None = None) -> ResumoPendentesClientes:
+    """Envio pendente SISTEMA -> LOJA em blocos, com paginação circular.
+
+    O marcador `ultimo_id_cliente_pendente` é APENAS de paginação da varredura
+    atual (o id do cliente é aleatório, não temporal): ao esgotar a lista, ele
+    volta ao início. Avança somente após o bloco ser processado sem erro.
+    """
+    with _TRAVA_CLIENTES:
+        return _enviar_pendentes_para_loja(bloco)
+
+
+def _enviar_pendentes_para_loja(bloco: int | None = None) -> ResumoPendentesClientes:
+    cfg = config()
+    tamanho = min(bloco or cfg.pendentes_bloco, 500)
+    resumo = ResumoPendentesClientes()
+
+    marcador = str(estado.ler().get("ultimo_id_cliente_pendente") or "") or None
+    try:
+        dados = sistema.chamar(
+            sistema.CLIENTES_PENDENTES,
+            {"desdeId": marcador, "limite": tamanho},
+        )
+    except sistema.ErroSistema as e:
+        resumo.erros += 1
+        resumo.erroDetalhe = erro_seguro(e)
+        return resumo
+
+    itens = dados.get("itens") or []
+    resumo.semParticipacaoAtiva += int(dados.get("descartadosSemParticipacao") or 0)
+
+    if not itens and not dados.get("marcador"):
+        # Fim da lista: recomeça do início no próximo ciclo.
+        if marcador:
+            estado.definir("ultimo_id_cliente_pendente", "")
+            resumo.voltouAoInicio = True
+        return resumo
+
+    novo_marcador = dados.get("marcador") or marcador
+    resumo.recebidos = len(itens)
+    falhou = False
+
+    for cliente in itens:
+        try:
+            _resolver_cliente(cliente, resumo)
+        except Exception as e:  # noqa: BLE001
+            falhou = True
+            resumo.erros += 1
+            resumo.erroDetalhe = erro_seguro(e)
+            logger().error("falha ao processar cliente pendente: %s", resumo.erroDetalhe)
+            break
+
+    # Marcador avança só com o bloco concluído; erro mantém para nova tentativa.
+    if not falhou and novo_marcador and novo_marcador != marcador:
+        estado.definir("ultimo_id_cliente_pendente", novo_marcador)
+    resumo.ultimoIdClientePendente = str(
+        estado.ler().get("ultimo_id_cliente_pendente") or ""
+    )
+    return resumo
