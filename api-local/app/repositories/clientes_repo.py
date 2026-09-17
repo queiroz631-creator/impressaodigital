@@ -1,7 +1,33 @@
 """Consultas e gravações de clientes configuráveis pelo usuário."""
+from datetime import date, datetime
 from typing import Any
 from app.database import ErroBanco, consultar, executar
 from app.sql_store import render
+
+# Padrão confirmado no cadastro feito pela própria tela do Lojamix.
+_NASCIMENTO_PADRAO = date(1900, 1, 1)
+
+
+def _data_nascimento(valor: Any) -> date:
+    """Converte a data de nascimento em um valor de data tipado.
+
+    A coluna do Lojamix é `datetime`: texto como '1988-01-22' seria interpretado
+    conforme o idioma do SQL Server (dia/mês/ano) e estouraria o intervalo. Com
+    um objeto de data o driver envia o valor tipado, sem ambiguidade.
+    """
+    if isinstance(valor, datetime):
+        return valor.date()
+    if isinstance(valor, date):
+        return valor
+    if isinstance(valor, str):
+        texto = valor.strip()
+        if texto:
+            try:
+                return date.fromisoformat(texto[:10])
+            except ValueError:
+                return _NASCIMENTO_PADRAO
+    return _NASCIMENTO_PADRAO
+
 
 def alterados(limite: int, ultimo_id: int, inicio: Any, fim: Any) -> list[dict[str, Any]]:
     sql, params = render("clientes_loja_sistema", {
@@ -101,7 +127,10 @@ def criar(nome: str, cpf: str, telefone: str | None, email: str | None, nascimen
     # marcador interno resolvido dentro da transação (abaixo).
     # Data real do sistema quando informada; quando ausente, usa o padrão
     # confirmado no cadastro feito pela própria tela do Lojamix (1900-01-01).
-    nascimento_final = nascimento if nascimento else "1900-01-01"
+    # Sempre como valor de data tipado (nunca texto), para não depender do
+    # formato de data do SQL Server.
+    nascimento_final = _data_nascimento(nascimento)
+
     sql_pf, params_pf = render("cliente_criar_pessoa_fisica", {
         "id_entidade": None, "cpf": cpf, "nascimento": nascimento_final,
     })
