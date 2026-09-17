@@ -511,13 +511,20 @@ export async function receberClientesLote(entrada: {
           continue;
         }
         resumo.atualizados += 1;
+        // Indicador informativo: o cliente já chega ligado à loja neste sentido.
+        await marcarParticipantesSincronizados(supabase, existenteId);
       } else {
-        const { error } = await supabase.from("clientes").insert(campos);
+        const { data: criado, error } = await supabase
+          .from("clientes")
+          .insert(campos)
+          .select("id")
+          .maybeSingle();
         if (error) {
           resumo.ignorados += 1;
           continue;
         }
         resumo.criados += 1;
+        if (criado?.id) await marcarParticipantesSincronizados(supabase, criado.id);
       }
     }
 
