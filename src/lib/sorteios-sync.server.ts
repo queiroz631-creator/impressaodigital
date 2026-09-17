@@ -761,7 +761,10 @@ export async function vincularOrigemCliente(entrada: {
   if (atual.origem_id && atual.origem_id !== entrada.origemId) {
     throw new Error("Cliente já vinculado a outro cadastro da loja");
   }
-  if (atual.origem_id === entrada.origemId) return { vinculado: true };
+  if (atual.origem_id === entrada.origemId) {
+    await marcarParticipantesSincronizados(supabase, entrada.clienteId);
+    return { vinculado: true };
+  }
 
   const { error: erroUpdate } = await supabase
     .from("clientes")
@@ -770,8 +773,34 @@ export async function vincularOrigemCliente(entrada: {
     .is("origem_id", null);
   if (erroUpdate) throw new Error(erroUpdate.message);
 
+  await marcarParticipantesSincronizados(supabase, entrada.clienteId);
+
   return { vinculado: true };
 }
+
+/**
+ * Indicador informativo: marca as participações do cliente como sincronizadas.
+ * Nunca desfaz a ligação — falha aqui é registrada e ignorada, pois a ligação
+ * (`clientes.origem_id`) é o dado oficial e permanente.
+ */
+async function marcarParticipantesSincronizados(
+  supabase: Awaited<ReturnType<typeof cliente>>,
+  clienteId: string,
+): Promise<void> {
+  try {
+    await supabase
+      .from("sorteio_participantes")
+      .update({
+        sincronizacao_status: "SINCRONIZADO",
+        sincronizado_em: new Date().toISOString(),
+      })
+      .eq("cliente_id", clienteId)
+      .neq("sincronizacao_status", "SINCRONIZADO");
+  } catch {
+    // Indicador informativo: não interrompe a vinculação.
+  }
+}
+
 
 /**
  * Lista clientes elegíveis ainda sem ligação com a loja, paginados por id:
