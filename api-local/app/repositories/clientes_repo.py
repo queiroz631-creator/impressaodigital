@@ -127,7 +127,10 @@ def criar(nome: str, cpf: str, telefone: str | None, email: str | None, nascimen
     # marcador interno resolvido dentro da transação (abaixo).
     # Data real do sistema quando informada; quando ausente, usa o padrão
     # confirmado no cadastro feito pela própria tela do Lojamix (1900-01-01).
-    nascimento_final = nascimento if nascimento else "1900-01-01"
+    # Sempre como valor de data tipado (nunca texto), para não depender do
+    # formato de data do SQL Server.
+    nascimento_final = _data_nascimento(nascimento)
+
     sql_pf, params_pf = render("cliente_criar_pessoa_fisica", {
         "id_entidade": None, "cpf": cpf, "nascimento": nascimento_final,
     })
