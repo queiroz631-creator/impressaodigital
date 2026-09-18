@@ -2,83 +2,107 @@
 
 ## O que eu verifiquei na nota 160969
 
-- Ela foi cadastrada às 10:35 e cancelada às 10:52 (R$ 5,00).
-- Ela **nunca chegou a ser processada**: não gerou nenhum cupom e não deixou troco.
-- O saldo atual do cliente (R$ 5,85) vem de outra nota, a 160877 — não da 160969.
+- Cadastrada às 10:35 e cancelada às 10:52 (R$ 5,00).
+- Ela **nunca chegou a ser processada**: não gerou cupom e não deixou troco.
+- O saldo do cliente (R$ 5,85) vem da nota 160877 — não da 160969.
 
-Ou seja, nesse caso específico não havia nada para descontar: a nota foi cancelada
-antes de virar cupom/troco.
+Nesse caso não havia nada a descontar.
 
 ## A falha real que existe hoje
 
-Se a nota **já tiver sido processada** e depois for cancelada, o sistema hoje
-cancela os cupons dela, mas **não devolve nem corrige o troco** do cliente. O
-saldo fica maior do que deveria. É isso que esta etapa corrige.
+Se a nota **já tiver sido processada** e depois for cancelada, o sistema cancela
+os cupons dela mas **não corrige o troco** do cliente: o saldo fica maior do que
+deveria. É isso que esta etapa corrige.
 
-## Regra a aplicar (conforme sua resposta)
+## Conferência feita antes de definir a fórmula (sem alterar nada)
+
+Como o saldo é preenchido hoje: só na geração de cupons — a cada nota válida
+processada, `saldo + valor da nota` vira cupons e o resto é gravado em
+`saldo_centavos` da participação e em `saldo_gerado_centavos` da nota.
+`cupons_gerados` é a quantidade de cupons daquela nota. Nenhum outro ponto do
+sistema mexe nesses campos.
+
+Fórmula testada em todos os 9 participantes reais:
+
+`saldo = maior(0, soma das notas VÁLIDAS já processadas − soma do valor dos cupons que não estão cancelados)`
+
+| Participante | Saldo atual | Notas consideradas | Cupons (ativos/cancel./utiliz.) | Consumido | Calculado | Diferença |
+|---|---|---|---|---|---|---|
+| 3a35dd9d | R$ 5,85 | R$ 225,85 | 11 / 0 / 0 | R$ 220,00 | R$ 5,85 | 0 |
+| 5ad01b24 | R$ 3,00 | R$ 63,00 | 3 / 0 / 0 | R$ 60,00 | R$ 3,00 | 0 |
+| outros 7 | R$ 0,00 | R$ 0,00 | 0 / 0 / 0 | R$ 0,00 | R$ 0,00 | 0 |
+
+Diferença zero em todos. Observação honesta: hoje não existe nenhum cupom
+cancelado nem utilizado no banco, então essas duas situações só podem ser
+comprovadas nos testes criados para isso (itens 1, 3 e 5 abaixo) — antes da
+correção em massa.
+
+O valor consumido usa o valor gravado em cada cupom (`valor_base_centavos`), e
+não o valor atual do sorteio, para que uma mudança futura no valor por cupom não
+desfaça o histórico.
+
+## Regra a aplicar
 
 Ao cancelar uma nota:
 
 1. Os cupons gerados por aquela nota são cancelados (já acontece hoje).
-2. O saldo do cliente naquele sorteio é **recalculado**: soma o valor de todas as
-   notas válidas já processadas do participante e desconta o valor dos cupons que
-   continuam valendo. Se o resultado der negativo, o saldo fica zero.
-3. A nota cancelada deixa de contar: seus cupons e seu troco são desconsiderados
-   no cálculo, e ela não volta a ser processada.
-4. Tudo em uma única operação, com registro no histórico (auditoria) do que foi
-   cancelado e de qual saldo passou para qual.
+2. O saldo do cliente naquele sorteio é recalculado pela fórmula acima.
+3. A nota cancelada deixa de contar e não volta a ser processada.
+4. Tudo em uma única operação, com registro no histórico: saldo anterior, total
+   das notas, cupons considerados, valor consumido e saldo novo.
 
-Notas canceladas antes de serem processadas continuam sem efeito nenhum, como a
-160969.
+## Correção dos saldos já existentes
 
-## Depois de implementar
-
-Rodar uma conferência dos participantes que já têm nota cancelada processada e
-corrigir o saldo deles pela mesma regra, registrando na auditoria.
+Nada será atualizado em massa sem sua confirmação. Antes disso eu apresento a
+mesma tabela acima (saldo atual, total, cupons, consumido, calculado, diferença)
+já com os testes realizados; só depois, e só nos participantes com diferença, o
+saldo é gravado — com registro na auditoria.
 
 ## Detalhes técnicos
 
 **Banco (migração aditiva, sem tabela nova)**
 
 - Nova função `public.sorteio_recalcular_saldo_participante(_participante_id uuid, _origem text, _usuario_id uuid)`,
-  `SECURITY DEFINER`, `search_path = public`, executável apenas por `service_role`:
-  - `SELECT ... FOR UPDATE` na participação (mesma serialização usada em
+  `SECURITY DEFINER`, `search_path = public`, `EXECUTE` apenas para `service_role`:
+  - `SELECT ... FOR UPDATE` na participação (mesma serialização de
     `sorteio_gerar_cupons_da_nota`).
-  - `total = soma(valor_centavos)` das notas do participante com
-    `status = 'VALIDA' AND cupons_processado_em IS NOT NULL`.
-  - `consumido = count(cupons ativos/utilizados) * sorteios.valor_por_cupom_centavos`
-    (cupons `status <> 'CANCELADO'` do participante).
-  - `saldo = greatest(total - consumido, 0)` → `UPDATE sorteio_participantes.saldo_centavos`.
-  - `INSERT sorteio_auditoria` com evento `saldo.recalculado` e detalhe
-    (`saldo_anterior_centavos`, `saldo_centavos`, `total`, `consumido`).
-- Alterar `public.sorteio_propagar_cancelamento_nota()` (trigger AFTER UPDATE já
-  existente em `sorteio_notas`) para, depois de cancelar os cupons da nota,
-  chamar a função de recálculo do participante. A parte que já funciona
-  (cancelamento dos cupons, `cancelado_em`) permanece idêntica.
-- Nada muda em RLS, grants, validação, fila, cursores ou sincronização.
+  - `total = sum(valor_centavos)` de `sorteio_notas` do participante com
+    `status='VALIDA' AND cupons_processado_em IS NOT NULL`.
+  - `consumido = sum(valor_base_centavos)` de `sorteio_cupons` do participante
+    com `status <> 'CANCELADO'`.
+  - `saldo = greatest(total - consumido, 0)`; grava só se mudou.
+  - `INSERT sorteio_auditoria` evento `saldo.recalculado` com
+    `saldo_anterior_centavos`, `saldo_centavos`, `total_notas_centavos`,
+    `consumido_centavos`, `cupons_considerados`.
+  - Retorna `jsonb` com esses mesmos números (permite conferir sem gravar nada
+    mais).
+- `public.sorteio_propagar_cancelamento_nota()` (trigger AFTER UPDATE já
+  existente): após cancelar os cupons da nota, chamar o recálculo do
+  participante. O comportamento atual (cancelar cupons, `cancelado_em`) fica
+  idêntico.
+- Nada muda em RLS, grants de tabela, validação, fila, cursores ou sincronização.
 
 **Servidor**
 
-- `src/lib/sorteios-cupons.server.ts`: expor `recalcularSaldoParticipante(participanteId, origem, usuarioId)`
-  via RPC, e uma rotina `recalcularSaldosDoSorteio(sorteioId)` usada na
-  conferência pontual e pelo botão do painel.
-- `src/lib/sorteios.functions.ts`: incluir o recálculo no
-  `processarCuponsDoSorteio` (mesma permissão `sorteios.gerenciar`), para que o
-  botão "Gerar cupons pendentes" também acerte saldos divergentes.
+- `src/lib/sorteios-cupons.server.ts`: `recalcularSaldoParticipante(...)` via RPC
+  e `recalcularSaldosDoSorteio(sorteioId)`.
+- `src/lib/sorteios.functions.ts`: `processarCuponsDoSorteio` (permissão
+  `sorteios.gerenciar`) passa a recalcular os saldos ao final.
 
-**Tipos / telas**
+**Tipos**
 
-- `src/modules/sorteios/types/index.ts`: novo evento de auditoria `saldo.recalculado`.
-- Sem mudança visual necessária; o saldo já é exibido em Participantes e no painel.
+- `src/modules/sorteios/types/index.ts`: evento `saldo.recalculado`.
+- Sem mudança visual; o saldo já aparece em Participantes e no painel.
 
-**Testes (no banco de desenvolvimento, dados reais)**
+**Testes (banco de desenvolvimento, dados reais)**
 
-1. Nota processada com troco → cancelar → cupons cancelados e saldo recalculado.
+1. Nota processada com troco → cancelar → cupons da nota cancelados e saldo recalculado.
 2. Nota cancelada antes do processamento (caso 160969) → saldo inalterado.
-3. Cancelar a nota que gerou cupons já usados por troco posterior → saldo não fica negativo.
+3. Nota cujos cupons foram consumidos por troco posterior → saldo nunca negativo.
 4. Cancelar duas vezes a mesma nota → nenhum efeito extra.
-5. Cancelamentos simultâneos de duas notas do mesmo participante → saldo final correto.
-6. Participante sem nota válida → saldo permanece zero.
+5. Cupom marcado como utilizado → continua contando como consumido.
+6. Cancelamentos simultâneos de duas notas do mesmo participante → saldo final correto.
+7. Participante sem nota válida → saldo permanece zero.
 
 ## Fora do escopo
 
