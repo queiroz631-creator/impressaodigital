@@ -544,3 +544,28 @@ export const validarNotaSorteio = createServerFn({ method: "POST" })
       mensagem: r.resultado === "VALIDA" ? "Nota validada." : "Nota marcada como inválida.",
     };
   });
+
+/* ------------------------------------------------- saldo e geração de cupons */
+
+/**
+ * Processa o saldo e gera os cupons das notas válidas ainda não processadas
+ * deste sorteio. O navegador informa apenas o identificador do sorteio: a
+ * quantidade de cupons é sempre calculada no banco, nota por nota, e a
+ * operação é idempotente (rodar de novo não duplica nada).
+ */
+export const processarCuponsDoSorteio = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ sorteioId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigirGestao(context);
+
+    const atual = await lerSorteioAtual(context.supabase, data.sorteioId);
+    if (atual.status !== "ATIVO") {
+      throw new Error("Somente sorteios ativos geram cupons.");
+    }
+
+    const { processarCuponsPendentes } = await import("@/lib/sorteios-cupons.server");
+    const resumo = await processarCuponsPendentes(data.sorteioId, 500, "painel", context.userId);
+
+    return resumo;
+  });
