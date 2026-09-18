@@ -82,6 +82,7 @@ def _nota_para_envio(linha: dict[str, Any]) -> dict[str, Any]:
         "valorCentavos": centavos(linha.get("valor_total")),
         "dataNota": data_iso(linha.get("data_hora_emissao")),
         "origemId": str(linha["id_nota_fiscal"]),
+        "clienteOrigemId": (str(linha["id_entidade"]) if linha.get("id_entidade") else None),
     }
 
 
@@ -183,6 +184,7 @@ def enviar_situacoes(bloco: int | None = None, sorteio: SorteioAtivo | None = No
                         {
                             "numero": str(l["numero_documento_fiscal"]).strip(),
                             "origemId": str(l["id_nota_fiscal"]),
+                            "clienteOrigemId": (str(l["id_entidade"]) if l.get("id_entidade") else None),
                             "situacao": int(l.get("id_situacao_documento_fiscal") or 3),
                             "canceladaEm": data_iso(l.get("data_hora_cancelamento")),
                         }
