@@ -25,10 +25,13 @@ async function contar(
   tabela: "sorteio_participantes" | "sorteio_notas" | "sorteio_cupons",
   sorteioId: string,
 ) {
-  const { count, error } = await supabase
+  let consulta = supabase
     .from(tabela)
     .select("id", { count: "exact", head: true })
     .eq("sorteio_id", sorteioId);
+  // Cupons cancelados não valem mais: não entram na contagem exibida.
+  if (tabela === "sorteio_cupons") consulta = consulta.neq("status", "CANCELADO");
+  const { count, error } = await consulta;
   if (error) throw new Error(error.message);
   return count ?? 0;
 }
