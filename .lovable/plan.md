@@ -1,49 +1,54 @@
-# Corrigir o aviso "Numero_Endereco" ao abrir/salvar o cliente no Lojamix
+# Desativar a gravação de clientes na loja (Lojamix), mantendo o código
 
-## Por que a mensagem aparece
+## O que muda no funcionamento
 
-O aviso vem do próprio Lojamix, não do sistema: ao gravar o cadastro, ele exige
-que o campo **Número do endereço** tenha algum valor. No cliente criado pela
-sincronização esse campo ficou **vazio de verdade (nulo)**, porque o comando de
-criação não o preenche — ele foi deixado para o padrão do banco, e no seu banco
-local esse padrão não coloca nada.
+O programa da loja para de gravar qualquer cliente no Lojamix: nada é criado,
+nada é atualizado e nenhum vínculo novo é feio no sentido sistema → loja.
+Todo o resto continua igual: notas, situações de notas, clientes que vêm da
+loja para o sistema e a revisão de clientes.
 
-Verificado no comando de criação do cliente: ele preenche logradouro, bairro e
-CEP como texto vazio, mas **não** inclui número do endereço nem complemento.
+Nenhum código é apagado — o fluxo fica desligado por uma chave, pronto para
+ser religado quando você quiser continuar.
 
-A documentação oficial do Lojamix
-(moderniza-dev.github.io/varejo-docs, operação Entidade/Salvar) confirma que
-**NumeroEndereco** e **Complemento** são campos normais de texto do cadastro,
-preenchidos junto com logradouro, bairro e CEP — ou seja, gravá-los como texto
-vazio reproduz o comportamento oficial.
+## Como fica
 
-## O que será ajustado
+Nova chave de configuração **"gravar clientes no Lojamix"**, desligada por
+padrão. Com ela desligada:
 
-Um único arquivo do programa da loja (`api-local/app/sql_store.py`), no comando
-de criação do cliente:
+- as duas etapas de gravação (clientes do sistema → loja e clientes pendentes)
+  não rodam no ciclo automático;
+- os marcadores e a fila não avançam, então nada é perdido: quando religar,
+  os clientes pendentes continuam de onde pararam;
+- a tela mostra essas etapas como "desligada", em vez de contadores zerados,
+  para não parecer erro;
+- as chamadas manuais dessas etapas respondem informando que estão desligadas,
+  sem gravar nada.
 
-- passar a gravar **número do endereço** como texto vazio (`''`);
-- passar a gravar **complemento** como texto vazio (`''`), pelo mesmo motivo —
-  é o outro campo de endereço que hoje pode ficar nulo.
+O que vem da loja para o sistema continua funcionando normalmente, inclusive o
+vínculo automático de participante e notas quando o cliente chega com nota de
+sorteio ativo.
 
-Nada mais muda: cidade 260, os demais valores fixos, o retorno obrigatório do
-código da entidade, a transação única com a pessoa física, o desfazimento total
-em caso de erro, o vínculo por CPF e o modo simulação continuam iguais.
+## Detalhes técnicos
 
-## Cadastros já criados
+Arquivos da API local:
 
-Os clientes que já foram criados continuam com esses campos nulos e vão repetir
-o aviso na tela do Lojamix. Se quiser, faço em seguida uma correção pontual
-desses cadastros existentes (preencher os campos de endereço com vazio) — diga
-se prefere que eu inclua isso.
+- `app/settings_store.py` e `app/config.py`: nova opção
+  `gravar_clientes_no_lojamix` (padrão `False`).
+- `app/worker.py`: quando desligada, `clientes_sistema_loja` e
+  `clientes_pendentes_loja` retornam `{"desligado": True}` sem executar —
+  sem leitura da fila, sem confirmação de cursor.
+- `app/services/clientes.py`: `aplicar_alteracoes()` e
+  `enviar_pendentes_para_loja()` passam a checar a chave no início e sair sem
+  efeito (respostas marcadas como desligadas). Nada removido de
+  `_resolver_cliente`, `criar`, vínculo por CPF ou modo simulação.
+- `app/gui/main.py`: caixa de seleção para a nova opção e exibição
+  "desligada" nas duas etapas.
+- `api-local/README.md`: registro da opção.
+
+Nada muda no site, nas rotas, no banco, nas migrações, na validação de notas,
+cupons ou saldo. Sem commit, envio ou publicação.
 
 ## Depois de aplicar
 
-Na loja: se você editou esse comando na tela de configuração, clique em
-"restaurar padrão" nele; gere o executável novamente e sincronize com a
-simulação desligada.
-
-## Fora de escopo
-
-Notas, validação, cancelamento, cupons, saldo, cursores, elegibilidade, rotas,
-banco do sistema e telas do site. Sem commit, envio ou publicação.
+Na loja: gere o executável novamente; a opção já vem desligada. Para voltar a
+gravar no futuro, basta ligá-la em Configurações.
