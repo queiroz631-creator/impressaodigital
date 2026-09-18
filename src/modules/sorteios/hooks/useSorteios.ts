@@ -86,11 +86,16 @@ export function useIndicadoresSorteio(id: string) {
       const [
         { data: notas, error: erroNotas },
         { data: cupons, error: erroCupons },
+        { data: participacoes, error: erroSaldo },
         premios,
         ganhadores,
       ] = await Promise.all([
-        supabase.from("sorteio_notas").select("status, valor_centavos").eq("sorteio_id", id),
+        supabase
+          .from("sorteio_notas")
+          .select("status, valor_centavos, cupons_processado_em")
+          .eq("sorteio_id", id),
         supabase.from("sorteio_cupons").select("status").eq("sorteio_id", id),
+        supabase.from("sorteio_participantes").select("saldo_centavos").eq("sorteio_id", id),
         supabase
           .from("sorteio_premios")
           .select("id", { count: "exact", head: true })
@@ -103,22 +108,32 @@ export function useIndicadoresSorteio(id: string) {
       ]);
       if (erroNotas) throw new Error(erroNotas.message);
       if (erroCupons) throw new Error(erroCupons.message);
+      if (erroSaldo) throw new Error(erroSaldo.message);
 
       const porStatusNota = { PENDENTE: 0, VALIDA: 0, INVALIDA: 0, CANCELADA: 0 };
       let valorValidoCentavos = 0;
+      let notasAguardandoCupons = 0;
       for (const n of notas ?? []) {
         porStatusNota[n.status as StatusNota] += 1;
-        if (n.status === "VALIDA") valorValidoCentavos += n.valor_centavos ?? 0;
+        if (n.status === "VALIDA") {
+          valorValidoCentavos += n.valor_centavos ?? 0;
+          if (!n.cupons_processado_em) notasAguardandoCupons += 1;
+        }
       }
 
       const porStatusCupom = { ATIVO: 0, CANCELADO: 0, UTILIZADO: 0 };
       for (const c of cupons ?? []) porStatusCupom[c.status as StatusCupom] += 1;
+
+      let saldoCentavos = 0;
+      for (const p of participacoes ?? []) saldoCentavos += p.saldo_centavos ?? 0;
 
       return {
         ...contagens,
         porStatusNota,
         porStatusCupom,
         valorValidoCentavos,
+        saldoCentavos,
+        notasAguardandoCupons,
         premiosAtivos: premios.count ?? 0,
         ganhadores: ganhadores.count ?? 0,
       };
@@ -229,7 +244,13 @@ export function useNotasSorteio(id: string) {
   });
 }
 
-export type CupomListado = SorteioCupom & { participanteNome: string; notaNumero: string };
+export type CupomListado = SorteioCupom & {
+  participanteNome: string;
+  participanteCpf: string | null;
+  notaNumero: string;
+  notaValorCentavos: number | null;
+  notaStatus: StatusNota | null;
+};
 
 export function useCuponsSorteio(id: string) {
   return useQuery<CupomListado[]>({
@@ -238,19 +259,28 @@ export function useCuponsSorteio(id: string) {
       const { data, error } = await supabase
         .from("sorteio_cupons")
         .select(
-          "*, sorteio_participantes:participante_id (clientes:cliente_id (nome)), sorteio_notas:nota_id (numero)",
+          "*, sorteio_participantes:participante_id (clientes:cliente_id (nome, cpf)), sorteio_notas:nota_id (numero, valor_centavos, status)",
         )
         .eq("sorteio_id", id)
         .order("gerado_em", { ascending: false });
       if (error) throw new Error(error.message);
       const lista = (data ?? []) as unknown as (SorteioCupom & {
-        sorteio_participantes: { clientes: { nome: string | null } | null } | null;
-        sorteio_notas: { numero: string | null } | null;
+        sorteio_participantes: {
+          clientes: { nome: string | null; cpf: string | null } | null;
+        } | null;
+        sorteio_notas: {
+          numero: string | null;
+          valor_centavos: number | null;
+          status: string | null;
+        } | null;
       })[];
       return lista.map((c) => ({
         ...c,
         participanteNome: c.sorteio_participantes?.clientes?.nome ?? "—",
+        participanteCpf: c.sorteio_participantes?.clientes?.cpf ?? null,
         notaNumero: c.sorteio_notas?.numero ?? "—",
+        notaValorCentavos: c.sorteio_notas?.valor_centavos ?? null,
+        notaStatus: (c.sorteio_notas?.status as StatusNota | undefined) ?? null,
       }));
     },
   });

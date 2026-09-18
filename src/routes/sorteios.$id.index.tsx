@@ -2,12 +2,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Users, FileText, Ticket, Trophy, Wallet, Gift } from "lucide-react";
+import { Users, FileText, Ticket, Trophy, Wallet, Gift, Coins } from "lucide-react";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { brl, dataHoraBR } from "@/lib/format";
-import { alterarStatusSorteio } from "@/lib/sorteios.functions";
+import { alterarStatusSorteio, processarCuponsDoSorteio } from "@/lib/sorteios.functions";
 import { useIndicadoresSorteio, useSorteio } from "@/modules/sorteios/hooks/useSorteios";
 import { StatusSorteioBadge } from "@/modules/sorteios/components/StatusSorteioBadge";
 import { IndicadorCard } from "@/modules/sorteios/components/IndicadorCard";
@@ -52,12 +52,31 @@ function PainelSorteio() {
   const { data: indicadores } = useIndicadoresSorteio(id);
   const alterarStatus = useServerFn(alterarStatusSorteio);
 
+  const processarCupons = useServerFn(processarCuponsDoSorteio);
+
   const mutation = useMutation({
     mutationFn: (status: StatusSorteio) => alterarStatus({ data: { id, status } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sorteio", id] });
       qc.invalidateQueries({ queryKey: ["sorteios"] });
       toast.success("Situação atualizada.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mCupons = useMutation({
+    mutationFn: () => processarCupons({ data: { sorteioId: id } }),
+    onSuccess: (resumo) => {
+      qc.invalidateQueries({ queryKey: ["sorteio-indicadores", id] });
+      qc.invalidateQueries({ queryKey: ["sorteio", id] });
+      qc.invalidateQueries({ queryKey: ["sorteio-cupons", id] });
+      qc.invalidateQueries({ queryKey: ["sorteio-notas", id] });
+      qc.invalidateQueries({ queryKey: ["sorteio-participantes", id] });
+      toast.success(
+        resumo.processadas === 0
+          ? "Nenhuma nota nova para processar."
+          : `${resumo.processadas} nota(s) processada(s) e ${resumo.cupons} cupom(ns) gerado(s).`,
+      );
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -156,6 +175,18 @@ function PainelSorteio() {
           icone={<Wallet className="h-5 w-5" />}
         />
         <IndicadorCard
+          titulo="Saldo acumulado"
+          valor={brl((indicadores?.saldoCentavos ?? 0) / 100)}
+          icone={<Coins className="h-5 w-5" />}
+          descricao="Troco que ainda não completou um cupom"
+        />
+        <IndicadorCard
+          titulo="Cupons cancelados"
+          valor={indicadores?.porStatusCupom.CANCELADO ?? 0}
+          icone={<Ticket className="h-5 w-5" />}
+          descricao={`${indicadores?.porStatusCupom.UTILIZADO ?? 0} ${ROTULO_STATUS_CUPOM.UTILIZADO.toLowerCase()}(s)`}
+        />
+        <IndicadorCard
           titulo="Prêmios ativos"
           valor={indicadores?.premiosAtivos ?? 0}
           icone={<Gift className="h-5 w-5" />}
@@ -166,6 +197,22 @@ function PainelSorteio() {
           icone={<Trophy className="h-5 w-5" />}
         />
       </div>
+
+      {sorteio.status === "ATIVO" && (
+        <Card className="mb-4">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+            <CardTitle className="text-base">Saldo e cupons</CardTitle>
+            <Button size="sm" disabled={mCupons.isPending} onClick={() => mCupons.mutate()}>
+              {mCupons.isPending ? "Processando..." : "Gerar cupons pendentes"}
+            </Button>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            {(indicadores?.notasAguardandoCupons ?? 0) === 0
+              ? "Todas as notas válidas já foram convertidas em saldo e cupons."
+              : `${indicadores?.notasAguardandoCupons} nota(s) válida(s) aguardando processamento.`}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

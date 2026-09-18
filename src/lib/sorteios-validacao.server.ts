@@ -146,6 +146,16 @@ export async function validarNotaPorId(
       nota_base_id: base.id,
     },
   });
+  // Saldo/cupons: a geração é idempotente e independente. Uma falha aqui NUNCA
+  // desfaz a validação — a nota fica válida e não processada, e a próxima
+  // rodada (ou o botão do painel) tenta novamente.
+  try {
+    const { gerarCuponsDaNota } = await import("@/lib/sorteios-cupons.server");
+    await gerarCuponsDaNota(nota.id, origem, usuarioId);
+  } catch (e) {
+    console.error("[sorteios-validacao] falha ao gerar cupons da nota", nota.id, e);
+  }
+
   return { resultado: "VALIDA" };
 }
 
