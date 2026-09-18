@@ -208,7 +208,8 @@ export function useParticipantesSorteio(id: string) {
             supabase
               .from("sorteio_cupons")
               .select("id", { count: "exact", head: true })
-              .eq("participante_id", p.id),
+              .eq("participante_id", p.id)
+              .neq("status", "CANCELADO"),
           ]);
           return {
             ...p,
