@@ -36,6 +36,13 @@
       "when": 1789745394327,
       "tag": "0004_recalcular_saldo_participante",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789774026441,
+      "tag": "0005_cancelar_cupons_sem_lastro",
+      "breakpoints": true
     }
   ]
 }
