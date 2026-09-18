@@ -204,7 +204,9 @@ class App(tk.Tk):
         simulacao = False
 
         alteracoes = result.get("clientes_sistema_loja")
-        if isinstance(alteracoes, dict):
+        if isinstance(alteracoes, dict) and alteracoes.get("desligado"):
+            linhas.append("\nClientes (sistema → loja): desligada")
+        elif isinstance(alteracoes, dict):
             simulacao = simulacao or bool(alteracoes.get("bloqueadoSimulacao"))
             linhas.append(
                 "\nClientes (sistema → loja): aplicados "
