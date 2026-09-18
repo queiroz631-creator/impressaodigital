@@ -134,3 +134,85 @@ export async function processarCuponsPendentesAtivos(limite = 200): Promise<Resu
 
   return resumo;
 }
+
+/* --------------------------------------------------------- recálculo de saldo */
+
+export interface ConferenciaSaldo {
+  participanteId: string;
+  saldoAnteriorCentavos: number;
+  saldoCentavos: number;
+  totalNotasCentavos: number;
+  consumidoCentavos: number;
+  cuponsConsiderados: number;
+  alterado: boolean;
+}
+
+/**
+ * Recalcula o saldo de uma participação pela ÚNICA regra do sistema:
+ * notas VÁLIDAS já processadas menos os cupons que continuam valendo
+ * (ativos ou utilizados). Nunca fica negativo. Grava só quando muda e
+ * registra na auditoria.
+ */
+export async function recalcularSaldoParticipante(
+  participanteId: string,
+  origem: OrigemGeracao | "cancelamento" = "rotina",
+  usuarioId: string | null = null,
+): Promise<ConferenciaSaldo | null> {
+  const supabase = await cliente();
+  const argumentos: { _participante_id: string; _origem: string; _usuario_id?: string } = {
+    _participante_id: participanteId,
+    _origem: origem,
+  };
+  if (usuarioId) argumentos._usuario_id = usuarioId;
+
+  const { data, error } = await supabase.rpc("sorteio_recalcular_saldo_participante", argumentos);
+  if (error) throw new Error(error.message);
+
+  const r = (data ?? {}) as {
+    resultado?: string;
+    alterado?: boolean;
+    saldo_anterior_centavos?: number;
+    saldo_centavos?: number;
+    total_notas_centavos?: number;
+    consumido_centavos?: number;
+    cupons_considerados?: number;
+  };
+  if (r.resultado !== "OK") return null;
+
+  return {
+    participanteId,
+    saldoAnteriorCentavos: r.saldo_anterior_centavos ?? 0,
+    saldoCentavos: r.saldo_centavos ?? 0,
+    totalNotasCentavos: r.total_notas_centavos ?? 0,
+    consumidoCentavos: r.consumido_centavos ?? 0,
+    cuponsConsiderados: r.cupons_considerados ?? 0,
+    alterado: r.alterado === true,
+  };
+}
+
+/** Recalcula (e corrige) o saldo de todos os participantes de um sorteio. */
+export async function recalcularSaldosDoSorteio(
+  sorteioId: string,
+  origem: OrigemGeracao | "cancelamento" = "painel",
+  usuarioId: string | null = null,
+): Promise<{ analisados: number; corrigidos: number }> {
+  const supabase = await cliente();
+  const { data: participantes, error } = await supabase
+    .from("sorteio_participantes")
+    .select("id")
+    .eq("sorteio_id", sorteioId);
+  if (error) throw new Error(error.message);
+
+  let analisados = 0;
+  let corrigidos = 0;
+  for (const p of participantes ?? []) {
+    analisados += 1;
+    try {
+      const r = await recalcularSaldoParticipante(p.id, origem, usuarioId);
+      if (r?.alterado) corrigidos += 1;
+    } catch (e) {
+      console.error("[sorteios-cupons] falha ao recalcular saldo", p.id, e);
+    }
+  }
+  return { analisados, corrigidos };
+}
