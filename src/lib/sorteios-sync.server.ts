@@ -160,6 +160,7 @@ export async function receberNotasLote(entrada: {
       valor_centavos: n.valorCentavos,
       data_nota: n.dataNota ?? null,
       origem_id: n.origemId ?? null,
+      cliente_origem_id: n.clienteOrigemId ?? null,
       sincronizado_em: new Date().toISOString(),
     }));
 
@@ -169,6 +170,14 @@ export async function receberNotasLote(entrada: {
       .upsert(linhas, { onConflict: "sorteio_id,numero" })
       .select("id");
     if (error) throw new Error(error.message);
+
+    // Clientes já ligados à loja recebem na hora a participação e as notas.
+    const origens = [
+      ...new Set(entrada.notas.map((n) => n.clienteOrigemId).filter((v): v is string => !!v)),
+    ];
+    for (const origemId of origens) {
+      await vincularParticipacaoPorOrigemLoja(supabase, { origemId });
+    }
 
     return {
       loteId: entrada.loteId,
