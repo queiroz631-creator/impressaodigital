@@ -364,6 +364,7 @@ export async function registrarSituacaoNotas(entrada: {
           situacao: cancelada ? 3 : 1,
           cancelada_em: cancelada ? quando : null,
           ...(n.origemId ? { origem_id: n.origemId } : {}),
+          ...(n.clienteOrigemId ? { cliente_origem_id: n.clienteOrigemId } : {}),
         })
         .eq("sorteio_id", entrada.sorteioId)
         .eq("numero", n.numero)
