@@ -31,6 +31,16 @@ def em_execucao() -> bool:
     return _TRAVA_CLIENTES.locked()
 
 
+def gravacao_na_loja_ligada() -> bool:
+    """Chave mestra do sentido SISTEMA -> LOJA de clientes.
+
+    Desligada (padrão): nada é criado, atualizado ou vinculado no Lojamix, a
+    fila não é lida e nenhum cursor/marcador avança. O código permanece
+    intacto para ser religado no futuro.
+    """
+    return bool(config().gravar_clientes_no_lojamix)
+
+
 def _cliente_para_envio(linha: dict[str, Any]) -> dict[str, Any]:
     return {
         "origemId": str(linha["id_entidade"]),

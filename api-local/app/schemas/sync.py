@@ -106,5 +106,6 @@ class ResumoPendentesClientes(BaseModel):
     bloqueadoSimulacao: bool = False
     ultimoIdClientePendente: str = ""
     voltouAoInicio: bool = False
+    desligado: bool = False
     erros: int = 0
     erroDetalhe: str | None = None
