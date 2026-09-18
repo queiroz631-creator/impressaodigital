@@ -204,7 +204,9 @@ class App(tk.Tk):
         simulacao = False
 
         alteracoes = result.get("clientes_sistema_loja")
-        if isinstance(alteracoes, dict):
+        if isinstance(alteracoes, dict) and alteracoes.get("desligado"):
+            linhas.append("\nClientes (sistema → loja): desligada")
+        elif isinstance(alteracoes, dict):
             simulacao = simulacao or bool(alteracoes.get("bloqueadoSimulacao"))
             linhas.append(
                 "\nClientes (sistema → loja): aplicados "
@@ -215,7 +217,9 @@ class App(tk.Tk):
             )
 
         pendentes = result.get("clientes_pendentes_loja")
-        if isinstance(pendentes, dict):
+        if isinstance(pendentes, dict) and pendentes.get("desligado"):
+            linhas.append("\nClientes pendentes (sistema → loja): desligada")
+        elif isinstance(pendentes, dict):
             simulacao = simulacao or bool(pendentes.get("bloqueadoSimulacao"))
             linhas.append(
                 "\nClientes pendentes (sistema → loja): recebidos "
@@ -228,7 +232,13 @@ class App(tk.Tk):
                 + ("\n  Varredura reiniciada do começo." if pendentes.get("voltouAoInicio") else "")
             )
 
-        if simulacao or bool(self.cfg.get("simulacao_criacao_cliente", True)):
+        if not bool(self.cfg.get("gravar_clientes_no_lojamix", False)):
+            linhas.append(
+                "\n\n*** GRAVAÇÃO DE CLIENTES NO LOJAMIX DESLIGADA: as etapas "
+                "sistema → loja não rodam. Ligue em Configurações quando quiser "
+                "retomar. ***"
+            )
+        elif simulacao or bool(self.cfg.get("simulacao_criacao_cliente", True)):
             linhas.append(
                 "\n\n*** MODO SIMULAÇÃO LIGADO: nenhum cliente novo é criado no "
                 "Lojamix. Desligue em Configurações para gravar de verdade. ***"
@@ -445,6 +455,16 @@ class ConfigWindow(tk.Toplevel):
         ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(10,0))
         row += 1
 
+        self.gravar_var = tk.BooleanVar(
+            value=bool(self.cfg.get("gravar_clientes_no_lojamix", False))
+        )
+        ttk.Checkbutton(
+            conexao_tab,
+            text="Gravar clientes no Lojamix (sistema → loja). Desligado: nenhum cliente é criado, atualizado ou vinculado na loja",
+            variable=self.gravar_var
+        ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(4,0))
+        row += 1
+
         self.criar_var = tk.BooleanVar(
             value=bool(self.cfg.get("criar_cliente_no_lojamix", True))
         )
@@ -612,6 +632,7 @@ class ConfigWindow(tk.Toplevel):
                 value = var.get().strip()
                 data[key] = int(value) if key in numeric else value
             data["escrita_sqlserver_habilitada"] = self.write_var.get()
+            data["gravar_clientes_no_lojamix"] = self.gravar_var.get()
             data["criar_cliente_no_lojamix"] = self.criar_var.get()
             data["simulacao_criacao_cliente"] = self.simulacao_var.get()
 

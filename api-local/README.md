@@ -122,3 +122,10 @@ O limite superior de `id_nota_fiscal` é capturado uma única vez no início do 
 - A reconciliação (`POST /api/sync/reconciliar`) voltou a revisar clientes elegíveis (`clientesElegiveis`).
 - Novo botão **Reprocessar clientes** (`POST /api/local/clientes-reprocessar`): zera **somente** `ultimo_id_entidade`, `ultimo_id_nota_cliente` e `ultimo_id_cliente_revisado`. Nunca altera `ultimo_id_nota` nem `ultimo_id_revisado`, que pertencem ao sincronismo de notas. Recusa a execução quando há um ciclo de clientes em andamento (todo o fluxo de clientes é serializado por uma trava única).
 - Nada é excluído em nenhum dos sentidos; notas fiscais não são afetadas.
+
+## Gravação de clientes no Lojamix (chave mestra)
+
+- Nova opção `gravar_clientes_no_lojamix` (**desligada por padrão**), na aba Conexão das Configurações.
+- Desligada: as etapas `clientes_sistema_loja` (`aplicar_alteracoes`) e `clientes_pendentes_loja` (`enviar_pendentes_para_loja`) não executam — a fila do sistema nem é lida, nenhum cursor ou marcador avança e nada é criado, atualizado ou vinculado no Lojamix. A tela mostra essas etapas como "desligada" e exibe um aviso destacado.
+- Ligada: o comportamento anterior volta integralmente, incluindo `criar_cliente_no_lojamix`, `simulacao_criacao_cliente`, vínculo por CPF, transação única e rollback.
+- Nada foi removido do código; o fluxo Loja → Sistema, a revisão de clientes e o sincronismo de notas seguem funcionando normalmente.
