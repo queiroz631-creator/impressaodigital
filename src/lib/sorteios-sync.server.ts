@@ -805,6 +805,10 @@ export async function vincularOrigemCliente(entrada: {
   }
   if (atual.origem_id === entrada.origemId) {
     await marcarParticipantesSincronizados(supabase, entrada.clienteId);
+    await vincularParticipacaoPorOrigemLoja(supabase, {
+      origemId: entrada.origemId,
+      clienteId: entrada.clienteId,
+    });
     return { vinculado: true };
   }
 
@@ -816,8 +820,97 @@ export async function vincularOrigemCliente(entrada: {
   if (erroUpdate) throw new Error(erroUpdate.message);
 
   await marcarParticipantesSincronizados(supabase, entrada.clienteId);
+  await vincularParticipacaoPorOrigemLoja(supabase, {
+    origemId: entrada.origemId,
+    clienteId: entrada.clienteId,
+  });
 
   return { vinculado: true };
+}
+
+/**
+ * Cliente que veio da loja porque tem nota no período de um sorteio ATIVO entra
+ * automaticamente como participante e recebe as notas dele já como VÁLIDAS —
+ * a nota existe na base oficial da loja, não há o que validar. Fica pendente
+ * apenas o aceite dos termos, feito por ele no portal público.
+ *
+ * Não gera cupom, número de cupom nem saldo. Notas canceladas na loja e notas
+ * já usadas por outro participante são ignoradas. Falha aqui nunca derruba o
+ * recebimento do cliente/nota: a ligação é o dado oficial.
+ */
+async function vincularParticipacaoPorOrigemLoja(
+  supabase: Awaited<ReturnType<typeof cliente>>,
+  entrada: { origemId: string; clienteId?: string },
+): Promise<void> {
+  try {
+    let clienteId = entrada.clienteId ?? null;
+    if (!clienteId) {
+      const { data } = await supabase
+        .from("clientes")
+        .select("id")
+        .eq("origem_id", entrada.origemId)
+        .maybeSingle();
+      clienteId = data?.id ?? null;
+    }
+    if (!clienteId) return;
+
+    const { data: ativos } = await supabase.from("sorteios").select("id").eq("status", "ATIVO");
+    const sorteioIds = (ativos ?? []).map((s) => s.id);
+    if (sorteioIds.length === 0) return;
+
+    for (const sorteioId of sorteioIds) {
+      const { data: notasBase } = await supabase
+        .from("sorteio_notas_base")
+        .select("id, numero, valor_centavos")
+        .eq("sorteio_id", sorteioId)
+        .eq("cliente_origem_id", entrada.origemId)
+        .is("cancelada_em", null);
+      if (!notasBase || notasBase.length === 0) continue;
+
+      // Participação garantida (idempotente pela unicidade sorteio + cliente).
+      await supabase
+        .from("sorteio_participantes")
+        .upsert(
+          {
+            sorteio_id: sorteioId,
+            cliente_id: clienteId,
+            concorre_sorteio: true,
+            sincronizacao_status: "SINCRONIZADO",
+            sincronizado_em: new Date().toISOString(),
+          },
+          { onConflict: "sorteio_id,cliente_id", ignoreDuplicates: true },
+        );
+
+      const { data: participante } = await supabase
+        .from("sorteio_participantes")
+        .select("id")
+        .eq("sorteio_id", sorteioId)
+        .eq("cliente_id", clienteId)
+        .maybeSingle();
+      if (!participante) continue;
+
+      const agora = new Date().toISOString();
+      for (const nb of notasBase) {
+        // A unicidade (sorteio_id, numero) garante que a nota não é duplicada
+        // nem roubada de outro participante.
+        const { error } = await supabase.from("sorteio_notas").insert({
+          sorteio_id: sorteioId,
+          participante_id: participante.id,
+          numero: nb.numero,
+          valor_centavos: nb.valor_centavos,
+          nota_base_id: nb.id,
+          status: "VALIDA",
+          validado_em: agora,
+          cupons_gerados: 0,
+          saldo_gerado_centavos: 0,
+        });
+        // Nota já cadastrada (por ele ou por outro participante): segue adiante.
+        if (error && !/duplicate|unique/i.test(error.message)) throw new Error(error.message);
+      }
+    }
+  } catch {
+    // Vínculo automático é conveniência: nunca interrompe a sincronização.
+  }
 }
 
 /**
