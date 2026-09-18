@@ -41,6 +41,21 @@ O valor consumido usa o valor gravado em cada cupom (`valor_base_centavos`), e
 não o valor atual do sorteio, para que uma mudança futura no valor por cupom não
 desfaça o histórico.
 
+## Saldo acumulado antes de formar um cupom — já funciona
+
+Confirmado na implementação atual: uma nota válida que não chega ao valor de um
+cupom **já é processada e já aumenta o saldo** (gera 0 cupons, grava o saldo novo
+e marca a nota como processada). O acúmulo entre notas também já funciona:
+`novo saldo = saldo anterior + valor da nota − (cupons × valor por cupom)`.
+As telas já leem o saldo de `sorteio_participantes.saldo_centavos` — a lista de
+Participantes mostra Cliente, CPF, Saldo, Notas e Cupons, e o indicador "Saldo
+acumulado" do painel soma os saldos dos participantes daquele sorteio.
+
+Portanto **nada da geração de cupons será alterado** e nenhum campo ou tabela de
+saldo será criado. Desta parte só entra na etapa a conferência dos casos de 0
+cupom nos testes e a garantia de que o recálculo do cancelamento usa a mesma
+fonte de saldo.
+
 ## Regra a aplicar
 
 Ao cancelar uma nota:
@@ -102,7 +117,12 @@ saldo é gravado — com registro na auditoria.
 4. Cancelar duas vezes a mesma nota → nenhum efeito extra.
 5. Cupom marcado como utilizado → continua contando como consumido.
 6. Cancelamentos simultâneos de duas notas do mesmo participante → saldo final correto.
-7. Participante sem nota válida → saldo permanece zero.
+7. Participante sem nota válida → saldo permanece zero e 0 cupons.
+8. Nota de R$ 5,00 → 0 cupons e saldo R$ 5,00; segunda de R$ 5,00 → R$ 10,00;
+   terceira de R$ 15,00 → 1 cupom e R$ 5,00 de saldo.
+9. Reprocessar qualquer uma dessas notas → nenhum saldo ou cupom duplicado.
+10. Cancelar uma nota que só gerou saldo → saldo recalculado corretamente.
+11. Duas notas simultâneas do mesmo participante → saldo final correto.
 
 ## Fora do escopo
 
