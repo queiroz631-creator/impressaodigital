@@ -156,6 +156,18 @@ function PainelSorteio() {
           icone={<Wallet className="h-5 w-5" />}
         />
         <IndicadorCard
+          titulo="Saldo acumulado"
+          valor={brl((indicadores?.saldoCentavos ?? 0) / 100)}
+          icone={<Coins className="h-5 w-5" />}
+          descricao="Troco que ainda não completou um cupom"
+        />
+        <IndicadorCard
+          titulo="Cupons cancelados"
+          valor={indicadores?.porStatusCupom.CANCELADO ?? 0}
+          icone={<Ticket className="h-5 w-5" />}
+          descricao={`${indicadores?.porStatusCupom.UTILIZADO ?? 0} ${ROTULO_STATUS_CUPOM.UTILIZADO.toLowerCase()}(s)`}
+        />
+        <IndicadorCard
           titulo="Prêmios ativos"
           valor={indicadores?.premiosAtivos ?? 0}
           icone={<Gift className="h-5 w-5" />}
@@ -166,6 +178,22 @@ function PainelSorteio() {
           icone={<Trophy className="h-5 w-5" />}
         />
       </div>
+
+      {sorteio.status === "ATIVO" && (
+        <Card className="mb-4">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+            <CardTitle className="text-base">Saldo e cupons</CardTitle>
+            <Button size="sm" disabled={mCupons.isPending} onClick={() => mCupons.mutate()}>
+              {mCupons.isPending ? "Processando..." : "Gerar cupons pendentes"}
+            </Button>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            {(indicadores?.notasAguardandoCupons ?? 0) === 0
+              ? "Todas as notas válidas já foram convertidas em saldo e cupons."
+              : `${indicadores?.notasAguardandoCupons} nota(s) válida(s) aguardando processamento.`}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
