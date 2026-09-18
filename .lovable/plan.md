@@ -117,7 +117,12 @@ saldo é gravado — com registro na auditoria.
 4. Cancelar duas vezes a mesma nota → nenhum efeito extra.
 5. Cupom marcado como utilizado → continua contando como consumido.
 6. Cancelamentos simultâneos de duas notas do mesmo participante → saldo final correto.
-7. Participante sem nota válida → saldo permanece zero.
+7. Participante sem nota válida → saldo permanece zero e 0 cupons.
+8. Nota de R$ 5,00 → 0 cupons e saldo R$ 5,00; segunda de R$ 5,00 → R$ 10,00;
+   terceira de R$ 15,00 → 1 cupom e R$ 5,00 de saldo.
+9. Reprocessar qualquer uma dessas notas → nenhum saldo ou cupom duplicado.
+10. Cancelar uma nota que só gerou saldo → saldo recalculado corretamente.
+11. Duas notas simultâneas do mesmo participante → saldo final correto.
 
 ## Fora do escopo
 
