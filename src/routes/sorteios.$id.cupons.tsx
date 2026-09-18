@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -15,7 +16,11 @@ import {
 import { brl, dataHoraBR } from "@/lib/format";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
 import { useCuponsSorteio, useSorteio } from "@/modules/sorteios/hooks/useSorteios";
-import { ROTULO_STATUS_CUPOM, type StatusCupom } from "@/modules/sorteios/types";
+import {
+  ROTULO_STATUS_CUPOM,
+  ROTULO_STATUS_NOTA,
+  type StatusCupom,
+} from "@/modules/sorteios/types";
 
 export const Route = createFileRoute("/sorteios/$id/cupons")({
   component: () => (
