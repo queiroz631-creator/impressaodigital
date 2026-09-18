@@ -15,6 +15,7 @@ const esquema = z.object({
         valorCentavos: z.number().int().positive().max(100000000),
         origemId: z.string().max(120).nullish(),
         dataNota: z.string().max(40).nullish(),
+        clienteOrigemId: z.string().max(120).nullish(),
       }),
     )
     .min(1)
