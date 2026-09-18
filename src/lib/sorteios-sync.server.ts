@@ -295,6 +295,8 @@ export interface NotaSituacaoLoja {
   numero: string;
   /** Referência adicional da origem (id interno da loja). Nunca identifica a nota. */
   origemId?: string | null | undefined;
+  /** Código do cliente da loja (id_entidade) dono da nota. */
+  clienteOrigemId?: string | null | undefined;
   /** 1 = normal, 3 = cancelada (Lojamix). */
   situacao: number;
   canceladaEm?: string | null | undefined;
