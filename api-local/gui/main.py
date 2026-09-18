@@ -217,7 +217,9 @@ class App(tk.Tk):
             )
 
         pendentes = result.get("clientes_pendentes_loja")
-        if isinstance(pendentes, dict):
+        if isinstance(pendentes, dict) and pendentes.get("desligado"):
+            linhas.append("\nClientes pendentes (sistema → loja): desligada")
+        elif isinstance(pendentes, dict):
             simulacao = simulacao or bool(pendentes.get("bloqueadoSimulacao"))
             linhas.append(
                 "\nClientes pendentes (sistema → loja): recebidos "
