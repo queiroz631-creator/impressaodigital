@@ -2293,6 +2293,7 @@ export type Database = {
         Row: {
           atualizado_em: string
           cancelada_em: string | null
+          cliente_origem_id: string | null
           criado_em: string
           data_nota: string | null
           id: string
@@ -2306,6 +2307,7 @@ export type Database = {
         Insert: {
           atualizado_em?: string
           cancelada_em?: string | null
+          cliente_origem_id?: string | null
           criado_em?: string
           data_nota?: string | null
           id?: string
@@ -2319,6 +2321,7 @@ export type Database = {
         Update: {
           atualizado_em?: string
           cancelada_em?: string | null
+          cliente_origem_id?: string | null
           criado_em?: string
           data_nota?: string | null
           id?: string
