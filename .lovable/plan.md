@@ -41,6 +41,14 @@ O valor consumido usa o valor gravado em cada cupom (`valor_base_centavos`), e
 não o valor atual do sorteio, para que uma mudança futura no valor por cupom não
 desfaça o histórico.
 
+## Existe outra rotina que mexe no saldo? Não
+
+Conferido no projeto e no banco: o único lugar que **grava** saldo é a geração de
+cupons (`sorteio_gerar_cupons_da_nota`). Nenhuma rotina desconta ou devolve saldo
+quando um cupom é utilizado ou cancelado — todos os outros pontos apenas **leem**
+o saldo (painel, participantes, portal). Portanto o recálculo desta etapa será a
+única regra de cálculo do cancelamento, sem criar uma segunda fórmula concorrente.
+
 ## Saldo acumulado antes de formar um cupom — já funciona
 
 Confirmado na implementação atual: uma nota válida que não chega ao valor de um
