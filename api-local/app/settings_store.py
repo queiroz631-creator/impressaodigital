@@ -36,6 +36,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "revisao_bloco": 500,
     "consumidor_clientes": "api-local-loja",
     "escrita_sqlserver_habilitada": False,
+    # Desligado: o fluxo de gravação de clientes no Lojamix fica inativo.
+    "gravar_clientes_no_lojamix": False,
     "criar_cliente_no_lojamix": True,
     # Ligado por padrão: nada é criado no Lojamix até o operador desligar.
     "simulacao_criacao_cliente": True,
