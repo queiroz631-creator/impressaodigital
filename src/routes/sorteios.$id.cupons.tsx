@@ -46,23 +46,55 @@ const CLASSE_STATUS: Record<StatusCupom, string> = {
   UTILIZADO: "bg-primary/10 text-primary",
 };
 
+function semAcento(texto: string) {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function mascararCpf(cpf: string | null) {
+  const d = (cpf ?? "").replace(/\D/g, "");
+  if (d.length !== 11) return cpf ?? "—";
+  return `${d.slice(0, 3)}.***.***-${d.slice(9)}`;
+}
+
 function CuponsSorteio() {
   const { id } = Route.useParams();
   const { data: sorteio } = useSorteio(id);
   const { data: cupons, isLoading } = useCuponsSorteio(id);
   const [filtro, setFiltro] = useState<StatusCupom | "TODOS">("TODOS");
+  const [busca, setBusca] = useState("");
 
-  const filtrados = useMemo(
-    () => (cupons ?? []).filter((c) => filtro === "TODOS" || c.status === filtro),
-    [cupons, filtro],
-  );
+  const filtrados = useMemo(() => {
+    const termo = semAcento(busca.trim());
+    const digitos = busca.replace(/\D/g, "");
+    return (cupons ?? []).filter((c) => {
+      if (filtro !== "TODOS" && c.status !== filtro) return false;
+      if (!termo && !digitos) return true;
+      const porNome = termo ? semAcento(c.participanteNome).includes(termo) : false;
+      const porCpf = digitos
+        ? (c.participanteCpf ?? "").replace(/\D/g, "").includes(digitos)
+        : false;
+      const porCupom = termo ? semAcento(c.numero).includes(termo) : false;
+      const porNota = digitos ? c.notaNumero.replace(/\D/g, "").includes(digitos) : false;
+      return porNome || porCpf || porCupom || porNota;
+    });
+  }, [cupons, filtro, busca]);
 
   return (
     <>
       <PageHeader titulo="Cupons" subtitulo={sorteio?.nome ?? ""} />
       <NavSorteio id={id} />
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="max-w-sm flex-1 min-w-[220px]">
+          <Input
+            placeholder="Buscar por cliente, CPF, nº do cupom ou nº da nota"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
         {FILTROS.map((f) => (
           <Button
             key={f}
@@ -81,7 +113,7 @@ function CuponsSorteio() {
           <CardContent className="p-8 text-center text-sm text-muted-foreground">
             {(cupons?.length ?? 0) === 0
               ? "Nenhum cupom neste sorteio."
-              : "Nenhum cupom com esta situação."}
+              : "Nenhum cupom encontrado para esta busca."}
           </CardContent>
         </Card>
       )}
@@ -94,7 +126,9 @@ function CuponsSorteio() {
                 <TableRow>
                   <TableHead>Número</TableHead>
                   <TableHead>Participante</TableHead>
-                  <TableHead>Nota</TableHead>
+                  <TableHead>CPF</TableHead>
+                  <TableHead>Nota de origem</TableHead>
+                  <TableHead className="text-right">Valor da nota</TableHead>
                   <TableHead className="text-right">Valor base</TableHead>
                   <TableHead>Situação</TableHead>
                   <TableHead>Geração</TableHead>
@@ -105,7 +139,18 @@ function CuponsSorteio() {
                   <TableRow key={c.id}>
                     <TableCell className="font-mono font-medium">{c.numero}</TableCell>
                     <TableCell>{c.participanteNome}</TableCell>
-                    <TableCell>{c.notaNumero}</TableCell>
+                    <TableCell>{mascararCpf(c.participanteCpf)}</TableCell>
+                    <TableCell>
+                      <span className="font-mono">{c.notaNumero}</span>
+                      {c.notaStatus && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {ROTULO_STATUS_NOTA[c.notaStatus]}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {c.notaValorCentavos === null ? "—" : brl(c.notaValorCentavos / 100)}
+                    </TableCell>
                     <TableCell className="text-right">{brl(c.valor_base_centavos / 100)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={CLASSE_STATUS[c.status]}>
