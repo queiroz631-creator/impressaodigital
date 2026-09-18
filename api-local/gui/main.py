@@ -455,6 +455,16 @@ class ConfigWindow(tk.Toplevel):
         ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(10,0))
         row += 1
 
+        self.gravar_var = tk.BooleanVar(
+            value=bool(self.cfg.get("gravar_clientes_no_lojamix", False))
+        )
+        ttk.Checkbutton(
+            conexao_tab,
+            text="Gravar clientes no Lojamix (sistema → loja). Desligado: nenhum cliente é criado, atualizado ou vinculado na loja",
+            variable=self.gravar_var
+        ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(4,0))
+        row += 1
+
         self.criar_var = tk.BooleanVar(
             value=bool(self.cfg.get("criar_cliente_no_lojamix", True))
         )
