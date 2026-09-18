@@ -14,6 +14,7 @@ const esquema = z.object({
       z.object({
         numero: z.string().min(1).max(60),
         origemId: z.string().max(120).nullish(),
+        clienteOrigemId: z.string().max(120).nullish(),
         situacao: z.number().int().min(0).max(99),
         canceladaEm: z.string().datetime({ offset: true }).nullish(),
       }),
