@@ -11,6 +11,12 @@ local esse padrão não coloca nada.
 Verificado no comando de criação do cliente: ele preenche logradouro, bairro e
 CEP como texto vazio, mas **não** inclui número do endereço nem complemento.
 
+A documentação oficial do Lojamix
+(moderniza-dev.github.io/varejo-docs, operação Entidade/Salvar) confirma que
+**NumeroEndereco** e **Complemento** são campos normais de texto do cadastro,
+preenchidos junto com logradouro, bairro e CEP — ou seja, gravá-los como texto
+vazio reproduz o comportamento oficial.
+
 ## O que será ajustado
 
 Um único arquivo do programa da loja (`api-local/app/sql_store.py`), no comando
