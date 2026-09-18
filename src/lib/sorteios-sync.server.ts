@@ -21,6 +21,8 @@ export interface NotaLoja {
   valorCentavos: number;
   origemId?: string | null | undefined;
   dataNota?: string | null | undefined;
+  /** Código do cliente da loja (id_entidade) dono da nota. */
+  clienteOrigemId?: string | null | undefined;
 }
 
 export interface ClienteLoja {
