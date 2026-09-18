@@ -564,8 +564,13 @@ export const processarCuponsDoSorteio = createServerFn({ method: "POST" })
       throw new Error("Somente sorteios ativos geram cupons.");
     }
 
-    const { processarCuponsPendentes } = await import("@/lib/sorteios-cupons.server");
+    const { processarCuponsPendentes, recalcularSaldosDoSorteio } = await import(
+      "@/lib/sorteios-cupons.server"
+    );
     const resumo = await processarCuponsPendentes(data.sorteioId, 500, "painel", context.userId);
 
-    return resumo;
+    // Acerta saldos divergentes (ex.: notas canceladas antes desta rotina existir).
+    const saldos = await recalcularSaldosDoSorteio(data.sorteioId, "painel", context.userId);
+
+    return { ...resumo, saldosAnalisados: saldos.analisados, saldosCorrigidos: saldos.corrigidos };
   });

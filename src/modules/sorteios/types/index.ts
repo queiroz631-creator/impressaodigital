@@ -270,6 +270,7 @@ export const EVENTOS_AUDITORIA = {
   notaCancelada: "nota.cancelada",
   cuponsGerados: "cupons.gerados",
   cupomCancelado: "cupom.cancelado",
+  saldoRecalculado: "saldo.recalculado",
   termosAceitos: "termos.aceitos",
   sincronizacao: "sincronizacao.executada",
   portalEntrada: "portal.entrada",

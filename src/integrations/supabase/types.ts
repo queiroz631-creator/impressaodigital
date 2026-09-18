@@ -3500,6 +3500,14 @@ export type Database = {
         }
         Returns: string
       }
+      sorteio_recalcular_saldo_participante: {
+        Args: {
+          _origem?: string
+          _participante_id: string
+          _usuario_id?: string
+        }
+        Returns: Json
+      }
       tem_permissao: {
         Args: { _chave: string; _user_id: string }
         Returns: boolean
