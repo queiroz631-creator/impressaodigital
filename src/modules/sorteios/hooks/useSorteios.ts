@@ -22,16 +22,24 @@ const CAMPOS_SORTEIO =
 type Contagens = { participantes: number; notas: number; cupons: number };
 
 async function contar(
-  tabela: "sorteio_participantes" | "sorteio_notas" | "sorteio_cupons",
+  tabela: "sorteio_participantes" | "sorteio_notas",
   sorteioId: string,
 ) {
-  let consulta = supabase
+  const { count, error } = await supabase
     .from(tabela)
     .select("id", { count: "exact", head: true })
     .eq("sorteio_id", sorteioId);
-  // Cupons cancelados não valem mais: não entram na contagem exibida.
-  if (tabela === "sorteio_cupons") consulta = consulta.neq("status", "CANCELADO");
-  const { count, error } = await consulta;
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+/** Cupons cancelados não valem mais: não entram na contagem exibida. */
+async function contarCuponsValidos(sorteioId: string) {
+  const { count, error } = await supabase
+    .from("sorteio_cupons")
+    .select("id", { count: "exact", head: true })
+    .eq("sorteio_id", sorteioId)
+    .neq("status", "CANCELADO");
   if (error) throw new Error(error.message);
   return count ?? 0;
 }
@@ -40,7 +48,7 @@ async function contagensDe(sorteioId: string): Promise<Contagens> {
   const [participantes, notas, cupons] = await Promise.all([
     contar("sorteio_participantes", sorteioId),
     contar("sorteio_notas", sorteioId),
-    contar("sorteio_cupons", sorteioId),
+    contarCuponsValidos(sorteioId),
   ]);
   return { participantes, notas, cupons };
 }
