@@ -538,6 +538,21 @@ export const registrarNotaParticipante = createServerFn({ method: "POST" })
         evento: EVENTOS_AUDITORIA.notaCadastrada,
         detalhe: { valor_centavos: data.valor_centavos },
       });
+
+      // Conferência imediata, reutilizando exatamente a regra da Etapa 4
+      // (a validação já dispara a geração de cupons). Falha aqui nunca desfaz o
+      // registro: a nota fica PENDENTE e a rotina de reconciliação tenta de novo.
+      try {
+        const { validarNotaPorId } = await import("./sorteios-validacao.server");
+        await validarNotaPorId(nota.id, "portal", null);
+      } catch (e) {
+        console.error(
+          "[sorteios-publico] validação imediata falhou após registro",
+          nota.id,
+          e instanceof Error ? e.message : "erro desconhecido",
+        );
+      }
+
       return { registrada: true };
     }),
   );
