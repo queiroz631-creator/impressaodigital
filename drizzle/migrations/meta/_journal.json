@@ -15,6 +15,13 @@
       "when": 1789692585505,
       "tag": "0001_notas_base_cliente_origem",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789692846084,
+      "tag": "0002_limpar_origem_id_clientes_terceira_vez",
+      "breakpoints": true
     }
   ]
 }
