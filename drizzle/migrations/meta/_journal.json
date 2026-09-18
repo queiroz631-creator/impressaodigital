@@ -29,6 +29,13 @@
       "when": 1789737215261,
       "tag": "0003_sorteio_cupons_geracao",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789745394327,
+      "tag": "0004_recalcular_saldo_participante",
+      "breakpoints": true
     }
   ]
 }
