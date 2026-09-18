@@ -747,6 +747,7 @@ export async function reconciliar(): Promise<ResumoReconciliacao> {
     .not("base_sincronizada_em", "is", null);
 
   const { validarNotasPendentesDoSorteio } = await import("@/lib/sorteios-validacao.server");
+  const { processarCuponsPendentes } = await import("@/lib/sorteios-cupons.server");
   for (const s of sorteios ?? []) {
     resumo.sorteiosVerificados += 1;
     const r = await validarNotasPendentesDoSorteio(s.id, 100);
@@ -754,7 +755,16 @@ export async function reconciliar(): Promise<ResumoReconciliacao> {
     resumo.validas += r.validas;
     resumo.invalidas += r.invalidas;
     resumo.pendentes += r.pendentes;
+    // Notas válidas que ficaram sem saldo/cupons (inclusive as criadas pelo
+    // vínculo automático): nunca deixa nenhuma parada. Falha aqui não
+    // interrompe a reconciliação.
+    try {
+      await processarCuponsPendentes(s.id, 200, "rotina", null);
+    } catch (e) {
+      console.error("[sorteios-sync] falha ao processar cupons pendentes", s.id, e);
+    }
   }
+
 
   const agora = new Date().toISOString();
   await supabase.from("sorteio_sincronizacoes").insert({
@@ -890,23 +900,38 @@ async function vincularParticipacaoPorOrigemLoja(
       if (!participante) continue;
 
       const agora = new Date().toISOString();
+      const { gerarCuponsDaNota } = await import("@/lib/sorteios-cupons.server");
       for (const nb of notasBase) {
         // A unicidade (sorteio_id, numero) garante que a nota não é duplicada
         // nem roubada de outro participante.
-        const { error } = await supabase.from("sorteio_notas").insert({
-          sorteio_id: sorteioId,
-          participante_id: participante.id,
-          numero: nb.numero,
-          valor_centavos: nb.valor_centavos,
-          nota_base_id: nb.id,
-          status: "VALIDA",
-          validado_em: agora,
-          cupons_gerados: 0,
-          saldo_gerado_centavos: 0,
-        });
+        const { data: criada, error } = await supabase
+          .from("sorteio_notas")
+          .insert({
+            sorteio_id: sorteioId,
+            participante_id: participante.id,
+            numero: nb.numero,
+            valor_centavos: nb.valor_centavos,
+            nota_base_id: nb.id,
+            status: "VALIDA",
+            validado_em: agora,
+            cupons_gerados: 0,
+            saldo_gerado_centavos: 0,
+          })
+          .select("id")
+          .maybeSingle();
         // Nota já cadastrada (por ele ou por outro participante): segue adiante.
         if (error && !/duplicate|unique/i.test(error.message)) throw new Error(error.message);
+        // Nota já entra válida por este caminho: gera saldo/cupons na hora.
+        // Falha aqui não desfaz a nota — a reconciliação tenta de novo.
+        if (!error && criada?.id) {
+          try {
+            await gerarCuponsDaNota(criada.id, "rotina", null);
+          } catch (e) {
+            console.error("[sorteios-sync] falha ao gerar cupons da nota vinculada", criada.id, e);
+          }
+        }
       }
+
     }
   } catch {
     // Vínculo automático é conveniência: nunca interrompe a sincronização.
