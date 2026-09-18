@@ -86,11 +86,16 @@ export function useIndicadoresSorteio(id: string) {
       const [
         { data: notas, error: erroNotas },
         { data: cupons, error: erroCupons },
+        { data: participacoes, error: erroSaldo },
         premios,
         ganhadores,
       ] = await Promise.all([
-        supabase.from("sorteio_notas").select("status, valor_centavos").eq("sorteio_id", id),
+        supabase
+          .from("sorteio_notas")
+          .select("status, valor_centavos, cupons_processado_em")
+          .eq("sorteio_id", id),
         supabase.from("sorteio_cupons").select("status").eq("sorteio_id", id),
+        supabase.from("sorteio_participantes").select("saldo_centavos").eq("sorteio_id", id),
         supabase
           .from("sorteio_premios")
           .select("id", { count: "exact", head: true })
@@ -103,22 +108,32 @@ export function useIndicadoresSorteio(id: string) {
       ]);
       if (erroNotas) throw new Error(erroNotas.message);
       if (erroCupons) throw new Error(erroCupons.message);
+      if (erroSaldo) throw new Error(erroSaldo.message);
 
       const porStatusNota = { PENDENTE: 0, VALIDA: 0, INVALIDA: 0, CANCELADA: 0 };
       let valorValidoCentavos = 0;
+      let notasAguardandoCupons = 0;
       for (const n of notas ?? []) {
         porStatusNota[n.status as StatusNota] += 1;
-        if (n.status === "VALIDA") valorValidoCentavos += n.valor_centavos ?? 0;
+        if (n.status === "VALIDA") {
+          valorValidoCentavos += n.valor_centavos ?? 0;
+          if (!n.cupons_processado_em) notasAguardandoCupons += 1;
+        }
       }
 
       const porStatusCupom = { ATIVO: 0, CANCELADO: 0, UTILIZADO: 0 };
       for (const c of cupons ?? []) porStatusCupom[c.status as StatusCupom] += 1;
+
+      let saldoCentavos = 0;
+      for (const p of participacoes ?? []) saldoCentavos += p.saldo_centavos ?? 0;
 
       return {
         ...contagens,
         porStatusNota,
         porStatusCupom,
         valorValidoCentavos,
+        saldoCentavos,
+        notasAguardandoCupons,
         premiosAtivos: premios.count ?? 0,
         ganhadores: ganhadores.count ?? 0,
       };
