@@ -29,11 +29,12 @@ export async function gerarCuponsDaNota(
   usuarioId: string | null = null,
 ): Promise<ResultadoGeracao> {
   const supabase = await cliente();
-  const { data, error } = await supabase.rpc("sorteio_gerar_cupons_da_nota", {
+  const argumentos: { _nota_id: string; _origem: string; _usuario_id?: string } = {
     _nota_id: notaId,
     _origem: origem,
-    _usuario_id: usuarioId ?? undefined,
-  });
+  };
+  if (usuarioId) argumentos._usuario_id = usuarioId;
+  const { data, error } = await supabase.rpc("sorteio_gerar_cupons_da_nota", argumentos);
   if (error) throw new Error(error.message);
 
   const r = (data ?? {}) as {
