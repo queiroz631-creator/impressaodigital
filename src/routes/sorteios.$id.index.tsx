@@ -52,12 +52,31 @@ function PainelSorteio() {
   const { data: indicadores } = useIndicadoresSorteio(id);
   const alterarStatus = useServerFn(alterarStatusSorteio);
 
+  const processarCupons = useServerFn(processarCuponsDoSorteio);
+
   const mutation = useMutation({
     mutationFn: (status: StatusSorteio) => alterarStatus({ data: { id, status } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sorteio", id] });
       qc.invalidateQueries({ queryKey: ["sorteios"] });
       toast.success("Situação atualizada.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mCupons = useMutation({
+    mutationFn: () => processarCupons({ data: { sorteioId: id } }),
+    onSuccess: (resumo) => {
+      qc.invalidateQueries({ queryKey: ["sorteio-indicadores", id] });
+      qc.invalidateQueries({ queryKey: ["sorteio", id] });
+      qc.invalidateQueries({ queryKey: ["sorteio-cupons", id] });
+      qc.invalidateQueries({ queryKey: ["sorteio-notas", id] });
+      qc.invalidateQueries({ queryKey: ["sorteio-participantes", id] });
+      toast.success(
+        resumo.processadas === 0
+          ? "Nenhuma nota nova para processar."
+          : `${resumo.processadas} nota(s) processada(s) e ${resumo.cupons} cupom(ns) gerado(s).`,
+      );
     },
     onError: (e: Error) => toast.error(e.message),
   });
