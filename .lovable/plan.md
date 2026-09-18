@@ -41,6 +41,21 @@ O valor consumido usa o valor gravado em cada cupom (`valor_base_centavos`), e
 não o valor atual do sorteio, para que uma mudança futura no valor por cupom não
 desfaça o histórico.
 
+## Saldo acumulado antes de formar um cupom — já funciona
+
+Confirmado na implementação atual: uma nota válida que não chega ao valor de um
+cupom **já é processada e já aumenta o saldo** (gera 0 cupons, grava o saldo novo
+e marca a nota como processada). O acúmulo entre notas também já funciona:
+`novo saldo = saldo anterior + valor da nota − (cupons × valor por cupom)`.
+As telas já leem o saldo de `sorteio_participantes.saldo_centavos` — a lista de
+Participantes mostra Cliente, CPF, Saldo, Notas e Cupons, e o indicador "Saldo
+acumulado" do painel soma os saldos dos participantes daquele sorteio.
+
+Portanto **nada da geração de cupons será alterado** e nenhum campo ou tabela de
+saldo será criado. Desta parte só entra na etapa a conferência dos casos de 0
+cupom nos testes e a garantia de que o recálculo do cancelamento usa a mesma
+fonte de saldo.
+
 ## Regra a aplicar
 
 Ao cancelar uma nota:
