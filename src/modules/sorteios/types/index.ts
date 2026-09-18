@@ -139,6 +139,8 @@ export interface SorteioNota {
   nota_base_id: string | null;
   cupons_gerados: number;
   saldo_gerado_centavos: number;
+  /** Marca de idempotência: nota já convertida em saldo/cupons. */
+  cupons_processado_em?: string | null;
   atualizado_em: string;
 }
 
