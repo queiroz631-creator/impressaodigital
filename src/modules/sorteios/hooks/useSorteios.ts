@@ -229,7 +229,13 @@ export function useNotasSorteio(id: string) {
   });
 }
 
-export type CupomListado = SorteioCupom & { participanteNome: string; notaNumero: string };
+export type CupomListado = SorteioCupom & {
+  participanteNome: string;
+  participanteCpf: string | null;
+  notaNumero: string;
+  notaValorCentavos: number | null;
+  notaStatus: StatusNota | null;
+};
 
 export function useCuponsSorteio(id: string) {
   return useQuery<CupomListado[]>({
@@ -238,19 +244,28 @@ export function useCuponsSorteio(id: string) {
       const { data, error } = await supabase
         .from("sorteio_cupons")
         .select(
-          "*, sorteio_participantes:participante_id (clientes:cliente_id (nome)), sorteio_notas:nota_id (numero)",
+          "*, sorteio_participantes:participante_id (clientes:cliente_id (nome, cpf)), sorteio_notas:nota_id (numero, valor_centavos, status)",
         )
         .eq("sorteio_id", id)
         .order("gerado_em", { ascending: false });
       if (error) throw new Error(error.message);
       const lista = (data ?? []) as unknown as (SorteioCupom & {
-        sorteio_participantes: { clientes: { nome: string | null } | null } | null;
-        sorteio_notas: { numero: string | null } | null;
+        sorteio_participantes: {
+          clientes: { nome: string | null; cpf: string | null } | null;
+        } | null;
+        sorteio_notas: {
+          numero: string | null;
+          valor_centavos: number | null;
+          status: string | null;
+        } | null;
       })[];
       return lista.map((c) => ({
         ...c,
         participanteNome: c.sorteio_participantes?.clientes?.nome ?? "—",
+        participanteCpf: c.sorteio_participantes?.clientes?.cpf ?? null,
         notaNumero: c.sorteio_notas?.numero ?? "—",
+        notaValorCentavos: c.sorteio_notas?.valor_centavos ?? null,
+        notaStatus: (c.sorteio_notas?.status as StatusNota | undefined) ?? null,
       }));
     },
   });
