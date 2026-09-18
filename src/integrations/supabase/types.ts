@@ -2219,6 +2219,7 @@ export type Database = {
           cadastrado_em: string
           cancelado_em: string | null
           cupons_gerados: number
+          cupons_processado_em: string | null
           id: string
           invalidado_em: string | null
           motivo_invalidez: string | null
@@ -2236,6 +2237,7 @@ export type Database = {
           cadastrado_em?: string
           cancelado_em?: string | null
           cupons_gerados?: number
+          cupons_processado_em?: string | null
           id?: string
           invalidado_em?: string | null
           motivo_invalidez?: string | null
@@ -2253,6 +2255,7 @@ export type Database = {
           cadastrado_em?: string
           cancelado_em?: string | null
           cupons_gerados?: number
+          cupons_processado_em?: string | null
           id?: string
           invalidado_em?: string | null
           motivo_invalidez?: string | null
@@ -3481,6 +3484,10 @@ export type Database = {
       sorteio_definir_termos_atual: {
         Args: { _termos_id: string }
         Returns: undefined
+      }
+      sorteio_gerar_cupons_da_nota: {
+        Args: { _nota_id: string; _origem?: string; _usuario_id?: string }
+        Returns: Json
       }
       sorteio_portal_criar_participacao: {
         Args: {
