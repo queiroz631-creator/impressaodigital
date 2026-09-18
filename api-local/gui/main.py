@@ -632,6 +632,7 @@ class ConfigWindow(tk.Toplevel):
                 value = var.get().strip()
                 data[key] = int(value) if key in numeric else value
             data["escrita_sqlserver_habilitada"] = self.write_var.get()
+            data["gravar_clientes_no_lojamix"] = self.gravar_var.get()
             data["criar_cliente_no_lojamix"] = self.criar_var.get()
             data["simulacao_criacao_cliente"] = self.simulacao_var.get()
 
