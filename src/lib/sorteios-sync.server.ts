@@ -413,6 +413,17 @@ export async function registrarSituacaoNotas(entrada: {
       }
     }
 
+    // A revisão também preenche o dono da nota: quem já está ligado à loja
+    // ganha aqui a participação e as notas correspondentes.
+    const origensRevisao = [
+      ...new Set(entrada.notas.map((n) => n.clienteOrigemId).filter((v): v is string => !!v)),
+    ];
+    for (const origemId of origensRevisao) {
+      await vincularParticipacaoPorOrigemLoja(supabase, { origemId });
+    }
+
+
+
     await enfileirar(supabase, {
       tipo: "NOTAS_LOJA_SUPABASE",
       entidade: "BASE_NOTAS",
