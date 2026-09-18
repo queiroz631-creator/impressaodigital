@@ -538,6 +538,10 @@ export async function receberClientesLote(entrada: {
         resumo.atualizados += 1;
         // Indicador informativo: o cliente já chega ligado à loja neste sentido.
         await marcarParticipantesSincronizados(supabase, existenteId);
+        await vincularParticipacaoPorOrigemLoja(supabase, {
+          origemId: c.origemId,
+          clienteId: existenteId,
+        });
       } else {
         const { data: criado, error } = await supabase
           .from("clientes")
@@ -549,7 +553,13 @@ export async function receberClientesLote(entrada: {
           continue;
         }
         resumo.criados += 1;
-        if (criado?.id) await marcarParticipantesSincronizados(supabase, criado.id);
+        if (criado?.id) {
+          await marcarParticipantesSincronizados(supabase, criado.id);
+          await vincularParticipacaoPorOrigemLoja(supabase, {
+            origemId: c.origemId,
+            clienteId: criado.id,
+          });
+        }
       }
     }
 
