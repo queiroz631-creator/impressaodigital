@@ -32,7 +32,7 @@ export async function gerarCuponsDaNota(
   const { data, error } = await supabase.rpc("sorteio_gerar_cupons_da_nota", {
     _nota_id: notaId,
     _origem: origem,
-    _usuario_id: usuarioId,
+    _usuario_id: usuarioId ?? undefined,
   });
   if (error) throw new Error(error.message);
 
