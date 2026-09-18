@@ -25,7 +25,18 @@ export const Route = createFileRoute("/api/public/sorteios/validar-notas")({
 
         const { validarNotasPendentes } = await import("@/lib/sorteios-validacao.server");
         const resumo = await validarNotasPendentes(100);
-        return Response.json({ ok: true, ...resumo });
+
+        // Saldo/cupons das notas válidas que ainda não foram processadas
+        // (inclusive as que ficaram para trás por falha anterior).
+        const { processarCuponsPendentesAtivos } = await import("@/lib/sorteios-cupons.server");
+        let cupons;
+        try {
+          cupons = await processarCuponsPendentesAtivos(200);
+        } catch (e) {
+          console.error("[sorteios] falha ao processar cupons pendentes", e);
+        }
+
+        return Response.json({ ok: true, ...resumo, cupons });
       },
     },
   },
