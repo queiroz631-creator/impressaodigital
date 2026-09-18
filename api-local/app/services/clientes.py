@@ -331,6 +331,10 @@ def aplicar_alteracoes(limite: int | None = None) -> dict[str, Any]:
     A alteração vem marcada com origem SUPABASE no sistema, portanto aplicar
     aqui não gera um novo evento de volta (sem loop).
     """
+    if not gravacao_na_loja_ligada():
+        # Etapa desligada: a fila nem é lida, então nada é confirmado.
+        return {"desligado": True, "aplicados": 0, "cursor": 0, "erros": 0}
+
     dados = ler_alteracoes(limite)
     itens = dados.get("itens") or []
     if not itens:
@@ -385,6 +389,10 @@ def enviar_pendentes_para_loja(bloco: int | None = None) -> ResumoPendentesClien
     atual (o id do cliente é aleatório, não temporal): ao esgotar a lista, ele
     volta ao início. Avança somente após o bloco ser processado sem erro.
     """
+    if not gravacao_na_loja_ligada():
+        # Etapa desligada: nenhum cliente é buscado e o marcador não avança.
+        return ResumoPendentesClientes(desligado=True)
+
     with _TRAVA_CLIENTES:
         return _enviar_pendentes_para_loja(bloco)
 
