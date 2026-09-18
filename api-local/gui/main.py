@@ -232,7 +232,13 @@ class App(tk.Tk):
                 + ("\n  Varredura reiniciada do começo." if pendentes.get("voltouAoInicio") else "")
             )
 
-        if simulacao or bool(self.cfg.get("simulacao_criacao_cliente", True)):
+        if not bool(self.cfg.get("gravar_clientes_no_lojamix", False)):
+            linhas.append(
+                "\n\n*** GRAVAÇÃO DE CLIENTES NO LOJAMIX DESLIGADA: as etapas "
+                "sistema → loja não rodam. Ligue em Configurações quando quiser "
+                "retomar. ***"
+            )
+        elif simulacao or bool(self.cfg.get("simulacao_criacao_cliente", True)):
             linhas.append(
                 "\n\n*** MODO SIMULAÇÃO LIGADO: nenhum cliente novo é criado no "
                 "Lojamix. Desligue em Configurações para gravar de verdade. ***"
