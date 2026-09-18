@@ -747,6 +747,7 @@ export async function reconciliar(): Promise<ResumoReconciliacao> {
     .not("base_sincronizada_em", "is", null);
 
   const { validarNotasPendentesDoSorteio } = await import("@/lib/sorteios-validacao.server");
+  const { processarCuponsPendentes } = await import("@/lib/sorteios-cupons.server");
   for (const s of sorteios ?? []) {
     resumo.sorteiosVerificados += 1;
     const r = await validarNotasPendentesDoSorteio(s.id, 100);
@@ -754,7 +755,16 @@ export async function reconciliar(): Promise<ResumoReconciliacao> {
     resumo.validas += r.validas;
     resumo.invalidas += r.invalidas;
     resumo.pendentes += r.pendentes;
+    // Notas válidas que ficaram sem saldo/cupons (inclusive as criadas pelo
+    // vínculo automático): nunca deixa nenhuma parada. Falha aqui não
+    // interrompe a reconciliação.
+    try {
+      await processarCuponsPendentes(s.id, 200, "rotina", null);
+    } catch (e) {
+      console.error("[sorteios-sync] falha ao processar cupons pendentes", s.id, e);
+    }
   }
+
 
   const agora = new Date().toISOString();
   await supabase.from("sorteio_sincronizacoes").insert({
