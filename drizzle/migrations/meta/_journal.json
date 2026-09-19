@@ -71,6 +71,13 @@
       "when": 1789784993749,
       "tag": "0009_corrige_pool_nota_em_processamento",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789811666232,
+      "tag": "0010_encerramento_sorteio",
+      "breakpoints": true
     }
   ]
 }

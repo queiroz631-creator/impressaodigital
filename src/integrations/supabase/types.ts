@@ -2892,12 +2892,15 @@ export type Database = {
         Row: {
           atualizado_em: string
           base_sincronizada_em: string | null
+          conferencia_encerramento: Json | null
           criado_em: string
           criado_por: string | null
           data_fim: string | null
           data_inicio: string | null
           data_sorteio: string | null
           descricao: string
+          encerrado_em: string | null
+          encerrado_por: string | null
           id: string
           nome: string
           numero_sorteio: number
@@ -2908,12 +2911,15 @@ export type Database = {
         Insert: {
           atualizado_em?: string
           base_sincronizada_em?: string | null
+          conferencia_encerramento?: Json | null
           criado_em?: string
           criado_por?: string | null
           data_fim?: string | null
           data_inicio?: string | null
           data_sorteio?: string | null
           descricao?: string
+          encerrado_em?: string | null
+          encerrado_por?: string | null
           id?: string
           nome: string
           numero_sorteio: number
@@ -2924,12 +2930,15 @@ export type Database = {
         Update: {
           atualizado_em?: string
           base_sincronizada_em?: string | null
+          conferencia_encerramento?: Json | null
           criado_em?: string
           criado_por?: string | null
           data_fim?: string | null
           data_inicio?: string | null
           data_sorteio?: string | null
           descricao?: string
+          encerrado_em?: string | null
+          encerrado_por?: string | null
           id?: string
           nome?: string
           numero_sorteio?: number
@@ -3604,6 +3613,7 @@ export type Database = {
         Returns: boolean
       }
       pode_sorteios: { Args: never; Returns: boolean }
+      sorteio_conferencia: { Args: { _sorteio_id: string }; Returns: Json }
       sorteio_definir_termos_atual: {
         Args: { _termos_id: string }
         Returns: undefined
@@ -3616,6 +3626,10 @@ export type Database = {
           _pool_maximo?: number
           _usuario_id?: string
         }
+        Returns: Json
+      }
+      sorteio_encerrar: {
+        Args: { _sorteio_id: string; _usuario_id?: string }
         Returns: Json
       }
       sorteio_gerar_cupons_da_nota: {
