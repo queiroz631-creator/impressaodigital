@@ -18,6 +18,17 @@ export function podeTransicionar(de: StatusSorteio, para: StatusSorteio): boolea
   return TRANSICOES_PERMITIDAS[de]?.includes(para) ?? false;
 }
 
+/**
+ * Transições oferecidas como botão simples. O encerramento ficou de fora: ele
+ * só acontece pela conferência de encerramento, que confere a base antes.
+ */
+export function transicoesManuais(de: StatusSorteio): StatusSorteio[] {
+  return (TRANSICOES_PERMITIDAS[de] ?? []).filter(
+    (para) => !(de === "ATIVO" && para === "ENCERRADO"),
+  );
+}
+
+
 /** Campos que alteram retroativamente a participação dos clientes. */
 export const CAMPOS_CRITICOS = [
   "numero_sorteio",

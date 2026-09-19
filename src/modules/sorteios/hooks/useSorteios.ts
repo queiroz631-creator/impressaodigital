@@ -17,7 +17,8 @@ import type {
  */
 
 const CAMPOS_SORTEIO =
-  "id, nome, descricao, numero_sorteio, status, data_inicio, data_fim, data_sorteio, valor_por_cupom_centavos, quantidade_maxima_cupons, criado_por, criado_em, atualizado_em";
+  "id, nome, descricao, numero_sorteio, status, data_inicio, data_fim, data_sorteio, valor_por_cupom_centavos, quantidade_maxima_cupons, criado_por, criado_em, atualizado_em, encerrado_em, encerrado_por, conferencia_encerramento";
+
 
 type Contagens = { participantes: number; notas: number; cupons: number };
 
