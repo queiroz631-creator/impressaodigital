@@ -43,6 +43,7 @@ import { Route as SorteiosIdEncerramentoRouteImport } from './routes/sorteios.$i
 import { Route as SorteiosIdNotasRouteImport } from './routes/sorteios.$id.notas'
 import { Route as SorteiosIdParticipantesRouteImport } from './routes/sorteios.$id.participantes'
 import { Route as SorteiosIdPremiosRouteImport } from './routes/sorteios.$id.premios'
+import { Route as SorteiosIdSortearRouteImport } from './routes/sorteios.$id.sortear'
 import { Route as SorteiosIdTermosRouteImport } from './routes/sorteios.$id.termos'
 import { Route as ApiPublicSorteiosReconciliarRouteImport } from './routes/api/public/sorteios/reconciliar'
 import { Route as ApiPublicSorteiosReconciliarInternoRouteImport } from './routes/api/public/sorteios/reconciliar-interno'
@@ -234,6 +235,11 @@ const SorteiosIdPremiosRoute = SorteiosIdPremiosRouteImport.update({
   path: '/sorteios/$id/premios',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SorteiosIdSortearRoute = SorteiosIdSortearRouteImport.update({
+  id: '/sorteios/$id/sortear',
+  path: '/sorteios/$id/sortear',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SorteiosIdTermosRoute = SorteiosIdTermosRouteImport.update({
   id: '/sorteios/$id/termos',
   path: '/sorteios/$id/termos',
@@ -379,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/sorteios/$id/notas': typeof SorteiosIdNotasRoute
   '/sorteios/$id/participantes': typeof SorteiosIdParticipantesRoute
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
+  '/sorteios/$id/sortear': typeof SorteiosIdSortearRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
@@ -434,6 +441,7 @@ export interface FileRoutesByTo {
   '/sorteios/$id/notas': typeof SorteiosIdNotasRoute
   '/sorteios/$id/participantes': typeof SorteiosIdParticipantesRoute
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
+  '/sorteios/$id/sortear': typeof SorteiosIdSortearRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
@@ -490,6 +498,7 @@ export interface FileRoutesById {
   '/sorteios/$id/notas': typeof SorteiosIdNotasRoute
   '/sorteios/$id/participantes': typeof SorteiosIdParticipantesRoute
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
+  '/sorteios/$id/sortear': typeof SorteiosIdSortearRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
@@ -547,6 +556,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/notas'
     | '/sorteios/$id/participantes'
     | '/sorteios/$id/premios'
+    | '/sorteios/$id/sortear'
     | '/sorteios/$id/termos'
     | '/sorteios/$id/'
     | '/api/public/sorteios/reconciliar'
@@ -602,6 +612,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/notas'
     | '/sorteios/$id/participantes'
     | '/sorteios/$id/premios'
+    | '/sorteios/$id/sortear'
     | '/sorteios/$id/termos'
     | '/sorteios/$id'
     | '/api/public/sorteios/reconciliar'
@@ -657,6 +668,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/notas'
     | '/sorteios/$id/participantes'
     | '/sorteios/$id/premios'
+    | '/sorteios/$id/sortear'
     | '/sorteios/$id/termos'
     | '/sorteios/$id/'
     | '/api/public/sorteios/reconciliar'
@@ -713,6 +725,7 @@ export interface RootRouteChildren {
   SorteiosIdNotasRoute: typeof SorteiosIdNotasRoute
   SorteiosIdParticipantesRoute: typeof SorteiosIdParticipantesRoute
   SorteiosIdPremiosRoute: typeof SorteiosIdPremiosRoute
+  SorteiosIdSortearRoute: typeof SorteiosIdSortearRoute
   SorteiosIdTermosRoute: typeof SorteiosIdTermosRoute
   SorteiosIdIndexRoute: typeof SorteiosIdIndexRoute
   ApiPublicSorteiosReconciliarRoute: typeof ApiPublicSorteiosReconciliarRoute
@@ -974,6 +987,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SorteiosIdPremiosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sorteios/$id/sortear': {
+      id: '/sorteios/$id/sortear'
+      path: '/sorteios/$id/sortear'
+      fullPath: '/sorteios/$id/sortear'
+      preLoaderRoute: typeof SorteiosIdSortearRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sorteios/$id/termos': {
       id: '/sorteios/$id/termos'
       path: '/sorteios/$id/termos'
@@ -1158,6 +1178,7 @@ const rootRouteChildren: RootRouteChildren = {
   SorteiosIdNotasRoute: SorteiosIdNotasRoute,
   SorteiosIdParticipantesRoute: SorteiosIdParticipantesRoute,
   SorteiosIdPremiosRoute: SorteiosIdPremiosRoute,
+  SorteiosIdSortearRoute: SorteiosIdSortearRoute,
   SorteiosIdTermosRoute: SorteiosIdTermosRoute,
   SorteiosIdIndexRoute: SorteiosIdIndexRoute,
   ApiPublicSorteiosReconciliarRoute: ApiPublicSorteiosReconciliarRoute,
