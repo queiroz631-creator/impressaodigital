@@ -15,11 +15,11 @@ Nada de notas, saldo, fontes, contribuições, geração/cancelamento de cupons,
 
 ## Regras da apuração (confirmadas com você)
 
-- Um prêmio com quantidade 3 é sorteado 3 vezes: cada unidade gera um ganhador. O prêmio só fica concluído quando todas as unidades saírem.
-- Um participante não pode ganhar duas vezes no mesmo sorteio: quem já ganhou sai da urna nos prêmios seguintes.
+- Um prêmio com quantidade 3 é sorteado 3 vezes: cada unidade (1, 2, 3) gera um ganhador próprio. O prêmio só fica concluído quando todas as unidades saírem, e a estrutura suporta qualquer quantidade.
+- Um participante não pode ganhar duas vezes no mesmo sorteio. A regra vale pelo participante: se ele já ganhou qualquer prêmio ou unidade, todos os cupons dele saem da urna nas apurações seguintes.
 - Prêmios inativos não entram na apuração. O sorteio vira Sorteado quando todas as unidades dos prêmios ativos tiverem ganhador.
 - A urna usa apenas os cupons deste sorteio, de participantes que concorrem, sem contar cupons cancelados — exatamente a mesma regra de cupom participante que o sistema já usa na conferência.
-- Cada clique sorteia uma unidade (o próximo prêmio disponível, na ordem cadastrada).
+- Cada clique sorteia uma unidade: o primeiro prêmio ativo com unidade livre, na ordem cadastrada.
 
 ## A aba "Sortear"
 
@@ -55,9 +55,17 @@ Abaixo, "Histórico dos ganhadores" com prêmio, cupom, participante, cliente, d
 
 Migração nova (somente o que falta):
 
-- Coluna `usuario_id` em `sorteio_ganhadores` (quem realizou), mais índice único garantindo uma unidade de prêmio por posição — impede sortear duas vezes a mesma unidade.
-- Função `sorteio_realizar(_sorteio_id, _usuario_id)`, `SECURITY DEFINER`, restrita a `service_role`, em uma única transação: trava o sorteio com `FOR UPDATE`, confere que o status é `ENCERRADO`, localiza o próximo prêmio ativo com unidade disponível na ordem cadastrada, monta a urna (cupons do sorteio não cancelados, de participantes que concorrem, excluindo participantes já premiados), sorteia com aleatoriedade do banco, insere o ganhador, grava auditoria `sorteio.realizado` (sorteio, prêmio, cupom, participante, usuário, data/hora, status anterior e posterior) e, quando não restar unidade disponível, atualiza o sorteio para `SORTEADO`. Qualquer falha desfaz tudo. Sem prêmio disponível ou sem cupom elegível devolve resposta controlada, não erro.
+Estado verificado hoje em `sorteio_ganhadores`: id, sorteio, prêmio, participante, cupom, número do cupom, data/hora e observação; índices: chave, único por (sorteio, cupom) e índice por sorteio. Não existe campo de unidade nem de usuário responsável. Prêmios já têm ordem, quantidade e ativo. Só isso será criado:
+
+- Coluna `unidade` (inteiro) em `sorteio_ganhadores`, indicando qual unidade do prêmio foi apurada (1..quantidade), e coluna `usuario_id` (quem realizou).
+- Índice único `(sorteio_id, premio_id, unidade)`: garante no máximo um ganhador por unidade e continua permitindo vários ganhadores do mesmo prêmio quando a quantidade é 2, 3, 10 etc. O único existente por (sorteio, cupom) é mantido — nenhum índice atual é removido ou afrouxado.
+- Função `sorteio_realizar(_sorteio_id, _usuario_id)`, `SECURITY DEFINER`, restrita a `service_role`, tudo em uma única transação e nesta ordem: trava o sorteio com `FOR UPDATE`; confere que o status é `ENCERRADO`; localiza o primeiro prêmio ativo com unidade ainda disponível, na ordem cadastrada; determina a unidade exata a apurar (menor número livre de 1 até a quantidade); monta a urna com os cupons deste sorteio não cancelados de participantes que concorrem; remove da urna todos os cupons de participantes que já têm qualquer ganhador neste sorteio (regra por participante, não por cupom); sorteia aleatoriamente no banco; insere o ganhador; grava a auditoria `sorteio.realizado`; verifica se restam unidades; e altera para `SORTEADO` somente quando todas as unidades de todos os prêmios ativos tiverem ganhador. Qualquer falha desfaz tudo, inclusive a mudança de status.
+- Idempotência e concorrência: a trava mais o índice único por unidade impedem duplicidade. Uma segunda chamada simultânea ou repetida recebe resposta controlada ("esta unidade já foi sorteada" / "não há prêmio disponível"), sem criar outro ganhador e sem erro bruto na tela. Nada disso depende do navegador.
+- A resposta da função traz, de uma só vez, tudo que a tela precisa: ganhador, sorteio, prêmio (id e nome), unidade e quantidade total, participante (id e nome), cliente (id e nome), cupom (id e número), data/hora, status atual do sorteio e se foi a última apuração. O frontend não faz uma segunda consulta para descobrir o vencedor.
 - Grants conforme o padrão atual das demais funções do módulo.
+
+A animação recebe apenas o número já decidido pelo servidor e a lista de números para o efeito visual; ela não escolhe, não recalcula e não pode ser usada para alterar o resultado — o registro do ganhador já está gravado antes de a animação começar.
+
 
 A trigger de congelamento da base encerrada continua intacta: ela cobre notas, participantes, cupons, fontes e contribuições — a apuração não escreve em nenhuma delas.
 
