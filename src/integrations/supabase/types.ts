@@ -2036,6 +2036,68 @@ export type Database = {
           },
         ]
       }
+      sorteio_cupom_contribuicoes: {
+        Row: {
+          criado_em: string
+          cupom_id: string
+          id: string
+          nota_id: string
+          ordem: number
+          participante_id: string
+          sorteio_id: string
+          valor_centavos: number
+        }
+        Insert: {
+          criado_em?: string
+          cupom_id: string
+          id?: string
+          nota_id: string
+          ordem?: number
+          participante_id: string
+          sorteio_id: string
+          valor_centavos: number
+        }
+        Update: {
+          criado_em?: string
+          cupom_id?: string
+          id?: string
+          nota_id?: string
+          ordem?: number
+          participante_id?: string
+          sorteio_id?: string
+          valor_centavos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_cupom_contribuicoes_cupom_id_fkey"
+            columns: ["cupom_id"]
+            isOneToOne: false
+            referencedRelation: "sorteio_cupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sorteio_cupom_contribuicoes_nota_id_fkey"
+            columns: ["nota_id"]
+            isOneToOne: false
+            referencedRelation: "sorteio_notas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sorteio_cupom_contribuicoes_participante_id_fkey"
+            columns: ["participante_id"]
+            isOneToOne: false
+            referencedRelation: "sorteio_participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sorteio_cupom_contribuicoes_sorteio_id_fkey"
+            columns: ["sorteio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sorteio_cupons: {
         Row: {
           cancelado_em: string | null
@@ -2439,6 +2501,67 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sorteio_premios_sorteio_id_fkey"
+            columns: ["sorteio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sorteio_saldo_fontes: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          id: string
+          nota_id: string
+          participante_id: string
+          sequencia: number
+          sorteio_id: string
+          status: string
+          valor_original_centavos: number
+          valor_pendente_centavos: number
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          nota_id: string
+          participante_id: string
+          sequencia?: never
+          sorteio_id: string
+          status?: string
+          valor_original_centavos: number
+          valor_pendente_centavos?: number
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          nota_id?: string
+          participante_id?: string
+          sequencia?: never
+          sorteio_id?: string
+          status?: string
+          valor_original_centavos?: number
+          valor_pendente_centavos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_saldo_fontes_nota_id_fkey"
+            columns: ["nota_id"]
+            isOneToOne: true
+            referencedRelation: "sorteio_notas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sorteio_saldo_fontes_participante_id_fkey"
+            columns: ["participante_id"]
+            isOneToOne: false
+            referencedRelation: "sorteio_participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sorteio_saldo_fontes_sorteio_id_fkey"
             columns: ["sorteio_id"]
             isOneToOne: false
             referencedRelation: "sorteios"
