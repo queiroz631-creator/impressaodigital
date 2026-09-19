@@ -1,123 +1,100 @@
-# Rastreabilidade da origem do valor dos cupons — diagnóstico e proposta (nada será implementado agora)
+# Reconstrução dos cupons do banco de DESENVOLVIMENTO com rastreabilidade completa
 
-## A) Diagnóstico atual (conferido no banco, sem alterar nada)
+Ambiente: **somente desenvolvimento** (uma única base usada pelo preview; nada será feito em produção). Sem commit, push, deploy ou publicação.
 
-**Estruturas hoje**
-- `sorteio_notas`: `valor_centavos`, `status`, `cupons_gerados`, `saldo_gerado_centavos`, `cupons_processado_em` (marca de idempotência). Não guarda quanto do seu valor foi consumido.
-- `sorteio_cupons`: `nota_id` (NOT NULL, uma nota só), `valor_base_centavos`, `status`, `gerado_em`, `cancelado_em`. **Não existe nenhuma tabela de composição**: um cupom sabe em qual nota nasceu, não quais notas o financiaram.
-- `sorteio_participantes`: um único número, `saldo_centavos`, sem decomposição por nota.
+## ETAPA 1 — Conferência atual (nada foi alterado)
 
-**Como o saldo é consumido hoje** (`sorteio_gerar_cupons_da_nota`, SECURITY DEFINER): trava a participação com `FOR UPDATE`, soma `saldo_centavos + valor_da_nota`, divide por `valor_por_cupom`, insere os cupons apontando **todos** para a nota atual, grava o troco e marca `cupons_processado_em`. A mistura de valores acontece dentro de um único número e depois é perdida.
+Cupons: **17** no sorteio "Dia das Crianças" (nº 1, ATIVO) — 15 ATIVOS, 2 CANCELADOS, **0 UTILIZADOS**.
 
-**Cancelamento** (`sorteio_notas_propagar_cancelamento` → `sorteio_propagar_cancelamento_nota`): cancela os cupons com `nota_id` da nota e chama `sorteio_recalcular_saldo_participante`, que usa a regra agregada `saldo = maior(0, notas VÁLIDAS processadas − cupons que continuam valendo)` e, se sobrarem cupons sem lastro, cancela o **mais recente ATIVO** (`ORDER BY gerado_em DESC`) — a escolha arbitrária que você recusou.
+| Participante | Notas VÁLIDAS processadas | Valor das notas | Cupons ATIVOS | Cupons cancelados | Valor consumido | Saldo atual | Saldo esperado | Diferença |
+|---|---|---|---|---|---|---|---|---|
+| 3a35dd9d… (cliente 57dc4894…) | 6 | R$ 240,85 | 12 | 2 | R$ 240,00 | R$ 0,85 | R$ 0,85 | 0 |
+| 5ad01b24… (cliente b2096c7c…) | 1 | R$ 63,00 | 3 | 0 | R$ 60,00 | R$ 3,00 | R$ 3,00 | 0 |
+| 7 outros participantes | 0 | R$ 0,00 | 0 | 0 | R$ 0,00 | R$ 0,00 | R$ 0,00 | 0 |
 
-**Cupons utilizados:** nenhum código do projeto grava `UTILIZADO` ainda (o mecanismo do sorteio/`sorteio_ganhadores` não está implementado). Nenhum cupom `UTILIZADO` existe no banco hoje. A regra pode ser definida antes de virar realidade.
+Notas: 18 no total, **0 pendentes**, **0 válidas sem processar**, 0 utilizadas em sorteio.
+Auditoria: 144 registros, apenas 1 com vínculo direto a cupom.
+Dependências que apontam para `sorteio_cupons`:
+- `sorteio_auditoria.cupom_id` → `ON DELETE SET NULL` (as linhas de auditoria **continuam existindo**, só perdem o vínculo numérico com o cupom);
+- `sorteio_ganhadores.cupom_id` → `ON DELETE RESTRICT` (tabela com **0 linhas**, então não bloqueia a exclusão).
 
-## B) Proposta de estrutura (a menor que resolve)
+Conclusão: **não há inconsistência** — os saldos batem com a fórmula em todos os participantes e a reconstrução a partir das notas processadas reproduz exatamente a quantidade de cupons de cada um. Pode seguir.
 
-**Tabela 1 — `sorteio_cupom_contribuicoes`** (histórico imutável, a resposta da sua pergunta)
+## ETAPA 2 — Base de saldo que será usada
+
+`saldo_base` = soma do valor das notas VÁLIDAS já processadas (notas e seus campos de processamento **não** são tocados):
+- 3a35dd9d: R$ 240,85 (notas 160699 48,00 + 160769 100,00 + 160877 77,85 + 160988 2,00 + 160976 9,00 + 160987 4,00) → 12 cupons + R$ 0,85
+- 5ad01b24: R$ 63,00 (nota 160947 63,00) → 3 cupons + R$ 3,00
+
+## ETAPA 3 — Backup antes de qualquer exclusão
+
+Exportar em CSV (somente leitura) para a pasta de arquivos do projeto: os 17 cupons atuais, o conteúdo de `sorteio_notas` e de `sorteio_participantes`. Isso permite reverter a reconstrução manualmente se algo sair diferente do previsto.
+
+## ETAPA 4 — Nova estrutura (migração 0005, só DDL)
+
+**`sorteio_cupom_contribuicoes`**: `id`, `sorteio_id`, `participante_id`, `cupom_id` (FK RESTRICT), `nota_id` (FK RESTRICT, **NOT NULL**), `valor_centavos` (`CHECK > 0`), `ordem`, `criado_em`, `UNIQUE (cupom_id, nota_id)`, índices por `nota_id` e `participante_id`.
+
+**`sorteio_saldo_fontes`**: `id`, `sorteio_id`, `participante_id`, `nota_id` (FK RESTRICT, NOT NULL), `valor_original_centavos`, `valor_pendente_centavos` (`CHECK >= 0`), `status` (`PENDENTE`/`ESGOTADO`/`CANCELADO`), `criado_em`, `atualizado_em`, `UNIQUE (nota_id)`, índice por `participante_id`.
+
+Ambas com `GRANT` a `authenticated`/`service_role`, RLS ativada e políticas somente para o painel (`pode_sorteios()`), sem acesso anônimo — mesmo padrão das outras tabelas do módulo.
+
+Na mesma migração, regravar:
+- `sorteio_gerar_cupons_da_nota`: mantém assinatura, regra dos R$ 20,00, limite do sorteio, numeração aleatória, trava `FOR UPDATE` e auditoria; passa a criar a fonte da nota, consumir as fontes em ordem FIFO e gravar uma linha de contribuição por nota usada.
+- `sorteio_recalcular_saldo_participante`: **remove o `ORDER BY gerado_em DESC LIMIT 1`**. Passa a (1) marcar a fonte da nota como `CANCELADO`, (2) recalcular o lastro de cada cupom usando só contribuições de notas ainda VÁLIDAS, (3) cancelar exatamente os cupons ATIVOS cujo lastro ficou abaixo do valor do cupom, devolvendo ao saldo as contribuições das demais notas, (4) nunca deixar saldo negativo, (5) registrar tudo na auditoria.
+- Cupom `UTILIZADO`: **nunca cancelado automaticamente**; se perder lastro, grava evento de auditoria próprio e registra o déficit (sem alterar o fato de que foi utilizado).
+
+## ETAPA 5 — Reconstrução (dados, com confirmação)
+
+Executada logo depois da migração, sem cancelar notas no meio. Para cada participante, na ordem de `cupons_processado_em`:
+
+1. `DELETE FROM sorteio_cupons WHERE sorteio_id = <sorteio>` — a exclusão mostra um cartão de confirmação antes de rodar (17 registros).
+2. Reinserir os cupons com os **mesmos 15 números** reaproveitados na mesma ordem de geração (para não mudar o número que o cliente vê), com `valor_base_centavos = 2000`, `status = 'ATIVO'` e `nota_id` = a nota que originou cada cupom.
+3. Inserir as 20 linhas de contribuição. Composição exata que a ordem FIFO produz:
 ```
-id, sorteio_id, participante_id, cupom_id -> sorteio_cupons (RESTRICT),
-nota_id -> sorteio_notas (RESTRICT, NULL = bloco herdado não rastreado),
-valor_centavos (> 0), ordem, criado_em
-UNIQUE (cupom_id, nota_id)
+3a35dd9d (12 cupons)
+ 1  160699 2000
+ 2  160699 2000
+ 3  160699  800 + 160769 1200
+ 4  160769 2000
+ 5  160769 2000
+ 6  160769 2000
+ 7  160769 2000
+ 8  160769  800 + 160877 1200
+ 9  160877 2000
+10  160877 2000
+11  160877 2000
+12  160877 585 + 160988 200 + 160976 900 + 160987 315
+5ad01b24 (3 cupons)
+ 1,2,3  cada um 160947 2000
 ```
-Uma nota pode aparecer em vários cupons; um cupom pode ter várias notas; o valor fica gravado no momento da formação e nunca é reescrito.
+4. Inserir as 7 linhas de fontes: `valor_original` = valor da nota, `valor_pendente` = resíduo (só a nota 160987 fica com 85 e a 160947 com 300; as demais em `ESGOTADO`), `status` correspondente.
+5. Gravar `sorteio_participantes.saldo_centavos` = soma dos resíduos (85 e 300 — mesmos valores de hoje) e inserir na auditoria o evento de reconstrução.
 
-**Tabela 2 — `sorteio_saldo_fontes`** (quanto de cada nota ainda está disponível)
-```
-id, sorteio_id, participante_id, nota_id -> sorteio_notas (NULL = bloco herdado),
-valor_original_centavos, valor_pendente_centavos (>= 0),
-status ('PENDENTE'|'ESGOTADO'|'CANCELADO'), criado_em, atualizado_em
-```
-Invariantes verificáveis: `sum(valor_pendente) = sorteio_participantes.saldo_centavos` e, para cada nota, `valor_original = valor_pendente + soma das contribuições`.
+**Consequência a confirmar:** os 2 cupons cancelados de hoje (01-872584 e 01-252279) deixam de existir, porque correspondiam a notas já canceladas e não têm lastro nas notas válidas. Seus registros de auditoria permanecem. Se preferir mantê-los visíveis como histórico, eu os reinsero como `CANCELADO` sem contribuição.
 
-Por que as duas: sem a tabela 2 não é possível saber o resíduo de cada nota nos casos antigos (ver F), e sem a tabela 1 não existe o vínculo exigido. Nenhuma das duas cria "um segundo saldo do cliente": `sorteio_participantes.saldo_centavos` continua sendo o número oficial das telas; a decomposição só serve para decidir qual cupom cancelar.
+## ETAPA 6 — Conferências depois da reconstrução
 
-Regra de cancelamento passa a ser: **cancela-se exatamente o cupom cujo lastro (soma das contribuições de notas que continuam VÁLIDAS) ficou abaixo do valor dele** — não mais o "mais recente". Como o lastro de um cupom não depende de outros cupons, não há efeito cascata: uma única passada resolve.
+Tabela final: participante, saldo antes, notas processadas, valor das notas, cupons reconstruídos, valor consumido, saldo depois, diferença.
+Invariantes verificadas por consulta:
+- `sum(valor_pendente_centavos)` = `sorteio_participantes.saldo_centavos` para todos os participantes;
+- `sum(contribuições)` = `valor_base_centavos` para cada cupom;
+- nenhum cupom sem contribuição (17 cupons, 20 contribuições);
+- nenhum cupom com valor maior que o lastro das notas válidas;
+- `sorteio_notas`, `sorteio_participantes`, `clientes`, `sorteios` e `sorteio_auditoria` inalterados, exceto o campo de saldo.
 
-## C) Exemplo do cupom formado por duas notas
+## ETAPA 7 — Testes no banco de desenvolvimento
 
-Nota A R$ 18,00, Nota B R$ 5,00, cupom R$ 20,00 → `sorteio_cupom_contribuicoes`:
-```
-cupom X  <- nota A  1800
-cupom X  <- nota B   200
-saldo: bloco da nota B com valor_pendente 300
-```
-Cancelando B: o sistema vê a linha de 200, conclui que o cupom X perdeu lastro (1800 < 2000) e cancela **o X** — sabendo quanto daquela nota estava dentro dele.
-
-## D) Caso real: nota 161033 (nenhum dado alterado)
-
-Estado atual do participante: saldo **R$ 16,85**, 12 cupons ATIVOS, 2 CANCELADOS, 0 UTILIZADOS.
-
-Simulação FIFO em ordem de processamento (o que a composição deveria ter gravado):
-```
-160699  R$48,00  2 cupons  sobra  800 (da própria)
-160769  R$100,00 5 cupons  consome 800 de 160699 + 9200  sobra 800
-160877  R$77,85  4 cupons  consome 800 de 160769 + 7200  sobra 585
-160988  R$ 2,00  0 cupons
-160976  R$ 9,00  0 cupons                       pool 1685
-160987  R$ 4,00  1 cupom = 585+200+900+315       sobra 85
-161034  R$ 4,00  0 cupons
-161033  R$ 5,00  0 cupons                       pool 985
-161035  R$ 2,00  0 cupons                       pool 1185
-161036  R$19,00  1 cupom = 85+400+500+200+815    sobra 1085
-        (161036 cancelada 23:10:49 -> cupom 01-872584 cancelado;
-         os 1185 das outras notas voltam; os 815 dela somem com a nota)
-161037  R$10,00  1 cupom = 85+400+500+200+815    sobra 185
-```
-Cancelando 161033 (R$ 5,00): **os 500 estavam dentro do cupom 01-252279** (e antes, dentro do 01-872584, já cancelado). Com composição, o sistema cancela exatamente o 01-252279 por perda de lastro, devolve os 1500 restantes ao pool → saldo 1685 e 12 cupons. A regra atual chegou ao mesmo número por coincidência (era o cupom ATIVO mais recente); em outro dia ela poderia cancelar um cupom que não usou nada da nota cancelada.
-
-**O que os dados atuais permitem e não permitem reconstruir:** a cadeia de `saldo_gerado_centavos` bate com o cálculo em 11 das 12 notas processadas, e a única divergência é exatamente a nota 161037 — porque houve um cancelamento entre as duas gerações. Ou seja: **não é possível reconstruir a composição dos cupons existentes com 100% de certeza** a partir do que está gravado.
-
-## E) Cupons utilizados (precisa da sua aprovação — não vou inventar)
-
-Cupom `UTILIZADO` é o único que não pode ser desfeito. Quando uma nota que o financiou é cancelada, o cupom fica com lastro menor que o valor dele. Consequências e opções:
-
-1. **Nunca cancelar cupom utilizado** (recomendado): o saldo do cliente é reduzido até onde der (nunca negativo) e, se ainda sobrar diferença entre o que os cupons valem e o que as notas cobrem, isso é gravado como déficit na auditoria e mostrado como alerta no painel para decisão humana. O prêmio já entregue não é tocado.
-2. **Bloquear o cancelamento da nota** quando ela financia um cupom utilizado, obrigando tratamento manual antes.
-3. **Cancelar o cupom utilizado também**, com estorno/reposição decidido à mão.
-4. **Ratear o prejuízo** entre os cupons afetados (não recomendo: cria regra nova de negócio).
-
-Qualquer uma exige o indicador de déficit no painel, porque sem ele a perda fica invisível.
-
-## F) Cupons antigos (17 no total: 15 ATIVOS, 2 CANCELADOS)
-
-Não vou inventar a composição deles. Estratégia segura:
-- Os cupons existentes ficam **sem linhas de contribuição** = "não rastreados"; continuam valendo e continuam contados pela regra agregada.
-- O saldo atual de cada participante entra como **um bloco único** (`nota_id NULL`, "saldo herdado"), que nunca é cancelável e sempre conta como lastro.
-- A partir daí, toda geração nova grava composição exata e o cancelamento deixa de ser arbitrário.
-- Enquanto um cancelamento depender de um cupom antigo (sem linhas), o sistema não consegue identificar qual era e mantém o comportamento de hoje como último recurso, com auditoria explícita `motivo: sem_rastreio`. Alternativas que você pode escolher: (a) aceitar isso só para os 15 antigos; (b) em vez de cancelar arbitrariamente, **não cancelar nada** e registrar déficit para revisão manual.
-
-## G) Impacto nas funções existentes
-
-- `sorteio_gerar_cupons_da_nota`: mesma assinatura e mesmo retorno; depois de calcular quantos cupons cabem, consome os blocos em ordem FIFO (`FOR UPDATE`), insere os cupons e uma linha de contribuição por bloco usado, baixa `valor_pendente` e grava o saldo. Regra dos R$ 20,00, limite do sorteio, numeração aleatória e auditoria permanecem.
-- `sorteio_recalcular_saldo_participante`: mesma assinatura; substitui o laço "cancelar o mais recente" pela passada de lastro sobre cupons rastreados, mantém a fórmula agregada, o piso em zero, a auditoria e o registro de déficit.
-- `sorteio_propagar_cancelamento_nota`: continua chamando o recálculo; passa também a marcar a fonte da nota como `CANCELADO`.
-- Validação, portal, painel, API local, fila, cursores e sincronização: **sem alteração** (as telas seguem lendo `sorteio_participantes.saldo_centavos`).
-- Novas tabelas: RLS ativada, políticas só para o painel (`pode_sorteios()`), `GRANT` a `authenticated`/`service_role`, sem acesso anônimo — mesma padrão das demais tabelas do módulo.
-
-## H) Plano de migração (só depois da sua aprovação)
-
-1. Migração 0005: criar as duas tabelas com FKs, `CHECK`, únicos, índices (`nota_id`, `cupom_id`, `participante_id`), `GRANT`s, RLS e políticas.
-2. Carga inicial (via consulta, não migração): um bloco herdado por participante com saldo maior que zero; conferência de `sum(valor_pendente) = saldo_centavos`.
-3. Migração 0006: regravar o corpo das duas funções (e do trigger, se necessário) já usando composição — depois da carga, para que a primeira geração rastreada encontre a tabela consistente.
-4. Atualizar tipos gerados; nenhuma tela obrigatória. Opcional depois: mostrar a composição na tela de cupons.
-
-## I) Testes necessários (ensaio, sem gravar dados)
-
-1. A R$18,00 + B R$5,00 → 1 cupom com linhas 1800/200 e saldo R$3,00.
-2. Cancelar B → cupom cancelado, saldo devolve só o que não estava no cupom.
-3. Cancelar A → mesmo comportamento pelo lado de A.
-4. Três notas encadeadas (R$5,00 + R$5,00 + R$15,00) → 1 cupom com três linhas somando 2000 e saldo R$5,00.
-5. Reprocessar qualquer nota → 0 cupons e 0 linhas novas.
-6. Cancelar nota que só gerou saldo → saldo cai, nenhum cupom cancelado.
-7. Cancelar nota que financiou cupom → cancela exatamente esse cupom (não o mais recente).
-8. Cancelar nota que financia cupom UTILIZADO → comportamento da regra que você aprovar + registro de déficit.
-9. Nota cancelada antes de processar → nada muda.
-10. Quatro processamentos simultâneos do mesmo participante → um só efeito, sem cupom nem linha duplicada.
-11. Invariante `sum(valor_pendente) = saldo_centavos` conferida depois de cada operação.
-12. Participante com bloco herdado (caso antigo) → saldo continua correto e o cupom antigo não é cancelado por engano.
+1. Nota R$ 18,00 + nota R$ 5,00 → 1 cupom com linhas 1800/200, fonte B pendente R$ 3,00, saldo R$ 3,00.
+2. Cancelar a nota de R$ 5,00 → cancela exatamente o cupom afetado; os R$ 18,00 voltam ao pool.
+3. Notas R$ 5,00 + R$ 5,00 + R$ 15,00 → 1 cupom com três linhas e saldo R$ 5,00.
+4. Cancelar uma das três notas → composição recalculada e só o cupom sem lastro cancelado.
+5. Nota que só gera saldo → nenhum cupom cancelado.
+6. Reprocessar nota → nenhum cupom, contribuição ou fonte duplicada.
+7. Processamentos simultâneos do mesmo participante → um único efeito.
+8. Cupom `UTILIZADO` → não cancelado, déficit registrado.
+9. Nota cancelada antes de processar → nada gerado nem cancelado.
+10. Todos os invariantes conferidos novamente ao final.
+Os testes são feitos em modo de ensaio (tudo desfeito ao final) e a base reconstruída dos 17 cupons fica gravada.
 
 ## Fora de escopo
-Valor por cupom, elegibilidade, participação, validação, fila, cursores, API local, banco da loja e demais módulos. Sem migração, sem alteração de função, trigger ou frontend neste passo. Sem commit, push, deploy ou publicação.
+Notas, participação, clientes, validação, cancelamento de notas, integrações com a loja, API local, fila, cursores, cron e demais módulos. Nada em produção.
