@@ -35,10 +35,16 @@ houver pendência. Ao clicar, abre uma confirmação: "Tem certeza que deseja
 encerrar este sorteio? Após o encerramento, novas notas, participações e cupons
 não poderão alterar a base deste sorteio."
 
-Depois de encerrado, a seção passa a mostrar o retrato do fechamento: data e
-hora, quem encerrou e os mesmos números congelados no momento do encerramento.
-Todas as telas de consulta (notas, cupons, participantes, prêmios, termos)
-continuam funcionando normalmente.
+Depois de encerrado, a seção passa a mostrar o **retrato** do fechamento: data e
+hora, quem encerrou e os números exatamente como estavam no momento do
+encerramento — lidos do retrato gravado, não recalculados a partir dos dados de
+hoje. Todas as telas de consulta (notas, cupons, participantes, prêmios, termos,
+auditoria) continuam funcionando normalmente.
+
+O botão só aparece quando a conferência exibida está aprovada, mas a decisão
+nunca é do navegador: o servidor refaz a conferência inteira dentro da transação
+de encerramento e recusa se algo mudou nesse intervalo.
+
 
 ## Conferência: o que bloqueia o encerramento
 
@@ -46,21 +52,26 @@ Pendências (podem mudar a quantidade de cupons):
 notas com situação PENDENTE; notas válidas sem cupons processados; sorteio com
 `valor_por_cupom_centavos` igual a zero.
 
-Inconsistências (a base não fecha):
+Inconsistências (a base não fecha matematicamente ou tem dado inválido):
 saldo gravado do participante diferente da soma das fontes pendentes; saldo
-gravado diferente do cálculo (notas válidas processadas menos cupons que
-valem); soma das contribuições diferente do `valor_base_centavos` do cupom;
-cupom ativo sem lastro em notas ainda válidas; cupom não cancelado sem
-composição; contribuição apontando para nota inexistente, para outro
-participante ou para nota não válida; número de cupom repetido no sorteio;
-fonte CANCELADA ou ESGOTADA com valor pendente; fonte pendente maior que o
-valor original; nota válida processada sem fonte.
+gravado diferente do cálculo atual do projeto (notas válidas processadas menos
+cupons que valem); soma das contribuições diferente do `valor_base_centavos` do
+cupom; cupom ativo sem lastro em notas ainda válidas; **cupom não cancelado
+(ATIVO ou UTILIZADO) sem composição**; contribuição apontando para nota
+inexistente, para outro participante, para outro sorteio ou para nota que não
+está mais válida; número de cupom repetido no sorteio; fonte CANCELADA ou
+ESGOTADA com valor pendente; fonte pendente maior que o valor original; nota
+válida processada sem fonte.
+
+Cada item traz o participante, a nota ou o cupom envolvido e a diferença em
+reais, para o administrador saber exatamente onde está o problema.
 
 Observação, nunca bloqueio: sorteio sem `data_fim`, `data_fim` ainda no futuro,
-saldo residual em participantes (saldo não utilizado continua existindo e
-aparece no retrato), e os dois cupons cancelados históricos sem composição, já
-aprovados anteriormente — a regra de composição só vale para cupons não
-cancelados.
+**saldo residual** em participantes (R$ 8,85 não é inconsistência; continua
+existindo e entra no retrato), e os cupons **CANCELADOS históricos** sem
+composição, que permanecem preservados para auditoria — a exigência de
+composição vale só para cupons não cancelados.
+
 
 Nada é corrigido automaticamente: a conferência é somente leitura.
 
