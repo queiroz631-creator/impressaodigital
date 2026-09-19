@@ -15,10 +15,15 @@ const ABAS = [
 export function NavSorteio({ id }: { id: string }) {
   const { data: sorteio } = useSorteio(id);
   const mostrarEncerramento = sorteio?.status === "ATIVO" || sorteio?.status === "ENCERRADO";
+  const mostrarSortear = sorteio?.status === "ENCERRADO" || sorteio?.status === "SORTEADO";
 
-  const abas = mostrarEncerramento
-    ? [...ABAS, { rotulo: "Encerramento", to: "/sorteios/$id/encerramento" as const }]
-    : ABAS;
+  const abas = [
+    ...ABAS,
+    ...(mostrarEncerramento
+      ? [{ rotulo: "Encerramento", to: "/sorteios/$id/encerramento" as const }]
+      : []),
+    ...(mostrarSortear ? [{ rotulo: "Sortear", to: "/sorteios/$id/sortear" as const }] : []),
+  ];
 
   return (
     <nav className="mb-4 flex flex-wrap gap-2 overflow-x-auto">
