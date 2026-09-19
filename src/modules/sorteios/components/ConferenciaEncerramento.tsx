@@ -90,9 +90,9 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
                   Encerrar sorteio
                 </AlertDialogAction>
               </AlertDialogFooter>
-            </AlertDialogFooter>
-          </AlertDialogContent>
+            </AlertDialogContent>
           </AlertDialog>
+
         )}
       </CardHeader>
 

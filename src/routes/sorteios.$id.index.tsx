@@ -12,11 +12,13 @@ import { useIndicadoresSorteio, useSorteio } from "@/modules/sorteios/hooks/useS
 import { StatusSorteioBadge } from "@/modules/sorteios/components/StatusSorteioBadge";
 import { IndicadorCard } from "@/modules/sorteios/components/IndicadorCard";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
+import { ConferenciaEncerramento } from "@/modules/sorteios/components/ConferenciaEncerramento";
 import {
   ROTULO_TRANSICAO,
-  TRANSICOES_PERMITIDAS,
+  transicoesManuais,
   somenteConsulta,
 } from "@/modules/sorteios/services/status";
+
 import {
   ROTULO_STATUS_NOTA,
   ROTULO_STATUS_CUPOM,
@@ -85,7 +87,7 @@ function PainelSorteio() {
   if (error) return <p className="text-sm text-destructive">{(error as Error).message}</p>;
   if (!sorteio) return null;
 
-  const transicoes = TRANSICOES_PERMITIDAS[sorteio.status];
+  const transicoes = transicoesManuais(sorteio.status);
 
   return (
     <>
