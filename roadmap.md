@@ -94,7 +94,14 @@
 - [x] Clientes: enviar só pessoa física + CPF válido + telefone + nota no período (duas passagens, marcadores independentes, reconciliação de elegibilidade)
 - [ ] Preencher o `.env` da API local na máquina da loja e confirmar os nomes das colunas de cliente no Lojamix
 
-- [ ] Próxima etapa: geração de cupons, números aleatórios e saldo
+- [x] Etapa 7: saldo acumulado + geração de cupons (função `sorteio_gerar_cupons_da_nota`, botão no painel, rotina automática)
+- [x] Etapa 8: cancelamento de nota acerta o saldo do cliente (`sorteio_recalcular_saldo_participante`)
+- [x] Etapa 9: rastreabilidade da origem do valor dos cupons — `sorteio_saldo_fontes` + `sorteio_cupom_contribuicoes`,
+      FIFO por sequência, cancelamento pelo cupom que perdeu lastro (sem escolha arbitrária), déficit de cupom
+      utilizado registrado, reconstrução dos cupons do banco de desenvolvimento com composição completa
+
+## API local / Lojamix — estado atual
+- [ ] Preencher o `.env` da API local na máquina da loja e confirmar os nomes das colunas de cliente no Lojamix
 
 ## Módulo Sorteios — Recuperação de clientes elegíveis (concluída)
 - [x] Revisão periódica de clientes elegíveis na API da loja (marcador `ultimo_id_cliente_revisado`, varredura circular)
