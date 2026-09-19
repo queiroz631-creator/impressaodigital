@@ -12,7 +12,6 @@ import { useIndicadoresSorteio, useSorteio } from "@/modules/sorteios/hooks/useS
 import { StatusSorteioBadge } from "@/modules/sorteios/components/StatusSorteioBadge";
 import { IndicadorCard } from "@/modules/sorteios/components/IndicadorCard";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
-import { ConferenciaEncerramento } from "@/modules/sorteios/components/ConferenciaEncerramento";
 import {
   ROTULO_TRANSICAO,
   transicoesManuais,
@@ -215,12 +214,6 @@ function PainelSorteio() {
           </CardContent>
         </Card>
       )}
-
-      {(sorteio.status === "ATIVO" || sorteio.status === "ENCERRADO") && (
-        <ConferenciaEncerramento sorteio={sorteio} />
-      )}
-
-
 
       <Card>
         <CardHeader>

@@ -39,6 +39,7 @@ import { Route as CurriculoPublicoTokenRouteImport } from './routes/curriculo.pu
 import { Route as SorteiosIdIndexRouteImport } from './routes/sorteios.$id.index'
 import { Route as SorteiosIdCuponsRouteImport } from './routes/sorteios.$id.cupons'
 import { Route as SorteiosIdEditarRouteImport } from './routes/sorteios.$id.editar'
+import { Route as SorteiosIdEncerramentoRouteImport } from './routes/sorteios.$id.encerramento'
 import { Route as SorteiosIdNotasRouteImport } from './routes/sorteios.$id.notas'
 import { Route as SorteiosIdParticipantesRouteImport } from './routes/sorteios.$id.participantes'
 import { Route as SorteiosIdPremiosRouteImport } from './routes/sorteios.$id.premios'
@@ -213,6 +214,11 @@ const SorteiosIdEditarRoute = SorteiosIdEditarRouteImport.update({
   path: '/sorteios/$id/editar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SorteiosIdEncerramentoRoute = SorteiosIdEncerramentoRouteImport.update({
+  id: '/sorteios/$id/encerramento',
+  path: '/sorteios/$id/encerramento',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SorteiosIdNotasRoute = SorteiosIdNotasRouteImport.update({
   id: '/sorteios/$id/notas',
   path: '/sorteios/$id/notas',
@@ -369,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
+  '/sorteios/$id/encerramento': typeof SorteiosIdEncerramentoRoute
   '/sorteios/$id/notas': typeof SorteiosIdNotasRoute
   '/sorteios/$id/participantes': typeof SorteiosIdParticipantesRoute
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
@@ -423,6 +430,7 @@ export interface FileRoutesByTo {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
+  '/sorteios/$id/encerramento': typeof SorteiosIdEncerramentoRoute
   '/sorteios/$id/notas': typeof SorteiosIdNotasRoute
   '/sorteios/$id/participantes': typeof SorteiosIdParticipantesRoute
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
@@ -478,6 +486,7 @@ export interface FileRoutesById {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
+  '/sorteios/$id/encerramento': typeof SorteiosIdEncerramentoRoute
   '/sorteios/$id/notas': typeof SorteiosIdNotasRoute
   '/sorteios/$id/participantes': typeof SorteiosIdParticipantesRoute
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
@@ -534,6 +543,7 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/editar'
+    | '/sorteios/$id/encerramento'
     | '/sorteios/$id/notas'
     | '/sorteios/$id/participantes'
     | '/sorteios/$id/premios'
@@ -588,6 +598,7 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/editar'
+    | '/sorteios/$id/encerramento'
     | '/sorteios/$id/notas'
     | '/sorteios/$id/participantes'
     | '/sorteios/$id/premios'
@@ -642,6 +653,7 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/editar'
+    | '/sorteios/$id/encerramento'
     | '/sorteios/$id/notas'
     | '/sorteios/$id/participantes'
     | '/sorteios/$id/premios'
@@ -697,6 +709,7 @@ export interface RootRouteChildren {
   CurriculoPublicoTokenRoute: typeof CurriculoPublicoTokenRoute
   SorteiosIdCuponsRoute: typeof SorteiosIdCuponsRoute
   SorteiosIdEditarRoute: typeof SorteiosIdEditarRoute
+  SorteiosIdEncerramentoRoute: typeof SorteiosIdEncerramentoRoute
   SorteiosIdNotasRoute: typeof SorteiosIdNotasRoute
   SorteiosIdParticipantesRoute: typeof SorteiosIdParticipantesRoute
   SorteiosIdPremiosRoute: typeof SorteiosIdPremiosRoute
@@ -933,6 +946,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SorteiosIdEditarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sorteios/$id/encerramento': {
+      id: '/sorteios/$id/encerramento'
+      path: '/sorteios/$id/encerramento'
+      fullPath: '/sorteios/$id/encerramento'
+      preLoaderRoute: typeof SorteiosIdEncerramentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sorteios/$id/notas': {
       id: '/sorteios/$id/notas'
       path: '/sorteios/$id/notas'
@@ -1134,6 +1154,7 @@ const rootRouteChildren: RootRouteChildren = {
   CurriculoPublicoTokenRoute: CurriculoPublicoTokenRoute,
   SorteiosIdCuponsRoute: SorteiosIdCuponsRoute,
   SorteiosIdEditarRoute: SorteiosIdEditarRoute,
+  SorteiosIdEncerramentoRoute: SorteiosIdEncerramentoRoute,
   SorteiosIdNotasRoute: SorteiosIdNotasRoute,
   SorteiosIdParticipantesRoute: SorteiosIdParticipantesRoute,
   SorteiosIdPremiosRoute: SorteiosIdPremiosRoute,
