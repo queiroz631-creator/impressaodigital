@@ -99,6 +99,10 @@
 - [x] Etapa 9: rastreabilidade da origem do valor dos cupons — `sorteio_saldo_fontes` + `sorteio_cupom_contribuicoes`,
       FIFO por sequência, cancelamento pelo cupom que perdeu lastro (sem escolha arbitrária), déficit de cupom
       utilizado registrado, reconstrução dos cupons do banco de desenvolvimento com composição completa
+- [x] Etapa 10: o saldo liberado pelo cancelamento gera cupom na mesma transação
+      (`sorteio_emitir_cupons_do_pool`, usada tanto pelo processamento da nota quanto pelo recálculo);
+      limite de cupons do sorteio respeitado, cupom UTILIZADO nunca cancelado, 10 testes obrigatórios verificados
+
 
 ## API local / Lojamix — estado atual
 - [ ] Preencher o `.env` da API local na máquina da loja e confirmar os nomes das colunas de cliente no Lojamix
