@@ -158,16 +158,21 @@ cupons, fontes, contribuições ou cancelamento.
 
 ### Testes no banco de desenvolvimento
 
-Os 12 cenários pedidos, com dados temporários criados e removidos ao final e o
-sorteio devolvido a `ATIVO` no encerramento de cada teste que o alterar:
-encerramento permitido com base correta; bloqueio por nota válida não
-processada, por cupom sem lastro, por saldo divergente e por contribuição
-inválida; segunda tentativa em sorteio já encerrado sem efeito; duas tentativas
-simultâneas com apenas uma vencedora; falha no meio com rollback total;
-participação e geração de cupom recusadas após o encerramento; consultas
-históricas intactas; auditoria `sorteio.encerrado` completa. No fim, reconferência
-dos invariantes (saldo = fontes pendentes, contribuições = valor do cupom, nenhum
-cupom ativo sem lastro, nenhum número duplicado, nenhuma nota pendente).
+Os 22 cenários pedidos, com dados temporários criados e removidos ao final e o
+sorteio devolvido a `ATIVO` depois de cada teste que o encerrar:
+
+1. encerramento com base correta; 2–6. bloqueio por nota PENDENTE, por nota
+válida não processada, por saldo divergente, por contribuição incorreta e por
+cupom ativo sem lastro; 7. segunda tentativa em sorteio já encerrado sem efeito;
+8. dois encerramentos simultâneos com apenas um vencedor; 9. erro no meio com
+rollback completo; 10–13. após encerrado, participação, cupom, alteração de nota
+e cancelamento de nota todos recusados; 14. consultas históricas funcionando;
+15. auditoria completa; 16. retrato gravado idêntico à conferência que autorizou;
+17. saldo residual permitido; 18. cupons cancelados históricos sem composição não
+bloqueiam; 19–22. invariantes finais (nenhum número duplicado, nenhuma nota
+válida sem processamento, saldo = fontes pendentes, nenhuma contribuição
+inválida) mais "nenhum cupom não cancelado sem composição".
+
 
 ## Fora desta etapa
 
