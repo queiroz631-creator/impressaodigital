@@ -95,11 +95,13 @@ export interface TotaisConferencia {
   contribuicoes_centavos: number;
 }
 
+export type DetalheConferencia = Record<string, string | number | boolean | null>;
+
 export interface ItemConferencia {
   codigo: string;
   mensagem: string;
   quantidade: number;
-  itens: Record<string, unknown>[];
+  itens: DetalheConferencia[];
 }
 
 export interface ConferenciaSorteio {

@@ -42,7 +42,8 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
   });
 
   const mutation = useMutation({
-    mutationFn: () => encerrar({ data: { sorteioId: sorteio.id } }),
+    mutationFn: () =>
+      encerrar({ data: { sorteioId: sorteio.id } }) as Promise<{ resultado: string }>,
     onSuccess: (r) => {
       qc.invalidateQueries({ queryKey: ["sorteio", sorteio.id] });
       qc.invalidateQueries({ queryKey: ["sorteios"] });
