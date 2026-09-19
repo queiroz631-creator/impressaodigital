@@ -143,8 +143,12 @@ cupons, fontes, contribuições ou cancelamento.
   fn; `CAMPOS_SORTEIO` ganha `encerrado_em, encerrado_por,
   conferencia_encerramento`.
 - Novo componente `src/modules/sorteios/components/ConferenciaEncerramento.tsx`
-  com os indicadores, as listas de pendências/inconsistências e o botão com
-  `AlertDialog` de confirmação.
+  com os 11 indicadores (participantes, participantes concorrentes, notas
+  válidas, notas canceladas, notas pendentes, cupons ativos, cupons cancelados,
+  cupons utilizados, saldo acumulado, fontes pendentes, contribuições), as listas
+  de pendências e inconsistências por extenso e o botão com `AlertDialog` de
+  confirmação. Reaproveita `IndicadorCard` e `brl`/`dataHoraBR` já existentes.
+
 - `src/routes/sorteios.$id.index.tsx`: renderiza a seção quando o status é
   `ATIVO` (conferência + botão) ou `ENCERRADO` (retrato do fechamento).
 - `services/status.ts`: `ROTULO_TRANSICAO` deixa de oferecer "Encerrar sorteio"
