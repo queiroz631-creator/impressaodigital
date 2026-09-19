@@ -15,11 +15,11 @@ Nada de notas, saldo, fontes, contribuições, geração/cancelamento de cupons,
 
 ## Regras da apuração (confirmadas com você)
 
-- Um prêmio com quantidade 3 é sorteado 3 vezes: cada unidade gera um ganhador. O prêmio só fica concluído quando todas as unidades saírem.
-- Um participante não pode ganhar duas vezes no mesmo sorteio: quem já ganhou sai da urna nos prêmios seguintes.
+- Um prêmio com quantidade 3 é sorteado 3 vezes: cada unidade (1, 2, 3) gera um ganhador próprio. O prêmio só fica concluído quando todas as unidades saírem, e a estrutura suporta qualquer quantidade.
+- Um participante não pode ganhar duas vezes no mesmo sorteio. A regra vale pelo participante: se ele já ganhou qualquer prêmio ou unidade, todos os cupons dele saem da urna nas apurações seguintes.
 - Prêmios inativos não entram na apuração. O sorteio vira Sorteado quando todas as unidades dos prêmios ativos tiverem ganhador.
 - A urna usa apenas os cupons deste sorteio, de participantes que concorrem, sem contar cupons cancelados — exatamente a mesma regra de cupom participante que o sistema já usa na conferência.
-- Cada clique sorteia uma unidade (o próximo prêmio disponível, na ordem cadastrada).
+- Cada clique sorteia uma unidade: o primeiro prêmio ativo com unidade livre, na ordem cadastrada.
 
 ## A aba "Sortear"
 
