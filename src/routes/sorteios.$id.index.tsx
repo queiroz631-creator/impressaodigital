@@ -216,6 +216,12 @@ function PainelSorteio() {
         </Card>
       )}
 
+      {(sorteio.status === "ATIVO" || sorteio.status === "ENCERRADO") && (
+        <ConferenciaEncerramento sorteio={sorteio} />
+      )}
+
+
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Ganhadores</CardTitle>
