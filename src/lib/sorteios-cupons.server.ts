@@ -144,7 +144,10 @@ export interface ConferenciaSaldo {
   totalNotasCentavos: number;
   consumidoCentavos: number;
   cuponsConsiderados: number;
+  /** Cupons emitidos com o saldo liberado pelo cancelamento (mesma transação). */
+  cuponsGeradosAposRecalculo: number;
   alterado: boolean;
+
 }
 
 /**
@@ -176,6 +179,7 @@ export async function recalcularSaldoParticipante(
     total_notas_centavos?: number;
     consumido_centavos?: number;
     cupons_considerados?: number;
+    cupons_gerados_apos_recalculo?: number;
   };
   if (r.resultado !== "OK") return null;
 
@@ -186,9 +190,11 @@ export async function recalcularSaldoParticipante(
     totalNotasCentavos: r.total_notas_centavos ?? 0,
     consumidoCentavos: r.consumido_centavos ?? 0,
     cuponsConsiderados: r.cupons_considerados ?? 0,
+    cuponsGeradosAposRecalculo: r.cupons_gerados_apos_recalculo ?? 0,
     alterado: r.alterado === true,
   };
 }
+
 
 /** Recalcula (e corrige) o saldo de todos os participantes de um sorteio. */
 export async function recalcularSaldosDoSorteio(
