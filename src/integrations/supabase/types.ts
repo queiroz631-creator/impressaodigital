@@ -2166,6 +2166,8 @@ export type Database = {
           premio_id: string | null
           sorteado_em: string
           sorteio_id: string
+          unidade: number | null
+          usuario_id: string | null
         }
         Insert: {
           cupom_id: string
@@ -2176,6 +2178,8 @@ export type Database = {
           premio_id?: string | null
           sorteado_em?: string
           sorteio_id: string
+          unidade?: number | null
+          usuario_id?: string | null
         }
         Update: {
           cupom_id?: string
@@ -2186,6 +2190,8 @@ export type Database = {
           premio_id?: string | null
           sorteado_em?: string
           sorteio_id?: string
+          unidade?: number | null
+          usuario_id?: string | null
         }
         Relationships: [
           {
@@ -3613,6 +3619,7 @@ export type Database = {
         Returns: boolean
       }
       pode_sorteios: { Args: never; Returns: boolean }
+      sorteio_apuracao_resumo: { Args: { _sorteio_id: string }; Returns: Json }
       sorteio_conferencia: { Args: { _sorteio_id: string }; Returns: Json }
       sorteio_definir_termos_atual: {
         Args: { _termos_id: string }
@@ -3646,6 +3653,10 @@ export type Database = {
           _telefone_normalizado: string
         }
         Returns: string
+      }
+      sorteio_realizar: {
+        Args: { _sorteio_id: string; _usuario_id?: string }
+        Returns: Json
       }
       sorteio_recalcular_saldo_participante: {
         Args: {
