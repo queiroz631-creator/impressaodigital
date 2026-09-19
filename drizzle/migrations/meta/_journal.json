@@ -57,6 +57,13 @@
       "when": 1789782973096,
       "tag": "0007_sorteio_fontes_sequencia_fifo",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789784577748,
+      "tag": "0008_cupons_apos_cancelamento",
+      "breakpoints": true
     }
   ]
 }

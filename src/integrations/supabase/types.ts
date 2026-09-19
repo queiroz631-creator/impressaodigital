@@ -3608,6 +3608,16 @@ export type Database = {
         Args: { _termos_id: string }
         Returns: undefined
       }
+      sorteio_emitir_cupons_do_pool: {
+        Args: {
+          _nota_referencia?: string
+          _origem?: string
+          _participante_id: string
+          _pool_maximo?: number
+          _usuario_id?: string
+        }
+        Returns: Json
+      }
       sorteio_gerar_cupons_da_nota: {
         Args: { _nota_id: string; _origem?: string; _usuario_id?: string }
         Returns: Json
