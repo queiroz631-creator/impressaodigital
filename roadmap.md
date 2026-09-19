@@ -123,4 +123,9 @@
 - [x] Transição genérica ATIVO → ENCERRADO recusada: só pela conferência
 - [x] Painel: seção "Conferência para encerramento", 12 indicadores, listas por extenso, botão com confirmação e retrato após o encerramento
 - [x] 22 testes no banco de desenvolvimento, dados temporários removidos
-- [ ] Próxima etapa (a definir): apuração do cupom vencedor e registro de ganhadores
+## Módulo Sorteios — Apuração do cupom vencedor (ENCERRADO → SORTEADO) — implementada
+- [x] `sorteio_ganhadores.unidade` + `usuario_id` e índice único (sorteio_id, premio_id, unidade) — vários ganhadores por prêmio, no máximo um por unidade
+- [x] `sorteio_apuracao_resumo` (leitura): totais, prêmios com sorteados/disponível, ganhadores e amostra de números
+- [x] `sorteio_realizar`: FOR UPDATE + status ENCERRADO + próximo prêmio/unidade na ordem + urna sem participantes já ganhadores + sorteio no banco + ganhador + auditoria `sorteio.realizado` + SORTEADO só na última unidade; rollback total
+- [x] Aba "Sortear" (ENCERRADO/SORTEADO): resumo, prêmios, animação da urna (só visual), card do ganhador e histórico
+- [ ] Bateria de testes finais da apuração (não executada nesta etapa, conforme solicitado)
