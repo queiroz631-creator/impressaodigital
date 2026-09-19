@@ -248,7 +248,90 @@ export interface SorteioGanhador {
   numero_cupom: string;
   sorteado_em: string;
   observacao: string | null;
+  /** Unidade do prêmio apurada (1..quantidade). */
+  unidade?: number | null;
+  /** Usuário que realizou a apuração. */
+  usuario_id?: string | null;
 }
+
+/* ---------------------------------------------- apuração do cupom vencedor */
+
+export interface PremioApuracao {
+  id: string;
+  nome: string;
+  descricao: string;
+  ordem: number;
+  quantidade: number;
+  ativo: boolean;
+  sorteados: number;
+  disponivel: boolean;
+}
+
+export interface GanhadorApuracao {
+  id: string;
+  premio_id: string | null;
+  premio_nome: string | null;
+  premio_quantidade: number | null;
+  unidade: number | null;
+  cupom_id: string;
+  numero_cupom: string;
+  participante_id: string;
+  participante_nome: string | null;
+  cliente_id: string | null;
+  cliente_nome: string | null;
+  cupom_status: StatusCupom | null;
+  sorteado_em: string;
+  usuario_id: string | null;
+}
+
+export interface TotaisApuracao {
+  participantes_concorrentes: number;
+  cupons_concorrentes: number;
+  premios_cadastrados: number;
+  unidades_total: number;
+  unidades_sorteadas: number;
+  unidades_disponiveis: number;
+}
+
+export interface ApuracaoSorteio {
+  resultado: "OK" | "IGNORADA";
+  motivo?: string;
+  sorteio?: {
+    id: string;
+    nome: string;
+    numero_sorteio: number;
+    status: StatusSorteio;
+  };
+  totais?: TotaisApuracao;
+  premios?: PremioApuracao[];
+  ganhadores?: GanhadorApuracao[];
+  /** Números usados apenas no efeito visual da animação. */
+  numeros_amostra?: string[];
+  pode_sortear?: boolean;
+}
+
+export type ResultadoApuracao =
+  | {
+      resultado: "SORTEADO";
+      ganhador_id: string;
+      sorteio_id: string;
+      premio_id: string;
+      premio_nome: string;
+      premio_descricao: string | null;
+      unidade: number;
+      premio_quantidade: number;
+      participante_id: string;
+      participante_nome: string | null;
+      cliente_id: string | null;
+      cliente_nome: string | null;
+      cupom_id: string;
+      numero_cupom: string;
+      sorteado_em: string;
+      status: StatusSorteio;
+      ultimo: boolean;
+      unidades_restantes: number;
+    }
+  | { resultado: "IGNORADO"; motivo: string; status?: StatusSorteio };
 
 export interface SorteioSincronizacao {
   id: string;

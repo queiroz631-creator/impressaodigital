@@ -611,3 +611,34 @@ export const encerrarSorteio = createServerFn({ method: "POST" })
     const { encerrarSorteioNoBanco } = await import("@/lib/sorteios-encerramento.server");
     return encerrarSorteioNoBanco(data.sorteioId, context.userId);
   });
+
+/* ---------------------------------------------------------------- apuração */
+
+/** Resumo somente leitura da apuração (indicadores, prêmios e ganhadores). */
+export const resumoApuracaoSorteio = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ sorteioId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigirGestao(context);
+    const { resumoApuracao } = await import("@/lib/sorteios-apuracao.server");
+    return resumoApuracao(data.sorteioId);
+  });
+
+/**
+ * Sorteia a próxima unidade de prêmio. Tudo acontece na função do banco, em uma
+ * única transação: o navegador nunca escolhe o cupom vencedor.
+ */
+export const realizarSorteio = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ sorteioId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigirGestao(context);
+    const { realizarSorteioNoBanco, mensagemRecusa } = await import(
+      "@/lib/sorteios-apuracao.server"
+    );
+    const r = await realizarSorteioNoBanco(data.sorteioId, context.userId);
+    if (r.resultado === "IGNORADO") {
+      throw new Error(mensagemRecusa(r.motivo));
+    }
+    return r;
+  });
