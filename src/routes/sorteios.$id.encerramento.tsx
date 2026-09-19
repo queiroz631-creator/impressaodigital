@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { useSorteio } from "@/modules/sorteios/hooks/useSorteios";
@@ -49,8 +49,11 @@ function EncerramentoSorteio() {
       )}
 
       <div className="mt-4">
-        <Button variant="outline" onClick={() => window.history.back()}>
-          Voltar
+        <Button
+          variant="outline"
+          onClick={() => navigate({ to: "/sorteios/$id", params: { id } })}
+        >
+          Voltar para o painel
         </Button>
       </div>
     </>
