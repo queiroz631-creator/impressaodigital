@@ -233,9 +233,16 @@ export const alterarStatusSorteio = createServerFn({ method: "POST" })
     await exigirGestao(context);
 
     const atual = await lerSorteioAtual(context.supabase, data.id);
+    // O encerramento nunca passa por aqui: ele exige a conferência completa.
+    if (atual.status === "ATIVO" && data.status === "ENCERRADO") {
+      throw new Error(
+        "Use a conferência para encerramento no painel do sorteio para encerrá-lo.",
+      );
+    }
     if (!podeTransicionar(atual.status, data.status as StatusSorteio)) {
       throw new Error(`Não é possível mudar de ${atual.status} para ${data.status}.`);
     }
+
 
     const { error } = await context.supabase
       .from("sorteios")
@@ -573,4 +580,34 @@ export const processarCuponsDoSorteio = createServerFn({ method: "POST" })
     const saldos = await recalcularSaldosDoSorteio(data.sorteioId, "painel", context.userId);
 
     return { ...resumo, saldosAnalisados: saldos.analisados, saldosCorrigidos: saldos.corrigidos };
+  });
+
+/* ------------------------------------------------------------- encerramento */
+
+/**
+ * Conferência somente leitura do sorteio (totais, pendências e inconsistências).
+ * Não corrige, não recalcula e não gera cupom.
+ */
+export const conferenciaEncerramentoSorteio = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ sorteioId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigirGestao(context);
+    const { conferenciaSorteio } = await import("@/lib/sorteios-encerramento.server");
+    return conferenciaSorteio(data.sorteioId);
+  });
+
+/**
+ * Encerra o sorteio (ATIVO → ENCERRADO). O navegador não decide nada: a função
+ * do banco trava o sorteio, refaz a conferência dentro da mesma transação,
+ * grava o retrato que autorizou o encerramento e registra a auditoria. Qualquer
+ * falha desfaz tudo.
+ */
+export const encerrarSorteio = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ sorteioId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigirGestao(context);
+    const { encerrarSorteioNoBanco } = await import("@/lib/sorteios-encerramento.server");
+    return encerrarSorteioNoBanco(data.sorteioId, context.userId);
   });
