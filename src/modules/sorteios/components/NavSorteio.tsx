@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { useSorteio } from "../hooks/useSorteios";
 
 const ABAS = [
   { rotulo: "Painel", to: "/sorteios/$id" as const },
@@ -12,9 +13,16 @@ const ABAS = [
 
 /** Navegação entre as telas de um sorteio. */
 export function NavSorteio({ id }: { id: string }) {
+  const { data: sorteio } = useSorteio(id);
+  const mostrarEncerramento = sorteio?.status === "ATIVO" || sorteio?.status === "ENCERRADO";
+
+  const abas = mostrarEncerramento
+    ? [...ABAS, { rotulo: "Encerramento", to: "/sorteios/$id/encerramento" as const }]
+    : ABAS;
+
   return (
     <nav className="mb-4 flex flex-wrap gap-2 overflow-x-auto">
-      {ABAS.map((aba) => (
+      {abas.map((aba) => (
         <Link
           key={aba.to}
           to={aba.to}
