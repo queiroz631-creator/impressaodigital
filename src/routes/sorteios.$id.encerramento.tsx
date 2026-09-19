@@ -28,6 +28,7 @@ export const Route = createFileRoute("/sorteios/$id/encerramento")({
 
 function EncerramentoSorteio() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
   const { data: sorteio, isLoading, error } = useSorteio(id);
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
