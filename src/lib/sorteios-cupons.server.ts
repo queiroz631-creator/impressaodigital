@@ -144,7 +144,10 @@ export interface ConferenciaSaldo {
   totalNotasCentavos: number;
   consumidoCentavos: number;
   cuponsConsiderados: number;
+  /** Cupons emitidos com o saldo liberado pelo cancelamento (mesma transação). */
+  cuponsGeradosAposRecalculo: number;
   alterado: boolean;
+
 }
 
 /**
