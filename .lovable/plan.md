@@ -1,93 +1,150 @@
-# Gerar cupom quando o cancelamento libera saldo suficiente
+# Fechamento do sorteio (ATIVO → ENCERRADO)
 
-Hoje, quando uma nota é cancelada, o sistema cancela os cupons que perderam
-lastro e devolve ao saldo o que pertencia às outras notas. Se esse saldo
-devolvido já der para formar um cupom novo, ele fica esperando a próxima nota.
-Esta etapa fecha esse ciclo: ao final do cancelamento, se o saldo já alcançar o
-valor do cupom, os cupons são emitidos na mesma hora.
+Encerrar um sorteio de forma controlada: conferir tudo antes, congelar a base
+depois, sem apagar nada e com registro completo no histórico.
 
-## Como vai funcionar
+## Estados
 
-Na ordem exata, dentro de uma única operação:
+O projeto já tem cinco situações e nenhuma nova será criada:
 
-1. a nota é cancelada;
-2. as fontes daquela nota saem do pool (viram CANCELADO);
-3. os cupons que ficaram sem lastro são cancelados e o que pertencia às outras
-   notas volta ao saldo;
-4. o saldo do participante é recalculado só com as notas ainda válidas;
-5. só então o sistema confere o saldo: cada múltiplo do valor do cupom gera um
-   cupom novo, consumindo as fontes na mesma ordem de entrada (FIFO) e gravando
-   de qual nota veio cada centavo;
-6. o que sobrar continua como saldo.
+```text
+RASCUNHO  ->  ATIVO  ->  ENCERRADO  ->  SORTEADO
+                 \          \
+                  ---->  CANCELADO  <----
+```
 
-Se o saldo ficar abaixo do valor do cupom, nada é criado. Se o sorteio tiver
-limite de cupons, o limite manda: o que não couber permanece como saldo.
-Cupons já UTILIZADOS continuam nunca sendo cancelados automaticamente.
+`ENCERRADO` é o fechamento desta etapa. `SORTEADO` é a apuração, que fica para
+a próxima etapa. Não existem (e não serão criados) estados "APURADO" ou
+"FINALIZADO" — a nomenclatura atual é mantida.
 
-Tudo acontece junto com o cancelamento: se a emissão do cupom novo falhar, o
-cancelamento inteiro é desfeito — o participante nunca fica num estado
-intermediário.
+## O que o usuário passa a ver
 
-Cada passo fica registrado no histórico: o cancelamento, o recálculo do saldo e
-a emissão dos cupons decorrentes.
+No painel do sorteio, uma seção nova **Conferência para encerramento** com:
+participantes, participantes que concorrem, notas válidas, notas canceladas,
+notas pendentes, cupons ativos, cupons cancelados, cupons utilizados, saldo
+acumulado, fontes pendentes, contribuições, lista de pendências e lista de
+inconsistências.
+
+No topo da seção, o resultado: **Conferência aprovada** ou **Existem
+pendências**, com cada motivo escrito por extenso (por exemplo "3 notas válidas
+ainda não geraram cupons" ou "participante X: saldo R$ 8,85 diferente das
+fontes R$ 6,85").
+
+O botão **Encerrar sorteio** aparece nessa seção e fica desabilitado enquanto
+houver pendência. Ao clicar, abre uma confirmação: "Tem certeza que deseja
+encerrar este sorteio? Após o encerramento, novas notas, participações e cupons
+não poderão alterar a base deste sorteio."
+
+Depois de encerrado, a seção passa a mostrar o retrato do fechamento: data e
+hora, quem encerrou e os mesmos números congelados no momento do encerramento.
+Todas as telas de consulta (notas, cupons, participantes, prêmios, termos)
+continuam funcionando normalmente.
+
+## Conferência: o que bloqueia o encerramento
+
+Pendências (podem mudar a quantidade de cupons):
+notas com situação PENDENTE; notas válidas sem cupons processados; sorteio com
+`valor_por_cupom_centavos` igual a zero.
+
+Inconsistências (a base não fecha):
+saldo gravado do participante diferente da soma das fontes pendentes; saldo
+gravado diferente do cálculo (notas válidas processadas menos cupons que
+valem); soma das contribuições diferente do `valor_base_centavos` do cupom;
+cupom ativo sem lastro em notas ainda válidas; cupom não cancelado sem
+composição; contribuição apontando para nota inexistente, para outro
+participante ou para nota não válida; número de cupom repetido no sorteio;
+fonte CANCELADA ou ESGOTADA com valor pendente; fonte pendente maior que o
+valor original; nota válida processada sem fonte.
+
+Observação, nunca bloqueio: sorteio sem `data_fim`, `data_fim` ainda no futuro,
+saldo residual em participantes (saldo não utilizado continua existindo e
+aparece no retrato), e os dois cupons cancelados históricos sem composição, já
+aprovados anteriormente — a regra de composição só vale para cupons não
+cancelados.
+
+Nada é corrigido automaticamente: a conferência é somente leitura.
 
 ## Detalhes técnicos
 
-Uma única migração aditiva, sem mudar tabelas.
+### Migração (aditiva, banco de desenvolvimento)
 
-**Nova função interna `public.sorteio_emitir_cupons_do_pool(_participante_id, _origem, _usuario_id, _nota_referencia uuid DEFAULT NULL)`**
-(`SECURITY DEFINER`, `search_path = public`, `EXECUTE` só para `service_role`):
-extraída do laço que hoje vive em `sorteio_gerar_cupons_da_nota` — números
-únicos com retry, limite `quantidade_maxima_cupons` contando cupons
-`status <> 'CANCELADO'`, consumo das fontes `PENDENTE` por `sequencia ASC` com
-`FOR UPDATE`, `INSERT` em `sorteio_cupom_contribuicoes`, baixa de
-`valor_pendente_centavos`/`ESGOTADO`, gravação de
-`sorteio_participantes.saldo_centavos` com a soma das fontes pendentes e
-auditoria `cupons.gerados`. Pressupõe a participação já travada pelo chamador.
-`sorteio_cupons.nota_id` é `NOT NULL`: o cupom recebe a nota da última
-contribuição que o completou (a nota que fechou o cupom), que é rastreável pelas
-contribuições de qualquer forma.
+1. `ALTER TABLE public.sorteios` com três colunas nulas:
+   `encerrado_em timestamptz`, `encerrado_por uuid`,
+   `conferencia_encerramento jsonb`.
+2. `public.sorteio_conferencia(_sorteio_id uuid) RETURNS jsonb` — somente
+   leitura, `SECURITY DEFINER`, `search_path=public`, `EXECUTE` para
+   `authenticated` e `service_role` (leitura já é liberada pelas policies).
+   Devolve `{sorteio:{...}, totais:{...}, pendencias:[...], inconsistencias:[...],
+   aprovada:bool}`; cada item de pendência/inconsistência traz `codigo`,
+   `mensagem`, `quantidade` e os ids envolvidos (participante/nota/cupom).
+3. `public.sorteio_encerrar(_sorteio_id uuid, _usuario_id uuid) RETURNS jsonb` —
+   `SECURITY DEFINER`, `EXECUTE` somente `service_role`. Faz, na mesma
+   transação: `SELECT ... FROM sorteios WHERE id=_sorteio_id FOR UPDATE`
+   (impede dois encerramentos simultâneos); se o status já é `ENCERRADO`
+   devolve `{resultado:'IGNORADO'}` sem gravar; exige status `ATIVO`; chama
+   `sorteio_conferencia` e levanta exceção se `aprovada = false`;
+   `UPDATE sorteios SET status='ENCERRADO', encerrado_em=now(),
+   encerrado_por=_usuario_id, conferencia_encerramento=<retrato>
+   WHERE id=… AND status='ATIVO'` (falha → exceção); insere auditoria
+   `sorteio.encerrado` com `de`, `para`, participantes, notas válidas, cupons
+   ativos/cancelados/utilizados, saldo acumulado e o retrato da conferência.
+   Qualquer erro desfaz tudo.
+4. Congelamento por trigger `BEFORE INSERT OR UPDATE`, função única
+   `public.sorteio_bloquear_base_encerrada()` aplicada a `sorteio_notas`,
+   `sorteio_participantes`, `sorteio_cupons`, `sorteio_saldo_fontes` e
+   `sorteio_cupom_contribuicoes`: quando o sorteio da linha está `ENCERRADO`,
+   `SORTEADO` ou `CANCELADO`, levanta exceção com mensagem clara. `SELECT`,
+   `DELETE` de manutenção e as tabelas de histórico/auditoria não são afetados.
+   Isso passa a recusar também o cancelamento de nota vindo da sincronização
+   depois do encerramento — é a regra pedida, e o lote registra o erro como
+   qualquer outra recusa, sem alterar o código da sincronização.
 
-**`sorteio_gerar_cupons_da_nota`** reescrita para manter exatamente o
-comportamento atual (idempotência por `cupons_processado_em`, nota `VALIDA`,
-sorteio `ATIVO`, criação da fonte, conferência pool × saldo esperado,
-`UPDATE sorteio_notas`) e delegar a emissão à nova função — uma única regra de
-geração, sem lógica duplicada.
+Sem DROP, sem rename, sem coluna obrigatória, sem tocar nas funções de saldo,
+cupons, fontes, contribuições ou cancelamento.
 
-**`sorteio_recalcular_saldo_participante`** ganha, depois de gravar o saldo e a
-auditoria `saldo.recalculado`, uma chamada a `sorteio_emitir_cupons_do_pool` com
-a mesma `_origem`. O retorno passa a incluir `cupons_gerados_apos_recalculo` e
-`saldo_centavos` já refletindo a emissão. A participação já está travada com
-`FOR UPDATE` no início da função, então dois cancelamentos simultâneos do mesmo
-participante são serializados. O trigger
-`sorteio_propagar_cancelamento_nota` continua chamando essa função — logo
-cancelamento + emissão ficam na mesma transação e qualquer exceção desfaz tudo.
+### Servidor
 
-**Servidor**: `recalcularSaldoParticipante` em
-`src/lib/sorteios-cupons.server.ts` passa a devolver
-`cuponsGeradosAposRecalculo`; nada mais muda. Nenhuma alteração em validação,
-elegibilidade, participação, notas, sincronização, fila, cursores ou API local.
+- Novo `src/lib/sorteios-encerramento.server.ts`: `conferenciaSorteio(id)` e
+  `encerrarSorteio(id, usuarioId)`, ambos via `supabaseAdmin.rpc`, no mesmo
+  padrão de `sorteios-cupons.server.ts`.
+- `src/lib/sorteios.functions.ts`: duas server fns novas com
+  `requireSupabaseAuth` + `exigirGestao` (permissão `sorteios.gerenciar`, a
+  mesma já usada) — `conferenciaEncerramentoSorteio` e `encerrarSorteio`, que
+  importa o `.server.ts` dentro do handler.
+- `alterarStatusSorteio` passa a recusar a transição direta `ATIVO → ENCERRADO`
+  com a mensagem "Use a conferência de encerramento", para que o fechamento
+  nunca escape da conferência. As outras transições ficam iguais.
 
-## Testes (banco de desenvolvimento, em ensaio revertido no final)
+### Frontend
 
-1. Cancelamento libera R$ 21,85 → 1 cupom novo, saldo R$ 1,85.
-2. Libera R$ 40,00 → 2 cupons, saldo R$ 0,00.
-3. Libera R$ 19,99 → nenhum cupom.
-4. Sorteio no limite de cupons → não ultrapassa; excedente fica como saldo.
-5. O cupom novo tem contribuições somando o valor do cupom, todas de notas
-   válidas.
-6. Recálculo repetido não duplica o cupom novo.
-7. Dois cancelamentos simultâneos do mesmo participante → saldo e quantidade de
-   cupons corretos, sem duplicidade.
-8. Cupom UTILIZADO nunca é cancelado automaticamente; déficit registrado.
-9. Falha forçada na emissão desfaz também o cancelamento e o recálculo.
-10. Histórico com os três eventos: cancelamento do cupom, recálculo do saldo e
-    geração dos cupons novos.
-11. Invariantes gerais: soma das fontes pendentes = saldo de cada participante;
-    soma das contribuições = valor de cada cupom ativo.
+- `useSorteios.ts`: hook `useConferenciaEncerramento(id)` chamando a nova server
+  fn; `CAMPOS_SORTEIO` ganha `encerrado_em, encerrado_por,
+  conferencia_encerramento`.
+- Novo componente `src/modules/sorteios/components/ConferenciaEncerramento.tsx`
+  com os indicadores, as listas de pendências/inconsistências e o botão com
+  `AlertDialog` de confirmação.
+- `src/routes/sorteios.$id.index.tsx`: renderiza a seção quando o status é
+  `ATIVO` (conferência + botão) ou `ENCERRADO` (retrato do fechamento).
+- `services/status.ts`: `ROTULO_TRANSICAO` deixa de oferecer "Encerrar sorteio"
+  no bloco genérico de transições (passa a ser a ação da nova seção).
+- `types/index.ts`: tipos da conferência; `src/integrations/supabase/types.ts`
+  regenerado.
 
-## Fora do escopo
+### Testes no banco de desenvolvimento
 
-Produção, Lojamix e API local, sincronização, fila, cursores, cron, regra de
-elegibilidade, validação de notas, valor por cupom, telas. Sem commit, deploy ou
-publicação.
+Os 12 cenários pedidos, com dados temporários criados e removidos ao final e o
+sorteio devolvido a `ATIVO` no encerramento de cada teste que o alterar:
+encerramento permitido com base correta; bloqueio por nota válida não
+processada, por cupom sem lastro, por saldo divergente e por contribuição
+inválida; segunda tentativa em sorteio já encerrado sem efeito; duas tentativas
+simultâneas com apenas uma vencedora; falha no meio com rollback total;
+participação e geração de cupom recusadas após o encerramento; consultas
+históricas intactas; auditoria `sorteio.encerrado` completa. No fim, reconferência
+dos invariantes (saldo = fontes pendentes, contribuições = valor do cupom, nenhum
+cupom ativo sem lastro, nenhum número duplicado, nenhuma nota pendente).
+
+## Fora desta etapa
+
+Apuração do número vencedor, ganhadores, prêmios entregues, comunicação com o
+cliente, WhatsApp, e-mail, Lojamix, API local, sincronização, fila, cursores,
+produção, commit, deploy e publicação.
