@@ -65,10 +65,66 @@ export interface Sorteio {
   quantidade_maxima_cupons: number | null;
   /** Última sincronização da base de notas deste sorteio (validação). */
   base_sincronizada_em?: string | null;
+  /** Fechamento do sorteio (etapa de encerramento). */
+  encerrado_em?: string | null;
+  encerrado_por?: string | null;
+  /** Retrato da conferência que autorizou o encerramento. */
+  conferencia_encerramento?: ConferenciaSorteio | null;
   criado_por: string | null;
   criado_em: string;
   atualizado_em: string;
 }
+
+/* ----------------------------------------------- conferência de encerramento */
+
+export interface TotaisConferencia {
+  participantes: number;
+  participantes_concorrentes: number;
+  notas_validas: number;
+  notas_canceladas: number;
+  notas_pendentes: number;
+  notas_invalidas: number;
+  valor_notas_validas_centavos: number;
+  cupons_ativos: number;
+  cupons_cancelados: number;
+  cupons_utilizados: number;
+  saldo_acumulado_centavos: number;
+  fontes_pendentes: number;
+  fontes_pendentes_centavos: number;
+  contribuicoes: number;
+  contribuicoes_centavos: number;
+}
+
+export type DetalheConferencia = Record<string, string | number | boolean | null>;
+
+export interface ItemConferencia {
+  codigo: string;
+  mensagem: string;
+  quantidade: number;
+  itens: DetalheConferencia[];
+}
+
+export interface ConferenciaSorteio {
+  resultado: "OK" | "IGNORADA";
+  motivo?: string;
+  conferido_em?: string;
+  sorteio?: {
+    id: string;
+    nome: string;
+    numero_sorteio: number;
+    status: StatusSorteio;
+    data_inicio: string | null;
+    data_fim: string | null;
+    valor_por_cupom_centavos: number;
+    quantidade_maxima_cupons: number | null;
+  };
+  totais?: TotaisConferencia;
+  pendencias?: ItemConferencia[];
+  inconsistencias?: ItemConferencia[];
+  aprovada: boolean;
+  pode_encerrar?: boolean;
+}
+
 
 export interface SorteioTermos {
   id: string;

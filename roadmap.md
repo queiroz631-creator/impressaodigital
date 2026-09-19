@@ -115,3 +115,12 @@
 - [x] Enviar clientes Sistema → Lojamix com criação de cadastro novo (vincular por CPF, criar entidade+pessoa_fisica em transação, modo simulação, marcador ultimo_id_cliente_pendente circular, elegibilidade = PF + CPF válido + telefone + participação em sorteio ATIVO; fluxo de notas intacto) — concluído
 - [x] Criação real no Lojamix com padrões confirmados: pessoa física completa (sexo 1, indicador_ie 9, rg/ie/nome_mae/nome_pai vazios), data de nascimento real ou 1900-01-01, e-mail sempre opcional, confirmação determinística da pessoa física (SELECT exato antes do commit, não rowcount), correção do import de ErroBanco em clientes_repo.criar
 - [x] Criação da entidade espelhando o cadastro real (obrigatórios sem padrão preenchidos, opcionais observados espelhados, demais opcionais vazios, padrões do Lojamix preservados) — `id_cidade` = 260 conforme cadastro 9942
+
+## Módulo Sorteios — Fechamento do sorteio (ATIVO → ENCERRADO) — concluída
+- [x] `sorteio_conferencia` (somente leitura): totais, pendências e inconsistências, com participante/nota/cupom de cada problema
+- [x] `sorteio_encerrar`: FOR UPDATE + conferência refeita na transação + retrato em `sorteios.conferencia_encerramento` + auditoria `sorteio.encerrado`; rollback total em qualquer falha
+- [x] Congelamento da base após ENCERRADO/SORTEADO/CANCELADO por trigger BEFORE em notas, participantes, cupons, fontes e contribuições (consultas e histórico intactos)
+- [x] Transição genérica ATIVO → ENCERRADO recusada: só pela conferência
+- [x] Painel: seção "Conferência para encerramento", 12 indicadores, listas por extenso, botão com confirmação e retrato após o encerramento
+- [x] 22 testes no banco de desenvolvimento, dados temporários removidos
+- [ ] Próxima etapa (a definir): apuração do cupom vencedor e registro de ganhadores
