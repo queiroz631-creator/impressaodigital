@@ -50,6 +50,13 @@
       "when": 1789782833466,
       "tag": "0006_sorteio_rastreabilidade_cupons",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789782973096,
+      "tag": "0007_sorteio_fontes_sequencia_fifo",
+      "breakpoints": true
     }
   ]
 }

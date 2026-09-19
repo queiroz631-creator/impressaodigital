@@ -2515,6 +2515,7 @@ export type Database = {
           id: string
           nota_id: string
           participante_id: string
+          sequencia: number
           sorteio_id: string
           status: string
           valor_original_centavos: number
@@ -2526,6 +2527,7 @@ export type Database = {
           id?: string
           nota_id: string
           participante_id: string
+          sequencia?: never
           sorteio_id: string
           status?: string
           valor_original_centavos: number
@@ -2537,6 +2539,7 @@ export type Database = {
           id?: string
           nota_id?: string
           participante_id?: string
+          sequencia?: never
           sorteio_id?: string
           status?: string
           valor_original_centavos?: number
