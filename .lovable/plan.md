@@ -1,4 +1,4 @@
-# Reconstrução dos cupons do banco de DESENVOLVOLVIMENTO com rastreabilidade completa
+# Reconstrução dos cupons do banco de DESENVOLVIMENTO com rastreabilidade completa
 
 Ambiente: **somente desenvolvimento** (uma única base usada pelo preview; nada será feito em produção). Sem commit, push, deploy ou publicação.
 
