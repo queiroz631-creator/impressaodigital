@@ -89,26 +89,37 @@ Nada é corrigido automaticamente: a conferência é somente leitura.
    aprovada:bool}`; cada item de pendência/inconsistência traz `codigo`,
    `mensagem`, `quantidade` e os ids envolvidos (participante/nota/cupom).
 3. `public.sorteio_encerrar(_sorteio_id uuid, _usuario_id uuid) RETURNS jsonb` —
-   `SECURITY DEFINER`, `EXECUTE` somente `service_role`. Faz, na mesma
-   transação: `SELECT ... FROM sorteios WHERE id=_sorteio_id FOR UPDATE`
-   (impede dois encerramentos simultâneos); se o status já é `ENCERRADO`
-   devolve `{resultado:'IGNORADO'}` sem gravar; exige status `ATIVO`; chama
-   `sorteio_conferencia` e levanta exceção se `aprovada = false`;
-   `UPDATE sorteios SET status='ENCERRADO', encerrado_em=now(),
-   encerrado_por=_usuario_id, conferencia_encerramento=<retrato>
-   WHERE id=… AND status='ATIVO'` (falha → exceção); insere auditoria
-   `sorteio.encerrado` com `de`, `para`, participantes, notas válidas, cupons
-   ativos/cancelados/utilizados, saldo acumulado e o retrato da conferência.
-   Qualquer erro desfaz tudo.
+   `SECURITY DEFINER`, `EXECUTE` somente `service_role`. Uma única transação, na
+   ordem: `SELECT ... FROM sorteios WHERE id=_sorteio_id FOR UPDATE` (dois
+   administradores nunca encerram ao mesmo tempo; o segundo espera e depois vê o
+   status já `ENCERRADO`) → se já está `ENCERRADO`, devolve
+   `{resultado:'IGNORADO'}` sem gravar nada → exige status `ATIVO` → chama
+   `sorteio_conferencia` **dentro da transação**, ignorando qualquer conferência
+   vinda do navegador → se `aprovada = false`, levanta exceção devolvendo as
+   pendências e desfaz tudo → `UPDATE sorteios SET status='ENCERRADO',
+   encerrado_em=now(), encerrado_por=_usuario_id,
+   conferencia_encerramento=<esse mesmo retrato> WHERE id=… AND status='ATIVO'`
+   (0 linhas → exceção) → insere a auditoria. O retrato gravado é
+   obrigatoriamente o mesmo objeto que autorizou o encerramento, nunca uma
+   segunda leitura. Qualquer falha desfaz o UPDATE e a auditoria juntos: não
+   existe sorteio encerrado sem auditoria nem auditoria sem encerramento.
+   Auditoria `sorteio.encerrado` (tabela existente `sorteio_auditoria`, origem
+   `painel`, `usuario_id` preenchido) com: `de`, `para`, participantes,
+   participantes concorrentes, notas válidas/canceladas/pendentes, cupons
+   ativos/cancelados/utilizados, saldo acumulado, fontes pendentes,
+   contribuições e o retrato completo da conferência.
 4. Congelamento por trigger `BEFORE INSERT OR UPDATE`, função única
    `public.sorteio_bloquear_base_encerrada()` aplicada a `sorteio_notas`,
    `sorteio_participantes`, `sorteio_cupons`, `sorteio_saldo_fontes` e
-   `sorteio_cupom_contribuicoes`: quando o sorteio da linha está `ENCERRADO`,
-   `SORTEADO` ou `CANCELADO`, levanta exceção com mensagem clara. `SELECT`,
-   `DELETE` de manutenção e as tabelas de histórico/auditoria não são afetados.
-   Isso passa a recusar também o cancelamento de nota vindo da sincronização
-   depois do encerramento — é a regra pedida, e o lote registra o erro como
-   qualquer outra recusa, sem alterar o código da sincronização.
+   `sorteio_cupom_contribuicoes` — só nessas cinco. Lê o sorteio da linha e, se
+   estiver `ENCERRADO`, `SORTEADO` ou `CANCELADO`, levanta exceção **antes** de
+   qualquer dado ser alterado. `SELECT`, consultas administrativas, auditoria e
+   histórico não são afetados. Como é `BEFORE`, a trava também impede que o
+   cancelamento de nota pela sincronização chegue a mexer em saldo, cupons,
+   fontes ou contribuições do sorteio encerrado: a nota é recusada de forma
+   controlada, o lote registra o erro dessa nota e segue processando as demais,
+   sem nenhuma mudança na arquitetura da sincronização.
+
 
 Sem DROP, sem rename, sem coluna obrigatória, sem tocar nas funções de saldo,
 cupons, fontes, contribuições ou cancelamento.
