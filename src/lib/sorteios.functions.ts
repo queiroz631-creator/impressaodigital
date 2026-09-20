@@ -239,6 +239,11 @@ export const alterarStatusSorteio = createServerFn({ method: "POST" })
         "Use a conferência para encerramento no painel do sorteio para encerrá-lo.",
       );
     }
+    // A reabertura também não: ela exige a função dedicada, que limpa os dados
+    // do encerramento e grava a auditoria `sorteio.reaberto`.
+    if (atual.status === "ENCERRADO" && data.status === "ATIVO") {
+      throw new Error("Use o botão Reabrir sorteio na aba Encerramento para reabri-lo.");
+    }
     if (!podeTransicionar(atual.status, data.status as StatusSorteio)) {
       throw new Error(`Não é possível mudar de ${atual.status} para ${data.status}.`);
     }
@@ -610,6 +615,21 @@ export const encerrarSorteio = createServerFn({ method: "POST" })
     await exigirGestao(context);
     const { encerrarSorteioNoBanco } = await import("@/lib/sorteios-encerramento.server");
     return encerrarSorteioNoBanco(data.sorteioId, context.userId);
+  });
+
+/**
+ * Reabre o sorteio (ENCERRADO → ATIVO). Única exceção à regra de nunca voltar
+ * a uma situação anterior. A decisão é do banco, em uma única transação: trava
+ * o sorteio, confere a situação, limpa os dados do encerramento, preserva o
+ * retrato da conferência como histórico e grava a auditoria `sorteio.reaberto`.
+ */
+export const reabrirSorteio = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ sorteioId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigirGestao(context);
+    const { reabrirSorteioNoBanco } = await import("@/lib/sorteios-encerramento.server");
+    return reabrirSorteioNoBanco(data.sorteioId, context.userId);
   });
 
 /* ---------------------------------------------------------------- apuração */
