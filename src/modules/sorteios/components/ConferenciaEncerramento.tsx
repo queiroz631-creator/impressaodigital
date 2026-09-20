@@ -16,7 +16,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { brl, dataHoraBR } from "@/lib/format";
-import { conferenciaEncerramentoSorteio, encerrarSorteio } from "@/lib/sorteios.functions";
+import {
+  conferenciaEncerramentoSorteio,
+  encerrarSorteio,
+  reabrirSorteio,
+} from "@/lib/sorteios.functions";
+import { MENSAGEM_REABERTURA } from "@/lib/sorteios-encerramento.server";
 import { IndicadorCard } from "./IndicadorCard";
 import type { ConferenciaSorteio, Sorteio, TotaisConferencia } from "../types";
 
