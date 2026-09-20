@@ -77,3 +77,31 @@ export async function encerrarSorteioNoBanco(
     conferencia: (r.conferencia ?? null) as ConferenciaSorteio | null,
   };
 }
+
+export type ResultadoReabertura =
+  | { resultado: "REABERTO"; reabertoEm: string | null }
+  | { resultado: "IGNORADO"; motivo: string };
+
+/**
+ * Reabre o sorteio (ENCERRADO → ATIVO). Única exceção à regra de nunca voltar
+ * a uma situação anterior. O banco trava o sorteio, confere a situação, limpa
+ * a data/responsável do encerramento, preserva o retrato da conferência como
+ * histórico e grava a auditoria `sorteio.reaberto`. Qualquer falha desfaz tudo.
+ */
+export async function reabrirSorteioNoBanco(
+  sorteioId: string,
+  usuarioId: string | null = null,
+): Promise<ResultadoReabertura> {
+  const supabase = await cliente();
+  const argumentos: { _sorteio_id: string; _usuario_id?: string } = { _sorteio_id: sorteioId };
+  if (usuarioId) argumentos._usuario_id = usuarioId;
+
+  const { data, error } = await supabase.rpc("sorteio_reabrir", argumentos);
+  if (error) throw new Error(error.message);
+
+  const r = (data ?? {}) as { resultado?: string; motivo?: string; reaberto_em?: string | null };
+  if (r.resultado === "REABERTO") {
+    return { resultado: "REABERTO", reabertoEm: r.reaberto_em ?? null };
+  }
+  return { resultado: "IGNORADO", motivo: r.motivo ?? "desconhecido" };
+}

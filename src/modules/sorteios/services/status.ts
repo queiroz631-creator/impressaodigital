@@ -3,13 +3,16 @@ import type { StatusSorteio } from "../types";
 /**
  * Regras de situação do sorteio (Etapa 2).
  *
- * Nunca é possível voltar para uma situação anterior. Estas regras valem para a
- * interface, mas a decisão final é sempre refeita no servidor antes de gravar.
+ * Nunca é possível voltar para uma situação anterior — com uma única exceção:
+ * a reabertura controlada ENCERRADO → ATIVO, que só acontece pela função
+ * dedicada `reabrirSorteio` (auditoria `sorteio.reaberto`), nunca pela troca
+ * simples de status. Estas regras valem para a interface, mas a decisão final
+ * é sempre refeita no servidor antes de gravar.
  */
 export const TRANSICOES_PERMITIDAS: Record<StatusSorteio, StatusSorteio[]> = {
   RASCUNHO: ["ATIVO", "CANCELADO"],
   ATIVO: ["ENCERRADO", "CANCELADO"],
-  ENCERRADO: ["SORTEADO", "CANCELADO"],
+  ENCERRADO: ["SORTEADO", "CANCELADO", "ATIVO"],
   SORTEADO: [],
   CANCELADO: [],
 };
@@ -20,11 +23,14 @@ export function podeTransicionar(de: StatusSorteio, para: StatusSorteio): boolea
 
 /**
  * Transições oferecidas como botão simples. O encerramento ficou de fora: ele
- * só acontece pela conferência de encerramento, que confere a base antes.
+ * só acontece pela conferência de encerramento, que confere a base antes. A
+ * reabertura também ficou de fora: ela só acontece pela função dedicada, que
+ * registra a auditoria própria e limpa os dados do encerramento.
  */
 export function transicoesManuais(de: StatusSorteio): StatusSorteio[] {
   return (TRANSICOES_PERMITIDAS[de] ?? []).filter(
-    (para) => !(de === "ATIVO" && para === "ENCERRADO"),
+    (para) =>
+      !(de === "ATIVO" && para === "ENCERRADO") && !(de === "ENCERRADO" && para === "ATIVO"),
   );
 }
 
@@ -67,6 +73,15 @@ export function podeEditarCriticos(status: StatusSorteio, movimentacoes: number)
 export function somenteConsulta(status: StatusSorteio): boolean {
   return status === "SORTEADO" || status === "CANCELADO";
 }
+
+/** Motivos de recusa da reabertura, traduzidos para a tela. */
+export const MENSAGEM_REABERTURA: Record<string, string> = {
+  sorteio_nao_encontrado: "Sorteio não encontrado.",
+  ja_ativo: "Este sorteio já está ativo.",
+  ja_sorteado: "Este sorteio já foi sorteado e não pode ser reaberto.",
+  cancelado: "Este sorteio está cancelado e não pode ser reaberto.",
+  em_rascunho: "Este sorteio ainda está em rascunho.",
+};
 
 export const ROTULO_TRANSICAO: Record<StatusSorteio, string> = {
   RASCUNHO: "Voltar para rascunho",

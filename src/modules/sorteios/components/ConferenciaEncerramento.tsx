@@ -16,7 +16,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { brl, dataHoraBR } from "@/lib/format";
-import { conferenciaEncerramentoSorteio, encerrarSorteio } from "@/lib/sorteios.functions";
+import {
+  conferenciaEncerramentoSorteio,
+  encerrarSorteio,
+  reabrirSorteio,
+} from "@/lib/sorteios.functions";
+import { MENSAGEM_REABERTURA } from "../services/status";
 import { IndicadorCard } from "./IndicadorCard";
 import type { ConferenciaSorteio, Sorteio, TotaisConferencia } from "../types";
 
@@ -32,6 +37,7 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
   const qc = useQueryClient();
   const conferir = useServerFn(conferenciaEncerramentoSorteio);
   const encerrar = useServerFn(encerrarSorteio);
+  const reabrir = useServerFn(reabrirSorteio);
 
   const encerrado = sorteio.status !== "ATIVO";
 
@@ -51,6 +57,25 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
       toast.success(
         r.resultado === "ENCERRADO" ? "Sorteio encerrado." : "Este sorteio já estava encerrado.",
       );
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const reabertura = useMutation({
+    mutationFn: () =>
+      reabrir({ data: { sorteioId: sorteio.id } }) as Promise<{
+        resultado: "REABERTO" | "IGNORADO";
+        motivo?: string;
+      }>,
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["sorteio", sorteio.id] });
+      qc.invalidateQueries({ queryKey: ["sorteios"] });
+      qc.invalidateQueries({ queryKey: ["sorteio-conferencia", sorteio.id] });
+      if (r.resultado === "REABERTO") {
+        toast.success("Sorteio reaberto. A base voltou a aceitar movimentações.");
+      } else {
+        toast.error(MENSAGEM_REABERTURA[r.motivo ?? ""] ?? "Não foi possível reabrir o sorteio.");
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -103,6 +128,36 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
             <span className="text-muted-foreground">Encerrado em: </span>
             {dataHoraBR(sorteio.encerrado_em ?? null)}
           </p>
+        )}
+
+        {sorteio.status === "ENCERRADO" && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
+            <p className="text-sm text-muted-foreground">
+              Precisa corrigir a base? Você pode reabrir o sorteio e encerrá-lo de novo depois.
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="outline" disabled={reabertura.isPending}>
+                  {reabertura.isPending ? "Reabrindo..." : "Reabrir sorteio"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Tem certeza que deseja reabrir este sorteio?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Após a reabertura, novas notas, participações e cupons voltarão a alterar a
+                    base deste sorteio. O histórico do encerramento anterior continua gravado.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => reabertura.mutate()}>
+                    Reabrir sorteio
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         )}
 
         {isLoading && !encerrado && (

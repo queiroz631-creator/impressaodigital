@@ -3654,6 +3654,10 @@ export type Database = {
         }
         Returns: string
       }
+      sorteio_reabrir: {
+        Args: { _sorteio_id: string; _usuario_id?: string }
+        Returns: Json
+      }
       sorteio_realizar: {
         Args: { _sorteio_id: string; _usuario_id?: string }
         Returns: Json
