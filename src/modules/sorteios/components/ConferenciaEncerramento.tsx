@@ -37,6 +37,7 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
   const qc = useQueryClient();
   const conferir = useServerFn(conferenciaEncerramentoSorteio);
   const encerrar = useServerFn(encerrarSorteio);
+  const reabrir = useServerFn(reabrirSorteio);
 
   const encerrado = sorteio.status !== "ATIVO";
 
