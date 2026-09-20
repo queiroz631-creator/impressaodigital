@@ -82,14 +82,6 @@ export type ResultadoReabertura =
   | { resultado: "REABERTO"; reabertoEm: string | null }
   | { resultado: "IGNORADO"; motivo: string };
 
-export const MENSAGEM_REABERTURA: Record<string, string> = {
-  sorteio_nao_encontrado: "Sorteio não encontrado.",
-  ja_ativo: "Este sorteio já está ativo.",
-  ja_sorteado: "Este sorteio já foi sorteado e não pode ser reaberto.",
-  cancelado: "Este sorteio está cancelado e não pode ser reaberto.",
-  em_rascunho: "Este sorteio ainda está em rascunho.",
-};
-
 /**
  * Reabre o sorteio (ENCERRADO → ATIVO). Única exceção à regra de nunca voltar
  * a uma situação anterior. O banco trava o sorteio, confere a situação, limpa

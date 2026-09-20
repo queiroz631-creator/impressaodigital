@@ -74,6 +74,15 @@ export function somenteConsulta(status: StatusSorteio): boolean {
   return status === "SORTEADO" || status === "CANCELADO";
 }
 
+/** Motivos de recusa da reabertura, traduzidos para a tela. */
+export const MENSAGEM_REABERTURA: Record<string, string> = {
+  sorteio_nao_encontrado: "Sorteio não encontrado.",
+  ja_ativo: "Este sorteio já está ativo.",
+  ja_sorteado: "Este sorteio já foi sorteado e não pode ser reaberto.",
+  cancelado: "Este sorteio está cancelado e não pode ser reaberto.",
+  em_rascunho: "Este sorteio ainda está em rascunho.",
+};
+
 export const ROTULO_TRANSICAO: Record<StatusSorteio, string> = {
   RASCUNHO: "Voltar para rascunho",
   ATIVO: "Ativar sorteio",

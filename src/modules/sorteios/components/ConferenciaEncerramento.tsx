@@ -21,7 +21,7 @@ import {
   encerrarSorteio,
   reabrirSorteio,
 } from "@/lib/sorteios.functions";
-import { MENSAGEM_REABERTURA } from "@/lib/sorteios-encerramento.server";
+import { MENSAGEM_REABERTURA } from "../services/status";
 import { IndicadorCard } from "./IndicadorCard";
 import type { ConferenciaSorteio, Sorteio, TotaisConferencia } from "../types";
 
