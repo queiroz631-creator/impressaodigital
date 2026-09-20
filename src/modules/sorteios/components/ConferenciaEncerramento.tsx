@@ -61,6 +61,25 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const reabertura = useMutation({
+    mutationFn: () =>
+      reabrir({ data: { sorteioId: sorteio.id } }) as Promise<{
+        resultado: "REABERTO" | "IGNORADO";
+        motivo?: string;
+      }>,
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["sorteio", sorteio.id] });
+      qc.invalidateQueries({ queryKey: ["sorteios"] });
+      qc.invalidateQueries({ queryKey: ["sorteio-conferencia", sorteio.id] });
+      if (r.resultado === "REABERTO") {
+        toast.success("Sorteio reaberto. A base voltou a aceitar movimentações.");
+      } else {
+        toast.error(MENSAGEM_REABERTURA[r.motivo ?? ""] ?? "Não foi possível reabrir o sorteio.");
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   // Depois de encerrado, os números vêm do retrato gravado no encerramento.
   const retrato = sorteio.conferencia_encerramento ?? null;
   const atual = encerrado ? retrato : (conferencia ?? null);
