@@ -130,6 +130,36 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
           </p>
         )}
 
+        {sorteio.status === "ENCERRADO" && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
+            <p className="text-sm text-muted-foreground">
+              Precisa corrigir a base? Você pode reabrir o sorteio e encerrá-lo de novo depois.
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="outline" disabled={reabertura.isPending}>
+                  {reabertura.isPending ? "Reabrindo..." : "Reabrir sorteio"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Tem certeza que deseja reabrir este sorteio?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Após a reabertura, novas notas, participações e cupons voltarão a alterar a
+                    base deste sorteio. O histórico do encerramento anterior continua gravado.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => reabertura.mutate()}>
+                    Reabrir sorteio
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
+
         {isLoading && !encerrado && (
           <p className="text-sm text-muted-foreground">Conferindo a base do sorteio...</p>
         )}
