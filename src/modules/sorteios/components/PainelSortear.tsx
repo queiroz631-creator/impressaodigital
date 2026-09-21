@@ -282,8 +282,8 @@ function dadoProtegido(final4: string | null) {
 }
 
 function ResultadoGanhador({ resultado, destaque = false }: { resultado: Sorteado; destaque?: boolean }) {
-  return (
-    <div className={`grid gap-2 text-sm sm:grid-cols-2 ${destaque ? "rounded-md border bg-primary/5 p-4" : ""}`}>
+  const linhas = (
+    <>
       <Linha
         rotulo="Prêmio"
         valor={
@@ -291,21 +291,56 @@ function ResultadoGanhador({ resultado, destaque = false }: { resultado: Sortead
             ? `${resultado.premio_nome} (unidade ${resultado.unidade} de ${resultado.premio_quantidade})`
             : resultado.premio_nome
         }
+        grande={destaque}
       />
+      <Linha rotulo="Participante" valor={resultado.participante_nome ?? "—"} grande={destaque} />
+      <Linha rotulo="CPF" valor={dadoProtegido(resultado.cpf_final4)} grande={destaque} />
+      <Linha
+        rotulo="Telefone"
+        valor={dadoProtegido(resultado.telefone_final4)}
+        grande={destaque}
+      />
+      <Linha rotulo="Data" valor={dataHoraBR(resultado.sorteado_em)} grande={destaque} />
+    </>
+  );
+
+  if (destaque) {
+    return (
+      <div className="space-y-5 rounded-xl border border-primary/30 bg-primary/5 p-6">
+        <div className="text-center">
+          <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground">
+            Cupom vencedor
+          </p>
+          <p className="mt-1 font-mono text-4xl font-bold tabular-nums tracking-wider text-primary sm:text-5xl">
+            {resultado.numero_cupom}
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">{linhas}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-2 text-sm sm:grid-cols-2">
       <Linha rotulo="Cupom" valor={resultado.numero_cupom} />
-      <Linha rotulo="Participante" valor={resultado.participante_nome ?? "—"} />
-      <Linha rotulo="CPF" valor={dadoProtegido(resultado.cpf_final4)} />
-      <Linha rotulo="Telefone" valor={dadoProtegido(resultado.telefone_final4)} />
-      <Linha rotulo="Data" valor={dataHoraBR(resultado.sorteado_em)} />
+      {linhas}
     </div>
   );
 }
 
-function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
+function Linha({
+  rotulo,
+  valor,
+  grande = false,
+}: {
+  rotulo: string;
+  valor: string;
+  grande?: boolean;
+}) {
   return (
-    <p>
+    <p className={grande ? "text-base" : undefined}>
       <span className="text-muted-foreground">{rotulo}: </span>
-      <span className="font-medium">{valor}</span>
+      <span className={grande ? "text-lg font-semibold" : "font-medium"}>{valor}</span>
     </p>
   );
 }
