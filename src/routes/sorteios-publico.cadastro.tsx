@@ -1,14 +1,42 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { LayoutPublico } from "@/modules/sorteios/components/publico/LayoutPublico";
 import { concluirCadastroPublico } from "@/lib/sorteios-publico.functions";
 import { lerFluxo, limparFluxo } from "@/modules/sorteios/services/fluxo-publico";
+
+/** Aplica a máscara DD/MM/AAAA enquanto a pessoa digita (somente números). */
+function mascararData(valor: string): string {
+  const digitos = valor.replace(/\D/g, "").slice(0, 8);
+  if (digitos.length <= 2) return digitos;
+  if (digitos.length <= 4) return `${digitos.slice(0, 2)}/${digitos.slice(2)}`;
+  return `${digitos.slice(0, 2)}/${digitos.slice(2, 4)}/${digitos.slice(4)}`;
+}
+
+/** Converte DD/MM/AAAA para AAAA-MM-DD (formato aceito pelo servidor). */
+function dataTextoParaIso(texto: string): string | null {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(texto);
+  if (!m) return null;
+  const [, dia, mes, ano] = m;
+  const data = new Date(`${ano}-${mes}-${dia}T00:00:00`);
+  if (Number.isNaN(data.getTime())) return null;
+  if (data.getDate() !== Number(dia) || data.getMonth() + 1 !== Number(mes)) return null;
+  return `${ano}-${mes}-${dia}`;
+}
+
+/** Converte AAAA-MM-DD para DD/MM/AAAA (para exibição). */
+function isoParaTexto(iso: string): string {
+  const [ano, mes, dia] = iso.split("-");
+  return ano && mes && dia ? `${dia}/${mes}/${ano}` : "";
+}
 
 const META_PRIVADA = [
   { title: "Portal de Sorteios | Queiroz Papelaria" },
