@@ -178,7 +178,7 @@ export function PainelSortear({ sorteio }: { sorteio: Sorteio }) {
           }}
         >
           <DialogContent
-            className={`w-[calc(100%-2rem)] max-w-xl ${animando ? "[&>button]:hidden" : ""}`}
+            className={`w-[calc(100%-2rem)] max-w-2xl ${animando ? "[&>button]:hidden" : ""}`}
             onEscapeKeyDown={(evento) => {
               if (animando) evento.preventDefault();
             }}
@@ -187,8 +187,10 @@ export function PainelSortear({ sorteio }: { sorteio: Sorteio }) {
             }}
           >
             <DialogHeader>
-              <DialogTitle>{animando ? "Sorteando cupom" : "Ganhador"}</DialogTitle>
-              <DialogDescription>{ultimo.premio_nome}</DialogDescription>
+              <DialogTitle className="text-2xl">
+                {animando ? "Sorteando cupom" : "🎉 Ganhador"}
+              </DialogTitle>
+              <DialogDescription className="text-base">{ultimo.premio_nome}</DialogDescription>
             </DialogHeader>
             {animando ? (
             <RoletaCupons
@@ -200,7 +202,7 @@ export function PainelSortear({ sorteio }: { sorteio: Sorteio }) {
               <>
                 <ResultadoGanhador resultado={ultimo} destaque />
                 <DialogFooter>
-                  <Button onClick={() => setModalAberto(false)}>Fechar</Button>
+                  <Button size="lg" onClick={() => setModalAberto(false)}>Fechar</Button>
                 </DialogFooter>
               </>
             )}
