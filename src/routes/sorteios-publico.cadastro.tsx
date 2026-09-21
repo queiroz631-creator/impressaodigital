@@ -146,6 +146,7 @@ function CadastroPortal() {
                   <PopoverContent className="w-auto p-0" align="end">
                     <Calendar
                       mode="single"
+                      locale={ptBR}
                       selected={dataTextoParaIso(nascimento) ? new Date(`${dataTextoParaIso(nascimento)}T00:00:00`) : undefined}
                       onSelect={(data) => setNascimento(data ? format(data, "dd/MM/yyyy") : "")}
                       disabled={{ after: new Date() }}
