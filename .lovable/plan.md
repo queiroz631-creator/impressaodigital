@@ -1,55 +1,49 @@
-# Permitir dois cadastros de participante com o mesmo telefone
+# Mensagem clara de "telefone já cadastrado" no portal do sorteio
 
 ## Objetivo
 
-Hoje o telefone é único na base de clientes: quem tenta se cadastrar no portal com um telefone já usado por outra pessoa (CPF diferente) é recusado como "cadastro ambíguo". A mudança permite que pessoas diferentes (CPFs diferentes) compartilhem o mesmo telefone — ex.: familiares. A identidade do participante passa a ser o CPF; o telefone deixa de ser identificador único.
+Hoje, quando a pessoa entra ou se cadastra no portal com um telefone que já pertence a outro cadastro, o portal responde com a mensagem genérica "Os dados informados não correspondem a um cadastro válido." — a pessoa não entende o motivo. A mudança: quando o telefone informado já estiver na base em nome de outro CPF, mostrar uma mensagem específica informando que o telefone já está cadastrado. A regra de telefone único não muda — continua bloqueado, só muda a explicação.
 
 ## Estado atual (verificado)
 
-- `clientes.telefone_normalizado` tem restrição UNIQUE (`clientes_telefone_normalizado_key`).
-- `sorteio_portal_criar_participacao` reaproveita o cliente pelo telefone; se ele já tem CPF, dispara `CADASTRO_AMBIGUO`.
-- Portal (etapas de acesso/cadastro em `sorteios-publico.functions.ts`) bloqueia via `garantirCpfLivre` quando o telefone pertence a cadastro com CPF.
-- A sincronização Lojamix (`sorteios-sync.server.ts`) localiza o cliente nesta ordem: `origem_id` → CPF → telefone (mais antigo). O telefone já é apenas o último recurso.
-- WhatsApp, orçamentos e currículos usam o telefone como "primeiro que encontrar" — comportamento se mantém, sem alteração.
+Três pontos em `src/lib/sorteios-publico.functions.ts` + helper em `src/lib/sorteios-publico.server.ts`:
+
+1. **Entrar, CPF novo + telefone de outro cadastro** (`verificarTelefonePublico`, linha ~179): `garantirCpfLivre(porTelefone)` dispara `DADOS_NAO_CONFEREM` genérico.
+2. **Entrar, CPF existente + telefone que não confere** (`verificarTelefonePublico`, linha ~215): dispara `DADOS_NAO_CONFEREM` genérico — mesmo quando o telefone digitado pertence a outro cadastro.
+3. **Cadastro novo com telefone de outro cadastro** (`concluirCadastroPublico`, linha ~304): `garantirCpfLivre` genérico; e a função do banco `sorteio_portal_criar_participacao` dispara `CADASTRO_AMBIGUO`, que cai na mensagem genérica de erro.
+
+O frontend do portal já exibe `mensagem` dos resultados com `ok: false` — basta o servidor enviar a mensagem certa com um código novo.
 
 ## Mudanças
 
-### 1. Banco (uma migração)
+### 1. Novo código de erro `TELEFONE_EM_USO`
 
-- Remover a restrição UNIQUE de `clientes.telefone_normalizado` e recriar como índice único **parcial** somente para clientes vinculados à loja (`WHERE origem_id IS NOT NULL`): os clientes vindos da loja continuam sem telefone duplicado entre si; os cadastros feitos pelo portal podem repetir telefone.
-- Reescrever `sorteio_portal_criar_participacao`:
-  - Telefone já existe **sem CPF** → comportamento atual (completa o cadastro existente). Inalterado.
-  - Telefone já existe **com CPF igual** ao informado → reaproveita o cliente. Inalterado.
-  - Telefone já existe **com CPF diferente** → em vez de recusar, cria um cliente novo com o CPF informado. Fim do bloqueio `CADASTRO_AMBIGUO`.
-  - Trava de concorrência por telefone (advisory lock) permanece.
-- `sorteio_participantes` não muda: continua um participante por cliente por sorteio — cada CPF vira um participante próprio.
+- Mensagem: "Este telefone já está cadastrado por outra pessoa. Se o número é seu, procure a loja para atualizar seu cadastro." (sem revelar nome, CPF ou qualquer dado do outro cadastro).
 
-### 2. Portal (código)
+### 2. Aplicar nos três pontos
 
-- Ajustar o ponto que hoje chama `garantirCpfLivre` para, quando o telefone pertencer a um cadastro com CPF diferente, seguir como cadastro novo em vez de bloquear.
-- Manter todas as proteções atuais: validação de CPF, conferência CPF + telefone no acesso de quem já tem cadastro, limite de tentativas, dados sempre mascarados (nada de revelar nome/telefone de terceiros).
-- Auditoria do portal passa a registrar o vínculo como `telefone_compartilhado` quando um segundo cadastro usa um telefone já existente.
+- **CPF novo + telefone ocupado** (entrar): trocar o erro genérico de `garantirCpfLivre` pelo novo código/mensagem.
+- **CPF existente + telefone não confere** (entrar): antes de responder o genérico, verificar se o telefone digitado pertence a outro cadastro (`buscarClientePorTelefone`); se pertencer a outra pessoa → `TELEFONE_EM_USO`; se não existir na base → mantém a mensagem genérica atual (não revela se o telefone é ou não do titular do CPF).
+- **Cadastro novo + telefone ocupado**: `garantirCpfLivre` com o novo código; e mapear o erro `CADASTRO_AMBIGUO` da função do banco (caso de duas pessoas ao mesmo tempo) para a mesma mensagem, em vez do erro genérico.
 
-### 3. Sincronização Lojamix
+### 3. Auditoria
 
-- Nenhuma mudança de regra: a ordem de identificação já é `origem_id` → CPF → telefone. Com telefones repetidos, o último recurso continua pegando o cadastro mais antigo (comportamento atual, determinístico). Nada é alterado nas rotas, fila ou tokens.
+- Registrar no detalhe da auditoria do portal, nesses casos, `motivo: "telefone_em_uso"` (sem dados do outro cadastro), reaproveitando os eventos de auditoria já existentes.
 
-### 4. Não alterar
+### 4. Frontend
 
-- Notas, saldo, fontes, contribuições, cupons, apuração, encerramento/reabertura, WhatsApp, orçamentos, currículos, tokens e rotas da API.
+- Nenhuma alteração estrutural: a mensagem aparece no lugar onde os erros do portal já aparecem hoje. Verificar apenas que o texto longo quebra bem no celular.
 
-## Verificação (sem bateria de testes final)
+### 5. Não alterar
+
+- Regra de telefone único, função `sorteio_portal_criar_participacao` (continua disparando `CADASTRO_AMBIGUO`), restrição do banco, sincronização Lojamix, notas, cupons, saldo, apuração — nada disso é tocado.
+
+## Verificação
 
 - TypeScript (`bunx tsgo --noEmit`) e build sem erros.
-- Conferir no banco de desenvolvimento que dois cadastros com o mesmo telefone e CPFs diferentes passam a existir (via RPC, com dados de teste removidos em seguida).
+- Teste manual no portal (base de desenvolvimento): tentar entrar/cadastrar com telefone já existente e conferir a nova mensagem nos três caminhos.
 
-## Pontos de atenção a validar depois
+## Pontos de atenção
 
-- Um telefone compartilhado significa que a confirmação "CPF + telefone" de uma pessoa pode ser conhecida por quem divide o telefone — risco inerente à decisão.
-- Notas da loja cujo consumidor tem só telefone (sem CPF) continuam indo para o cadastro mais antigo com aquele telefone.
+- A mensagem revela apenas que aquele número de telefone já tem cadastro — não revela nome nem CPF de ninguém. Era exatamente o pedido.
 - Sem commit, push, deploy ou publicação.
-
-## Detalhes técnicos
-
-- Migração: `ALTER TABLE public.clientes DROP CONSTRAINT clientes_telefone_normalizado_key;` + `CREATE UNIQUE INDEX clientes_telefone_normalizado_loja_key ON public.clientes (telefone_normalizado) WHERE origem_id IS NOT NULL;` + `CREATE OR REPLACE FUNCTION public.sorteio_portal_criar_participacao(...)` (mesma assinatura e grants, service_role).
-- Arquivos: nova migração em `drizzle/migrations/`; ajustes pontuais em `src/lib/sorteios-publico.functions.ts` (e, se necessário, `src/lib/sorteios-publico.server.ts`).
