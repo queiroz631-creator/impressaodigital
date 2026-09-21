@@ -392,13 +392,14 @@ export async function buscarClientePorTelefone(
   return data?.[0] ?? null;
 }
 
-/** Bloqueio genérico quando o telefone já pertence a um cadastro com CPF. */
+/** Mensagem exibida quando o telefone informado já pertence a outro cadastro. */
+export const MENSAGEM_TELEFONE_EM_USO =
+  "Este telefone já está cadastrado por outra pessoa. Se o número é seu, procure a loja para atualizar seu cadastro.";
+
+/** Bloqueio quando o telefone já pertence a um cadastro com CPF. */
 export function garantirCpfLivre(cliente: ClienteRow): void {
   if (cliente.cpf && cliente.cpf.trim() !== "") {
-    throw new ErroPortal(
-      "DADOS_NAO_CONFEREM",
-      "Os dados informados não correspondem a um cadastro válido.",
-    );
+    throw new ErroPortal("TELEFONE_EM_USO", MENSAGEM_TELEFONE_EM_USO);
   }
 }
 
