@@ -54,7 +54,18 @@ async function executar<T>(fn: () => Promise<T>): Promise<Resultado<T>> {
   }
 }
 
-const esquemaCpf = z.object({ cpf: z.string().trim().min(1) });
+/** Registra (sem interromper o fluxo) a tentativa bloqueada por telefone em uso. */
+async function auditarTelefoneEmUso(sorteioId: string, cpf: string | null): Promise<void> {
+  try {
+    await auditarPortal({
+      sorteio_id: sorteioId,
+      evento: EVENTOS_AUDITORIA.portalEntrada,
+      detalhe: { cpf: cpf ? mascararCpf(cpf) : null, motivo: "telefone_em_uso" },
+    });
+  } catch (e) {
+    console.error("[sorteios-publico] auditoria telefone_em_uso", e);
+  }
+}
 const esquemaTelefone = esquemaCpf.extend({
   telefone: z.string().trim().min(8),
   lembrar: z.boolean().default(false),
