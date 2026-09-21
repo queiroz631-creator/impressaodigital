@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -45,6 +53,7 @@ export function PainelSortear({ sorteio }: { sorteio: Sorteio }) {
 
   const [ultimo, setUltimo] = useState<Sorteado | null>(null);
   const [animando, setAnimando] = useState(false);
+  const [modalAberto, setModalAberto] = useState(false);
 
   const { data: apuracao, isLoading } = useQuery<ApuracaoSorteio>({
     queryKey: ["sorteio-apuracao", sorteio.id],
@@ -56,6 +65,7 @@ export function PainelSortear({ sorteio }: { sorteio: Sorteio }) {
     onSuccess: (r) => {
       setUltimo(r);
       setAnimando(true);
+      setModalAberto(true);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -160,19 +170,42 @@ export function PainelSortear({ sorteio }: { sorteio: Sorteio }) {
 
       <ListaPremios premios={premios} />
 
-      {ultimo && animando && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{ultimo.premio_nome}</CardTitle>
-          </CardHeader>
-          <CardContent>
+      {ultimo && (
+        <Dialog
+          open={modalAberto}
+          onOpenChange={(aberto) => {
+            if (!animando) setModalAberto(aberto);
+          }}
+        >
+          <DialogContent
+            className={`w-[calc(100%-2rem)] max-w-xl ${animando ? "[&>button]:hidden" : ""}`}
+            onEscapeKeyDown={(evento) => {
+              if (animando) evento.preventDefault();
+            }}
+            onInteractOutside={(evento) => {
+              if (animando) evento.preventDefault();
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>{animando ? "Sorteando cupom" : "Ganhador"}</DialogTitle>
+              <DialogDescription>{ultimo.premio_nome}</DialogDescription>
+            </DialogHeader>
+            {animando ? (
             <RoletaCupons
               numeros={numeros}
               vencedor={ultimo.numero_cupom}
               onFim={finalizarAnimacao}
             />
-          </CardContent>
-        </Card>
+            ) : (
+              <>
+                <ResultadoGanhador resultado={ultimo} destaque />
+                <DialogFooter>
+                  <Button onClick={() => setModalAberto(false)}>Fechar</Button>
+                </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       )}
 
       {ultimo && !animando && <CardGanhador resultado={ultimo} />}
@@ -235,18 +268,34 @@ function CardGanhador({ resultado }: { resultado: Sorteado }) {
           <Trophy className="h-4 w-4 text-primary" /> Ganhador
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
-        <Linha rotulo="Prêmio" valor={
+      <CardContent>
+        <ResultadoGanhador resultado={resultado} />
+      </CardContent>
+    </Card>
+  );
+}
+
+function dadoProtegido(final4: string | null) {
+  return final4 ? `•••• ${final4}` : "—";
+}
+
+function ResultadoGanhador({ resultado, destaque = false }: { resultado: Sorteado; destaque?: boolean }) {
+  return (
+    <div className={`grid gap-2 text-sm sm:grid-cols-2 ${destaque ? "rounded-md border bg-primary/5 p-4" : ""}`}>
+      <Linha
+        rotulo="Prêmio"
+        valor={
           resultado.premio_quantidade > 1
             ? `${resultado.premio_nome} (unidade ${resultado.unidade} de ${resultado.premio_quantidade})`
             : resultado.premio_nome
-        } />
-        <Linha rotulo="Cupom" valor={resultado.numero_cupom} />
-        <Linha rotulo="Participante" valor={resultado.participante_nome ?? "—"} />
-        <Linha rotulo="Cliente" valor={resultado.cliente_nome ?? "—"} />
-        <Linha rotulo="Data" valor={dataHoraBR(resultado.sorteado_em)} />
-      </CardContent>
-    </Card>
+        }
+      />
+      <Linha rotulo="Cupom" valor={resultado.numero_cupom} />
+      <Linha rotulo="Participante" valor={resultado.participante_nome ?? "—"} />
+      <Linha rotulo="CPF" valor={dadoProtegido(resultado.cpf_final4)} />
+      <Linha rotulo="Telefone" valor={dadoProtegido(resultado.telefone_final4)} />
+      <Linha rotulo="Data" valor={dataHoraBR(resultado.sorteado_em)} />
+    </div>
   );
 }
 
@@ -276,7 +325,8 @@ function Historico({ ganhadores }: { ganhadores: GanhadorApuracao[] }) {
                   <th className="p-2">Prêmio</th>
                   <th className="p-2">Cupom</th>
                   <th className="p-2">Participante</th>
-                  <th className="p-2">Cliente</th>
+                   <th className="p-2">CPF</th>
+                   <th className="p-2">Telefone</th>
                   <th className="p-2">Data/Hora</th>
                   <th className="p-2">Situação</th>
                 </tr>
@@ -292,7 +342,8 @@ function Historico({ ganhadores }: { ganhadores: GanhadorApuracao[] }) {
                     </td>
                     <td className="p-2 font-mono tabular-nums">{g.numero_cupom}</td>
                     <td className="p-2">{g.participante_nome ?? "—"}</td>
-                    <td className="p-2">{g.cliente_nome ?? "—"}</td>
+                    <td className="p-2 whitespace-nowrap">{dadoProtegido(g.cpf_final4)}</td>
+                    <td className="p-2 whitespace-nowrap">{dadoProtegido(g.telefone_final4)}</td>
                     <td className="p-2 whitespace-nowrap">{dataHoraBR(g.sorteado_em)}</td>
                     <td className="p-2">
                       <Badge variant="secondary">{g.cupom_status ?? "—"}</Badge>

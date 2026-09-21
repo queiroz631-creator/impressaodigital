@@ -128,5 +128,5 @@
 - [x] `sorteio_apuracao_resumo` (leitura): totais, prêmios com sorteados/disponível, ganhadores e amostra de números
 - [x] `sorteio_realizar`: FOR UPDATE + status ENCERRADO + próximo prêmio/unidade na ordem + urna sem participantes já ganhadores + sorteio no banco + ganhador + auditoria `sorteio.realizado` + SORTEADO só na última unidade; rollback total
 - [x] Aba "Sortear" (ENCERRADO/SORTEADO): resumo, prêmios, animação da urna (só visual), card do ganhador e histórico
-- [ ] Ajustar resultado: modal de roleta, remover Cliente e exibir somente os 4 últimos dígitos de CPF/telefone
+- [x] Ajustar resultado: modal de roleta, remover Cliente e exibir somente os 4 últimos dígitos de CPF/telefone
 - [ ] Bateria de testes finais da apuração (não executada nesta etapa, conforme solicitado)
