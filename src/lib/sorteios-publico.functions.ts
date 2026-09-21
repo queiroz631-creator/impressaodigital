@@ -66,6 +66,8 @@ async function auditarTelefoneEmUso(sorteioId: string, cpf: string | null): Prom
     console.error("[sorteios-publico] auditoria telefone_em_uso", e);
   }
 }
+
+const esquemaCpf = z.object({ cpf: z.string().trim().min(1) });
 const esquemaTelefone = esquemaCpf.extend({
   telefone: z.string().trim().min(8),
   lembrar: z.boolean().default(false),
