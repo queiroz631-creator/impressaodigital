@@ -77,7 +77,7 @@ function CadastroPortal() {
           telefone: fluxo.telefone!,
           lembrar: fluxo.lembrar ?? false,
           nome: pedeNome ? nome : "",
-          data_nascimento: pedeNascimento ? nascimento : "",
+          data_nascimento: pedeNascimento ? (dataTextoParaIso(nascimento) ?? "") : "",
         },
       });
       if (!resultado.ok) {
@@ -126,14 +126,47 @@ function CadastroPortal() {
           {pedeNascimento && (
             <div className="space-y-2">
               <Label htmlFor="nascimento">Data de nascimento</Label>
-              <Input
-                id="nascimento"
-                type="date"
-                className="h-12 text-lg"
-                value={nascimento}
-                max={new Date().toISOString().slice(0, 10)}
-                onChange={(e) => setNascimento(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="nascimento"
+                  inputMode="numeric"
+                  placeholder="DD/MM/AAAA"
+                  className="h-12 text-lg"
+                  value={nascimento}
+                  maxLength={10}
+                  onChange={(e) => setNascimento(mascararData(e.target.value))}
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-12 w-12 shrink-0"
+                      aria-label="Escolher no calendário"
+                    >
+                      <CalendarIcon className="h-5 w-5" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      mode="single"
+                      selected={dataTextoParaIso(nascimento) ? new Date(`${dataTextoParaIso(nascimento)}T00:00:00`) : undefined}
+                      onSelect={(data) => setNascimento(data ? format(data, "dd/MM/yyyy") : "")}
+                      disabled={{ after: new Date() }}
+                      defaultMonth={
+                        dataTextoParaIso(nascimento)
+                          ? new Date(`${dataTextoParaIso(nascimento)}T00:00:00`)
+                          : new Date(new Date().getFullYear() - 30, 0, 1)
+                      }
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Digite a data ou toque no calendário para escolher.
+              </p>
             </div>
           )}
           {erro && <p className="text-sm text-destructive">{erro}</p>}
