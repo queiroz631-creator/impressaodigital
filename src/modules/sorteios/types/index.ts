@@ -278,7 +278,8 @@ export interface GanhadorApuracao {
   participante_id: string;
   participante_nome: string | null;
   cliente_id: string | null;
-  cliente_nome: string | null;
+  cpf_final4: string | null;
+  telefone_final4: string | null;
   cupom_status: StatusCupom | null;
   sorteado_em: string;
   usuario_id: string | null;
@@ -323,7 +324,8 @@ export type ResultadoApuracao =
       participante_id: string;
       participante_nome: string | null;
       cliente_id: string | null;
-      cliente_nome: string | null;
+      cpf_final4: string | null;
+      telefone_final4: string | null;
       cupom_id: string;
       numero_cupom: string;
       sorteado_em: string;

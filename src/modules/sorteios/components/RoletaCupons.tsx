@@ -67,12 +67,14 @@ export function RoletaCupons({
       <div
         aria-live="polite"
         className={[
-          "w-full max-w-full overflow-hidden font-mono tabular-nums transition-all duration-300",
+          "flex min-h-20 w-full max-w-full items-center justify-center overflow-hidden font-mono tabular-nums transition-all duration-300",
           "text-3xl sm:text-5xl md:text-6xl",
           parou ? "scale-105 font-bold text-primary" : "text-foreground/80",
         ].join(" ")}
       >
-        <span className={parou ? "" : "blur-[0.4px]"}>{atual}</span>
+        <span key={atual} className={parou ? "animate-scale-in" : "animate-fade-in blur-[0.4px]"}>
+          {atual}
+        </span>
       </div>
     </div>
   );

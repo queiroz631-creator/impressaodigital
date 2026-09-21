@@ -92,6 +92,13 @@
       "when": 1789948497947,
       "tag": "0012_reabertura_sorteio",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789949648407,
+      "tag": "0013_apuracao_dados_parciais_ganhador",
+      "breakpoints": true
     }
   ]
 }
