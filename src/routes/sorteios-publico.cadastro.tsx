@@ -32,12 +32,6 @@ function dataTextoParaIso(texto: string): string | null {
   return `${ano}-${mes}-${dia}`;
 }
 
-/** Converte AAAA-MM-DD para DD/MM/AAAA (para exibição). */
-function isoParaTexto(iso: string): string {
-  const [ano, mes, dia] = iso.split("-");
-  return ano && mes && dia ? `${dia}/${mes}/${ano}` : "";
-}
-
 const META_PRIVADA = [
   { title: "Portal de Sorteios | Queiroz Papelaria" },
   { name: "robots", content: "noindex, nofollow" },
