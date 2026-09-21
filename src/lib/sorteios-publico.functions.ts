@@ -18,6 +18,7 @@ import {
   garantirCpfLivre,
   garantirParticipacao,
   limitarTentativas,
+  MENSAGEM_TELEFONE_EM_USO,
   mascararCpf,
   normalizarTelefone,
   obterSorteioAtivo,
@@ -50,6 +51,19 @@ async function executar<T>(fn: () => Promise<T>): Promise<Resultado<T>> {
       codigo: "ERRO",
       mensagem: "Não foi possível concluir agora. Tente novamente.",
     };
+  }
+}
+
+/** Registra (sem interromper o fluxo) a tentativa bloqueada por telefone em uso. */
+async function auditarTelefoneEmUso(sorteioId: string, cpf: string | null): Promise<void> {
+  try {
+    await auditarPortal({
+      sorteio_id: sorteioId,
+      evento: EVENTOS_AUDITORIA.portalEntrada,
+      detalhe: { cpf: cpf ? mascararCpf(cpf) : null, motivo: "telefone_em_uso" },
+    });
+  } catch (e) {
+    console.error("[sorteios-publico] auditoria telefone_em_uso", e);
   }
 }
 
@@ -175,8 +189,15 @@ export const verificarTelefonePublico = createServerFn({ method: "POST" })
       if (!cliente) {
         const porTelefone = await buscarClientePorTelefone(supabase, data.telefone);
         if (!porTelefone) return { etapa: "cadastro" };
-        // Telefone já vinculado a um CPF: bloqueia sem revelar nada.
-        garantirCpfLivre(porTelefone);
+        // Telefone já vinculado a outro CPF: bloqueia com mensagem específica.
+        try {
+          garantirCpfLivre(porTelefone);
+        } catch (e) {
+          if (e instanceof ErroPortal && e.codigo === "TELEFONE_EM_USO") {
+            await auditarTelefoneEmUso(sorteio.id, cpf);
+          }
+          throw e;
+        }
 
         const faltantesTelefone = faltantesDoCliente(porTelefone);
         if (faltantesTelefone.length > 0)
@@ -213,6 +234,12 @@ export const verificarTelefonePublico = createServerFn({ method: "POST" })
       }
 
       if (!telefoneConfere(data.telefone, cliente.telefone, cliente.telefone_normalizado)) {
+        // Telefone digitado pertence a outro cadastro: mensagem específica.
+        const outroCadastro = await buscarClientePorTelefone(supabase, data.telefone);
+        if (outroCadastro && outroCadastro.id !== cliente.id && outroCadastro.cpf?.trim()) {
+          await auditarTelefoneEmUso(sorteio.id, cpf);
+          throw new ErroPortal("TELEFONE_EM_USO", MENSAGEM_TELEFONE_EM_USO);
+        }
         throw new ErroPortal(
           "DADOS_NAO_CONFEREM",
           "Os dados informados não correspondem ao cadastro. Confira o CPF e o telefone.",
@@ -300,8 +327,15 @@ export const concluirCadastroPublico = createServerFn({ method: "POST" })
         // CPF novo: antes de criar, verifica se o telefone já tem cadastro.
         const porTelefone = await buscarClientePorTelefone(supabase, data.telefone);
         if (porTelefone) {
-          // Telefone já vinculado a algum CPF: bloqueia sem alterar nada.
-          garantirCpfLivre(porTelefone);
+          // Telefone já vinculado a outro CPF: bloqueia com mensagem específica.
+          try {
+            garantirCpfLivre(porTelefone);
+          } catch (e) {
+            if (e instanceof ErroPortal && e.codigo === "TELEFONE_EM_USO") {
+              await auditarTelefoneEmUso(sorteio.id, cpf);
+            }
+            throw e;
+          }
 
           const atualizacao: { cpf: string; nome?: string; data_nascimento?: string } = { cpf };
           if (!porTelefone.nome?.trim()) {
@@ -358,6 +392,11 @@ export const concluirCadastroPublico = createServerFn({ method: "POST" })
             },
           );
           if (error || !participanteId) {
+            // Corrida: o telefone foi vinculado a outro CPF entre a checagem e a gravação.
+            if (error?.message?.includes("CADASTRO_AMBIGUO")) {
+              await auditarTelefoneEmUso(sorteio.id, cpf);
+              throw new ErroPortal("TELEFONE_EM_USO", MENSAGEM_TELEFONE_EM_USO);
+            }
             throw new ErroPortal(
               "ERRO",
               "Não foi possível concluir seu cadastro. Tente novamente.",

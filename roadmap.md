@@ -130,3 +130,7 @@
 - [x] Aba "Sortear" (ENCERRADO/SORTEADO): resumo, prêmios, animação da urna (só visual), card do ganhador e histórico
 - [x] Ajustar resultado: modal de roleta, remover Cliente e exibir somente os 4 últimos dígitos de CPF/telefone
 - [ ] Bateria de testes finais da apuração (não executada nesta etapa, conforme solicitado)
+
+## Portal do sorteio — melhorias em andamento
+- [x] Mensagem específica "telefone já cadastrado" nos fluxos de entrar/cadastrar (código TELEFONE_EM_USO, auditoria com motivo)
+- [x] Campo de data de nascimento com duas formas de preenchimento: calendário (seletor de data) ou texto digitado com máscara DD/MM/AAAA
