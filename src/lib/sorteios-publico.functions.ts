@@ -18,6 +18,7 @@ import {
   garantirCpfLivre,
   garantirParticipacao,
   limitarTentativas,
+  MENSAGEM_TELEFONE_EM_USO,
   mascararCpf,
   normalizarTelefone,
   obterSorteioAtivo,
