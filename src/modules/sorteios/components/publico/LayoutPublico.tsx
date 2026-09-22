@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import logoImpressao from "@/assets/logo-impressao.png";
+import logoSorteios from "@/assets/logo-queiroz-sorteios.png.asset.json";
 import { NavInferior } from "./NavInferior";
 
 /**
@@ -19,13 +19,13 @@ export function LayoutPublico({
   subtitulo?: string | undefined;
 }) {
   return (
-    <div className="min-h-screen bg-muted/40 flex flex-col">
+    <div className="tema-portal-sorteios min-h-screen bg-muted/40 flex flex-col">
       <header className="bg-primary text-primary-foreground">
         <div className="mx-auto w-full max-w-md px-4 py-5 flex items-center gap-3">
           <img
-            src={logoImpressao}
+            src={logoSorteios.url}
             alt="Queiroz Papelaria"
-            className="h-10 w-10 rounded-full bg-primary-foreground object-contain"
+            className="h-11 w-11 rounded-full bg-white object-contain"
           />
           <div className="min-w-0">
             <p className="font-semibold leading-tight truncate">Portal de Sorteios</p>
