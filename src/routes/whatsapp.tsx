@@ -1104,13 +1104,33 @@ function Conversa({
     },
   });
 
+  // Mostra só o dia atual; "carregar anteriores" move o corte para trás em lotes.
+  const inicioDoDia = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString();
+  }, [conversa.id]);
+  const [corte, setCorte] = useState(inicioDoDia);
+  const [semMais, setSemMais] = useState(false);
+  const [carregandoAnteriores, setCarregandoAnteriores] = useState(false);
+  const scroll = useRef<HTMLDivElement | null>(null);
+  const alturaAntes = useRef<number | null>(null);
+  const tentouAutoAnteriores = useRef(false);
+
+  useEffect(() => {
+    setCorte(inicioDoDia);
+    setSemMais(false);
+    tentouAutoAnteriores.current = false;
+  }, [conversa.id, inicioDoDia]);
+
   const { data: mensagens, isLoading } = useQuery({
-    queryKey: ["whatsapp-mensagens", conversa.id],
+    queryKey: ["whatsapp-mensagens", conversa.id, corte],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("whatsapp_mensagens")
         .select("*")
         .eq("conversa_id", conversa.id)
+        .gte("data_hora", corte)
         .order("data_hora", { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as Mensagem[];
@@ -1119,7 +1139,54 @@ function Conversa({
     refetchOnWindowFocus: true,
   });
 
+  /** Busca o lote anterior ao corte atual e recua o corte. */
+  async function carregarAnteriores() {
+    if (semMais || carregandoAnteriores) return;
+    setCarregandoAnteriores(true);
+    alturaAntes.current = scroll.current?.scrollHeight ?? null;
+    try {
+      const { data, error } = await supabase
+        .from("whatsapp_mensagens")
+        .select("data_hora")
+        .eq("conversa_id", conversa.id)
+        .lt("data_hora", corte)
+        .order("data_hora", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      const lote = (data ?? []) as { data_hora: string }[];
+      if (lote.length === 0) {
+        setSemMais(true);
+        return;
+      }
+      if (lote.length < 50) setSemMais(true);
+      const maisAntiga = lote[lote.length - 1]!.data_hora;
+      setCorte(maisAntiga);
+    } catch (e) {
+      alturaAntes.current = null;
+      toast.error(e instanceof Error ? e.message : "Falha ao carregar mensagens anteriores.");
+    } finally {
+      setCarregandoAnteriores(false);
+    }
+  }
+
+  // Sem nada hoje: abre já com o último trecho do histórico (uma única vez).
   useEffect(() => {
+    if (isLoading || !mensagens) return;
+    if (mensagens.length > 0 || tentouAutoAnteriores.current || semMais) return;
+    tentouAutoAnteriores.current = true;
+    void carregarAnteriores();
+  }, [isLoading, mensagens, semMais]);
+
+  useEffect(() => {
+    // Ao trazer histórico antigo, mantém a posição de leitura em vez de ir ao fim.
+    if (alturaAntes.current !== null && scroll.current) {
+      const diferenca = scroll.current.scrollHeight - alturaAntes.current;
+      alturaAntes.current = null;
+      if (diferenca > 0) {
+        scroll.current.scrollTop += diferenca;
+        return;
+      }
+    }
     fim.current?.scrollIntoView({ block: "end" });
   }, [mensagens]);
 
