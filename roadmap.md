@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
+
+
 ## Em andamento: Deploy em VPS Hostinger
 - [x] `deploy/setup-vps.sh` — instalação inicial da VPS
 - [x] `deploy/deploy.sh` — script de atualização/publicação
