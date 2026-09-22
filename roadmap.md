@@ -149,3 +149,8 @@
       Fila de impressão (verde-água), Aguardando Finalização (rosa), Finalizar (verde)
 - [x] Janela de finalização: "Finalizar agora" em verde, fluxos em rosa
 - [x] Suporte a tema claro e escuro; typecheck e build OK
+
+## Backup da loja — pasta `api-local-backup`
+- [x] Arquivos do backup (BackupImpressaoDigital V6.4.2) copiados para `api-local-backup/`:
+      `backup_app_v6_4.py`, `gerar_exe.bat`, `requirements.txt`, `README.md`, `VERSION`,
+      `.env.example`, `.gitignore` (lista conferida com o ZIP; `api-local/` 1.1.7 intacta)
