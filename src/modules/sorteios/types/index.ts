@@ -267,6 +267,21 @@ export interface PremioApuracao {
   disponivel: boolean;
 }
 
+/** Dados completos do participante ganhador, revelados sob demanda no painel. */
+export interface DadosCompletosGanhador {
+  ganhador_id: string;
+  numero_cupom: string;
+  premio_nome: string | null;
+  premio_quantidade: number | null;
+  unidade: number | null;
+  sorteado_em: string;
+  nome: string;
+  cpf: string | null;
+  telefone: string | null;
+  data_nascimento: string | null;
+  email: string | null;
+}
+
 export interface GanhadorApuracao {
   id: string;
   premio_id: string | null;

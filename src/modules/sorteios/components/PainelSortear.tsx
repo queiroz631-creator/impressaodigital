@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Dices, PartyPopper, Trophy } from "lucide-react";
+import { Dices, Eye, PartyPopper, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,11 +26,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { dataHoraBR } from "@/lib/format";
-import { realizarSorteio, resumoApuracaoSorteio } from "@/lib/sorteios.functions";
+import {
+  dadosCompletosGanhador,
+  realizarSorteio,
+  resumoApuracaoSorteio,
+} from "@/lib/sorteios.functions";
 import { IndicadorCard } from "./IndicadorCard";
 import { RoletaCupons } from "./RoletaCupons";
 import type {
   ApuracaoSorteio,
+  DadosCompletosGanhador,
   GanhadorApuracao,
   PremioApuracao,
   ResultadoApuracao,
@@ -346,6 +351,8 @@ function Linha({
 }
 
 function Historico({ ganhadores }: { ganhadores: GanhadorApuracao[] }) {
+  const [selecionado, setSelecionado] = useState<string | null>(null);
+
   return (
     <Card>
       <CardHeader>
@@ -366,6 +373,7 @@ function Historico({ ganhadores }: { ganhadores: GanhadorApuracao[] }) {
                    <th className="p-2">Telefone</th>
                   <th className="p-2">Data/Hora</th>
                   <th className="p-2">Situação</th>
+                  <th className="p-2 text-right">Dados</th>
                 </tr>
               </thead>
               <tbody>
@@ -385,6 +393,16 @@ function Historico({ ganhadores }: { ganhadores: GanhadorApuracao[] }) {
                     <td className="p-2">
                       <Badge variant="secondary">{g.cupom_status ?? "—"}</Badge>
                     </td>
+                    <td className="p-2 text-right">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label="Ver dados completos do participante"
+                        onClick={() => setSelecionado(g.id)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -392,6 +410,93 @@ function Historico({ ganhadores }: { ganhadores: GanhadorApuracao[] }) {
           </div>
         )}
       </CardContent>
+
+      <ModalDadosGanhador
+        ganhadorId={selecionado}
+        onFechar={() => setSelecionado(null)}
+      />
     </Card>
+  );
+}
+
+/** CPF completo: 000.000.000-00. */
+function cpfCompleto(cpf: string | null): string {
+  const d = (cpf ?? "").replace(/\D/g, "");
+  if (d.length !== 11) return cpf ?? "—";
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+/** Telefone completo: (34) 99999-0000 ou (34) 3333-0000. */
+function telefoneCompleto(telefone: string | null): string {
+  let d = (telefone ?? "").replace(/\D/g, "");
+  if (!d) return "—";
+  if (d.startsWith("55") && d.length > 11) d = d.slice(2);
+  if (d.length < 10) return telefone ?? "—";
+  const parte2 = d.length === 11 ? `${d.slice(2, 7)}-${d.slice(7)}` : `${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${parte2}`;
+}
+
+/** Data de nascimento (AAAA-MM-DD) para DD/MM/AAAA. */
+function nascimentoBR(iso: string | null): string {
+  if (!iso) return "—";
+  const [ano, mes, dia] = iso.slice(0, 10).split("-");
+  return ano && mes && dia ? `${dia}/${mes}/${ano}` : iso;
+}
+
+function ModalDadosGanhador({
+  ganhadorId,
+  onFechar,
+}: {
+  ganhadorId: string | null;
+  onFechar: () => void;
+}) {
+  const buscar = useServerFn(dadosCompletosGanhador);
+
+  const { data, isLoading, error } = useQuery<DadosCompletosGanhador>({
+    queryKey: ["ganhador-dados-completos", ganhadorId],
+    queryFn: () => buscar({ data: { ganhadorId: ganhadorId! } }) as Promise<DadosCompletosGanhador>,
+    enabled: ganhadorId !== null,
+  });
+
+  return (
+    <Dialog open={ganhadorId !== null} onOpenChange={(aberto) => !aberto && onFechar()}>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Dados completos do participante</DialogTitle>
+          <DialogDescription>
+            Informações exibidas apenas para conferência e contato com o ganhador.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading && <p className="text-sm text-muted-foreground">Carregando dados...</p>}
+        {error && <p className="text-sm text-destructive">{(error as Error).message}</p>}
+
+        {data && (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+              <p className="text-lg font-semibold">{data.nome}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Cupom <span className="font-mono tabular-nums">{data.numero_cupom}</span>
+                {data.premio_nome ? ` · ${data.premio_nome}` : ""}
+                {(data.premio_quantidade ?? 1) > 1 && data.unidade
+                  ? ` (unidade ${data.unidade})`
+                  : ""}
+              </p>
+            </div>
+            <div className="grid gap-2 text-sm sm:grid-cols-2">
+              <Linha rotulo="CPF" valor={cpfCompleto(data.cpf)} />
+              <Linha rotulo="Telefone" valor={telefoneCompleto(data.telefone)} />
+              <Linha rotulo="Nascimento" valor={nascimentoBR(data.data_nascimento)} />
+              <Linha rotulo="E-mail" valor={data.email ?? "—"} />
+              <Linha rotulo="Sorteado em" valor={dataHoraBR(data.sorteado_em)} />
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button onClick={onFechar}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

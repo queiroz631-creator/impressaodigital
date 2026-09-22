@@ -662,3 +662,64 @@ export const realizarSorteio = createServerFn({ method: "POST" })
     }
     return r;
   });
+
+/**
+ * Dados completos do participante ganhador (CPF, telefone etc.), buscados sob
+ * demanda no servidor. A listagem do histórico continua protegida; só quem
+ * tem permissão de gestão revela os dados, um ganhador por vez.
+ */
+export const dadosCompletosGanhador = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ ganhadorId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigirGestao(context);
+    const { supabase } = context;
+
+    const { data: ganhador, error: erroGanhador } = await supabase
+      .from("sorteio_ganhadores")
+      .select("id, numero_cupom, unidade, sorteado_em, participante_id, premio_id")
+      .eq("id", data.ganhadorId)
+      .maybeSingle();
+    if (erroGanhador) throw new Error(erroGanhador.message);
+    if (!ganhador) throw new Error("Ganhador não encontrado.");
+
+    const [{ data: participante, error: erroParticipante }, premio] = await Promise.all([
+      supabase
+        .from("sorteio_participantes")
+        .select("cliente_id")
+        .eq("id", ganhador.participante_id)
+        .maybeSingle(),
+      ganhador.premio_id
+        ? supabase
+            .from("sorteio_premios")
+            .select("nome, quantidade")
+            .eq("id", ganhador.premio_id)
+            .maybeSingle()
+            .then((r) => r.data)
+        : Promise.resolve(null),
+    ]);
+    if (erroParticipante) throw new Error(erroParticipante.message);
+    if (!participante) throw new Error("Participante do ganhador não encontrado.");
+
+    const { data: cliente, error: erroCliente } = await supabase
+      .from("clientes")
+      .select("nome, cpf, telefone, data_nascimento, email")
+      .eq("id", participante.cliente_id)
+      .maybeSingle();
+    if (erroCliente) throw new Error(erroCliente.message);
+    if (!cliente) throw new Error("Cadastro do participante não encontrado.");
+
+    return {
+      ganhador_id: ganhador.id,
+      numero_cupom: ganhador.numero_cupom,
+      premio_nome: premio?.nome ?? null,
+      premio_quantidade: premio?.quantidade ?? null,
+      unidade: ganhador.unidade,
+      sorteado_em: ganhador.sorteado_em,
+      nome: cliente.nome,
+      cpf: cliente.cpf,
+      telefone: cliente.telefone,
+      data_nascimento: cliente.data_nascimento,
+      email: cliente.email,
+    };
+  });
