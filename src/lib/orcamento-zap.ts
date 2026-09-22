@@ -82,6 +82,10 @@ export function textoOrcamentoZap(doc: DadosDocumento) {
     }
   }
 
+  if (doc.observacao?.trim()) {
+    partes.push(`*Observações:*\n${doc.observacao.trim()}`);
+  }
+
   //partes.push(OBS_FINAL);
   return partes.join("\n\n");
 }
