@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Plus, Save, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -153,6 +153,22 @@ export function FormularioCurriculo({
     if (!valor) {
       setExperiencias((a) => a.map((v, j) => (j === i ? { ...v, atividades: "" } : v)));
     }
+  };
+
+  // Reordena as experiências trocando com a vizinha (também troca a flag de atividades)
+  const moverExperiencia = (i: number, direcao: -1 | 1) => {
+    const j = i + direcao;
+    if (j < 0 || j >= experiencias.length) return;
+    setExperiencias((a) => {
+      const copia = [...a];
+      [copia[i], copia[j]] = [copia[j], copia[i]];
+      return copia;
+    });
+    setAtividadesVisiveis((a) => {
+      const copia = { ...a };
+      [copia[i], copia[j]] = [copia[j] ?? false, copia[i] ?? false];
+      return copia;
+    });
   };
 
   // Graduações adicionais: sempre exibe um card vazio no fim
