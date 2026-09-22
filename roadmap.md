@@ -135,3 +135,6 @@
 ## Portal do sorteio — melhorias em andamento
 - [x] Mensagem específica "telefone já cadastrado" nos fluxos de entrar/cadastrar (código TELEFONE_EM_USO, auditoria com motivo)
 - [x] Campo de data de nascimento com duas formas de preenchimento: calendário (seletor de data) ou texto digitado com máscara DD/MM/AAAA
+
+## Configurações — aba IA
+- [x] Aba "IA" em Configurações: escolha do provedor (OpenAI/Gemini, pela Lovable ou com chave própria), modelos, cofre da chave no servidor e botão de teste real.
