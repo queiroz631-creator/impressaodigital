@@ -158,6 +158,48 @@ const ICONE_STATUS: Record<StatusConversa, LucideIcon> = {
   finalizado: CheckCircle2,
 };
 
+/**
+ * Cor de cada status — `cheia` para a aba ativa, `suave` para abas inativas e
+ * para os botões de ação, de forma que o mesmo status seja sempre da mesma cor.
+ */
+const COR_STATUS: Record<StatusConversa, { cheia: string; suave: string }> = {
+  automatico: {
+    cheia: "border-violet-600 bg-violet-600 text-white hover:bg-violet-700 dark:border-violet-500 dark:bg-violet-600 dark:hover:bg-violet-500",
+    suave:
+      "border-violet-500/60 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-400/40 dark:bg-violet-950/50 dark:text-violet-300 dark:hover:bg-violet-900/50",
+  },
+  aguardando: {
+    cheia: "border-amber-500 bg-amber-500 text-amber-950 hover:bg-amber-600 dark:border-amber-400 dark:bg-amber-400 dark:text-amber-950 dark:hover:bg-amber-300",
+    suave:
+      "border-amber-500/60 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-400/40 dark:bg-amber-950/50 dark:text-amber-300 dark:hover:bg-amber-900/50",
+  },
+  em_atendimento: {
+    cheia: "border-sky-600 bg-sky-600 text-white hover:bg-sky-700 dark:border-sky-500 dark:bg-sky-600 dark:hover:bg-sky-500",
+    suave:
+      "border-sky-500/60 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:border-sky-400/40 dark:bg-sky-950/50 dark:text-sky-300 dark:hover:bg-sky-900/50",
+  },
+  pendente: {
+    cheia: "border-orange-600 bg-orange-600 text-white hover:bg-orange-700 dark:border-orange-500 dark:bg-orange-600 dark:hover:bg-orange-500",
+    suave:
+      "border-orange-500/60 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-400/40 dark:bg-orange-950/50 dark:text-orange-300 dark:hover:bg-orange-900/50",
+  },
+  esperando_impressao: {
+    cheia: "border-teal-600 bg-teal-600 text-white hover:bg-teal-700 dark:border-teal-500 dark:bg-teal-600 dark:hover:bg-teal-500",
+    suave:
+      "border-teal-500/60 bg-teal-50 text-teal-700 hover:bg-teal-100 dark:border-teal-400/40 dark:bg-teal-950/50 dark:text-teal-300 dark:hover:bg-teal-900/50",
+  },
+  aguardando_finalizacao: {
+    cheia: "border-fuchsia-600 bg-fuchsia-600 text-white hover:bg-fuchsia-700 dark:border-fuchsia-500 dark:bg-fuchsia-600 dark:hover:bg-fuchsia-500",
+    suave:
+      "border-fuchsia-500/60 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100 dark:border-fuchsia-400/40 dark:bg-fuchsia-950/50 dark:text-fuchsia-300 dark:hover:bg-fuchsia-900/50",
+  },
+  finalizado: {
+    cheia: "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 dark:border-emerald-500 dark:bg-emerald-600 dark:hover:bg-emerald-500",
+    suave:
+      "border-emerald-500/60 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-400/40 dark:bg-emerald-950/50 dark:text-emerald-300 dark:hover:bg-emerald-900/50",
+  },
+};
+
 function useConversas(conexaoId: string | null) {
   return useQuery({
     queryKey: ["whatsapp-conversas", conexaoId],
@@ -428,6 +470,7 @@ function Atendimento() {
       <div className="flex flex-wrap gap-1">
         {STATUS_CONVERSA.map((s) => {
           const Icone = ICONE_STATUS[s.valor];
+          const cor = COR_STATUS[s.valor];
           const ativo = aba === s.valor;
           const novas = naoLidasPorStatus[s.valor] ?? 0;
           const rotulo = novas > 0 ? `${s.rotulo} — ${novas} nova(s) mensagem(ns)` : s.rotulo;
@@ -440,11 +483,8 @@ function Atendimento() {
               onClick={() => setAba(s.valor)}
               className={cn(
                 "relative flex items-center gap-1 rounded-md border px-2 py-1.5 text-xs transition-colors",
-                ativo
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : novas > 0
-                    ? "border-destructive font-bold text-destructive hover:bg-muted"
-                    : "border-border text-muted-foreground hover:bg-muted",
+                ativo ? cor.cheia : cor.suave,
+                novas > 0 && "font-bold",
               )}
             >
               <Icone className={cn("h-4 w-4", novas > 0 && !ativo && "animate-pulse")} />
