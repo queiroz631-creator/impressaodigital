@@ -686,6 +686,7 @@ export const listarMeusCupons = createServerFn({ method: "GET" }).handler(async 
       .from("sorteio_cupons")
       .select("id, numero, status, valor_base_centavos, gerado_em")
       .eq("participante_id", participante.id)
+      .eq("status", "ATIVO")
       .order("gerado_em", { ascending: false })
       .limit(200);
     return { cupons: data ?? [] };

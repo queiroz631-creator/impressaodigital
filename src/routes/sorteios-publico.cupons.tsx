@@ -49,13 +49,7 @@ function CuponsPortal() {
                     <p className="font-mono text-lg font-semibold truncate">{cupom.numero}</p>
                     <p className="text-xs text-muted-foreground">{dataHoraBR(cupom.gerado_em)}</p>
                   </div>
-                  {cupom.status === "CANCELADO" ? (
-                    <Badge variant="outline">Cancelado</Badge>
-                  ) : cupom.status === "UTILIZADO" ? (
-                    <Badge variant="secondary">Utilizado</Badge>
-                  ) : (
-                    <Badge>Ativo</Badge>
-                  )}
+                  <Badge>Ativo</Badge>
                 </CardContent>
               </Card>
             ))}
