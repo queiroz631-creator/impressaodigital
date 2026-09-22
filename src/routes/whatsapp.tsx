@@ -2214,7 +2214,6 @@ function MidiaMensagem({
 }) {
   const [aberto, setAberto] = useState(false);
   const [transcricao, setTranscricao] = useState<string | null>(mensagem.transcricao);
-  const [transcricaoAberta, setTranscricaoAberta] = useState(false);
   const [carregandoTranscricao, setCarregandoTranscricao] = useState(false);
   const transcrever = useServerFn(transcreverAudioWhatsapp);
 
@@ -2225,7 +2224,6 @@ function MidiaMensagem({
       const r = await transcrever({ data: { mensagemId: mensagem.id } });
       if (r.ok && r.texto) {
         setTranscricao(r.texto);
-        setTranscricaoAberta(true);
       } else {
         toast.error(r.erro ?? "Não foi possível transcrever o áudio.");
       }
