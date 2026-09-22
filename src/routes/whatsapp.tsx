@@ -655,7 +655,7 @@ function Atendimento() {
       {seletorConexao}
       <div
         className="grid h-[calc(100vh-12rem)] gap-0"
-        style={{ gridTemplateColumns: `${larguraLista}px 12px 1fr` }}
+        style={{ gridTemplateColumns: `${larguraLista}px 12px minmax(0, 1fr)` }}
       >
         <Card className="flex min-h-0 flex-col">
           <CardContent className="flex min-h-0 flex-1 flex-col p-3">{painelContatos}</CardContent>
@@ -672,7 +672,7 @@ function Atendimento() {
           <span className="h-16 w-1 rounded-full bg-border transition-colors group-hover:bg-primary" />
         </div>
 
-        <div className="min-h-0">
+        <div className="min-h-0 min-w-0">
           {aberta ? (
             <Conversa
               key={aberta.id}
@@ -1616,9 +1616,9 @@ function Conversa({
 
               {(mensagens ?? []).map((m) =>
                 m.tipo === "sistema" ? (
-                  <div key={m.id} className="flex items-center gap-2 py-2">
+                  <div key={m.id} className="flex min-w-0 items-center gap-2 py-2">
                     <span className="h-px flex-1 bg-border" />
-                    <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span className="min-w-0 max-w-full rounded-full bg-muted px-3 py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground [overflow-wrap:anywhere]">
                       {m.texto ?? "Novo atendimento"}
                     </span>
                     <span className="h-px flex-1 bg-border" />
@@ -1627,7 +1627,7 @@ function Conversa({
                   <div
                     key={m.id}
                     className={cn(
-                      "group flex items-center gap-1",
+                      "group flex min-w-0 max-w-full items-center gap-1 overflow-hidden",
                       m.direcao === "saida" ? "justify-end" : "justify-start",
                     )}
                   >
@@ -1675,7 +1675,7 @@ function Conversa({
                         selecionando && m.arquivo_url ? () => alternarSelecao(m.id) : undefined
                       }
                       className={cn(
-                        "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+                        "min-w-0 max-w-[80%] overflow-hidden rounded-2xl px-3 py-2 text-sm shadow-sm",
                         m.direcao === "saida"
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-foreground",
@@ -1696,7 +1696,7 @@ function Conversa({
                       {m.texto && (
                         <p
                           className={cn(
-                            "whitespace-pre-wrap break-words",
+                            "max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
                             m.apagada && "line-through",
                           )}
                         >
@@ -2298,7 +2298,7 @@ function MidiaMensagem({
 
   if (ehAudio) {
     return (
-      <div className="mb-1 space-y-1">
+      <div className="mb-1 min-w-0 max-w-full space-y-1 overflow-hidden">
         <audio controls={!selecionando} src={urlMidia(mensagem.id)} className="w-56 max-w-full" />
         {!selecionando && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -2323,7 +2323,7 @@ function MidiaMensagem({
           </div>
         )}
         {transcricao && !selecionando && (
-          <div className="max-w-md rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          <div className="min-w-0 max-w-full rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100 sm:max-w-md">
             <div className="mb-1 flex items-center justify-between gap-2">
               <span className="inline-flex items-center gap-1 text-xs font-semibold">
                 <Mic className="h-3 w-3" /> Transcrição
@@ -2340,7 +2340,9 @@ function MidiaMensagem({
                 <Copy className="h-3 w-3" /> Copiar
               </button>
             </div>
-            <p className="whitespace-pre-wrap break-words text-sm">{transcricao}</p>
+            <p className="max-w-full whitespace-pre-wrap break-words text-sm [overflow-wrap:anywhere]">
+              {transcricao}
+            </p>
           </div>
         )}
       </div>
