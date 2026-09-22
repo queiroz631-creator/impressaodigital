@@ -1587,7 +1587,26 @@ function Conversa({
       <div className="flex min-h-0 flex-1 gap-3">
         <Card className="flex min-h-0 min-w-0 flex-1 flex-col">
           <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
-            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+            <div ref={scroll} className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+              {!isLoading &&
+                (semMais ? (
+                  (mensagens ?? []).length > 0 && (
+                    <p className="py-1 text-center text-[11px] uppercase tracking-wide text-muted-foreground">
+                      Início da conversa
+                    </p>
+                  )
+                ) : (
+                  <div className="flex justify-center py-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={carregandoAnteriores}
+                      onClick={() => void carregarAnteriores()}
+                    >
+                      {carregandoAnteriores ? "Carregando..." : "Carregar mensagens anteriores"}
+                    </Button>
+                  </div>
+                ))}
               {isLoading && <Skeleton className="h-20 w-full" />}
               {!isLoading && (mensagens ?? []).length === 0 && (
                 <p className="py-8 text-center text-sm text-muted-foreground">
