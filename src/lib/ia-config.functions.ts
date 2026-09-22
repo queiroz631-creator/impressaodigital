@@ -73,8 +73,8 @@ export const estadoIA = createServerFn({ method: "GET" })
 
 /** Salva provedor e modelos escolhidos. */
 export const salvarConfiguracaoIA = createServerFn({ method: "POST" })
-  .validator((input: unknown) => esquemaConfig.parse(input))
   .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => esquemaConfig.parse(input))
   .handler(async ({ data, context }) => {
     await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -109,7 +109,8 @@ export const salvarConfiguracaoIA = createServerFn({ method: "POST" })
 
 /** Grava (ou substitui) a chave própria de um provedor. */
 export const salvarChaveIA = createServerFn({ method: "POST" })
-  .validator((input: unknown) =>
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
     z
       .object({
         provedor: z.enum(["openai_proprio", "gemini_proprio"]),
@@ -117,7 +118,6 @@ export const salvarChaveIA = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -140,10 +140,10 @@ export const salvarChaveIA = createServerFn({ method: "POST" })
 
 /** Remove a chave própria de um provedor. */
 export const removerChaveIA = createServerFn({ method: "POST" })
-  .validator((input: unknown) =>
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
     z.object({ provedor: z.enum(["openai_proprio", "gemini_proprio"]) }).parse(input),
   )
-  .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     await exigirAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
