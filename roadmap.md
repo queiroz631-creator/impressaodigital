@@ -129,6 +129,7 @@
 - [x] `sorteio_realizar`: FOR UPDATE + status ENCERRADO + próximo prêmio/unidade na ordem + urna sem participantes já ganhadores + sorteio no banco + ganhador + auditoria `sorteio.realizado` + SORTEADO só na última unidade; rollback total
 - [x] Aba "Sortear" (ENCERRADO/SORTEADO): resumo, prêmios, animação da urna (só visual), card do ganhador e histórico
 - [x] Ajustar resultado: modal de roleta, remover Cliente e exibir somente os 4 últimos dígitos de CPF/telefone
+- [x] Histórico de ganhadores: botão (olho) por linha abre modal com dados completos do participante (CPF, telefone, nascimento, e-mail), buscados no servidor sob demanda com permissão de gestão; listagem segue mascarada
 - [ ] Bateria de testes finais da apuração (não executada nesta etapa, conforme solicitado)
 
 ## Portal do sorteio — melhorias em andamento
