@@ -241,7 +241,12 @@ async function textoGeminiDireto(
     if (!r.ok)
       return { status: r.status, conteudo: null, erroBruto: await r.text().catch(() => "") };
     const corpo = await r.json();
-    return { status: 200, conteudo: textoGemini(corpo), motivoParada: motivoGemini(corpo) };
+    const motivo = motivoGemini(corpo);
+    return {
+      status: 200,
+      conteudo: textoGemini(corpo),
+      ...(motivo ? { motivoParada: motivo } : {}),
+    };
   } catch (e) {
     return { status: 0, conteudo: null, erroBruto: e instanceof Error ? e.message : "" };
   }
