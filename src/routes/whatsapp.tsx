@@ -655,7 +655,7 @@ function Atendimento() {
       {seletorConexao}
       <div
         className="grid h-[calc(100vh-12rem)] gap-0"
-        style={{ gridTemplateColumns: `${larguraLista}px 12px 1fr` }}
+        style={{ gridTemplateColumns: `${larguraLista}px 12px minmax(0, 1fr)` }}
       >
         <Card className="flex min-h-0 flex-col">
           <CardContent className="flex min-h-0 flex-1 flex-col p-3">{painelContatos}</CardContent>
@@ -672,7 +672,7 @@ function Atendimento() {
           <span className="h-16 w-1 rounded-full bg-border transition-colors group-hover:bg-primary" />
         </div>
 
-        <div className="min-h-0">
+        <div className="min-h-0 min-w-0">
           {aberta ? (
             <Conversa
               key={aberta.id}
