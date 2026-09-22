@@ -1381,8 +1381,9 @@ function Conversa({
 
         <Button
           size="sm"
-          variant="secondary"
+          variant="outline"
           title="Assumir"
+          className={COR_STATUS.em_atendimento.suave}
           onClick={() => alterarStatus("em_atendimento", "assumiu")}
         >
           <UserCheck className="h-4 w-4" />
@@ -1391,6 +1392,7 @@ function Conversa({
           size="sm"
           variant="outline"
           title="Devolver ao bot"
+          className={COR_STATUS.automatico.suave}
           onClick={() => alterarStatus("automatico", "devolveu_bot")}
         >
           <BotIcon className="h-4 w-4" />
@@ -1399,6 +1401,7 @@ function Conversa({
           size="sm"
           variant="outline"
           title="Pendente"
+          className={COR_STATUS.pendente.suave}
           onClick={() => alterarStatus("pendente", "marcou_pendente")}
         >
           <AlertCircle className="h-4 w-4" />
@@ -1407,6 +1410,7 @@ function Conversa({
           size="sm"
           variant="outline"
           title="Fila de impressão"
+          className={COR_STATUS.esperando_impressao.suave}
           onClick={() => alterarStatus("esperando_impressao", "fila_impressao")}
         >
           <Printer className="h-4 w-4" />
@@ -1415,11 +1419,17 @@ function Conversa({
           size="sm"
           variant="outline"
           title="Enviar para Aguardando Finalização"
+          className={COR_STATUS.aguardando_finalizacao.suave}
           onClick={() => void enviarFinalizacao()}
         >
           <Flag className="h-4 w-4" />
         </Button>
-        <Button size="sm" title="Finalizar" onClick={() => setFinalizarAberto(true)}>
+        <Button
+          size="sm"
+          title="Finalizar"
+          className={COR_STATUS.finalizado.cheia}
+          onClick={() => setFinalizarAberto(true)}
+        >
           <CheckCircle2 className="h-4 w-4" />
         </Button>
         <Button
