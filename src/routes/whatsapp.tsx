@@ -832,21 +832,110 @@ function Conversa({
     });
   }
 
+  /** Baixa até 3 arquivos separadamente; acima disso, junta tudo num único ZIP. */
   async function baixarSelecionados() {
     const ids = Array.from(selecionados);
-    if (ids.length === 0) return;
-    for (const [i, id] of ids.entries()) {
+    if (ids.length === 0 || preparandoZip) return;
+
+    if (ids.length <= 3) {
+      for (const [i, id] of ids.entries()) {
+        const a = document.createElement("a");
+        a.href = urlMidia(id, true);
+        a.download = "";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        if (i < ids.length - 1) await new Promise((r) => setTimeout(r, 400));
+      }
+      toast.success(ids.length === 1 ? "1 arquivo baixado." : `${ids.length} arquivos baixados.`);
+      setSelecionando(false);
+      setSelecionados(new Set());
+      return;
+    }
+
+    setPreparandoZip(true);
+    const aviso = toast.loading(`Preparando ${ids.length} arquivos...`);
+    try {
+      const { default: JSZip } = await import("jszip");
+      const zip = new JSZip();
+      const usados = new Map<string, number>();
+      let falhas = 0;
+      let indice = 0;
+
+      const nomeUnico = (bruto: string) => {
+        const limpo = (bruto || "arquivo").replace(/[\\/:*?"<>|\r\n]/g, "_").trim() || "arquivo";
+        const contagem = usados.get(limpo) ?? 0;
+        usados.set(limpo, contagem + 1);
+        if (contagem === 0) return limpo;
+        const ponto = limpo.lastIndexOf(".");
+        return ponto > 0
+          ? `${limpo.slice(0, ponto)} (${contagem + 1})${limpo.slice(ponto)}`
+          : `${limpo} (${contagem + 1})`;
+      };
+
+      const lote = 4;
+      for (let i = 0; i < ids.length; i += lote) {
+        const parte = ids.slice(i, i + lote);
+        const baixados = await Promise.all(
+          parte.map(async (id) => {
+            try {
+              const resposta = await fetch(urlMidia(id, true));
+              if (!resposta.ok) return null;
+              const blob = await resposta.blob();
+              const msg = (mensagens ?? []).find((m) => m.id === id);
+              const cabecalho = resposta.headers.get("content-disposition") ?? "";
+              const doCabecalho = /filename="?([^";]+)"?/i.exec(cabecalho)?.[1] ?? "";
+              return { blob, nome: msg?.arquivo_nome ?? doCabecalho };
+            } catch {
+              return null;
+            }
+          }),
+        );
+        for (const item of baixados) {
+          indice += 1;
+          if (!item) {
+            falhas += 1;
+            continue;
+          }
+          zip.file(nomeUnico(item.nome || `arquivo-${indice}`), item.blob);
+        }
+        toast.loading(`Preparando ${Math.min(i + lote, ids.length)} de ${ids.length}...`, {
+          id: aviso,
+        });
+      }
+
+      const total = ids.length - falhas;
+      if (total === 0) {
+        toast.error("Não foi possível baixar os arquivos selecionados.", { id: aviso });
+        return;
+      }
+
+      const conteudo = await zip.generateAsync({ type: "blob" });
+      const dia = new Date().toISOString().slice(0, 10);
+      const nomeZip = conversa.atendimento_numero
+        ? `atendimento-${conversa.atendimento_numero}-${dia}.zip`
+        : `arquivos-${dia}.zip`;
+      const url = URL.createObjectURL(conteudo);
       const a = document.createElement("a");
-      a.href = urlMidia(id, true);
-      a.download = "";
+      a.href = url;
+      a.download = nomeZip;
       document.body.appendChild(a);
       a.click();
       a.remove();
-      if (i < ids.length - 1) await new Promise((r) => setTimeout(r, 400));
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+      if (falhas > 0) {
+        toast.warning(`${total} arquivos no ZIP. ${falhas} não puderam ser baixados.`, { id: aviso });
+      } else {
+        toast.success(`${total} arquivos baixados em um único ZIP.`, { id: aviso });
+      }
+      setSelecionando(false);
+      setSelecionados(new Set());
+    } catch {
+      toast.error("Falha ao gerar o ZIP dos arquivos.", { id: aviso });
+    } finally {
+      setPreparandoZip(false);
     }
-    toast.success(ids.length === 1 ? "1 arquivo baixado." : `${ids.length} arquivos baixados.`);
-    setSelecionando(false);
-    setSelecionados(new Set());
   }
 
   /** Retorna os IDs dos arquivos do atendimento mais recente (após o último divisor "ATENDIMENTO N"). Somente arquivos recebidos do cliente. */
