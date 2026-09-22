@@ -121,6 +121,16 @@ export function mensagemErroImportacao(codigo: string): string {
       return "Arquivo corrompido ou ilegível. Tente enviar outro arquivo.";
     case "IA_INDISPONIVEL":
       return "Não foi possível interpretar o currículo agora. Tente novamente em instantes.";
+    case "IA_OCUPADA":
+      return "O serviço de IA está ocupado neste momento. Tente novamente em alguns instantes.";
+    case "IA_LIMITE":
+      return "O limite de uso da IA foi atingido. Aguarde alguns minutos e tente novamente.";
+    case "IA_CREDITOS":
+      return "Os créditos de IA acabaram. Verifique a configuração na aba IA.";
+    case "IA_CHAVE":
+      return "A chave da IA foi recusada. Verifique a configuração na aba IA.";
+    case "IA_MODELO":
+      return "O modelo de IA configurado não está disponível para esta chave. Escolha outro na aba IA.";
     default:
       return "Não foi possível importar este currículo. Tente outro arquivo.";
   }
