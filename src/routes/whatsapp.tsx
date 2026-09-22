@@ -683,6 +683,7 @@ function Conversa({
   const [selecionando, setSelecionando] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [selecionarAoCarregar, setSelecionarAoCarregar] = useState(false);
+  const [preparandoZip, setPreparandoZip] = useState(false);
   const [finalizarAberto, setFinalizarAberto] = useState(false);
   const [rapidasAberto, setRapidasAberto] = useState(false);
   // Painel de anotações do cliente (direita): preferência fica salva no navegador.
