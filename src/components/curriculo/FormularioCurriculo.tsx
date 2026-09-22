@@ -161,7 +161,7 @@ export function FormularioCurriculo({
     if (j < 0 || j >= experiencias.length) return;
     setExperiencias((a) => {
       const copia = [...a];
-      [copia[i], copia[j]] = [copia[j], copia[i]];
+      [copia[i], copia[j]] = [copia[j]!, copia[i]!];
       return copia;
     });
     setAtividadesVisiveis((a) => {
