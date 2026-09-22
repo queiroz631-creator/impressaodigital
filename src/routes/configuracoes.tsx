@@ -25,6 +25,7 @@ import {
 } from "@/lib/impressora";
 import { PIX_MENSAGEM_PADRAO, PRAZO_MENSAGEM_PADRAO } from "@/lib/orcamento-extras";
 import { PerfisImpressao } from "@/components/PerfisImpressao";
+import { ConfiguracaoIA } from "@/components/ConfiguracaoIA";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -267,6 +268,7 @@ function Configuracoes() {
           <TabsTrigger value="pix">PIX e prazo</TabsTrigger>
           <TabsTrigger value="impressao">Impressão</TabsTrigger>
           <TabsTrigger value="link">Link do orçamento</TabsTrigger>
+          <TabsTrigger value="ia">IA</TabsTrigger>
         </TabsList>
 
         <TabsContent value="empresa">
@@ -672,6 +674,10 @@ function Configuracoes() {
 
         <TabsContent value="link">
           <CardLinkPublico />
+        </TabsContent>
+
+        <TabsContent value="ia">
+          <ConfiguracaoIA />
         </TabsContent>
       </Tabs>
     </>
