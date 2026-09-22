@@ -232,6 +232,7 @@ async function textoGeminiDireto(
           contents: [{ role: "user", parts: [{ text: usuario }] }],
           generationConfig: {
             temperature: 0,
+            maxOutputTokens: 8192,
             ...(json ? { responseMimeType: "application/json" } : {}),
           },
         }),
@@ -239,9 +240,10 @@ async function textoGeminiDireto(
     );
     if (!r.ok)
       return { status: r.status, conteudo: null, erroBruto: await r.text().catch(() => "") };
-    return { status: 200, conteudo: textoGemini(await r.json()) };
-  } catch {
-    return { status: 0, conteudo: null };
+    const corpo = await r.json();
+    return { status: 200, conteudo: textoGemini(corpo), motivoParada: motivoGemini(corpo) };
+  } catch (e) {
+    return { status: 0, conteudo: null, erroBruto: e instanceof Error ? e.message : "" };
   }
 }
 
