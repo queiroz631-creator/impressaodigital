@@ -35,6 +35,7 @@ import { IndicadorCard } from "./IndicadorCard";
 import { RoletaCupons } from "./RoletaCupons";
 import type {
   ApuracaoSorteio,
+  DadosCompletosGanhador,
   GanhadorApuracao,
   PremioApuracao,
   ResultadoApuracao,
@@ -350,6 +351,8 @@ function Linha({
 }
 
 function Historico({ ganhadores }: { ganhadores: GanhadorApuracao[] }) {
+  const [selecionado, setSelecionado] = useState<string | null>(null);
+
   return (
     <Card>
       <CardHeader>
