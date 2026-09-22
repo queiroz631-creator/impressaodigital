@@ -43,7 +43,29 @@ export interface ResultadoIA {
   conteudo: string | null;
   /** Corpo de erro do provedor (para extrair mensagens), quando houver. */
   erroBruto?: string;
+  /** Motivo de parada do modelo (ex.: MAX_TOKENS = resposta cortada). */
+  motivoParada?: string;
 }
+
+/** Log de diagnóstico da IA. Nunca registra chaves. */
+function registrarFalhaIA(onde: string, r: ResultadoIA) {
+  const detalhe = (r.erroBruto ?? "").slice(0, 600);
+  console.error(
+    `[IA] ${onde} falhou status=${r.status} motivo=${r.motivoParada ?? "-"} detalhe=${detalhe}`,
+  );
+}
+
+/** Falhas temporárias do provedor: vale tentar de novo. */
+function falhaTemporaria(r: ResultadoIA): boolean {
+  if (r.status === 0) return true; // rede
+  if (r.status === 429 || r.status === 500 || r.status === 502 || r.status === 503 || r.status === 504)
+    return true;
+  // Resposta cortada ou vazia com status 200 também é tratada como temporária.
+  if (r.status === 200 && (r.motivoParada === "MAX_TOKENS" || !r.conteudo)) return true;
+  return false;
+}
+
+const esperar = (ms: number) => new Promise((ok) => setTimeout(ok, ms));
 
 interface ConfigIA {
   provedor: ProvedorIA;
