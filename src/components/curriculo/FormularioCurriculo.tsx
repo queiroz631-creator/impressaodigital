@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Plus, Save, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -153,6 +153,22 @@ export function FormularioCurriculo({
     if (!valor) {
       setExperiencias((a) => a.map((v, j) => (j === i ? { ...v, atividades: "" } : v)));
     }
+  };
+
+  // Reordena as experiências trocando com a vizinha (também troca a flag de atividades)
+  const moverExperiencia = (i: number, direcao: -1 | 1) => {
+    const j = i + direcao;
+    if (j < 0 || j >= experiencias.length) return;
+    setExperiencias((a) => {
+      const copia = [...a];
+      [copia[i], copia[j]] = [copia[j]!, copia[i]!];
+      return copia;
+    });
+    setAtividadesVisiveis((a) => {
+      const copia = { ...a };
+      [copia[i], copia[j]] = [copia[j] ?? false, copia[i] ?? false];
+      return copia;
+    });
   };
 
   // Graduações adicionais: sempre exibe um card vazio no fim
@@ -887,13 +903,35 @@ export function FormularioCurriculo({
                         />
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setExperiencias((a) => a.filter((_, j) => j !== i))}
-                    >
-                      <Trash2 className="mr-1 h-4 w-4" /> Remover
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={i === 0}
+                        title="Subir experiência"
+                        aria-label="Subir experiência"
+                        onClick={() => moverExperiencia(i, -1)}
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={i === experiencias.length - 1}
+                        title="Descer experiência"
+                        aria-label="Descer experiência"
+                        onClick={() => moverExperiencia(i, 1)}
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setExperiencias((a) => a.filter((_, j) => j !== i))}
+                      >
+                        <Trash2 className="mr-1 h-4 w-4" /> Remover
+                      </Button>
+                    </div>
                   </div>
                 ))}
               {possuiExperiencia && (
