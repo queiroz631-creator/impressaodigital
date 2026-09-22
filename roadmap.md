@@ -138,3 +138,11 @@
 
 ## Configurações — aba IA
 - [x] Aba "IA" em Configurações: escolha do provedor (OpenAI/Gemini, pela Lovable ou com chave própria), modelos, cofre da chave no servidor e botão de teste real.
+
+## WhatsApp — cor própria em cada botão de status
+- [x] Mapa de cores por status (`COR_STATUS`) reaproveitado nas abas e nos botões de ação
+- [x] Abas: cor cheia na ativa, tom suave na inativa (cada status com um matiz)
+- [x] Botões do cabeçalho: Assumir (azul), Devolver ao bot (violeta), Pendente (laranja),
+      Fila de impressão (verde-água), Aguardando Finalização (rosa), Finalizar (verde)
+- [x] Janela de finalização: "Finalizar agora" em verde, fluxos em rosa
+- [x] Suporte a tema claro e escuro; typecheck e build OK
