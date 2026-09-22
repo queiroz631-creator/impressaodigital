@@ -883,6 +883,9 @@ export type Database = {
           email: string | null
           empresa_nome: string
           endereco: string | null
+          ia_modelo: string | null
+          ia_modelo_audio: string | null
+          ia_provedor: string
           id: string
           impressora_padrao_largura: number
           impressora_padrao_nome: string | null
@@ -907,6 +910,9 @@ export type Database = {
           email?: string | null
           empresa_nome?: string
           endereco?: string | null
+          ia_modelo?: string | null
+          ia_modelo_audio?: string | null
+          ia_provedor?: string
           id?: string
           impressora_padrao_largura?: number
           impressora_padrao_nome?: string | null
@@ -931,6 +937,9 @@ export type Database = {
           email?: string | null
           empresa_nome?: string
           endereco?: string | null
+          ia_modelo?: string | null
+          ia_modelo_audio?: string | null
+          ia_provedor?: string
           id?: string
           impressora_padrao_largura?: number
           impressora_padrao_nome?: string | null
@@ -1333,6 +1342,27 @@ export type Database = {
           descricao?: string
           id?: string
           ordem?: number
+        }
+        Relationships: []
+      }
+      ia_credenciais: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          chave: string
+          provedor: string
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave: string
+          provedor: string
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          chave?: string
+          provedor?: string
         }
         Relationships: []
       }

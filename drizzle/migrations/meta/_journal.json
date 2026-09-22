@@ -99,6 +99,13 @@
       "when": 1789949648407,
       "tag": "0013_apuracao_dados_parciais_ganhador",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790071608324,
+      "tag": "0014_configuracao_ia",
+      "breakpoints": true
     }
   ]
 }
