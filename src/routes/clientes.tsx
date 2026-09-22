@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Eye, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { normalizarNomePessoa } from "@/lib/nome-pessoa";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -180,7 +181,7 @@ function Clientes() {
     setSalvando(true);
     try {
       const registro = {
-        nome: form.nome.trim(),
+        nome: normalizarNomePessoa(form.nome),
         telefone: form.telefone.trim() || null,
         telefone_normalizado: form.telefone.trim()
           ? normalizarTelefone(form.telefone) || null

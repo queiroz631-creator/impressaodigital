@@ -30,6 +30,7 @@ import {
   type SorteioRow,
 } from "./sorteios-publico.server";
 
+import { normalizarNomePessoa } from "@/lib/nome-pessoa";
 import { EVENTOS_AUDITORIA } from "@/modules/sorteios/types";
 import {
   normalizarCpf,
@@ -302,7 +303,7 @@ export const concluirCadastroPublico = createServerFn({ method: "POST" })
         }
         const atualizacao: { nome?: string; data_nascimento?: string } = {};
         if (!existente.nome?.trim()) {
-          const nome = data.nome.replace(/\s+/g, " ").trim();
+          const nome = normalizarNomePessoa(data.nome);
           const v = validarNomeCompleto(nome);
           if (!v.ok) throw new ErroPortal("VALIDACAO", v.erro ?? "Nome inválido.");
           atualizacao.nome = nome;
@@ -339,7 +340,7 @@ export const concluirCadastroPublico = createServerFn({ method: "POST" })
 
           const atualizacao: { cpf: string; nome?: string; data_nascimento?: string } = { cpf };
           if (!porTelefone.nome?.trim()) {
-            const nome = data.nome.replace(/\s+/g, " ").trim();
+            const nome = normalizarNomePessoa(data.nome);
             const v = validarNomeCompleto(nome);
             if (!v.ok) throw new ErroPortal("VALIDACAO", v.erro ?? "Nome inválido.");
             atualizacao.nome = nome;
@@ -369,7 +370,7 @@ export const concluirCadastroPublico = createServerFn({ method: "POST" })
             detalhe: { cpf: mascararCpf(cpf), vinculo: "cliente_existente_sem_cpf" },
           });
         } else {
-          const nome = data.nome.replace(/\s+/g, " ").trim();
+          const nome = normalizarNomePessoa(data.nome);
           const vNome = validarNomeCompleto(nome);
           if (!vNome.ok) throw new ErroPortal("VALIDACAO", vNome.erro ?? "Nome inválido.");
           const vNascimento = validarDataNascimento(data.data_nascimento);

@@ -12,6 +12,7 @@
  * Nada aqui gera cupom, número de cupom ou saldo.
  */
 import { enfileirar, dispararValidacaoDoSorteio } from "@/lib/sorteios-eventos.server";
+import { normalizarNomePessoa } from "@/lib/nome-pessoa";
 
 export const ORIGENS = ["LOJA", "SUPABASE"] as const;
 export type OrigemSync = (typeof ORIGENS)[number];
@@ -519,7 +520,7 @@ export async function receberClientesLote(entrada: {
       }
 
       const campos = {
-        nome: c.nome,
+        nome: normalizarNomePessoa(c.nome) || c.nome,
         cpf,
         telefone: c.telefone ?? null,
         telefone_normalizado: telefone,
