@@ -164,6 +164,23 @@
 }
 
 /* ==========================================================
+   TEMA DO PORTAL DE SORTEIOS (vermelho da logo)
+   Escopo local: só vale dentro do portal público do participante.
+   ========================================================== */
+.tema-portal-sorteios {
+  --primary: oklch(0.55 0.22 27);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.94 0.03 25);
+  --secondary-foreground: oklch(0.42 0.2 27);
+  --accent: oklch(0.94 0.04 25);
+  --accent-foreground: oklch(0.42 0.2 27);
+  --ring: oklch(0.6 0.22 27);
+  --sidebar-primary: oklch(0.55 0.22 27);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --chart-1: oklch(0.55 0.22 27);
+}
+
+/* ==========================================================
    ETIQUETA TÉRMICA 80mm
    ========================================================== */
 .etiqueta-80mm {
