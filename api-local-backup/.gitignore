@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.venv/
+venv/
+env/
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Configurações locais e segredos
+.env
+.env.*
+!.env.example
+config.json
+**/config.json
+*.secret
+*.token
+
+# Logs
+*.log
+logs/
+
+# Backups e arquivos gerados
+*.zip
+*.tar
+*.tar.gz
+*.bak
+*.backup
+
+# Executáveis gerados localmente
+*.exe
+
+# IDE / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
