@@ -903,13 +903,35 @@ export function FormularioCurriculo({
                         />
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setExperiencias((a) => a.filter((_, j) => j !== i))}
-                    >
-                      <Trash2 className="mr-1 h-4 w-4" /> Remover
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={i === 0}
+                        title="Subir experiência"
+                        aria-label="Subir experiência"
+                        onClick={() => moverExperiencia(i, -1)}
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={i === experiencias.length - 1}
+                        title="Descer experiência"
+                        aria-label="Descer experiência"
+                        onClick={() => moverExperiencia(i, 1)}
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setExperiencias((a) => a.filter((_, j) => j !== i))}
+                      >
+                        <Trash2 className="mr-1 h-4 w-4" /> Remover
+                      </Button>
+                    </div>
                   </div>
                 ))}
               {possuiExperiencia && (
