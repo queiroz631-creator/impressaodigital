@@ -2214,7 +2214,6 @@ function MidiaMensagem({
 }) {
   const [aberto, setAberto] = useState(false);
   const [transcricao, setTranscricao] = useState<string | null>(mensagem.transcricao);
-  const [transcricaoAberta, setTranscricaoAberta] = useState(false);
   const [carregandoTranscricao, setCarregandoTranscricao] = useState(false);
   const transcrever = useServerFn(transcreverAudioWhatsapp);
 
@@ -2225,7 +2224,6 @@ function MidiaMensagem({
       const r = await transcrever({ data: { mensagemId: mensagem.id } });
       if (r.ok && r.texto) {
         setTranscricao(r.texto);
-        setTranscricaoAberta(true);
       } else {
         toast.error(r.erro ?? "Não foi possível transcrever o áudio.");
       }
@@ -2311,15 +2309,7 @@ function MidiaMensagem({
             >
               <Download className="h-3 w-3" /> Baixar áudio
             </a>
-            {transcricao ? (
-              <button
-                type="button"
-                onClick={() => setTranscricaoAberta(true)}
-                className="inline-flex items-center gap-1 underline opacity-90"
-              >
-                <Mic className="h-3 w-3" /> Ver transcrição
-              </button>
-            ) : (
+            {!transcricao && (
               <button
                 type="button"
                 onClick={() => void transcreverAudio()}
@@ -2332,26 +2322,27 @@ function MidiaMensagem({
             )}
           </div>
         )}
-        <Dialog open={transcricaoAberta} onOpenChange={setTranscricaoAberta}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-sm">Transcrição do áudio</DialogTitle>
-            </DialogHeader>
-            <p className="whitespace-pre-wrap break-words text-sm">{transcricao ?? ""}</p>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                if (!transcricao) return;
-                void navigator.clipboard
-                  .writeText(transcricao)
-                  .then(() => toast.success("Transcrição copiada."));
-              }}
-            >
-              <Copy className="mr-2 h-4 w-4" /> Copiar transcrição
-            </Button>
-          </DialogContent>
-        </Dialog>
+        {transcricao && !selecionando && (
+          <div className="max-w-md rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold">
+                <Mic className="h-3 w-3" /> Transcrição
+              </span>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 text-xs underline opacity-80 hover:opacity-100"
+                onClick={() => {
+                  void navigator.clipboard
+                    .writeText(transcricao)
+                    .then(() => toast.success("Transcrição copiada."));
+                }}
+              >
+                <Copy className="h-3 w-3" /> Copiar
+              </button>
+            </div>
+            <p className="whitespace-pre-wrap break-words text-sm">{transcricao}</p>
+          </div>
+        )}
       </div>
     );
   }
