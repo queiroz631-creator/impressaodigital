@@ -202,6 +202,12 @@ function textoGemini(json: unknown): string {
     .trim();
 }
 
+/** Motivo de parada do Gemini (MAX_TOKENS, SAFETY, ...). */
+function motivoGemini(json: unknown): string | undefined {
+  const m = (json as { candidates?: { finishReason?: string }[] })?.candidates?.[0]?.finishReason;
+  return typeof m === "string" ? m : undefined;
+}
+
 function chaveLovable(): string | null {
   const k = process.env["LOVABLE_API_KEY"];
   return k && k.trim() ? k.trim() : null;
