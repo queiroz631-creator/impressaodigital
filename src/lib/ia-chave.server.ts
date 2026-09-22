@@ -365,7 +365,12 @@ async function textoResponsesLovable(
   }
 }
 
-/** Chamada de texto: prompt de sistema + prompt do usuário, opcionalmente JSON. */
+/**
+ * Chamada de texto: prompt de sistema + prompt do usuário, opcionalmente JSON.
+ *
+ * Falhas temporárias do provedor (ocupado, limite momentâneo, rede, resposta
+ * cortada) são repetidas automaticamente até 3 tentativas.
+ */
 export async function gerarTextoIA(
   sistema: string,
   usuario: string,
@@ -374,35 +379,57 @@ export async function gerarTextoIA(
   const cfg = await resolverConfigIA();
   const json = Boolean(opcoes.json);
 
-  if (cfg.provedor === "gemini_proprio" && cfg.chavePropria)
-    return textoGeminiDireto(cfg.chavePropria, cfg.modeloTexto, sistema, usuario, json);
+  const chamada = async (): Promise<ResultadoIA> => {
+    if (cfg.provedor === "gemini_proprio" && cfg.chavePropria)
+      return textoGeminiDireto(cfg.chavePropria, cfg.modeloTexto, sistema, usuario, json);
 
-  if (cfg.provedor === "openai_proprio" && cfg.chavePropria)
+    if (cfg.provedor === "openai_proprio" && cfg.chavePropria)
+      return textoChatCompletions(
+        "https://api.openai.com/v1/chat/completions",
+        { Authorization: `Bearer ${cfg.chavePropria}` },
+        cfg.modeloTexto,
+        sistema,
+        usuario,
+        json,
+        true,
+      );
+
+    const chave = chaveLovable();
+    if (!chave) return { status: 0, conteudo: null, erroBruto: "sem chave configurada" };
+
+    if (cfg.provedor === "lovable_openai")
+      return textoResponsesLovable(chave, cfg.modeloTexto, sistema, usuario, json);
+
     return textoChatCompletions(
-      "https://api.openai.com/v1/chat/completions",
-      { Authorization: `Bearer ${cfg.chavePropria}` },
+      `${LOVABLE_BASE}/chat/completions`,
+      { Authorization: `Bearer ${chave}` },
       cfg.modeloTexto,
       sistema,
       usuario,
       json,
-      true,
+      false,
     );
+  };
 
-  const chave = chaveLovable();
-  if (!chave) return { status: 0, conteudo: null };
+  const esperas = [800, 2000];
+  let ultimo: ResultadoIA = { status: 0, conteudo: null };
 
-  if (cfg.provedor === "lovable_openai")
-    return textoResponsesLovable(chave, cfg.modeloTexto, sistema, usuario, json);
+  for (let tentativa = 0; tentativa < esperas.length + 1; tentativa++) {
+    ultimo = await chamada();
+    if (ultimo.status === 200 && ultimo.conteudo && ultimo.motivoParada !== "MAX_TOKENS")
+      return ultimo;
 
-  return textoChatCompletions(
-    `${LOVABLE_BASE}/chat/completions`,
-    { Authorization: `Bearer ${chave}` },
-    cfg.modeloTexto,
-    sistema,
-    usuario,
-    json,
-    false,
-  );
+    registrarFalhaIA(
+      `texto ${cfg.provedor}/${cfg.modeloTexto} tentativa ${tentativa + 1}`,
+      ultimo,
+    );
+    if (!falhaTemporaria(ultimo)) return ultimo;
+    const espera = esperas[tentativa];
+    if (espera === undefined) break;
+    await esperar(espera);
+  }
+
+  return ultimo;
 }
 
 /** Transcrição de áudio (base64). Aceita OGG/Opus do WhatsApp. */
