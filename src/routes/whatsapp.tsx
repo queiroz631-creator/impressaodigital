@@ -1981,7 +1981,7 @@ function Conversa({
           </DialogHeader>
           <div className="space-y-2">
             <Button
-              className="w-full justify-start"
+              className={cn("w-full justify-start", COR_STATUS.finalizado.cheia)}
               onClick={() => {
                 setFinalizarAberto(false);
                 void alterarStatus("finalizado", "finalizou");
@@ -1993,7 +1993,7 @@ function Conversa({
               <Button
                 key={f.id}
                 variant="outline"
-                className="w-full justify-start"
+                className={cn("w-full justify-start", COR_STATUS.aguardando_finalizacao.suave)}
                 onClick={() => {
                   setFinalizarAberto(false);
                   void enviarFinalizacao(f.id);
