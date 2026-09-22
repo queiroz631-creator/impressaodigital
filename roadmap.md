@@ -154,3 +154,11 @@
 - [x] Arquivos do backup (BackupImpressaoDigital V6.4.2) copiados para `api-local-backup/`:
       `backup_app_v6_4.py`, `gerar_exe.bat`, `requirements.txt`, `README.md`, `VERSION`,
       `.env.example`, `.gitignore` (lista conferida com o ZIP; `api-local/` 1.1.7 intacta)
+
+## Migrações de banco — pastas e referência
+- [x] `supabase/migrations/` é a referência oficial: é a pasta que o deploy da VPS lê
+      (`deploy/deploy.sh` → `deploy/aplicar-migracoes.sh`), na ordem dos nomes datados.
+- [x] `drizzle/` NÃO deve ser apagada: é o controle interno da plataforma (journal + snapshots)
+      que registra o que já foi aplicado neste ambiente. É somente leitura.
+- [x] Regra permanente: toda mudança de banco nova feita aqui é gravada também em
+      `supabase/migrations/` no mesmo momento, com nome datado e SQL idêntico.
