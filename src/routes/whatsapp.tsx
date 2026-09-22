@@ -1618,7 +1618,7 @@ function Conversa({
                 m.tipo === "sistema" ? (
                   <div key={m.id} className="flex min-w-0 items-center gap-2 py-2">
                     <span className="h-px flex-1 bg-border" />
-                    <span className="min-w-0 max-w-full overflow-wrap-anywhere rounded-full bg-muted px-3 py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span className="min-w-0 max-w-full rounded-full bg-muted px-3 py-1 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground [overflow-wrap:anywhere]">
                       {m.texto ?? "Novo atendimento"}
                     </span>
                     <span className="h-px flex-1 bg-border" />
