@@ -43,7 +43,29 @@ export interface ResultadoIA {
   conteudo: string | null;
   /** Corpo de erro do provedor (para extrair mensagens), quando houver. */
   erroBruto?: string;
+  /** Motivo de parada do modelo (ex.: MAX_TOKENS = resposta cortada). */
+  motivoParada?: string;
 }
+
+/** Log de diagnóstico da IA. Nunca registra chaves. */
+function registrarFalhaIA(onde: string, r: ResultadoIA) {
+  const detalhe = (r.erroBruto ?? "").slice(0, 600);
+  console.error(
+    `[IA] ${onde} falhou status=${r.status} motivo=${r.motivoParada ?? "-"} detalhe=${detalhe}`,
+  );
+}
+
+/** Falhas temporárias do provedor: vale tentar de novo. */
+function falhaTemporaria(r: ResultadoIA): boolean {
+  if (r.status === 0) return true; // rede
+  if (r.status === 429 || r.status === 500 || r.status === 502 || r.status === 503 || r.status === 504)
+    return true;
+  // Resposta cortada ou vazia com status 200 também é tratada como temporária.
+  if (r.status === 200 && (r.motivoParada === "MAX_TOKENS" || !r.conteudo)) return true;
+  return false;
+}
+
+const esperar = (ms: number) => new Promise((ok) => setTimeout(ok, ms));
 
 interface ConfigIA {
   provedor: ProvedorIA;
@@ -180,6 +202,12 @@ function textoGemini(json: unknown): string {
     .trim();
 }
 
+/** Motivo de parada do Gemini (MAX_TOKENS, SAFETY, ...). */
+function motivoGemini(json: unknown): string | undefined {
+  const m = (json as { candidates?: { finishReason?: string }[] })?.candidates?.[0]?.finishReason;
+  return typeof m === "string" ? m : undefined;
+}
+
 function chaveLovable(): string | null {
   const k = process.env["LOVABLE_API_KEY"];
   return k && k.trim() ? k.trim() : null;
@@ -204,6 +232,7 @@ async function textoGeminiDireto(
           contents: [{ role: "user", parts: [{ text: usuario }] }],
           generationConfig: {
             temperature: 0,
+            maxOutputTokens: 8192,
             ...(json ? { responseMimeType: "application/json" } : {}),
           },
         }),
@@ -211,9 +240,15 @@ async function textoGeminiDireto(
     );
     if (!r.ok)
       return { status: r.status, conteudo: null, erroBruto: await r.text().catch(() => "") };
-    return { status: 200, conteudo: textoGemini(await r.json()) };
-  } catch {
-    return { status: 0, conteudo: null };
+    const corpo = await r.json();
+    const motivo = motivoGemini(corpo);
+    return {
+      status: 200,
+      conteudo: textoGemini(corpo),
+      ...(motivo ? { motivoParada: motivo } : {}),
+    };
+  } catch (e) {
+    return { status: 0, conteudo: null, erroBruto: e instanceof Error ? e.message : "" };
   }
 }
 
@@ -335,7 +370,12 @@ async function textoResponsesLovable(
   }
 }
 
-/** Chamada de texto: prompt de sistema + prompt do usuário, opcionalmente JSON. */
+/**
+ * Chamada de texto: prompt de sistema + prompt do usuário, opcionalmente JSON.
+ *
+ * Falhas temporárias do provedor (ocupado, limite momentâneo, rede, resposta
+ * cortada) são repetidas automaticamente até 3 tentativas.
+ */
 export async function gerarTextoIA(
   sistema: string,
   usuario: string,
@@ -344,35 +384,57 @@ export async function gerarTextoIA(
   const cfg = await resolverConfigIA();
   const json = Boolean(opcoes.json);
 
-  if (cfg.provedor === "gemini_proprio" && cfg.chavePropria)
-    return textoGeminiDireto(cfg.chavePropria, cfg.modeloTexto, sistema, usuario, json);
+  const chamada = async (): Promise<ResultadoIA> => {
+    if (cfg.provedor === "gemini_proprio" && cfg.chavePropria)
+      return textoGeminiDireto(cfg.chavePropria, cfg.modeloTexto, sistema, usuario, json);
 
-  if (cfg.provedor === "openai_proprio" && cfg.chavePropria)
+    if (cfg.provedor === "openai_proprio" && cfg.chavePropria)
+      return textoChatCompletions(
+        "https://api.openai.com/v1/chat/completions",
+        { Authorization: `Bearer ${cfg.chavePropria}` },
+        cfg.modeloTexto,
+        sistema,
+        usuario,
+        json,
+        true,
+      );
+
+    const chave = chaveLovable();
+    if (!chave) return { status: 0, conteudo: null, erroBruto: "sem chave configurada" };
+
+    if (cfg.provedor === "lovable_openai")
+      return textoResponsesLovable(chave, cfg.modeloTexto, sistema, usuario, json);
+
     return textoChatCompletions(
-      "https://api.openai.com/v1/chat/completions",
-      { Authorization: `Bearer ${cfg.chavePropria}` },
+      `${LOVABLE_BASE}/chat/completions`,
+      { Authorization: `Bearer ${chave}` },
       cfg.modeloTexto,
       sistema,
       usuario,
       json,
-      true,
+      false,
     );
+  };
 
-  const chave = chaveLovable();
-  if (!chave) return { status: 0, conteudo: null };
+  const esperas = [800, 2000];
+  let ultimo: ResultadoIA = { status: 0, conteudo: null };
 
-  if (cfg.provedor === "lovable_openai")
-    return textoResponsesLovable(chave, cfg.modeloTexto, sistema, usuario, json);
+  for (let tentativa = 0; tentativa < esperas.length + 1; tentativa++) {
+    ultimo = await chamada();
+    if (ultimo.status === 200 && ultimo.conteudo && ultimo.motivoParada !== "MAX_TOKENS")
+      return ultimo;
 
-  return textoChatCompletions(
-    `${LOVABLE_BASE}/chat/completions`,
-    { Authorization: `Bearer ${chave}` },
-    cfg.modeloTexto,
-    sistema,
-    usuario,
-    json,
-    false,
-  );
+    registrarFalhaIA(
+      `texto ${cfg.provedor}/${cfg.modeloTexto} tentativa ${tentativa + 1}`,
+      ultimo,
+    );
+    if (!falhaTemporaria(ultimo)) return ultimo;
+    const espera = esperas[tentativa];
+    if (espera === undefined) break;
+    await esperar(espera);
+  }
+
+  return ultimo;
 }
 
 /** Transcrição de áudio (base64). Aceita OGG/Opus do WhatsApp. */

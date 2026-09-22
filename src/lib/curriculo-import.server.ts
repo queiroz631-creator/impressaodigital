@@ -46,7 +46,10 @@ export async function interpretarTexto(conteudo: string): Promise<CurriculoImpor
 
   if (r.status === 429) throw new Error("IA_LIMITE");
   if (r.status === 402) throw new Error("IA_CREDITOS");
-  if (r.status !== 200 || r.conteudo === null) throw new Error("IA_INDISPONIVEL");
+  if (r.status === 401 || r.status === 403) throw new Error("IA_CHAVE");
+  if (r.status === 404) throw new Error("IA_MODELO");
+  if (r.status === 0 || r.status >= 500) throw new Error("IA_OCUPADA");
+  if (r.status !== 200 || !r.conteudo) throw new Error("IA_OCUPADA");
 
   const bruto = r.conteudo;
   let obj: Record<string, unknown>;
