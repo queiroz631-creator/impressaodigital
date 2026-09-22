@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Dices, PartyPopper, Trophy } from "lucide-react";
+import { Dices, Eye, PartyPopper, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +26,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { dataHoraBR } from "@/lib/format";
-import { realizarSorteio, resumoApuracaoSorteio } from "@/lib/sorteios.functions";
+import {
+  dadosCompletosGanhador,
+  realizarSorteio,
+  resumoApuracaoSorteio,
+} from "@/lib/sorteios.functions";
 import { IndicadorCard } from "./IndicadorCard";
 import { RoletaCupons } from "./RoletaCupons";
 import type {
