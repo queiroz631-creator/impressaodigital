@@ -1443,10 +1443,16 @@ function Conversa({
           </Button>
           <Button
             size="sm"
-            disabled={selecionados.size === 0}
+            disabled={selecionados.size === 0 || preparandoZip}
             onClick={() => void baixarSelecionados()}
+            title={
+              selecionados.size > 3
+                ? "Baixar todos em um único ZIP"
+                : "Baixar os arquivos selecionados"
+            }
           >
-            <Download className="mr-1 h-4 w-4" /> Baixar
+            <Download className="mr-1 h-4 w-4" />{" "}
+            {preparandoZip ? "Preparando..." : selecionados.size > 3 ? "Baixar ZIP" : "Baixar"}
           </Button>
           <Button
             size="sm"
