@@ -8,7 +8,8 @@ Hoje, ao transcrever um áudio no WhatsApp, o texto abre numa janela (modal) que
 - O texto transcrito aparece num **cartão com cor diferente** (fundo âmbar/dourado suave, com ícone de microfone e o rótulo "Transcrição"), para ficar claro que aquele texto veio de um áudio transcrito.
 - O botão **"Copiar transcrição"** continua disponível, agora ao lado do texto fixado.
 - Enquanto a IA transcreve, o botão mostra "Transcrevendo..." como hoje; se falhar, o aviso de erro continua aparecendo.
-- Vale para áudios já transcritos antes (eles já têm o texto salvo) e para novos.
+- **Transcrição somente manual**: o sistema nunca transcreve sozinho — nem ao receber o áudio, nem ao abrir a conversa. Só acontece quando você clica no botão **Transcrever** (confirmado: hoje já não existe transcrição automática em nenhum ponto, e isso será mantido).
+- Vale para áudios já transcritos antes (eles já têm o texto salvo e aparecem direto) e para novos.
 
 ## O que NÃO muda
 
