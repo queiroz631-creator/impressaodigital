@@ -122,16 +122,26 @@ export function ImportarCurriculo({
   };
 
   /** Move o arquivo original para a pasta escolhida, se possível. */
-  const arquivarArquivo = async () => {
-    if (!suporta || !pasta || !arquivoHandle) return null;
+  const arquivarArquivo = async (): Promise<{
+    ok: boolean;
+    nome?: string;
+    aviso?: string;
+  }> => {
+    if (!pasta) return { ok: false };
+    if (!suporta || !arquivoHandle) {
+      const aviso = mensagemErroArquivamento("SEM_CONTROLE_ARQUIVO");
+      setAvisoArquivo(aviso);
+      return { ok: false, aviso };
+    }
     try {
       const nome = await moverArquivo(arquivoHandle, pasta);
-      return nome;
+      return { ok: true, nome };
     } catch (e) {
-      setAvisoArquivo(
-        mensagemErroArquivamento(e instanceof ErroArquivamento ? e.message : "FALHA_MOVER"),
+      const aviso = mensagemErroArquivamento(
+        e instanceof ErroArquivamento ? e.message : "FALHA_MOVER",
       );
-      return null;
+      setAvisoArquivo(aviso);
+      return { ok: false, aviso };
     }
   };
 
@@ -268,11 +278,12 @@ export function ImportarCurriculo({
         id = r.id;
       }
 
-      const movido = await arquivarArquivo();
+      const arquivamento = await arquivarArquivo();
       const base = existente
         ? "Cadastro atualizado com as informações importadas."
         : "Currículo importado. Revise as informações.";
-      toast.success(movido ? `${base} Arquivo movido para "${pasta?.name}".` : base);
+      toast.success(arquivamento.ok ? `${base} Arquivo movido para "${pasta?.name}".` : base);
+      if (arquivamento.aviso) toast.warning(arquivamento.aviso, { duration: 10000 });
       onImportado(id);
       limpar();
     } catch (e) {
