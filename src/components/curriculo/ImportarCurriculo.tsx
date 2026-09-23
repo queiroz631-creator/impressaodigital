@@ -2,7 +2,14 @@
 
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { AlertTriangle, CheckCircle2, FileUp, Loader2, Upload } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Copy,
+  FileUp,
+  Loader2,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -42,7 +49,8 @@ interface Existente {
 const PASSOS = [
   "Lendo o documento…",
   "Extraindo o texto…",
-  "Identificando as informações…",
+  "Preenchendo pelo padrão do documento…",
+  "Completando com a IA…",
   "Preenchendo o currículo…",
 ];
 
@@ -69,6 +77,9 @@ export function ImportarCurriculo({
   const [telefone, setTelefone] = useState("");
   const [gravando, setGravando] = useState(false);
   const [arrastando, setArrastando] = useState(false);
+  const [textoExtraido, setTextoExtraido] = useState("");
+  const [erroIA, setErroIA] = useState("");
+  const [verTexto, setVerTexto] = useState(false);
 
   const limpar = () => {
     setPasso(null);
@@ -78,6 +89,9 @@ export function ImportarCurriculo({
     setCpf("");
     setTelefone("");
     setGravando(false);
+    setTextoExtraido("");
+    setErroIA("");
+    setVerTexto(false);
   };
 
   const fechar = () => {
@@ -89,6 +103,8 @@ export function ImportarCurriculo({
     setErro("");
     setDados(null);
     setExistente(null);
+    setErroIA("");
+    setVerTexto(false);
     if (!tipoImportacao(file.name)) {
       setErro(mensagemErroImportacao("FORMATO_NAO_SUPORTADO"));
       return;
@@ -96,11 +112,14 @@ export function ImportarCurriculo({
     try {
       setPasso(0);
       const texto = await extrairTextoCurriculo(file);
+      setTextoExtraido(texto);
       setPasso(2);
       const r = await interpretar({ data: { texto } });
-      setPasso(3);
+      setPasso(4);
       setDados(r.dados);
       setExistente((r.existente as Existente | null) ?? null);
+      setErroIA(r.erroIA ?? "");
+      setVerTexto(Boolean(r.erroIA));
       setCpf(r.dados.cpf ? formatarCpf(r.dados.cpf) : "");
       setTelefone(
         r.dados.campos.telefone_principal
@@ -125,6 +144,15 @@ export function ImportarCurriculo({
       setExistente((r.existente as Existente | null) ?? null);
     } else {
       setExistente(null);
+    }
+  };
+
+  const copiarTexto = async () => {
+    try {
+      await navigator.clipboard.writeText(textoExtraido);
+      toast.success("Texto copiado.");
+    } catch {
+      toast.error("Não foi possível copiar. Selecione o texto e use Ctrl+C.");
     }
   };
 
@@ -257,6 +285,43 @@ export function ImportarCurriculo({
                 </p>
               )}
             </div>
+
+            {erroIA && (
+              <p className="flex items-start gap-2 rounded-md bg-amber-500/10 p-3 text-sm text-amber-600">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  {mensagemErroImportacao(erroIA)} As informações reconhecidas pelo sistema
+                  foram preenchidas — confira e complete o que falta.
+                </span>
+              </p>
+            )}
+
+            {textoExtraido && (
+              <div className="rounded-md border">
+                <button
+                  type="button"
+                  onClick={() => setVerTexto((v) => !v)}
+                  className="flex w-full items-center justify-between px-3 py-2 text-sm"
+                >
+                  <span className="font-medium">Texto lido do arquivo</span>
+                  <span className="text-xs text-muted-foreground">
+                    {verTexto ? "OCULTAR" : "VER / COPIAR"}
+                  </span>
+                </button>
+                {verTexto && (
+                  <div className="space-y-2 border-t p-2">
+                    <div className="flex justify-end">
+                      <Button size="sm" variant="outline" onClick={() => void copiarTexto()}>
+                        <Copy className="mr-1 h-3.5 w-3.5" /> COPIAR TEXTO
+                      </Button>
+                    </div>
+                    <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded bg-muted p-2 text-xs">
+                      {textoExtraido}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
 
             {existente ? (
               <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">

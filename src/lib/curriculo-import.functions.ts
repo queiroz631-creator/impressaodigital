@@ -68,9 +68,9 @@ export const interpretarCurriculoImportado = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { interpretarTexto, buscarPorCpf } = await import("@/lib/curriculo-import.server");
-    const dados = await interpretarTexto(data.texto);
-    const existente = dados.cpf ? await buscarPorCpf(dados.cpf) : null;
-    return { dados, existente };
+    const r = await interpretarTexto(data.texto);
+    const existente = r.dados.cpf ? await buscarPorCpf(r.dados.cpf) : null;
+    return { dados: r.dados, existente, iaUsada: r.iaUsada, erroIA: r.erroIA };
   });
 
 /** Verifica se um CPF informado manualmente já possui currículo. */
