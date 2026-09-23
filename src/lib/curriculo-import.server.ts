@@ -190,7 +190,7 @@ function unir<T>(primeiros: T[], depois: T[], chaveDe: (v: T) => string): T[] {
 /** O que a IA respondeu prevalece; o que ela deixou vazio fica das regras. */
 function mesclar(base: CurriculoImportado, ia: CurriculoImportado): CurriculoImportado {
   const campos = { ...base.campos } as Record<string, unknown>;
-  for (const [nome, valor] of Object.entries(ia.campos as Record<string, unknown>)) {
+  for (const [nome, valor] of Object.entries(ia.campos as unknown as Record<string, unknown>)) {
     if (nome === "documentacao_completa") {
       if (valor !== null && valor !== undefined) campos[nome] = valor;
     } else if (nome === "habilitacao") {
