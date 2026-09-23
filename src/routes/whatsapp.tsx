@@ -7,7 +7,6 @@ import {
   AlertCircle,
   ArrowLeft,
   Bot,
-  Bot as BotIcon,
   BotOff,
   Calculator,
   CheckCircle2,
@@ -21,6 +20,8 @@ import {
   MessageSquare,
   Mic,
   Paperclip,
+  PanelRightClose,
+  PanelRightOpen,
   Pencil,
   Trash2,
   Printer,
@@ -1062,6 +1063,19 @@ function Conversa({
     void navigate({ to: "/" });
   }
 
+  /** Abre um orçamento novo somente com os dados do contato. */
+  function abrirOrcamento() {
+    sessionStorage.setItem(
+      "calc-arquivos-whatsapp",
+      JSON.stringify({
+        arquivos: [],
+        nome: conversa.nome_contato ?? "",
+        telefone: conversa.telefone,
+      }),
+    );
+    void navigate({ to: "/" });
+  }
+
   // Avisa o cliente que o atendente está digitando (no máximo 1x a cada 3s).
   function avisarDigitando() {
     const agora = Date.now();
@@ -1455,42 +1469,49 @@ function Conversa({
         >
           <UserCheck className="h-4 w-4" />
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          title="Devolver ao bot"
-          className={COR_STATUS.automatico.suave}
-          onClick={() => alterarStatus("automatico", "devolveu_bot")}
+        <Select
+          value=""
+          onValueChange={(acao) => {
+            if (acao === "automatico") void alterarStatus("automatico", "devolveu_bot");
+            if (acao === "pendente") void alterarStatus("pendente", "marcou_pendente");
+            if (acao === "esperando_impressao")
+              void alterarStatus("esperando_impressao", "fila_impressao");
+            if (acao === "aguardando_finalizacao") void enviarFinalizacao();
+          }}
         >
-          <BotIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          title="Pendente"
-          className={COR_STATUS.pendente.suave}
-          onClick={() => alterarStatus("pendente", "marcou_pendente")}
-        >
-          <AlertCircle className="h-4 w-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          title="Fila de impressão"
-          className={COR_STATUS.esperando_impressao.suave}
-          onClick={() => alterarStatus("esperando_impressao", "fila_impressao")}
-        >
-          <Printer className="h-4 w-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          title="Enviar para Aguardando Finalização"
-          className={COR_STATUS.aguardando_finalizacao.suave}
-          onClick={() => void enviarFinalizacao()}
-        >
-          <Flag className="h-4 w-4" />
-        </Button>
+          <SelectTrigger className="h-9 w-[172px]" title="Mover conversa para outra situação">
+            <SelectValue placeholder="Mover para..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="automatico">
+              <span className={cn("flex items-center gap-2", COR_STATUS.automatico.suave)}>
+                <Bot className="h-4 w-4" /> Devolver ao bot
+              </span>
+            </SelectItem>
+            <SelectItem value="pendente">
+              <span className={cn("flex items-center gap-2", COR_STATUS.pendente.suave)}>
+                <AlertCircle className="h-4 w-4" /> Pendente
+              </span>
+            </SelectItem>
+            <SelectItem value="esperando_impressao">
+              <span
+                className={cn("flex items-center gap-2", COR_STATUS.esperando_impressao.suave)}
+              >
+                <Printer className="h-4 w-4" /> Fila de impressão
+              </span>
+            </SelectItem>
+            <SelectItem value="aguardando_finalizacao">
+              <span
+                className={cn(
+                  "flex items-center gap-2",
+                  COR_STATUS.aguardando_finalizacao.suave,
+                )}
+              >
+                <Flag className="h-4 w-4" /> Aguardar finalização
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
         <Button
           size="sm"
           title="Finalizar"
@@ -1520,11 +1541,11 @@ function Conversa({
         </Button>
         <Button
           size="sm"
-          variant={notasAbertas ? "secondary" : "outline"}
-          title={notasAbertas ? "Recolher anotações" : "Mostrar anotações do cliente"}
-          onClick={alternarNotas}
+          variant="outline"
+          title="Abrir orçamento com nome e telefone do cliente"
+          onClick={abrirOrcamento}
         >
-          <StickyNote className="h-4 w-4" />
+          <Calculator className="h-4 w-4" />
         </Button>
       </div>
 
@@ -1955,6 +1976,23 @@ function Conversa({
             </Dialog>
           </CardContent>
         </Card>
+
+        <div className="flex w-8 shrink-0 items-center justify-center">
+          <Button
+            size="icon"
+            variant="outline"
+            className="h-9 w-8"
+            title={notasAbertas ? "Recolher anotações" : "Mostrar anotações do cliente"}
+            aria-label={notasAbertas ? "Recolher anotações" : "Mostrar anotações do cliente"}
+            onClick={alternarNotas}
+          >
+            {notasAbertas ? (
+              <PanelRightClose className="h-4 w-4" />
+            ) : (
+              <PanelRightOpen className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
 
         {notasAbertas && (
           <Card className="flex min-h-0 w-64 shrink-0 flex-col md:w-72">
