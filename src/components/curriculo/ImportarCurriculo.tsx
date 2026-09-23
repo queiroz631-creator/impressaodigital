@@ -90,6 +90,50 @@ export function ImportarCurriculo({
   const [textoExtraido, setTextoExtraido] = useState("");
   const [erroIA, setErroIA] = useState("");
   const [verTexto, setVerTexto] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [pasta, setPasta] = useState<any | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [arquivoHandle, setArquivoHandle] = useState<any | null>(null);
+  const [avisoArquivo, setAvisoArquivo] = useState("");
+  const suporta = suportaArquivamento();
+
+  useEffect(() => {
+    if (!aberto || !suporta) return;
+    void lerPastaSalva().then((h) => setPasta(h));
+  }, [aberto, suporta]);
+
+  const escolherPasta = async () => {
+    try {
+      const h = await escolherPastaDestino();
+      if (h) {
+        setPasta(h);
+        toast.success(`Os arquivos importados serão movidos para "${h.name}".`);
+      }
+    } catch (e) {
+      toast.error(
+        mensagemErroArquivamento(e instanceof ErroArquivamento ? e.message : "FALHA_MOVER"),
+      );
+    }
+  };
+
+  const desligarPasta = async () => {
+    await limparPasta();
+    setPasta(null);
+  };
+
+  /** Move o arquivo original para a pasta escolhida, se possível. */
+  const arquivarArquivo = async () => {
+    if (!suporta || !pasta || !arquivoHandle) return null;
+    try {
+      const nome = await moverArquivo(arquivoHandle, pasta);
+      return nome;
+    } catch (e) {
+      setAvisoArquivo(
+        mensagemErroArquivamento(e instanceof ErroArquivamento ? e.message : "FALHA_MOVER"),
+      );
+      return null;
+    }
+  };
 
   const limpar = () => {
     setPasso(null);
