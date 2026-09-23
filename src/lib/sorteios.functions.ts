@@ -257,6 +257,9 @@ export const alterarStatusSorteio = createServerFn({ method: "POST" })
     if (atual.status === "ENCERRADO" && data.status === "ATIVO") {
       throw new Error("Use o botão Reabrir sorteio na aba Encerramento para reabri-lo.");
     }
+    if (atual.status === "CANCELADO") {
+      throw new Error("Use o botão Reabrir sorteio no painel do sorteio para reabri-lo.");
+    }
     if (!podeTransicionar(atual.status, data.status as StatusSorteio)) {
       throw new Error(`Não é possível mudar de ${atual.status} para ${data.status}.`);
     }
