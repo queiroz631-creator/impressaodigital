@@ -421,6 +421,109 @@ class App:
 
         self.start_download(filename, automatic=False)
 
+    def set_botoes_ativos(self, ativos):
+        estado = "normal" if ativos else "disabled"
+        for botao in (self.btn_gerar, self.btn_selecionado, self.btn_ultimo):
+            try:
+                botao.configure(state=estado)
+            except Exception:
+                pass
+
+    def gerar_backup(self):
+        if self.gerando:
+            messagebox.showinfo(
+                "Backup",
+                "Já existe um backup sendo gerado por este programa."
+            )
+            return
+
+        self.save()
+
+        if not self.token_var.get().strip():
+            messagebox.showerror("Backup", "Informe o token da API.")
+            return
+
+        if not messagebox.askyesno(
+            "Gerar backup",
+            "Gerar uma nova cópia do banco no servidor agora?\n\n"
+            "Ao terminar, o arquivo será baixado automaticamente "
+            "para a pasta local."
+        ):
+            return
+
+        self.gerando = True
+        self.set_botoes_ativos(False)
+        self.set_progress_mode("indeterminate")
+        self.status_var.set("Solicitando backup ao servidor...")
+        threading.Thread(target=self._gerar_backup_worker, daemon=True).start()
+
+    def _gerar_backup_worker(self):
+        api = self.api_var.get()
+        token = self.token_var.get()
+
+        try:
+            job_id, mensagem, status_http = solicitar_backup(api, token)
+
+            if status_http == 409:
+                log(f"Backup já em andamento no servidor (job {job_id}).")
+                self.ui_queue.put((
+                    "status",
+                    "Já existe um backup em andamento. Acompanhando...",
+                ))
+            else:
+                log(f"Backup solicitado ao servidor (job {job_id}).")
+                self.ui_queue.put(("status", mensagem))
+
+            limite = time.time() + 3600
+            arquivo = None
+
+            while time.time() < limite:
+                time.sleep(5)
+                dados = status_backup(api, token, job_id)
+                situacao = (dados.get("status") or "").upper()
+                texto = dados.get("mensagem") or "Gerando backup no servidor..."
+
+                if situacao in ("AGUARDANDO", "EXECUTANDO"):
+                    self.ui_queue.put(("status", texto))
+                    continue
+
+                if situacao == "CONCLUIDO":
+                    arquivo = dados.get("filename")
+                    if not arquivo:
+                        raise RuntimeError(
+                            "O backup terminou, mas o servidor não informou "
+                            "o nome do arquivo."
+                        )
+                    break
+
+                if situacao == "ERRO":
+                    raise RuntimeError(texto)
+
+                # Situação desconhecida: segue acompanhando.
+                self.ui_queue.put(("status", texto))
+
+            if not arquivo:
+                raise RuntimeError(
+                    "O tempo de espera do backup esgotou (1 hora). "
+                    "O backup pode ainda terminar no servidor — "
+                    "use \"Atualizar lista\" mais tarde."
+                )
+
+            log(f"Backup gerado no servidor: {arquivo}")
+            self.ui_queue.put(("status", f"Backup gerado: {arquivo}"))
+            self.ui_queue.put(("gerar_fim", True))
+            self.ui_queue.put(("start_download", arquivo, False))
+
+        except BackupSobDemandaIndisponivel as e:
+            log(f"Backup sob demanda indisponível: {e}")
+            self.ui_queue.put(("gerar_fim", True))
+            self.ui_queue.put(("error", "Backup", str(e)))
+
+        except Exception as e:
+            log(f"ERRO ao gerar backup: {type(e).__name__}: {e}")
+            self.ui_queue.put(("gerar_fim", True))
+            self.ui_queue.put(("error", "Erro ao gerar backup", str(e)))
+
     def download_latest(self):
         self.save()
         self.set_progress_mode("indeterminate")
