@@ -209,6 +209,8 @@ class App:
         self.progress_mode = "determinate"
         self.backups = []
         self.selected_backup = None
+        self.gerando = False
+
         self.ui_queue = queue.Queue()
 
         self.build_ui()
