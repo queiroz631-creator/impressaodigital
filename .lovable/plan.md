@@ -36,6 +36,6 @@ Nenhuma outra tela, nenhum selo de sorteio, nenhuma regra de negócio, nada no b
   - `INVALIDA`: `bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200`
   - `PENDENTE`: `bg-orange-100 text-orange-900 dark:bg-orange-950 dark:text-orange-200`
   - `CANCELADA`: `bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300`
-  -Fallback: `bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300`
+  - Fallback: `bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300`
 - Os rótulos ("Válida", "Inválida", "Pendente", "Cancelada") permanecem os mesmos.
 - Verificação: `bunx tsgo --noEmit` e conferência visual da lista no portal (notas com cada situação, se existirem).
