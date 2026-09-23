@@ -129,3 +129,107 @@ function ListaSorteios() {
     </>
   );
 }
+
+/** Logo exibida no topo do portal público, com envio e volta ao padrão. */
+function LogoDoPortal() {
+  const queryClient = useQueryClient();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const buscar = useServerFn(logoPortalAtual);
+  const salvar = useServerFn(salvarLogoSorteio);
+  const limpar = useServerFn(limparLogoSorteio);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["sorteios", "logo-portal-admin"],
+    queryFn: () => buscar(),
+  });
+
+  function invalidar() {
+    void queryClient.invalidateQueries({ queryKey: ["sorteios", "logo-portal-admin"] });
+    void queryClient.invalidateQueries({ queryKey: ["sorteios", "logo-portal"] });
+  }
+
+  const mSalvar = useMutation({
+    mutationFn: async (arquivo: File) => {
+      if (!TIPOS_ACEITOS.includes(arquivo.type)) {
+        throw new Error("Escolha uma imagem PNG, JPG, WEBP ou SVG.");
+      }
+      if (arquivo.size > 2 * 1024 * 1024) throw new Error("A imagem precisa ter até 2 MB.");
+      const bytes = new Uint8Array(await arquivo.arrayBuffer());
+      let bruto = "";
+      for (const b of bytes) bruto += String.fromCharCode(b);
+      return salvar({ data: { base64: btoa(bruto), tipo: arquivo.type } });
+    },
+    onSuccess: () => {
+      toast.success("Logo do portal atualizada.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mLimpar = useMutation({
+    mutationFn: () => limpar(),
+    onSuccess: () => {
+      toast.success("Logo padrão restaurada.");
+      invalidar();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const ocupado = mSalvar.isPending || mLimpar.isPending;
+
+  return (
+    <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-center gap-3">
+        <img
+          src={data?.url ?? logoPadrao.url}
+          alt="Logo do portal"
+          className="h-12 w-12 shrink-0 rounded-full border bg-white object-contain"
+        />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">Logo do portal</p>
+          <p className="text-xs text-muted-foreground">
+            {isLoading
+              ? "Carregando..."
+              : data?.personalizada
+                ? "Imagem enviada pela loja."
+                : "Usando a logo padrão do sistema."}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex shrink-0 flex-wrap gap-2">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          className="hidden"
+          onChange={(e) => {
+            const arquivo = e.target.files?.[0];
+            e.target.value = "";
+            if (arquivo) mSalvar.mutate(arquivo);
+          }}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={ocupado}
+          onClick={() => inputRef.current?.click()}
+        >
+          <ImageUp className="mr-2 h-4 w-4" />
+          {data?.personalizada ? "Trocar logo" : "Adicionar logo"}
+        </Button>
+        {data?.personalizada && (
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={ocupado}
+            onClick={() => mLimpar.mutate()}
+          >
+            <RotateCcw className="mr-2 h-4 w-4" /> Voltar à logo padrão
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
