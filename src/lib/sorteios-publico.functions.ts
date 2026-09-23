@@ -99,6 +99,7 @@ function dadosPublicosSorteio(s: SorteioRow) {
     data_sorteio: s.data_sorteio,
     valor_por_cupom_centavos: s.valor_por_cupom_centavos,
     quantidade_maxima_cupons: s.quantidade_maxima_cupons,
+    valor_minimo_nota_centavos: s.valor_minimo_nota_centavos ?? 0,
     status: s.status,
   };
 }
