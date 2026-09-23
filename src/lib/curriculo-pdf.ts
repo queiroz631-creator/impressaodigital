@@ -96,7 +96,7 @@ function renderizar(
     setFont(true, 11);
     doc.setTextColor(255, 255, 255);
     doc.text(titulo.toUpperCase(), MARGEM + 8, y + h - 5);
-    y += h + 8 * escala;
+    y += h + 14 * escala;
   };
 
   const centro = largura / 2;
@@ -158,7 +158,7 @@ function renderizar(
   if (pessoais.length) {
     secao("Dados pessoais");
     for (const p of pessoais) paragrafo(p, MARGEM, util, 10);
-    y += 8 * escala;
+    y += 14 * escala;
   }
 
   // ===== Informações adicionais =====
@@ -166,7 +166,7 @@ function renderizar(
   if (adicionais.length) {
     secao("Informações adicionais");
     for (const linha of adicionais) paragrafo(`• ${linha}`, MARGEM, util, 10);
-    y += 8 * escala;
+    y += 14 * escala;
   }
 
   // ===== Formação =====
@@ -177,7 +177,7 @@ function renderizar(
     for (const f of dados.formacoes) {
       paragrafo(formatarFormacao(f), MARGEM, util, 10);
     }
-    y += 8 * escala;
+    y += 14 * escala;
   }
 
   // ===== Cursos complementares =====
@@ -186,14 +186,14 @@ function renderizar(
     for (const curso of dados.cursos) {
       paragrafo(formatarCurso(curso), MARGEM, util, 10);
     }
-    y += 8 * escala;
+    y += 14 * escala;
   }
 
   // ===== Experiência profissional =====
   if (!c.experiencia_possui) {
     secao("Experiência profissional");
     texto(fraseSemExperiencia(c), MARGEM, 12, true, NAVY);
-    y += 8 * escala;
+    y += 14 * escala;
   } else if (dados.experiencias.length) {
     secao("Experiência profissional");
     if (dados.experiencias.length > 3) {
@@ -246,7 +246,7 @@ function renderizar(
       for (const exp of dir) {
         yDir = renderExp(exp, xDir, yDir, colW) + 6 * escala;
       }
-      y = Math.max(yEsq, yDir) + 8 * escala;
+      y = Math.max(yEsq, yDir) + 14 * escala;
     } else {
       for (const exp of dados.experiencias) {
         if (exp.empresa) texto(exp.empresa, MARGEM, 11, true, NAVY);
@@ -262,7 +262,7 @@ function renderizar(
   if (dados.habilidades.length) {
     secao("Habilidades");
     for (const h of dados.habilidades) paragrafo(`• ${h.descricao}`, MARGEM, util, 10);
-    y += 8 * escala;
+    y += 14 * escala;
   }
 
   // ===== Objetivo =====
@@ -270,13 +270,13 @@ function renderizar(
   if (objetivo) {
     secao("Objetivo");
     paragrafo(objetivo, MARGEM, util, 10);
-    y += 8 * escala;
+    y += 14 * escala;
   }
 
   // ===== Observação (destaque final, sem barra de seção) =====
   const obsHabilidades = observacaoHabilidades(c);
   if (obsHabilidades) {
-    y += 8 * escala;
+    y += 14 * escala;
     paragrafo(`OBS.: ${obsHabilidades}`, MARGEM, util, 12, true, NAVY);
   }
 
