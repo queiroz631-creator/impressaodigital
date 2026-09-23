@@ -900,6 +900,7 @@ export type Database = {
           pix_mensagem: string
           pix_nome: string | null
           rodape_orcamento: string
+          sorteio_logo_url: string | null
           telefone: string | null
           updated_at: string
           validade_padrao_dias: number
@@ -927,6 +928,7 @@ export type Database = {
           pix_mensagem?: string
           pix_nome?: string | null
           rodape_orcamento?: string
+          sorteio_logo_url?: string | null
           telefone?: string | null
           updated_at?: string
           validade_padrao_dias?: number
@@ -954,6 +956,7 @@ export type Database = {
           pix_mensagem?: string
           pix_nome?: string | null
           rodape_orcamento?: string
+          sorteio_logo_url?: string | null
           telefone?: string | null
           updated_at?: string
           validade_padrao_dias?: number
