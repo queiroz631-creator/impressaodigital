@@ -162,7 +162,7 @@ function blocoDaSecao(linhas: string[], secao: Secao): string[] {
   if (inicio < 0) return [];
   const saida: string[] = [];
   for (let i = inicio + 1; i < linhas.length; i++) {
-    const l = linhas[i];
+    const l = linhas[i] ?? "";
     if (ehTitulo(l, TODOS_TITULOS)) break;
     saida.push(l);
     if (saida.length > 200) break;
@@ -227,7 +227,7 @@ function acharNascimento(
   };
 
   for (let i = 0; i < k.length; i++) {
-    if (!/nasc|nascimento|data de nac/.test(k[i])) continue;
+    if (!/nasc|nascimento|data de nac/.test(k[i] ?? "")) continue;
     const alvo = [linhas[i], linhas[i + 1] ?? "", linhas[i + 2] ?? ""].join(" ");
     const m = RE_DATA_1.exec(alvo);
     if (m && dataPlausivel(m[0])) {
@@ -335,7 +335,7 @@ function valorPorRotulo(linhas: string[], k: string[], nomes: string[]): string 
       const original = (linhas[i] ?? "").slice(corte).replace(/^[:\-\u2013\u2014\s/.]+/, "");
       if (original.trim()) return original.trim();
       for (let j = i + 1; j <= Math.min(i + 2, linhas.length - 1); j++) {
-        if (linhas[j] && !ehTitulo(linhas[j], TODOS_TITULOS)) return linhas[j].trim();
+        { const p = linhas[j] ?? ""; if (p && !ehTitulo(p, TODOS_TITULOS)) return p.trim(); }
       }
     }
   }
@@ -434,11 +434,11 @@ function experienciaDoBloco(b: string[]): CurriculoImportado["experiencias"][num
   const primeiro = resto[0] ?? "";
   const cortado = primeiro.split(/\s+(?:[-–—|])\s+/);
   if (cortado.length >= 2) {
-    empresa = cortado[0].trim();
+    empresa = (cortado[0] ?? "").trim();
     cargo = cortado.slice(1).join(" ").trim();
   } else if (resto.length >= 2) {
     empresa = primeiro.trim();
-    cargo = resto[1].trim();
+    cargo = (resto[1] ?? "").trim();
   } else {
     empresa = primeiro.trim();
   }
@@ -458,7 +458,7 @@ function linhaDoCurso(l: string): CurriculoImportado["cursos"][number] {
   const semAno = (t: string) => t.replace(/\b(19|20)\d{2}\b/, "").replace(/\s{2,}/g, " ").trim();
   if (partes.length >= 2) {
     return {
-      nome_curso: capitalizarTexto(semAno(partes[0])).slice(0, 200),
+      nome_curso: capitalizarTexto(semAno(partes[0] ?? "")).slice(0, 200),
       instituicao: capitalizarTexto(semAno(partes.slice(1).join(" "))).slice(0, 200),
       ano,
     };
@@ -496,12 +496,12 @@ export function extrairPorRegras(texto: string): CurriculoImportado {
   const telefones = [...new Set(tel.vals.map((t) => formatarTelefone(t)))];
   let telefonePrincipal = telefones[0] ?? "";
   for (let i = 0; i < linhas.length; i++) {
-    if (!/celular|whatsapp|zap|cel\b|contato|principal|telefone/.test(k[i])) continue;
-    const daLinha = [...(linhas[i].match(new RegExp(RE_TELEFONE.source, "g")) ?? [])]
+    if (!/celular|whatsapp|zap|cel\b|contato|principal|telefone/.test(k[i] ?? "")) continue;
+    const daLinha = [...((linhas[i] ?? "").match(new RegExp(RE_TELEFONE.source, "g")) ?? [])]
       .filter(telefoneValido)
       .map((t) => formatarTelefone(t));
     if (daLinha.length) {
-      telefonePrincipal = daLinha[0];
+      telefonePrincipal = daLinha[0] ?? "";
       break;
     }
   }
@@ -542,8 +542,8 @@ export function extrairPorRegras(texto: string): CurriculoImportado {
     for (const l of linhas) {
       const m = /([A-ZÀ-Ú][a-zà-ú]{2,})\s*[/\-–]\s*([A-Z]{2})\b/.exec(l);
       if (m && !ehTitulo(l, TODOS_TITULOS)) {
-        if (!cidadeFinal) cidadeFinal = capitalizarTexto(m[1]).slice(0, 120);
-        if (!ufFinal) ufFinal = m[2];
+        if (!cidadeFinal) cidadeFinal = capitalizarTexto(m[1] ?? "").slice(0, 120);
+        if (!ufFinal) ufFinal = m[2] ?? "";
         verificar.add("Cidade");
         break;
       }
@@ -608,7 +608,7 @@ export function extrairPorRegras(texto: string): CurriculoImportado {
       pos_graduacao_nome: capitalizarTexto(posNome).slice(0, 200),
       objetivo_texto: objetivo.replace(/\s+/g, " ").slice(0, 1000),
     },
-    cpf: cpf.vals.length ? somenteNumeros(cpf.vals[0]) : "",
+    cpf: cpf.vals.length ? somenteNumeros(cpf.vals[0] ?? "") : "",
     telefones,
     cursos,
     formacoes,
