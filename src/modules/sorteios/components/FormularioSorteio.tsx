@@ -25,6 +25,7 @@ export type ValoresSorteio = {
   data_sorteio: string;
   valor_por_cupom: string;
   quantidade_maxima_cupons: string;
+  valor_minimo_nota: string;
 };
 
 function valoresIniciais(sorteio?: Sorteio | null): ValoresSorteio {
@@ -38,6 +39,9 @@ function valoresIniciais(sorteio?: Sorteio | null): ValoresSorteio {
     valor_por_cupom: sorteio ? textoDeCentavos(sorteio.valor_por_cupom_centavos) : "",
     quantidade_maxima_cupons: sorteio?.quantidade_maxima_cupons
       ? String(sorteio.quantidade_maxima_cupons)
+      : "",
+    valor_minimo_nota: sorteio?.valor_minimo_nota_centavos
+      ? textoDeCentavos(sorteio.valor_minimo_nota_centavos)
       : "",
   };
 }
