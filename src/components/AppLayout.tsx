@@ -13,10 +13,41 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { usePermissoes } from "@/hooks/usePermissoes";
-import { modulosVisiveis } from "@/lib/modulos";
+import { modulosVisiveis, type CorModulo } from "@/lib/modulos";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo-impressao.png";
+
+/** Cores de destaque de cada bloco do menu lateral (tons claros sobre o fundo escuro). */
+const CORES_GRUPO: Record<
+  CorModulo,
+  { titulo: string; icone: string; linkAtivo: string; linkHover: string }
+> = {
+  azul: {
+    titulo: "text-sky-300",
+    icone: "text-sky-300",
+    linkAtivo: "bg-sky-400/15 text-sky-200 shadow-[inset_3px_0_0_0] shadow-sky-400",
+    linkHover: "hover:bg-sky-400/10 hover:text-sky-200",
+  },
+  verde: {
+    titulo: "text-emerald-300",
+    icone: "text-emerald-300",
+    linkAtivo: "bg-emerald-400/15 text-emerald-200 shadow-[inset_3px_0_0_0] shadow-emerald-400",
+    linkHover: "hover:bg-emerald-400/10 hover:text-emerald-200",
+  },
+  roxo: {
+    titulo: "text-violet-300",
+    icone: "text-violet-300",
+    linkAtivo: "bg-violet-400/15 text-violet-200 shadow-[inset_3px_0_0_0] shadow-violet-400",
+    linkHover: "hover:bg-violet-400/10 hover:text-violet-200",
+  },
+  ambar: {
+    titulo: "text-amber-300",
+    icone: "text-amber-300",
+    linkAtivo: "bg-amber-400/15 text-amber-200 shadow-[inset_3px_0_0_0] shadow-amber-400",
+    linkHover: "hover:bg-amber-400/10 hover:text-amber-200",
+  },
+};
 
 export function AppLayout({
   children,
