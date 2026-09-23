@@ -255,9 +255,14 @@ class App:
         btns.pack(fill="x", pady=(14, 8))
         ttk.Button(btns, text="Testar conexão", command=self.test_connection).pack(side="left", padx=(0, 8))
         ttk.Button(btns, text="Atualizar lista", command=self.update_list).pack(side="left", padx=8)
-        ttk.Button(btns, text="Baixar selecionado", command=self.download_selected).pack(side="left", padx=8)
-        ttk.Button(btns, text="Baixar último backup", command=self.download_latest).pack(side="left", padx=8)
+        self.btn_gerar = ttk.Button(btns, text="Gerar backup agora", command=self.gerar_backup)
+        self.btn_gerar.pack(side="left", padx=8)
+        self.btn_selecionado = ttk.Button(btns, text="Baixar selecionado", command=self.download_selected)
+        self.btn_selecionado.pack(side="left", padx=8)
+        self.btn_ultimo = ttk.Button(btns, text="Baixar último backup", command=self.download_latest)
+        self.btn_ultimo.pack(side="left", padx=8)
         ttk.Button(btns, text="Abrir pasta", command=self.open_folder).pack(side="left", padx=8)
+
 
         ttk.Label(frm, text="Backups disponíveis — selecione um para baixar:",
                   font=("Segoe UI", 10, "bold")).pack(anchor="w", pady=(8, 5))
