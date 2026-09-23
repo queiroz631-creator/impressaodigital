@@ -10,7 +10,7 @@ export const Route = createFileRoute("/api/public/sorteios/reconciliar")({
     handlers: {
       POST: async ({ request }) => {
         const { tokenLojamixSyncValido, naoAutorizado } = await import("@/lib/sorteios-sync-token.server");
-        if (!tokenLojamixSyncValido(request)) return naoAutorizado();
+        if (!(await tokenLojamixSyncValido(request))) return naoAutorizado();
 
         try {
           const { reconciliar } = await import("@/lib/sorteios-sync.server");

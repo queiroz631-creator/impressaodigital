@@ -1988,6 +1988,33 @@ export type Database = {
         }
         Relationships: []
       }
+      sistema_chaves: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          id: string
+          nome: string
+          url_base: string
+          valor: string
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          id?: string
+          nome: string
+          url_base?: string
+          valor?: string
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          id?: string
+          nome?: string
+          url_base?: string
+          valor?: string
+        }
+        Relationships: []
+      }
       sorteio_auditoria: {
         Row: {
           cliente_id: string | null
