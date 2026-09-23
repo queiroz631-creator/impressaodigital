@@ -141,12 +141,16 @@ export async function moverArquivo(arquivoHandle: any, pasta: any): Promise<stri
     throw new ErroArquivamento("FALHA_MOVER");
   }
 
+  // Apagar o original exige permissão de alteração no próprio arquivo:
+  // o seletor concede apenas leitura, então pedimos aqui.
+  if (typeof arquivoHandle.remove !== "function") {
+    throw new ErroArquivamento("COPIADO_SEM_APAGAR");
+  }
+  if (!(await garantirPermissao(arquivoHandle))) {
+    throw new ErroArquivamento("SEM_PERMISSAO_ARQUIVO");
+  }
   try {
-    if (typeof arquivoHandle.remove === "function") {
-      await arquivoHandle.remove();
-    } else {
-      throw new Error("sem-remove");
-    }
+    await arquivoHandle.remove();
   } catch {
     throw new ErroArquivamento("COPIADO_SEM_APAGAR");
   }
@@ -160,6 +164,10 @@ export function mensagemErroArquivamento(codigo: string): string {
       return "Este navegador não permite mover arquivos. Use o Chrome ou o Edge no computador.";
     case "SEM_PERMISSAO":
       return "A permissão de acesso à pasta não foi concedida. O arquivo continua onde estava.";
+    case "SEM_PERMISSAO_ARQUIVO":
+      return "O arquivo foi copiado para a pasta, mas a permissão para apagar o original não foi concedida. Ao importar, escolha “Permitir alterações” no aviso do navegador.";
+    case "SEM_CONTROLE_ARQUIVO":
+      return "Para que o arquivo seja movido, use o botão SELECIONAR ARQUIVO no Chrome ou Edge do computador. Desta vez ele continua na pasta de origem.";
     case "ARQUIVO_EM_USO":
       return "O arquivo parece estar aberto em outro programa. Feche-o e mova manualmente.";
     case "COPIADO_SEM_APAGAR":
