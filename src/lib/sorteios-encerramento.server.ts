@@ -79,7 +79,7 @@ export async function encerrarSorteioNoBanco(
 }
 
 export type ResultadoReabertura =
-  | { resultado: "REABERTO"; reabertoEm: string | null }
+  | { resultado: "REABERTO"; reabertoEm: string | null; status: string }
   | { resultado: "IGNORADO"; motivo: string };
 
 /**
@@ -99,9 +99,9 @@ export async function reabrirSorteioNoBanco(
   const { data, error } = await supabase.rpc("sorteio_reabrir", argumentos);
   if (error) throw new Error(error.message);
 
-  const r = (data ?? {}) as { resultado?: string; motivo?: string; reaberto_em?: string | null };
+  const r = (data ?? {}) as { resultado?: string; motivo?: string; reaberto_em?: string | null; status?: string };
   if (r.resultado === "REABERTO") {
-    return { resultado: "REABERTO", reabertoEm: r.reaberto_em ?? null };
+    return { resultado: "REABERTO", reabertoEm: r.reaberto_em ?? null, status: r.status ?? "ATIVO" };
   }
   return { resultado: "IGNORADO", motivo: r.motivo ?? "desconhecido" };
 }

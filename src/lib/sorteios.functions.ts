@@ -226,7 +226,7 @@ export const atualizarSorteio = createServerFn({ method: "POST" })
         situacao: atual.status,
         mudancas,
         criticos_liberados: criticosLiberados,
-      } as unknown as Json,
+      },
     });
 
     return { ok: true };
