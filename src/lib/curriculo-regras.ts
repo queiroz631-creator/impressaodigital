@@ -445,7 +445,6 @@ function experienciaDoBloco(b: string[]): CurriculoImportado["experiencias"][num
     };
   }
 
-
   let empresa = "";
   let cargo = "";
   const primeiro = resto[0] ?? "";
