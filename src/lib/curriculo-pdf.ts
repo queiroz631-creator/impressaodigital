@@ -51,7 +51,6 @@ function renderizar(
   util: number,
   escala: number,
 ): RenderResult {
-
   const c = dados.curriculo;
   let y = MARGEM;
   let secoes = 0;
