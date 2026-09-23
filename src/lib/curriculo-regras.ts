@@ -583,11 +583,24 @@ export function extrairPorRegras(texto: string): CurriculoImportado {
     .filter((c) => c.nome_curso.length > 3)
     .slice(0, 30);
 
-  const blocoFor = blocoDaSecao(linhas, "formacoes").filter((l) => l);
+  const blocoForBruto = blocoDaSecao(linhas, "formacoes").filter((l) => l);
+  const CORTE_FORMACAO =
+    /^(empresa|cargo|funcao|cargo\/funcao|periodo|periodo\/tempo|tempo|admissao|demissao|saida|atividade|atividades|objetivo|habilidade|habilidades|competencia|competencias|atenciosamente)\b/;
+  const corte = blocoForBruto.findIndex((l) => CORTE_FORMACAO.test(chave(limparItemLista(l))));
+  const blocoFor = corte >= 0 ? blocoForBruto.slice(0, corte) : blocoForBruto;
   const formacoes = blocoFor
     .map((l) => ({ ...linhaDoCurso(limparItemLista(l)), nivel: acharEscolaridade(l) }))
-    .filter((f) => f.nome_curso.length > 3)
-    .slice(0, 30);
+    .filter((f) => {
+      const nome = f.nome_curso.trim();
+      if (nome.length <= 3 || nome.length > 80) return false;
+      if (/[,;]$/.test(nome) || /\se$/i.test(nome)) return false;
+      const esc = acharEscolaridade(nome);
+      if (esc && chave(nome) === chave(esc)) return false;
+
+      return true;
+    })
+    .slice(0, 6);
+
 
   const blocoHab = blocoDaSecao(linhas, "habilidades").filter((l) => l);
   const habilidades = blocoHab
