@@ -126,7 +126,7 @@ export const salvarLogoSorteio = createServerFn({ method: "POST" })
     const { error: erroUpload } = await supabaseAdmin.storage
       .from(BUCKET)
       .upload(caminho, binario, { contentType: data.tipo, upsert: true });
-    if (erroUpload) throw new Error(erroUpload.message);
+    if (erroUpload) throw new Error(traduzirErroStorage(erroUpload.message));
 
     const anterior = await caminhoGravado();
 
