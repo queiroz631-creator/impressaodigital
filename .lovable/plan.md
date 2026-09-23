@@ -9,6 +9,7 @@
 
 ## WhatsApp
 
+- Mover o seletor **Mover para...** para antes do botão **Assumir**, mantendo todas as ações e cores atuais.
 - Trocar o botão quadrado atual das anotações por uma pequena aba lateral, seguindo a imagem enviada.
 - Posicionar a aba presa à borda do painel de anotações, com formato circular na ponta e uma seta para abrir ou recolher.
 - Manter a aba visível quando o painel estiver fechado, para permitir abri-lo novamente.
@@ -18,6 +19,7 @@
 
 - Conferir o posicionamento do novo botão da calculadora em telas grandes e pequenas.
 - Confirmar que o clique abre o WhatsApp sem limpar o pedido em andamento.
+- Conferir que o seletor aparece imediatamente antes de **Assumir** e continua executando as quatro ações.
 - Testar a aba lateral abrindo e recolhendo as anotações sem cobrir a conversa.
 
 ## Detalhes técnicos
