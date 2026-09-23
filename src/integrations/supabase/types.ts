@@ -2972,6 +2972,7 @@ export type Database = {
           numero_sorteio: number
           quantidade_maxima_cupons: number | null
           status: string
+          valor_minimo_nota_centavos: number
           valor_por_cupom_centavos: number
         }
         Insert: {
@@ -2991,6 +2992,7 @@ export type Database = {
           numero_sorteio: number
           quantidade_maxima_cupons?: number | null
           status?: string
+          valor_minimo_nota_centavos?: number
           valor_por_cupom_centavos?: number
         }
         Update: {
@@ -3010,6 +3012,7 @@ export type Database = {
           numero_sorteio?: number
           quantidade_maxima_cupons?: number | null
           status?: string
+          valor_minimo_nota_centavos?: number
           valor_por_cupom_centavos?: number
         }
         Relationships: []
