@@ -170,6 +170,78 @@ function normalizarResposta(obj: Record<string, unknown>): CurriculoImportado {
   };
 }
 
+/* ------------------------------------------------------------------ */
+/* Mesclagem do preenchimento por regras com o resultado da IA         */
+/* ------------------------------------------------------------------ */
+
+/** Junta duas listas mantendo a primeira ocorrência de cada item. */
+function unir<T>(primeiros: T[], depois: T[], chaveDe: (v: T) => string): T[] {
+  const saida = [...primeiros];
+  const vistas = new Set(saida.map(chaveDe));
+  for (const item of depois) {
+    const k = chaveDe(item);
+    if (!k || vistas.has(k)) continue;
+    vistas.add(k);
+    saida.push(item);
+  }
+  return saida;
+}
+
+/** O que a IA respondeu prevalece; o que ela deixou vazio fica das regras. */
+function mesclar(base: CurriculoImportado, ia: CurriculoImportado): CurriculoImportado {
+  const campos = { ...base.campos } as Record<string, unknown>;
+  for (const [nome, valor] of Object.entries(ia.campos as Record<string, unknown>)) {
+    if (nome === "documentacao_completa") {
+      if (valor !== null && valor !== undefined) campos[nome] = valor;
+    } else if (nome === "habilitacao") {
+      if (valor === true) campos[nome] = true;
+    } else if (typeof valor === "string" && valor.trim()) {
+      campos[nome] = valor;
+    }
+  }
+
+  return {
+    campos: campos as unknown as CamposImportados,
+    cpf: cpfValido(ia.cpf) ? ia.cpf : base.cpf,
+    telefones: unir(ia.telefones, base.telefones, (t) => somenteNumeros(t)),
+    cursos: unir(ia.cursos, base.cursos, (c) => chaveUnica(c.nome_curso)),
+    formacoes: unir(ia.formacoes, base.formacoes, (f) => chaveUnica(`${f.nome_curso}|${f.nivel}`)),
+    experiencias: unir(ia.experiencias, base.experiencias, (e) =>
+      chaveUnica(`${e.empresa}|${e.cargo}`),
+    ),
+    habilidades: unir(ia.habilidades, base.habilidades, (h) => chaveUnica(h)),
+    confiancaBaixa: unir(ia.confiancaBaixa, base.confiancaBaixa, (c) => chaveUnica(c)),
+  };
+}
+
+/**
+ * Interpreta o texto de um currículo: primeiro as regras (sem IA e sem custo),
+ * depois a IA para completar e confirmar. Quando a IA recusa — ocupada, sem
+ * chave, sem crédito, limite ou modelo — o preenchimento por regras continua
+ * valendo e o motivo volta em `erroIA` em vez de interromper a importação.
+ */
+export async function interpretarTexto(conteudo: string): Promise<ResultadoInterpretacao> {
+  const base = extrairPorRegras(conteudo);
+  const r = await gerarTextoIA(SISTEMA, conteudo.slice(0, 30000), { json: true });
+
+  const erroIA = codigoDeStatus(r);
+  if (erroIA) return { dados: base, iaUsada: false, erroIA };
+
+  let obj: Record<string, unknown>;
+  try {
+    obj = JSON.parse(
+      (r.conteudo ?? "")
+        .replace(/^```json/i, "")
+        .replace(/```$/, "")
+        .trim(),
+    );
+  } catch {
+    return { dados: base, iaUsada: false, erroIA: "IA_INDISPONIVEL" };
+  }
+
+  return { dados: mesclar(base, normalizarResposta(obj)), iaUsada: true, erroIA: "" };
+}
+
 /** Currículo já cadastrado para o CPF informado. */
 export async function buscarPorCpf(cpf: string) {
   const numeros = somenteNumeros(cpf);
