@@ -101,12 +101,30 @@ BEGIN
   END IF;
 END $$;
 
+-- portal-sorteios (espelha as migrações 20260923050000 e 20260923060000)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='portal_sorteios_leitura_autenticada') THEN
+    CREATE POLICY "portal_sorteios_leitura_autenticada" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'portal-sorteios');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='portal_sorteios_escrita_gestao') THEN
+    CREATE POLICY "portal_sorteios_escrita_gestao" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'portal-sorteios' AND (public.has_role(auth.uid(), 'admin') OR public.tem_permissao(auth.uid(), 'sorteios.gerenciar')));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='portal_sorteios_atualiza_gestao') THEN
+    CREATE POLICY "portal_sorteios_atualiza_gestao" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'portal-sorteios' AND (public.has_role(auth.uid(), 'admin') OR public.tem_permissao(auth.uid(), 'sorteios.gerenciar'))) WITH CHECK (bucket_id = 'portal-sorteios' AND (public.has_role(auth.uid(), 'admin') OR public.tem_permissao(auth.uid(), 'sorteios.gerenciar')));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='portal_sorteios_exclui_gestao') THEN
+    CREATE POLICY "portal_sorteios_exclui_gestao" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'portal-sorteios' AND (public.has_role(auth.uid(), 'admin') OR public.tem_permissao(auth.uid(), 'sorteios.gerenciar')));
+  END IF;
+END $$;
+
 COMMIT;
 
 -- Resumo do resultado ---------------------------------------------------------
 SELECT b.id AS pasta, b.public AS publica
   FROM storage.buckets b
- WHERE b.id IN ('bot-midia', 'mensagens-rapidas', 'orcamento-arquivos', 'sistema', 'whatsapp', 'database_export_11_09_26')
+ WHERE b.id IN ('bot-midia', 'mensagens-rapidas', 'orcamento-arquivos', 'sistema', 'whatsapp', 'database_export_11_09_26', 'portal-sorteios')
+
  ORDER BY b.id;
 
 SELECT p.policyname AS regra
