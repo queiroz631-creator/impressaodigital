@@ -354,7 +354,7 @@ export function ImportarCurriculo({
               <p className="text-sm text-muted-foreground">
                 Arraste o arquivo para cá — PDF, DOC ou DOCX (até 10 MB)
               </p>
-              <Button variant="outline" onClick={() => inputRef.current?.click()}>
+              <Button variant="outline" onClick={() => void selecionarArquivo()}>
                 <Upload className="mr-1 h-4 w-4" /> SELECIONAR ARQUIVO
               </Button>
               <input
@@ -369,10 +369,49 @@ export function ImportarCurriculo({
                 }}
               />
             </div>
+
+            <div className="rounded-md border p-3 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Pasta de arquivamento</span>
+                </div>
+                {suporta ? (
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => void escolherPasta()}>
+                      {pasta ? "TROCAR PASTA" : "ESCOLHER PASTA"}
+                    </Button>
+                    {pasta && (
+                      <Button size="sm" variant="ghost" onClick={() => void desligarPasta()}>
+                        NÃO ARQUIVAR
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <Button size="sm" variant="outline" disabled>
+                    ESCOLHER PASTA
+                  </Button>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {!suporta
+                  ? "Este navegador não permite mover arquivos. Use o Chrome ou o Edge no computador."
+                  : pasta
+                    ? `Depois de importar, o arquivo sai da pasta de origem e vai para "${pasta.name}".`
+                    : "Escolha uma pasta para que o arquivo seja movido para lá depois da importação."}
+              </p>
+            </div>
+
             {erro && (
               <p className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 {erro}
+              </p>
+            )}
+            {avisoArquivo && (
+              <p className="flex items-start gap-2 rounded-md bg-amber-500/10 p-3 text-sm text-amber-600">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                {avisoArquivo}
               </p>
             )}
           </div>
