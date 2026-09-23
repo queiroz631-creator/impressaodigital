@@ -594,9 +594,9 @@ export function extrairPorRegras(texto: string): CurriculoImportado {
       const nome = f.nome_curso.trim();
       if (nome.length <= 3 || nome.length > 80) return false;
       if (/[,;]$/.test(nome) || /\se$/i.test(nome)) return false;
-      if (acharEscolaridade(nome) && chave(nome) === chave(acharEscolaridade(nome) ?? "")) {
-        return false;
-      }
+      const esc = acharEscolaridade(nome);
+      if (esc && chave(nome) === chave(esc)) return false;
+
       return true;
     })
     .slice(0, 6);
