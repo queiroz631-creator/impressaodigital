@@ -24,6 +24,16 @@ const LIMITE_BYTES = 2 * 1024 * 1024;
 
 type Cliente = SupabaseClient<Database>;
 
+const AVISO_SEM_PASTA =
+  "O armazenamento da logo ainda não está preparado neste servidor. Rode a atualização do sistema.";
+
+/** Traduz erros do armazenamento para mensagens em português. */
+function traduzirErroStorage(mensagem: string): string {
+  if (/bucket not found/i.test(mensagem)) return AVISO_SEM_PASTA;
+  return mensagem;
+}
+
+
 /** Exige administrador OU permissão sensível de gerenciamento de sorteios. */
 async function exigirGestao(context: { supabase: Cliente; userId: string }) {
   const { data: isAdmin, error: erroRole } = await context.supabase.rpc("has_role", {
@@ -116,7 +126,7 @@ export const salvarLogoSorteio = createServerFn({ method: "POST" })
     const { error: erroUpload } = await supabaseAdmin.storage
       .from(BUCKET)
       .upload(caminho, binario, { contentType: data.tipo, upsert: true });
-    if (erroUpload) throw new Error(erroUpload.message);
+    if (erroUpload) throw new Error(traduzirErroStorage(erroUpload.message));
 
     const anterior = await caminhoGravado();
 
