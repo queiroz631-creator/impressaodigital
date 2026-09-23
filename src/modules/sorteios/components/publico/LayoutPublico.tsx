@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import logoSorteios from "@/assets/logo-queiroz-sorteios.png.asset.json";
+import { logoPortalPublica } from "@/lib/sorteio-logo.functions";
 import { NavInferior } from "./NavInferior";
 
 /**
@@ -18,14 +20,23 @@ export function LayoutPublico({
   titulo?: string | undefined;
   subtitulo?: string | undefined;
 }) {
+  const { data: logo } = useQuery({
+    queryKey: ["sorteios", "logo-portal"],
+    queryFn: () => logoPortalPublica(),
+    staleTime: 5 * 60 * 1000,
+  });
+
   return (
     <div className="tema-portal-sorteios min-h-screen bg-muted/40 flex flex-col">
       <header className="bg-primary text-primary-foreground">
         <div className="mx-auto w-full max-w-md px-4 py-5 flex items-center gap-3">
           <img
-            src={logoSorteios.url}
+            src={logo?.url ?? logoSorteios.url}
             alt="Queiroz Papelaria"
             className="h-11 w-11 rounded-full bg-white object-contain"
+            onError={(e) => {
+              e.currentTarget.src = logoSorteios.url;
+            }}
           />
           <div className="min-w-0">
             <p className="font-semibold leading-tight truncate">Portal de Sorteios</p>
