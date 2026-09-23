@@ -70,6 +70,7 @@ export const MODULOS: Modulo[] = [
     descricao: "Ferramentas operacionais do dia a dia",
     ordem: 1,
     ativo: true,
+    cor: "azul",
     acesso: "administrativo",
     permissao: "modulo.operacao",
     itens: [
@@ -131,6 +132,7 @@ export const MODULOS: Modulo[] = [
     descricao: "Atendimento e automação de mensagens",
     ordem: 2,
     ativo: true,
+    cor: "verde",
     acesso: "administrativo",
     permissao: "modulo.comunicacao",
     itens: [
@@ -183,6 +185,7 @@ export const MODULOS: Modulo[] = [
     descricao: "Vitrine pública e campanhas",
     ordem: 3,
     ativo: true,
+    cor: "roxo",
     acesso: "administrativo",
     permissao: "modulo.marketing",
     itens: [
@@ -224,6 +227,7 @@ export const MODULOS: Modulo[] = [
     descricao: "Gestão do sistema",
     ordem: 4,
     ativo: true,
+    cor: "ambar",
     acesso: "administrativo",
     permissao: "modulo.administracao",
     itens: [
