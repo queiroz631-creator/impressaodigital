@@ -18,6 +18,7 @@ export function PaginaPrivada({
     nome: string;
     saldo_centavos: number;
     acoesBloqueadas: boolean;
+    sorteio: { valor_minimo_nota_centavos: number };
   }) => ReactNode;
 }) {
   const contexto = useContextoPortal();
