@@ -282,9 +282,7 @@ export function ImportarCurriculo({
       const base = existente
         ? "Cadastro atualizado com as informações importadas."
         : "Currículo importado. Revise as informações.";
-      toast.success(
-        arquivamento.ok ? `${base} Arquivo movido para "${pasta?.name}".` : base,
-      );
+      toast.success(arquivamento.ok ? `${base} Arquivo movido para "${pasta?.name}".` : base);
       if (arquivamento.aviso) toast.warning(arquivamento.aviso, { duration: 10000 });
       onImportado(id);
       limpar();
