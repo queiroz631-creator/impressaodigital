@@ -81,6 +81,7 @@ export function FormularioSorteio({
       data_sorteio: paraIso(valores.data_sorteio) ?? "",
       valor_por_cupom_centavos: centavos ?? 0,
       quantidade_maxima_cupons: limite ? Number(limite) : null,
+      valor_minimo_nota_centavos: centavosDeTexto(valores.valor_minimo_nota) ?? 0,
     };
 
     const resultado = esquemaSorteio.safeParse(candidato);
