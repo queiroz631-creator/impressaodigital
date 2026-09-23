@@ -322,7 +322,28 @@ export function ImportarCurriculo({
               onDrop={(e) => {
                 e.preventDefault();
                 setArrastando(false);
+                const item = e.dataTransfer.items?.[0];
                 const file = e.dataTransfer.files?.[0];
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const obter = (item as any)?.getAsFileSystemHandle;
+                if (suporta && typeof obter === "function") {
+                  void obter
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    .call(item)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    .then(async (h: any) => {
+                      if (h?.kind === "file") {
+                        setArquivoHandle(h);
+                        await processar(await h.getFile());
+                      } else if (file) {
+                        await processar(file);
+                      }
+                    })
+                    .catch(() => {
+                      if (file) void processar(file);
+                    });
+                  return;
+                }
                 if (file) void processar(file);
               }}
               className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-8 text-center ${
