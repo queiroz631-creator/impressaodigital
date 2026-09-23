@@ -568,6 +568,7 @@ export const registrarNotaParticipante = createServerFn({ method: "POST" })
       const { participante, sorteio } = await carregarSessao();
       const periodo = periodoAberto(sorteio);
       if (!periodo.aberto) throw new ErroPortal("PERIODO", periodo.mensagem ?? "Indisponível.");
+      conferirValorMinimo(sorteio, data.valor_centavos);
 
       const supabase = await admin();
       const { data: nota, error } = await supabase
@@ -639,6 +640,7 @@ export const corrigirMinhaNota = createServerFn({ method: "POST" })
       const { participante, sorteio } = await carregarSessao();
       const periodo = periodoAberto(sorteio);
       if (!periodo.aberto) throw new ErroPortal("PERIODO", periodo.mensagem ?? "Indisponível.");
+      conferirValorMinimo(sorteio, data.valor_centavos);
 
       const supabase = await admin();
       const { data: nota } = await supabase
