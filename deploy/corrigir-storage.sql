@@ -25,6 +25,12 @@ VALUES ('bot-midia', 'bot-midia', false),
        ('database_export_11_09_26', 'database_export_11_09_26', false)
 ON CONFLICT (id) DO NOTHING;
 
+-- portal-sorteios (logo do portal de sorteios, limite de 2 MB)
+INSERT INTO storage.buckets (id, name, public, file_size_limit)
+VALUES ('portal-sorteios', 'portal-sorteios', false, 2097152)
+ON CONFLICT (id) DO NOTHING;
+
+
 -- 2. Regras de permissão (só cria as que não existem) --------------------------
 
 -- mensagens-rapidas (espelha a migração 20260908223416)
