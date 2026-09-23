@@ -97,7 +97,7 @@ function renderizar(
     setFont(true, 11);
     doc.setTextColor(255, 255, 255);
     doc.text(titulo.toUpperCase(), MARGEM + 8, y + h - 5);
-    y += h + 8 * escala + folga.secao;
+    y += h + 8 * escala;
   };
 
   const centro = largura / 2;
@@ -121,12 +121,12 @@ function renderizar(
   setFont(true, 16);
   doc.setTextColor(255, 255, 255);
   doc.text("CURRÍCULO VITAE", centro, y + hFaixa - 8 * escala, { align: "center" });
-  y += hFaixa + 16 * escala + folga.cabecalho;
+  y += hFaixa + 16 * escala;
 
   centrado((c.nome_completo || "").toUpperCase(), 15, true, NAVY);
 
   // Espaço entre o nome e os telefones
-  y += 4 * escala + folga.cabecalho;
+  y += 4 * escala;
 
   const telefones = [
     c.telefone_principal
@@ -137,7 +137,7 @@ function renderizar(
   if (telefones.length) centrado(telefones.join("  •  "), 12);
   if (c.email) centrado(c.email, 10);
 
-  y += 6 * escala + folga.cabecalho;
+  y += 6 * escala;
 
   // Foto 2,5cm x 3,5cm alinhada ao topo e à direita da faixa do cabeçalho.
   if (c.foto_exibir && c.foto_url) {
@@ -159,7 +159,7 @@ function renderizar(
   if (pessoais.length) {
     secao("Dados pessoais");
     for (const p of pessoais) paragrafo(p, MARGEM, util, 10);
-    y += 8 * escala + folga.secao;
+    y += 8 * escala;
   }
 
   // ===== Informações adicionais =====
@@ -167,7 +167,7 @@ function renderizar(
   if (adicionais.length) {
     secao("Informações adicionais");
     for (const linha of adicionais) paragrafo(`• ${linha}`, MARGEM, util, 10);
-    y += 8 * escala + folga.secao;
+    y += 8 * escala;
   }
 
   // ===== Formação =====
@@ -178,7 +178,7 @@ function renderizar(
     for (const f of dados.formacoes) {
       paragrafo(formatarFormacao(f), MARGEM, util, 10);
     }
-    y += 8 * escala + folga.secao;
+    y += 8 * escala;
   }
 
   // ===== Cursos complementares =====
@@ -187,14 +187,14 @@ function renderizar(
     for (const curso of dados.cursos) {
       paragrafo(formatarCurso(curso), MARGEM, util, 10);
     }
-    y += 8 * escala + folga.secao;
+    y += 8 * escala;
   }
 
   // ===== Experiência profissional =====
   if (!c.experiencia_possui) {
     secao("Experiência profissional");
     texto(fraseSemExperiencia(c), MARGEM, 12, true, NAVY);
-    y += 8 * escala + folga.secao;
+    y += 8 * escala;
   } else if (dados.experiencias.length) {
     secao("Experiência profissional");
     if (dados.experiencias.length > 3) {
@@ -241,20 +241,20 @@ function renderizar(
 
       let yEsq = y;
       for (const exp of esq) {
-        yEsq = renderExp(exp, MARGEM, yEsq, colW) + 6 * escala + folga.secao;
+        yEsq = renderExp(exp, MARGEM, yEsq, colW) + 6 * escala;
       }
       let yDir = y;
       for (const exp of dir) {
-        yDir = renderExp(exp, xDir, yDir, colW) + 6 * escala + folga.secao;
+        yDir = renderExp(exp, xDir, yDir, colW) + 6 * escala;
       }
-      y = Math.max(yEsq, yDir) + 8 * escala + folga.secao;
+      y = Math.max(yEsq, yDir) + 8 * escala;
     } else {
       for (const exp of dados.experiencias) {
         if (exp.empresa) texto(exp.empresa, MARGEM, 11, true, NAVY);
         if (exp.cargo) texto(`Cargo/Função: ${exp.cargo}`, MARGEM, 10);
         if (exp.periodo) texto(`Período: ${exp.periodo}`, MARGEM, 9);
         if (exp.atividades) paragrafo(`Atividade(s): ${exp.atividades}`, MARGEM, util, 10);
-        y += 6 * escala + folga.secao;
+        y += 6 * escala;
       }
     }
   }
@@ -263,7 +263,7 @@ function renderizar(
   if (dados.habilidades.length) {
     secao("Habilidades");
     for (const h of dados.habilidades) paragrafo(`• ${h.descricao}`, MARGEM, util, 10);
-    y += 8 * escala + folga.secao;
+    y += 8 * escala;
   }
 
   // ===== Objetivo =====
@@ -271,18 +271,18 @@ function renderizar(
   if (objetivo) {
     secao("Objetivo");
     paragrafo(objetivo, MARGEM, util, 10);
-    y += 8 * escala + folga.secao;
+    y += 8 * escala;
   }
 
   // ===== Observação (destaque final, sem barra de seção) =====
   const obsHabilidades = observacaoHabilidades(c);
   if (obsHabilidades) {
-    y += folga.secao;
+    y += 8 * escala;
     paragrafo(`OBS.: ${obsHabilidades}`, MARGEM, util, 12, true, NAVY);
   }
 
   if (c.exibir_data_atualizacao) {
-    y += 16 * escala + folga.secao;
+    y += 16 * escala;
     setFont(false, 9);
     doc.setTextColor(110, 110, 120);
     doc.text(`Atualizado em ${dataBR(c.updated_at)}`, MARGEM, y);
