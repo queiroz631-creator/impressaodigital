@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/public/sorteios/sync/sorteio-ativo")(
     handlers: {
       POST: async ({ request }) => {
         const { tokenLojamixSyncValido, naoAutorizado } = await import("@/lib/sorteios-sync-token.server");
-        if (!tokenLojamixSyncValido(request)) return naoAutorizado();
+        if (!(await tokenLojamixSyncValido(request))) return naoAutorizado();
 
         try {
           const { lerSorteioAtivoParaSync } = await import("@/lib/sorteios-sync.server");

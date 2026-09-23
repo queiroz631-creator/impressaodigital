@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/public/sorteios/sync/notas-lote")({
     handlers: {
       POST: async ({ request }) => {
         const { tokenLojamixSyncValido, naoAutorizado } = await import("@/lib/sorteios-sync-token.server");
-        if (!tokenLojamixSyncValido(request)) return naoAutorizado();
+        if (!(await tokenLojamixSyncValido(request))) return naoAutorizado();
 
         const entrada = esquema.safeParse(await request.json().catch(() => null));
         if (!entrada.success) {
