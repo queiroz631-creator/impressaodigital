@@ -13,8 +13,9 @@ import {
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import { gravarEtapa } from "@/lib/curriculo.server";
 import type { PayloadEtapa } from "@/lib/curriculo";
-import type { CurriculoImportado } from "@/lib/curriculo-import-tipos";
-import { gerarTextoIA } from "@/lib/ia-chave.server";
+import type { CamposImportados, CurriculoImportado } from "@/lib/curriculo-import-tipos";
+import { extrairPorRegras, chaveUnica } from "@/lib/curriculo-regras";
+import { gerarTextoIA, type ResultadoIA } from "@/lib/ia-chave.server";
 
 const SISTEMA = `Você extrai dados de currículos brasileiros e devolve SOMENTE JSON válido.
 REGRAS OBRIGATÓRIAS:
@@ -40,29 +41,28 @@ function lista(v: unknown): unknown[] {
   return Array.isArray(v) ? v.slice(0, 30) : [];
 }
 
-/** Chama a IA e normaliza o resultado para os tipos do sistema. */
-export async function interpretarTexto(conteudo: string): Promise<CurriculoImportado> {
-  const r = await gerarTextoIA(SISTEMA, conteudo.slice(0, 30000), { json: true });
+/** Estrutura devolvida pela interpretação: dados mesclados + situação da IA. */
+export interface ResultadoInterpretacao {
+  dados: CurriculoImportado;
+  /** true quando a IA respondeu e entrou na mesclagem. */
+  iaUsada: boolean;
+  /** "" quando a IA respondeu; código IA_* quando não respondeu. */
+  erroIA: string;
+}
 
-  if (r.status === 429) throw new Error("IA_LIMITE");
-  if (r.status === 402) throw new Error("IA_CREDITOS");
-  if (r.status === 401 || r.status === 403) throw new Error("IA_CHAVE");
-  if (r.status === 404) throw new Error("IA_MODELO");
-  if (r.status === 0 || r.status >= 500) throw new Error("IA_OCUPADA");
-  if (r.status !== 200 || !r.conteudo) throw new Error("IA_OCUPADA");
+/** Motivo da recusa da IA em código compreensível ("" quando respondeu). */
+function codigoDeStatus(r: ResultadoIA): string {
+  if (r.status === 429) return "IA_LIMITE";
+  if (r.status === 402) return "IA_CREDITOS";
+  if (r.status === 401 || r.status === 403) return "IA_CHAVE";
+  if (r.status === 404) return "IA_MODELO";
+  if (r.status !== 200 || !r.conteudo) return "IA_OCUPADA";
+  if (r.motivoParada === "MAX_TOKENS") return "IA_OCUPADA";
+  return "";
+}
 
-  const bruto = r.conteudo;
-  let obj: Record<string, unknown>;
-  try {
-    obj = JSON.parse(
-      bruto
-        .replace(/^```json/i, "")
-        .replace(/```$/, "")
-        .trim(),
-    );
-  } catch {
-    throw new Error("IA_INDISPONIVEL");
-  }
+/** Converte o JSON devolvido pela IA na estrutura do sistema. */
+function normalizarResposta(obj: Record<string, unknown>): CurriculoImportado {
 
   const escolaridade = ESCOLARIDADES.includes(texto(obj["escolaridade"]))
     ? texto(obj["escolaridade"])
