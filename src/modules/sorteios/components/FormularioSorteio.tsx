@@ -210,6 +210,22 @@ export function FormularioSorteio({
             />
             {erro("quantidade_maxima_cupons")}
           </div>
+
+          <div>
+            <Label htmlFor="minimoNota">Valor mínimo da nota (R$)</Label>
+            <Input
+              id="minimoNota"
+              inputMode="decimal"
+              placeholder="Sem mínimo"
+              value={valores.valor_minimo_nota}
+              onChange={(e) => set("valor_minimo_nota")(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Notas com valor abaixo desse mínimo não serão aceitas. Deixe em branco para não exigir
+              mínimo.
+            </p>
+            {erro("valor_minimo_nota_centavos")}
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
