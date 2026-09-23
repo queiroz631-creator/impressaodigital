@@ -171,9 +171,20 @@ export const atualizarSorteio = createServerFn({ method: "POST" })
     const motivoBloqueio = motivoBloqueioCriticos(atual.status, atual.movimentacoes);
     const criticosLiberados = motivoBloqueio === null;
 
+    const { data: antes, error: erroAntes } = await context.supabase
+      .from("sorteios")
+      .select(
+        "nome, descricao, numero_sorteio, data_inicio, data_fim, data_sorteio, valor_por_cupom_centavos, quantidade_maxima_cupons, valor_minimo_nota_centavos",
+      )
+      .eq("id", data.id)
+      .single();
+    if (erroAntes) throw new Error(erroAntes.message);
+
     const alteracao: Database["public"]["Tables"]["sorteios"]["Update"] = {
       nome: data.dados.nome,
       descricao: data.dados.descricao,
+      data_inicio: data.dados.data_inicio,
+      data_fim: data.dados.data_fim,
       data_sorteio: data.dados.data_sorteio,
       quantidade_maxima_cupons: data.dados.quantidade_maxima_cupons,
       valor_minimo_nota_centavos: data.dados.valor_minimo_nota_centavos,
@@ -181,27 +192,23 @@ export const atualizarSorteio = createServerFn({ method: "POST" })
 
     if (criticosLiberados) {
       alteracao.numero_sorteio = data.dados.numero_sorteio;
-      alteracao.data_inicio = data.dados.data_inicio;
-      alteracao.data_fim = data.dados.data_fim;
       alteracao.valor_por_cupom_centavos = data.dados.valor_por_cupom_centavos;
     } else {
-      // Confere no servidor se o navegador tentou mexer em campo crítico.
-      const { data: antes, error: erroAntes } = await context.supabase
-        .from("sorteios")
-        .select("numero_sorteio, data_inicio, data_fim, valor_por_cupom_centavos")
-        .eq("id", data.id)
-        .single();
-      if (erroAntes) throw new Error(erroAntes.message);
-
-      const iguais = CAMPOS_CRITICOS.every((campo) => {
-        const enviado = data.dados[campo];
-        const gravado = (antes as Record<string, unknown>)[campo];
-        if (campo === "data_inicio" || campo === "data_fim") {
-          return new Date(String(enviado)).getTime() === new Date(String(gravado)).getTime();
-        }
-        return enviado === gravado;
-      });
+      // Confere no servidor se o navegador tentou mexer em campo travado.
+      const iguais = CAMPOS_CRITICOS.every(
+        (campo) => data.dados[campo] === (antes as Record<string, unknown>)[campo],
+      );
       if (!iguais) throw new Error(motivoBloqueio);
+    }
+
+    const ehData = (c: string) => c.startsWith("data_");
+    const mudancas: Record<string, { antes: unknown; depois: unknown }> = {};
+    for (const [campo, depois] of Object.entries(alteracao)) {
+      const anterior = (antes as Record<string, unknown>)[campo];
+      const igual = ehData(campo)
+        ? new Date(String(anterior)).getTime() === new Date(String(depois)).getTime()
+        : (anterior ?? null) === (depois ?? null);
+      if (!igual) mudancas[campo] = { antes: anterior ?? null, depois: depois ?? null };
     }
 
     const { error } = await context.supabase
@@ -215,7 +222,11 @@ export const atualizarSorteio = createServerFn({ method: "POST" })
       sorteio_id: data.id,
       evento: "sorteio.alterado",
       usuario_id: context.userId,
-      detalhe: { campos: Object.keys(alteracao), criticos_liberados: criticosLiberados },
+      detalhe: {
+        situacao: atual.status,
+        mudancas,
+        criticos_liberados: criticosLiberados,
+      } as unknown as Json,
     });
 
     return { ok: true };
