@@ -765,7 +765,12 @@ class App:
                             f"Backup salvo em:\n\n{item[1]}"
                         )
 
+                elif kind == "gerar_fim":
+                    self.gerando = False
+                    self.set_botoes_ativos(True)
+
                 elif kind == "info":
+
                     messagebox.showinfo(item[1], item[2])
 
                 elif kind == "error":
