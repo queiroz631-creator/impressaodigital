@@ -25,6 +25,7 @@ export type ValoresSorteio = {
   data_sorteio: string;
   valor_por_cupom: string;
   quantidade_maxima_cupons: string;
+  valor_minimo_nota: string;
 };
 
 function valoresIniciais(sorteio?: Sorteio | null): ValoresSorteio {
@@ -38,6 +39,9 @@ function valoresIniciais(sorteio?: Sorteio | null): ValoresSorteio {
     valor_por_cupom: sorteio ? textoDeCentavos(sorteio.valor_por_cupom_centavos) : "",
     quantidade_maxima_cupons: sorteio?.quantidade_maxima_cupons
       ? String(sorteio.quantidade_maxima_cupons)
+      : "",
+    valor_minimo_nota: sorteio?.valor_minimo_nota_centavos
+      ? textoDeCentavos(sorteio.valor_minimo_nota_centavos)
       : "",
   };
 }
@@ -77,6 +81,7 @@ export function FormularioSorteio({
       data_sorteio: paraIso(valores.data_sorteio) ?? "",
       valor_por_cupom_centavos: centavos ?? 0,
       quantidade_maxima_cupons: limite ? Number(limite) : null,
+      valor_minimo_nota_centavos: centavosDeTexto(valores.valor_minimo_nota) ?? 0,
     };
 
     const resultado = esquemaSorteio.safeParse(candidato);
@@ -204,6 +209,22 @@ export function FormularioSorteio({
               onChange={(e) => set("quantidade_maxima_cupons")(e.target.value)}
             />
             {erro("quantidade_maxima_cupons")}
+          </div>
+
+          <div>
+            <Label htmlFor="minimoNota">Valor mínimo da nota (R$)</Label>
+            <Input
+              id="minimoNota"
+              inputMode="decimal"
+              placeholder="Sem mínimo"
+              value={valores.valor_minimo_nota}
+              onChange={(e) => set("valor_minimo_nota")(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Notas com valor abaixo desse mínimo não serão aceitas. Deixe em branco para não exigir
+              mínimo.
+            </p>
+            {erro("valor_minimo_nota_centavos")}
           </div>
         </div>
 

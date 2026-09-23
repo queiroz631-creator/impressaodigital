@@ -65,7 +65,7 @@ function NotasPortal() {
     await queryClient.invalidateQueries({ queryKey: ["portal-painel"] });
   }
 
-  async function salvar() {
+  async function salvar(minimoCentavos: number) {
     setErro("");
     const centavos = centavosDeTexto(valor);
     if (!numero.trim()) {
@@ -74,6 +74,10 @@ function NotasPortal() {
     }
     if (!centavos || centavos <= 0) {
       setErro("Informe o valor da nota.");
+      return;
+    }
+    if (minimoCentavos > 0 && centavos < minimoCentavos) {
+      setErro(`O valor mínimo da nota para este sorteio é ${brl(minimoCentavos / 100)}.`);
       return;
     }
     setEnviando(true);
@@ -137,12 +141,17 @@ function NotasPortal() {
                     value={valor}
                     onChange={(e) => setValor(formatarMoedaDigitando(e.target.value))}
                   />
+                  {contexto.sorteio.valor_minimo_nota_centavos > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Valor mínimo aceito: {brl(contexto.sorteio.valor_minimo_nota_centavos / 100)}
+                    </p>
+                  )}
                 </div>
                 {erro && <p className="text-sm text-destructive">{erro}</p>}
                 <Button
                   className="w-full h-12 text-base"
                   disabled={enviando}
-                  onClick={() => void salvar()}
+                  onClick={() => void salvar(contexto.sorteio.valor_minimo_nota_centavos)}
                 >
                   {enviando && <Loader2 className="h-5 w-5 animate-spin" />}
                   {corrigindo ? "Salvar correção" : "Registrar nota"}

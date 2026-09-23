@@ -133,6 +133,7 @@ export const criarSorteio = createServerFn({ method: "POST" })
         data_sorteio: data.data_sorteio,
         valor_por_cupom_centavos: data.valor_por_cupom_centavos,
         quantidade_maxima_cupons: data.quantidade_maxima_cupons,
+        valor_minimo_nota_centavos: data.valor_minimo_nota_centavos,
         status: "RASCUNHO",
         criado_por: context.userId,
       })
@@ -175,6 +176,7 @@ export const atualizarSorteio = createServerFn({ method: "POST" })
       descricao: data.dados.descricao,
       data_sorteio: data.dados.data_sorteio,
       quantidade_maxima_cupons: data.dados.quantidade_maxima_cupons,
+      valor_minimo_nota_centavos: data.dados.valor_minimo_nota_centavos,
     };
 
     if (criticosLiberados) {

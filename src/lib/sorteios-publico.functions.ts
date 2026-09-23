@@ -99,8 +99,27 @@ function dadosPublicosSorteio(s: SorteioRow) {
     data_sorteio: s.data_sorteio,
     valor_por_cupom_centavos: s.valor_por_cupom_centavos,
     quantidade_maxima_cupons: s.quantidade_maxima_cupons,
+    valor_minimo_nota_centavos: s.valor_minimo_nota_centavos ?? 0,
     status: s.status,
   };
+}
+
+/**
+ * Valor mínimo da nota: conferido SEMPRE no servidor, com o mínimo lido do
+ * próprio sorteio da sessão (o navegador nunca decide isso).
+ */
+function conferirValorMinimo(sorteio: SorteioRow, valorCentavos: number) {
+  const minimo = sorteio.valor_minimo_nota_centavos ?? 0;
+  if (minimo > 0 && valorCentavos < minimo) {
+    const texto = (minimo / 100).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+    throw new ErroPortal(
+      "VALOR_MINIMO",
+      `O valor mínimo da nota para este sorteio é ${texto}.`,
+    );
+  }
 }
 
 /** Dados públicos do sorteio ATIVO (ou mensagem de indisponibilidade). */
@@ -549,6 +568,7 @@ export const registrarNotaParticipante = createServerFn({ method: "POST" })
       const { participante, sorteio } = await carregarSessao();
       const periodo = periodoAberto(sorteio);
       if (!periodo.aberto) throw new ErroPortal("PERIODO", periodo.mensagem ?? "Indisponível.");
+      conferirValorMinimo(sorteio, data.valor_centavos);
 
       const supabase = await admin();
       const { data: nota, error } = await supabase
@@ -620,6 +640,7 @@ export const corrigirMinhaNota = createServerFn({ method: "POST" })
       const { participante, sorteio } = await carregarSessao();
       const periodo = periodoAberto(sorteio);
       if (!periodo.aberto) throw new ErroPortal("PERIODO", periodo.mensagem ?? "Indisponível.");
+      conferirValorMinimo(sorteio, data.valor_centavos);
 
       const supabase = await admin();
       const { data: nota } = await supabase

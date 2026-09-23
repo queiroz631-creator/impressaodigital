@@ -60,6 +60,11 @@ export const esquemaSorteio = z
       .positive("O limite deve ser maior que zero")
       .nullable()
       .default(null),
+    valor_minimo_nota_centavos: z
+      .number()
+      .int()
+      .min(0, "O valor mínimo não pode ser negativo")
+      .default(0),
   })
   .superRefine((v, ctx) => {
     const inicio = new Date(v.data_inicio).getTime();
