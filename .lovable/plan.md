@@ -1,35 +1,37 @@
 # Botão "Gerar backup agora" no programa de backup
 
+O arquivo que você enviou (`app.py`, servidor de backup em Flask) **já tem tudo o que falta**: ele aceita o pedido de gerar backup, roda o script no servidor, acompanha o andamento e disponibiliza o arquivo para download. Então o trabalho aqui é só no programa Windows.
+
 ## O que você vai ver
 
-No programa de backup (Windows), ao lado de "Baixar último backup", entra um botão **Gerar backup agora**:
+No programa de backup, na linha de botões, entra **Gerar backup agora**:
 
-1. Pede confirmação ("Gerar uma nova cópia do banco no servidor agora?").
-2. Pede ao servidor de backup para criar a cópia.
-3. Mostra "Gerando backup no servidor..." e fica aguardando (com limite de espera).
-4. Quando o arquivo novo aparece na lista, ele é baixado sozinho para a pasta escolhida, com a mesma barra de progresso do download manual.
-5. Ao terminar, mostra o aviso de sucesso e atualiza a lista de backups.
+1. Pede confirmação: "Gerar uma nova cópia do banco no servidor agora?".
+2. Envia o pedido ao servidor e mostra "Gerando backup no servidor..." na barra de status.
+3. Fica acompanhando o andamento (consulta a cada 5 segundos, até 1 hora).
+4. Quando o servidor avisa que concluiu, o arquivo novo é **baixado automaticamente** para a pasta escolhida, com a mesma barra de progresso do download manual.
+5. No fim, aviso de sucesso e a lista de backups é atualizada.
 
-Se o servidor recusar o pedido, aparece uma mensagem clara: "Este servidor de backup não aceita gerar cópia sob demanda" — sem travar o programa.
+Casos tratados com mensagem clara, sem travar o programa:
 
-## Ponto importante (precisa da sua decisão / ação)
+- Já existe um backup em andamento no servidor → "Já existe um backup em andamento." e o programa passa a acompanhar esse mesmo backup até terminar.
+- O script de backup falha no servidor → mostra o motivo que o servidor informou.
+- Passou de 1 hora → avisa que o tempo de espera esgotou (o backup pode ainda terminar; basta atualizar a lista depois).
+- Servidor antigo, sem a rota nova → "Este servidor de backup não aceita gerar cópia sob demanda".
 
-O servidor `backup.queiroztecno.com.br` **não faz parte deste projeto** — o código dele não está aqui. Você indicou que hoje ele provavelmente só lista e baixa backups já gerados.
-
-Isso significa: o botão fica pronto no programa, mas ele só vai realmente gerar a cópia depois que o servidor de backup passar a aceitar esse pedido. Enquanto isso, o botão vai mostrar a mensagem de "não suportado".
-
-Junto com o botão, deixo escrito no README exatamente o que o servidor precisa oferecer para o botão funcionar (rota, forma de chamar e resposta esperada), para quem cuida daquele servidor aplicar. Se você me der acesso ao código desse servidor, faço a parte dele também num próximo passo.
+Enquanto a geração está em curso, os botões de download e o de gerar ficam desabilitados, para não atropelar a operação.
 
 ## Detalhes técnicos
 
 Arquivo: `api-local-backup/backup_app_v6_4.py`
 
-- Nova função `api_post(url, token, timeout)` (urllib, `Authorization: Bearer`), espelhando `api_get`.
-- Nova função `solicitar_backup(api, token)` → `POST {api}/api/backups`; trata `404`/`405`/`501` como "não suportado" (exceção própria `BackupSobDemandaIndisponivel`).
-- Novo método `gerar_backup()` na janela: roda em thread, guarda a lista de nomes atual, chama `solicitar_backup`, e depois faz polling de `get_backups` (a cada 5s, até 10 min) procurando um nome que ainda não existia (ou o `filename` devolvido pela resposta, quando houver).
-- Ao encontrar, reaproveita `start_download(filename)` (mesma barra de progresso, mesma pasta de destino, mesmo tratamento de erro).
-- Botão `ttk.Button(btns, text="Gerar backup agora", command=self.gerar_backup)` na linha de botões, desabilitado enquanto uma operação estiver em curso (mesma lógica de `self.busy` já usada).
-- Mensagens e logs em português, gravados em `backup.log` como o restante do app.
-- `VERSION` → `6.4.3`; `README.md` ganha a seção "Gerar backup sob demanda" com o contrato da rota esperada e a nota da correção do download automático já aplicada.
+- `api_post(url, token, timeout)` — espelha `api_get` (urllib, `Authorization: Bearer`, retorna corpo + status).
+- `solicitar_backup(api, token)` → `POST {api}/api/backups`; aceita `202` (novo job) e `409` (já em andamento, reaproveita o `job_id` devolvido); `404/405/501` levantam `BackupSobDemandaIndisponivel`.
+- `status_backup(api, token, job_id)` → `GET {api}/api/backups/status/{job_id}`; lê `status` (`AGUARDANDO`, `EXECUTANDO`, `CONCLUIDO`, `ERRO`), `mensagem` e `filename`.
+- Novo método `gerar_backup()` na janela: roda em thread; confirma com `messagebox.askyesno`; chama `solicitar_backup`; faz polling com `status_backup` a cada 5 s (limite 1 h), atualizando a barra de status via `ui_queue` com a `mensagem` do servidor; em `CONCLUIDO` envia `("start_download", filename, False)` pela `ui_queue`, reaproveitando todo o download atual; em `ERRO` envia `("error", ...)`.
+- Botão `ttk.Button(btns, text="Gerar backup agora", command=self.gerar_backup)` na linha existente (ao lado de "Baixar último backup"); nova flag `self.gerando` desabilita/reabilita os botões de ação via `ui_queue`.
+- Tudo logado em `backup.log` com as mensagens em português, como no resto do app.
+- `VERSION` → `6.4.3`; `README.md` ganha a seção "Gerar backup sob demanda" (como funciona, rotas usadas, variáveis `BACKUP_SCRIPT`/`BACKUP_DIR` do servidor) e a nota da correção do download automático já aplicada.
+- O `app.py` enviado é guardado como referência em `api-local-backup/servidor/app.py`, para o código do servidor não se perder — nenhuma alteração nele.
 
-Não muda: login/token, listagem, download manual, verificação automática, agendamento, `config.json`, nem qualquer parte do sistema web ou do banco. Nada é executado, compilado ou publicado — gerar o novo EXE com `gerar_exe.bat` continua sendo passo manual seu.
+Não muda: token/login, listagem, download manual, verificação automática, agendamento, `config.json`, nem qualquer parte do sistema web ou do banco. Nada é executado, compilado ou publicado — gerar o novo EXE com `gerar_exe.bat` e atualizar o servidor continuam sendo passos manuais seus.
