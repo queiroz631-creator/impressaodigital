@@ -174,3 +174,15 @@
 - `supabase/migrations/` é a referência oficial (lida pelo deploy da VPS).
 - Ao copiar uma mudança de banco para lá, conferir se as dependências anteriores (tabelas, funções) também já estão na pasta — foi o que causou o erro de deploy de 23/09 (`sorteio_saldo_fontes` inexistente na VPS).
 - Migrações de limpeza de dados específicas do ambiente da plataforma (ex.: limpar `origem_id` de clientes) NÃO são copiadas para a pasta oficial.
+
+## Importação de currículo — preenchimento por regras antes da IA
+- [x] `src/lib/curriculo-regras.ts` — preenche os campos direto do texto lido no navegador
+      (rótulos, CPF/telefone/CEP/data/e-mail, seções, experiências, cursos, habilidades),
+      sem nenhuma chamada de IA; incertezas vão para a lista "verificar".
+- [x] Ordem: regras → IA completa o que faltou → se a IA falhar, o que as regras pegaram
+      continua na tela e o motivo aparece (limite de uso, chave recusada, serviço ocupado).
+- [x] Bloco "Texto lido do arquivo" (VER / COPIAR) no diálogo, para revisão manual.
+- [x] Verificado no navegador com a IA indisponível (limite de uso atingido): 17 campos
+      preenchidos, rascunho criado e aberto em `/curriculos/<id>`, sem erros de console.
+- [ ] Pendente do usuário: `git push` e, na VPS, `cd /var/www/impressaodigital && git pull && bash deploy/deploy.sh`.
+
