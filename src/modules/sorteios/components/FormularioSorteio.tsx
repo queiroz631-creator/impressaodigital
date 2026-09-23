@@ -170,7 +170,6 @@ export function FormularioSorteio({
               type="datetime-local"
               value={valores.data_inicio}
               onChange={(e) => set("data_inicio")(e.target.value)}
-              disabled={Boolean(motivoBloqueio)}
             />
             {erro("data_inicio")}
           </div>
@@ -182,7 +181,6 @@ export function FormularioSorteio({
               type="datetime-local"
               value={valores.data_fim}
               onChange={(e) => set("data_fim")(e.target.value)}
-              disabled={Boolean(motivoBloqueio)}
             />
             {erro("data_fim")}
           </div>
