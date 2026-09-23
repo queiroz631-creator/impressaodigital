@@ -13,10 +13,41 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, useIsAdmin } from "@/hooks/useAuth";
 import { usePermissoes } from "@/hooks/usePermissoes";
-import { modulosVisiveis } from "@/lib/modulos";
+import { modulosVisiveis, type CorModulo } from "@/lib/modulos";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo-impressao.png";
+
+/** Cores de destaque de cada bloco do menu lateral (tons claros sobre o fundo escuro). */
+const CORES_GRUPO: Record<
+  CorModulo,
+  { titulo: string; icone: string; linkAtivo: string; linkHover: string }
+> = {
+  azul: {
+    titulo: "text-sky-300",
+    icone: "text-sky-300",
+    linkAtivo: "bg-sky-400/15 text-sky-200 shadow-[inset_3px_0_0_0] shadow-sky-400",
+    linkHover: "hover:bg-sky-400/10 hover:text-sky-200",
+  },
+  verde: {
+    titulo: "text-emerald-300",
+    icone: "text-emerald-300",
+    linkAtivo: "bg-emerald-400/15 text-emerald-200 shadow-[inset_3px_0_0_0] shadow-emerald-400",
+    linkHover: "hover:bg-emerald-400/10 hover:text-emerald-200",
+  },
+  roxo: {
+    titulo: "text-violet-300",
+    icone: "text-violet-300",
+    linkAtivo: "bg-violet-400/15 text-violet-200 shadow-[inset_3px_0_0_0] shadow-violet-400",
+    linkHover: "hover:bg-violet-400/10 hover:text-violet-200",
+  },
+  ambar: {
+    titulo: "text-amber-300",
+    icone: "text-amber-300",
+    linkAtivo: "bg-amber-400/15 text-amber-200 shadow-[inset_3px_0_0_0] shadow-amber-400",
+    linkHover: "hover:bg-amber-400/10 hover:text-amber-200",
+  },
+};
 
 export function AppLayout({
   children,
@@ -68,13 +99,17 @@ export function AppLayout({
 
       {grupos.map((grupo) => {
         const expandido = gruposAbertos[grupo.id] === true;
+        const cores = CORES_GRUPO[grupo.cor];
         return (
           <div key={grupo.id} className="flex flex-col">
             <button
               type="button"
               aria-expanded={expandido}
               onClick={() => setGruposAbertos((prev) => ({ ...prev, [grupo.id]: !expandido }))}
-              className="flex items-center justify-between px-3 pb-1 pt-4 text-left text-xs font-bold uppercase tracking-wider text-sidebar-foreground/80 transition-colors hover:text-sidebar-foreground focus:outline-none"
+              className={cn(
+                "flex items-center justify-between px-3 pb-1 pt-4 text-left text-xs font-bold uppercase tracking-wider transition-colors focus:outline-none",
+                cores.titulo,
+              )}
             >
               {grupo.nome}
               {expandido ? (
@@ -89,9 +124,13 @@ export function AppLayout({
                   <Link
                     key={item.id}
                     to={item.rota as never}
-                    className={linkClasse(pathname === item.rota)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors",
+                      cores.linkHover,
+                      pathname === item.rota && cores.linkAtivo,
+                    )}
                   >
-                    <item.icone className="h-4 w-4 shrink-0" />
+                    <item.icone className={cn("h-4 w-4 shrink-0", cores.icone)} />
                     <span className="flex-1">{item.nome}</span>
                     {item.badgeNaoLidas && pendentes > 0 && (
                       <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
