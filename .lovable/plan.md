@@ -10,6 +10,7 @@
 - Os arquivos encontrados (id e nome) ficam guardados junto com a seleção. Com isso, "Baixar" e "Calculadora" funcionam mesmo quando a mensagem não está carregada na tela.
 - Quando é preciso abrir outra conversa, a seleção vai junto com ela, e a conversa nova já abre com o modo de seleção ligado e os arquivos marcados.
 - A regra continua a mesma: só arquivos recebidos do cliente, a partir do último "ATENDIMENTO N", na conversa mais recente do número.
+- **Mensagens apagadas ficam de fora:** arquivos de mensagens marcadas como apagadas não são selecionados pelo botão (a busca passa a trazer o campo `apagada` e ignora essas linhas).
 - O nome do botão e o visual da tela ficam como estão.
 
 ## Detalhes técnicos
