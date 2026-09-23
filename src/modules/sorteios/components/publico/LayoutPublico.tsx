@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import logoSorteios from "@/assets/logo-queiroz-sorteios.png.asset.json";
+import { logoPortalPublica } from "@/lib/sorteio-logo.functions";
 import { NavInferior } from "./NavInferior";
 
 /**
