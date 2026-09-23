@@ -1,12 +1,13 @@
 /** Importação de currículo pronto (PDF/DOC/DOCX) com revisão no formulário. */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   AlertTriangle,
   CheckCircle2,
   Copy,
   FileUp,
+  FolderOpen,
   Loader2,
   Upload,
 } from "lucide-react";
@@ -38,6 +39,15 @@ import {
   interpretarCurriculoImportado,
 } from "@/lib/curriculo-import.functions";
 import { cpfValido, formatarCpf, formatarTelefone, somenteNumeros } from "@/lib/curriculo";
+import {
+  ErroArquivamento,
+  escolherPastaDestino,
+  lerPastaSalva,
+  limparPasta,
+  mensagemErroArquivamento,
+  moverArquivo,
+  suportaArquivamento,
+} from "@/lib/curriculo-arquivo";
 
 interface Existente {
   id: string;
