@@ -1,12 +1,13 @@
 /** Importação de currículo pronto (PDF/DOC/DOCX) com revisão no formulário. */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   AlertTriangle,
   CheckCircle2,
   Copy,
   FileUp,
+  FolderOpen,
   Loader2,
   Upload,
 } from "lucide-react";
@@ -38,6 +39,15 @@ import {
   interpretarCurriculoImportado,
 } from "@/lib/curriculo-import.functions";
 import { cpfValido, formatarCpf, formatarTelefone, somenteNumeros } from "@/lib/curriculo";
+import {
+  ErroArquivamento,
+  escolherPastaDestino,
+  lerPastaSalva,
+  limparPasta,
+  mensagemErroArquivamento,
+  moverArquivo,
+  suportaArquivamento,
+} from "@/lib/curriculo-arquivo";
 
 interface Existente {
   id: string;
@@ -80,6 +90,50 @@ export function ImportarCurriculo({
   const [textoExtraido, setTextoExtraido] = useState("");
   const [erroIA, setErroIA] = useState("");
   const [verTexto, setVerTexto] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [pasta, setPasta] = useState<any | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [arquivoHandle, setArquivoHandle] = useState<any | null>(null);
+  const [avisoArquivo, setAvisoArquivo] = useState("");
+  const suporta = suportaArquivamento();
+
+  useEffect(() => {
+    if (!aberto || !suporta) return;
+    void lerPastaSalva().then((h) => setPasta(h));
+  }, [aberto, suporta]);
+
+  const escolherPasta = async () => {
+    try {
+      const h = await escolherPastaDestino();
+      if (h) {
+        setPasta(h);
+        toast.success(`Os arquivos importados serão movidos para "${h.name}".`);
+      }
+    } catch (e) {
+      toast.error(
+        mensagemErroArquivamento(e instanceof ErroArquivamento ? e.message : "FALHA_MOVER"),
+      );
+    }
+  };
+
+  const desligarPasta = async () => {
+    await limparPasta();
+    setPasta(null);
+  };
+
+  /** Move o arquivo original para a pasta escolhida, se possível. */
+  const arquivarArquivo = async () => {
+    if (!suporta || !pasta || !arquivoHandle) return null;
+    try {
+      const nome = await moverArquivo(arquivoHandle, pasta);
+      return nome;
+    } catch (e) {
+      setAvisoArquivo(
+        mensagemErroArquivamento(e instanceof ErroArquivamento ? e.message : "FALHA_MOVER"),
+      );
+      return null;
+    }
+  };
 
   const limpar = () => {
     setPasso(null);
@@ -92,11 +146,43 @@ export function ImportarCurriculo({
     setTextoExtraido("");
     setErroIA("");
     setVerTexto(false);
+    setArquivoHandle(null);
   };
 
   const fechar = () => {
     limpar();
+    setAvisoArquivo("");
     onFechar();
+  };
+
+  /** Abre o seletor nativo para obter também o controle do arquivo original. */
+  const selecionarArquivo = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const picker = (window as any).showOpenFilePicker;
+    if (!suporta || typeof picker !== "function") {
+      inputRef.current?.click();
+      return;
+    }
+    try {
+      const [handle] = await picker({
+        multiple: false,
+        types: [
+          {
+            description: "Currículo",
+            accept: {
+              "application/pdf": [".pdf"],
+              "application/msword": [".doc"],
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+            },
+          },
+        ],
+      });
+      if (!handle) return;
+      setArquivoHandle(handle);
+      void processar(await handle.getFile());
+    } catch {
+      /* seleção cancelada */
+    }
   };
 
   const processar = async (file: File) => {
@@ -105,6 +191,7 @@ export function ImportarCurriculo({
     setExistente(null);
     setErroIA("");
     setVerTexto(false);
+    setAvisoArquivo("");
     if (!tipoImportacao(file.name)) {
       setErro(mensagemErroImportacao("FORMATO_NAO_SUPORTADO"));
       return;
@@ -159,13 +246,14 @@ export function ImportarCurriculo({
   const continuar = async (substituirListas = false) => {
     if (!dados) return;
     setGravando(true);
+    setAvisoArquivo("");
     try {
+      let id: string;
       if (existente) {
         const r = await atualizar({
           data: { curriculoId: existente.id, dados, substituirListas },
         });
-        toast.success("Cadastro atualizado com as informações importadas.");
-        onImportado(r.id);
+        id = r.id;
       } else {
         const numeros = somenteNumeros(cpf);
         if (!cpfValido(numeros)) {
@@ -177,9 +265,15 @@ export function ImportarCurriculo({
           return;
         }
         const r = await criar({ data: { cpf: numeros, telefone, dados } });
-        toast.success("Currículo importado. Revise as informações.");
-        onImportado(r.id);
+        id = r.id;
       }
+
+      const movido = await arquivarArquivo();
+      const base = existente
+        ? "Cadastro atualizado com as informações importadas."
+        : "Currículo importado. Revise as informações.";
+      toast.success(movido ? `${base} Arquivo movido para "${pasta?.name}".` : base);
+      onImportado(id);
       limpar();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível importar o currículo.");
@@ -228,7 +322,28 @@ export function ImportarCurriculo({
               onDrop={(e) => {
                 e.preventDefault();
                 setArrastando(false);
+                const item = e.dataTransfer.items?.[0];
                 const file = e.dataTransfer.files?.[0];
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const obter = (item as any)?.getAsFileSystemHandle;
+                if (suporta && typeof obter === "function") {
+                  void obter
+
+                    .call(item)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    .then(async (h: any) => {
+                      if (h?.kind === "file") {
+                        setArquivoHandle(h);
+                        await processar(await h.getFile());
+                      } else if (file) {
+                        await processar(file);
+                      }
+                    })
+                    .catch(() => {
+                      if (file) void processar(file);
+                    });
+                  return;
+                }
                 if (file) void processar(file);
               }}
               className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-8 text-center ${
@@ -239,7 +354,7 @@ export function ImportarCurriculo({
               <p className="text-sm text-muted-foreground">
                 Arraste o arquivo para cá — PDF, DOC ou DOCX (até 10 MB)
               </p>
-              <Button variant="outline" onClick={() => inputRef.current?.click()}>
+              <Button variant="outline" onClick={() => void selecionarArquivo()}>
                 <Upload className="mr-1 h-4 w-4" /> SELECIONAR ARQUIVO
               </Button>
               <input
@@ -254,10 +369,49 @@ export function ImportarCurriculo({
                 }}
               />
             </div>
+
+            <div className="rounded-md border p-3 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Pasta de arquivamento</span>
+                </div>
+                {suporta ? (
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => void escolherPasta()}>
+                      {pasta ? "TROCAR PASTA" : "ESCOLHER PASTA"}
+                    </Button>
+                    {pasta && (
+                      <Button size="sm" variant="ghost" onClick={() => void desligarPasta()}>
+                        NÃO ARQUIVAR
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <Button size="sm" variant="outline" disabled>
+                    ESCOLHER PASTA
+                  </Button>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {!suporta
+                  ? "Este navegador não permite mover arquivos. Use o Chrome ou o Edge no computador."
+                  : pasta
+                    ? `Depois de importar, o arquivo sai da pasta de origem e vai para "${pasta.name}".`
+                    : "Escolha uma pasta para que o arquivo seja movido para lá depois da importação."}
+              </p>
+            </div>
+
             {erro && (
               <p className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 {erro}
+              </p>
+            )}
+            {avisoArquivo && (
+              <p className="flex items-start gap-2 rounded-md bg-amber-500/10 p-3 text-sm text-amber-600">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                {avisoArquivo}
               </p>
             )}
           </div>
@@ -290,8 +444,8 @@ export function ImportarCurriculo({
               <p className="flex items-start gap-2 rounded-md bg-amber-500/10 p-3 text-sm text-amber-600">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
-                  {mensagemErroImportacao(erroIA)} As informações reconhecidas pelo sistema
-                  foram preenchidas — confira e complete o que falta.
+                  {mensagemErroImportacao(erroIA)} As informações reconhecidas pelo sistema foram
+                  preenchidas — confira e complete o que falta.
                 </span>
               </p>
             )}
