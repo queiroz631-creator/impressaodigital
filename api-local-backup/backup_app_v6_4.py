@@ -71,6 +71,69 @@ def api_get(url, token=None, timeout=30):
     with urlopen(req, timeout=timeout) as r:
         return r.read()
 
+def api_post(url, token=None, timeout=60):
+    """POST simples (sem corpo). Retorna (status, dados_json)."""
+    headers = {"Content-Type": "application/json"}
+    if token is not None:
+        headers["Authorization"] = "Bearer " + require_token(token)
+    req = Request(url, data=b"{}", headers=headers, method="POST")
+    try:
+        with urlopen(req, timeout=timeout) as r:
+            corpo = r.read()
+            status = r.status if hasattr(r, "status") else r.getcode()
+    except HTTPError as e:
+        corpo = e.read()
+        status = e.code
+    try:
+        dados = json.loads(corpo or b"{}")
+    except Exception:
+        dados = {}
+    return status, (dados if isinstance(dados, dict) else {})
+
+class BackupSobDemandaIndisponivel(Exception):
+    pass
+
+def solicitar_backup(api, token):
+    """Pede ao servidor para gerar um backup agora. Retorna o job_id."""
+    url = api.rstrip("/") + "/api/backups"
+    status, dados = api_post(url, token, timeout=60)
+
+    if status in (404, 405, 501):
+        raise BackupSobDemandaIndisponivel(
+            "Este servidor de backup não aceita gerar cópia sob demanda.\n\n"
+            "Atualize o servidor de backup para a versão com a rota "
+            "POST /api/backups."
+        )
+
+    if status in (401, 403):
+        raise RuntimeError(
+            dados.get("error") or "Token recusado pelo servidor de backup."
+        )
+
+    if status in (200, 201, 202, 409):
+        job_id = dados.get("job_id")
+        if not job_id:
+            raise RuntimeError(
+                dados.get("mensagem")
+                or dados.get("error")
+                or "O servidor não informou o identificador da operação."
+            )
+        return job_id, (dados.get("mensagem") or "Backup em andamento."), status
+
+    raise RuntimeError(
+        dados.get("error")
+        or dados.get("mensagem")
+        or f"O servidor respondeu com o código {status}."
+    )
+
+def status_backup(api, token, job_id):
+    url = api.rstrip("/") + "/api/backups/status/" + quote(str(job_id), safe="")
+    dados = json.loads(api_get(url, token, timeout=30) or b"{}")
+    if not isinstance(dados, dict):
+        dados = {}
+    return dados
+
+
 def get_backups(api, token):
     # Mantém o mesmo formato da V4: /api/backups -> { "backups": [...] }
     data = json.loads(api_get(api.rstrip("/") + "/api/backups", token))
