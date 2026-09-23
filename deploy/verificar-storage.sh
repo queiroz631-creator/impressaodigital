@@ -53,7 +53,7 @@ SELECT b.id AS pasta,
        COALESCE(round(b.file_size_limit / 1048576.0, 1)::text || ' MB', 'padrao do projeto') AS limite_arquivo,
        (SELECT count(*) FROM storage.objects o WHERE o.bucket_id = b.id) AS arquivos
   FROM storage.buckets b
- WHERE b.id IN ('bot-midia', 'mensagens-rapidas', 'orcamento-arquivos', 'sistema', 'whatsapp', 'database_export_11_09_26')
+ WHERE b.id IN ('bot-midia', 'mensagens-rapidas', 'orcamento-arquivos', 'sistema', 'whatsapp', 'database_export_11_09_26', 'portal-sorteios')
  ORDER BY b.id;
 SQL
 
@@ -61,7 +61,7 @@ echo
 AUSENTES="$(psql_exec -tA <<'SQL'
 WITH esperados(nome) AS (
   VALUES ('bot-midia'), ('mensagens-rapidas'), ('orcamento-arquivos'),
-         ('sistema'), ('whatsapp'), ('database_export_11_09_26')
+         ('sistema'), ('whatsapp'), ('database_export_11_09_26'), ('portal-sorteios')
 )
 SELECT e.nome
   FROM esperados e
