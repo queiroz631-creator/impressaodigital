@@ -63,6 +63,8 @@ export interface Sorteio {
   data_sorteio: string | null;
   valor_por_cupom_centavos: number;
   quantidade_maxima_cupons: number | null;
+  /** Valor mínimo aceito para uma nota deste sorteio (0 = sem mínimo). */
+  valor_minimo_nota_centavos: number;
   /** Última sincronização da base de notas deste sorteio (validação). */
   base_sincronizada_em?: string | null;
   /** Fechamento do sorteio (etapa de encerramento). */
