@@ -65,7 +65,7 @@ function NotasPortal() {
     await queryClient.invalidateQueries({ queryKey: ["portal-painel"] });
   }
 
-  async function salvar() {
+  async function salvar(minimoCentavos: number) {
     setErro("");
     const centavos = centavosDeTexto(valor);
     if (!numero.trim()) {
@@ -74,6 +74,10 @@ function NotasPortal() {
     }
     if (!centavos || centavos <= 0) {
       setErro("Informe o valor da nota.");
+      return;
+    }
+    if (minimoCentavos > 0 && centavos < minimoCentavos) {
+      setErro(`O valor mínimo da nota para este sorteio é ${brl(minimoCentavos / 100)}.`);
       return;
     }
     setEnviando(true);
