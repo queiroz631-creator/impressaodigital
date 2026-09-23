@@ -2,6 +2,7 @@
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
+- [x] Calculadora/WhatsApp: atalho no topo, seletor antes de Assumir e controle de anotações em aba lateral
 
 
 ## Em andamento: Deploy em VPS Hostinger
