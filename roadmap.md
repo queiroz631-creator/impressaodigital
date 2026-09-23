@@ -1,6 +1,7 @@
 # Roadmap
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
+- [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
 
 
 ## Em andamento: Deploy em VPS Hostinger

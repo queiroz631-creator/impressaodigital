@@ -311,7 +311,13 @@ function Calculadora() {
     if (!hidratado) return;
     const dados = whatsappPendente.current;
     whatsappPendente.current = null;
-    if (!dados || dados.arquivos.length === 0) return;
+    if (!dados) return;
+    if (dados.arquivos.length === 0) {
+      limparFormulario(false);
+      if (dados.nome.trim()) set("clienteNome", dados.nome.trim());
+      if (dados.telefone.trim()) set("clienteTelefone", telefoneBR(dados.telefone));
+      return;
+    }
     void importarArquivosWhatsapp(dados);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hidratado]);
