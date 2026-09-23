@@ -146,11 +146,43 @@ export function ImportarCurriculo({
     setTextoExtraido("");
     setErroIA("");
     setVerTexto(false);
+    setArquivoHandle(null);
   };
 
   const fechar = () => {
     limpar();
+    setAvisoArquivo("");
     onFechar();
+  };
+
+  /** Abre o seletor nativo para obter também o controle do arquivo original. */
+  const selecionarArquivo = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const picker = (window as any).showOpenFilePicker;
+    if (!suporta || typeof picker !== "function") {
+      inputRef.current?.click();
+      return;
+    }
+    try {
+      const [handle] = await picker({
+        multiple: false,
+        types: [
+          {
+            description: "Currículo",
+            accept: {
+              "application/pdf": [".pdf"],
+              "application/msword": [".doc"],
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+            },
+          },
+        ],
+      });
+      if (!handle) return;
+      setArquivoHandle(handle);
+      void processar(await handle.getFile());
+    } catch {
+      /* seleção cancelada */
+    }
   };
 
   const processar = async (file: File) => {
@@ -159,6 +191,7 @@ export function ImportarCurriculo({
     setExistente(null);
     setErroIA("");
     setVerTexto(false);
+    setAvisoArquivo("");
     if (!tipoImportacao(file.name)) {
       setErro(mensagemErroImportacao("FORMATO_NAO_SUPORTADO"));
       return;
