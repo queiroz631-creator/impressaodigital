@@ -650,7 +650,7 @@ export function FormularioCurriculo({
                   />
                 </div>
               )}
-              {escolaridadeTemCurso(escolaridade) && (
+              {(escolaridadeTemCurso(escolaridade) || formacoes.length > 0) && (
                 <div className="space-y-3">
                   <Label className="text-sm font-semibold">Outras graduações (opcional)</Label>
                   {listaFormacoes.map((f, i) => (
@@ -671,7 +671,11 @@ export function FormularioCurriculo({
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
                             <SelectContent>
-                              {NIVEIS_FORMACAO.map((v) => (
+                              {(NIVEIS_FORMACAO.includes((f.nivel ?? "").trim()) ||
+                              !(f.nivel ?? "").trim()
+                                ? NIVEIS_FORMACAO
+                                : [...NIVEIS_FORMACAO, (f.nivel ?? "").trim()]
+                              ).map((v) => (
                                 <SelectItem key={v} value={v}>
                                   {v}
                                 </SelectItem>
@@ -690,7 +694,8 @@ export function FormularioCurriculo({
                         )}
                       </div>
 
-                      {(f.nivel ?? "").trim() && (
+                      {((f.nivel ?? "").trim() || i < formacoes.length) && (
+
                         <div className="grid gap-2 sm:grid-cols-[1fr_1fr_100px]">
                           <div>
                             <Label>Nome do curso</Label>
