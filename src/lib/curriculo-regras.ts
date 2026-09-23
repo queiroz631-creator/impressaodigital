@@ -382,8 +382,13 @@ function acharNome(linhas: string[], k: string[], verificar: Set<string>): strin
 /* Blocos: experiências, cursos, habilidades                          */
 /* ------------------------------------------------------------------ */
 
-const RE_PERIODOS =
-  /(\d{1,2}\/\d{2,4}|\d{4})\s*(?:a|ao|-|–|—|até|to)\s*(\d{1,2}\/\d{2,4}|\d{4}|atual|atualmente|dias|hoje)/i;
+const MESES =
+  "janeiro|fevereiro|mar[çc]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro";
+const TOKEN_PERIODO = `(?:\\d{1,2}/\\d{2,4}|\\d{4}|(?:${MESES})(?:\\s+de\\s+\\d{4})?)`;
+const RE_PERIODOS = new RegExp(
+  `(${TOKEN_PERIODO})\\s*(?:a|ao|-|–|—|até|to)\\s*(${TOKEN_PERIODO}|atual|atualmente|dias|hoje)`,
+  "i",
+);
 
 function dividirBlocos(linhas: string[]): string[][] {
   const blocos: string[][] = [];
@@ -400,11 +405,12 @@ function dividirBlocos(linhas: string[]): string[][] {
   }
   if (atual.length) blocos.push(atual);
 
-  // Documento sem linhas em branco: separa por linha de período novo.
-  if (blocos.length === 0 && atual.length > 4) {
+  // Documento sem linhas em branco (ou com um único bloco): separa por período novo.
+  const todas = linhas.filter((l) => l);
+  if (blocos.length <= 1 && todas.length > 4) {
     const porPeriodo: string[][] = [];
     let grupo: string[] = [];
-    for (const l of atual) {
+    for (const l of todas) {
       if (RE_PERIODOS.test(l) && grupo.length && grupo.some((g) => RE_PERIODOS.test(g))) {
         porPeriodo.push(grupo);
         grupo = [];
@@ -521,7 +527,12 @@ export function extrairPorRegras(texto: string): CurriculoImportado {
     "praca",
     "rodovia",
   ]);
-  const numero = valorPorRotulo(linhas, k, ["numero", "nº", "n", "num"]);
+  let numero = valorPorRotulo(linhas, k, ["numero", "nº", "n", "num"]);
+  if (!numero) {
+    // "Rua Coronel Oliveira, 880 - Sala 3" → número 880.
+    const m = /,\s*(\d{1,5}[A-Za-z]?)\b/.exec(endereco);
+    if (m) numero = m[1] ?? "";
+  }
   const bairro = valorPorRotulo(linhas, k, ["bairro", "setor"]);
   const cidade = valorPorRotulo(linhas, k, ["cidade", "municipio", "localidade"]);
   const uf = valorPorRotulo(linhas, k, ["uf"]).match(/^[A-Za-z]{2}/)?.[0].toUpperCase() ?? "";
@@ -540,7 +551,7 @@ export function extrairPorRegras(texto: string): CurriculoImportado {
   let ufFinal = uf;
   if (!cidadeFinal || !ufFinal) {
     for (const l of linhas) {
-      const m = /([A-ZÀ-Ú][a-zà-ú]{2,})\s*[/\-–]\s*([A-Z]{2})\b/.exec(l);
+      const m = /([A-ZÀ-Ú][a-zà-ú]{2,}(?:\s+[A-ZÀ-Ú][a-zà-ú]{2,}){0,3}?)\s*[/\-–]\s*([A-Z]{2})\b/.exec(l);
       if (m && !ehTitulo(l, TODOS_TITULOS)) {
         if (!cidadeFinal) cidadeFinal = capitalizarTexto(m[1] ?? "").slice(0, 120);
         if (!ufFinal) ufFinal = m[2] ?? "";
@@ -605,7 +616,7 @@ export function extrairPorRegras(texto: string): CurriculoImportado {
       categoria_habilitacao: categoria,
       escolaridade,
       curso_superior: capitalizarTexto(cursoSuperior).slice(0, 160),
-      pos_graduacao_nome: capitalizarTexto(posNome).slice(0, 200),
+      pos_graduacao_nome: capitalizarTexto(posNome.replace(/^(?:em|de|do|da|na|no)\s+/i, "")).slice(0, 200),
       objetivo_texto: objetivo.replace(/\s+/g, " ").slice(0, 1000),
     },
     cpf: cpf.vals.length ? somenteNumeros(cpf.vals[0] ?? "") : "",
