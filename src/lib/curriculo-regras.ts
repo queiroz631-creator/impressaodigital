@@ -435,6 +435,17 @@ function experienciaDoBloco(b: string[]): CurriculoImportado["experiencias"][num
     resto.push(l);
   }
 
+  // Bloco com período e uma única linha de texto: é descrição, não empresa.
+  if (periodo && resto.length === 1 && /[.!?]$/.test(resto[0] ?? "")) {
+    return {
+      empresa: "",
+      cargo: "",
+      periodo: periodo.slice(0, 120),
+      atividades: (resto[0] ?? "").replace(/\s+/g, " ").trim().slice(0, 2000),
+    };
+  }
+
+
   let empresa = "";
   let cargo = "";
   const primeiro = resto[0] ?? "";
