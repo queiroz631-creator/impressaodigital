@@ -7,7 +7,12 @@ import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { brl, dataHoraBR } from "@/lib/format";
-import { alterarStatusSorteio, processarCuponsDoSorteio } from "@/lib/sorteios.functions";
+import {
+  alterarStatusSorteio,
+  processarCuponsDoSorteio,
+  reabrirSorteio,
+} from "@/lib/sorteios.functions";
+import { ConfirmarAcao } from "@/components/ConfirmarAcao";
 import { useIndicadoresSorteio, useSorteio } from "@/modules/sorteios/hooks/useSorteios";
 import { StatusSorteioBadge } from "@/modules/sorteios/components/StatusSorteioBadge";
 import { IndicadorCard } from "@/modules/sorteios/components/IndicadorCard";
@@ -15,6 +20,7 @@ import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
 import {
   ROTULO_TRANSICAO,
   transicoesManuais,
+  MENSAGEM_REABERTURA,
   somenteConsulta,
 } from "@/modules/sorteios/services/status";
 
@@ -65,6 +71,28 @@ function PainelSorteio() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const reabrir = useServerFn(reabrirSorteio);
+  const mReabrir = useMutation({
+    mutationFn: () =>
+      reabrir({ data: { sorteioId: id } }) as Promise<{
+        resultado: "REABERTO" | "IGNORADO";
+        motivo?: string;
+        status?: string;
+      }>,
+    onSuccess: (r) => {
+      if (r.resultado === "REABERTO") {
+        qc.invalidateQueries({ queryKey: ["sorteio", id] });
+        qc.invalidateQueries({ queryKey: ["sorteios"] });
+        toast.success(
+          `Sorteio reaberto. Situação atual: ${r.status === "RASCUNHO" ? "Rascunho" : "Ativo"}.`,
+        );
+      } else {
+        toast.error(MENSAGEM_REABERTURA[r.motivo ?? ""] ?? "Não foi possível reabrir o sorteio.");
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const mCupons = useMutation({
     mutationFn: () => processarCupons({ data: { sorteioId: id } }),
     onSuccess: (resumo) => {
@@ -105,6 +133,18 @@ function PainelSorteio() {
                   Editar
                 </Link>
               </Button>
+            )}
+            {sorteio.status === "CANCELADO" && (
+              <ConfirmarAcao
+                titulo="Reabrir sorteio cancelado?"
+                descricao="Tem certeza que deseja reabrir este sorteio cancelado? Ele voltará para a situação anterior ao cancelamento (Ativo ou Rascunho) e poderá receber notas e participações novamente."
+                rotuloConfirmar="Reabrir sorteio"
+                onConfirmar={() => mReabrir.mutate()}
+              >
+                <Button size="sm" disabled={mReabrir.isPending}>
+                  {mReabrir.isPending ? "Reabrindo..." : "Reabrir sorteio"}
+                </Button>
+              </ConfirmarAcao>
             )}
             {transicoes.map((status) => (
               <Button
