@@ -46,12 +46,16 @@ export interface ItemModulo {
   badgeNaoLidas?: boolean;
 }
 
+export type CorModulo = "azul" | "verde" | "roxo" | "ambar";
+
 export interface Modulo {
   id: string;
   nome: string;
   descricao: string;
   ordem: number;
   ativo: boolean;
+  /** Cor de destaque do bloco no menu lateral. */
+  cor: CorModulo;
   /** "administrativo" = painel interno; "publico" = site/app público futuro. */
   acesso: TipoAcessoModulo;
   /** Chave de permissão futura do módulo (ex.: "modulo.operacao"). */
