@@ -50,22 +50,26 @@ function ListaSorteios() {
       </div>
 
       <Card className="mb-4">
-        <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold">Link público do portal</p>
-            <p className="truncate text-xs text-muted-foreground">{urlPublicaSorteios()}</p>
+        <CardContent className="flex flex-col gap-4 p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Link público do portal</p>
+              <p className="truncate text-xs text-muted-foreground">{urlPublicaSorteios()}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void navigator.clipboard
+                  .writeText(urlPublicaSorteios())
+                  .then(() => toast.success("Link do portal copiado."));
+              }}
+            >
+              <Link2 className="mr-2 h-4 w-4" /> Copiar link
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              void navigator.clipboard
-                .writeText(urlPublicaSorteios())
-                .then(() => toast.success("Link do portal copiado."));
-            }}
-          >
-            <Link2 className="mr-2 h-4 w-4" /> Copiar link
-          </Button>
+
+          <LogoDoPortal />
         </CardContent>
       </Card>
 
