@@ -178,6 +178,7 @@ function blocoDaSecao(linhas: string[], secao: Secao): string[] {
 const RE_CPF = /\b\d{3}\.\d{3}\.\d{3}-?\d{2}\b|\b\d{11}\b/g;
 const RE_TELEFONE = /\(\d{2}\)\s*\d{4,5}-?\d{4}\b|\b\d{2}[\s.\-]\d{4,5}-?\d{4}\b/g;
 const RE_DATA = /\b\d{2}[\/\-.]\d{2}[\/\-.]\d{4}\b/g;
+const RE_DATA_1 = /\b\d{2}[\/\-.]\d{2}[\/\-.]\d{4}\b/;
 const RE_CEP = /\b\d{5}-?\d{3}\b/g;
 const RE_EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/g;
 
@@ -228,7 +229,7 @@ function acharNascimento(
   for (let i = 0; i < k.length; i++) {
     if (!/nasc|nascimento|data de nac/.test(k[i])) continue;
     const alvo = [linhas[i], linhas[i + 1] ?? "", linhas[i + 2] ?? ""].join(" ");
-    const m = RE_DATA.exec(alvo);
+    const m = RE_DATA_1.exec(alvo);
     if (m && dataPlausivel(m[0])) {
       const iso = paraData(m[0]);
       if (idadeSuficiente(iso)) return iso;
