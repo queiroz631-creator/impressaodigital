@@ -246,13 +246,14 @@ export function ImportarCurriculo({
   const continuar = async (substituirListas = false) => {
     if (!dados) return;
     setGravando(true);
+    setAvisoArquivo("");
     try {
+      let id: string;
       if (existente) {
         const r = await atualizar({
           data: { curriculoId: existente.id, dados, substituirListas },
         });
-        toast.success("Cadastro atualizado com as informações importadas.");
-        onImportado(r.id);
+        id = r.id;
       } else {
         const numeros = somenteNumeros(cpf);
         if (!cpfValido(numeros)) {
@@ -264,9 +265,15 @@ export function ImportarCurriculo({
           return;
         }
         const r = await criar({ data: { cpf: numeros, telefone, dados } });
-        toast.success("Currículo importado. Revise as informações.");
-        onImportado(r.id);
+        id = r.id;
       }
+
+      const movido = await arquivarArquivo();
+      const base = existente
+        ? "Cadastro atualizado com as informações importadas."
+        : "Currículo importado. Revise as informações.";
+      toast.success(movido ? `${base} Arquivo movido para "${pasta?.name}".` : base);
+      onImportado(id);
       limpar();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível importar o currículo.");
