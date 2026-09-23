@@ -401,7 +401,7 @@ function dividirBlocos(linhas: string[]): string[][] {
   if (atual.length) blocos.push(atual);
 
   // Documento sem linhas em branco: separa por linha de período novo.
-  if (blocos.length <= 1 && atual.length > 4) {
+  if (blocos.length === 0 && atual.length > 4) {
     const porPeriodo: string[][] = [];
     let grupo: string[] = [];
     for (const l of atual) {
@@ -484,7 +484,7 @@ export function extrairPorRegras(texto: string): CurriculoImportado {
   const verificar = new Set<string>();
 
   const cpf = capturar(texto, RE_CPF, (m) => cpfValido(somenteNumeros(m)));
-  const tel = capturar(restanteDe(cpf.restante), RE_TELEFONE, telefoneValido);
+  const tel = capturar(cpf.restante, RE_TELEFONE, telefoneValido);
   const nasc = acharNascimento(linhas, k, tel.restante, verificar);
   const dat = capturar(tel.restante, RE_DATA, dataPlausivel);
   const cep = capturar(dat.restante, RE_CEP, () => true);
@@ -524,7 +524,7 @@ export function extrairPorRegras(texto: string): CurriculoImportado {
   const numero = valorPorRotulo(linhas, k, ["numero", "nº", "n", "num"]);
   const bairro = valorPorRotulo(linhas, k, ["bairro", "setor"]);
   const cidade = valorPorRotulo(linhas, k, ["cidade", "municipio", "localidade"]);
-  const uf = valorPorRotulo(linhas, k, ["uf", "estado"]).match(/^[A-Za-z]{2}/)?.[0].toUpperCase() ?? "";
+  const uf = valorPorRotulo(linhas, k, ["uf"]).match(/^[A-Za-z]{2}/)?.[0].toUpperCase() ?? "";
   const objetivo = valorPorRotulo(linhas, k, ["objetivo", "pretensao", "finalidade"]);
   const cursoSuperior = valorPorRotulo(linhas, k, ["curso superior", "graduacao"]);
   const posNome = valorPorRotulo(linhas, k, [
@@ -616,11 +616,6 @@ export function extrairPorRegras(texto: string): CurriculoImportado {
     habilidades,
     confiancaBaixa: [...verificar],
   };
-}
-
-/** O próprio texto de entrada é o "restante" inicial. */
-function restanteDe(texto: string) {
-  return texto;
 }
 
 export { chaveUnica };
