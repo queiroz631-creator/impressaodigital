@@ -104,6 +104,24 @@ function dadosPublicosSorteio(s: SorteioRow) {
   };
 }
 
+/**
+ * Valor mínimo da nota: conferido SEMPRE no servidor, com o mínimo lido do
+ * próprio sorteio da sessão (o navegador nunca decide isso).
+ */
+function conferirValorMinimo(sorteio: SorteioRow, valorCentavos: number) {
+  const minimo = sorteio.valor_minimo_nota_centavos ?? 0;
+  if (minimo > 0 && valorCentavos < minimo) {
+    const texto = (minimo / 100).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+    throw new ErroPortal(
+      "VALOR_MINIMO",
+      `O valor mínimo da nota para este sorteio é ${texto}.`,
+    );
+  }
+}
+
 /** Dados públicos do sorteio ATIVO (ou mensagem de indisponibilidade). */
 export const obterSorteioAtivoPublico = createServerFn({ method: "GET" }).handler(async () =>
   executar(async () => {
