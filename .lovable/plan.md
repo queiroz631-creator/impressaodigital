@@ -1,60 +1,56 @@
-# Corrigir o erro 404 ao clicar em "Gerar backup agora"
+# Corrigir o deploy: faltam migrações anteriores na pasta oficial
 
-## O que está acontecendo
+## O que aconteceu
 
-A janela mostra a mensagem crua do servidor: `HTTP Error 404: NOT FOUND`.
-O programa já trata bem o caso "o servidor não aceita gerar backup" — então
-esse 404 veio de outro ponto do fluxo, e hoje o programa não sabe explicar qual.
+A VPS parou na migração `20260922120000_cupons_apos_cancelamento.sql` porque ela
+usa a tabela `sorteio_saldo_fontes`, que **não existe no banco da VPS**.
 
-Duas causas possíveis (não é possível confirmar daqui, porque o servidor de
-backup roda fora deste projeto):
+Motivo: quando copiei as mudanças recentes para `supabase/migrations/` (a pasta
+que o deploy lê), copiei só as sete últimas. As mudanças anteriores — as que
+criaram a geração de cupons, o recálculo de saldo, a rastreabilidade (fontes de
+saldo e contribuições) e a ordem FIFO — ficaram apenas no controle interno da
+plataforma. Sem elas, a VPS não tem as tabelas que as sete novas precisam.
 
-1. O servidor no ar ainda é a versão antiga, sem a rotina de gerar backup
-   (o endereço não existe e responde 404 em vez de 405).
-2. O servidor novo está no ar, mas rodando em vários processos ao mesmo tempo.
-   O pedido é criado em um processo e a consulta de andamento cai em outro, que
-   não conhece aquela operação e responde "operação não encontrada" (404).
+Nada foi aplicado pela metade: o deploy interrompeu antes de registrar a
+migração, então basta completar a pasta e rodar o deploy de novo.
 
-Nos dois casos o programa deveria dizer o que fazer, em vez de mostrar o texto
-técnico.
+## O que será feito
 
-## O que será feito no programa (api-local-backup)
+Copiar para `supabase/migrations/` as seis mudanças que faltam, com datas
+anteriores às sete já copiadas, na ordem correta:
 
-1. Toda resposta de erro do servidor passa a ser lida e traduzida, nunca mais
-   exibida como "HTTP Error 404: NOT FOUND".
-2. Ao pedir o backup: se o endereço não existir, a mensagem fica clara —
-   "o servidor de backup ainda está na versão antiga; atualize-o para aceitar
-   gerar cópia sob demanda".
-3. Ao acompanhar o andamento: um 404 isolado logo após o pedido deixa de ser
-   erro imediato — o programa tenta de novo algumas vezes; só se insistir é que
-   avisa que o servidor perdeu o controle da operação (provável servidor rodando
-   em vários processos) e sugere conferir a instalação.
-4. Antes de pedir o backup, o programa confere uma vez se o servidor tem a
-   rotina; se não tiver, avisa na hora, sem travar os botões.
-5. A cada recusa, o motivo real fica gravado no `backup.log`.
+1. campo de origem do cliente nas notas da loja
+2. geração de cupons a partir das notas
+3. recálculo de saldo do participante
+4. cancelamento de cupons sem lastro
+5. rastreabilidade (fontes de saldo e contribuições por cupom)
+6. ordem FIFO explícita das fontes de saldo
 
-## Do lado do servidor (fora deste projeto)
+Duas mudanças internas **não** serão copiadas: as duas limpezas de
+`origem_id` de clientes. Elas eram tarefas pontuais do ambiente da plataforma e,
+se rodassem na VPS, apagariam o vínculo dos clientes com a loja.
 
-Junto do código de referência em `api-local-backup/servidor/`, ficará anotado no
-`README.md`: o serviço precisa rodar com **um único processo** (por exemplo,
-`gunicorn --workers 1 --threads 8`), porque o andamento do backup é guardado na
-memória do processo. Com mais de um processo, a consulta de andamento falha com
-404 mesmo estando tudo correto.
+## Depois disso
 
-## Não muda
+Rodar na VPS novamente:
 
-Listagem de backups, download (inclusive a barra de progresso), verificação
-automática, ícone na bandeja, início com o Windows e o restante do sistema.
+```text
+cd /var/www/impressaodigital
+bash deploy/deploy.sh
+```
+
+As treze migrações serão aplicadas na ordem e o deploy segue para build e PM2.
 
 ## Detalhes técnicos
 
-- `api_get` passa a capturar `HTTPError`, ler o corpo JSON e devolver
-  `(status, dados)`; quem chama decide a mensagem.
-- `status_backup` devolve o status HTTP junto dos dados; no laço de polling,
-  404 incrementa um contador tolerante (até ~6 tentativas / 30 s) antes de virar
-  erro com mensagem explicativa.
-- `solicitar_backup` mantém o tratamento de 404/405/501, 401/403 e
-  200/201/202/409, agora com fallback de mensagem lida do corpo.
-- `VERSION` sobe para 6.4.4 e o `README.md` registra a correção e a exigência de
-  processo único no servidor.
-- Depois disso é preciso gerar o EXE novo com `gerar_exe.bat` para valer na loja.
+- Novos arquivos em `supabase/migrations/`, SQL idêntico ao das originais
+  (`drizzle/migrations/0001, 0003, 0004, 0005, 0006, 0007`), nomeados
+  `20260921110000_notas_base_cliente_origem.sql` até
+  `20260921110500_sorteio_fontes_sequencia_fifo.sql`, todos anteriores a
+  `20260922120000`.
+- `drizzle/migrations/0000` e `0002` (UPDATE em `public.clientes`) ficam fora por
+  serem correções de dados do ambiente da plataforma.
+- `drizzle/` segue intacta; nenhuma migração é executada aqui — o banco da
+  plataforma já tem tudo isso.
+- Nota em `roadmap.md`: ao copiar mudanças de banco para a pasta oficial,
+  conferir se as dependências anteriores também estão lá.
