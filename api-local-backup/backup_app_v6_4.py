@@ -636,7 +636,7 @@ class App:
             target = folder / filename
             if not target.exists():
                 self.ui_status(f"Novo backup encontrado: {filename}")
-                self.root.after(0, lambda n=filename: self.download(n, automatic=True))
+                self.root.after(0, lambda n=filename: self.start_download(n, automatic=True))
             else:
                 self.ui_status("Backup atualizado: nenhum arquivo novo.")
         except Exception as e:
