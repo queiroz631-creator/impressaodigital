@@ -162,3 +162,10 @@
       que registra o que já foi aplicado neste ambiente. É somente leitura.
 - [x] Regra permanente: toda mudança de banco nova feita aqui é gravada também em
       `supabase/migrations/` no mesmo momento, com nome datado e SQL idêntico.
+
+## Programa de backup — V6.4.3
+- [x] Correção do download automático (chamava método inexistente).
+- [x] Botão "Gerar backup agora": pede `POST /api/backups`, acompanha
+      `GET /api/backups/status/<job_id>` e baixa o arquivo ao concluir.
+- [x] Código do servidor de backup guardado como referência em `api-local-backup/servidor/app.py`.
+- [ ] Pendente do usuário: gerar o novo EXE (`gerar_exe.bat`) e instalar na máquina da loja.

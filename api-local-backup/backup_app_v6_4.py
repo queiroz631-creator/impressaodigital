@@ -71,6 +71,69 @@ def api_get(url, token=None, timeout=30):
     with urlopen(req, timeout=timeout) as r:
         return r.read()
 
+def api_post(url, token=None, timeout=60):
+    """POST simples (sem corpo). Retorna (status, dados_json)."""
+    headers = {"Content-Type": "application/json"}
+    if token is not None:
+        headers["Authorization"] = "Bearer " + require_token(token)
+    req = Request(url, data=b"{}", headers=headers, method="POST")
+    try:
+        with urlopen(req, timeout=timeout) as r:
+            corpo = r.read()
+            status = r.status if hasattr(r, "status") else r.getcode()
+    except HTTPError as e:
+        corpo = e.read()
+        status = e.code
+    try:
+        dados = json.loads(corpo or b"{}")
+    except Exception:
+        dados = {}
+    return status, (dados if isinstance(dados, dict) else {})
+
+class BackupSobDemandaIndisponivel(Exception):
+    pass
+
+def solicitar_backup(api, token):
+    """Pede ao servidor para gerar um backup agora. Retorna o job_id."""
+    url = api.rstrip("/") + "/api/backups"
+    status, dados = api_post(url, token, timeout=60)
+
+    if status in (404, 405, 501):
+        raise BackupSobDemandaIndisponivel(
+            "Este servidor de backup não aceita gerar cópia sob demanda.\n\n"
+            "Atualize o servidor de backup para a versão com a rota "
+            "POST /api/backups."
+        )
+
+    if status in (401, 403):
+        raise RuntimeError(
+            dados.get("error") or "Token recusado pelo servidor de backup."
+        )
+
+    if status in (200, 201, 202, 409):
+        job_id = dados.get("job_id")
+        if not job_id:
+            raise RuntimeError(
+                dados.get("mensagem")
+                or dados.get("error")
+                or "O servidor não informou o identificador da operação."
+            )
+        return job_id, (dados.get("mensagem") or "Backup em andamento."), status
+
+    raise RuntimeError(
+        dados.get("error")
+        or dados.get("mensagem")
+        or f"O servidor respondeu com o código {status}."
+    )
+
+def status_backup(api, token, job_id):
+    url = api.rstrip("/") + "/api/backups/status/" + quote(str(job_id), safe="")
+    dados = json.loads(api_get(url, token, timeout=30) or b"{}")
+    if not isinstance(dados, dict):
+        dados = {}
+    return dados
+
+
 def get_backups(api, token):
     # Mantém o mesmo formato da V4: /api/backups -> { "backups": [...] }
     data = json.loads(api_get(api.rstrip("/") + "/api/backups", token))
@@ -146,6 +209,8 @@ class App:
         self.progress_mode = "determinate"
         self.backups = []
         self.selected_backup = None
+        self.gerando = False
+
         self.ui_queue = queue.Queue()
 
         self.build_ui()
@@ -192,9 +257,14 @@ class App:
         btns.pack(fill="x", pady=(14, 8))
         ttk.Button(btns, text="Testar conexão", command=self.test_connection).pack(side="left", padx=(0, 8))
         ttk.Button(btns, text="Atualizar lista", command=self.update_list).pack(side="left", padx=8)
-        ttk.Button(btns, text="Baixar selecionado", command=self.download_selected).pack(side="left", padx=8)
-        ttk.Button(btns, text="Baixar último backup", command=self.download_latest).pack(side="left", padx=8)
+        self.btn_gerar = ttk.Button(btns, text="Gerar backup agora", command=self.gerar_backup)
+        self.btn_gerar.pack(side="left", padx=8)
+        self.btn_selecionado = ttk.Button(btns, text="Baixar selecionado", command=self.download_selected)
+        self.btn_selecionado.pack(side="left", padx=8)
+        self.btn_ultimo = ttk.Button(btns, text="Baixar último backup", command=self.download_latest)
+        self.btn_ultimo.pack(side="left", padx=8)
         ttk.Button(btns, text="Abrir pasta", command=self.open_folder).pack(side="left", padx=8)
+
 
         ttk.Label(frm, text="Backups disponíveis — selecione um para baixar:",
                   font=("Segoe UI", 10, "bold")).pack(anchor="w", pady=(8, 5))
@@ -350,6 +420,109 @@ class App:
             return
 
         self.start_download(filename, automatic=False)
+
+    def set_botoes_ativos(self, ativos):
+        estado = "normal" if ativos else "disabled"
+        for botao in (self.btn_gerar, self.btn_selecionado, self.btn_ultimo):
+            try:
+                botao.configure(state=estado)
+            except Exception:
+                pass
+
+    def gerar_backup(self):
+        if self.gerando:
+            messagebox.showinfo(
+                "Backup",
+                "Já existe um backup sendo gerado por este programa."
+            )
+            return
+
+        self.save()
+
+        if not self.token_var.get().strip():
+            messagebox.showerror("Backup", "Informe o token da API.")
+            return
+
+        if not messagebox.askyesno(
+            "Gerar backup",
+            "Gerar uma nova cópia do banco no servidor agora?\n\n"
+            "Ao terminar, o arquivo será baixado automaticamente "
+            "para a pasta local."
+        ):
+            return
+
+        self.gerando = True
+        self.set_botoes_ativos(False)
+        self.set_progress_mode("indeterminate")
+        self.status_var.set("Solicitando backup ao servidor...")
+        threading.Thread(target=self._gerar_backup_worker, daemon=True).start()
+
+    def _gerar_backup_worker(self):
+        api = self.api_var.get()
+        token = self.token_var.get()
+
+        try:
+            job_id, mensagem, status_http = solicitar_backup(api, token)
+
+            if status_http == 409:
+                log(f"Backup já em andamento no servidor (job {job_id}).")
+                self.ui_queue.put((
+                    "status",
+                    "Já existe um backup em andamento. Acompanhando...",
+                ))
+            else:
+                log(f"Backup solicitado ao servidor (job {job_id}).")
+                self.ui_queue.put(("status", mensagem))
+
+            limite = time.time() + 3600
+            arquivo = None
+
+            while time.time() < limite:
+                time.sleep(5)
+                dados = status_backup(api, token, job_id)
+                situacao = (dados.get("status") or "").upper()
+                texto = dados.get("mensagem") or "Gerando backup no servidor..."
+
+                if situacao in ("AGUARDANDO", "EXECUTANDO"):
+                    self.ui_queue.put(("status", texto))
+                    continue
+
+                if situacao == "CONCLUIDO":
+                    arquivo = dados.get("filename")
+                    if not arquivo:
+                        raise RuntimeError(
+                            "O backup terminou, mas o servidor não informou "
+                            "o nome do arquivo."
+                        )
+                    break
+
+                if situacao == "ERRO":
+                    raise RuntimeError(texto)
+
+                # Situação desconhecida: segue acompanhando.
+                self.ui_queue.put(("status", texto))
+
+            if not arquivo:
+                raise RuntimeError(
+                    "O tempo de espera do backup esgotou (1 hora). "
+                    "O backup pode ainda terminar no servidor — "
+                    "use \"Atualizar lista\" mais tarde."
+                )
+
+            log(f"Backup gerado no servidor: {arquivo}")
+            self.ui_queue.put(("status", f"Backup gerado: {arquivo}"))
+            self.ui_queue.put(("gerar_fim", True))
+            self.ui_queue.put(("start_download", arquivo, False))
+
+        except BackupSobDemandaIndisponivel as e:
+            log(f"Backup sob demanda indisponível: {e}")
+            self.ui_queue.put(("gerar_fim", True))
+            self.ui_queue.put(("error", "Backup", str(e)))
+
+        except Exception as e:
+            log(f"ERRO ao gerar backup: {type(e).__name__}: {e}")
+            self.ui_queue.put(("gerar_fim", True))
+            self.ui_queue.put(("error", "Erro ao gerar backup", str(e)))
 
     def download_latest(self):
         self.save()
@@ -592,7 +765,12 @@ class App:
                             f"Backup salvo em:\n\n{item[1]}"
                         )
 
+                elif kind == "gerar_fim":
+                    self.gerando = False
+                    self.set_botoes_ativos(True)
+
                 elif kind == "info":
+
                     messagebox.showinfo(item[1], item[2])
 
                 elif kind == "error":
