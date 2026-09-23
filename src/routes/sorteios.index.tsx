@@ -1,14 +1,25 @@
+import { useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Plus, Gift, Link2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Plus, Gift, Link2, ImageUp, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { brl, dataBR } from "@/lib/format";
+import logoPadrao from "@/assets/logo-queiroz-sorteios.png.asset.json";
+import {
+  limparLogoSorteio,
+  logoPortalAtual,
+  salvarLogoSorteio,
+} from "@/lib/sorteio-logo.functions";
 import { useListaSorteios } from "@/modules/sorteios/hooks/useSorteios";
 import { StatusSorteioBadge } from "@/modules/sorteios/components/StatusSorteioBadge";
 import { somenteConsulta } from "@/modules/sorteios/services/status";
 import { urlPublicaSorteios } from "@/modules/sorteios/services/url-publica";
+
+const TIPOS_ACEITOS = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 
 export const Route = createFileRoute("/sorteios/")({
   component: () => (
