@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -25,6 +25,7 @@ import {
   Tag,
   Loader2,
   Send,
+  MessageCircle,
   Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -1176,6 +1177,12 @@ function Calculadora() {
                 <ShoppingCart className="h-4 w-4" /> Novo Pedido
               </Button>
             </ConfirmarAcao>
+
+            <Button asChild size="sm" variant="secondary">
+              <Link to="/whatsapp">
+                <MessageCircle className="h-4 w-4" /> WhatsApp
+              </Link>
+            </Button>
 
             <Button
               size="sm"

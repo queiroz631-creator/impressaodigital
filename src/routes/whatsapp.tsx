@@ -11,6 +11,8 @@ import {
   Calculator,
   CheckCircle2,
   CheckSquare,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Copy,
   Download,
@@ -20,8 +22,6 @@ import {
   MessageSquare,
   Mic,
   Paperclip,
-  PanelRightClose,
-  PanelRightOpen,
   Pencil,
   Trash2,
   Printer,
@@ -1460,15 +1460,6 @@ function Conversa({
           </p>
         </div>
 
-        <Button
-          size="sm"
-          variant="outline"
-          title="Assumir"
-          className={COR_STATUS.em_atendimento.suave}
-          onClick={() => alterarStatus("em_atendimento", "assumiu")}
-        >
-          <UserCheck className="h-4 w-4" />
-        </Button>
         <Select
           value=""
           onValueChange={(acao) => {
@@ -1512,6 +1503,15 @@ function Conversa({
             </SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          size="sm"
+          variant="outline"
+          title="Assumir"
+          className={COR_STATUS.em_atendimento.suave}
+          onClick={() => alterarStatus("em_atendimento", "assumiu")}
+        >
+          <UserCheck className="h-4 w-4" />
+        </Button>
         <Button
           size="sm"
           title="Finalizar"
@@ -1977,19 +1977,19 @@ function Conversa({
           </CardContent>
         </Card>
 
-        <div className="flex w-8 shrink-0 items-center justify-center">
+        <div className="-ml-3 flex w-5 shrink-0 items-center justify-center">
           <Button
             size="icon"
-            variant="outline"
-            className="h-9 w-8"
+            variant="default"
+            className="h-8 w-5 rounded-l-full rounded-r-none border-r-0 px-0 shadow-sm"
             title={notasAbertas ? "Recolher anotações" : "Mostrar anotações do cliente"}
             aria-label={notasAbertas ? "Recolher anotações" : "Mostrar anotações do cliente"}
             onClick={alternarNotas}
           >
             {notasAbertas ? (
-              <PanelRightClose className="h-4 w-4" />
+              <ChevronRight className="h-3.5 w-3.5" />
             ) : (
-              <PanelRightOpen className="h-4 w-4" />
+              <ChevronLeft className="h-3.5 w-3.5" />
             )}
           </Button>
         </div>
