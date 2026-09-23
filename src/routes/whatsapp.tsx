@@ -865,9 +865,12 @@ function Conversa({
 
   // Ao trocar de conversa, sai do modo seleção e volta as anotações para leitura.
   useEffect(() => {
-    setSelecionando(false);
-    setSelecionados(new Set());
-    setSelecionarAoCarregar(false);
+    // Na abertura vinda de "Últimos Arquivos", mantém a seleção recebida.
+    if (!(pendente && pendente.conversaId === conversa.id)) {
+      setSelecionando(false);
+      setSelecionados(new Set());
+      setNomesSelecao(new Map());
+    }
     setEditandoNota(false);
     setEditandoNome(false);
     setAnexos([]);
