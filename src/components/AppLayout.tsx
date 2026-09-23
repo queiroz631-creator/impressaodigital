@@ -99,13 +99,17 @@ export function AppLayout({
 
       {grupos.map((grupo) => {
         const expandido = gruposAbertos[grupo.id] === true;
+        const cores = CORES_GRUPO[grupo.cor];
         return (
           <div key={grupo.id} className="flex flex-col">
             <button
               type="button"
               aria-expanded={expandido}
               onClick={() => setGruposAbertos((prev) => ({ ...prev, [grupo.id]: !expandido }))}
-              className="flex items-center justify-between px-3 pb-1 pt-4 text-left text-xs font-bold uppercase tracking-wider text-sidebar-foreground/80 transition-colors hover:text-sidebar-foreground focus:outline-none"
+              className={cn(
+                "flex items-center justify-between px-3 pb-1 pt-4 text-left text-xs font-bold uppercase tracking-wider transition-colors focus:outline-none",
+                cores.titulo,
+              )}
             >
               {grupo.nome}
               {expandido ? (
@@ -120,9 +124,13 @@ export function AppLayout({
                   <Link
                     key={item.id}
                     to={item.rota as never}
-                    className={linkClasse(pathname === item.rota)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors",
+                      cores.linkHover,
+                      pathname === item.rota && cores.linkAtivo,
+                    )}
                   >
-                    <item.icone className="h-4 w-4 shrink-0" />
+                    <item.icone className={cn("h-4 w-4 shrink-0", cores.icone)} />
                     <span className="flex-1">{item.nome}</span>
                     {item.badgeNaoLidas && pendentes > 0 && (
                       <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">
