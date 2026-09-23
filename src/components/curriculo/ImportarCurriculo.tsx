@@ -328,7 +328,7 @@ export function ImportarCurriculo({
                 const obter = (item as any)?.getAsFileSystemHandle;
                 if (suporta && typeof obter === "function") {
                   void obter
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
                     .call(item)
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .then(async (h: any) => {
@@ -444,8 +444,8 @@ export function ImportarCurriculo({
               <p className="flex items-start gap-2 rounded-md bg-amber-500/10 p-3 text-sm text-amber-600">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
-                  {mensagemErroImportacao(erroIA)} As informações reconhecidas pelo sistema
-                  foram preenchidas — confira e complete o que falta.
+                  {mensagemErroImportacao(erroIA)} As informações reconhecidas pelo sistema foram
+                  preenchidas — confira e complete o que falta.
                 </span>
               </p>
             )}
