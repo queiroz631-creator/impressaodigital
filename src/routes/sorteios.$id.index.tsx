@@ -67,75 +67,10 @@ function PainelSorteio() {
   if (error) return <p className="text-sm text-destructive">{(error as Error).message}</p>;
   if (!sorteio) return null;
 
-  const transicoes = transicoesManuais(sorteio.status);
-
   return (
     <>
       <PageHeader titulo={sorteio.nome} subtitulo={`Sorteio nº ${sorteio.numero_sorteio}`} />
       <NavSorteio id={id} />
-
-      <Card className="mb-4">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2">
-            Dados do sorteio <StatusSorteioBadge status={sorteio.status} />
-          </CardTitle>
-          <div className="flex flex-wrap gap-2">
-            {!somenteConsulta(sorteio.status) && (
-              <Button asChild variant="outline" size="sm">
-                <Link to="/sorteios/$id/editar" params={{ id }}>
-                  Editar
-                </Link>
-              </Button>
-            )}
-            {sorteio.status === "CANCELADO" && (
-              <ConfirmarAcao
-                titulo="Reabrir sorteio cancelado?"
-                descricao="Tem certeza que deseja reabrir este sorteio cancelado? Ele voltará para a situação anterior ao cancelamento (Ativo ou Rascunho) e poderá receber notas e participações novamente."
-                rotuloConfirmar="Reabrir sorteio"
-                onConfirmar={() => mReabrir.mutate()}
-              >
-                <Button size="sm" disabled={mReabrir.isPending}>
-                  {mReabrir.isPending ? "Reabrindo..." : "Reabrir sorteio"}
-                </Button>
-              </ConfirmarAcao>
-            )}
-            {transicoes.map((status) => (
-              <Button
-                key={status}
-                size="sm"
-                variant={status === "CANCELADO" ? "destructive" : "default"}
-                disabled={mutation.isPending}
-                onClick={() => mutation.mutate(status)}
-              >
-                {ROTULO_TRANSICAO[status]}
-              </Button>
-            ))}
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
-          <p>
-            <span className="text-muted-foreground">Início: </span>
-            {dataHoraBR(sorteio.data_inicio)}
-          </p>
-          <p>
-            <span className="text-muted-foreground">Fim: </span>
-            {dataHoraBR(sorteio.data_fim)}
-          </p>
-          <p>
-            <span className="text-muted-foreground">Data do sorteio: </span>
-            {dataHoraBR(sorteio.data_sorteio)}
-          </p>
-          <p>
-            <span className="text-muted-foreground">Valor por cupom: </span>
-            {brl(sorteio.valor_por_cupom_centavos / 100)}
-          </p>
-          <p>
-            <span className="text-muted-foreground">Limite de cupons: </span>
-            {sorteio.quantidade_maxima_cupons ?? "Sem limite"}
-          </p>
-          {sorteio.descricao && <p className="sm:col-span-2">{sorteio.descricao}</p>}
-        </CardContent>
-      </Card>
 
       <SeletorHojeTodos modo={modoData} onChange={setModoData} />
 
