@@ -66,6 +66,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-texto-termos: var(--texto-termos);
 }
 
 :root {
@@ -82,6 +83,8 @@
   --secondary-foreground: oklch(0.3 0.16 273);
   --muted: oklch(0.955 0.012 265);
   --muted-foreground: oklch(0.5 0.04 265);
+  /* Conteúdo dos termos do sorteio: preto no portal. */
+  --texto-termos: oklch(0 0 0);
   --accent: oklch(0.93 0.05 268);
   --accent-foreground: oklch(0.3 0.16 273);
   --destructive: oklch(0.545 0.245 27.325);
@@ -130,6 +133,7 @@
   --secondary-foreground: oklch(0.984 0.003 247.858);
   --muted: oklch(0.279 0.041 260.031);
   --muted-foreground: oklch(0.74 0.04 256.788);
+  --texto-termos: oklch(0.97 0.005 260);
   --accent: oklch(0.32 0.055 264);
   --accent-foreground: oklch(0.984 0.003 247.858);
   --destructive: oklch(0.62 0.22 22.216);
