@@ -4,6 +4,7 @@ import { useSorteio } from "../hooks/useSorteios";
 
 const ABAS = [
   { rotulo: "Painel", to: "/sorteios/$id" as const },
+  { rotulo: "Dados", to: "/sorteios/$id/dados" as const },
   { rotulo: "Termos", to: "/sorteios/$id/termos" as const },
   { rotulo: "Prêmios", to: "/sorteios/$id/premios" as const },
   { rotulo: "Participantes", to: "/sorteios/$id/participantes" as const },
