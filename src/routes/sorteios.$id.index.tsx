@@ -196,7 +196,7 @@ function PainelSorteio() {
           icone={<Users className="h-5 w-5" />}
         />
         <IndicadorCard
-          titulo="Notas"
+          titulo={modoData === "HOJE" ? "Notas hoje" : "Notas"}
           valor={indicadores?.notas ?? 0}
           icone={<FileText className="h-5 w-5" />}
           descricao={
@@ -206,7 +206,7 @@ function PainelSorteio() {
           }
         />
         <IndicadorCard
-          titulo="Cupons"
+          titulo={modoData === "HOJE" ? "Cupons hoje" : "Cupons"}
           valor={indicadores?.cupons ?? 0}
           icone={<Ticket className="h-5 w-5" />}
           descricao={
