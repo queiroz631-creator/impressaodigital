@@ -44,41 +44,7 @@ function PainelSorteio() {
   const { data: sorteio, isLoading, error } = useSorteio(id);
   const [modoData, setModoData] = useState<ModoData>("HOJE");
   const { data: indicadores } = useIndicadoresSorteio(id, modoData);
-  const alterarStatus = useServerFn(alterarStatusSorteio);
-
   const processarCupons = useServerFn(processarCuponsDoSorteio);
-
-  const mutation = useMutation({
-    mutationFn: (status: StatusSorteio) => alterarStatus({ data: { id, status } }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["sorteio", id] });
-      qc.invalidateQueries({ queryKey: ["sorteios"] });
-      toast.success("Situação atualizada.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const reabrir = useServerFn(reabrirSorteio);
-  const mReabrir = useMutation({
-    mutationFn: () =>
-      reabrir({ data: { sorteioId: id } }) as Promise<{
-        resultado: "REABERTO" | "IGNORADO";
-        motivo?: string;
-        status?: string;
-      }>,
-    onSuccess: (r) => {
-      if (r.resultado === "REABERTO") {
-        qc.invalidateQueries({ queryKey: ["sorteio", id] });
-        qc.invalidateQueries({ queryKey: ["sorteios"] });
-        toast.success(
-          `Sorteio reaberto. Situação atual: ${r.status === "RASCUNHO" ? "Rascunho" : "Ativo"}.`,
-        );
-      } else {
-        toast.error(MENSAGEM_REABERTURA[r.motivo ?? ""] ?? "Não foi possível reabrir o sorteio.");
-      }
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   const mCupons = useMutation({
     mutationFn: () => processarCupons({ data: { sorteioId: id } }),
