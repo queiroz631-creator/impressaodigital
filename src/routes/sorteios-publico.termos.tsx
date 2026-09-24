@@ -115,8 +115,8 @@ function TermosPortal() {
                 if (!texto?.trim()) return null;
                 return (
                   <section key={chave}>
-                    <h3 className="text-sm font-semibold text-foreground">{rotulo}</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-line mt-1">
+                    <h3 className="text-sm font-semibold text-texto-termos">{rotulo}</h3>
+                    <p className="text-sm text-texto-termos whitespace-pre-line mt-1">
                       {texto}
                     </p>
                   </section>
