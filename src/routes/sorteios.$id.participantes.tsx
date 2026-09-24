@@ -98,6 +98,8 @@ function ParticipantesSorteio() {
       <PageHeader titulo="Participantes" subtitulo={sorteio?.nome ?? ""} />
       <NavSorteio id={id} />
 
+      <SeletorHojeTodos modo={modoData} onChange={setModoData} />
+
       <div className="mb-4 max-w-sm">
         <Input
           placeholder="Buscar por nome ou CPF"
@@ -112,7 +114,9 @@ function ParticipantesSorteio() {
           <CardContent className="p-8 text-center text-sm text-muted-foreground">
             {(participantes?.length ?? 0) === 0
               ? "Nenhum participante neste sorteio."
-              : "Nenhum participante encontrado para a busca."}
+              : modoData === "HOJE"
+                ? "Nenhum participante novo hoje."
+                : "Nenhum participante encontrado para a busca."}
           </CardContent>
         </Card>
       )}
