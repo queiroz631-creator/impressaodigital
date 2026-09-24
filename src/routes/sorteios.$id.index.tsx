@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -7,30 +7,14 @@ import { Users, FileText, Ticket, Trophy, Wallet, Gift, Coins } from "lucide-rea
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { brl, dataHoraBR } from "@/lib/format";
-import {
-  alterarStatusSorteio,
-  processarCuponsDoSorteio,
-  reabrirSorteio,
-} from "@/lib/sorteios.functions";
-import { ConfirmarAcao } from "@/components/ConfirmarAcao";
+import { brl } from "@/lib/format";
+import { processarCuponsDoSorteio } from "@/lib/sorteios.functions";
 import { useIndicadoresSorteio, useSorteio } from "@/modules/sorteios/hooks/useSorteios";
-import { StatusSorteioBadge } from "@/modules/sorteios/components/StatusSorteioBadge";
 import { IndicadorCard } from "@/modules/sorteios/components/IndicadorCard";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
 import { SeletorHojeTodos, type ModoData } from "@/modules/sorteios/components/SeletorHojeTodos";
-import {
-  ROTULO_TRANSICAO,
-  transicoesManuais,
-  MENSAGEM_REABERTURA,
-  somenteConsulta,
-} from "@/modules/sorteios/services/status";
 
-import {
-  ROTULO_STATUS_NOTA,
-  ROTULO_STATUS_CUPOM,
-  type StatusSorteio,
-} from "@/modules/sorteios/types";
+import { ROTULO_STATUS_NOTA, ROTULO_STATUS_CUPOM } from "@/modules/sorteios/types";
 
 export const Route = createFileRoute("/sorteios/$id/")({
   component: () => (
