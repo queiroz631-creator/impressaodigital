@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -17,6 +18,7 @@ import { useIndicadoresSorteio, useSorteio } from "@/modules/sorteios/hooks/useS
 import { StatusSorteioBadge } from "@/modules/sorteios/components/StatusSorteioBadge";
 import { IndicadorCard } from "@/modules/sorteios/components/IndicadorCard";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
+import { SeletorHojeTodos, type ModoData } from "@/modules/sorteios/components/SeletorHojeTodos";
 import {
   ROTULO_TRANSICAO,
   transicoesManuais,
@@ -56,7 +58,8 @@ function PainelSorteio() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: sorteio, isLoading, error } = useSorteio(id);
-  const { data: indicadores } = useIndicadoresSorteio(id);
+  const [modoData, setModoData] = useState<ModoData>("HOJE");
+  const { data: indicadores } = useIndicadoresSorteio(id, modoData);
   const alterarStatus = useServerFn(alterarStatusSorteio);
 
   const processarCupons = useServerFn(processarCuponsDoSorteio);
@@ -184,9 +187,11 @@ function PainelSorteio() {
         </CardContent>
       </Card>
 
+      <SeletorHojeTodos modo={modoData} onChange={setModoData} />
+
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <IndicadorCard
-          titulo="Participantes"
+          titulo={modoData === "HOJE" ? "Participantes hoje" : "Participantes"}
           valor={indicadores?.participantes ?? 0}
           icone={<Users className="h-5 w-5" />}
         />
