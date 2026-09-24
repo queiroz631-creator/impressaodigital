@@ -13,8 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { brl, dataHoraBR } from "@/lib/format";
+import { brl, dataHoraBR, ehHoje } from "@/lib/format";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
+import { SeletorHojeTodos, type ModoData } from "@/modules/sorteios/components/SeletorHojeTodos";
 import { useCuponsSorteio, useSorteio } from "@/modules/sorteios/hooks/useSorteios";
 import {
   ROTULO_STATUS_CUPOM,
@@ -70,11 +71,13 @@ function CuponsSorteio() {
   const { data: cupons, isLoading } = useCuponsSorteio(id);
   const [filtro, setFiltro] = useState<StatusCupom | "TODOS">("TODOS");
   const [busca, setBusca] = useState("");
+  const [modoData, setModoData] = useState<ModoData>("HOJE");
 
   const filtrados = useMemo(() => {
     const termo = semAcento(busca.trim());
     const digitos = busca.replace(/\D/g, "");
     return (cupons ?? []).filter((c) => {
+      if (modoData === "HOJE" && !ehHoje(c.gerado_em)) return false;
       if (filtro !== "TODOS" && c.status !== filtro) return false;
       if (!termo && !digitos) return true;
       const porNome = termo ? semAcento(c.participanteNome).includes(termo) : false;
@@ -85,12 +88,14 @@ function CuponsSorteio() {
       const porNota = digitos ? c.notaNumero.replace(/\D/g, "").includes(digitos) : false;
       return porNome || porCpf || porCupom || porNota;
     });
-  }, [cupons, filtro, busca]);
+  }, [cupons, filtro, busca, modoData]);
 
   return (
     <>
       <PageHeader titulo="Cupons" subtitulo={sorteio?.nome ?? ""} />
       <NavSorteio id={id} />
+
+      <SeletorHojeTodos modo={modoData} onChange={setModoData} />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="max-w-sm flex-1 min-w-[220px]">
@@ -118,7 +123,9 @@ function CuponsSorteio() {
           <CardContent className="p-8 text-center text-sm text-muted-foreground">
             {(cupons?.length ?? 0) === 0
               ? "Nenhum cupom neste sorteio."
-              : "Nenhum cupom encontrado para esta busca."}
+              : modoData === "HOJE"
+                ? "Nenhum cupom gerado hoje."
+                : "Nenhum cupom encontrado para esta busca."}
           </CardContent>
         </Card>
       )}

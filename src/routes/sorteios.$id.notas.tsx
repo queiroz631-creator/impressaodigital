@@ -16,8 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { brl, dataHoraBR } from "@/lib/format";
+import { brl, dataHoraBR, ehHoje } from "@/lib/format";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
+import { SeletorHojeTodos, type ModoData } from "@/modules/sorteios/components/SeletorHojeTodos";
 import { useNotasSorteio, useSorteio } from "@/modules/sorteios/hooks/useSorteios";
 import { ROTULO_STATUS_NOTA, type StatusNota } from "@/modules/sorteios/types";
 
@@ -56,6 +57,7 @@ function NotasSorteio() {
   const { data: sorteio } = useSorteio(id);
   const { data: notas, isLoading } = useNotasSorteio(id);
   const [filtro, setFiltro] = useState<StatusNota | "TODAS">("TODAS");
+  const [modoData, setModoData] = useState<ModoData>("HOJE");
   const qc = useQueryClient();
   const validar = useServerFn(validarNotaSorteio);
   const sorteioAtivo = sorteio?.status === "ATIVO";
@@ -73,14 +75,21 @@ function NotasSorteio() {
   });
 
   const filtradas = useMemo(
-    () => (notas ?? []).filter((n) => filtro === "TODAS" || n.status === filtro),
-    [notas, filtro],
+    () =>
+      (notas ?? []).filter(
+        (n) =>
+          (modoData === "TODOS" || ehHoje(n.cadastrado_em)) &&
+          (filtro === "TODAS" || n.status === filtro),
+      ),
+    [notas, filtro, modoData],
   );
 
   return (
     <>
       <PageHeader titulo="Notas" subtitulo={sorteio?.nome ?? ""} />
       <NavSorteio id={id} />
+
+      <SeletorHojeTodos modo={modoData} onChange={setModoData} />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {FILTROS.map((f) => (
@@ -101,7 +110,9 @@ function NotasSorteio() {
           <CardContent className="p-8 text-center text-sm text-muted-foreground">
             {(notas?.length ?? 0) === 0
               ? "Nenhuma nota cadastrada neste sorteio."
-              : "Nenhuma nota com esta situação."}
+              : modoData === "HOJE"
+                ? "Nenhuma nota registrada hoje."
+                : "Nenhuma nota com esta situação."}
           </CardContent>
         </Card>
       )}

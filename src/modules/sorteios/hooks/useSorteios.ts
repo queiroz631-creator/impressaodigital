@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ehHoje } from "@/lib/format";
 import type {
   Sorteio,
   SorteioCupom,
@@ -89,12 +90,10 @@ export function useSorteio(id: string) {
 }
 
 /** Indicadores do painel do sorteio, todos calculados no banco. */
-export function useIndicadoresSorteio(id: string) {
+export function useIndicadoresSorteio(id: string, modo: "HOJE" | "TODOS" = "TODOS") {
   return useQuery({
-    queryKey: ["sorteio-indicadores", id],
+    queryKey: ["sorteio-indicadores", id, modo],
     queryFn: async () => {
-      const contagens = await contagensDe(id);
-
       const [
         { data: notas, error: erroNotas },
         { data: cupons, error: erroCupons },
@@ -104,10 +103,13 @@ export function useIndicadoresSorteio(id: string) {
       ] = await Promise.all([
         supabase
           .from("sorteio_notas")
-          .select("status, valor_centavos, cupons_processado_em")
+          .select("status, valor_centavos, cupons_processado_em, cadastrado_em")
           .eq("sorteio_id", id),
-        supabase.from("sorteio_cupons").select("status").eq("sorteio_id", id),
-        supabase.from("sorteio_participantes").select("saldo_centavos").eq("sorteio_id", id),
+        supabase.from("sorteio_cupons").select("status, gerado_em").eq("sorteio_id", id),
+        supabase
+          .from("sorteio_participantes")
+          .select("saldo_centavos, criado_em")
+          .eq("sorteio_id", id),
         supabase
           .from("sorteio_premios")
           .select("id", { count: "exact", head: true })
@@ -122,10 +124,19 @@ export function useIndicadoresSorteio(id: string) {
       if (erroCupons) throw new Error(erroCupons.message);
       if (erroSaldo) throw new Error(erroSaldo.message);
 
+      // No modo HOJE, participantes, notas e cupons consideram só o dia de hoje
+      // (fuso do navegador). Saldo, prêmios e ganhadores são sempre totais.
+      const soHoje = modo === "HOJE";
+      const notasVisiveis = (notas ?? []).filter((n) => !soHoje || ehHoje(n.cadastrado_em));
+      const cuponsVisiveis = (cupons ?? []).filter((c) => !soHoje || ehHoje(c.gerado_em));
+      const participantesVisiveis = (participacoes ?? []).filter(
+        (p) => !soHoje || ehHoje(p.criado_em),
+      );
+
       const porStatusNota = { PENDENTE: 0, VALIDA: 0, INVALIDA: 0, CANCELADA: 0 };
       let valorValidoCentavos = 0;
       let notasAguardandoCupons = 0;
-      for (const n of notas ?? []) {
+      for (const n of notasVisiveis) {
         porStatusNota[n.status as StatusNota] += 1;
         if (n.status === "VALIDA") {
           valorValidoCentavos += n.valor_centavos ?? 0;
@@ -134,13 +145,15 @@ export function useIndicadoresSorteio(id: string) {
       }
 
       const porStatusCupom = { ATIVO: 0, CANCELADO: 0, UTILIZADO: 0 };
-      for (const c of cupons ?? []) porStatusCupom[c.status as StatusCupom] += 1;
+      for (const c of cuponsVisiveis) porStatusCupom[c.status as StatusCupom] += 1;
 
       let saldoCentavos = 0;
       for (const p of participacoes ?? []) saldoCentavos += p.saldo_centavos ?? 0;
 
       return {
-        ...contagens,
+        participantes: participantesVisiveis.length,
+        notas: notasVisiveis.length,
+        cupons: cuponsVisiveis.filter((c) => c.status !== "CANCELADO").length,
         porStatusNota,
         porStatusCupom,
         valorValidoCentavos,

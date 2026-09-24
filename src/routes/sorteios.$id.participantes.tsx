@@ -16,9 +16,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { brl, dataHoraBR } from "@/lib/format";
+import { brl, dataHoraBR, ehHoje } from "@/lib/format";
 import { definirElegibilidadeParticipante } from "@/lib/sorteios.functions";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
+import { SeletorHojeTodos, type ModoData } from "@/modules/sorteios/components/SeletorHojeTodos";
 import { somenteConsulta } from "@/modules/sorteios/services/status";
 import { useParticipantesSorteio, useSorteio } from "@/modules/sorteios/hooks/useSorteios";
 import { mascararCpf, mascararTelefone } from "@/modules/sorteios/validations/sorteio";
@@ -66,6 +67,7 @@ function ParticipantesSorteio() {
   const { data: sorteio } = useSorteio(id);
   const { data: participantes, isLoading } = useParticipantesSorteio(id);
   const [busca, setBusca] = useState("");
+  const [modoData, setModoData] = useState<ModoData>("HOJE");
   const definirElegibilidade = useServerFn(definirElegibilidadeParticipante);
 
   const consulta = sorteio ? somenteConsulta(sorteio.status) : true;
@@ -82,18 +84,21 @@ function ParticipantesSorteio() {
   const filtrados = useMemo(() => {
     const termo = semAcento(busca.trim());
     const digitos = busca.replace(/\D/g, "");
-    if (!termo && !digitos) return participantes ?? [];
     return (participantes ?? []).filter((p) => {
+      if (modoData === "HOJE" && !ehHoje(p.criado_em)) return false;
+      if (!termo && !digitos) return true;
       const porNome = termo ? semAcento(p.nome).includes(termo) : false;
       const porCpf = digitos ? (p.cpf ?? "").replace(/\D/g, "").includes(digitos) : false;
       return porNome || porCpf;
     });
-  }, [participantes, busca]);
+  }, [participantes, busca, modoData]);
 
   return (
     <>
       <PageHeader titulo="Participantes" subtitulo={sorteio?.nome ?? ""} />
       <NavSorteio id={id} />
+
+      <SeletorHojeTodos modo={modoData} onChange={setModoData} />
 
       <div className="mb-4 max-w-sm">
         <Input
@@ -109,7 +114,9 @@ function ParticipantesSorteio() {
           <CardContent className="p-8 text-center text-sm text-muted-foreground">
             {(participantes?.length ?? 0) === 0
               ? "Nenhum participante neste sorteio."
-              : "Nenhum participante encontrado para a busca."}
+              : modoData === "HOJE"
+                ? "Nenhum participante novo hoje."
+                : "Nenhum participante encontrado para a busca."}
           </CardContent>
         </Card>
       )}

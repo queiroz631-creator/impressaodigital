@@ -57,7 +57,7 @@ import { PERFIL_VAZIO, type PerfilImpressao } from "@/lib/perfil-impressao";
 import type { ArquivoDoc } from "@/lib/documento";
 import { useAuth } from "@/hooks/useAuth";
 
-import { brl, dataBR } from "@/lib/format";
+import { brl, dataBR, dataLocalISO } from "@/lib/format";
 import { documentoDeOrcamentos } from "@/lib/orcamento-doc";
 import { gerarOrcamentoPdf } from "@/lib/pdf";
 import { gerarOrcamentoImagem } from "@/lib/imagem";
@@ -85,16 +85,6 @@ export const Route = createFileRoute("/orcamentos")({
     ],
   }),
 });
-
-/** Data local (fuso do navegador) no formato aceito por <input type="date">. */
-function dataLocalISO(valor: Date | string | null | undefined) {
-  const data = valor ? new Date(valor) : new Date();
-  if (Number.isNaN(data.getTime())) return "";
-  const ano = data.getFullYear();
-  const mes = String(data.getMonth() + 1).padStart(2, "0");
-  const dia = String(data.getDate()).padStart(2, "0");
-  return `${ano}-${mes}-${dia}`;
-}
 
 /** Situação do pagamento de um pedido. */
 function situacaoPagamento(total: number, pago: number) {
