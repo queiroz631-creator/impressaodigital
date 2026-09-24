@@ -13,8 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { brl, dataHoraBR } from "@/lib/format";
+import { brl, dataHoraBR, ehHoje } from "@/lib/format";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
+import { SeletorHojeTodos, type ModoData } from "@/modules/sorteios/components/SeletorHojeTodos";
 import { useCuponsSorteio, useSorteio } from "@/modules/sorteios/hooks/useSorteios";
 import {
   ROTULO_STATUS_CUPOM,
@@ -70,11 +71,13 @@ function CuponsSorteio() {
   const { data: cupons, isLoading } = useCuponsSorteio(id);
   const [filtro, setFiltro] = useState<StatusCupom | "TODOS">("TODOS");
   const [busca, setBusca] = useState("");
+  const [modoData, setModoData] = useState<ModoData>("HOJE");
 
   const filtrados = useMemo(() => {
     const termo = semAcento(busca.trim());
     const digitos = busca.replace(/\D/g, "");
     return (cupons ?? []).filter((c) => {
+      if (modoData === "HOJE" && !ehHoje(c.gerado_em)) return false;
       if (filtro !== "TODOS" && c.status !== filtro) return false;
       if (!termo && !digitos) return true;
       const porNome = termo ? semAcento(c.participanteNome).includes(termo) : false;
@@ -85,7 +88,7 @@ function CuponsSorteio() {
       const porNota = digitos ? c.notaNumero.replace(/\D/g, "").includes(digitos) : false;
       return porNome || porCpf || porCupom || porNota;
     });
-  }, [cupons, filtro, busca]);
+  }, [cupons, filtro, busca, modoData]);
 
   return (
     <>
