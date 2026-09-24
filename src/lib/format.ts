@@ -20,6 +20,19 @@ export const dataBR = (value?: string | null) => {
 export const dataHoraBR = (value?: string | null) =>
   value ? new Date(value).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "-";
 
+/** Data local (fuso do navegador) no formato aceito por <input type="date">. */
+export const dataLocalISO = (valor?: Date | string | null) => {
+  const data = valor ? new Date(valor) : new Date();
+  if (Number.isNaN(data.getTime())) return "";
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const dia = String(data.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+};
+
+/** Verdadeiro quando a data/hora cai no dia de hoje (fuso do navegador). */
+export const ehHoje = (valor?: string | null) => !!valor && dataLocalISO(valor) === dataLocalISO();
+
 export const telefoneRaw = (value?: string | null) => (value ?? "").replace(/\D/g, "");
 
 export const telefoneBR = (value?: string | null) => {
