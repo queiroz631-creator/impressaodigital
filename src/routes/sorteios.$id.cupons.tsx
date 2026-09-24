@@ -95,6 +95,8 @@ function CuponsSorteio() {
       <PageHeader titulo="Cupons" subtitulo={sorteio?.nome ?? ""} />
       <NavSorteio id={id} />
 
+      <SeletorHojeTodos modo={modoData} onChange={setModoData} />
+
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="max-w-sm flex-1 min-w-[220px]">
           <Input
@@ -121,7 +123,9 @@ function CuponsSorteio() {
           <CardContent className="p-8 text-center text-sm text-muted-foreground">
             {(cupons?.length ?? 0) === 0
               ? "Nenhum cupom neste sorteio."
-              : "Nenhum cupom encontrado para esta busca."}
+              : modoData === "HOJE"
+                ? "Nenhum cupom gerado hoje."
+                : "Nenhum cupom encontrado para esta busca."}
           </CardContent>
         </Card>
       )}
