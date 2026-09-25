@@ -14,7 +14,7 @@
 
 ## O que não muda
 
-Regras de notas, clientes, cupons, marcadores, lotes, rotas, banco e site. Os identificadores de lote continuam iguais (só servem para evitar duplicidade).
+Alterações somente no programa da loja (pasta `api-local/`). Site, banco, migrações e rotas do sistema não são tocados. Regras de notas, clientes, cupons, marcadores e lotes continuam iguais. Os identificadores de lote continuam iguais (só servem para evitar duplicidade).
 
 ## Detalhes técnicos
 
