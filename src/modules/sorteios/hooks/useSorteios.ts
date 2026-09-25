@@ -90,9 +90,13 @@ export function useSorteio(id: string) {
 }
 
 /** Indicadores do painel do sorteio, todos calculados no banco. */
-export function useIndicadoresSorteio(id: string, modo: "HOJE" | "TODOS" = "TODOS") {
+export function useIndicadoresSorteio(
+  id: string,
+  modo: "HOJE" | "TODOS" = "TODOS",
+  participantes: "CONCORREM" | "TODOS" = "CONCORREM",
+) {
   return useQuery({
-    queryKey: ["sorteio-indicadores", id, modo],
+    queryKey: ["sorteio-indicadores", id, modo, participantes],
     queryFn: async () => {
       const [
         { data: notas, error: erroNotas },
@@ -103,12 +107,15 @@ export function useIndicadoresSorteio(id: string, modo: "HOJE" | "TODOS" = "TODO
       ] = await Promise.all([
         supabase
           .from("sorteio_notas")
-          .select("status, valor_centavos, cupons_processado_em, cadastrado_em")
+          .select("status, valor_centavos, cupons_processado_em, cadastrado_em, participante_id")
           .eq("sorteio_id", id),
-        supabase.from("sorteio_cupons").select("status, gerado_em").eq("sorteio_id", id),
+        supabase
+          .from("sorteio_cupons")
+          .select("status, gerado_em, participante_id")
+          .eq("sorteio_id", id),
         supabase
           .from("sorteio_participantes")
-          .select("saldo_centavos, criado_em")
+          .select("id, saldo_centavos, criado_em, concorre_sorteio")
           .eq("sorteio_id", id),
         supabase
           .from("sorteio_premios")
@@ -127,10 +134,20 @@ export function useIndicadoresSorteio(id: string, modo: "HOJE" | "TODOS" = "TODO
       // No modo HOJE, participantes, notas e cupons consideram só o dia de hoje
       // (fuso do navegador). Saldo, prêmios e ganhadores são sempre totais.
       const soHoje = modo === "HOJE";
-      const notasVisiveis = (notas ?? []).filter((n) => !soHoje || ehHoje(n.cadastrado_em));
-      const cuponsVisiveis = (cupons ?? []).filter((c) => !soHoje || ehHoje(c.gerado_em));
+      const apenasConcorrentes = participantes === "CONCORREM";
+      const participantesElegiveis = new Set(
+        (participacoes ?? []).filter((p) => p.concorre_sorteio).map((p) => p.id),
+      );
+      const participanteVisivel = (participanteId: string) =>
+        !apenasConcorrentes || participantesElegiveis.has(participanteId);
+      const notasVisiveis = (notas ?? []).filter(
+        (n) => participanteVisivel(n.participante_id) && (!soHoje || ehHoje(n.cadastrado_em)),
+      );
+      const cuponsVisiveis = (cupons ?? []).filter(
+        (c) => participanteVisivel(c.participante_id) && (!soHoje || ehHoje(c.gerado_em)),
+      );
       const participantesVisiveis = (participacoes ?? []).filter(
-        (p) => !soHoje || ehHoje(p.criado_em),
+        (p) => participanteVisivel(p.id) && (!soHoje || ehHoje(p.criado_em)),
       );
 
       const porStatusNota = { PENDENTE: 0, VALIDA: 0, INVALIDA: 0, CANCELADA: 0 };
@@ -148,7 +165,9 @@ export function useIndicadoresSorteio(id: string, modo: "HOJE" | "TODOS" = "TODO
       for (const c of cuponsVisiveis) porStatusCupom[c.status as StatusCupom] += 1;
 
       let saldoCentavos = 0;
-      for (const p of participacoes ?? []) saldoCentavos += p.saldo_centavos ?? 0;
+      for (const p of participacoes ?? []) {
+        if (participanteVisivel(p.id)) saldoCentavos += p.saldo_centavos ?? 0;
+      }
 
       return {
         participantes: participantesVisiveis.length,
