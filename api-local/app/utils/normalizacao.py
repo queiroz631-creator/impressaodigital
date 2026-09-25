@@ -9,8 +9,34 @@ seguem essa regra: cada um tem tratamento próprio.
 
 import re
 import unicodedata
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
+
+try:
+    from zoneinfo import ZoneInfo
+
+    FUSO = ZoneInfo("America/Sao_Paulo")
+except Exception:  # sem base de fusos no Windows: Brasília é UTC-3 fixo
+    FUSO = timezone(timedelta(hours=-3), "BRT")
+
+
+def agora() -> datetime:
+    """Data/hora atual no horário de Brasília."""
+    return datetime.now(FUSO)
+
+
+def data_hora_br(valor: str | None) -> str:
+    """ISO -> 25/09/2026 23:31:33 no horário de Brasília."""
+    if not valor:
+        return "—"
+    try:
+        dt = datetime.fromisoformat(str(valor).replace("Z", "+00:00"))
+    except ValueError:
+        return str(valor)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=FUSO)
+    return dt.astimezone(FUSO).strftime("%d/%m/%Y %H:%M:%S")
+
 
 _PERMITIDOS = re.compile(r"[^A-Z0-9 ]")
 _ESPACOS = re.compile(r"\s+")
@@ -59,5 +85,8 @@ def data_iso(valor: datetime | date | None) -> str | None:
     if valor is None:
         return None
     if isinstance(valor, datetime):
-        return valor.isoformat()
+        # O Lojamix grava no horário local da loja (Brasília).
+        if valor.tzinfo is None:
+            return valor.replace(tzinfo=FUSO).isoformat()
+        return valor.astimezone(FUSO).isoformat()
     return valor.isoformat()
