@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,9 +21,11 @@ import {
   conferenciaEncerramentoSorteio,
   encerrarSorteio,
   reabrirSorteio,
+  totaisSorteioPorElegibilidade,
 } from "@/lib/sorteios.functions";
 import { MENSAGEM_REABERTURA } from "../services/status";
 import { IndicadorCard } from "./IndicadorCard";
+import { SeletorParticipantes, type ModoParticipantes } from "./SeletorParticipantes";
 import type { ConferenciaSorteio, Sorteio, TotaisConferencia } from "../types";
 
 /**
@@ -38,6 +41,9 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
   const conferir = useServerFn(conferenciaEncerramentoSorteio);
   const encerrar = useServerFn(encerrarSorteio);
   const reabrir = useServerFn(reabrirSorteio);
+  const buscarTotais = useServerFn(totaisSorteioPorElegibilidade);
+  const [modoParticipantes, setModoParticipantes] = useState<ModoParticipantes>("CONCORREM");
+  const [mostrarValorNotas, setMostrarValorNotas] = useState(false);
 
   const encerrado = sorteio.status !== "ATIVO";
 
@@ -45,6 +51,16 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
     queryKey: ["sorteio-conferencia", sorteio.id],
     queryFn: () => conferir({ data: { sorteioId: sorteio.id } }) as Promise<ConferenciaSorteio>,
     enabled: !encerrado,
+  });
+  const { data: totaisFiltrados, isLoading: carregandoTotais } = useQuery({
+    queryKey: ["sorteio-totais-elegibilidade", sorteio.id, modoParticipantes],
+    queryFn: () =>
+      buscarTotais({
+        data: {
+          sorteioId: sorteio.id,
+          apenasConcorrentes: modoParticipantes === "CONCORREM",
+        },
+      }),
   });
 
   const mutation = useMutation({
@@ -164,7 +180,14 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
           <p className="text-sm text-muted-foreground">Conferindo a base do sorteio...</p>
         )}
 
-        {totais && <Totais totais={totais} />}
+        <SeletorParticipantes modo={modoParticipantes} onChange={setModoParticipantes} />
+
+        {carregandoTotais && (
+          <p className="text-sm text-muted-foreground">Atualizando indicadores...</p>
+        )}
+        {totaisFiltrados && (
+          <Totais totais={totaisFiltrados} mostrarValor={mostrarValorNotas} onAlternarValor={() => setMostrarValorNotas((atual) => !atual)} />
+        )}
 
         {!encerrado && atual && (
           <div
@@ -203,11 +226,18 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
   );
 }
 
-function Totais({ totais }: { totais: TotaisConferencia }) {
+function Totais({
+  totais,
+  mostrarValor,
+  onAlternarValor,
+}: {
+  totais: Omit<TotaisConferencia, "participantes_concorrentes">;
+  mostrarValor: boolean;
+  onAlternarValor: () => void;
+}) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <IndicadorCard titulo="Participantes" valor={totais.participantes} />
-      <IndicadorCard titulo="Concorrem ao sorteio" valor={totais.participantes_concorrentes} />
       <IndicadorCard titulo="Notas válidas" valor={totais.notas_validas} />
       <IndicadorCard titulo="Notas canceladas" valor={totais.notas_canceladas} />
       <IndicadorCard titulo="Notas pendentes" valor={totais.notas_pendentes} />
@@ -231,7 +261,19 @@ function Totais({ totais }: { totais: TotaisConferencia }) {
       />
       <IndicadorCard
         titulo="Valor em notas válidas"
-        valor={brl(totais.valor_notas_validas_centavos / 100)}
+        valor={mostrarValor ? brl(totais.valor_notas_validas_centavos / 100) : "R$ ••••••"}
+        acao={
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            aria-label={mostrarValor ? "Ocultar valor em notas válidas" : "Mostrar valor em notas válidas"}
+            title={mostrarValor ? "Ocultar valor" : "Mostrar valor"}
+            onClick={onAlternarValor}
+          >
+            {mostrarValor ? <EyeOff /> : <Eye />}
+          </Button>
+        }
       />
     </div>
   );

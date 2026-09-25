@@ -3,7 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Users, FileText, Ticket, Trophy, Wallet, Gift, Coins } from "lucide-react";
+import { Users, FileText, Ticket, Trophy, Wallet, Gift, Coins, Eye, EyeOff } from "lucide-react";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,10 @@ import { useIndicadoresSorteio, useSorteio } from "@/modules/sorteios/hooks/useS
 import { IndicadorCard } from "@/modules/sorteios/components/IndicadorCard";
 import { NavSorteio } from "@/modules/sorteios/components/NavSorteio";
 import { SeletorHojeTodos, type ModoData } from "@/modules/sorteios/components/SeletorHojeTodos";
+import {
+  SeletorParticipantes,
+  type ModoParticipantes,
+} from "@/modules/sorteios/components/SeletorParticipantes";
 
 import { ROTULO_STATUS_NOTA, ROTULO_STATUS_CUPOM } from "@/modules/sorteios/types";
 
@@ -43,7 +47,9 @@ function PainelSorteio() {
   const qc = useQueryClient();
   const { data: sorteio, isLoading, error } = useSorteio(id);
   const [modoData, setModoData] = useState<ModoData>("HOJE");
-  const { data: indicadores } = useIndicadoresSorteio(id, modoData);
+  const [modoParticipantes, setModoParticipantes] = useState<ModoParticipantes>("CONCORREM");
+  const [mostrarValorNotas, setMostrarValorNotas] = useState(false);
+  const { data: indicadores } = useIndicadoresSorteio(id, modoData, modoParticipantes);
   const processarCupons = useServerFn(processarCuponsDoSorteio);
 
   const mCupons = useMutation({
@@ -73,6 +79,7 @@ function PainelSorteio() {
       <NavSorteio id={id} />
 
       <SeletorHojeTodos modo={modoData} onChange={setModoData} />
+      <SeletorParticipantes modo={modoParticipantes} onChange={setModoParticipantes} />
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <IndicadorCard
@@ -102,8 +109,20 @@ function PainelSorteio() {
         />
         <IndicadorCard
           titulo="Valor em notas válidas"
-          valor={brl((indicadores?.valorValidoCentavos ?? 0) / 100)}
+          valor={mostrarValorNotas ? brl((indicadores?.valorValidoCentavos ?? 0) / 100) : "R$ ••••••"}
           icone={<Wallet className="h-5 w-5" />}
+          acao={
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              aria-label={mostrarValorNotas ? "Ocultar valor em notas válidas" : "Mostrar valor em notas válidas"}
+              title={mostrarValorNotas ? "Ocultar valor" : "Mostrar valor"}
+              onClick={() => setMostrarValorNotas((atual) => !atual)}
+            >
+              {mostrarValorNotas ? <EyeOff /> : <Eye />}
+            </Button>
+          }
         />
         <IndicadorCard
           titulo="Saldo acumulado"
