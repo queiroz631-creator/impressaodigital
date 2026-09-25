@@ -12,6 +12,7 @@ from app.database import disponivel
 from app.settings_store import load_config, load_secrets, save_config, save_secrets
 from app import sql_store
 from app.utils.estado import ler as ler_estado
+from app.utils.normalizacao import data_hora_br
 from app.windows import startup_enabled, set_startup
 
 
