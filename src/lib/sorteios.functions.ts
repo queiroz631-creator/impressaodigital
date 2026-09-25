@@ -12,7 +12,7 @@ import {
   podeTransicionar,
   somenteConsulta,
 } from "@/modules/sorteios/services/status";
-import type { StatusSorteio } from "@/modules/sorteios/types";
+import type { StatusSorteio, TotaisConferencia } from "@/modules/sorteios/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/integrations/supabase/types";
 
@@ -631,6 +631,24 @@ export const encerrarSorteio = createServerFn({ method: "POST" })
     await exigirGestao(context);
     const { encerrarSorteioNoBanco } = await import("@/lib/sorteios-encerramento.server");
     return encerrarSorteioNoBanco(data.sorteioId, context.userId);
+  });
+
+/** Totais de leitura para alternar entre participantes concorrentes e todos. */
+export const totaisSorteioPorElegibilidade = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ sorteioId: z.string().uuid(), apenasConcorrentes: z.boolean() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: totais, error } = await context.supabase.rpc(
+      "sorteio_totais_por_elegibilidade",
+      {
+        _sorteio_id: data.sorteioId,
+        _apenas_concorrentes: data.apenasConcorrentes,
+      },
+    );
+    if (error) throw new Error(error.message);
+    return totais as unknown as Omit<TotaisConferencia, "participantes_concorrentes">;
   });
 
 /**

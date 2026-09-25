@@ -3733,6 +3733,10 @@ export type Database = {
         }
         Returns: Json
       }
+      sorteio_totais_por_elegibilidade: {
+        Args: { _apenas_concorrentes?: boolean; _sorteio_id: string }
+        Returns: Json
+      }
       tem_permissao: {
         Args: { _chave: string; _user_id: string }
         Returns: boolean
