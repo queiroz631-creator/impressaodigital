@@ -171,7 +171,7 @@ class App(tk.Tk):
         self.sql_var.set("● " + str(data.get("sqlserver", "desconhecido")).upper())
         self.sistema_var.set("● Configuração será verificada ao testar")
         self.sync_var.set("Em andamento" if running else "Aguardando")
-        self.last_var.set(str(data.get("last_cycle") or "—"))
+        self.last_var.set(data_hora_br(data.get("last_cycle")))
         result = data.get("last_result") or {}
         self.result_var.set(str(result)[:700] if result else "—")
         ultimo_erro = data.get("last_error") or "nenhum"
@@ -179,7 +179,7 @@ class App(tk.Tk):
             f"Serviço: {service}\n"
             f"SQL Server: {data.get('sqlserver', 'desconhecido')}\n"
             f"Sincronização em andamento: {running}\n"
-            f"Último sucesso: {data.get('last_success') or '—'}\n"
+            f"Último sucesso: {data_hora_br(data.get('last_success'))}\n"
             f"Último erro: {ultimo_erro}\n"
             + self._resumo_clientes(result)
         )

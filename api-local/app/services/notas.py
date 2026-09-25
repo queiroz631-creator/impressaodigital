@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from app.config import config
+from app.utils.normalizacao import FUSO
 from app.repositories import notas_repo
 from app.schemas.sync import ResumoNotas, ResumoSituacoes, SorteioAtivo
 from app.services import sistema
@@ -59,10 +60,10 @@ def _limite_data(valor: str | None, padrao: datetime, fim: bool = False) -> date
 
         normalizado = texto.replace("Z", "+00:00")
         dt = datetime.fromisoformat(normalizado)
-        # SQL Server datetime não precisa receber tzinfo; o horário do sorteio
-        # é tratado como horário local do sistema.
+        # O SQL Server do Lojamix guarda horário de Brasília sem fuso:
+        # converte para Brasília antes de remover o fuso.
         if dt.tzinfo is not None:
-            dt = dt.replace(tzinfo=None)
+            dt = dt.astimezone(FUSO).replace(tzinfo=None)
         return dt
     except ValueError:
         raise ValueError(f"Data do sorteio inválida: {texto[:50]}")

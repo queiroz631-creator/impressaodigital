@@ -1,6 +1,5 @@
 """Estado operacional em memória para interface e serviço."""
 from __future__ import annotations
-from datetime import datetime, timezone
 from threading import Lock
 from typing import Any
 
@@ -23,4 +22,6 @@ def update(**kwargs: Any) -> None:
         _state.update(kwargs)
 
 def now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    from app.utils.normalizacao import agora
+
+    return agora().isoformat()
