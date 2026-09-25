@@ -188,6 +188,6 @@
       preenchidos, rascunho criado e aberto em `/curriculos/<id>`, sem erros de console.
 - [ ] Pendente do usuário: `git push` e, na VPS, `cd /var/www/impressaodigital && git pull && bash deploy/deploy.sh`.
 ## Sorteios — indicadores por elegibilidade
-- [ ] Painel e Encerramento: filtro Concorrem/Todos em todos os indicadores ligados a participantes
-- [ ] Painel e Encerramento: valor em notas válidas oculto por padrão com botão de olho
+- [x] Painel e Encerramento: filtro Concorrem/Todos em todos os indicadores ligados a participantes
+- [x] Painel e Encerramento: valor em notas válidas oculto por padrão com botão de olho
 
