@@ -99,7 +99,6 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
   // Depois de encerrado, os números vêm do retrato gravado no encerramento.
   const retrato = sorteio.conferencia_encerramento ?? null;
   const atual = encerrado ? retrato : (conferencia ?? null);
-  const totais = atual?.totais;
   const pendencias = atual?.pendencias ?? [];
   const inconsistencias = atual?.inconsistencias ?? [];
   const aprovada = atual?.aprovada === true;
@@ -186,7 +185,11 @@ export function ConferenciaEncerramento({ sorteio }: { sorteio: Sorteio }) {
           <p className="text-sm text-muted-foreground">Atualizando indicadores...</p>
         )}
         {totaisFiltrados && (
-          <Totais totais={totaisFiltrados} mostrarValor={mostrarValorNotas} onAlternarValor={() => setMostrarValorNotas((atual) => !atual)} />
+          <Totais
+            totais={totaisFiltrados}
+            mostrarValor={mostrarValorNotas}
+            onAlternarValor={() => setMostrarValorNotas((atual) => !atual)}
+          />
         )}
 
         {!encerrado && atual && (
