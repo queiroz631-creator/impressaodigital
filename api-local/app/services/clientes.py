@@ -48,7 +48,7 @@ def _cliente_para_envio(linha: dict[str, Any]) -> dict[str, Any]:
         "cpf": normalizacao.cpf(linha.get("cpf")),
         "telefone": normalizacao.digitos(linha.get("telefone")),
         "email": normalizacao.email(linha.get("email")),
-        "dataNascimento": normalizacao.data_iso(linha.get("data_nascimento")),
+        "dataNascimento": normalizacao.data_civil_iso(linha.get("data_nascimento")),
     }
 
 

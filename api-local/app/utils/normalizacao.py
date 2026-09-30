@@ -90,3 +90,12 @@ def data_iso(valor: datetime | date | None) -> str | None:
             return valor.replace(tzinfo=FUSO).isoformat()
         return valor.astimezone(FUSO).isoformat()
     return valor.isoformat()
+
+
+def data_civil_iso(valor: datetime | date | None) -> str | None:
+    """Data sem horário ou fuso, usada para nascimento (AAAA-MM-DD)."""
+    if valor is None:
+        return None
+    if isinstance(valor, datetime):
+        return valor.date().isoformat()
+    return valor.isoformat()
