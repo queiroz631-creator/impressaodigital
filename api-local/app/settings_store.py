@@ -118,6 +118,7 @@ def load_secrets() -> dict[str, str]:
             "sqlserver_user": "",
             "sqlserver_password": "",
             "sistema_token": "",
+            "backup_token": "",
             "api_local_token": base64.b16encode(os.urandom(32)).decode("ascii").lower(),
         }
         try:
@@ -137,6 +138,7 @@ def load_secrets() -> dict[str, str]:
             "sqlserver_user": "",
             "sqlserver_password": "",
             "sistema_token": "",
+            "backup_token": "",
             "api_local_token": base64.b16encode(os.urandom(32)).decode("ascii").lower(),
         }
 

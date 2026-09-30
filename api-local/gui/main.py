@@ -544,7 +544,7 @@ class ConfigWindow(tk.Toplevel):
         ttk.Button(
             backup_tab,
             text="Testar API de backup",
-            command=self.parent.backup_panel.test_connection,
+            command=self.test_backup,
         ).grid(row=6, column=0, columnspan=2, sticky="w", pady=(12, 0))
 
         sql_tab.columnconfigure(0, weight=1)
@@ -620,6 +620,11 @@ class ConfigWindow(tk.Toplevel):
             parent, textvariable=var, width=58,
             show="*" if secret else ""
         ).grid(row=row, column=1, sticky="ew", pady=5)
+
+    def test_backup(self) -> None:
+        self.parent.backup_panel.api_var.set(self.vars["backup_api_url"].get().strip())
+        self.parent.backup_panel.token_var.set(self.vars["backup_token"].get().strip())
+        self.parent.backup_panel.test_connection()
 
     def _load_sql_editor(self) -> None:
         key = self.sql_key_var.get()

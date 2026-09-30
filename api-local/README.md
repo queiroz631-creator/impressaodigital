@@ -13,6 +13,8 @@ Aplicativo Windows para sincronização do Lojamix SQL Server com o sistema.
   antigo `%LOCALAPPDATA%\BackupImpressaoDigital\config.json` são importados.
   O arquivo antigo não é alterado nem apagado.
 - Há um único ícone na bandeja e uma única inicialização com o Windows.
+- O instalador remove somente o início automático do programa antigo de backup;
+  suas configurações e seus arquivos permanecem guardados.
 
 ## Gerar o EXE
 
