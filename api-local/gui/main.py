@@ -421,8 +421,10 @@ class ConfigWindow(tk.Toplevel):
         notebook.pack(fill="both", expand=True)
 
         conexao_tab = ttk.Frame(notebook, padding=15)
+        backup_tab = ttk.Frame(notebook, padding=15)
         sql_tab = ttk.Frame(notebook, padding=10)
         notebook.add(conexao_tab, text="Conexão")
+        notebook.add(backup_tab, text="Backup")
         notebook.add(sql_tab, text="Consultas SQL")
 
         conexao_tab.columnconfigure(1, weight=1)
@@ -505,6 +507,45 @@ class ConfigWindow(tk.Toplevel):
             text="Senhas e tokens são armazenados separadamente e protegidos pelo Windows.",
             wraplength=700
         ).grid(row=row + 1, column=0, columnspan=2, sticky="w", pady=5)
+
+        backup_tab.columnconfigure(1, weight=1)
+        self._field(
+            backup_tab, 0, "URL da API de backup", "backup_api_url",
+            str(self.cfg.get("backup_api_url", "https://backup.queiroztecno.com.br")),
+        )
+        self._field(
+            backup_tab, 1, "Token do backup", "backup_token",
+            self.sec.get("backup_token", ""), secret=True,
+        )
+        self._field(
+            backup_tab, 2, "Pasta local", "backup_folder",
+            str(self.cfg.get("backup_folder", "")),
+        )
+        self._field(
+            backup_tab, 3, "Verificar a cada (minutos)", "backup_interval_minutes",
+            str(self.cfg.get("backup_interval_minutes", 60)),
+        )
+        self.backup_auto_var = tk.BooleanVar(
+            value=bool(self.cfg.get("backup_automatico", True))
+        )
+        ttk.Checkbutton(
+            backup_tab,
+            text="Baixar automaticamente quando houver um backup novo",
+            variable=self.backup_auto_var,
+        ).grid(row=4, column=0, columnspan=2, sticky="w", pady=(10, 4))
+        ttk.Label(
+            backup_tab,
+            text=(
+                "A configuração do antigo Backup Impressão Digital é importada "
+                "automaticamente na primeira execução. O arquivo antigo é preservado."
+            ),
+            wraplength=760,
+        ).grid(row=5, column=0, columnspan=2, sticky="w", pady=(8, 4))
+        ttk.Button(
+            backup_tab,
+            text="Testar API de backup",
+            command=self.parent.backup_panel.test_connection,
+        ).grid(row=6, column=0, columnspan=2, sticky="w", pady=(12, 0))
 
         sql_tab.columnconfigure(0, weight=1)
         sql_tab.columnconfigure(1, weight=0)
@@ -640,7 +681,8 @@ class ConfigWindow(tk.Toplevel):
         try:
             numeric = {
                 "sqlserver_port", "api_local_port", "sync_interval_seconds",
-                "lote_tamanho", "revisao_bloco", "pendentes_bloco"
+                "lote_tamanho", "revisao_bloco", "pendentes_bloco",
+                "backup_interval_minutes",
             }
             data = dict(self.cfg)
             for key, var in self.vars.items():
@@ -650,9 +692,11 @@ class ConfigWindow(tk.Toplevel):
             data["gravar_clientes_no_lojamix"] = self.gravar_var.get()
             data["criar_cliente_no_lojamix"] = self.criar_var.get()
             data["simulacao_criacao_cliente"] = self.simulacao_var.get()
+            data["backup_automatico"] = self.backup_auto_var.get()
+            data["backup_legacy_imported"] = True
 
             secrets_data = dict(self.sec)
-            for key in ["sqlserver_user", "sqlserver_password", "sistema_token"]:
+            for key in ["sqlserver_user", "sqlserver_password", "sistema_token", "backup_token"]:
                 secrets_data[key] = self.vars[key].get()
 
             save_config(data)
@@ -662,6 +706,11 @@ class ConfigWindow(tk.Toplevel):
             recarregar()
             self.parent.cfg = load_config()
             self.parent.sec = load_secrets()
+            self.parent.backup_panel.api_var.set(data["backup_api_url"])
+            self.parent.backup_panel.token_var.set(secrets_data["backup_token"])
+            self.parent.backup_panel.folder_var.set(data["backup_folder"])
+            self.parent.backup_panel.interval_var.set(data["backup_interval_minutes"])
+            self.parent.backup_panel.auto_var.set(data["backup_automatico"])
 
             messagebox.showinfo("Lojamix Sync", "Configuração salva com sucesso.")
             self.destroy()
