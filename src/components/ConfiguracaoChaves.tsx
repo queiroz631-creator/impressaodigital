@@ -22,7 +22,7 @@ interface BlocoChaveProps {
   descricao: string;
   rotuloUrl: string;
   placeholderUrl: string;
-  atual?: ChaveResumo;
+  atual: ChaveResumo | undefined;
 }
 
 function BlocoChave({ nome, titulo, descricao, rotuloUrl, placeholderUrl, atual }: BlocoChaveProps) {
