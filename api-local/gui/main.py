@@ -14,6 +14,7 @@ from app import sql_store
 from app.utils.estado import ler as ler_estado
 from app.utils.normalizacao import data_hora_br
 from app.windows import startup_enabled, set_startup
+from app.backup import BackupPanel
 
 
 class App(tk.Tk):
@@ -43,10 +44,17 @@ class App(tk.Tk):
         except tk.TclError:
             pass
 
-        root = ttk.Frame(self, padding=18)
+        root = ttk.Frame(self, padding=12)
         root.pack(fill="both", expand=True)
 
-        header = ttk.Frame(root)
+        notebook = ttk.Notebook(root)
+        notebook.pack(fill="both", expand=True)
+        sync_tab = ttk.Frame(notebook, padding=18)
+        backup_tab = ttk.Frame(notebook)
+        notebook.add(sync_tab, text="Sincronização")
+        notebook.add(backup_tab, text="Backup")
+
+        header = ttk.Frame(sync_tab)
         header.pack(fill="x", pady=(0, 14))
         ttk.Label(
             header, text="Lojamix Sync",
@@ -57,14 +65,14 @@ class App(tk.Tk):
             font=("Segoe UI", 11, "bold")
         ).pack(side="right", pady=6)
 
-        cards = ttk.Frame(root)
+        cards = ttk.Frame(sync_tab)
         cards.pack(fill="x", pady=(0, 14))
         cards.columnconfigure((0, 1), weight=1)
 
         self._card(cards, 0, "SQL SERVER", self.sql_var)
         self._card(cards, 1, "SISTEMA", self.sistema_var)
 
-        action = ttk.LabelFrame(root, text="Ações", padding=14)
+        action = ttk.LabelFrame(sync_tab, text="Ações", padding=14)
         action.pack(fill="x", pady=(0, 14))
 
         btns = ttk.Frame(action)
@@ -92,7 +100,7 @@ class App(tk.Tk):
             command=self.open_config
         ).grid(row=0, column=3, padx=5, sticky="ew", ipady=10)
 
-        info = ttk.LabelFrame(root, text="Status da sincronização", padding=14)
+        info = ttk.LabelFrame(sync_tab, text="Status da sincronização", padding=14)
         info.pack(fill="x", pady=(0, 14))
         info.columnconfigure(1, weight=1)
 
@@ -110,7 +118,7 @@ class App(tk.Tk):
                 row=row, column=1, sticky="w", pady=5
             )
 
-        log_frame = ttk.LabelFrame(root, text="Informações", padding=10)
+        log_frame = ttk.LabelFrame(sync_tab, text="Informações", padding=10)
         log_frame.pack(fill="both", expand=True)
         self.log_text = tk.Text(
             log_frame, height=10, state="disabled",
@@ -118,7 +126,7 @@ class App(tk.Tk):
         )
         self.log_text.pack(fill="both", expand=True)
 
-        bottom = ttk.Frame(root)
+        bottom = ttk.Frame(sync_tab)
         bottom.pack(fill="x", pady=(12, 0))
         ttk.Button(bottom, text="📋 Atualizar status",
                     command=self.refresh_status).pack(side="left")
@@ -128,6 +136,9 @@ class App(tk.Tk):
                     command=self.reprocessar_clientes).pack(side="left")
         ttk.Button(bottom, text="✕ Fechar",
                     command=self.close_app).pack(side="right")
+
+        self.backup_panel = BackupPanel(backup_tab, self)
+        self.backup_panel.pack(fill="both", expand=True)
 
     def _card(self, parent: ttk.Frame, column: int, title: str, variable: tk.StringVar) -> None:
         frame = ttk.LabelFrame(parent, text=title, padding=14)
@@ -373,6 +384,9 @@ class App(tk.Tk):
 
     def close_app(self) -> None:
         self.withdraw()
+
+    def shutdown_modules(self) -> None:
+        self.backup_panel.shutdown()
 
     def show_startup_result(self, ok: bool) -> None:
         if ok:

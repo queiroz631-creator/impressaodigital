@@ -14,9 +14,11 @@ from app.worker import SyncWorker
 from app.runtime import update
 from gui.main import App
 from app.windows import TrayController, startup_enabled, set_startup
+from app.settings_store import migrate_legacy_backup_settings
 
 
 def main() -> None:
+    migrate_legacy_backup_settings()
     cfg = config()
 
     worker = SyncWorker()
@@ -82,6 +84,7 @@ def main() -> None:
     def close() -> None:
         try:
             tray.stop()
+            app.shutdown_modules()
             server.should_exit = True
             worker.stop()
         finally:

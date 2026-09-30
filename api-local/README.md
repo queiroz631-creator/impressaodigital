@@ -2,6 +2,18 @@
 
 Aplicativo Windows para sincronização do Lojamix SQL Server com o sistema.
 
+## Versão 1.2.0 — sincronização e backup em um único programa
+
+- Um único `LojamixSync.exe` substitui os executáveis de sincronização e backup.
+- A tela atual possui as abas **Sincronização** e **Backup**.
+- O backup mantém listagem, geração sob demanda, downloads manual e automático,
+  progresso, pasta local e intervalo próprios.
+- Cada serviço usa sua URL e seu token. Os tokens ficam protegidos pelo Windows.
+- Na primeira execução, URL, token, pasta, intervalo e preferência automática do
+  antigo `%LOCALAPPDATA%\BackupImpressaoDigital\config.json` são importados.
+  O arquivo antigo não é alterado nem apagado.
+- Há um único ícone na bandeja e uma única inicialização com o Windows.
+
 ## Gerar o EXE
 
 No Windows:

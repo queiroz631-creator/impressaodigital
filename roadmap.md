@@ -172,6 +172,12 @@
 - [x] Código do servidor de backup guardado como referência em `api-local-backup/servidor/app.py`.
 - [ ] Pendente do usuário: gerar o novo EXE (`gerar_exe.bat`) e instalar na máquina da loja.
 
+## API local unificada — sincronização + backup
+- [x] Incorporar o backup ao `LojamixSync.exe`, preservando as duas lógicas independentes
+- [x] Adicionar abas Sincronização e Backup à interface atual e unificar bandeja/inicialização
+- [x] Importar automaticamente a configuração do programa de backup antigo sem apagar seus arquivos
+- [ ] Gerar o novo EXE no Windows e validar contra os servidores reais da loja
+
 ## Migrações (regra)
 - `supabase/migrations/` é a referência oficial (lida pelo deploy da VPS).
 - Ao copiar uma mudança de banco para lá, conferir se as dependências anteriores (tabelas, funções) também já estão na pasta — foi o que causou o erro de deploy de 23/09 (`sorteio_saldo_fontes` inexistente na VPS).

@@ -42,6 +42,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
     # Ligado por padrão: nada é criado no Lojamix até o operador desligar.
     "simulacao_criacao_cliente": True,
     "pendentes_bloco": 100,
+    "backup_api_url": "https://backup.queiroztecno.com.br",
+    "backup_folder": str(Path.home() / "Backups" / "ImpressaoDigital"),
+    "backup_interval_minutes": 60,
+    "backup_automatico": True,
+    "backup_legacy_imported": False,
 }
 
 
@@ -143,3 +148,46 @@ def save_secrets(data: dict[str, str]) -> None:
     tmp = SECRETS_FILE.with_suffix(".tmp")
     tmp.write_bytes(base64.b64encode(protected))
     os.replace(tmp, SECRETS_FILE)
+
+
+def migrate_legacy_backup_settings() -> bool:
+    """Importa uma vez a configuração do antigo BackupImpressaoDigital.
+
+    A configuração atual sempre vence. O arquivo antigo é somente lido e
+    permanece intacto para permitir retorno seguro à versão anterior.
+    """
+    config_data = load_config()
+    if config_data.get("backup_legacy_imported"):
+        return False
+
+    legacy_file = (
+        Path(os.environ.get("LOCALAPPDATA", Path.home()))
+        / "BackupImpressaoDigital"
+        / "config.json"
+    )
+    imported = False
+    try:
+        legacy = json.loads(legacy_file.read_text(encoding="utf-8"))
+        if isinstance(legacy, dict):
+            if legacy.get("api_url"):
+                config_data["backup_api_url"] = str(legacy["api_url"]).strip()
+            if legacy.get("folder"):
+                config_data["backup_folder"] = str(legacy["folder"]).strip()
+            if legacy.get("interval") is not None:
+                config_data["backup_interval_minutes"] = int(legacy["interval"])
+            if legacy.get("auto") is not None:
+                config_data["backup_automatico"] = bool(legacy["auto"])
+
+            token = str(legacy.get("token") or "").strip()
+            if token:
+                secrets_data = load_secrets()
+                if not secrets_data.get("backup_token"):
+                    secrets_data["backup_token"] = token
+                    save_secrets(secrets_data)
+            imported = True
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        imported = False
+
+    config_data["backup_legacy_imported"] = True
+    save_config(config_data)
+    return imported
