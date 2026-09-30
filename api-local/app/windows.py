@@ -46,6 +46,9 @@ class TrayController:
         menu=pystray.Menu(
             pystray.MenuItem("Abrir Lojamix Sync",lambda *_: self.open(),default=True),
             pystray.MenuItem("Sincronizar agora",lambda *_: self.app.after(0,self.app.sync_now)),
+            pystray.MenuItem("Atualizar backups",lambda *_: self.app.after(0,self.app.backup_panel.update_list)),
+            pystray.MenuItem("Baixar último backup",lambda *_: self.app.after(0,self.app.backup_panel.download_latest)),
+            pystray.MenuItem("Abrir pasta de backups",lambda *_: self.app.after(0,self.app.backup_panel.open_folder)),
             pystray.MenuItem("Atualizar status",lambda *_: self.app.after(0,self.app.refresh_status)),
             pystray.MenuItem("Configurações",lambda *_: self.app.after(0,self.app.open_config)),
             pystray.Menu.SEPARATOR,

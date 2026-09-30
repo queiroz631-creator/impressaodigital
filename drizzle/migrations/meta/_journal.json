@@ -141,6 +141,13 @@
       "when": 1790295427958,
       "tag": "0019_sorteio_totais_por_elegibilidade",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790735827072,
+      "tag": "0020_sistema_chave_backup",
+      "breakpoints": true
     }
   ]
 }

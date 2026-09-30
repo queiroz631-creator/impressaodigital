@@ -54,6 +54,8 @@ export const Route = createFileRoute("/configuracoes")({
         property: "og:description",
         content: "Personalize os dados exibidos nos orçamentos em PDF.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
 });

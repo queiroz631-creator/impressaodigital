@@ -8,197 +8,162 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { gerarChave, listarChaves, salvarChave, verChave } from "@/lib/sistema-chaves.functions";
+import {
+  gerarChave,
+  listarChaves,
+  salvarChave,
+  verChave,
+  type ChaveResumo,
+} from "@/lib/sistema-chaves.functions";
 
-const NOME_SINCRONIZACAO = "sincronizacao";
+interface BlocoChaveProps {
+  nome: "sincronizacao" | "backup";
+  titulo: string;
+  descricao: string;
+  rotuloUrl: string;
+  placeholderUrl: string;
+  atual: ChaveResumo | undefined;
+}
 
-export function ConfiguracaoChaves() {
+function BlocoChave({ nome, titulo, descricao, rotuloUrl, placeholderUrl, atual }: BlocoChaveProps) {
   const queryClient = useQueryClient();
-  const buscar = useServerFn(listarChaves);
   const revelar = useServerFn(verChave);
   const gravar = useServerFn(salvarChave);
   const gerar = useServerFn(gerarChave);
-
-  const { data, isLoading } = useQuery({ queryKey: ["sistema-chaves"], queryFn: () => buscar() });
-
   const [chave, setChave] = useState("");
   const [urlBase, setUrlBase] = useState("");
   const [mostrar, setMostrar] = useState(false);
   const [carregada, setCarregada] = useState(false);
 
-  const atual = data?.find((c) => c.nome === NOME_SINCRONIZACAO);
-
   useEffect(() => {
-    if (!data) return;
-    setUrlBase(atual?.urlBase ?? "");
+    setUrlBase(atual?.urlBase || (nome === "backup" ? placeholderUrl : ""));
     setCarregada(false);
     setMostrar(false);
     setChave("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [atual, nome, placeholderUrl]);
 
   async function garantirValor() {
     if (carregada) return chave;
-    const r = await revelar({ data: { nome: NOME_SINCRONIZACAO } });
-    setChave(r.valor);
+    const resposta = await revelar({ data: { nome } });
+    setChave(resposta.valor);
     setCarregada(true);
-    return r.valor;
+    return resposta.valor;
   }
 
-  const mMostrar = useMutation({
+  const mostrarChave = useMutation({
     mutationFn: async () => {
       await garantirValor();
       setMostrar(true);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (erro: Error) => toast.error(erro.message),
   });
-
-  const mCopiarChave = useMutation({
+  const copiarChave = useMutation({
     mutationFn: async () => {
       const valor = await garantirValor();
       if (!valor) throw new Error("Nenhuma chave gravada ainda.");
       await navigator.clipboard.writeText(valor);
     },
     onSuccess: () => toast.success("Chave copiada."),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (erro: Error) => toast.error(erro.message),
   });
-
-  const mCopiarConexao = useMutation({
+  const copiarConexao = useMutation({
     mutationFn: async () => {
       const valor = await garantirValor();
       if (!valor) throw new Error("Nenhuma chave gravada ainda.");
       await navigator.clipboard.writeText(`URL: ${urlBase}\nCHAVE: ${valor}`);
     },
     onSuccess: () => toast.success("Dados de conexão copiados."),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (erro: Error) => toast.error(erro.message),
   });
-
-  const mGerar = useMutation({
+  const gerarNova = useMutation({
     mutationFn: () => gerar(),
-    onSuccess: (r) => {
-      setChave(r.valor);
+    onSuccess: (resposta) => {
+      setChave(resposta.valor);
       setCarregada(true);
       setMostrar(true);
       toast.info("Chave gerada. Clique em Salvar para aplicar.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (erro: Error) => toast.error(erro.message),
   });
-
-  const mSalvar = useMutation({
+  const salvar = useMutation({
     mutationFn: async () => {
       const valor = carregada ? chave : await garantirValor();
-      return gravar({ data: { nome: NOME_SINCRONIZACAO, valor, urlBase } });
+      return gravar({ data: { nome, valor, urlBase } });
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["sistema-chaves"] });
-      toast.success("Chave de sincronização salva.");
+      toast.success(`${titulo} salva.`);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (erro: Error) => toast.error(erro.message),
   });
 
-  if (isLoading) {
-    return (
-      <Card className="shadow-card">
-        <CardContent className="space-y-3 p-6">
-          <Skeleton className="h-5 w-48" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </CardContent>
-      </Card>
-    );
-  }
-
+  const id = `chave-${nome}`;
   return (
     <Card className="shadow-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <KeyRound className="h-4 w-4" />
-          Chave Key sincronização
+          {titulo}
         </CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <p className="text-sm text-muted-foreground">
-          Chave usada pelo aplicativo de sincronização da loja, junto com a URL do sistema.
-        </p>
-
+        <p className="text-sm text-muted-foreground">{descricao}</p>
         <div className="space-y-2">
-          <Label htmlFor="chave-sinc">Chave</Label>
+          <Label htmlFor={id}>Chave</Label>
           <div className="flex gap-2">
             <Input
-              id="chave-sinc"
+              id={id}
               type={mostrar ? "text" : "password"}
               value={mostrar || carregada ? chave : atual?.temChave ? "••••••••••••" : ""}
               placeholder="Cole a chave ou clique em Gerar chave"
-              onChange={(e) => {
-                setChave(e.target.value.trim());
+              onChange={(evento) => {
+                setChave(evento.target.value.trim());
                 setCarregada(true);
               }}
               onFocus={() => {
                 if (!carregada) void garantirValor();
               }}
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              title={mostrar ? "Ocultar" : "Mostrar"}
-              onClick={() => (mostrar ? setMostrar(false) : mMostrar.mutate())}
-            >
+            <Button type="button" variant="outline" size="icon" title={mostrar ? "Ocultar" : "Mostrar"} onClick={() => (mostrar ? setMostrar(false) : mostrarChave.mutate())}>
               {mostrar ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              title="Copiar chave"
-              onClick={() => mCopiarChave.mutate()}
-            >
+            <Button type="button" variant="outline" size="icon" title="Copiar chave" onClick={() => copiarChave.mutate()}>
               <Copy className="h-4 w-4" />
             </Button>
           </div>
-          {atual?.temChave && !mostrar ? (
-            <p className="text-xs text-muted-foreground">
-              Chave gravada, terminando em {atual.final4}.
-            </p>
-          ) : null}
+          {atual?.temChave && !mostrar ? <p className="text-xs text-muted-foreground">Chave gravada, terminando em {atual.final4}.</p> : null}
         </div>
-
         <div className="space-y-2">
-          <Label htmlFor="url-sinc">URL base do sistema</Label>
-          <Input
-            id="url-sinc"
-            value={urlBase}
-            placeholder="https://impressaodigital.lovable.app"
-            onChange={(e) => setUrlBase(e.target.value)}
-          />
+          <Label htmlFor={`url-${nome}`}>{rotuloUrl}</Label>
+          <Input id={`url-${nome}`} value={urlBase} placeholder={placeholderUrl} onChange={(evento) => setUrlBase(evento.target.value)} />
         </div>
-
         <div className="flex flex-wrap gap-2">
-          <Button type="button" onClick={() => mSalvar.mutate()} disabled={mSalvar.isPending}>
-            <Save className="mr-2 h-4 w-4" />
-            Salvar
+          <Button type="button" onClick={() => salvar.mutate()} disabled={salvar.isPending}>
+            <Save className="mr-2 h-4 w-4" /> Salvar
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => mGerar.mutate()}
-            disabled={mGerar.isPending}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Gerar chave
+          <Button type="button" variant="outline" onClick={() => gerarNova.mutate()} disabled={gerarNova.isPending}>
+            <RefreshCw className="mr-2 h-4 w-4" /> Gerar chave
           </Button>
-          <Button type="button" variant="outline" onClick={() => mCopiarConexao.mutate()}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copiar dados de conexão
+          <Button type="button" variant="outline" onClick={() => copiarConexao.mutate()}>
+            <Copy className="mr-2 h-4 w-4" /> Copiar dados de conexão
           </Button>
         </div>
-
-        {atual?.atualizadoEm ? (
-          <p className="text-xs text-muted-foreground">
-            Última alteração em {new Date(atual.atualizadoEm).toLocaleString("pt-BR")}.
-          </p>
-        ) : null}
+        {atual?.atualizadoEm ? <p className="text-xs text-muted-foreground">Última alteração em {new Date(atual.atualizadoEm).toLocaleString("pt-BR")}.</p> : null}
       </CardContent>
     </Card>
+  );
+}
+
+export function ConfiguracaoChaves() {
+  const buscar = useServerFn(listarChaves);
+  const { data, isLoading } = useQuery({ queryKey: ["sistema-chaves"], queryFn: () => buscar() });
+  if (isLoading) {
+    return <Card className="shadow-card"><CardContent className="space-y-3 p-6"><Skeleton className="h-5 w-48" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></CardContent></Card>;
+  }
+  return (
+    <div className="grid gap-4">
+      <BlocoChave nome="sincronizacao" titulo="Chave Key sincronização" descricao="Chave usada pelo aplicativo de sincronização da loja, junto com a URL do sistema." rotuloUrl="URL base do sistema" placeholderUrl="https://impressaodigital.lovable.app" atual={data?.find((item) => item.nome === "sincronizacao")} />
+      <BlocoChave nome="backup" titulo="Chave Key backup" descricao="Token exclusivo usado pelo módulo de backup do programa da loja." rotuloUrl="URL da API de backup" placeholderUrl="https://backup.queiroztecno.com.br" atual={data?.find((item) => item.nome === "backup")} />
+    </div>
   );
 }

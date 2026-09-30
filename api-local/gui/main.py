@@ -14,6 +14,7 @@ from app import sql_store
 from app.utils.estado import ler as ler_estado
 from app.utils.normalizacao import data_hora_br
 from app.windows import startup_enabled, set_startup
+from app.backup import BackupPanel
 
 
 class App(tk.Tk):
@@ -43,10 +44,17 @@ class App(tk.Tk):
         except tk.TclError:
             pass
 
-        root = ttk.Frame(self, padding=18)
+        root = ttk.Frame(self, padding=12)
         root.pack(fill="both", expand=True)
 
-        header = ttk.Frame(root)
+        notebook = ttk.Notebook(root)
+        notebook.pack(fill="both", expand=True)
+        sync_tab = ttk.Frame(notebook, padding=18)
+        backup_tab = ttk.Frame(notebook)
+        notebook.add(sync_tab, text="Sincronização")
+        notebook.add(backup_tab, text="Backup")
+
+        header = ttk.Frame(sync_tab)
         header.pack(fill="x", pady=(0, 14))
         ttk.Label(
             header, text="Lojamix Sync",
@@ -57,14 +65,14 @@ class App(tk.Tk):
             font=("Segoe UI", 11, "bold")
         ).pack(side="right", pady=6)
 
-        cards = ttk.Frame(root)
+        cards = ttk.Frame(sync_tab)
         cards.pack(fill="x", pady=(0, 14))
         cards.columnconfigure((0, 1), weight=1)
 
         self._card(cards, 0, "SQL SERVER", self.sql_var)
         self._card(cards, 1, "SISTEMA", self.sistema_var)
 
-        action = ttk.LabelFrame(root, text="Ações", padding=14)
+        action = ttk.LabelFrame(sync_tab, text="Ações", padding=14)
         action.pack(fill="x", pady=(0, 14))
 
         btns = ttk.Frame(action)
@@ -92,7 +100,7 @@ class App(tk.Tk):
             command=self.open_config
         ).grid(row=0, column=3, padx=5, sticky="ew", ipady=10)
 
-        info = ttk.LabelFrame(root, text="Status da sincronização", padding=14)
+        info = ttk.LabelFrame(sync_tab, text="Status da sincronização", padding=14)
         info.pack(fill="x", pady=(0, 14))
         info.columnconfigure(1, weight=1)
 
@@ -110,7 +118,7 @@ class App(tk.Tk):
                 row=row, column=1, sticky="w", pady=5
             )
 
-        log_frame = ttk.LabelFrame(root, text="Informações", padding=10)
+        log_frame = ttk.LabelFrame(sync_tab, text="Informações", padding=10)
         log_frame.pack(fill="both", expand=True)
         self.log_text = tk.Text(
             log_frame, height=10, state="disabled",
@@ -118,7 +126,7 @@ class App(tk.Tk):
         )
         self.log_text.pack(fill="both", expand=True)
 
-        bottom = ttk.Frame(root)
+        bottom = ttk.Frame(sync_tab)
         bottom.pack(fill="x", pady=(12, 0))
         ttk.Button(bottom, text="📋 Atualizar status",
                     command=self.refresh_status).pack(side="left")
@@ -128,6 +136,9 @@ class App(tk.Tk):
                     command=self.reprocessar_clientes).pack(side="left")
         ttk.Button(bottom, text="✕ Fechar",
                     command=self.close_app).pack(side="right")
+
+        self.backup_panel = BackupPanel(backup_tab, self)
+        self.backup_panel.pack(fill="both", expand=True)
 
     def _card(self, parent: ttk.Frame, column: int, title: str, variable: tk.StringVar) -> None:
         frame = ttk.LabelFrame(parent, text=title, padding=14)
@@ -374,6 +385,9 @@ class App(tk.Tk):
     def close_app(self) -> None:
         self.withdraw()
 
+    def shutdown_modules(self) -> None:
+        self.backup_panel.shutdown()
+
     def show_startup_result(self, ok: bool) -> None:
         if ok:
             messagebox.showinfo("Lojamix Sync","Inicialização com o Windows atualizada com sucesso.")
@@ -407,8 +421,10 @@ class ConfigWindow(tk.Toplevel):
         notebook.pack(fill="both", expand=True)
 
         conexao_tab = ttk.Frame(notebook, padding=15)
+        backup_tab = ttk.Frame(notebook, padding=15)
         sql_tab = ttk.Frame(notebook, padding=10)
         notebook.add(conexao_tab, text="Conexão")
+        notebook.add(backup_tab, text="Backup")
         notebook.add(sql_tab, text="Consultas SQL")
 
         conexao_tab.columnconfigure(1, weight=1)
@@ -492,6 +508,45 @@ class ConfigWindow(tk.Toplevel):
             wraplength=700
         ).grid(row=row + 1, column=0, columnspan=2, sticky="w", pady=5)
 
+        backup_tab.columnconfigure(1, weight=1)
+        self._field(
+            backup_tab, 0, "URL da API de backup", "backup_api_url",
+            str(self.cfg.get("backup_api_url", "https://backup.queiroztecno.com.br")),
+        )
+        self._field(
+            backup_tab, 1, "Token do backup", "backup_token",
+            self.sec.get("backup_token", ""), secret=True,
+        )
+        self._field(
+            backup_tab, 2, "Pasta local", "backup_folder",
+            str(self.cfg.get("backup_folder", "")),
+        )
+        self._field(
+            backup_tab, 3, "Verificar a cada (minutos)", "backup_interval_minutes",
+            str(self.cfg.get("backup_interval_minutes", 60)),
+        )
+        self.backup_auto_var = tk.BooleanVar(
+            value=bool(self.cfg.get("backup_automatico", True))
+        )
+        ttk.Checkbutton(
+            backup_tab,
+            text="Baixar automaticamente quando houver um backup novo",
+            variable=self.backup_auto_var,
+        ).grid(row=4, column=0, columnspan=2, sticky="w", pady=(10, 4))
+        ttk.Label(
+            backup_tab,
+            text=(
+                "A configuração do antigo Backup Impressão Digital é importada "
+                "automaticamente na primeira execução. O arquivo antigo é preservado."
+            ),
+            wraplength=760,
+        ).grid(row=5, column=0, columnspan=2, sticky="w", pady=(8, 4))
+        ttk.Button(
+            backup_tab,
+            text="Testar API de backup",
+            command=self.test_backup,
+        ).grid(row=6, column=0, columnspan=2, sticky="w", pady=(12, 0))
+
         sql_tab.columnconfigure(0, weight=1)
         sql_tab.columnconfigure(1, weight=0)
         sql_tab.rowconfigure(2, weight=1)
@@ -566,6 +621,11 @@ class ConfigWindow(tk.Toplevel):
             show="*" if secret else ""
         ).grid(row=row, column=1, sticky="ew", pady=5)
 
+    def test_backup(self) -> None:
+        self.parent.backup_panel.api_var.set(self.vars["backup_api_url"].get().strip())
+        self.parent.backup_panel.token_var.set(self.vars["backup_token"].get().strip())
+        self.parent.backup_panel.test_connection()
+
     def _load_sql_editor(self) -> None:
         key = self.sql_key_var.get()
         try:
@@ -626,7 +686,8 @@ class ConfigWindow(tk.Toplevel):
         try:
             numeric = {
                 "sqlserver_port", "api_local_port", "sync_interval_seconds",
-                "lote_tamanho", "revisao_bloco", "pendentes_bloco"
+                "lote_tamanho", "revisao_bloco", "pendentes_bloco",
+                "backup_interval_minutes",
             }
             data = dict(self.cfg)
             for key, var in self.vars.items():
@@ -636,9 +697,11 @@ class ConfigWindow(tk.Toplevel):
             data["gravar_clientes_no_lojamix"] = self.gravar_var.get()
             data["criar_cliente_no_lojamix"] = self.criar_var.get()
             data["simulacao_criacao_cliente"] = self.simulacao_var.get()
+            data["backup_automatico"] = self.backup_auto_var.get()
+            data["backup_legacy_imported"] = True
 
             secrets_data = dict(self.sec)
-            for key in ["sqlserver_user", "sqlserver_password", "sistema_token"]:
+            for key in ["sqlserver_user", "sqlserver_password", "sistema_token", "backup_token"]:
                 secrets_data[key] = self.vars[key].get()
 
             save_config(data)
@@ -648,6 +711,11 @@ class ConfigWindow(tk.Toplevel):
             recarregar()
             self.parent.cfg = load_config()
             self.parent.sec = load_secrets()
+            self.parent.backup_panel.api_var.set(data["backup_api_url"])
+            self.parent.backup_panel.token_var.set(secrets_data["backup_token"])
+            self.parent.backup_panel.folder_var.set(data["backup_folder"])
+            self.parent.backup_panel.interval_var.set(data["backup_interval_minutes"])
+            self.parent.backup_panel.auto_var.set(data["backup_automatico"])
 
             messagebox.showinfo("Lojamix Sync", "Configuração salva com sucesso.")
             self.destroy()
