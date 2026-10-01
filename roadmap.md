@@ -29,11 +29,11 @@
 - [x] Verificação em desktop e celular sem alterar dados reais
 
 ## FOTO EXPRESS — Etapa 3: textos sobre a foto
-- [ ] Inspecionar e evoluir somente os campos ausentes de `foto_express_textos`
-- [ ] Implementar camadas de texto independentes por item sobre a área física completa do formato
-- [ ] Persistir posição, largura e tamanho normalizados, fonte controlada, estilo, alinhamento, rotação e ordem
-- [ ] Implementar controles, arraste, duplicação, exclusão e autosave seguro no editor
-- [ ] Validar matemática, permissões, desktop e celular sem criar dados reais de teste
+- [x] Inspecionar e evoluir somente os campos ausentes de `foto_express_textos`
+- [x] Implementar camadas de texto independentes por item sobre a área física completa do formato
+- [x] Persistir posição, largura e tamanho normalizados, fonte controlada, estilo, alinhamento, rotação e ordem
+- [x] Implementar controles, arraste, duplicação, exclusão e autosave seguro no editor
+- [x] Validar matemática, permissões, desktop e celular sem criar dados reais de teste
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
