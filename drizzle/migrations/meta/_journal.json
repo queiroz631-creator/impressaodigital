@@ -225,6 +225,13 @@
       "when": 1790891178419,
       "tag": "0031_foto_express_invalidar_snapshot_fontes",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790891491177,
+      "tag": "0032_foto_express_corrigir_gatilhos_atualizado_em",
+      "breakpoints": true
     }
   ]
 }
