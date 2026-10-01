@@ -35,6 +35,16 @@
 - [x] Implementar controles, arraste, duplicação, exclusão e autosave seguro no editor
 - [x] Validar matemática, permissões, desktop e celular sem criar dados reais de teste
 
+## FOTO EXPRESS — Etapa 4: revisão e montagem automática
+- [x] Evoluir formatos com área interna normalizada da foto e cor de fundo
+- [x] Criar plano persistente com montagem, folhas e ocorrências em gravação atômica
+- [x] Implementar revisão com alertas de formato, configuração, imagem, quantidade e DPI
+- [x] Implementar montagem determinística em A4/A3 com margens, espaçamento, orientação e giro opcional
+- [x] Exibir prévia das folhas com enquadramento, espelhamento, textos e fundo do formato
+- [x] Detectar montagem desatualizada por assinatura dos itens, edições, textos e papel
+- [x] Validar matemática, compilação, desktop e celular sem confirmar montagem nem alterar dados reais
+- [ ] Etapa 5: renderização final e geração de arquivos (fora deste escopo)
+
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
 - [x] Calculadora/WhatsApp: atalho no topo, seletor antes de Assumir e controle de anotações em aba lateral
