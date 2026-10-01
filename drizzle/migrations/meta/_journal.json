@@ -204,6 +204,13 @@
       "when": 1790890522294,
       "tag": "0028_foto_express_snapshot_confirmado_seguro",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790891113063,
+      "tag": "0029_foto_express_endurecer_geracao_final",
+      "breakpoints": true
     }
   ]
 }
