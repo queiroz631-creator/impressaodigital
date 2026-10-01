@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type LimpezaStorage = {
   limpeza_id: string;
+  arquivo_id?: string | null;
   original_bucket: string;
   original_path: string;
   thumbnail_bucket: string;
@@ -13,6 +14,15 @@ type LimpezaStorage = {
 
 async function executarLimpezaStorage(limpeza: LimpezaStorage) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const referencia = supabaseAdmin
+    .from("foto_express_arquivos")
+    .select("id")
+    .limit(1);
+  const { data: arquivoAtivo, error: erroReferencia } = limpeza.arquivo_id
+    ? await referencia.eq("id", limpeza.arquivo_id).maybeSingle()
+    : await referencia.eq("original_path", limpeza.original_path).maybeSingle();
+  if (erroReferencia) return [`Verificação da referência: ${erroReferencia.message}`];
+  if (arquivoAtivo) return ["A limpeza foi mantida pendente porque o arquivo ainda está em uso."];
   const [original, thumbnail] = await Promise.all([
     supabaseAdmin.storage.from(limpeza.original_bucket).remove([limpeza.original_path]),
     supabaseAdmin.storage.from(limpeza.thumbnail_bucket).remove([limpeza.thumbnail_path]),
@@ -34,7 +44,7 @@ async function reprocessarLimpezasPendentes(limite = 10) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("foto_express_limpezas_storage")
-    .select("id, original_bucket, original_path, thumbnail_bucket, thumbnail_path, tentativas")
+    .select("id, arquivo_id, original_bucket, original_path, thumbnail_bucket, thumbnail_path, tentativas")
     .eq("status", "PENDENTE")
     .order("criado_em")
     .limit(limite);
@@ -43,6 +53,7 @@ async function reprocessarLimpezasPendentes(limite = 10) {
     (data ?? []).map((item) =>
       executarLimpezaStorage({
         limpeza_id: item.id,
+        arquivo_id: item.arquivo_id,
         original_bucket: item.original_bucket,
         original_path: item.original_path,
         thumbnail_bucket: item.thumbnail_bucket,
