@@ -345,7 +345,7 @@ export const prepararGeracaoFotoExpress = createServerFn({ method: "POST" })
     if (erroGeracao || erroArquivos || !geracao || !arquivos) throw new Error(erroGeracao?.message ?? erroArquivos?.message ?? "Geração não encontrada.");
     if (geracao.criado_por !== context.userId || geracao.estado !== "PROCESSANDO") throw new Error("GERACAO_INVALIDA");
     const snapshot = geracao.snapshot as Record<string, unknown>;
-    const itens = Array.isArray(snapshot.itens) ? snapshot.itens as Array<{ arquivo?: { id?: string; original_bucket?: string; original_path?: string } }> : [];
+    const itens = Array.isArray(snapshot["itens"]) ? snapshot["itens"] as Array<{ arquivo?: { id?: string; original_bucket?: string; original_path?: string } }> : [];
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const originais: Record<string, string> = {};
     for (const entrada of itens) {
@@ -381,7 +381,7 @@ export const concluirGeracaoFotoExpress = createServerFn({ method: "POST" })
     if (erroGeracao || erroEsperados || !geracao || !esperados?.length) throw new Error(erroGeracao?.message ?? erroEsperados?.message ?? "Geração incompleta.");
     if (geracao.criado_por !== context.userId || geracao.estado !== "PROCESSANDO") throw new Error("GERACAO_INVALIDA");
     const snapshot = geracao.snapshot as Record<string, unknown>;
-    const folhas = Array.isArray(snapshot.folhas) ? snapshot.folhas as Array<{ numero: number; largura_mm: number; altura_mm: number }> : [];
+    const folhas = Array.isArray(snapshot["folhas"]) ? snapshot["folhas"] as Array<{ numero: number; largura_mm: number; altura_mm: number }> : [];
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const validados: Array<{ id: string; tamanho: number; largura: number | null; altura: number | null; paginas: number | null }> = [];
     for (const esperado of esperados) {
