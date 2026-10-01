@@ -1524,6 +1524,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "foto_express_itens_arquivo_trabalho_fkey"
+            columns: ["arquivo_id", "trabalho_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_arquivos"
+            referencedColumns: ["id", "trabalho_id"]
+          },
+          {
             foreignKeyName: "foto_express_itens_formato_id_fkey"
             columns: ["formato_id"]
             isOneToOne: false
@@ -1538,6 +1545,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      foto_express_limpezas_storage: {
+        Row: {
+          arquivo_id: string | null
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          id: string
+          motivo: string
+          original_bucket: string
+          original_path: string
+          status: string
+          tentativas: number
+          thumbnail_bucket: string
+          thumbnail_path: string
+          ultimo_erro: string | null
+        }
+        Insert: {
+          arquivo_id?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          id?: string
+          motivo: string
+          original_bucket: string
+          original_path: string
+          status?: string
+          tentativas?: number
+          thumbnail_bucket: string
+          thumbnail_path: string
+          ultimo_erro?: string | null
+        }
+        Update: {
+          arquivo_id?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          id?: string
+          motivo?: string
+          original_bucket?: string
+          original_path?: string
+          status?: string
+          tentativas?: number
+          thumbnail_bucket?: string
+          thumbnail_path?: string
+          ultimo_erro?: string | null
+        }
+        Relationships: []
       }
       foto_express_textos: {
         Row: {
@@ -4003,6 +4058,38 @@ export type Database = {
       disparar_rotina_sorteios: { Args: { rota: string }; Returns: undefined }
       foto_express_duplicar_item: {
         Args: { _item_id: string }
+        Returns: string
+      }
+      foto_express_excluir_itens: {
+        Args: { _item_ids: string[] }
+        Returns: {
+          limpeza_id: string
+          original_bucket: string
+          original_path: string
+          thumbnail_bucket: string
+          thumbnail_path: string
+        }[]
+      }
+      foto_express_registrar_limpeza_upload: {
+        Args: {
+          _erro?: string
+          _original_path: string
+          _thumbnail_path: string
+        }
+        Returns: string
+      }
+      foto_express_registrar_upload: {
+        Args: {
+          _altura_px: number
+          _largura_px: number
+          _nome_original: string
+          _ordem?: number
+          _original_path: string
+          _tamanho_bytes: number
+          _thumbnail_path: string
+          _tipo_mime: string
+          _trabalho_id: string
+        }
         Returns: string
       }
       has_role: {
