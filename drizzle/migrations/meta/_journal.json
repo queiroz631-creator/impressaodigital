@@ -169,6 +169,13 @@
       "when": 1790833588986,
       "tag": "0023_foto_express_editor_nao_destrutivo",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790864781690,
+      "tag": "0024_foto_express_salvar_formato_no_editor",
+      "breakpoints": true
     }
   ]
 }

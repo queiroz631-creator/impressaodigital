@@ -4114,6 +4114,26 @@ export type Database = {
         }
         Returns: string
       }
+      foto_express_salvar_edicao_com_formato: {
+        Args: {
+          _crop_altura: number
+          _crop_largura: number
+          _crop_x: number
+          _crop_y: number
+          _espelhar_horizontal: boolean
+          _espelhar_vertical: boolean
+          _formato_id: string
+          _item_id: string
+          _modo_ajuste: string
+          _orientacao: string
+          _posicao_x: number
+          _posicao_y: number
+          _rotacao: number
+          _trabalho_id: string
+          _zoom: number
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
