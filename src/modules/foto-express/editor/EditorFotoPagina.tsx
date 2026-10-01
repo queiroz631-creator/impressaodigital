@@ -126,6 +126,9 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   }, []);
   const persistirTexto = useCallback(async (texto: TextoFoto) => {
     if (!podeEditar) return;
+    const timer = timersTextoRef.current[texto.id];
+    if (timer) window.clearTimeout(timer);
+    delete timersTextoRef.current[texto.id];
     setEstadoTexto("SALVANDO");
     try {
       const salvo = await salvarTexto({ data: {
@@ -140,7 +143,10 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
       setEstadoTexto("SALVO");
     } catch (erro) {
       setEstadoTexto("ERRO");
-      if (erro instanceof Error && erro.message.includes("TEXTO_DESATUALIZADO")) await textosQuery.refetch();
+      if (erro instanceof Error && erro.message.includes("TEXTO_DESATUALIZADO")) {
+        const resultado = await textosQuery.refetch();
+        if (resultado.data) setTextos(resultado.data);
+      }
     }
   }, [podeEditar, salvarTexto, trabalhoId, itemId, textosQuery]);
   const agendarTexto = useCallback((texto: TextoFoto) => {

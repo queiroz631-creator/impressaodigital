@@ -12,6 +12,7 @@ export function CamadasTexto({ textos, selecionadoId, somenteLeitura, onSelecion
   onCommit: (texto: TextoFoto) => void;
 }) {
   const arraste = useRef<{ id: string; x: number; y: number; posicaoX: number; posicaoY: number } | null>(null);
+  const ultimoTexto = useRef<TextoFoto | null>(null);
 
   function iniciar(e: PointerEvent<HTMLDivElement>, texto: TextoFoto) {
     e.stopPropagation();
@@ -26,18 +27,21 @@ export function CamadasTexto({ textos, selecionadoId, somenteLeitura, onSelecion
     const area = e.currentTarget.parentElement;
     if (!inicio || inicio.id !== texto.id || !area) return;
     e.stopPropagation();
-    onChange({
+    const atualizado = {
       ...texto,
       posicao_x: limitarCentroTexto(inicio.posicaoX + (e.clientX - inicio.x) / area.clientWidth),
       posicao_y: limitarCentroTexto(inicio.posicaoY + (e.clientY - inicio.y) / area.clientHeight),
-    });
+    };
+    ultimoTexto.current = atualizado;
+    onChange(atualizado);
   }
 
   function terminar(e: PointerEvent<HTMLDivElement>, texto: TextoFoto) {
     if (!arraste.current || arraste.current.id !== texto.id) return;
     e.stopPropagation();
     arraste.current = null;
-    onCommit(texto);
+    onCommit(ultimoTexto.current?.id === texto.id ? ultimoTexto.current : texto);
+    ultimoTexto.current = null;
   }
 
   return <>{textos.map((texto) => <div
