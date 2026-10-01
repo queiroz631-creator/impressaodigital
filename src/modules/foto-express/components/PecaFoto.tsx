@@ -1,5 +1,5 @@
 import { calcularGeometria, dimensoesMoldura, type EdicaoFoto } from "../lib/transformacaoFoto";
-import { familiaFonte } from "../lib/texto";
+import { familiaFonte, FONTES_TEXTO } from "../lib/texto";
 import type { ItemGaleria, TextoFoto } from "../types";
 
 const PADRAO: EdicaoFoto = { zoom: 1, posicaoX: 0, posicaoY: 0, rotacao: 0, espelharHorizontal: false, espelharVertical: false, modoAjuste: "PREENCHER" };

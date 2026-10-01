@@ -1,7 +1,7 @@
 import { useRef, type PointerEvent } from "react";
 import { cn } from "@/lib/utils";
 import type { TextoFoto } from "../../types";
-import { familiaFonte, limitarCentroTexto } from "../../lib/texto";
+import { familiaFonte, FONTES_TEXTO, limitarCentroTexto } from "../../lib/texto";
 
 export function CamadasTexto({ textos, selecionadoId, somenteLeitura, onSelecionar, onChange, onCommit }: {
   textos: TextoFoto[];
@@ -49,13 +49,14 @@ export function CamadasTexto({ textos, selecionadoId, somenteLeitura, onSelecion
     role="button"
     tabIndex={0}
     aria-label={`Texto: ${texto.conteudo || "sem conteúdo"}`}
-    className={cn("absolute z-10 cursor-move touch-none whitespace-pre-wrap break-words px-1 py-0.5 leading-tight", selecionadoId === texto.id && "outline outline-2 outline-primary outline-offset-2")}
+    className={cn("absolute z-10 cursor-move touch-none whitespace-pre-wrap break-words px-1 py-0.5", selecionadoId === texto.id && "outline outline-2 outline-primary outline-offset-2")}
     style={{
       left: `${Number(texto.posicao_x) * 100}%`,
       top: `${Number(texto.posicao_y) * 100}%`,
       width: `${Number(texto.largura_normalizada) * 100}%`,
       fontSize: `calc(${Number(texto.tamanho_normalizado) * 100} * 1cqh)`,
       fontFamily: familiaFonte(texto.fonte_id),
+      lineHeight: FONTES_TEXTO.find((fonte) => fonte.id === texto.fonte_id)?.lineHeight ?? 1.2,
       color: texto.cor,
       fontWeight: texto.negrito ? 700 : 400,
       fontStyle: texto.italico ? "italic" : "normal",

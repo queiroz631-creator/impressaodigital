@@ -9,6 +9,8 @@ export type TextoFoto = Database["public"]["Tables"]["foto_express_textos"]["Row
 export type MontagemFoto = Database["public"]["Tables"]["foto_express_montagens"]["Row"];
 export type FolhaFoto = Database["public"]["Tables"]["foto_express_folhas"]["Row"];
 export type OcorrenciaFoto = Database["public"]["Tables"]["foto_express_ocorrencias"]["Row"];
+export type GeracaoFoto = Database["public"]["Tables"]["foto_express_geracoes"]["Row"];
+export type ArquivoImpressaoFoto = Database["public"]["Tables"]["foto_express_arquivos_impressao"]["Row"];
 export type Orientacao = "AUTOMATICA" | "RETRATO" | "PAISAGEM";
 export type Qualidade = "EXCELENTE" | "BOA" | "BAIXA" | "MUITO_BAIXA" | "SEM_FORMATO";
 
