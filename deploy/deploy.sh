@@ -29,6 +29,14 @@ if ! bash deploy/aplicar-migracoes.sh; then
   exit 1
 fi
 
+echo "==> Garantindo o Storage privado do FOTO EXPRESS"
+if ! bash deploy/configurar-foto-express-storage.sh; then
+  echo
+  echo "ERRO: não foi possível configurar os buckets do FOTO EXPRESS."
+  echo "Nenhum bucket ou arquivo existente foi removido. Corrija a configuração e rode o deploy novamente."
+  exit 1
+fi
+
 echo "==> Instalando dependências"
 if [ -f package-lock.json ]; then
   npm ci
