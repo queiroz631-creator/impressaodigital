@@ -68,6 +68,7 @@ import { Route as ApiPublicSorteiosSyncNotasLoteRouteImport } from './routes/api
 import { Route as ApiPublicSorteiosSyncNotasSituacaoRouteImport } from './routes/api/public/sorteios/sync/notas-situacao'
 import { Route as ApiPublicSorteiosSyncSorteioAtivoRouteImport } from './routes/api/public/sorteios/sync/sorteio-ativo'
 import { Route as ApiPublicWhatsappWebhookTokenRouteImport } from './routes/api/public/whatsapp/webhook/$token'
+import { Route as FotoExpressTrabalhoIdFotosItemIdEditarRouteImport } from './routes/foto-express.$trabalhoId.fotos.$itemId.editar'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -380,6 +381,12 @@ const ApiPublicWhatsappWebhookTokenRoute =
     path: '/$token',
     getParentRoute: () => ApiPublicWhatsappWebhookRoute,
   } as any)
+const FotoExpressTrabalhoIdFotosItemIdEditarRoute =
+  FotoExpressTrabalhoIdFotosItemIdEditarRouteImport.update({
+    id: '/foto-express/$trabalhoId/fotos/$itemId/editar',
+    path: '/foto-express/$trabalhoId/fotos/$itemId/editar',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -441,6 +448,7 @@ export interface FileRoutesByFullPath {
   '/api/public/sorteios/sync/notas-situacao': typeof ApiPublicSorteiosSyncNotasSituacaoRoute
   '/api/public/sorteios/sync/sorteio-ativo': typeof ApiPublicSorteiosSyncSorteioAtivoRoute
   '/api/public/whatsapp/webhook/$token': typeof ApiPublicWhatsappWebhookTokenRoute
+  '/foto-express/$trabalhoId/fotos/$itemId/editar': typeof FotoExpressTrabalhoIdFotosItemIdEditarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -502,6 +510,7 @@ export interface FileRoutesByTo {
   '/api/public/sorteios/sync/notas-situacao': typeof ApiPublicSorteiosSyncNotasSituacaoRoute
   '/api/public/sorteios/sync/sorteio-ativo': typeof ApiPublicSorteiosSyncSorteioAtivoRoute
   '/api/public/whatsapp/webhook/$token': typeof ApiPublicWhatsappWebhookTokenRoute
+  '/foto-express/$trabalhoId/fotos/$itemId/editar': typeof FotoExpressTrabalhoIdFotosItemIdEditarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -564,6 +573,7 @@ export interface FileRoutesById {
   '/api/public/sorteios/sync/notas-situacao': typeof ApiPublicSorteiosSyncNotasSituacaoRoute
   '/api/public/sorteios/sync/sorteio-ativo': typeof ApiPublicSorteiosSyncSorteioAtivoRoute
   '/api/public/whatsapp/webhook/$token': typeof ApiPublicWhatsappWebhookTokenRoute
+  '/foto-express/$trabalhoId/fotos/$itemId/editar': typeof FotoExpressTrabalhoIdFotosItemIdEditarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -627,6 +637,7 @@ export interface FileRouteTypes {
     | '/api/public/sorteios/sync/notas-situacao'
     | '/api/public/sorteios/sync/sorteio-ativo'
     | '/api/public/whatsapp/webhook/$token'
+    | '/foto-express/$trabalhoId/fotos/$itemId/editar'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -688,6 +699,7 @@ export interface FileRouteTypes {
     | '/api/public/sorteios/sync/notas-situacao'
     | '/api/public/sorteios/sync/sorteio-ativo'
     | '/api/public/whatsapp/webhook/$token'
+    | '/foto-express/$trabalhoId/fotos/$itemId/editar'
   id:
     | '__root__'
     | '/'
@@ -749,6 +761,7 @@ export interface FileRouteTypes {
     | '/api/public/sorteios/sync/notas-situacao'
     | '/api/public/sorteios/sync/sorteio-ativo'
     | '/api/public/whatsapp/webhook/$token'
+    | '/foto-express/$trabalhoId/fotos/$itemId/editar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -810,6 +823,7 @@ export interface RootRouteChildren {
   ApiPublicSorteiosSyncNotasLoteRoute: typeof ApiPublicSorteiosSyncNotasLoteRoute
   ApiPublicSorteiosSyncNotasSituacaoRoute: typeof ApiPublicSorteiosSyncNotasSituacaoRoute
   ApiPublicSorteiosSyncSorteioAtivoRoute: typeof ApiPublicSorteiosSyncSorteioAtivoRoute
+  FotoExpressTrabalhoIdFotosItemIdEditarRoute: typeof FotoExpressTrabalhoIdFotosItemIdEditarRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1227,6 +1241,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWhatsappWebhookTokenRouteImport
       parentRoute: typeof ApiPublicWhatsappWebhookRoute
     }
+    '/foto-express/$trabalhoId/fotos/$itemId/editar': {
+      id: '/foto-express/$trabalhoId/fotos/$itemId/editar'
+      path: '/foto-express/$trabalhoId/fotos/$itemId/editar'
+      fullPath: '/foto-express/$trabalhoId/fotos/$itemId/editar'
+      preLoaderRoute: typeof FotoExpressTrabalhoIdFotosItemIdEditarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1312,6 +1333,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicSorteiosSyncNotasSituacaoRoute,
   ApiPublicSorteiosSyncSorteioAtivoRoute:
     ApiPublicSorteiosSyncSorteioAtivoRoute,
+  FotoExpressTrabalhoIdFotosItemIdEditarRoute:
+    FotoExpressTrabalhoIdFotosItemIdEditarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
