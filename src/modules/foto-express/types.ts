@@ -6,6 +6,9 @@ export type ArquivoFoto = Database["public"]["Tables"]["foto_express_arquivos"][
 export type ItemFoto = Database["public"]["Tables"]["foto_express_itens"]["Row"];
 export type ConfiguracaoFoto = Database["public"]["Tables"]["foto_express_configuracoes"]["Row"];
 export type TextoFoto = Database["public"]["Tables"]["foto_express_textos"]["Row"];
+export type MontagemFoto = Database["public"]["Tables"]["foto_express_montagens"]["Row"];
+export type FolhaFoto = Database["public"]["Tables"]["foto_express_folhas"]["Row"];
+export type OcorrenciaFoto = Database["public"]["Tables"]["foto_express_ocorrencias"]["Row"];
 export type Orientacao = "AUTOMATICA" | "RETRATO" | "PAISAGEM";
 export type Qualidade = "EXCELENTE" | "BOA" | "BAIXA" | "MUITO_BAIXA" | "SEM_FORMATO";
 

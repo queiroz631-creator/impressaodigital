@@ -183,6 +183,13 @@
       "when": 1790882722655,
       "tag": "0025_foto_express_textos_normalizados",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790887329759,
+      "tag": "0026_foto_express_revisao_montagem",
+      "breakpoints": true
     }
   ]
 }

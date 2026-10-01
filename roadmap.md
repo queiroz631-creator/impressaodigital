@@ -7,7 +7,7 @@
 - [x] Novo trabalho com cliente opcional e cópia normalizada sem alterar clientes
 - [x] Upload múltiplo, progresso, galeria, seleção em lote e qualidade a 300 DPI
 - [x] Duplicação lógica reutilizando o original, exclusão segura e autosave
-- [ ] Próxima etapa: editor avançado, revisão, montagem e geração final (fora deste escopo)
+- [x] Etapas seguintes de editor, textos, revisão e montagem concluídas; geração final permanece fora deste escopo
 
 ## FOTO EXPRESS — correção técnica
 - [x] Triggers próprios para `atualizado_em` sem alterar a função global
@@ -34,6 +34,16 @@
 - [x] Persistir posição, largura e tamanho normalizados, fonte controlada, estilo, alinhamento, rotação e ordem
 - [x] Implementar controles, arraste, duplicação, exclusão e autosave seguro no editor
 - [x] Validar matemática, permissões, desktop e celular sem criar dados reais de teste
+
+## FOTO EXPRESS — Etapa 4: revisão e montagem automática
+- [x] Evoluir formatos com área interna normalizada da foto e cor de fundo
+- [x] Criar plano persistente com montagem, folhas e ocorrências em gravação atômica
+- [x] Implementar revisão com alertas de formato, configuração, imagem, quantidade e DPI
+- [x] Implementar montagem determinística em A4/A3 com margens, espaçamento, orientação e giro opcional
+- [x] Exibir prévia das folhas com enquadramento, espelhamento, textos e fundo do formato
+- [x] Detectar montagem desatualizada por assinatura dos itens, edições, textos e papel
+- [x] Validar matemática, compilação, desktop e celular sem confirmar montagem nem alterar dados reais
+- [ ] Etapa 5: renderização final e geração de arquivos (fora deste escopo)
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone

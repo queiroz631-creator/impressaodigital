@@ -290,3 +290,26 @@ export const moverTextoFotoExpress = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
   });
+
+const ocorrenciaMontagemSchema = z.object({ itemId: z.string().uuid(), indiceCopia: z.number().int().positive(), xMm: z.number().nonnegative(), yMm: z.number().nonnegative(), larguraMm: z.number().positive(), alturaMm: z.number().positive(), rotacaoFolha: z.union([z.literal(0), z.literal(90)]) });
+const folhaMontagemSchema = z.object({ numero: z.number().int().positive(), larguraMm: z.number().positive(), alturaMm: z.number().positive(), ocorrencias: z.array(ocorrenciaMontagemSchema) });
+const montagemSchema = z.object({
+  trabalhoId: z.string().uuid(), papel: z.enum(["A4", "A3"]), papelLarguraMm: z.number().positive(), papelAlturaMm: z.number().positive(),
+  orientacaoSolicitada: z.enum(["AUTOMATICA", "RETRATO", "PAISAGEM"]), orientacaoEscolhida: z.enum(["RETRATO", "PAISAGEM"]),
+  margemSuperiorMm: z.number().nonnegative(), margemInferiorMm: z.number().nonnegative(), margemEsquerdaMm: z.number().nonnegative(), margemDireitaMm: z.number().nonnegative(),
+  espacamentoMm: z.number().nonnegative(), permitirRotacao: z.boolean(), assinatura: z.string().regex(/^[a-f0-9]{64}$/), versao: z.number().int().nonnegative(), folhas: z.array(folhaMontagemSchema).min(1),
+});
+
+export const salvarMontagemFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => montagemSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: montagem, error } = await context.supabase.rpc("foto_express_salvar_montagem", {
+      _trabalho_id: data.trabalhoId, _papel: data.papel, _papel_largura_mm: data.papelLarguraMm, _papel_altura_mm: data.papelAlturaMm,
+      _orientacao_solicitada: data.orientacaoSolicitada, _orientacao_escolhida: data.orientacaoEscolhida,
+      _margem_superior_mm: data.margemSuperiorMm, _margem_inferior_mm: data.margemInferiorMm, _margem_esquerda_mm: data.margemEsquerdaMm, _margem_direita_mm: data.margemDireitaMm,
+      _espacamento_mm: data.espacamentoMm, _permitir_rotacao: data.permitirRotacao, _assinatura: data.assinatura, _versao_esperada: data.versao, _folhas: data.folhas,
+    });
+    if (error) throw new Error(error.message);
+    return montagem;
+  });

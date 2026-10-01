@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Formato, ItemEditor, ItemGaleria, TextoFoto, Trabalho } from "../types";
+import type { FolhaFoto, Formato, ItemEditor, ItemGaleria, MontagemFoto, OcorrenciaFoto, TextoFoto, Trabalho } from "../types";
 
 export function useFormatos(todos = false) {
   return useQuery({
@@ -96,6 +96,24 @@ export function useTextosItem(itemId: string) {
         .order("id");
       if (error) throw error;
       return data as TextoFoto[];
+    },
+  });
+}
+
+export function useTextosTrabalho(itemIds: string[]) {
+  return useQuery({
+    queryKey: ["foto-express", "textos-trabalho", ...itemIds], enabled: itemIds.length > 0,
+    queryFn: async () => { const { data, error } = await supabase.from("foto_express_textos").select("*").in("item_id", itemIds).order("ordem"); if (error) throw error; return data as TextoFoto[]; },
+  });
+}
+
+export function useMontagem(trabalhoId: string) {
+  return useQuery({
+    queryKey: ["foto-express", "montagem", trabalhoId], retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("foto_express_montagens").select("*, folhas:foto_express_folhas(*, ocorrencias:foto_express_ocorrencias(*))").eq("trabalho_id", trabalhoId).maybeSingle();
+      if (error) throw error;
+      return data as (MontagemFoto & { folhas: Array<FolhaFoto & { ocorrencias: OcorrenciaFoto[] }> }) | null;
     },
   });
 }

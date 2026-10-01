@@ -1436,12 +1436,49 @@ export type Database = {
           },
         ]
       }
+      foto_express_folhas: {
+        Row: {
+          altura_mm: number
+          id: string
+          largura_mm: number
+          montagem_id: string
+          numero: number
+        }
+        Insert: {
+          altura_mm: number
+          id?: string
+          largura_mm: number
+          montagem_id: string
+          numero: number
+        }
+        Update: {
+          altura_mm?: number
+          id?: string
+          largura_mm?: number
+          montagem_id?: string
+          numero?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_folhas_montagem_id_fkey"
+            columns: ["montagem_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_montagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       foto_express_formatos: {
         Row: {
           altura_cm: number
+          area_foto_altura: number
+          area_foto_largura: number
+          area_foto_x: number
+          area_foto_y: number
           ativo: boolean
           atualizado_em: string
           codigo: string
+          cor_fundo: string
           criado_em: string
           id: string
           largura_cm: number
@@ -1451,9 +1488,14 @@ export type Database = {
         }
         Insert: {
           altura_cm: number
+          area_foto_altura?: number
+          area_foto_largura?: number
+          area_foto_x?: number
+          area_foto_y?: number
           ativo?: boolean
           atualizado_em?: string
           codigo: string
+          cor_fundo?: string
           criado_em?: string
           id?: string
           largura_cm: number
@@ -1463,9 +1505,14 @@ export type Database = {
         }
         Update: {
           altura_cm?: number
+          area_foto_altura?: number
+          area_foto_largura?: number
+          area_foto_x?: number
+          area_foto_y?: number
           ativo?: boolean
           atualizado_em?: string
           codigo?: string
+          cor_fundo?: string
           criado_em?: string
           id?: string
           largura_cm?: number
@@ -1596,6 +1643,131 @@ export type Database = {
           ultimo_erro?: string | null
         }
         Relationships: []
+      }
+      foto_express_montagens: {
+        Row: {
+          assinatura: string
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          espacamento_mm: number
+          estado: string
+          id: string
+          margem_direita_mm: number
+          margem_esquerda_mm: number
+          margem_inferior_mm: number
+          margem_superior_mm: number
+          orientacao_escolhida: string
+          orientacao_solicitada: string
+          papel: string
+          papel_altura_mm: number
+          papel_largura_mm: number
+          permitir_rotacao: boolean
+          trabalho_id: string
+          versao: number
+        }
+        Insert: {
+          assinatura: string
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          espacamento_mm?: number
+          estado?: string
+          id?: string
+          margem_direita_mm?: number
+          margem_esquerda_mm?: number
+          margem_inferior_mm?: number
+          margem_superior_mm?: number
+          orientacao_escolhida: string
+          orientacao_solicitada: string
+          papel: string
+          papel_altura_mm: number
+          papel_largura_mm: number
+          permitir_rotacao?: boolean
+          trabalho_id: string
+          versao?: number
+        }
+        Update: {
+          assinatura?: string
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          espacamento_mm?: number
+          estado?: string
+          id?: string
+          margem_direita_mm?: number
+          margem_esquerda_mm?: number
+          margem_inferior_mm?: number
+          margem_superior_mm?: number
+          orientacao_escolhida?: string
+          orientacao_solicitada?: string
+          papel?: string
+          papel_altura_mm?: number
+          papel_largura_mm?: number
+          permitir_rotacao?: boolean
+          trabalho_id?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_montagens_trabalho_id_fkey"
+            columns: ["trabalho_id"]
+            isOneToOne: true
+            referencedRelation: "foto_express_trabalhos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foto_express_ocorrencias: {
+        Row: {
+          altura_mm: number
+          folha_id: string
+          id: string
+          indice_copia: number
+          item_id: string
+          largura_mm: number
+          rotacao_folha: number
+          x_mm: number
+          y_mm: number
+        }
+        Insert: {
+          altura_mm: number
+          folha_id: string
+          id?: string
+          indice_copia: number
+          item_id: string
+          largura_mm: number
+          rotacao_folha?: number
+          x_mm: number
+          y_mm: number
+        }
+        Update: {
+          altura_mm?: number
+          folha_id?: string
+          id?: string
+          indice_copia?: number
+          item_id?: string
+          largura_mm?: number
+          rotacao_folha?: number
+          x_mm?: number
+          y_mm?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_ocorrencias_folha_id_fkey"
+            columns: ["folha_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_folhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foto_express_ocorrencias_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_itens"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       foto_express_textos: {
         Row: {
@@ -4225,6 +4397,52 @@ export type Database = {
           _zoom: number
         }
         Returns: string
+      }
+      foto_express_salvar_montagem: {
+        Args: {
+          _assinatura: string
+          _espacamento_mm: number
+          _folhas: Json
+          _margem_direita_mm: number
+          _margem_esquerda_mm: number
+          _margem_inferior_mm: number
+          _margem_superior_mm: number
+          _orientacao_escolhida: string
+          _orientacao_solicitada: string
+          _papel: string
+          _papel_altura_mm: number
+          _papel_largura_mm: number
+          _permitir_rotacao: boolean
+          _trabalho_id: string
+          _versao_esperada: number
+        }
+        Returns: {
+          assinatura: string
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          espacamento_mm: number
+          estado: string
+          id: string
+          margem_direita_mm: number
+          margem_esquerda_mm: number
+          margem_inferior_mm: number
+          margem_superior_mm: number
+          orientacao_escolhida: string
+          orientacao_solicitada: string
+          papel: string
+          papel_altura_mm: number
+          papel_largura_mm: number
+          permitir_rotacao: boolean
+          trabalho_id: string
+          versao: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "foto_express_montagens"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       foto_express_salvar_texto: {
         Args: {
