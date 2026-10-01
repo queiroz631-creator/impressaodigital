@@ -76,19 +76,25 @@ export function limitarPosicao(geometria: GeometriaFoto, x: number, y: number) {
   };
 }
 
-function visualParaOriginal(u: number, v: number, rotacao: number) {
-  switch (normalizarRotacao(rotacao)) {
-    case 90: return { x: v, y: 1 - u };
-    case 180: return { x: 1 - u, y: 1 - v };
-    case 270: return { x: 1 - v, y: u };
-    default: return { x: u, y: v };
+function visualParaOriginal(u: number, v: number, edicao: Pick<EdicaoFoto, "rotacao" | "espelharHorizontal" | "espelharVertical">) {
+  let ponto: { x: number; y: number };
+  switch (normalizarRotacao(edicao.rotacao)) {
+    case 90: ponto = { x: v, y: 1 - u }; break;
+    case 180: ponto = { x: 1 - u, y: 1 - v }; break;
+    case 270: ponto = { x: 1 - v, y: u }; break;
+    default: ponto = { x: u, y: v };
   }
+  return {
+    x: edicao.espelharHorizontal ? 1 - ponto.x : ponto.x,
+    y: edicao.espelharVertical ? 1 - ponto.y : ponto.y,
+  };
 }
 
 /**
  * O crop é derivado da transformação canônica e sempre gravado no espaço do
  * arquivo original: origem no canto superior esquerdo e valores entre 0 e 1.
- * Para 90°/270°, os cantos visíveis são transformados de volta ao original.
+ * A transformação inversa desfaz primeiro a rotação e depois os espelhamentos,
+ * mantendo o crop fiel às coordenadas do arquivo original.
  */
 export function derivarCrop(
   original: { largura: number; altura: number },
@@ -107,10 +113,10 @@ export function derivarCrop(
     base: basePx / g.alturaVisual,
   };
   const cantos = [
-    visualParaOriginal(limitesVisuais.esquerda, limitesVisuais.topo, edicao.rotacao),
-    visualParaOriginal(limitesVisuais.direita, limitesVisuais.topo, edicao.rotacao),
-    visualParaOriginal(limitesVisuais.esquerda, limitesVisuais.base, edicao.rotacao),
-    visualParaOriginal(limitesVisuais.direita, limitesVisuais.base, edicao.rotacao),
+    visualParaOriginal(limitesVisuais.esquerda, limitesVisuais.topo, edicao),
+    visualParaOriginal(limitesVisuais.direita, limitesVisuais.topo, edicao),
+    visualParaOriginal(limitesVisuais.esquerda, limitesVisuais.base, edicao),
+    visualParaOriginal(limitesVisuais.direita, limitesVisuais.base, edicao),
   ];
   const xs = cantos.map((p) => limitar(p.x, 0, 1));
   const ys = cantos.map((p) => limitar(p.y, 0, 1));
