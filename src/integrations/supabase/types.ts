@@ -1390,6 +1390,7 @@ export type Database = {
           espelhar_horizontal: boolean
           espelhar_vertical: boolean
           item_id: string
+          modo_ajuste: string
           posicao_x: number
           posicao_y: number
           rotacao: number
@@ -1404,6 +1405,7 @@ export type Database = {
           espelhar_horizontal?: boolean
           espelhar_vertical?: boolean
           item_id: string
+          modo_ajuste?: string
           posicao_x?: number
           posicao_y?: number
           rotacao?: number
@@ -1418,6 +1420,7 @@ export type Database = {
           espelhar_horizontal?: boolean
           espelhar_vertical?: boolean
           item_id?: string
+          modo_ajuste?: string
           posicao_x?: number
           posicao_y?: number
           rotacao?: number
@@ -4089,6 +4092,25 @@ export type Database = {
           _thumbnail_path: string
           _tipo_mime: string
           _trabalho_id: string
+        }
+        Returns: string
+      }
+      foto_express_salvar_edicao: {
+        Args: {
+          _crop_altura: number
+          _crop_largura: number
+          _crop_x: number
+          _crop_y: number
+          _espelhar_horizontal: boolean
+          _espelhar_vertical: boolean
+          _item_id: string
+          _modo_ajuste: string
+          _orientacao: string
+          _posicao_x: number
+          _posicao_y: number
+          _rotacao: number
+          _trabalho_id: string
+          _zoom: number
         }
         Returns: string
       }

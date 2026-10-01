@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Formato, ItemGaleria, Trabalho } from "../types";
+import type { Formato, ItemEditor, ItemGaleria, Trabalho } from "../types";
 
 export function useFormatos(todos = false) {
   return useQuery({
@@ -56,6 +56,29 @@ export function useItensGaleria(trabalhoId: string) {
         if (url?.signedUrl) item.thumbnailUrl = url.signedUrl;
       }));
       return itens;
+    },
+  });
+}
+
+export function useItemEditor(trabalhoId: string, itemId: string) {
+  return useQuery({
+    queryKey: ["foto-express", "editor", trabalhoId, itemId],
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("foto_express_itens")
+        .select("*, arquivo:foto_express_arquivos!foto_express_itens_arquivo_trabalho_fkey(*), formato:foto_express_formatos(*), configuracao:foto_express_configuracoes(*)")
+        .eq("id", itemId)
+        .eq("trabalho_id", trabalhoId)
+        .single();
+      if (error) throw error;
+      const item = data as unknown as ItemEditor;
+      const { data: url, error: urlError } = await supabase.storage
+        .from(item.arquivo.original_bucket)
+        .createSignedUrl(item.arquivo.original_path, 3600);
+      if (urlError || !url?.signedUrl) throw new Error(urlError?.message ?? "Não foi possível abrir a imagem original.");
+      item.originalUrl = url.signedUrl;
+      return item;
     },
   });
 }
