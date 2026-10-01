@@ -9,6 +9,14 @@
 - [x] Duplicação lógica reutilizando o original, exclusão segura e autosave
 - [ ] Próxima etapa: editor avançado, revisão, montagem e geração final (fora deste escopo)
 
+## FOTO EXPRESS — correção técnica
+- [x] Triggers próprios para `atualizado_em` sem alterar a função global
+- [x] Coerência entre item, arquivo e trabalho garantida no banco
+- [x] Upload e exclusão com fila transacional de limpeza do Storage
+- [x] Buckets privados provisionados de forma idempotente
+- [x] Controles de Formatos condicionados à permissão de gerenciamento
+- [x] Componente global de erro restaurado
+
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
 - [x] Calculadora/WhatsApp: atalho no topo, seletor antes de Assumir e controle de anotações em aba lateral
