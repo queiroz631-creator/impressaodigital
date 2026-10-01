@@ -4,10 +4,14 @@ import {
   DollarSign,
   FileText,
   FileUser,
+  FolderOpen,
   Gift,
   Megaphone,
   MessageCircle,
   Printer,
+  ImagePlus,
+  Images,
+  Ruler,
   Settings,
   Sparkles,
   Store,
@@ -46,7 +50,7 @@ export interface ItemModulo {
   badgeNaoLidas?: boolean;
 }
 
-export type CorModulo = "azul" | "verde" | "roxo" | "ambar";
+export type CorModulo = "azul" | "verde" | "roxo" | "rosa" | "ambar";
 
 export interface Modulo {
   id: string;
@@ -222,10 +226,52 @@ export const MODULOS: Modulo[] = [
     ],
   },
   {
+    id: "foto-express",
+    nome: "FOTO EXPRESS",
+    descricao: "Preparação de fotos para impressão",
+    ordem: 4,
+    ativo: true,
+    cor: "rosa",
+    acesso: "administrativo",
+    permissao: "modulo.foto_express",
+    itens: [
+      {
+        id: "foto-express-trabalhos",
+        nome: "Trabalhos",
+        descricao: "Galeria e trabalhos de fotos",
+        icone: Images,
+        ordem: 1,
+        ativo: true,
+        rota: "/foto-express",
+        permissao: "foto_express.visualizar",
+      },
+      {
+        id: "foto-express-novo",
+        nome: "Novo Trabalho",
+        descricao: "Criar um trabalho de fotos",
+        icone: ImagePlus,
+        ordem: 2,
+        ativo: true,
+        rota: "/foto-express/novo",
+        permissao: "foto_express.trabalhos.criar",
+      },
+      {
+        id: "foto-express-formatos",
+        nome: "Formatos",
+        descricao: "Tamanhos de impressão fotográfica",
+        icone: Ruler,
+        ordem: 3,
+        ativo: true,
+        rota: "/foto-express/formatos",
+        permissao: "foto_express.visualizar",
+      },
+    ],
+  },
+  {
     id: "administracao",
     nome: "Administração",
     descricao: "Gestão do sistema",
-    ordem: 4,
+    ordem: 5,
     ativo: true,
     cor: "ambar",
     acesso: "administrativo",
@@ -273,6 +319,10 @@ export const PERMISSOES_SENSIVEIS: { chave: string; nome: string }[] = [
   { chave: "usuarios.gerenciar", nome: "Gerenciar usuários" },
   // Concedida manualmente nos perfis; administradores já têm acesso total.
   { chave: "sorteios.gerenciar", nome: "Gerenciar sorteios" },
+  { chave: "foto_express.trabalhos.editar", nome: "Editar trabalhos do FOTO EXPRESS" },
+  { chave: "foto_express.fotos.enviar", nome: "Enviar fotos no FOTO EXPRESS" },
+  { chave: "foto_express.fotos.excluir", nome: "Excluir fotos no FOTO EXPRESS" },
+  { chave: "foto_express.formatos.gerenciar", nome: "Gerenciar formatos do FOTO EXPRESS" },
 ];
 
 /** Todas as chaves de permissão do sistema (módulos + telas + sensíveis). */

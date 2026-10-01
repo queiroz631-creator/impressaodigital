@@ -41,6 +41,12 @@ const CORES_GRUPO: Record<
     linkAtivo: "bg-violet-400/15 text-violet-200 shadow-[inset_3px_0_0_0] shadow-violet-400",
     linkHover: "hover:bg-violet-400/10 hover:text-violet-200",
   },
+  rosa: {
+    titulo: "text-pink-300",
+    icone: "text-pink-300",
+    linkAtivo: "bg-pink-400/15 text-pink-200 shadow-[inset_3px_0_0_0] shadow-pink-400",
+    linkHover: "hover:bg-pink-400/10 hover:text-pink-200",
+  },
   ambar: {
     titulo: "text-amber-300",
     icone: "text-amber-300",

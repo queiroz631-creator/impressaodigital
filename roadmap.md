@@ -1,5 +1,14 @@
 # Roadmap
 
+## FOTO EXPRESS — primeira entrega funcional
+- [x] Grupo próprio no menu: Trabalhos, Novo Trabalho e Formatos
+- [x] Banco incremental, permissões e formatos padrão idempotentes
+- [x] Buckets privados separados para originais, thumbnails e futuras impressões
+- [x] Novo trabalho com cliente opcional e cópia normalizada sem alterar clientes
+- [x] Upload múltiplo, progresso, galeria, seleção em lote e qualidade a 300 DPI
+- [x] Duplicação lógica reutilizando o original, exclusão segura e autosave
+- [ ] Próxima etapa: editor avançado, revisão, montagem e geração final (fora deste escopo)
+
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
 - [x] Calculadora/WhatsApp: atalho no topo, seletor antes de Assumir e controle de anotações em aba lateral
