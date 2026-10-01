@@ -16,6 +16,7 @@
 - [x] Buckets privados provisionados de forma idempotente
 - [x] Controles de Formatos condicionados à permissão de gerenciamento
 - [x] Componente global de erro restaurado
+- [x] Correção pontual da Galeria: FK explícita, estado de erro e validação somente leitura
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
