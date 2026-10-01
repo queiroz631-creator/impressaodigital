@@ -7,7 +7,7 @@
 - [x] Novo trabalho com cliente opcional e cópia normalizada sem alterar clientes
 - [x] Upload múltiplo, progresso, galeria, seleção em lote e qualidade a 300 DPI
 - [x] Duplicação lógica reutilizando o original, exclusão segura e autosave
-- [ ] Próxima etapa: editor avançado, revisão, montagem e geração final (fora deste escopo)
+- [x] Etapas seguintes de editor, textos, revisão e montagem concluídas; geração final permanece fora deste escopo
 
 ## FOTO EXPRESS — correção técnica
 - [x] Triggers próprios para `atualizado_em` sem alterar a função global

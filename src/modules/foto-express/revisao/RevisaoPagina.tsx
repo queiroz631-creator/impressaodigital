@@ -33,10 +33,11 @@ export function RevisaoPagina({ trabalhoId }: { trabalhoId: string }) {
     if (!item.formato) avisos.push(`Foto ${item.ordem + 1}: escolha um formato.`);
     if (item.quantidade < 1) avisos.push(`Foto ${item.ordem + 1}: quantidade inválida.`);
     if (!item.thumbnailUrl) avisos.push(`Foto ${item.ordem + 1}: imagem indisponível.`);
-    const cropValido = item.configuracao && Number(item.configuracao.crop_largura) > 0 && Number(item.configuracao.crop_altura) > 0;
+    const configuracaoItem = item.configuracao;
+    const cropValido = configuracaoItem && Number(configuracaoItem.crop_largura) > 0 && Number(configuracaoItem.crop_altura) > 0;
     if (item.formato && !cropValido) avisos.push(`Foto ${item.ordem + 1}: configuração incompleta; abra o editor para conferir.`);
-    if (item.formato && cropValido) {
-      const q = calcularQualidadeFoto({ larguraPx: item.arquivo.largura_px, alturaPx: item.arquivo.altura_px, larguraCm: Number(item.formato.largura_cm) * Number(item.formato.area_foto_largura), alturaCm: Number(item.formato.altura_cm) * Number(item.formato.area_foto_altura), orientacao: item.orientacao, crop: { largura: Number(item.configuracao.crop_largura), altura: Number(item.configuracao.crop_altura) }, rotacao: Number(item.configuracao.rotacao) });
+    if (item.formato && configuracaoItem && cropValido) {
+      const q = calcularQualidadeFoto({ larguraPx: item.arquivo.largura_px, alturaPx: item.arquivo.altura_px, larguraCm: Number(item.formato.largura_cm) * Number(item.formato.area_foto_largura), alturaCm: Number(item.formato.altura_cm) * Number(item.formato.area_foto_altura), orientacao: item.orientacao, crop: { largura: Number(configuracaoItem.crop_largura), altura: Number(configuracaoItem.crop_altura) }, rotacao: Number(configuracaoItem.rotacao) });
       if (q.dpi !== null && q.dpi < 220) avisos.push(`Foto ${item.ordem + 1}: ${q.dpi} DPI${q.dpi < 150 ? " — qualidade muito baixa" : " — qualidade baixa"}.`);
     }
     return avisos;
