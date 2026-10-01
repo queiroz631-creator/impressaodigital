@@ -28,6 +28,13 @@
 - [x] Autosave atômico, navegação entre fotos e modo somente leitura
 - [x] Verificação em desktop e celular sem alterar dados reais
 
+## FOTO EXPRESS — Etapa 3: textos sobre a foto
+- [x] Inspecionar e evoluir somente os campos ausentes de `foto_express_textos`
+- [x] Implementar camadas de texto independentes por item sobre a área física completa do formato
+- [x] Persistir posição, largura e tamanho normalizados, fonte controlada, estilo, alinhamento, rotação e ordem
+- [x] Implementar controles, arraste, duplicação, exclusão e autosave seguro no editor
+- [x] Validar matemática, permissões, desktop e celular sem criar dados reais de teste
+
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
 - [x] Calculadora/WhatsApp: atalho no topo, seletor antes de Assumir e controle de anotações em aba lateral

@@ -176,6 +176,13 @@
       "when": 1790864781690,
       "tag": "0024_foto_express_salvar_formato_no_editor",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790882722655,
+      "tag": "0025_foto_express_textos_normalizados",
+      "breakpoints": true
     }
   ]
 }

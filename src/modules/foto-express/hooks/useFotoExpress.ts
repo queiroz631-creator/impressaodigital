@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Formato, ItemEditor, ItemGaleria, Trabalho } from "../types";
+import type { Formato, ItemEditor, ItemGaleria, TextoFoto, Trabalho } from "../types";
 
 export function useFormatos(todos = false) {
   return useQuery({
@@ -79,6 +79,23 @@ export function useItemEditor(trabalhoId: string, itemId: string) {
       if (urlError || !url?.signedUrl) throw new Error(urlError?.message ?? "Não foi possível abrir a imagem original.");
       item.originalUrl = url.signedUrl;
       return item;
+    },
+  });
+}
+
+export function useTextosItem(itemId: string) {
+  return useQuery({
+    queryKey: ["foto-express", "textos", itemId],
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("foto_express_textos")
+        .select("*")
+        .eq("item_id", itemId)
+        .order("ordem")
+        .order("id");
+      if (error) throw error;
+      return data as TextoFoto[];
     },
   });
 }

@@ -11,25 +11,28 @@ Adicionar ao editor individual camadas de texto independentes e não destrutivas
 
 ## 2. Modelo e persistência
 - Representar cada texto como uma camada pertencente exclusivamente ao item, mesmo quando itens diferentes compartilham o mesmo arquivo original.
-- Persistir conteúdo como texto puro, posição normalizada, tamanho normalizado, fonte controlada, cor hexadecimal, negrito, itálico, alinhamento, rotação e ordem da camada.
+- Persistir conteúdo como texto puro, posição normalizada, largura normalizada, tamanho normalizado, identificador estável de fonte, cor hexadecimal, negrito, itálico, alinhamento, rotação e ordem numérica da camada.
 - Criar apenas a migration incremental e não destrutiva necessária para completar a estrutura existente, espelhada na pasta oficial de migrations.
 - Implementar operações seguras de criar, alterar, duplicar, reordenar e excluir texto, validando autenticação, permissão, trabalho, item e propriedade da camada.
 - Usar gravações atômicas e proteção contra uma alteração atingir outro item ou outro texto; qualquer função privilegiada terá `search_path` seguro e validação explícita do usuário.
 
 ## 3. Convenção matemática
-- Usar como sistema canônico a área final de impressão, independente da transformação e dos pixels do arquivo original.
+- Usar como sistema canônico a área física completa do formato, independente da transformação, da área ocupada pela fotografia e dos pixels do arquivo original, preparando formatos futuros como Polaroid sem implementá-los nesta etapa.
 - Definir `posicao_x` e `posicao_y` entre 0 e 1 como o centro da caixa do texto: `(0,0)` no canto superior esquerdo, `(0.5,0.5)` no centro e `(1,1)` no canto inferior direito.
 - Persistir o tamanho como proporção da altura da área de impressão; converter para pixels apenas na apresentação.
-- Converter uma camada para qualquer saída com: centro `(x × largura, y × altura)` e tamanho `tamanho_normalizado × altura`, aplicando depois alinhamento e rotação.
+- Persistir `largura_normalizada` como proporção da largura total da área de impressão, tornando quebra de linha e alinhamento reproduzíveis.
+- Converter uma camada para qualquer saída com: centro `(x × largura, y × altura)`, largura da caixa `largura_normalizada × largura` e tamanho `tamanho_normalizado × altura`; compor o texto dentro dessa caixa com o alinhamento persistido e aplicar a rotação em torno do centro da caixa.
 - Manter foto e textos em sistemas independentes: alterar enquadramento, formato ou crop não modifica automaticamente a posição dos textos.
+- Mudanças de formato ou orientação preservam todos os valores normalizados e recalculam apenas sua representação física.
 - Limitar a âncora à área `[0,1]`, permitir corte visual parcial pela moldura e impedir que a camada fique completamente inacessível.
 
 ## 4. Interface do editor
 - Adicionar a ação **Adicionar texto**, criando uma camada central selecionada com o conteúdo inicial “Digite seu texto”.
 - Permitir múltiplas camadas, seleção direta na foto, edição de conteúdo com múltiplas linhas e limite seguro de caracteres.
-- Criar controles separados para fonte, tamanho, cor, cores rápidas, negrito, itálico, alinhamento e rotação.
+- Criar controles separados para fonte, largura da caixa, tamanho, cor, cores rápidas, negrito, itálico, alinhamento e rotação.
+- Manter um catálogo central entre identificadores controlados e estáveis de fonte e as fontes utilizadas no preview; nunca persistir `font-family` arbitrária do navegador.
 - Usar inicialmente rotações controladas de 0°, 90°, 180° e 270° para manter a etapa previsível.
-- Permitir arrastar a camada com mouse ou toque, duplicar, excluir com proteção adequada e controlar uma ordem simples e determinística.
+- Permitir arrastar a camada com mouse ou toque, duplicar, excluir com proteção adequada e controlar uma ordem numérica simples e determinística; todos os textos ficam acima da fotografia.
 - Destacar discretamente a camada selecionada sem persistir a seleção.
 - Manter o botão de redefinição da foto separado: redefinir a foto nunca remove nem redefine textos.
 
