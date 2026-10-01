@@ -199,3 +199,94 @@ export const salvarEdicaoFotoExpress = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { salvoEm };
   });
+
+const identificacaoTextoSchema = z.object({
+  trabalhoId: z.string().uuid(),
+  itemId: z.string().uuid(),
+});
+
+const textoSchema = identificacaoTextoSchema.extend({
+  textoId: z.string().uuid(),
+  conteudo: z.string().max(500),
+  posicaoX: z.number().min(0).max(1),
+  posicaoY: z.number().min(0).max(1),
+  larguraNormalizada: z.number().positive().max(1),
+  tamanhoNormalizado: z.number().positive().max(1),
+  fonteId: z.enum(["SANS", "SERIF", "MONO", "DECORATIVA"]),
+  cor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+  alinhamento: z.enum(["ESQUERDA", "CENTRO", "DIREITA"]),
+  negrito: z.boolean(),
+  italico: z.boolean(),
+  rotacao: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]),
+  versao: z.number().int().positive(),
+});
+
+export const criarTextoFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => identificacaoTextoSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: texto, error } = await context.supabase.rpc("foto_express_criar_texto", {
+      _trabalho_id: data.trabalhoId,
+      _item_id: data.itemId,
+    });
+    if (error) throw new Error(error.message);
+    return texto;
+  });
+
+export const salvarTextoFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => textoSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: texto, error } = await context.supabase.rpc("foto_express_salvar_texto", {
+      _trabalho_id: data.trabalhoId,
+      _item_id: data.itemId,
+      _texto_id: data.textoId,
+      _conteudo: data.conteudo,
+      _posicao_x: data.posicaoX,
+      _posicao_y: data.posicaoY,
+      _largura_normalizada: data.larguraNormalizada,
+      _tamanho_normalizado: data.tamanhoNormalizado,
+      _fonte_id: data.fonteId,
+      _cor: data.cor,
+      _alinhamento: data.alinhamento,
+      _negrito: data.negrito,
+      _italico: data.italico,
+      _rotacao: data.rotacao,
+      _versao_esperada: data.versao,
+    });
+    if (error) throw new Error(error.message);
+    return texto;
+  });
+
+const textoAcaoSchema = identificacaoTextoSchema.extend({ textoId: z.string().uuid() });
+
+export const duplicarTextoFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => textoAcaoSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: texto, error } = await context.supabase.rpc("foto_express_duplicar_texto", {
+      _trabalho_id: data.trabalhoId, _item_id: data.itemId, _texto_id: data.textoId,
+    });
+    if (error) throw new Error(error.message);
+    return texto;
+  });
+
+export const excluirTextoFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => textoAcaoSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("foto_express_excluir_texto", {
+      _trabalho_id: data.trabalhoId, _item_id: data.itemId, _texto_id: data.textoId,
+    });
+    if (error) throw new Error(error.message);
+  });
+
+export const moverTextoFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => textoAcaoSchema.extend({ direcao: z.union([z.literal(-1), z.literal(1)]) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("foto_express_mover_texto", {
+      _trabalho_id: data.trabalhoId, _item_id: data.itemId, _texto_id: data.textoId, _direcao: data.direcao,
+    });
+    if (error) throw new Error(error.message);
+  });
