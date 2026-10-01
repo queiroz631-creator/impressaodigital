@@ -14,3 +14,6 @@ Ao abrir um trabalho, cada foto com formato definido será mostrada na proporç�
 - Conferir fotos em retrato e paisagem, incluindo rotação, espelhamento e os modos Preencher/Ajustar.
 - Validar a galeria em tela grande e celular.
 - Confirmar compilação sem erros e sem alterar dados, dependências ou banco.
+
+## Estado
+- Implementado.
