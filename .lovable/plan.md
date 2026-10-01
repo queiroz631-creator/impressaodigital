@@ -1,74 +1,81 @@
-# FOTO EXPRESS — Etapa 3: textos sobre a foto
+# FOTO EXPRESS — Etapa 4: revisão e montagem automática
 
 ## Objetivo
-Adicionar ao editor individual camadas de texto independentes e não destrutivas, vinculadas ao item da foto e reproduzíveis em qualquer resolução futura, sem alterar o original.
+Adicionar ao trabalho o fluxo **Revisar impressão → configurar papel → montar automaticamente → visualizar folhas**, produzindo um plano físico reproduzível, sem gerar PDF/JPG/TIFF e sem alterar originais ou edições existentes.
 
-## 1. Inspeção obrigatória antes da execução
-- Revisar a tabela existente `foto_express_textos`, seus campos, relacionamento com itens, ordenação, regras de acesso e permissões.
-- Confirmar quais propriedades já estão disponíveis e evoluir a tabela existente somente quando necessário.
-- Revisar o editor da Etapa 2 e seus padrões de autosave, permissões, modo somente leitura e interação por toque.
-- Não criar tabela paralela nem alterar migrations antigas.
+## Situação atual confirmada
+- Itens já possuem formato, quantidade, orientação, configuração não destrutiva e textos normalizados.
+- Formatos usam largura e altura físicas em centímetros, mas ainda não distinguem peça externa de área interna da fotografia.
+- Não existem hoje tabelas de revisão, configuração do papel, folhas ou ocorrências posicionadas.
+- O editor e a galeria renderizam a fotografia sobre a peça inteira; precisarão respeitar a área interna configurada.
+- As permissões existentes distinguem visualização e edição do trabalho.
+- Há um formato real chamado **Polaroid**, 7 × 10 cm. Ele será preservado, sem conversão ou sobrescrita automática.
 
-## 2. Modelo e persistência
-- Representar cada texto como uma camada pertencente exclusivamente ao item, mesmo quando itens diferentes compartilham o mesmo arquivo original.
-- Persistir conteúdo como texto puro, posição normalizada, largura normalizada, tamanho normalizado, identificador estável de fonte, cor hexadecimal, negrito, itálico, alinhamento, rotação e ordem numérica da camada.
-- Criar apenas a migration incremental e não destrutiva necessária para completar a estrutura existente, espelhada na pasta oficial de migrations.
-- Implementar operações seguras de criar, alterar, duplicar, reordenar e excluir texto, validando autenticação, permissão, trabalho, item e propriedade da camada.
-- Usar gravações atômicas e proteção contra uma alteração atingir outro item ou outro texto; qualquer função privilegiada terá `search_path` seguro e validação explícita do usuário.
+## Implementação
 
-## 3. Convenção matemática
-- Usar como sistema canônico a área física completa do formato, independente da transformação, da área ocupada pela fotografia e dos pixels do arquivo original, preparando formatos futuros como Polaroid sem implementá-los nesta etapa.
-- Definir `posicao_x` e `posicao_y` entre 0 e 1 como o centro da caixa do texto: `(0,0)` no canto superior esquerdo, `(0.5,0.5)` no centro e `(1,1)` no canto inferior direito.
-- Persistir o tamanho como proporção da altura da área de impressão; converter para pixels apenas na apresentação.
-- Persistir `largura_normalizada` como proporção da largura total da área de impressão, tornando quebra de linha e alinhamento reproduzíveis.
-- Converter uma camada para qualquer saída com: centro `(x × largura, y × altura)`, largura da caixa `largura_normalizada × largura` e tamanho `tamanho_normalizado × altura`; compor o texto dentro dessa caixa com o alinhamento persistido e aplicar a rotação em torno do centro da caixa.
-- Manter foto e textos em sistemas independentes: alterar enquadramento, formato ou crop não modifica automaticamente a posição dos textos.
-- Mudanças de formato ou orientação preservam todos os valores normalizados e recalculam apenas sua representação física.
-- Limitar a âncora à área `[0,1]`, permitir corte visual parcial pela moldura e impedir que a camada fique completamente inacessível.
+### 1. Modelo físico dos formatos
+- Evoluir `foto_express_formatos` de forma incremental para representar genericamente:
+  - dimensões externas da peça, mantendo as dimensões atuais como fonte física;
+  - área interna da fotografia por coordenadas normalizadas `x`, `y`, `largura` e `altura`;
+  - fundo da peça, inicialmente branco para formatos especiais.
+- Formatos comuns receberão área interna equivalente a 100% da peça.
+- Preservar o formato Polaroid atual e permitir parametrizar sua área interna na tela de Formatos.
+- Preparar variantes **Polaroid Vertical** e **Polaroid Horizontal** configuráveis, sem inventar medidas definitivas; somente formatos com dimensões e área interna válidas poderão entrar na montagem.
+- Atualizar editor, miniaturas e previews para restringir a fotografia à área interna, mantendo os textos relativos à peça externa completa.
 
-## 4. Interface do editor
-- Adicionar a ação **Adicionar texto**, criando uma camada central selecionada com o conteúdo inicial “Digite seu texto”.
-- Permitir múltiplas camadas, seleção direta na foto, edição de conteúdo com múltiplas linhas e limite seguro de caracteres.
-- Criar controles separados para fonte, largura da caixa, tamanho, cor, cores rápidas, negrito, itálico, alinhamento e rotação.
-- Manter um catálogo central entre identificadores controlados e estáveis de fonte e as fontes utilizadas no preview; nunca persistir `font-family` arbitrária do navegador.
-- Usar inicialmente rotações controladas de 0°, 90°, 180° e 270° para manter a etapa previsível.
-- Permitir arrastar a camada com mouse ou toque, duplicar, excluir com proteção adequada e controlar uma ordem numérica simples e determinística; todos os textos ficam acima da fotografia.
-- Destacar discretamente a camada selecionada sem persistir a seleção.
-- Manter o botão de redefinição da foto separado: redefinir a foto nunca remove nem redefine textos.
+### 2. Persistência atômica do plano
+Criar estruturas específicas e protegidas para:
+- **configuração de impressão**: trabalho, papel A4/A3, orientação automática/retrato/paisagem, quatro margens em mm, espaçamento em mm, permissão de giro, versão, assinatura determinística e estado;
+- **folhas**: revisão do plano, índice da folha, dimensões físicas e orientação escolhida;
+- **ocorrências**: folha, item, índice da cópia, posição `x/y`, largura/altura e rotação física, tudo em milímetros.
 
-## 5. Preview e uso em celular
-- Reproduzir conteúdo, posição, tamanho, fonte, cor, estilos, alinhamento, rotação, corte e ordem em qualquer tamanho do editor.
-- Separar os gestos: arrastar texto não move a foto nem a página; arrastar foto não move texto.
-- Oferecer no celular acesso confortável à seleção, conteúdo, tamanho, cor, movimentação e exclusão.
-- Usuários somente leitura visualizam o resultado completo, sem controles de alteração.
-- Manter o cálculo de DPI exclusivamente baseado no original e no crop; textos não interferem na qualidade fotográfica.
+Uma função autenticada salvará configuração, folhas e ocorrências na mesma transação, validando permissão, vínculo de todos os itens ao trabalho, quantidades, formatos e limites físicos. Leitura seguirá `foto_express.visualizar`; gravação exigirá `foto_express.trabalhos.editar`. As novas tabelas terão GRANTs, RLS, índices e políticas na mesma migration.
 
-## 6. Autosave e estados
-- Atualizar localmente durante o arraste e persistir ao terminar a interação.
-- Aplicar debounce aos controles contínuos, evitando gravação a cada pixel.
-- Exibir os estados **Salvando...**, **Salvo** e **Erro ao salvar**.
-- Em erro, preservar o estado local e oferecer nova tentativa sem afirmar que a alteração foi salva.
+### 3. Motor matemático independente da interface
+- Criar biblioteca pura, sem dependência do React, com conversões centralizadas entre cm, mm e pixels de preview.
+- Expandir cada item em ocorrências conforme `quantidade`, sem duplicar item ou arquivo.
+- Implementar posicionamento determinístico por tamanho/área e preenchimento em linhas, avaliando giro de 90° da peça quando permitido.
+- Para orientação automática do papel, calcular retrato e paisagem e escolher deterministicamente o melhor resultado por: menos folhas, maior aproveitamento e critério estável de desempate.
+- Nunca reduzir peças; retornar erro detalhado quando uma peça não couber na área útil.
+- Garantir margens, espaçamento, ausência de sobreposição e tamanho físico original.
+- Calcular aproveitamento como `área total das peças ÷ área útil total das folhas × 100`.
 
-## 7. Organização
-- Separar apresentação das camadas, painel de controles, lista/ordenação, matemática normalizada e operações de persistência.
-- Integrar esses módulos ao editor atual sem concentrar toda a implementação no componente principal.
-- Não alterar a convenção matemática já aprovada para zoom, posição, rotação, orientação, modo e crop da foto.
+### 4. Revisão do trabalho
+Criar uma rota própria acessível pela Galeria com:
+- número e cliente;
+- total de fotos e cópias;
+- agrupamento por formato e orientação;
+- qualidade/DPI e contagens por faixa;
+- quantidade, textos e estado de edição por foto;
+- avisos para DPI abaixo de 220/150, formato ausente, configuração incompleta, imagem indisponível, quantidade inválida e inconsistências.
 
-## 8. Validação sem dados reais
-- Criar testes matemáticos locais para retrato, paisagem, diferentes proporções, múltiplas linhas, alinhamentos, rotações e redimensionamento.
-- Comparar previews proporcionais em 400×600, 1200×1800 e 2400×3600, garantindo reconstrução equivalente.
-- Validar por inspeção a segurança, os vínculos e o isolamento entre itens que compartilham o mesmo original.
-- Verificar abertura, apresentação, controles, modo somente leitura, desktop, celular e compilação sem gravar dados reais.
-- Classificar como **não validado funcionalmente** tudo que depender de escrita real, incluindo autosave após recarregar, concorrência e independência persistida entre itens duplicados.
+Baixa qualidade será apenas informativa. Problemas estruturais impedirão a montagem e oferecerão atalhos para a Galeria ou o Editor da foto afetada.
 
-## 9. Limites desta entrega
-- Não alterar o original nem criar imagem física editada.
-- Não implementar montagem, papel, margens, impressão, renderização final, PDF/JPG/TIFF, portal, pagamento, filtros ou efeitos avançados.
-- Não tratar arquivos órfãos, MIME dos buckets ou provisionamento da VPS.
-- Não atualizar dependências nem lockfiles; se uma dependência parecer indispensável, apenas documentar e aguardar autorização.
-- Não criar ou modificar dados reais para testes, não publicar e não iniciar a Etapa 4.
+### 5. Configuração e preview das folhas
+- Disponibilizar A4 e A3 com dimensões físicas conhecidas, orientação retrato/paisagem/automática, margens independentes, espaçamento único e opção de girar peças.
+- Recalcular localmente ao mudar controles; persistir somente ao confirmar a montagem.
+- Exibir folhas proporcionais, margens, peças, espaçamento, identificação de foto/formato/cópia e navegação entre folhas.
+- Cada peça reproduzirá thumbnail, enquadramento, orientação, rotação, espelhamentos, textos e fundo/área interna do formato, sem carregar todos os originais.
+- Mostrar folhas, peças, peças por folha, área útil, área ocupada e aproveitamento.
+- Em celular, organizar controles verticalmente e escalar apenas a representação visual, nunca as medidas persistidas.
+- Usuários somente leitura poderão consultar revisão e plano salvo, sem alterar ou regenerar.
 
-## Entrega final
-- Relatar a estrutura encontrada, migrations e arquivos alterados, componentes, fontes disponíveis, convenções matemáticas, autosave, segurança e testes.
-- Separar claramente o que foi comprovado funcionalmente, validado apenas por inspeção e não validado funcionalmente.
-- Confirmar expressamente a preservação do original, ausência de novos arquivos físicos, ausência de mudanças em dependências, ausência de dados reais de teste e ausência de publicação.
+### 6. Invalidação e reabertura
+- Gerar uma assinatura determinística a partir dos dados que afetam a montagem: itens, quantidades, formatos, orientação, edição, textos e configuração do papel.
+- Comparar a assinatura atual com a persistida para exibir **Montagem desatualizada**.
+- Reabrir um trabalho deverá reproduzir exatamente folhas e posições salvas enquanto a assinatura permanecer válida.
+- Mudanças posteriores não apagarão silenciosamente o plano anterior; ele ficará marcado para regeneração.
+
+## Validação
+- Testes matemáticos locais com A4/A3, retrato/paisagem, formatos 10×15, 15×20, 20×30, 5×7, mistos e formato com área interna; quantidades variadas; margens 0/3/5/10 mm; espaçamentos 0/2/5 mm; giro ligado/desligado.
+- Verificar determinismo, limites, margens, espaçamento, sobreposição, tamanho físico, abertura de folhas, peça que não cabe, cálculo de aproveitamento e conversão futura `mm / 25,4 × DPI`.
+- Testar matematicamente área externa/interna, bordas, orientação e textos dos formatos especiais.
+- Validar visualmente revisão e preview em desktop e celular, sem persistir alterações em trabalhos reais.
+- Classificar no relatório final o que foi funcionalmente comprovado, tecnicamente validado e não validado funcionalmente.
+
+## Restrições
+- Não gerar arquivos finais, renderização em 300 DPI, download, impressão ou editor manual das peças.
+- Não tratar órfãos antigos, MIME ou provisionamento da VPS.
+- Não atualizar dependências ou lockfiles, não publicar e não iniciar a Etapa 5.
+- Não criar ou modificar dados reais apenas para testes.
+- Espelhar toda migration oficial em `supabase/migrations/`, mantendo SQL idêntico e ordem cronológica.
