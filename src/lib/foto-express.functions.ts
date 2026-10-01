@@ -13,6 +13,14 @@ type LimpezaStorage = {
 
 async function executarLimpezaStorage(limpeza: LimpezaStorage) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: arquivoAtivo, error: erroReferencia } = await supabaseAdmin
+    .from("foto_express_arquivos")
+    .select("id")
+    .or(`original_path.eq.${limpeza.original_path},thumbnail_path.eq.${limpeza.thumbnail_path}`)
+    .limit(1)
+    .maybeSingle();
+  if (erroReferencia) return [`Verificação da referência: ${erroReferencia.message}`];
+  if (arquivoAtivo) return ["A limpeza foi mantida pendente porque o arquivo ainda está em uso."];
   const [original, thumbnail] = await Promise.all([
     supabaseAdmin.storage.from(limpeza.original_bucket).remove([limpeza.original_path]),
     supabaseAdmin.storage.from(limpeza.thumbnail_bucket).remove([limpeza.thumbnail_path]),
