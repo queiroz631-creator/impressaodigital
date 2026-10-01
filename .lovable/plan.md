@@ -17,19 +17,23 @@ Adicionar o editor individual de cada item da Galeria, preservando integralmente
 - Exibir uma moldura com a proporção física do formato escolhido, incluindo dimensões personalizadas e orientação retrato/paisagem.
 - Permitir arrastar com mouse ou toque, zoom suave por slider e botões, rotação de 90°, espelhamento horizontal/vertical e redefinição.
 - Implementar **Preencher** como padrão, sem áreas vazias, e **Ajustar**, permitindo mostrar a foto inteira e sinalizando visualmente as áreas não ocupadas.
+- No modo **Ajustar**, manter em `0` a posição normalizada de qualquer eixo sem área excedente; permitir deslocamento somente no eixo que possuir overflow após todas as transformações.
 - Impedir que o gesto dentro da área de edição mova a página no celular, sem afetar a navegação fora dela.
 - Oferecer modo somente leitura quando o usuário puder visualizar, mas não tiver `foto_express.trabalhos.editar`; o banco continuará sendo a autoridade da permissão.
 
 ### 3. Matemática reutilizável
 - Separar dos componentes a lógica de proporção, escala-base, rotação, limites de deslocamento, espelhamento, crop e DPI.
-- Definir `zoom` como multiplicador da escala-base do modo selecionado.
-- Persistir `posicao_x` e `posicao_y` normalizados, independentes dos pixels da tela: `0` representa o centro e os extremos representam os limites válidos do deslocamento.
-- Persistir `crop_x`, `crop_y`, `crop_largura` e `crop_altura` como retângulo normalizado no original, em valores de `0` a `1`, derivado do enquadramento visível.
+- Definir `zoom` como multiplicador da escala-base do modo atual: `zoom = 1` representa exatamente a escala-base de **Preencher** ou **Ajustar**, nunca uma escala em pixels da interface.
+- Persistir `posicao_x` e `posicao_y` normalizados, independentes dos pixels da tela: `0` representa o centro e os extremos representam os limites válidos do deslocamento. Em eixos sem overflow, persistir sempre `0`.
+- Usar `zoom`, posição, rotação, orientação e modo de ajuste como representação canônica da edição. Não haverá controle independente de crop nesta etapa.
+- Derivar `crop_x`, `crop_y`, `crop_largura` e `crop_altura` do enquadramento resultante, como retângulo normalizado de `0` a `1` no sistema de coordenadas do arquivo original, com origem no canto superior esquerdo do original.
+- Para rotações de 90° e 270°, calcular o enquadramento no espaço visual rotacionado e aplicar a transformação inversa para persistir o retângulo nas coordenadas do original. Espelhamentos alteram a transformação visual, mas não mudam a origem do sistema persistido.
 - Recalcular e limitar o enquadramento após zoom, rotação, orientação, modo de ajuste e mudança de tamanho da tela.
 - Manter essa matemática reutilizável para uma futura renderização em alta resolução, que aplicará os mesmos parâmetros ao original.
 
 ### 4. Qualidade a 300 DPI
 - Evoluir o cálculo atual para usar exclusivamente as dimensões do arquivo original, o tamanho físico, a orientação, a rotação e a região efetivamente utilizada.
+- Calcular os pixels efetivos pelo crop normalizado no original: `pixels_largura = largura_original × crop_largura` e `pixels_altura = altura_original × crop_altura`. Após rotação de 90°/270°, trocar os eixos para compará-los às dimensões físicas já orientadas. O resultado será `floor(min(pixels_largura_visual / (largura_cm_visual / 2,54), pixels_altura_visual / (altura_cm_visual / 2,54)))`.
 - Manter as faixas atuais: Excelente a partir de 300 DPI, Boa de 220 a 299, Baixa de 150 a 219 e Muito baixa abaixo de 150.
 - Atualizar o resultado em tempo real e exibir aviso informativo abaixo de 220 DPI, com maior destaque abaixo de 150 DPI.
 - Preservar compatibilidade com o indicador já exibido na Galeria.
