@@ -33,7 +33,7 @@ function criarCanvas(largura: number, altura: number) {
   return canvas;
 }
 
-function renderizarPeca(item: ManifestoItem, bitmap: ImageBitmap, larguraPx: number, alturaPx: number) {
+export function renderizarPeca(item: ManifestoItem, bitmap: ImageBitmap, larguraPx: number, alturaPx: number) {
   const canvas = criarCanvas(larguraPx, alturaPx);
   const contexto = canvas.getContext("2d", { alpha: false });
   if (!contexto) throw new Error("Não foi possível preparar a peça para impressão.");
@@ -82,9 +82,9 @@ export async function renderizarFolha(manifesto: ManifestoGeracao, folha: Manife
       const largura = Math.round(mmParaPixels(Number(ocorrencia.largura_mm), DPI_IMPRESSAO));
       const altura = Math.round(mmParaPixels(Number(ocorrencia.altura_mm), DPI_IMPRESSAO));
       const dimensoes = dimensoesPeca(item);
-      const pecaW = ocorrencia.rotacao_folha === 90 ? altura : largura;
-      const pecaH = ocorrencia.rotacao_folha === 90 ? largura : altura;
-      const peca = renderizarPeca(item, bitmap, pecaW, pecaH);
+      const larguraNatural = Math.round(mmParaPixels(dimensoes.largura * 10, DPI_IMPRESSAO));
+      const alturaNatural = Math.round(mmParaPixels(dimensoes.altura * 10, DPI_IMPRESSAO));
+      const peca = renderizarPeca(item, bitmap, larguraNatural, alturaNatural);
       const x = Math.round(mmParaPixels(Number(ocorrencia.x_mm), DPI_IMPRESSAO));
       const y = Math.round(mmParaPixels(Number(ocorrencia.y_mm), DPI_IMPRESSAO));
       contexto.save();
@@ -93,7 +93,6 @@ export async function renderizarFolha(manifesto: ManifestoGeracao, folha: Manife
       } else contexto.drawImage(peca, x, y, largura, altura);
       contexto.restore();
       peca.width = 1; peca.height = 1;
-      void dimensoes;
     }
     return folhaCanvas;
   } finally {

@@ -102,6 +102,19 @@ export type PreparacaoGeracao = {
 export function validarManifesto(valor: Json): ManifestoGeracao {
   if (!valor || Array.isArray(valor) || typeof valor !== "object") throw new Error("Manifesto de geração inválido.");
   const manifesto = valor as unknown as ManifestoGeracao;
-  if (manifesto.versao_manifesto !== 1 || !Array.isArray(manifesto.folhas) || !Array.isArray(manifesto.itens)) throw new Error("Versão do manifesto incompatível.");
+  if (manifesto.versao_manifesto !== 1 || !Array.isArray(manifesto.folhas) || !manifesto.folhas.length || !Array.isArray(manifesto.itens) || !manifesto.itens.length) throw new Error("Versão do manifesto incompatível.");
+  const itens = new Map(manifesto.itens.map((entrada) => [entrada.item.id, entrada]));
+  const copias = new Set<string>();
+  for (const folha of manifesto.folhas) {
+    if (!Number.isFinite(Number(folha.numero)) || Number(folha.numero) < 1 || Number(folha.largura_mm) <= 0 || Number(folha.altura_mm) <= 0 || !Array.isArray(folha.ocorrencias)) throw new Error("Folha inválida no manifesto.");
+    for (const ocorrencia of folha.ocorrencias) {
+      const item = itens.get(ocorrencia.item_id);
+      const chave = `${ocorrencia.item_id}:${ocorrencia.indice_copia}`;
+      if (!item || copias.has(chave) || ocorrencia.indice_copia < 1 || ocorrencia.indice_copia > Number((item.item as { quantidade?: number }).quantidade ?? 0) || ![0, 90].includes(Number(ocorrencia.rotacao_folha))) throw new Error("Ocorrência inválida no manifesto.");
+      copias.add(chave);
+    }
+  }
+  const total = manifesto.itens.reduce((soma, entrada) => soma + Number((entrada.item as { quantidade?: number }).quantidade ?? 0), 0);
+  if (copias.size !== total) throw new Error("O manifesto não contém todas as cópias esperadas.");
   return manifesto;
 }
