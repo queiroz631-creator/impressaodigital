@@ -102,7 +102,7 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   const estado = estadoSalvar === "SALVANDO" ? "Salvando" : estadoSalvar === "ERRO" ? "Erro ao salvar" : estadoSalvar === "PENDENTE" ? "Alterações pendentes" : "Salvo";
 
   return <div className="space-y-5 p-4 sm:p-6">
-    <PageHeader title="Editar foto" description={item.arquivo.nome_original} actions={<Button variant="outline" asChild><Link to="/foto-express/$id/fotos" params={{ id: trabalhoId }}><ArrowLeft className="mr-2 h-4 w-4" />Galeria</Link></Button>} />
+    <div className="flex flex-wrap items-start justify-between gap-3"><PageHeader titulo="Editar foto" subtitulo={item.arquivo.nome_original} /><Button variant="outline" asChild><Link to="/foto-express/$id/fotos" params={{ id: trabalhoId }}><ArrowLeft className="mr-2 h-4 w-4" />Galeria</Link></Button></div>
     {!podeEditar && <Alert><CloudOff className="h-4 w-4" /><AlertTitle>Somente leitura</AlertTitle><AlertDescription>Você pode visualizar esta edição, mas não alterá-la.</AlertDescription></Alert>}
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-4"><AreaEdicao url={imagemFalhou ? "" : item.originalUrl ?? ""} nome={item.arquivo.nome_original} original={{ largura: item.arquivo.largura_px, altura: item.arquivo.altura_px }} proporcao={formatoCm.largura / formatoCm.altura} edicao={edicao} somenteLeitura={!podeEditar} onChange={alterarEdicao} onCommit={pedirSalvar} onImageError={() => setImagemFalhou(true)} />
