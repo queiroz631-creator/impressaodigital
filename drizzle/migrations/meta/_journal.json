@@ -218,6 +218,13 @@
       "when": 1790891135993,
       "tag": "0030_foto_express_concluir_geracao_atomica",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790891178419,
+      "tag": "0031_foto_express_invalidar_snapshot_fontes",
+      "breakpoints": true
     }
   ]
 }
