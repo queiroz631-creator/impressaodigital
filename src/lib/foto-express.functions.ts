@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type LimpezaStorage = {
   limpeza_id: string;
+  arquivo_id?: string | null;
   original_bucket: string;
   original_path: string;
   thumbnail_bucket: string;
@@ -52,6 +53,7 @@ async function reprocessarLimpezasPendentes(limite = 10) {
     (data ?? []).map((item) =>
       executarLimpezaStorage({
         limpeza_id: item.id,
+        arquivo_id: item.arquivo_id,
         original_bucket: item.original_bucket,
         original_path: item.original_path,
         thumbnail_bucket: item.thumbnail_bucket,
