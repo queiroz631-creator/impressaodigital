@@ -4387,6 +4387,10 @@ export type Database = {
         Args: { _etapa: string; _geracao_id: string }
         Returns: undefined
       }
+      foto_express_concluir_geracao: {
+        Args: { _arquivos: Json; _geracao_id: string }
+        Returns: undefined
+      }
       foto_express_criar_texto: {
         Args: { _item_id: string; _trabalho_id: string }
         Returns: {

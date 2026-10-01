@@ -211,6 +211,13 @@
       "when": 1790891113063,
       "tag": "0029_foto_express_endurecer_geracao_final",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1790891135993,
+      "tag": "0030_foto_express_concluir_geracao_atomica",
+      "breakpoints": true
     }
   ]
 }
