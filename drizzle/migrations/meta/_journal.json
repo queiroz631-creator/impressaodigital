@@ -148,6 +148,13 @@
       "when": 1790735827072,
       "tag": "0020_sistema_chave_backup",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790830252958,
+      "tag": "0021_foto_express_primeira_entrega",
+      "breakpoints": true
     }
   ]
 }
