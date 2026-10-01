@@ -53,7 +53,7 @@ export function useItensGaleria(trabalhoId: string) {
       const itens = data as unknown as ItemGaleria[];
       await Promise.all(itens.map(async (item) => {
         const { data: url } = await supabase.storage.from(item.arquivo.thumbnail_bucket).createSignedUrl(item.arquivo.thumbnail_path, 3600);
-        item.thumbnailUrl = url?.signedUrl;
+        if (url?.signedUrl) item.thumbnailUrl = url.signedUrl;
       }));
       return itens;
     },

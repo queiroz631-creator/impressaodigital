@@ -4,7 +4,6 @@ import {
   DollarSign,
   FileText,
   FileUser,
-  FolderOpen,
   Gift,
   Megaphone,
   MessageCircle,
