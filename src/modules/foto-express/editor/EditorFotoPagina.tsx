@@ -85,7 +85,13 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   const redefinir = () => { setEdicao(EDICAO_INICIAL); setOrientacao("AUTOMATICA"); marcarAlterado(); window.setTimeout(executarSalvar, 0); };
   const navegarPara = async (destino: string | undefined) => {
     if (!destino) return;
-    if (estadoSalvar === "PENDENTE" || estadoSalvar === "ERRO") executarSalvar();
+    if ((estadoSalvar === "PENDENTE" || estadoSalvar === "ERRO") && podeEditar) {
+      try {
+        await mutation.mutateAsync({ revisao: revisaoRef.current, dados: { edicao, orientacao } });
+      } catch {
+        return;
+      }
+    }
     await navigate({ to: "/foto-express/$trabalhoId/fotos/$itemId/editar", params: { trabalhoId, itemId: destino } });
   };
 
