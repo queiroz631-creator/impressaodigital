@@ -1,43 +1,64 @@
-# Correção pontual da Galeria do FOTO EXPRESS
+# FOTO EXPRESS — Etapa 2: editor não destrutivo
 
 ## Objetivo
-Restabelecer a abertura da Galeria sem remover a proteção de integridade já criada, impedir carregamento infinito em caso de falha e concluir a auditoria dos arquivos sem item e dos tipos MIME. Nenhum dado existente, objeto, dependência ou funcionalidade fora deste fluxo será alterado.
+Adicionar o editor individual de cada item da Galeria, preservando integralmente o arquivo original e salvando somente parâmetros reproduzíveis de edição.
 
-## Correções
+## Escopo da entrega
 
-1. **Eliminar a ambiguidade PGRST201**
-   - Ajustar a consulta dos itens para indicar explicitamente `foto_express_itens_arquivo_trabalho_fkey` no relacionamento com `foto_express_arquivos`.
-   - Manter intactas tanto a FK simples quanto a FK composta que garante `item.trabalho_id = arquivo.trabalho_id`.
-   - Revisar as demais consultas do módulo; a busca atual da Galeria é o único embed encontrado entre essas duas tabelas.
+### 1. Entrada e navegação
+- Adicionar a ação **Editar** em cada foto da Galeria.
+- Criar a rota `/foto-express/$trabalhoId/fotos/$itemId/editar`, com metadados próprios e proteção por `foto_express.visualizar`.
+- Carregar somente o item atual, seu arquivo, formato, configuração e uma URL temporária da imagem privada.
+- Validar que o item pertence ao trabalho informado; tratar item ausente, falha de consulta, imagem indisponível e expiração da URL com opção de tentar novamente.
+- Incluir **Anterior**, **Próxima** e **Voltar para Galeria**, respeitando a ordem atual dos itens e resolvendo alterações pendentes antes da navegação.
 
-2. **Tratar falhas da Galeria**
-   - Usar os estados de erro e recarregamento já fornecidos pela consulta.
-   - Encerrar “Carregando galeria…” quando houver falha.
-   - Exibir uma mensagem clara e um botão “Tentar novamente”, sem esconder os controles normais quando a consulta funcionar.
+### 2. Área de edição
+- Criar componentes separados para a área da foto, controles, qualidade, estado de salvamento e navegação.
+- Exibir uma moldura com a proporção física do formato escolhido, incluindo dimensões personalizadas e orientação retrato/paisagem.
+- Permitir arrastar com mouse ou toque, zoom suave por slider e botões, rotação de 90°, espelhamento horizontal/vertical e redefinição.
+- Implementar **Preencher** como padrão, sem áreas vazias, e **Ajustar**, permitindo mostrar a foto inteira e sinalizando visualmente as áreas não ocupadas.
+- Impedir que o gesto dentro da área de edição mova a página no celular, sem afetar a navegação fora dela.
+- Oferecer modo somente leitura quando o usuário puder visualizar, mas não tiver `foto_express.trabalhos.editar`; o banco continuará sendo a autoridade da permissão.
 
-3. **Auditoria sem limpeza automática**
-   - Documentar os seis arquivos sem item: ID, trabalho, criação, caminhos, existência do original e thumbnail e referências indiretas.
-   - Informar que os seis pertencem ao trabalho #000001, seus 12 objetos físicos existem e não há referências em itens, configurações, textos ou fila de limpeza.
-   - Comparar os horários desses registros com o histórico das correções para classificar, com o devido grau de certeza, se são compatíveis com o fluxo antigo de upload.
-   - Propor saneamento posterior seguro: nova conferência de referências, registro pela fila transacional existente e remoção física somente após autorização explícita. Nada será limpo agora.
+### 3. Matemática reutilizável
+- Separar dos componentes a lógica de proporção, escala-base, rotação, limites de deslocamento, espelhamento, crop e DPI.
+- Definir `zoom` como multiplicador da escala-base do modo selecionado.
+- Persistir `posicao_x` e `posicao_y` normalizados, independentes dos pixels da tela: `0` representa o centro e os extremos representam os limites válidos do deslocamento.
+- Persistir `crop_x`, `crop_y`, `crop_largura` e `crop_altura` como retângulo normalizado no original, em valores de `0` a `1`, derivado do enquadramento visível.
+- Recalcular e limitar o enquadramento após zoom, rotação, orientação, modo de ajuste e mudança de tamanho da tela.
+- Manter essa matemática reutilizável para uma futura renderização em alta resolução, que aplicará os mesmos parâmetros ao original.
 
-4. **Situação dos tipos MIME**
-   - Relatar separadamente os três buckets: todos são privados e conservam os limites de 20 MB, 2 MB e 100 MB; atualmente `allowed_mime_types` está vazio nos três.
-   - Registrar que o repositório contém um script que prevê JPG/PNG/WEBP para originais e thumbnails e nenhum limite de tipo para impressões, e que o deploy da VPS chama esse script.
-   - Não executar o script nem modificar os buckets. Como o estado atual não comprova se ele nunca foi executado ou se a configuração MIME não persistiu, o relatório não afirmará uma causa sem evidência.
+### 4. Qualidade a 300 DPI
+- Evoluir o cálculo atual para usar exclusivamente as dimensões do arquivo original, o tamanho físico, a orientação, a rotação e a região efetivamente utilizada.
+- Manter as faixas atuais: Excelente a partir de 300 DPI, Boa de 220 a 299, Baixa de 150 a 219 e Muito baixa abaixo de 150.
+- Atualizar o resultado em tempo real e exibir aviso informativo abaixo de 220 DPI, com maior destaque abaixo de 150 DPI.
+- Preservar compatibilidade com o indicador já exibido na Galeria.
 
-## Verificação
+### 5. Salvamento automático e integridade
+- Manter o estado local durante arraste e ajustes, salvando ao terminar a interação e também com debounce para controles contínuos.
+- Exibir estados discretos **Salvando**, **Salvo** e **Erro ao salvar**, mantendo a edição local em caso de falha e oferecendo nova tentativa.
+- Salvar configuração, orientação e `status_edicao` de forma atômica, validando no banco a permissão `foto_express.trabalhos.editar` e a correspondência entre item e trabalho.
+- Nunca atualizar `foto_express_arquivos`, nem criar cópias ou versões físicas da imagem.
+- Preservar a independência das configurações de itens duplicados que compartilham o mesmo `arquivo_id`.
 
-- Validar a compilação e os registros de erro sem atualizar pacotes.
-- Abrir o trabalho existente em desktop e celular, sem upload e sem usar ações de alteração, duplicação ou exclusão.
-- Confirmar que a Galeria exibe exatamente os três itens válidos e seus thumbnails.
-- Confirmar que a requisição deixa de retornar PGRST201.
-- Simular a falha de leitura apenas no navegador, interceptando a requisição, para comprovar a mensagem e o botão de nova tentativa sem alterar dados.
-- Conferir que nenhuma outra consulta, dado, objeto, migration, dependência ou configuração foi modificada.
+### 6. Alteração mínima no banco
+A inspeção confirmou que zoom, posição, rotação, crop e espelhamentos já existem. O único dado obrigatório ausente é o modo **Preencher/Ajustar**.
 
-## Arquivos previstos
+- Criar uma migration incremental e não destrutiva na pasta oficial, adicionando `modo_ajuste` a `foto_express_configuracoes`, com padrão `PREENCHER` e validação para `PREENCHER` ou `AJUSTAR`.
+- Incluir na mesma migration uma função autenticada para salvar atomicamente os parâmetros da configuração e a orientação do item.
+- Manter tabelas, FKs, RLS e arquivos existentes; não modificar migrations antigas.
+- Atualizar os tipos gerados pelo fluxo da plataforma, sem editar arquivos gerados manualmente.
 
-- `src/modules/foto-express/hooks/useFotoExpress.ts`
-- `src/modules/foto-express/paginas/GaleriaPagina.tsx`
+### 7. Verificações
+- Verificar compilação, erros de execução e consultas do editor.
+- Testar em desktop e celular: abertura pela Galeria, proporção da moldura, arraste, zoom, rotação, orientação, espelhamentos, reset, navegação, qualidade, carregamento e falhas com nova tentativa.
+- Validar a matemática e a reconstrução de configurações com dados locais controlados.
+- Não criar nem modificar dados reais apenas para testes. A persistência real que não puder ser comprovada sem escrita será identificada no relatório como validação técnica, não funcional.
+- Confirmar que nenhuma dependência ou lockfile foi alterado e que nenhum original foi modificado.
 
-Nenhuma migration, arquivo de dependências, script de provisionamento ou configuração de Storage será alterado.
+## Fora do escopo
+- Textos sobre foto, faixa adicional de miniaturas, montagem de folhas, papel, margens, renderização final, PDF/JPG/TIFF, fila de renderização, portal do cliente, pagamento e compartilhamento.
+- Limpeza dos seis arquivos sem item, alteração dos MIME types, provisionamento de Storage, mudanças em outros módulos e publicação/deploy.
+
+## Entrega final
+Apresentar arquivos criados e alterados, migration aplicada e registrada oficialmente, componentes do editor, convenção matemática, funcionamento do autosave, cálculo de DPI, verificações realizadas e limitações encontradas. Não avançar para outra etapa automaticamente.
