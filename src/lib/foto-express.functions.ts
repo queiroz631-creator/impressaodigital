@@ -383,12 +383,16 @@ export const concluirGeracaoFotoExpress = createServerFn({ method: "POST" })
     const snapshot = geracao.snapshot as Record<string, unknown>;
     const folhas = Array.isArray(snapshot["folhas"]) ? snapshot["folhas"] as Array<{ numero: number; largura_mm: number; altura_mm: number }> : [];
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const prefixoEsperado = `${geracao.snapshot && typeof geracao.snapshot === "object" && !Array.isArray(geracao.snapshot) ? String((geracao.snapshot as Record<string, unknown>)["trabalho"] && typeof (geracao.snapshot as Record<string, unknown>)["trabalho"] === "object" ? ((geracao.snapshot as Record<string, { id?: string }>)["trabalho"]?.id ?? "") : "") : ""}/${data.geracaoId}/`;
+    const tiposEsperados = esperados.map((arquivo) => `${arquivo.tipo}:${arquivo.folha_numero ?? "PDF"}`);
+    if (new Set(tiposEsperados).size !== esperados.length || !prefixoEsperado.startsWith("/") && !esperados.every((arquivo) => arquivo.caminho.startsWith(prefixoEsperado))) throw new Error("Conjunto de destinos inconsistente.");
     const validados: Array<{ id: string; tamanho: number; largura: number | null; altura: number | null; paginas: number | null }> = [];
     for (const esperado of esperados) {
-      if (esperado.bucket !== "foto-express-impressoes" || !esperado.caminho.includes(`/${data.geracaoId}/`)) throw new Error("Caminho final divergente do manifesto.");
+      const caminhoExato = esperado.tipo === "PDF" ? `${prefixoEsperado}impressao.pdf` : `${prefixoEsperado}folha-${String(esperado.folha_numero).padStart(2, "0")}.jpg`;
+      if (esperado.bucket !== "foto-express-impressoes" || esperado.caminho !== caminhoExato) throw new Error("Caminho final divergente do manifesto.");
       const { data: blob, error } = await supabaseAdmin.storage.from(esperado.bucket).download(esperado.caminho);
       if (error || !blob || blob.size <= 0) throw new Error(`Arquivo ausente ou vazio: ${esperado.nome_arquivo}.`);
-      if (blob.type && blob.type !== esperado.mime) throw new Error(`MIME inválido em ${esperado.nome_arquivo}.`);
+      if (blob.type !== esperado.mime) throw new Error(`MIME inválido em ${esperado.nome_arquivo}.`);
       const bytes = new Uint8Array(await blob.arrayBuffer());
       if (esperado.tipo === "JPG") {
         const dimensoes = dimensoesJpeg(bytes);
@@ -412,11 +416,7 @@ export const concluirGeracaoFotoExpress = createServerFn({ method: "POST" })
         validados.push({ id: esperado.id, tamanho: blob.size, largura: null, altura: null, paginas: documento.getPageCount() });
       }
     }
-    for (const arquivo of validados) {
-      const { error } = await supabaseAdmin.from("foto_express_arquivos_impressao").update({ estado: "VALIDADO", tamanho_bytes: arquivo.tamanho, largura_px: arquivo.largura, altura_px: arquivo.altura, paginas: arquivo.paginas }).eq("id", arquivo.id).eq("geracao_id", data.geracaoId);
-      if (error) throw new Error(error.message);
-    }
-    const { error: erroConclusao } = await supabaseAdmin.from("foto_express_geracoes").update({ estado: "CONCLUIDA", etapa: "CONCLUIDA", concluido_em: new Date().toISOString(), erro: null }).eq("id", data.geracaoId).eq("estado", "PROCESSANDO");
+    const { error: erroConclusao } = await context.supabase.rpc("foto_express_concluir_geracao", { _geracao_id: data.geracaoId, _arquivos: validados });
     if (erroConclusao) throw new Error(erroConclusao.message);
     return { arquivos: validados.length };
   });

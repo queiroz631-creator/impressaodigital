@@ -204,6 +204,27 @@
       "when": 1790890522294,
       "tag": "0028_foto_express_snapshot_confirmado_seguro",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790891113063,
+      "tag": "0029_foto_express_endurecer_geracao_final",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1790891135993,
+      "tag": "0030_foto_express_concluir_geracao_atomica",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790891178419,
+      "tag": "0031_foto_express_invalidar_snapshot_fontes",
+      "breakpoints": true
     }
   ]
 }

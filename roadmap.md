@@ -43,7 +43,7 @@
 - [x] Exibir prévia das folhas com enquadramento, espelhamento, textos e fundo do formato
 - [x] Detectar montagem desatualizada por assinatura dos itens, edições, textos e papel
 - [x] Validar matemática, compilação, desktop e celular sem confirmar montagem nem alterar dados reais
-- [ ] Etapa 5: renderização final 300 DPI, geração PDF/JPG, histórico e downloads privados (em andamento)
+- [x] Etapa 5: renderização final 300 DPI, geração PDF/JPG, histórico e downloads privados
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
