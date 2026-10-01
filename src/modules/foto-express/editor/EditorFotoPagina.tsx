@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { salvarEdicaoFotoExpress } from "@/lib/foto-express.functions";
-import { useItemEditor, useItensGaleria } from "../hooks/useFotoExpress";
+import { useFormatos, useItemEditor, useItensGaleria } from "../hooks/useFotoExpress";
 import { calcularQualidadeFoto } from "../lib/qualidade";
 import { derivarCrop, dimensoesMoldura, limitarPosicao, calcularGeometria, type EdicaoFoto } from "../lib/transformacaoFoto";
 import type { Orientacao } from "../types";
@@ -29,11 +29,13 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   const salvar = useServerFn(salvarEdicaoFotoExpress);
   const itemQuery = useItemEditor(trabalhoId, itemId);
   const itensQuery = useItensGaleria(trabalhoId);
+  const formatosQuery = useFormatos();
   const { user } = useAuth();
   const { pode, carregando: carregandoPermissoes } = usePermissoes(user?.id);
   const podeEditar = pode("foto_express.trabalhos.editar");
   const [edicao, setEdicao] = useState<EdicaoFoto>(EDICAO_INICIAL);
   const [orientacao, setOrientacao] = useState<Orientacao>("AUTOMATICA");
+  const [formatoId, setFormatoId] = useState("");
   const [estadoSalvar, setEstadoSalvar] = useState<EstadoSalvar>("LIMPO");
   const [imagemFalhou, setImagemFalhou] = useState(false);
   const [carregadoId, setCarregadoId] = useState<string | null>(null);
@@ -47,20 +49,21 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
       rotacao: Number(item.configuracao.rotacao), espelharHorizontal: item.configuracao.espelhar_horizontal,
       espelharVertical: item.configuracao.espelhar_vertical, modoAjuste: item.configuracao.modo_ajuste === "AJUSTAR" ? "AJUSTAR" : "PREENCHER",
     });
-    setOrientacao(item.orientacao as Orientacao); setCarregadoId(item.id); setEstadoSalvar("LIMPO"); setImagemFalhou(false);
+    setOrientacao(item.orientacao as Orientacao); setFormatoId(item.formato_id ?? ""); setCarregadoId(item.id); setEstadoSalvar("LIMPO"); setImagemFalhou(false);
   }, [item, carregadoId]);
 
-  const formatoCm = useMemo(() => item?.formato ? dimensoesMoldura(Number(item.formato.largura_cm), Number(item.formato.altura_cm), orientacao, { largura: item.arquivo.largura_px, altura: item.arquivo.altura_px }, edicao.rotacao) : null, [item, orientacao, edicao.rotacao]);
+  const formatoSelecionado = useMemo(() => formatosQuery.data?.find((formato) => formato.id === formatoId) ?? (item?.formato?.id === formatoId ? item.formato : null), [formatosQuery.data, formatoId, item]);
+  const formatoCm = useMemo(() => item && formatoSelecionado ? dimensoesMoldura(Number(formatoSelecionado.largura_cm), Number(formatoSelecionado.altura_cm), orientacao, { largura: item.arquivo.largura_px, altura: item.arquivo.altura_px }, edicao.rotacao) : null, [item, formatoSelecionado, orientacao, edicao.rotacao]);
   const molduraCalculo = useMemo(() => formatoCm ? { largura: formatoCm.largura * 100, altura: formatoCm.altura * 100 } : null, [formatoCm]);
 
   const mutation = useMutation({
-    mutationFn: async ({ revisao, dados }: { revisao: number; dados: { edicao: EdicaoFoto; orientacao: Orientacao } }) => {
+    mutationFn: async ({ revisao, dados }: { revisao: number; dados: { edicao: EdicaoFoto; formatoId: string; orientacao: Orientacao } }) => {
       if (!item || !molduraCalculo) throw new Error("Formato de impressão não definido.");
       const geometria = calcularGeometria({ largura: item.arquivo.largura_px, altura: item.arquivo.altura_px }, molduraCalculo, dados.edicao);
       const posicao = limitarPosicao(geometria, dados.edicao.posicaoX, dados.edicao.posicaoY);
       const edicaoLimitada = { ...dados.edicao, posicaoX: posicao.x, posicaoY: posicao.y };
       const crop = derivarCrop({ largura: item.arquivo.largura_px, altura: item.arquivo.altura_px }, molduraCalculo, edicaoLimitada);
-      await salvar({ data: { trabalhoId, itemId, zoom: edicaoLimitada.zoom, posicaoX: edicaoLimitada.posicaoX, posicaoY: edicaoLimitada.posicaoY, rotacao: edicaoLimitada.rotacao as 0 | 90 | 180 | 270, cropX: crop.x, cropY: crop.y, cropLargura: crop.largura, cropAltura: crop.altura, espelharHorizontal: edicaoLimitada.espelharHorizontal, espelharVertical: edicaoLimitada.espelharVertical, modoAjuste: edicaoLimitada.modoAjuste, orientacao: dados.orientacao } });
+      await salvar({ data: { trabalhoId, itemId, formatoId: dados.formatoId, zoom: edicaoLimitada.zoom, posicaoX: edicaoLimitada.posicaoX, posicaoY: edicaoLimitada.posicaoY, rotacao: edicaoLimitada.rotacao as 0 | 90 | 180 | 270, cropX: crop.x, cropY: crop.y, cropLargura: crop.largura, cropAltura: crop.altura, espelharHorizontal: edicaoLimitada.espelharHorizontal, espelharVertical: edicaoLimitada.espelharVertical, modoAjuste: edicaoLimitada.modoAjuste, orientacao: dados.orientacao } });
       return revisao;
     },
     onMutate: () => setEstadoSalvar("SALVANDO"),
@@ -70,11 +73,12 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
 
   const marcarAlterado = useCallback(() => { revisaoRef.current += 1; setEstadoSalvar("PENDENTE"); }, []);
   const alterarEdicao = useCallback((valor: EdicaoFoto) => { setEdicao(valor); marcarAlterado(); }, [marcarAlterado]);
+  const alterarFormato = useCallback((valor: string) => { setFormatoId(valor); setEdicao((atual) => ({ ...atual, posicaoX: 0, posicaoY: 0 })); marcarAlterado(); }, [marcarAlterado]);
   const alterarOrientacao = useCallback((valor: Orientacao) => { setOrientacao(valor); setEdicao((atual) => ({ ...atual, posicaoX: 0, posicaoY: 0 })); marcarAlterado(); }, [marcarAlterado]);
   const executarSalvar = useCallback(() => {
     if (!podeEditar || estadoSalvar === "LIMPO" || estadoSalvar === "SALVO" || mutation.isPending) return;
-    mutation.mutate({ revisao: revisaoRef.current, dados: { edicao, orientacao } });
-  }, [podeEditar, estadoSalvar, mutation, edicao, orientacao]);
+    mutation.mutate({ revisao: revisaoRef.current, dados: { edicao, formatoId, orientacao } });
+  }, [podeEditar, estadoSalvar, mutation, edicao, formatoId, orientacao]);
   useEffect(() => {
     if (estadoSalvar !== "PENDENTE") return;
     const timer = window.setTimeout(executarSalvar, 700);
@@ -87,7 +91,7 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
     if (!destino) return;
     if ((estadoSalvar === "PENDENTE" || estadoSalvar === "ERRO") && podeEditar) {
       try {
-        await mutation.mutateAsync({ revisao: revisaoRef.current, dados: { edicao, orientacao } });
+        await mutation.mutateAsync({ revisao: revisaoRef.current, dados: { edicao, formatoId, orientacao } });
       } catch {
         return;
       }
@@ -95,7 +99,7 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
     await navigate({ to: "/foto-express/$trabalhoId/fotos/$itemId/editar", params: { trabalhoId, itemId: destino } });
   };
 
-  if (itemQuery.isLoading || carregandoPermissoes) return <div className="space-y-4 p-4 sm:p-6"><Skeleton className="h-10 w-64" /><Skeleton className="h-[520px] w-full" /></div>;
+   if (itemQuery.isLoading || formatosQuery.isLoading || carregandoPermissoes) return <div className="space-y-4 p-4 sm:p-6"><Skeleton className="h-10 w-64" /><Skeleton className="h-[520px] w-full" /></div>;
   if (itemQuery.isError || !item) return <div className="p-4 sm:p-6"><Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Não foi possível abrir a foto</AlertTitle><AlertDescription className="space-y-3"><p>Confira sua conexão e tente novamente.</p><Button variant="outline" onClick={() => itemQuery.refetch()}>Tentar novamente</Button></AlertDescription></Alert></div>;
   if (!item.formato || !formatoCm || !molduraCalculo) return <div className="p-4 sm:p-6"><Alert><AlertCircle className="h-4 w-4" /><AlertTitle>Escolha um formato</AlertTitle><AlertDescription className="space-y-3"><p>Defina o formato desta foto na Galeria antes de editar.</p><Button asChild variant="outline"><Link to="/foto-express/$id/fotos" params={{ id: trabalhoId }}>Voltar para Galeria</Link></Button></AlertDescription></Alert></div>;
 
@@ -115,7 +119,7 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
         {imagemFalhou && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Imagem indisponível</AlertTitle><AlertDescription><Button variant="outline" className="mt-2" onClick={async () => { setImagemFalhou(false); await itemQuery.refetch(); }}>Tentar novamente</Button></AlertDescription></Alert>}
         <div className="flex items-center justify-between gap-2"><Button variant="outline" disabled={!anterior} onClick={() => navegarPara(anterior)}><ChevronLeft className="mr-1 h-4 w-4" />Anterior</Button><span className="text-sm text-muted-foreground">{indice >= 0 ? `${indice + 1} de ${lista.length}` : ""}</span><Button variant="outline" disabled={!proximo} onClick={() => navegarPara(proximo)}>Próxima<ChevronRight className="ml-1 h-4 w-4" /></Button></div>
       </div>
-      <Card><CardHeader className="flex-row items-center justify-between space-y-0"><CardTitle className="text-lg">Ajustes</CardTitle><Badge variant={estadoSalvar === "ERRO" ? "destructive" : "outline"}>{mutation.isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}{estado}</Badge></CardHeader><CardContent className="space-y-6"><ControlesEditor edicao={edicao} orientacao={orientacao} somenteLeitura={!podeEditar} onChange={alterarEdicao} onOrientacao={alterarOrientacao} onCommit={pedirSalvar} onReset={redefinir} /><IndicadorQualidade resultado={qualidade} />{estadoSalvar === "ERRO" && <Button className="w-full" variant="destructive" onClick={executarSalvar}>Tentar salvar novamente</Button>}</CardContent></Card>
+      <Card><CardHeader className="flex-row items-center justify-between space-y-0"><CardTitle className="text-lg">Ajustes</CardTitle><Badge variant={estadoSalvar === "ERRO" ? "destructive" : "outline"}>{mutation.isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}{estado}</Badge></CardHeader><CardContent className="space-y-6"><ControlesEditor edicao={edicao} formatoId={formatoId} formatos={formatosQuery.data ?? []} orientacao={orientacao} somenteLeitura={!podeEditar} onChange={alterarEdicao} onFormato={alterarFormato} onOrientacao={alterarOrientacao} onCommit={pedirSalvar} onReset={redefinir} /><IndicadorQualidade resultado={qualidade} />{estadoSalvar === "ERRO" && <Button className="w-full" variant="destructive" onClick={executarSalvar}>Tentar salvar novamente</Button>}</CardContent></Card>
     </div>
   </div>;
 }

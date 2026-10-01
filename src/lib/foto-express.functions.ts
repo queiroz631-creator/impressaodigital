@@ -176,7 +176,7 @@ export const excluirItensFotoExpress = createServerFn({ method: "POST" })
   });
 
 const edicaoSchema = z.object({
-  trabalhoId: z.string().uuid(), itemId: z.string().uuid(), zoom: z.number().min(1).max(5),
+  trabalhoId: z.string().uuid(), itemId: z.string().uuid(), formatoId: z.string().uuid(), zoom: z.number().min(1).max(5),
   posicaoX: z.number().min(-1).max(1), posicaoY: z.number().min(-1).max(1),
   rotacao: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]),
   cropX: z.number().min(0).max(1), cropY: z.number().min(0).max(1),
@@ -189,8 +189,8 @@ export const salvarEdicaoFotoExpress = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => edicaoSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { data: salvoEm, error } = await context.supabase.rpc("foto_express_salvar_edicao", {
-      _trabalho_id: data.trabalhoId, _item_id: data.itemId, _zoom: data.zoom,
+    const { data: salvoEm, error } = await context.supabase.rpc("foto_express_salvar_edicao_com_formato", {
+      _trabalho_id: data.trabalhoId, _item_id: data.itemId, _formato_id: data.formatoId, _zoom: data.zoom,
       _posicao_x: data.posicaoX, _posicao_y: data.posicaoY, _rotacao: data.rotacao,
       _crop_x: data.cropX, _crop_y: data.cropY, _crop_largura: data.cropLargura, _crop_altura: data.cropAltura,
       _espelhar_horizontal: data.espelharHorizontal, _espelhar_vertical: data.espelharVertical,
