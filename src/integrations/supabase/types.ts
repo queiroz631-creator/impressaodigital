@@ -1606,15 +1606,20 @@ export type Database = {
           cor: string
           criado_em: string
           fonte: string
+          fonte_id: string
           id: string
+          italico: boolean
           item_id: string
           largura: number | null
+          largura_normalizada: number
           negrito: boolean
           ordem: number
           posicao_x: number
           posicao_y: number
           rotacao: number
           tamanho: number
+          tamanho_normalizado: number
+          versao: number
         }
         Insert: {
           alinhamento?: string
@@ -1624,15 +1629,20 @@ export type Database = {
           cor?: string
           criado_em?: string
           fonte?: string
+          fonte_id?: string
           id?: string
+          italico?: boolean
           item_id: string
           largura?: number | null
+          largura_normalizada?: number
           negrito?: boolean
           ordem?: number
           posicao_x?: number
           posicao_y?: number
           rotacao?: number
           tamanho?: number
+          tamanho_normalizado?: number
+          versao?: number
         }
         Update: {
           alinhamento?: string
@@ -1642,15 +1652,20 @@ export type Database = {
           cor?: string
           criado_em?: string
           fonte?: string
+          fonte_id?: string
           id?: string
+          italico?: boolean
           item_id?: string
           largura?: number | null
+          largura_normalizada?: number
           negrito?: boolean
           ordem?: number
           posicao_x?: number
           posicao_y?: number
           rotacao?: number
           tamanho?: number
+          tamanho_normalizado?: number
+          versao?: number
         }
         Relationships: [
           {
@@ -4059,9 +4074,73 @@ export type Database = {
       cpf_valido: { Args: { _cpf: string }; Returns: boolean }
       disparar_rotina_bot: { Args: { rota: string }; Returns: undefined }
       disparar_rotina_sorteios: { Args: { rota: string }; Returns: undefined }
+      foto_express_criar_texto: {
+        Args: { _item_id: string; _trabalho_id: string }
+        Returns: {
+          alinhamento: string
+          altura: number | null
+          atualizado_em: string
+          conteudo: string
+          cor: string
+          criado_em: string
+          fonte: string
+          fonte_id: string
+          id: string
+          italico: boolean
+          item_id: string
+          largura: number | null
+          largura_normalizada: number
+          negrito: boolean
+          ordem: number
+          posicao_x: number
+          posicao_y: number
+          rotacao: number
+          tamanho: number
+          tamanho_normalizado: number
+          versao: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "foto_express_textos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       foto_express_duplicar_item: {
         Args: { _item_id: string }
         Returns: string
+      }
+      foto_express_duplicar_texto: {
+        Args: { _item_id: string; _texto_id: string; _trabalho_id: string }
+        Returns: {
+          alinhamento: string
+          altura: number | null
+          atualizado_em: string
+          conteudo: string
+          cor: string
+          criado_em: string
+          fonte: string
+          fonte_id: string
+          id: string
+          italico: boolean
+          item_id: string
+          largura: number | null
+          largura_normalizada: number
+          negrito: boolean
+          ordem: number
+          posicao_x: number
+          posicao_y: number
+          rotacao: number
+          tamanho: number
+          tamanho_normalizado: number
+          versao: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "foto_express_textos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       foto_express_excluir_itens: {
         Args: { _item_ids: string[] }
@@ -4072,6 +4151,19 @@ export type Database = {
           thumbnail_bucket: string
           thumbnail_path: string
         }[]
+      }
+      foto_express_excluir_texto: {
+        Args: { _item_id: string; _texto_id: string; _trabalho_id: string }
+        Returns: undefined
+      }
+      foto_express_mover_texto: {
+        Args: {
+          _direcao: number
+          _item_id: string
+          _texto_id: string
+          _trabalho_id: string
+        }
+        Returns: undefined
       }
       foto_express_registrar_limpeza_upload: {
         Args: {
@@ -4133,6 +4225,54 @@ export type Database = {
           _zoom: number
         }
         Returns: string
+      }
+      foto_express_salvar_texto: {
+        Args: {
+          _alinhamento: string
+          _conteudo: string
+          _cor: string
+          _fonte_id: string
+          _italico: boolean
+          _item_id: string
+          _largura_normalizada: number
+          _negrito: boolean
+          _posicao_x: number
+          _posicao_y: number
+          _rotacao: number
+          _tamanho_normalizado: number
+          _texto_id: string
+          _trabalho_id: string
+          _versao_esperada: number
+        }
+        Returns: {
+          alinhamento: string
+          altura: number | null
+          atualizado_em: string
+          conteudo: string
+          cor: string
+          criado_em: string
+          fonte: string
+          fonte_id: string
+          id: string
+          italico: boolean
+          item_id: string
+          largura: number | null
+          largura_normalizada: number
+          negrito: boolean
+          ordem: number
+          posicao_x: number
+          posicao_y: number
+          rotacao: number
+          tamanho: number
+          tamanho_normalizado: number
+          versao: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "foto_express_textos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       has_role: {
         Args: {
