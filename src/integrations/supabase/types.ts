@@ -1324,6 +1324,333 @@ export type Database = {
           },
         ]
       }
+      foto_express_arquivos: {
+        Row: {
+          altura_px: number
+          criado_em: string
+          criado_por: string
+          id: string
+          largura_px: number
+          nome_original: string
+          original_bucket: string
+          original_path: string
+          tamanho_bytes: number
+          thumbnail_bucket: string
+          thumbnail_path: string
+          tipo_mime: string
+          trabalho_id: string
+        }
+        Insert: {
+          altura_px: number
+          criado_em?: string
+          criado_por?: string
+          id?: string
+          largura_px: number
+          nome_original: string
+          original_bucket?: string
+          original_path: string
+          tamanho_bytes: number
+          thumbnail_bucket?: string
+          thumbnail_path: string
+          tipo_mime: string
+          trabalho_id: string
+        }
+        Update: {
+          altura_px?: number
+          criado_em?: string
+          criado_por?: string
+          id?: string
+          largura_px?: number
+          nome_original?: string
+          original_bucket?: string
+          original_path?: string
+          tamanho_bytes?: number
+          thumbnail_bucket?: string
+          thumbnail_path?: string
+          tipo_mime?: string
+          trabalho_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_arquivos_trabalho_id_fkey"
+            columns: ["trabalho_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_trabalhos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foto_express_configuracoes: {
+        Row: {
+          atualizado_em: string
+          crop_altura: number | null
+          crop_largura: number | null
+          crop_x: number | null
+          crop_y: number | null
+          espelhar_horizontal: boolean
+          espelhar_vertical: boolean
+          item_id: string
+          posicao_x: number
+          posicao_y: number
+          rotacao: number
+          zoom: number
+        }
+        Insert: {
+          atualizado_em?: string
+          crop_altura?: number | null
+          crop_largura?: number | null
+          crop_x?: number | null
+          crop_y?: number | null
+          espelhar_horizontal?: boolean
+          espelhar_vertical?: boolean
+          item_id: string
+          posicao_x?: number
+          posicao_y?: number
+          rotacao?: number
+          zoom?: number
+        }
+        Update: {
+          atualizado_em?: string
+          crop_altura?: number | null
+          crop_largura?: number | null
+          crop_x?: number | null
+          crop_y?: number | null
+          espelhar_horizontal?: boolean
+          espelhar_vertical?: boolean
+          item_id?: string
+          posicao_x?: number
+          posicao_y?: number
+          rotacao?: number
+          zoom?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_configuracoes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "foto_express_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foto_express_formatos: {
+        Row: {
+          altura_cm: number
+          ativo: boolean
+          atualizado_em: string
+          codigo: string
+          criado_em: string
+          id: string
+          largura_cm: number
+          nome: string
+          ordem: number
+          padrao: boolean
+        }
+        Insert: {
+          altura_cm: number
+          ativo?: boolean
+          atualizado_em?: string
+          codigo: string
+          criado_em?: string
+          id?: string
+          largura_cm: number
+          nome: string
+          ordem?: number
+          padrao?: boolean
+        }
+        Update: {
+          altura_cm?: number
+          ativo?: boolean
+          atualizado_em?: string
+          codigo?: string
+          criado_em?: string
+          id?: string
+          largura_cm?: number
+          nome?: string
+          ordem?: number
+          padrao?: boolean
+        }
+        Relationships: []
+      }
+      foto_express_itens: {
+        Row: {
+          altura_personalizada_cm: number | null
+          arquivo_id: string
+          atualizado_em: string
+          criado_em: string
+          formato_id: string | null
+          id: string
+          largura_personalizada_cm: number | null
+          ordem: number
+          orientacao: string
+          quantidade: number
+          status_edicao: string
+          trabalho_id: string
+        }
+        Insert: {
+          altura_personalizada_cm?: number | null
+          arquivo_id: string
+          atualizado_em?: string
+          criado_em?: string
+          formato_id?: string | null
+          id?: string
+          largura_personalizada_cm?: number | null
+          ordem?: number
+          orientacao?: string
+          quantidade?: number
+          status_edicao?: string
+          trabalho_id: string
+        }
+        Update: {
+          altura_personalizada_cm?: number | null
+          arquivo_id?: string
+          atualizado_em?: string
+          criado_em?: string
+          formato_id?: string | null
+          id?: string
+          largura_personalizada_cm?: number | null
+          ordem?: number
+          orientacao?: string
+          quantidade?: number
+          status_edicao?: string
+          trabalho_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_itens_arquivo_id_fkey"
+            columns: ["arquivo_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_arquivos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foto_express_itens_formato_id_fkey"
+            columns: ["formato_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_formatos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foto_express_itens_trabalho_id_fkey"
+            columns: ["trabalho_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_trabalhos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foto_express_textos: {
+        Row: {
+          alinhamento: string
+          altura: number | null
+          atualizado_em: string
+          conteudo: string
+          cor: string
+          criado_em: string
+          fonte: string
+          id: string
+          item_id: string
+          largura: number | null
+          negrito: boolean
+          ordem: number
+          posicao_x: number
+          posicao_y: number
+          rotacao: number
+          tamanho: number
+        }
+        Insert: {
+          alinhamento?: string
+          altura?: number | null
+          atualizado_em?: string
+          conteudo?: string
+          cor?: string
+          criado_em?: string
+          fonte?: string
+          id?: string
+          item_id: string
+          largura?: number | null
+          negrito?: boolean
+          ordem?: number
+          posicao_x?: number
+          posicao_y?: number
+          rotacao?: number
+          tamanho?: number
+        }
+        Update: {
+          alinhamento?: string
+          altura?: number | null
+          atualizado_em?: string
+          conteudo?: string
+          cor?: string
+          criado_em?: string
+          fonte?: string
+          id?: string
+          item_id?: string
+          largura?: number | null
+          negrito?: boolean
+          ordem?: number
+          posicao_x?: number
+          posicao_y?: number
+          rotacao?: number
+          tamanho?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_textos_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foto_express_trabalhos: {
+        Row: {
+          atualizado_em: string
+          cliente_id: string | null
+          cliente_nome: string
+          cliente_telefone: string
+          criado_em: string
+          criado_por: string
+          id: string
+          numero: number
+          observacoes: string
+          status: string
+        }
+        Insert: {
+          atualizado_em?: string
+          cliente_id?: string | null
+          cliente_nome?: string
+          cliente_telefone?: string
+          criado_em?: string
+          criado_por?: string
+          id?: string
+          numero?: number
+          observacoes?: string
+          status?: string
+        }
+        Update: {
+          atualizado_em?: string
+          cliente_id?: string | null
+          cliente_nome?: string
+          cliente_telefone?: string
+          criado_em?: string
+          criado_por?: string
+          id?: string
+          numero?: number
+          observacoes?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_trabalhos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       habilidades_curriculo: {
         Row: {
           ativo: boolean
@@ -3674,6 +4001,10 @@ export type Database = {
       cpf_valido: { Args: { _cpf: string }; Returns: boolean }
       disparar_rotina_bot: { Args: { rota: string }; Returns: undefined }
       disparar_rotina_sorteios: { Args: { rota: string }; Returns: undefined }
+      foto_express_duplicar_item: {
+        Args: { _item_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3681,6 +4012,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      pode_foto_express: { Args: { _chave?: string }; Returns: boolean }
       pode_sorteios: { Args: never; Returns: boolean }
       sorteio_apuracao_resumo: { Args: { _sorteio_id: string }; Returns: Json }
       sorteio_conferencia: { Args: { _sorteio_id: string }; Returns: Json }
