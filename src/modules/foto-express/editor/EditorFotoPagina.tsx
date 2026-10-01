@@ -179,7 +179,7 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
 
    if (itemQuery.isLoading || formatosQuery.isLoading || carregandoPermissoes) return <div className="space-y-4 p-4 sm:p-6"><Skeleton className="h-10 w-64" /><Skeleton className="h-[520px] w-full" /></div>;
   if (itemQuery.isError || !item) return <div className="p-4 sm:p-6"><Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Não foi possível abrir a foto</AlertTitle><AlertDescription className="space-y-3"><p>Confira sua conexão e tente novamente.</p><Button variant="outline" onClick={() => itemQuery.refetch()}>Tentar novamente</Button></AlertDescription></Alert></div>;
-  if (!item.formato || !formatoCm || !molduraCalculo) return <div className="p-4 sm:p-6"><Alert><AlertCircle className="h-4 w-4" /><AlertTitle>Escolha um formato</AlertTitle><AlertDescription className="space-y-3"><p>Defina o formato desta foto na Galeria antes de editar.</p><Button asChild variant="outline"><Link to="/foto-express/$id/fotos" params={{ id: trabalhoId }}>Voltar para Galeria</Link></Button></AlertDescription></Alert></div>;
+  if (!item.formato || !formatoSelecionado || !formatoCm || !molduraCalculo) return <div className="p-4 sm:p-6"><Alert><AlertCircle className="h-4 w-4" /><AlertTitle>Escolha um formato</AlertTitle><AlertDescription className="space-y-3"><p>Defina o formato desta foto na Galeria antes de editar.</p><Button asChild variant="outline"><Link to="/foto-express/$id/fotos" params={{ id: trabalhoId }}>Voltar para Galeria</Link></Button></AlertDescription></Alert></div>;
 
   const lista = itensQuery.data ?? [];
   const indice = lista.findIndex((foto) => foto.id === itemId);
