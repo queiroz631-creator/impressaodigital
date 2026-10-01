@@ -44,7 +44,7 @@ async function reprocessarLimpezasPendentes(limite = 10) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("foto_express_limpezas_storage")
-    .select("id, original_bucket, original_path, thumbnail_bucket, thumbnail_path, tentativas")
+    .select("id, arquivo_id, original_bucket, original_path, thumbnail_bucket, thumbnail_path, tentativas")
     .eq("status", "PENDENTE")
     .order("criado_em")
     .limit(limite);
