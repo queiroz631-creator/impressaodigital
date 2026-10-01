@@ -19,11 +19,11 @@
 - [x] Correção pontual da Galeria: FK explícita, estado de erro e validação somente leitura
 
 ## FOTO EXPRESS — Etapa 2: editor não destrutivo
-- [ ] Editor individual por item com original preservado
-- [ ] Enquadramento, zoom, rotação, espelhamento, orientação e reset
-- [ ] Crop normalizado derivado e DPI efetivo a 300 DPI
-- [ ] Autosave atômico, navegação entre fotos e modo somente leitura
-- [ ] Verificação em desktop e celular sem alterar dados reais
+- [x] Editor individual por item com original preservado
+- [x] Enquadramento, zoom, rotação, espelhamento, orientação e reset
+- [x] Crop normalizado derivado e DPI efetivo a 300 DPI
+- [x] Autosave atômico, navegação entre fotos e modo somente leitura
+- [x] Verificação em desktop e celular sem alterar dados reais
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
