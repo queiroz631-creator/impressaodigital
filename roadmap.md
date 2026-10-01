@@ -24,6 +24,7 @@
 - [x] Crop normalizado derivado e DPI efetivo a 300 DPI
 - [x] Autosave atômico, navegação entre fotos e modo somente leitura
 - [x] Verificação em desktop e celular sem alterar dados reais
+- [ ] Auditoria técnica final somente leitura: matemática, migration, atomicidade e limites do que não foi validado funcionalmente
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
