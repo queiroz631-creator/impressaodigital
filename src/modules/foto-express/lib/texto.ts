@@ -4,11 +4,11 @@ export type FonteTextoId = "SANS" | "SERIF" | "MONO" | "DECORATIVA";
 export type AlinhamentoTexto = "ESQUERDA" | "CENTRO" | "DIREITA";
 export type RotacaoTexto = 0 | 90 | 180 | 270;
 
-export const FONTES_TEXTO: ReadonlyArray<{ id: FonteTextoId; nome: string; familia: string }> = [
-  { id: "SANS", nome: "Sem serifa", familia: "Arial, Helvetica, sans-serif" },
-  { id: "SERIF", nome: "Serifada", familia: "Georgia, 'Times New Roman', serif" },
-  { id: "MONO", nome: "Monoespaçada", familia: "'Courier New', Courier, monospace" },
-  { id: "DECORATIVA", nome: "Decorativa", familia: "cursive" },
+export const FONTES_TEXTO: ReadonlyArray<{ id: FonteTextoId; nome: string; familia: string; lineHeight: number }> = [
+  { id: "SANS", nome: "Sem serifa", familia: "FotoExpressSans", lineHeight: 1.2 },
+  { id: "SERIF", nome: "Serifada", familia: "FotoExpressSerif", lineHeight: 1.22 },
+  { id: "MONO", nome: "Monoespaçada", familia: "FotoExpressMono", lineHeight: 1.2 },
+  { id: "DECORATIVA", nome: "Decorativa", familia: "FotoExpressDecorativa", lineHeight: 1.24 },
 ];
 
 export const CORES_TEXTO = ["#FFFFFF", "#000000", "#FF0000", "#2563EB", "#FACC15", "#16A34A"] as const;
