@@ -190,6 +190,20 @@
       "when": 1790887329759,
       "tag": "0026_foto_express_revisao_montagem",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1790890450320,
+      "tag": "0027_foto_express_renderizacao_final",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790890522294,
+      "tag": "0028_foto_express_snapshot_confirmado_seguro",
+      "breakpoints": true
     }
   ]
 }

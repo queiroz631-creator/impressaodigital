@@ -313,3 +313,135 @@ export const salvarMontagemFotoExpress = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return montagem;
   });
+
+const geracaoIdSchema = z.object({ geracaoId: z.string().uuid() });
+const iniciarGeracaoSchema = z.object({ trabalhoId: z.string().uuid(), saida: z.enum(["PDF", "JPG", "PDF_JPG"]) });
+
+function dimensoesJpeg(bytes: Uint8Array) {
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return null;
+  let indice = 2;
+  while (indice + 9 < bytes.length) {
+    if (bytes[indice] !== 0xff) { indice += 1; continue; }
+    const marcador = bytes[indice + 1] ?? 0;
+    if (marcador === 0xd8 || marcador === 0xd9) { indice += 2; continue; }
+    const tamanho = ((bytes[indice + 2] ?? 0) << 8) | (bytes[indice + 3] ?? 0);
+    if (tamanho < 2) return null;
+    if ([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf].includes(marcador)) {
+      return { altura: ((bytes[indice + 5] ?? 0) << 8) | (bytes[indice + 6] ?? 0), largura: ((bytes[indice + 7] ?? 0) << 8) | (bytes[indice + 8] ?? 0) };
+    }
+    indice += tamanho + 2;
+  }
+  return null;
+}
+
+export const prepararGeracaoFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => iniciarGeracaoSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: geracaoId, error: erroInicio } = await context.supabase.rpc("foto_express_iniciar_geracao", { _trabalho_id: data.trabalhoId, _saida: data.saida });
+    if (erroInicio || !geracaoId) throw new Error(erroInicio?.message ?? "Não foi possível iniciar a geração.");
+    const { data: geracao, error: erroGeracao } = await context.supabase.from("foto_express_geracoes").select("id, snapshot, criado_por, estado").eq("id", geracaoId).single();
+    const { data: arquivos, error: erroArquivos } = await context.supabase.from("foto_express_arquivos_impressao").select("*").eq("geracao_id", geracaoId).order("folha_numero");
+    if (erroGeracao || erroArquivos || !geracao || !arquivos) throw new Error(erroGeracao?.message ?? erroArquivos?.message ?? "Geração não encontrada.");
+    if (geracao.criado_por !== context.userId || geracao.estado !== "PROCESSANDO") throw new Error("GERACAO_INVALIDA");
+    const snapshot = geracao.snapshot as Record<string, unknown>;
+    const itens = Array.isArray(snapshot["itens"]) ? snapshot["itens"] as Array<{ arquivo?: { id?: string; original_bucket?: string; original_path?: string } }> : [];
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const originais: Record<string, string> = {};
+    for (const entrada of itens) {
+      const arquivo = entrada.arquivo;
+      if (!arquivo?.id || !arquivo.original_bucket || !arquivo.original_path) throw new Error("Manifesto contém original inválido.");
+      const { data: url, error } = await supabaseAdmin.storage.from(arquivo.original_bucket).createSignedUrl(arquivo.original_path, 7200);
+      if (error || !url?.signedUrl) throw new Error(error?.message ?? "Não foi possível autorizar um arquivo original.");
+      originais[arquivo.id] = url.signedUrl;
+    }
+    const destinos = await Promise.all(arquivos.map(async (arquivo) => {
+      if (arquivo.bucket !== "foto-express-impressoes" || !arquivo.caminho.startsWith(`${data.trabalhoId}/${geracaoId}/`)) throw new Error("Destino de impressão inválido.");
+      const { data: autorizacao, error } = await supabaseAdmin.storage.from(arquivo.bucket).createSignedUploadUrl(arquivo.caminho, { upsert: false });
+      if (error || !autorizacao?.token) throw new Error(error?.message ?? "Não foi possível autorizar o destino.");
+      return { id: arquivo.id, tipo: arquivo.tipo, folhaNumero: arquivo.folha_numero, bucket: arquivo.bucket, caminho: arquivo.caminho, nomeArquivo: arquivo.nome_arquivo, mime: arquivo.mime, token: autorizacao.token };
+    }));
+    return { geracaoId, manifesto: geracao.snapshot, originais, destinos };
+  });
+
+export const atualizarGeracaoFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => geracaoIdSchema.extend({ etapa: z.string().min(1).max(100) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("foto_express_atualizar_geracao", { _geracao_id: data.geracaoId, _etapa: data.etapa });
+    if (error) throw new Error(error.message);
+  });
+
+export const concluirGeracaoFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => geracaoIdSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: geracao, error: erroGeracao } = await context.supabase.from("foto_express_geracoes").select("id, criado_por, estado, snapshot").eq("id", data.geracaoId).single();
+    const { data: esperados, error: erroEsperados } = await context.supabase.from("foto_express_arquivos_impressao").select("*").eq("geracao_id", data.geracaoId);
+    if (erroGeracao || erroEsperados || !geracao || !esperados?.length) throw new Error(erroGeracao?.message ?? erroEsperados?.message ?? "Geração incompleta.");
+    if (geracao.criado_por !== context.userId || geracao.estado !== "PROCESSANDO") throw new Error("GERACAO_INVALIDA");
+    const snapshot = geracao.snapshot as Record<string, unknown>;
+    const folhas = Array.isArray(snapshot["folhas"]) ? snapshot["folhas"] as Array<{ numero: number; largura_mm: number; altura_mm: number }> : [];
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const validados: Array<{ id: string; tamanho: number; largura: number | null; altura: number | null; paginas: number | null }> = [];
+    for (const esperado of esperados) {
+      if (esperado.bucket !== "foto-express-impressoes" || !esperado.caminho.includes(`/${data.geracaoId}/`)) throw new Error("Caminho final divergente do manifesto.");
+      const { data: blob, error } = await supabaseAdmin.storage.from(esperado.bucket).download(esperado.caminho);
+      if (error || !blob || blob.size <= 0) throw new Error(`Arquivo ausente ou vazio: ${esperado.nome_arquivo}.`);
+      if (blob.type && blob.type !== esperado.mime) throw new Error(`MIME inválido em ${esperado.nome_arquivo}.`);
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      if (esperado.tipo === "JPG") {
+        const dimensoes = dimensoesJpeg(bytes);
+        const folha = folhas.find((f) => f.numero === esperado.folha_numero);
+        if (!dimensoes || !folha) throw new Error(`JPG inválido: ${esperado.nome_arquivo}.`);
+        const larguraEsperada = Math.round(Number(folha.largura_mm) / 25.4 * 300);
+        const alturaEsperada = Math.round(Number(folha.altura_mm) / 25.4 * 300);
+        if (dimensoes.largura !== larguraEsperada || dimensoes.altura !== alturaEsperada) throw new Error(`Dimensões inválidas em ${esperado.nome_arquivo}.`);
+        validados.push({ id: esperado.id, tamanho: blob.size, largura: dimensoes.largura, altura: dimensoes.altura, paginas: null });
+      } else {
+        if (bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) throw new Error("PDF final inválido.");
+        const { PDFDocument } = await import("pdf-lib");
+        const documento = await PDFDocument.load(bytes, { updateMetadata: false });
+        if (documento.getPageCount() !== folhas.length) throw new Error("Quantidade de páginas do PDF divergente.");
+        documento.getPages().forEach((pagina, indice) => {
+          const folha = folhas[indice]; if (!folha) throw new Error("Folha ausente no manifesto.");
+          const { width, height } = pagina.getSize();
+          const larguraPt = Number(folha.largura_mm) / 25.4 * 72; const alturaPt = Number(folha.altura_mm) / 25.4 * 72;
+          if (Math.abs(width - larguraPt) > 0.5 || Math.abs(height - alturaPt) > 0.5) throw new Error(`Dimensão física inválida na página ${indice + 1}.`);
+        });
+        validados.push({ id: esperado.id, tamanho: blob.size, largura: null, altura: null, paginas: documento.getPageCount() });
+      }
+    }
+    for (const arquivo of validados) {
+      const { error } = await supabaseAdmin.from("foto_express_arquivos_impressao").update({ estado: "VALIDADO", tamanho_bytes: arquivo.tamanho, largura_px: arquivo.largura, altura_px: arquivo.altura, paginas: arquivo.paginas }).eq("id", arquivo.id).eq("geracao_id", data.geracaoId);
+      if (error) throw new Error(error.message);
+    }
+    const { error: erroConclusao } = await supabaseAdmin.from("foto_express_geracoes").update({ estado: "CONCLUIDA", etapa: "CONCLUIDA", concluido_em: new Date().toISOString(), erro: null }).eq("id", data.geracaoId).eq("estado", "PROCESSANDO");
+    if (erroConclusao) throw new Error(erroConclusao.message);
+    return { arquivos: validados.length };
+  });
+
+export const falharGeracaoFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => geracaoIdSchema.extend({ erro: z.string().min(1).max(1000) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: geracao, error: erroGeracao } = await context.supabase.from("foto_express_geracoes").select("criado_por, estado").eq("id", data.geracaoId).single();
+    if (erroGeracao || !geracao || geracao.criado_por !== context.userId) throw new Error("GERACAO_INVALIDA");
+    const { data: arquivos } = await context.supabase.from("foto_express_arquivos_impressao").select("bucket, caminho").eq("geracao_id", data.geracaoId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    for (const arquivo of arquivos ?? []) await supabaseAdmin.storage.from(arquivo.bucket).remove([arquivo.caminho]);
+    const { error } = await context.supabase.rpc("foto_express_falhar_geracao", { _geracao_id: data.geracaoId, _erro: data.erro });
+    if (error) throw new Error(error.message);
+  });
+
+export const obterDownloadGeracaoFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ arquivoId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: arquivo, error } = await context.supabase.from("foto_express_arquivos_impressao").select("bucket, caminho, nome_arquivo, estado").eq("id", data.arquivoId).single();
+    if (error || !arquivo || arquivo.estado !== "VALIDADO") throw new Error(error?.message ?? "Arquivo ainda não está disponível.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: url, error: erroUrl } = await supabaseAdmin.storage.from(arquivo.bucket).createSignedUrl(arquivo.caminho, 300, { download: arquivo.nome_arquivo });
+    if (erroUrl || !url?.signedUrl) throw new Error(erroUrl?.message ?? "Não foi possível preparar o download.");
+    return { url: url.signedUrl, nome: arquivo.nome_arquivo };
+  });

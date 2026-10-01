@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { FolhaFoto, Formato, ItemEditor, ItemGaleria, MontagemFoto, OcorrenciaFoto, TextoFoto, Trabalho } from "../types";
+import type { ArquivoImpressaoFoto, FolhaFoto, Formato, GeracaoFoto, ItemEditor, ItemGaleria, MontagemFoto, OcorrenciaFoto, TextoFoto, Trabalho } from "../types";
 
 export function useFormatos(todos = false) {
   return useQuery({
@@ -115,5 +115,22 @@ export function useMontagem(trabalhoId: string) {
       if (error) throw error;
       return data as (MontagemFoto & { folhas: Array<FolhaFoto & { ocorrencias: OcorrenciaFoto[] }> }) | null;
     },
+  });
+}
+
+export function useGeracoes(trabalhoId: string) {
+  return useQuery({
+    queryKey: ["foto-express", "geracoes", trabalhoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("foto_express_geracoes")
+        .select("*, arquivos:foto_express_arquivos_impressao(*)")
+        .eq("trabalho_id", trabalhoId)
+        .order("criado_em", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data as Array<GeracaoFoto & { arquivos: ArquivoImpressaoFoto[] }>;
+    },
+    refetchInterval: (query) => query.state.data?.some((geracao) => geracao.estado === "PROCESSANDO") ? 2000 : false,
   });
 }

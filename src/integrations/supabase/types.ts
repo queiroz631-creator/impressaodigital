@@ -1380,6 +1380,68 @@ export type Database = {
           },
         ]
       }
+      foto_express_arquivos_impressao: {
+        Row: {
+          altura_px: number | null
+          bucket: string
+          caminho: string
+          criado_em: string
+          dpi: number
+          estado: string
+          folha_numero: number | null
+          geracao_id: string
+          id: string
+          largura_px: number | null
+          mime: string
+          nome_arquivo: string
+          paginas: number | null
+          tamanho_bytes: number | null
+          tipo: string
+        }
+        Insert: {
+          altura_px?: number | null
+          bucket?: string
+          caminho: string
+          criado_em?: string
+          dpi?: number
+          estado?: string
+          folha_numero?: number | null
+          geracao_id: string
+          id?: string
+          largura_px?: number | null
+          mime: string
+          nome_arquivo: string
+          paginas?: number | null
+          tamanho_bytes?: number | null
+          tipo: string
+        }
+        Update: {
+          altura_px?: number | null
+          bucket?: string
+          caminho?: string
+          criado_em?: string
+          dpi?: number
+          estado?: string
+          folha_numero?: number | null
+          geracao_id?: string
+          id?: string
+          largura_px?: number | null
+          mime?: string
+          nome_arquivo?: string
+          paginas?: number | null
+          tamanho_bytes?: number | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_arquivos_impressao_geracao_id_fkey"
+            columns: ["geracao_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_geracoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       foto_express_configuracoes: {
         Row: {
           atualizado_em: string
@@ -1522,6 +1584,78 @@ export type Database = {
         }
         Relationships: []
       }
+      foto_express_geracoes: {
+        Row: {
+          assinatura: string
+          atualizado_em: string
+          concluido_em: string | null
+          criado_em: string
+          criado_por: string
+          dpi: number
+          erro: string | null
+          estado: string
+          etapa: string
+          id: string
+          iniciado_em: string | null
+          montagem_id: string
+          montagem_versao: number
+          saida: string
+          snapshot: Json
+          trabalho_id: string
+        }
+        Insert: {
+          assinatura: string
+          atualizado_em?: string
+          concluido_em?: string | null
+          criado_em?: string
+          criado_por?: string
+          dpi?: number
+          erro?: string | null
+          estado?: string
+          etapa?: string
+          id?: string
+          iniciado_em?: string | null
+          montagem_id: string
+          montagem_versao: number
+          saida: string
+          snapshot: Json
+          trabalho_id: string
+        }
+        Update: {
+          assinatura?: string
+          atualizado_em?: string
+          concluido_em?: string | null
+          criado_em?: string
+          criado_por?: string
+          dpi?: number
+          erro?: string | null
+          estado?: string
+          etapa?: string
+          id?: string
+          iniciado_em?: string | null
+          montagem_id?: string
+          montagem_versao?: number
+          saida?: string
+          snapshot?: Json
+          trabalho_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_geracoes_montagem_id_fkey"
+            columns: ["montagem_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_montagens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foto_express_geracoes_trabalho_id_fkey"
+            columns: ["trabalho_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_trabalhos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       foto_express_itens: {
         Row: {
           altura_personalizada_cm: number | null
@@ -1663,6 +1797,7 @@ export type Database = {
           papel_altura_mm: number
           papel_largura_mm: number
           permitir_rotacao: boolean
+          snapshot_confirmado: Json | null
           trabalho_id: string
           versao: number
         }
@@ -1684,6 +1819,7 @@ export type Database = {
           papel_altura_mm: number
           papel_largura_mm: number
           permitir_rotacao?: boolean
+          snapshot_confirmado?: Json | null
           trabalho_id: string
           versao?: number
         }
@@ -1705,6 +1841,7 @@ export type Database = {
           papel_altura_mm?: number
           papel_largura_mm?: number
           permitir_rotacao?: boolean
+          snapshot_confirmado?: Json | null
           trabalho_id?: string
           versao?: number
         }
@@ -4246,6 +4383,10 @@ export type Database = {
       cpf_valido: { Args: { _cpf: string }; Returns: boolean }
       disparar_rotina_bot: { Args: { rota: string }; Returns: undefined }
       disparar_rotina_sorteios: { Args: { rota: string }; Returns: undefined }
+      foto_express_atualizar_geracao: {
+        Args: { _etapa: string; _geracao_id: string }
+        Returns: undefined
+      }
       foto_express_criar_texto: {
         Args: { _item_id: string; _trabalho_id: string }
         Returns: {
@@ -4327,6 +4468,14 @@ export type Database = {
       foto_express_excluir_texto: {
         Args: { _item_id: string; _texto_id: string; _trabalho_id: string }
         Returns: undefined
+      }
+      foto_express_falhar_geracao: {
+        Args: { _erro: string; _geracao_id: string }
+        Returns: undefined
+      }
+      foto_express_iniciar_geracao: {
+        Args: { _saida: string; _trabalho_id: string }
+        Returns: string
       }
       foto_express_mover_texto: {
         Args: {
@@ -4434,6 +4583,7 @@ export type Database = {
           papel_altura_mm: number
           papel_largura_mm: number
           permitir_rotacao: boolean
+          snapshot_confirmado: Json | null
           trabalho_id: string
           versao: number
         }
@@ -4491,6 +4641,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      foto_express_snapshot_montagem: {
+        Args: { _montagem_id: string }
+        Returns: Json
       }
       has_role: {
         Args: {
