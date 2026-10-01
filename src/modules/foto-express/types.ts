@@ -11,6 +11,7 @@ export type Qualidade = "EXCELENTE" | "BOA" | "BAIXA" | "MUITO_BAIXA" | "SEM_FOR
 export interface ItemGaleria extends ItemFoto {
   arquivo: ArquivoFoto;
   formato: Formato | null;
+  configuracao: ConfiguracaoFoto | null;
   thumbnailUrl?: string;
 }
 

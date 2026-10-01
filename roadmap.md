@@ -23,6 +23,7 @@
 - [x] Enquadramento, zoom, rotação, espelhamento, orientação e reset
 - [x] Crop normalizado derivado e DPI efetivo a 300 DPI
 - [x] Transformação inversa do crop corrigida para espelhamentos horizontal e vertical
+- [x] Miniaturas da Galeria com formato e enquadramento salvos; 4:3 sem formato
 - [x] Autosave atômico, navegação entre fotos e modo somente leitura
 - [x] Verificação em desktop e celular sem alterar dados reais
 

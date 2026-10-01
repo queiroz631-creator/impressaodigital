@@ -46,7 +46,7 @@ export function useItensGaleria(trabalhoId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("foto_express_itens")
-        .select("*, arquivo:foto_express_arquivos!foto_express_itens_arquivo_trabalho_fkey(*), formato:foto_express_formatos(*)")
+        .select("*, arquivo:foto_express_arquivos!foto_express_itens_arquivo_trabalho_fkey(*), formato:foto_express_formatos(*), configuracao:foto_express_configuracoes(*)")
         .eq("trabalho_id", trabalhoId)
         .order("ordem").order("criado_em");
       if (error) throw error;
