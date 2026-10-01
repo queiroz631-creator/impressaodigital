@@ -30,6 +30,30 @@ async function executarLimpezaStorage(limpeza: LimpezaStorage) {
   return erros;
 }
 
+async function reprocessarLimpezasPendentes(limite = 10) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("foto_express_limpezas_storage")
+    .select("id, original_bucket, original_path, thumbnail_bucket, thumbnail_path, tentativas")
+    .eq("status", "PENDENTE")
+    .order("criado_em")
+    .limit(limite);
+  if (error) return [`Consulta da limpeza: ${error.message}`];
+  const resultados = await Promise.all(
+    (data ?? []).map((item) =>
+      executarLimpezaStorage({
+        limpeza_id: item.id,
+        original_bucket: item.original_bucket,
+        original_path: item.original_path,
+        thumbnail_bucket: item.thumbnail_bucket,
+        thumbnail_path: item.thumbnail_path,
+        tentativas: item.tentativas,
+      }),
+    ),
+  );
+  return resultados.flat();
+}
+
 const uploadSchema = z.object({
   trabalhoId: z.string().uuid(),
   nomeOriginal: z.string().min(1).max(500),
@@ -57,7 +81,10 @@ export const registrarUploadFotoExpress = createServerFn({ method: "POST" })
       _thumbnail_path: data.thumbnailPath,
       _ordem: data.ordem,
     });
-    if (!error) return { itemId, limpezaPendente: false };
+    if (!error) {
+      await reprocessarLimpezasPendentes();
+      return { itemId, limpezaPendente: false };
+    }
 
     const { data: limpezaId, error: erroFila } = await context.supabase.rpc(
       "foto_express_registrar_limpeza_upload",
@@ -86,6 +113,35 @@ export const registrarUploadFotoExpress = createServerFn({ method: "POST" })
     throw new Error(`Falha ao registrar a foto: ${error.message}. Os arquivos enviados foram removidos.`);
   });
 
+const limpezaUploadSchema = z.object({
+  originalPath: z.string().min(1).max(1000),
+  thumbnailPath: z.string().min(1).max(1000),
+  erro: z.string().min(1).max(2000),
+});
+
+export const limparUploadIncompletoFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => limpezaUploadSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: limpezaId, error } = await context.supabase.rpc(
+      "foto_express_registrar_limpeza_upload",
+      {
+        _original_path: data.originalPath,
+        _thumbnail_path: data.thumbnailPath,
+        _erro: data.erro,
+      },
+    );
+    if (error || !limpezaId) throw new Error(error?.message ?? "Não foi possível registrar a limpeza.");
+    const avisos = await executarLimpezaStorage({
+      limpeza_id: limpezaId,
+      original_bucket: "foto-express-originais",
+      original_path: data.originalPath,
+      thumbnail_bucket: "foto-express-thumbnails",
+      thumbnail_path: data.thumbnailPath,
+    });
+    return { limpezaPendente: avisos.length > 0, avisos };
+  });
+
 const exclusaoSchema = z.object({ itemIds: z.array(z.string().uuid()).min(1).max(500) });
 
 export const excluirItensFotoExpress = createServerFn({ method: "POST" })
@@ -99,10 +155,11 @@ export const excluirItensFotoExpress = createServerFn({ method: "POST" })
 
     const resultados = await Promise.all((limpezas ?? []).map(executarLimpezaStorage));
     const erros = resultados.flat();
+    const errosAnteriores = await reprocessarLimpezasPendentes();
     return {
       itensExcluidos: new Set(data.itemIds).size,
       limpezasConcluidas: (limpezas ?? []).length - resultados.filter((lista) => lista.length > 0).length,
       limpezasPendentes: resultados.filter((lista) => lista.length > 0).length,
-      avisos: erros,
+      avisos: [...erros, ...errosAnteriores],
     };
   });
