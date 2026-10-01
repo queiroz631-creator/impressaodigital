@@ -59,8 +59,14 @@ const round = (n: number) => Number(n.toFixed(3));
 export function montarFolhas(itens: ItemGaleria[], config: ConfiguracaoMontagem): PlanoMontagem {
   if (!itens.length) return { folhas: [], orientacaoEscolhida: "RETRATO", areaUtilMm2: 0, areaOcupadaMm2: 0, aproveitamento: 0 };
   if (config.orientacao !== "AUTOMATICA") return montarOrientacao(itens, config, config.orientacao);
-  const retrato = montarOrientacao(itens, config, "RETRATO"); const paisagem = montarOrientacao(itens, config, "PAISAGEM");
-  return [retrato, paisagem].sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || a.orientacaoEscolhida.localeCompare(b.orientacaoEscolhida))[0] ?? retrato;
+  const resultados: PlanoMontagem[] = [];
+  let ultimoErro: unknown;
+  for (const orientacao of ["RETRATO", "PAISAGEM"] as const) {
+    try { resultados.push(montarOrientacao(itens, config, orientacao)); } catch (erro) { ultimoErro = erro; }
+  }
+  const melhor = resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || a.orientacaoEscolhida.localeCompare(b.orientacaoEscolhida))[0];
+  if (!melhor) throw ultimoErro instanceof Error ? ultimoErro : new Error("Esta foto não cabe na área útil do papel selecionado.");
+  return melhor;
 }
 
 export async function assinaturaMontagem(itens: ItemGaleria[], textos: TextoFoto[], config: ConfiguracaoMontagem) {
