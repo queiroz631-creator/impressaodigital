@@ -162,6 +162,13 @@
       "when": 1790831846975,
       "tag": "0022_foto_express_correcao_tecnica",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790833588986,
+      "tag": "0023_foto_express_editor_nao_destrutivo",
+      "breakpoints": true
     }
   ]
 }
