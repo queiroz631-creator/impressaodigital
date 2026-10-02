@@ -1,4 +1,4 @@
-import type { ItemGaleria, TextoFoto } from "../types";
+import type { Formato, ItemGaleria, PapelFoto, TextoFoto } from "../types";
 
 export type OrientacaoPapel = "AUTOMATICA" | "RETRATO" | "PAISAGEM";
 export type ConfiguracaoMontagem = {
@@ -7,7 +7,7 @@ export type ConfiguracaoMontagem = {
   espacamentoMm: number; permitirRotacao: boolean;
 };
 export type OcorrenciaMontagem = { itemId: string; indiceCopia: number; xMm: number; yMm: number; larguraMm: number; alturaMm: number; rotacaoFolha: 0 | 90 };
-export type FolhaMontagem = { numero: number; larguraMm: number; alturaMm: number; ocorrencias: OcorrenciaMontagem[] };
+export type FolhaMontagem = { numero: number; larguraMm: number; alturaMm: number; ocorrencias: OcorrenciaMontagem[]; papelId?: string; papelNome?: string };
 export type PlanoMontagem = { folhas: FolhaMontagem[]; orientacaoEscolhida: Exclude<OrientacaoPapel, "AUTOMATICA">; areaUtilMm2: number; areaOcupadaMm2: number; aproveitamento: number };
 
 export const cmParaMm = (cm: number) => cm * 10;
@@ -140,4 +140,28 @@ export async function assinaturaMontagem(itens: ItemGaleria[], textos: TextoFoto
   const dados = JSON.stringify({ config, itens: itens.map((i) => ({ id: i.id, formato: i.formato_id, largura: i.largura_personalizada_cm, altura: i.altura_personalizada_cm, quantidade: i.quantidade, orientacao: i.orientacao, atualizado: i.atualizado_em, configuracao: i.configuracao, formatoDados: i.formato })), textos: textos.map((t) => ({ id: t.id, item: t.item_id, versao: t.versao, atualizado: t.atualizado_em })) });
   const bytes = new TextEncoder().encode(dados); const hash = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export async function assinaturaMontagemPorPapeis(itens: ItemGaleria[], textos: TextoFoto[], configs: ConfiguracaoMontagem[]) {
+  const dados = JSON.stringify({ configs: [...configs].sort((a, b) => a.papelId.localeCompare(b.papelId)), itens: itens.map((i) => ({ id: i.id, formato: i.formato_id, largura: i.largura_personalizada_cm, altura: i.altura_personalizada_cm, quantidade: i.quantidade, orientacao: i.orientacao, atualizado: i.atualizado_em, configuracao: i.configuracao, formatoDados: i.formato })), textos: textos.map((t) => ({ id: t.id, item: t.item_id, versao: t.versao, atualizado: t.atualizado_em })) });
+  const bytes = new TextEncoder().encode(dados); const hash = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export function capacidadeEstimadaFormato(formato: Pick<Formato, "largura_cm" | "altura_cm">, papel: PapelFoto) {
+  const larguraPeca = cmParaMm(Number(formato.largura_cm)); const alturaPeca = cmParaMm(Number(formato.altura_cm));
+  if (larguraPeca <= 0 || alturaPeca <= 0) return 0;
+  const orientacoes = papel.orientacao === "AUTOMATICA" ? ["RETRATO", "PAISAGEM"] as const : [papel.orientacao as "RETRATO" | "PAISAGEM"];
+  const capacidadeGrade = (larguraFolha: number, alturaFolha: number, largura: number, altura: number) => {
+    const utilW = larguraFolha - Number(papel.margem_esquerda_mm) - Number(papel.margem_direita_mm);
+    const utilH = alturaFolha - Number(papel.margem_superior_mm) - Number(papel.margem_inferior_mm);
+    const espaco = Number(papel.espacamento_mm);
+    return Math.max(0, Math.floor((utilW + espaco) / (largura + espaco)) * Math.floor((utilH + espaco) / (altura + espaco)));
+  };
+  return Math.max(...orientacoes.flatMap((orientacao) => {
+    const larguraFolha = orientacao === "PAISAGEM" ? Math.max(Number(papel.largura_mm), Number(papel.altura_mm)) : Math.min(Number(papel.largura_mm), Number(papel.altura_mm));
+    const alturaFolha = orientacao === "PAISAGEM" ? Math.min(Number(papel.largura_mm), Number(papel.altura_mm)) : Math.max(Number(papel.largura_mm), Number(papel.altura_mm));
+    const normal = capacidadeGrade(larguraFolha, alturaFolha, larguraPeca, alturaPeca);
+    return papel.permitir_rotacao ? [normal, capacidadeGrade(larguraFolha, alturaFolha, alturaPeca, larguraPeca)] : [normal];
+  }));
 }

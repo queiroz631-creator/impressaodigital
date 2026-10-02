@@ -14,47 +14,96 @@ import { usePermissoes } from "@/hooks/usePermissoes";
 import { salvarMontagemFotoExpress } from "@/lib/foto-express.functions";
 import { useItensGaleria, useMontagem, usePapeis, useTextosTrabalho, useTrabalho } from "../hooks/useFotoExpress";
 import { calcularQualidadeFoto } from "../lib/qualidade";
-import { montarFolhas, assinaturaMontagem, type ConfiguracaoMontagem, type PlanoMontagem } from "../lib/montagem";
-import { ConfiguracaoPapel } from "./ConfiguracaoPapel";
+import { assinaturaMontagemPorPapeis, capacidadeEstimadaFormato, montarFolhas, type ConfiguracaoMontagem, type PlanoMontagem } from "../lib/montagem";
 import { PreviewFolha } from "../montagem/PreviewFolha";
+import type { ItemGaleria, PapelFoto } from "../types";
 import { GeracaoImpressao } from "./GeracaoImpressao";
 
-const configurarPapel = (papel: { id: string; nome: string; largura_mm: number; altura_mm: number; orientacao: string; margem_superior_mm: number; margem_inferior_mm: number; margem_esquerda_mm: number; margem_direita_mm: number; espacamento_mm: number; permitir_rotacao: boolean }): ConfiguracaoMontagem => ({ papelId: papel.id, papelNome: papel.nome, larguraMm: Number(papel.largura_mm), alturaMm: Number(papel.altura_mm), orientacao: papel.orientacao === "RETRATO" || papel.orientacao === "PAISAGEM" ? papel.orientacao : "AUTOMATICA", margemSuperiorMm: Number(papel.margem_superior_mm), margemInferiorMm: Number(papel.margem_inferior_mm), margemEsquerdaMm: Number(papel.margem_esquerda_mm), margemDireitaMm: Number(papel.margem_direita_mm), espacamentoMm: Number(papel.espacamento_mm), permitirRotacao: papel.permitir_rotacao });
+const configurarPapel = (papel: PapelFoto): ConfiguracaoMontagem => ({
+  papelId: papel.id, papelNome: papel.nome, larguraMm: Number(papel.largura_mm), alturaMm: Number(papel.altura_mm),
+  orientacao: papel.orientacao === "RETRATO" || papel.orientacao === "PAISAGEM" ? papel.orientacao : "AUTOMATICA",
+  margemSuperiorMm: Number(papel.margem_superior_mm), margemInferiorMm: Number(papel.margem_inferior_mm),
+  margemEsquerdaMm: Number(papel.margem_esquerda_mm), margemDireitaMm: Number(papel.margem_direita_mm),
+  espacamentoMm: Number(papel.espacamento_mm), permitirRotacao: papel.permitir_rotacao,
+});
+
+type GrupoMontagem = { papel: PapelFoto; config: ConfiguracaoMontagem; itens: ItemGaleria[]; plano: PlanoMontagem };
+
 export function RevisaoPagina({ trabalhoId }: { trabalhoId: string }) {
-  const { data: trabalho } = useTrabalho(trabalhoId); const itensQuery = useItensGaleria(trabalhoId); const itens = itensQuery.data ?? [];
-  const textosQuery = useTextosTrabalho(itens.map((i) => i.id)); const textos = textosQuery.data ?? []; const montagemQuery = useMontagem(trabalhoId);
-  const papeisQuery = usePapeis(); const papeis = papeisQuery.data ?? [];
-  const { user } = useAuth(); const { pode } = usePermissoes(user?.id); const podeEditar = pode("foto_express.trabalhos.editar"); const salvar = useServerFn(salvarMontagemFotoExpress); const qc = useQueryClient();
-  const [papelId, setPapelId] = useState(""); const [indice, setIndice] = useState(0); const [assinatura, setAssinatura] = useState("");
-  useEffect(() => { const primeiro = papeis[0]; if (!primeiro) return; setPapelId((atual) => atual || (montagemQuery.data?.papel_id && papeis.some((p) => p.id === montagemQuery.data?.papel_id) ? montagemQuery.data.papel_id : primeiro.id)); }, [papeis, montagemQuery.data?.papel_id]);
-  const papelSelecionado = papeis.find((papel) => papel.id === papelId);
-  const config = useMemo(() => papelSelecionado ? configurarPapel(papelSelecionado) : null, [papelSelecionado]);
-  useEffect(() => { if (config) void assinaturaMontagem(itens, textos, config).then(setAssinatura); else setAssinatura(""); }, [itens, textos, config]);
-  const resultado = useMemo<{ plano: PlanoMontagem | null; erro: string | null }>(() => { if (!config) return { plano: null, erro: papeisQuery.isLoading ? null : "Cadastre e ative um papel para montar as fotos." }; try { return { plano: montarFolhas(itens, config), erro: null }; } catch (e) { return { plano: null, erro: e instanceof Error ? e.message : "Não foi possível montar as folhas." }; } }, [itens, config, papeisQuery.isLoading]);
-  useEffect(() => { setIndice(0); }, [resultado.plano?.folhas.length, papelId]);
+  const { data: trabalho } = useTrabalho(trabalhoId);
+  const itensQuery = useItensGaleria(trabalhoId); const itens = itensQuery.data ?? [];
+  const textosQuery = useTextosTrabalho(itens.map((item) => item.id)); const textos = textosQuery.data ?? [];
+  const montagemQuery = useMontagem(trabalhoId); const papeisQuery = usePapeis(); const papeis = papeisQuery.data ?? [];
+  const { user } = useAuth(); const { pode } = usePermissoes(user?.id); const podeEditar = pode("foto_express.trabalhos.editar");
+  const salvar = useServerFn(salvarMontagemFotoExpress); const qc = useQueryClient();
+  const [indice, setIndice] = useState(0); const [assinatura, setAssinatura] = useState("");
+
+  const resultado = useMemo<{ grupos: GrupoMontagem[]; plano: PlanoMontagem | null; erro: string | null }>(() => {
+    if (papeisQuery.isLoading) return { grupos: [], plano: null, erro: null };
+    if (!itens.length) return { grupos: [], plano: null, erro: "Adicione fotos antes de montar." };
+    const mapa = new Map<string, ItemGaleria[]>();
+    for (const item of itens) {
+      const papelId = item.formato?.papel_padrao_id;
+      if (!papelId) return { grupos: [], plano: null, erro: `O formato da foto ${item.ordem + 1} não possui papel padrão.` };
+      const lista = mapa.get(papelId) ?? []; lista.push(item); mapa.set(papelId, lista);
+    }
+    try {
+      const grupos: GrupoMontagem[] = [];
+      let proximoNumero = 1;
+      for (const papel of papeis) {
+        const itensGrupo = mapa.get(papel.id); if (!itensGrupo?.length) continue;
+        const config = configurarPapel(papel); const calculado = montarFolhas(itensGrupo, config);
+        const plano = { ...calculado, folhas: calculado.folhas.map((folha) => ({ ...folha, numero: proximoNumero++, papelId: papel.id, papelNome: papel.nome })) };
+        grupos.push({ papel, config, itens: itensGrupo, plano });
+      }
+      if (grupos.length !== mapa.size) return { grupos: [], plano: null, erro: "Um papel padrão usado pelas fotos está inativo ou indisponível." };
+      const folhas = grupos.flatMap((grupo) => grupo.plano.folhas);
+      const areaUtilMm2 = grupos.reduce((soma, grupo) => soma + grupo.plano.areaUtilMm2, 0);
+      const areaOcupadaMm2 = grupos.reduce((soma, grupo) => soma + grupo.plano.areaOcupadaMm2, 0);
+      return { grupos, plano: { folhas, orientacaoEscolhida: grupos.every((grupo) => grupo.plano.orientacaoEscolhida === grupos[0]?.plano.orientacaoEscolhida) ? (grupos[0]?.plano.orientacaoEscolhida ?? "RETRATO") : "RETRATO", areaUtilMm2, areaOcupadaMm2, aproveitamento: areaUtilMm2 ? Number((areaOcupadaMm2 / areaUtilMm2 * 100).toFixed(3)) : 0 }, erro: null };
+    } catch (erro) { return { grupos: [], plano: null, erro: erro instanceof Error ? erro.message : "Não foi possível montar as folhas." }; }
+  }, [itens, papeis, papeisQuery.isLoading]);
+
+  useEffect(() => { const configs = resultado.grupos.map((grupo) => grupo.config); if (configs.length) void assinaturaMontagemPorPapeis(itens, textos, configs).then(setAssinatura); else setAssinatura(""); }, [itens, textos, resultado.grupos]);
+  useEffect(() => { setIndice(0); }, [resultado.plano?.folhas.length]);
+
   const alertas = useMemo(() => itens.flatMap((item) => {
     const avisos: string[] = [];
     if (!item.formato) avisos.push(`Foto ${item.ordem + 1}: escolha um formato.`);
+    else if (!item.formato.papel_padrao_id) avisos.push(`Foto ${item.ordem + 1}: o formato ${item.formato.nome} está sem papel padrão.`);
     if (item.quantidade < 1) avisos.push(`Foto ${item.ordem + 1}: quantidade inválida.`);
     if (!item.thumbnailUrl) avisos.push(`Foto ${item.ordem + 1}: imagem indisponível.`);
-    const configuracaoItem = item.configuracao;
-    const cropValido = configuracaoItem && Number(configuracaoItem.crop_largura) > 0 && Number(configuracaoItem.crop_altura) > 0;
+    const configuracao = item.configuracao; const cropValido = configuracao && Number(configuracao.crop_largura) > 0 && Number(configuracao.crop_altura) > 0;
     if (item.formato && !cropValido) avisos.push(`Foto ${item.ordem + 1}: configuração incompleta; abra o editor para conferir.`);
-    if (item.formato && configuracaoItem && cropValido) {
-      const q = calcularQualidadeFoto({ larguraPx: item.arquivo.largura_px, alturaPx: item.arquivo.altura_px, larguraCm: Number(item.formato.largura_cm) * Number(item.formato.area_foto_largura), alturaCm: Number(item.formato.altura_cm) * Number(item.formato.area_foto_altura), orientacao: item.orientacao, crop: { largura: Number(configuracaoItem.crop_largura), altura: Number(configuracaoItem.crop_altura) }, rotacao: Number(configuracaoItem.rotacao) });
-      if (q.dpi !== null && q.dpi < 220) avisos.push(`Foto ${item.ordem + 1}: ${q.dpi} DPI${q.dpi < 150 ? " — qualidade muito baixa" : " — qualidade baixa"}.`);
+    if (item.formato && configuracao && cropValido) {
+      const qualidade = calcularQualidadeFoto({ larguraPx: item.arquivo.largura_px, alturaPx: item.arquivo.altura_px, larguraCm: Number(item.formato.largura_cm) * Number(item.formato.area_foto_largura), alturaCm: Number(item.formato.altura_cm) * Number(item.formato.area_foto_altura), orientacao: item.orientacao, crop: { largura: Number(configuracao.crop_largura), altura: Number(configuracao.crop_altura) }, rotacao: Number(configuracao.rotacao) });
+      if (qualidade.dpi !== null && qualidade.dpi < 220) avisos.push(`Foto ${item.ordem + 1}: ${qualidade.dpi} DPI${qualidade.dpi < 150 ? " — qualidade muito baixa" : " — qualidade baixa"}.`);
     }
     return avisos;
   }), [itens]);
+
   const desatualizada = Boolean(montagemQuery.data && montagemQuery.data.assinatura !== assinatura);
-  const mutation = useMutation({ mutationFn: async () => { const plano = resultado.plano; if (!plano?.folhas.length || !config) throw new Error(resultado.erro ?? "Não há folhas para confirmar."); return salvar({ data: { trabalhoId, papelId: config.papelId, orientacaoEscolhida: plano.orientacaoEscolhida, assinatura, versao: montagemQuery.data?.versao ?? 0, folhas: plano.folhas } }); }, onSuccess: () => { toast.success("Montagem confirmada."); void qc.invalidateQueries({ queryKey: ["foto-express", "montagem", trabalhoId] }); }, onError: (e: Error) => { toast.error(e.message.includes("MONTAGEM_DESATUALIZADA") ? "A montagem foi alterada em outra tela. Recarregue e tente novamente." : e.message); } });
+  const mutation = useMutation({
+    mutationFn: async () => {
+      if (!resultado.plano?.folhas.length || !resultado.grupos.length) throw new Error(resultado.erro ?? "Não há folhas para confirmar.");
+      return salvar({ data: { trabalhoId, assinatura, versao: montagemQuery.data?.versao ?? 0, grupos: resultado.grupos.map((grupo) => ({ papelId: grupo.papel.id, orientacaoEscolhida: grupo.plano.orientacaoEscolhida, folhas: grupo.plano.folhas })) } });
+    },
+    onSuccess: () => { toast.success("Montagem confirmada por papel."); void qc.invalidateQueries({ queryKey: ["foto-express", "montagem", trabalhoId] }); },
+    onError: (erro: Error) => toast.error(erro.message.includes("MONTAGEM_DESATUALIZADA") ? "A montagem foi alterada em outra tela. Recarregue e tente novamente." : erro.message),
+  });
+
   if (itensQuery.isLoading || textosQuery.isLoading) return <p className="text-sm text-muted-foreground">Carregando revisão...</p>;
+  const orientacaoGeracao = resultado.grupos.length > 1 ? "MISTA" : resultado.grupos[0]?.plano.orientacaoEscolhida ?? "RETRATO";
   return <><PageHeader titulo={`Revisão #${String(trabalho?.numero ?? "").padStart(6, "0")}`} subtitulo={trabalho?.cliente_nome || "Conferência e montagem automática"} />
     <div className="mb-4 flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/foto-express/$id/fotos" params={{ id: trabalhoId }}><Images className="mr-2 h-4 w-4" />Galeria</Link></Button>{desatualizada && <Badge variant="destructive" className="self-center">Montagem desatualizada</Badge>}</div>
-    {alertas.length > 0 && <Alert className="mb-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Avisos da revisão</AlertTitle><AlertDescription><ul className="list-disc space-y-1 pl-4">{alertas.map((a, i) => <li key={`${a}-${i}`}>{a}</li>)}</ul></AlertDescription></Alert>}
+    {alertas.length > 0 && <Alert className="mb-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Avisos da revisão</AlertTitle><AlertDescription><ul className="list-disc space-y-1 pl-4">{alertas.map((aviso, i) => <li key={`${aviso}-${i}`}>{aviso}</li>)}</ul></AlertDescription></Alert>}
     {resultado.erro && <Alert variant="destructive" className="mb-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Montagem indisponível</AlertTitle><AlertDescription>{resultado.erro}</AlertDescription></Alert>}
-    <div className="grid items-start gap-5 xl:grid-cols-[360px_minmax(0,1fr)]"><div className="space-y-4"><Card><CardHeader><CardTitle>Dados do trabalho</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-3 text-sm"><Dado nome="Fotos" valor={String(itens.length)} /><Dado nome="Cópias" valor={String(itens.reduce((s, i) => s + i.quantidade, 0))} /><Dado nome="Cliente" valor={trabalho?.cliente_nome || "Não informado"} /><Dado nome="Telefone" valor={trabalho?.cliente_telefone || "Não informado"} /></CardContent></Card><Card><CardHeader><CardTitle>Papel e montagem</CardTitle></CardHeader><CardContent><ConfiguracaoPapel papeis={papeis} papelId={papelId} onChange={setPapelId} /></CardContent></Card>{resultado.plano && config && <GeracaoImpressao trabalhoId={trabalhoId} numeroTrabalho={trabalho?.numero} habilitada={Boolean(podeEditar && montagemQuery.data && !desatualizada && montagemQuery.data.snapshot_confirmado)} folhas={resultado.plano.folhas.length} papel={config.papelNome} orientacao={resultado.plano.orientacaoEscolhida} />}</div>
-      <Card><CardHeader><div className="flex flex-wrap items-center justify-between gap-3"><CardTitle className="flex items-center gap-2"><LayoutGrid className="h-5 w-5" />Prévia das folhas</CardTitle>{resultado.plano && <div className="flex flex-wrap gap-2"><Badge variant="outline">{resultado.plano.folhas.length} folha(s)</Badge><Badge variant="outline">{resultado.plano.orientacaoEscolhida === "PAISAGEM" ? "Paisagem" : "Retrato"}</Badge><Badge variant="outline">{resultado.plano.aproveitamento}% aproveitado</Badge></div>}</div></CardHeader><CardContent className="space-y-5">{resultado.plano && <PreviewFolha plano={resultado.plano} indice={indice} onIndice={setIndice} itens={itens} textos={textos} />}<Button className="w-full" disabled={!podeEditar || mutation.isPending || !resultado.plano?.folhas.length || !assinatura} onClick={() => mutation.mutate()}>{mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}Confirmar montagem</Button></CardContent></Card></div>
+    <div className="grid items-start gap-5 xl:grid-cols-[380px_minmax(0,1fr)]"><div className="space-y-4">
+      <Card><CardHeader><CardTitle>Dados do trabalho</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-3 text-sm"><Dado nome="Fotos" valor={String(itens.length)} /><Dado nome="Cópias" valor={String(itens.reduce((soma, item) => soma + item.quantidade, 0))} /><Dado nome="Cliente" valor={trabalho?.cliente_nome || "Não informado"} /><Dado nome="Telefone" valor={trabalho?.cliente_telefone || "Não informado"} /></CardContent></Card>
+      <Card><CardHeader><CardTitle>Papéis da montagem</CardTitle></CardHeader><CardContent className="space-y-4">{resultado.grupos.map((grupo) => <div key={grupo.papel.id} className="space-y-2 border-b pb-4 last:border-b-0 last:pb-0"><div className="flex items-center justify-between gap-2"><p className="font-medium">{grupo.papel.nome}</p><Badge variant="outline">{grupo.plano.folhas.length} folha(s)</Badge></div><p className="text-sm text-muted-foreground">{grupo.itens.length} foto(s) · {grupo.itens.reduce((soma, item) => soma + item.quantidade, 0)} cópia(s) · {grupo.plano.aproveitamento}% aproveitado</p><div className="flex flex-wrap gap-1.5">{[...new Map(grupo.itens.filter((item) => item.formato).map((item) => [item.formato?.id, item.formato])).values()].map((formato) => formato ? <Badge key={formato.id} variant="secondary">{formato.nome}: até {capacidadeEstimadaFormato(formato, grupo.papel)}/folha</Badge> : null)}</div></div>)}</CardContent></Card>
+      {resultado.plano && <GeracaoImpressao trabalhoId={trabalhoId} numeroTrabalho={trabalho?.numero} habilitada={Boolean(podeEditar && montagemQuery.data && !desatualizada && montagemQuery.data.snapshot_confirmado)} folhas={resultado.plano.folhas.length} papel={resultado.grupos.length > 1 ? `${resultado.grupos.length} papéis` : resultado.grupos[0]?.papel.nome ?? "—"} orientacao={orientacaoGeracao} />}
+    </div><Card><CardHeader><div className="flex flex-wrap items-center justify-between gap-3"><CardTitle className="flex items-center gap-2"><LayoutGrid className="h-5 w-5" />Prévia das folhas</CardTitle>{resultado.plano && <div className="flex flex-wrap gap-2"><Badge variant="outline">{resultado.plano.folhas.length} folha(s)</Badge><Badge variant="outline">{resultado.grupos.length} papel(is)</Badge><Badge variant="outline">{resultado.plano.aproveitamento}% aproveitado</Badge></div>}</div></CardHeader><CardContent className="space-y-5">{resultado.plano && <PreviewFolha plano={resultado.plano} indice={indice} onIndice={setIndice} itens={itens} textos={textos} />}<Button className="w-full" disabled={!podeEditar || mutation.isPending || !resultado.plano?.folhas.length || !assinatura || Boolean(resultado.erro)} onClick={() => mutation.mutate()}>{mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}Confirmar montagem</Button></CardContent></Card></div>
   </>;
 }
+
 function Dado({ nome, valor }: { nome: string; valor: string }) { return <div className="min-w-0"><p className="text-xs text-muted-foreground">{nome}</p><p className="truncate font-medium">{valor}</p></div>; }

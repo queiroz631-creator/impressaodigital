@@ -1505,6 +1505,8 @@ export type Database = {
           largura_mm: number
           montagem_id: string
           numero: number
+          papel_id: string | null
+          papel_nome: string | null
         }
         Insert: {
           altura_mm: number
@@ -1512,6 +1514,8 @@ export type Database = {
           largura_mm: number
           montagem_id: string
           numero: number
+          papel_id?: string | null
+          papel_nome?: string | null
         }
         Update: {
           altura_mm?: number
@@ -1519,6 +1523,8 @@ export type Database = {
           largura_mm?: number
           montagem_id?: string
           numero?: number
+          papel_id?: string | null
+          papel_nome?: string | null
         }
         Relationships: [
           {
@@ -1526,6 +1532,13 @@ export type Database = {
             columns: ["montagem_id"]
             isOneToOne: false
             referencedRelation: "foto_express_montagens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foto_express_folhas_papel_id_fkey"
+            columns: ["papel_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_papeis"
             referencedColumns: ["id"]
           },
         ]
@@ -1548,6 +1561,7 @@ export type Database = {
           nome: string
           ordem: number
           padrao: boolean
+          papel_padrao_id: string | null
         }
         Insert: {
           altura_cm: number
@@ -1566,6 +1580,7 @@ export type Database = {
           nome: string
           ordem?: number
           padrao?: boolean
+          papel_padrao_id?: string | null
         }
         Update: {
           altura_cm?: number
@@ -1584,8 +1599,17 @@ export type Database = {
           nome?: string
           ordem?: number
           padrao?: boolean
+          papel_padrao_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_formatos_papel_padrao_id_fkey"
+            columns: ["papel_padrao_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_papeis"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       foto_express_geracoes: {
         Row: {
@@ -4589,6 +4613,21 @@ export type Database = {
         }
         Returns: string
       }
+      foto_express_registrar_upload_com_formato: {
+        Args: {
+          _altura_px: number
+          _formato_id: string
+          _largura_px: number
+          _nome_original: string
+          _ordem?: number
+          _original_path: string
+          _tamanho_bytes: number
+          _thumbnail_path: string
+          _tipo_mime: string
+          _trabalho_id: string
+        }
+        Returns: string
+      }
       foto_express_salvar_edicao: {
         Args: {
           _crop_altura: number
@@ -4683,6 +4722,44 @@ export type Database = {
           _folhas: Json
           _orientacao_escolhida: string
           _papel_id: string
+          _trabalho_id: string
+          _versao_esperada: number
+        }
+        Returns: {
+          assinatura: string
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          espacamento_mm: number
+          estado: string
+          id: string
+          margem_direita_mm: number
+          margem_esquerda_mm: number
+          margem_inferior_mm: number
+          margem_superior_mm: number
+          orientacao_escolhida: string
+          orientacao_solicitada: string
+          papel: string
+          papel_altura_mm: number
+          papel_id: string | null
+          papel_largura_mm: number
+          papel_nome: string | null
+          permitir_rotacao: boolean
+          snapshot_confirmado: Json | null
+          trabalho_id: string
+          versao: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "foto_express_montagens"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      foto_express_salvar_montagem_por_papeis: {
+        Args: {
+          _assinatura: string
+          _grupos: Json
           _trabalho_id: string
           _versao_esperada: number
         }

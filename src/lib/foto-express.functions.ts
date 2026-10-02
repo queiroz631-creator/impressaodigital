@@ -67,6 +67,7 @@ async function reprocessarLimpezasPendentes(limite = 10) {
 
 const uploadSchema = z.object({
   trabalhoId: z.string().uuid(),
+  formatoId: z.string().uuid(),
   nomeOriginal: z.string().min(1).max(500),
   tipoMime: z.enum(["image/jpeg", "image/png", "image/webp"]),
   tamanhoBytes: z.number().int().positive().max(20 * 1024 * 1024),
@@ -81,8 +82,9 @@ export const registrarUploadFotoExpress = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => uploadSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { data: itemId, error } = await context.supabase.rpc("foto_express_registrar_upload", {
+    const { data: itemId, error } = await context.supabase.rpc("foto_express_registrar_upload_com_formato", {
       _trabalho_id: data.trabalhoId,
+      _formato_id: data.formatoId,
       _nome_original: data.nomeOriginal,
       _tipo_mime: data.tipoMime,
       _tamanho_bytes: data.tamanhoBytes,
@@ -305,17 +307,17 @@ export const moverTextoFotoExpress = createServerFn({ method: "POST" })
 const ocorrenciaMontagemSchema = z.object({ itemId: z.string().uuid(), indiceCopia: z.number().int().positive(), xMm: z.number().nonnegative(), yMm: z.number().nonnegative(), larguraMm: z.number().positive(), alturaMm: z.number().positive(), rotacaoFolha: z.union([z.literal(0), z.literal(90)]) });
 const folhaMontagemSchema = z.object({ numero: z.number().int().positive(), larguraMm: z.number().positive(), alturaMm: z.number().positive(), ocorrencias: z.array(ocorrenciaMontagemSchema) });
 const montagemSchema = z.object({
-  trabalhoId: z.string().uuid(), papelId: z.string().uuid(), orientacaoEscolhida: z.enum(["RETRATO", "PAISAGEM"]),
-  assinatura: z.string().regex(/^[a-f0-9]{64}$/), versao: z.number().int().nonnegative(), folhas: z.array(folhaMontagemSchema).min(1),
+  trabalhoId: z.string().uuid(), assinatura: z.string().regex(/^[a-f0-9]{64}$/), versao: z.number().int().nonnegative(),
+  grupos: z.array(z.object({ papelId: z.string().uuid(), orientacaoEscolhida: z.enum(["RETRATO", "PAISAGEM"]), folhas: z.array(folhaMontagemSchema).min(1) })).min(1),
 });
 
 export const salvarMontagemFotoExpress = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => montagemSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { data: montagem, error } = await context.supabase.rpc("foto_express_salvar_montagem_com_papel", {
-      _trabalho_id: data.trabalhoId, _papel_id: data.papelId, _orientacao_escolhida: data.orientacaoEscolhida,
-      _assinatura: data.assinatura, _versao_esperada: data.versao, _folhas: data.folhas,
+    const { data: montagem, error } = await context.supabase.rpc("foto_express_salvar_montagem_por_papeis", {
+      _trabalho_id: data.trabalhoId, _assinatura: data.assinatura, _versao_esperada: data.versao,
+      _grupos: data.grupos,
     });
     if (error) throw new Error(error.message);
     return montagem;
