@@ -28,6 +28,7 @@
 - [x] Formatos com bordas individuais e miniatura de teste atualizada ao vivo
 - [x] Formatos classificados por categoria e filtro com padrão Todos na tela de cadastro
 - [x] Papéis de montagem reutilizáveis com cadastro próprio e seleção simples na Revisão
+- [x] Editor de foto ajustado para prévia e controles caberem na área visível da tela
 - [x] Autosave atômico, navegação entre fotos e modo somente leitura
 - [x] Verificação em desktop e celular sem alterar dados reais
 
