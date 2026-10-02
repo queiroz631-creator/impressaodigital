@@ -4456,6 +4456,10 @@ export type Database = {
       cpf_valido: { Args: { _cpf: string }; Returns: boolean }
       disparar_rotina_bot: { Args: { rota: string }; Returns: undefined }
       disparar_rotina_sorteios: { Args: { rota: string }; Returns: undefined }
+      foto_express_aplicar_texto_todas_fotos: {
+        Args: { _item_id: string; _texto_id: string; _trabalho_id: string }
+        Returns: number
+      }
       foto_express_atualizar_geracao: {
         Args: { _etapa: string; _geracao_id: string }
         Returns: undefined
