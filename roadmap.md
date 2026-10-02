@@ -29,6 +29,7 @@
 - [x] Formatos classificados por categoria e filtro com padrão Todos na tela de cadastro
 - [x] Papéis de montagem reutilizáveis com cadastro próprio e seleção simples na Revisão
 - [x] Editor de foto ajustado para prévia e controles caberem na área visível da tela
+- [x] Editor abre trabalhos grandes sem gerar links de todas as miniaturas e repete falhas temporárias do original
 - [x] Autosave atômico, navegação entre fotos e modo somente leitura
 - [x] Verificação em desktop e celular sem alterar dados reais
 

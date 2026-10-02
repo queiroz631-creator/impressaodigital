@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { aplicarTextoTodasFotosFotoExpress, criarTextoFotoExpress, duplicarTextoFotoExpress, excluirTextoFotoExpress, moverTextoFotoExpress, salvarEdicaoFotoExpress, salvarTextoFotoExpress } from "@/lib/foto-express.functions";
-import { useFormatos, useItemEditor, useItensGaleria, useTextosItem } from "../hooks/useFotoExpress";
+import { useFormatos, useItemEditor, useItensNavegacao, useTextosItem } from "../hooks/useFotoExpress";
 import { calcularQualidadeFoto } from "../lib/qualidade";
 import { derivarCrop, dimensoesMoldura, limitarPosicao, calcularGeometria, type EdicaoFoto } from "../lib/transformacaoFoto";
 import type { Orientacao, TextoFoto } from "../types";
@@ -37,7 +37,7 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   const excluirTexto = useServerFn(excluirTextoFotoExpress);
   const moverTexto = useServerFn(moverTextoFotoExpress);
   const itemQuery = useItemEditor(trabalhoId, itemId);
-  const itensQuery = useItensGaleria(trabalhoId);
+  const itensQuery = useItensNavegacao(trabalhoId);
   const formatosQuery = useFormatos();
   const textosQuery = useTextosItem(itemId);
   const { user } = useAuth();
@@ -48,6 +48,7 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   const [formatoId, setFormatoId] = useState("");
   const [estadoSalvar, setEstadoSalvar] = useState<EstadoSalvar>("LIMPO");
   const [imagemFalhou, setImagemFalhou] = useState(false);
+  const [tentativasImagem, setTentativasImagem] = useState(0);
   const [carregadoId, setCarregadoId] = useState<string | null>(null);
   const revisaoRef = useRef(0);
   const [textos, setTextos] = useState<TextoFoto[]>([]);
@@ -66,6 +67,23 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
     });
     setOrientacao(item.orientacao as Orientacao); setFormatoId(item.formato_id ?? ""); setCarregadoId(item.id); setEstadoSalvar("LIMPO"); setImagemFalhou(false);
   }, [item, carregadoId]);
+
+  useEffect(() => {
+    setTentativasImagem(0);
+    setImagemFalhou(false);
+  }, [itemId]);
+
+  useEffect(() => {
+    if (!imagemFalhou || tentativasImagem >= 2) return;
+    const timer = window.setTimeout(async () => {
+      const resultado = await itemQuery.refetch();
+      if (resultado.data) {
+        setTentativasImagem((atual) => atual + 1);
+        setImagemFalhou(false);
+      }
+    }, 750 * 2 ** tentativasImagem);
+    return () => window.clearTimeout(timer);
+  }, [imagemFalhou, tentativasImagem, itemQuery]);
 
   useEffect(() => {
     if (!textosQuery.data || textosCarregadosRef.current === itemId) return;
@@ -210,7 +228,7 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
     {!podeEditar && <Alert><CloudOff className="h-4 w-4" /><AlertTitle>Somente leitura</AlertTitle><AlertDescription>Você pode visualizar esta edição, mas não alterá-la.</AlertDescription></Alert>}
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-4"><AreaEdicao url={imagemFalhou ? "" : item.originalUrl ?? ""} nome={item.arquivo.nome_original} original={{ largura: item.arquivo.largura_px, altura: item.arquivo.altura_px }} proporcao={formatoCm.largura / formatoCm.altura} areaFoto={areaFoto} corFundo={formatoSelecionado.cor_fundo} edicao={edicao} textos={textos} textoSelecionadoId={textoSelecionadoId} somenteLeitura={!podeEditar} onChange={alterarEdicao} onCommit={pedirSalvar} onImageError={() => setImagemFalhou(true)} onSelecionarTexto={setTextoSelecionadoId} onChangeTexto={substituirTexto} onCommitTexto={persistirTexto} />
-        {imagemFalhou && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Imagem indisponível</AlertTitle><AlertDescription><Button variant="outline" className="mt-2" onClick={async () => { setImagemFalhou(false); await itemQuery.refetch(); }}>Tentar novamente</Button></AlertDescription></Alert>}
+        {imagemFalhou && tentativasImagem >= 2 && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Imagem indisponível</AlertTitle><AlertDescription><Button variant="outline" className="mt-2" onClick={async () => { setTentativasImagem(0); setImagemFalhou(false); await itemQuery.refetch(); }}>Tentar novamente</Button></AlertDescription></Alert>}
         <div className="flex items-center justify-between gap-2"><Button variant="outline" disabled={!anterior} onClick={() => navegarPara(anterior)}><ChevronLeft className="mr-1 h-4 w-4" />Anterior</Button><span className="text-sm text-muted-foreground">{indice >= 0 ? `${indice + 1} de ${lista.length}` : ""}</span><Button variant="outline" disabled={!proximo} onClick={() => navegarPara(proximo)}>Próxima<ChevronRight className="ml-1 h-4 w-4" /></Button></div>
       </div>
       <Card className="xl:sticky xl:top-4 xl:max-h-[calc(100dvh-2rem)] xl:overflow-y-auto"><CardHeader className="flex-row items-center justify-between space-y-0"><CardTitle className="text-lg">Ajustes</CardTitle><Badge variant={estadoSalvar === "ERRO" || estadoTexto === "ERRO" ? "destructive" : "outline"}>{(mutation.isPending || estadoTexto === "SALVANDO") && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}{estadoTexto === "ERRO" ? "Erro ao salvar texto" : estadoTexto === "SALVANDO" ? "Salvando texto" : estado}</Badge></CardHeader><CardContent><Tabs defaultValue="foto"><TabsList className="grid w-full grid-cols-2"><TabsTrigger value="foto">Foto</TabsTrigger><TabsTrigger value="textos">Textos</TabsTrigger></TabsList><TabsContent value="foto" className="space-y-6 pt-4"><ControlesEditor edicao={edicao} formatoId={formatoId} formatos={formatosQuery.data ?? []} orientacao={orientacao} somenteLeitura={!podeEditar} onChange={alterarEdicao} onFormato={alterarFormato} onOrientacao={alterarOrientacao} onCommit={pedirSalvar} onReset={redefinir} /><IndicadorQualidade resultado={qualidade} />{estadoSalvar === "ERRO" && <Button className="w-full" variant="destructive" onClick={executarSalvar}>Tentar salvar novamente</Button>}</TabsContent><TabsContent value="textos" className="pt-4"><ControlesTexto textos={textos} selecionado={textos.find((texto) => texto.id === textoSelecionadoId) ?? null} somenteLeitura={!podeEditar} salvando={estadoTexto === "SALVANDO" || estadoTexto === "PENDENTE"} quantidadeOutrasFotos={Math.max(0, lista.length - 1)} onAdicionar={adicionarTexto} onSelecionar={setTextoSelecionadoId} onChange={(texto) => { substituirTexto(texto); agendarTexto(texto); }} onCommit={persistirTexto} onDuplicar={duplicarCamada} onAplicarTodas={aplicarCamadaEmTodas} onExcluir={excluirCamada} onMover={moverCamada} /></TabsContent></Tabs></CardContent></Card>

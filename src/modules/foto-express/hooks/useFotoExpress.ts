@@ -73,10 +73,37 @@ export function useItensGaleria(trabalhoId: string) {
   });
 }
 
+export function useItensNavegacao(trabalhoId: string) {
+  return useQuery({
+    queryKey: ["foto-express", "itens-navegacao", trabalhoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("foto_express_itens")
+        .select("id")
+        .eq("trabalho_id", trabalhoId)
+        .order("ordem")
+        .order("criado_em");
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+function erroTemporario(erro: unknown) {
+  if (!erro || typeof erro !== "object") return true;
+  const valor = erro as { status?: number; statusCode?: number; code?: string; message?: string };
+  const status = valor.status ?? valor.statusCode;
+  if (status === 429 || (status !== undefined && status >= 500)) return true;
+  if (status !== undefined && status >= 400 && status < 500) return false;
+  const texto = `${valor.code ?? ""} ${valor.message ?? ""}`.toLowerCase();
+  return texto.includes("429") || texto.includes("rate") || texto.includes("timeout") || texto.includes("network") || texto.includes("fetch") || status === undefined;
+}
+
 export function useItemEditor(trabalhoId: string, itemId: string) {
   return useQuery({
     queryKey: ["foto-express", "editor", trabalhoId, itemId],
-    retry: false,
+    retry: (tentativas, erro) => tentativas < 3 && erroTemporario(erro),
+    retryDelay: (tentativa) => Math.min(750 * 2 ** tentativa, 3000),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("foto_express_itens")
@@ -89,7 +116,8 @@ export function useItemEditor(trabalhoId: string, itemId: string) {
       const { data: url, error: urlError } = await supabase.storage
         .from(item.arquivo.original_bucket)
         .createSignedUrl(item.arquivo.original_path, 3600);
-      if (urlError || !url?.signedUrl) throw new Error(urlError?.message ?? "Não foi possível abrir a imagem original.");
+      if (urlError) throw urlError;
+      if (!url?.signedUrl) throw new Error("Não foi possível abrir a imagem original.");
       item.originalUrl = url.signedUrl;
       return item;
     },

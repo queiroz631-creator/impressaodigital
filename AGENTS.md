@@ -18,3 +18,4 @@
 - A montagem do FOTO EXPRESS usa um motor puro, determinístico e baseado em milímetros; plano, folhas e ocorrências são persistidos atomicamente para permitir reprodução e detecção de desatualização.
 - Papéis de montagem do FOTO EXPRESS são catálogos reutilizáveis; cada montagem persiste um snapshot das medidas para preservar histórico e gerações.
 - A geração final do FOTO EXPRESS usa snapshot imutável e renderização Canvas a 300 DPI no navegador; o servidor define destinos, autoriza uploads e valida integralmente os arquivos antes de concluí-los.
+- O editor FOTO EXPRESS usa uma lista leve de IDs para navegar; somente a foto aberta recebe URL temporária, evitando limites do Storage em trabalhos grandes.
