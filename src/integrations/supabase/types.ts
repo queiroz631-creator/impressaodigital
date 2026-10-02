@@ -1798,7 +1798,9 @@ export type Database = {
           orientacao_solicitada: string
           papel: string
           papel_altura_mm: number
+          papel_id: string | null
           papel_largura_mm: number
+          papel_nome: string | null
           permitir_rotacao: boolean
           snapshot_confirmado: Json | null
           trabalho_id: string
@@ -1820,7 +1822,9 @@ export type Database = {
           orientacao_solicitada: string
           papel: string
           papel_altura_mm: number
+          papel_id?: string | null
           papel_largura_mm: number
+          papel_nome?: string | null
           permitir_rotacao?: boolean
           snapshot_confirmado?: Json | null
           trabalho_id: string
@@ -1842,13 +1846,22 @@ export type Database = {
           orientacao_solicitada?: string
           papel?: string
           papel_altura_mm?: number
+          papel_id?: string | null
           papel_largura_mm?: number
+          papel_nome?: string | null
           permitir_rotacao?: boolean
           snapshot_confirmado?: Json | null
           trabalho_id?: string
           versao?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "foto_express_montagens_papel_id_fkey"
+            columns: ["papel_id"]
+            isOneToOne: false
+            referencedRelation: "foto_express_papeis"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "foto_express_montagens_trabalho_id_fkey"
             columns: ["trabalho_id"]
@@ -1908,6 +1921,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      foto_express_papeis: {
+        Row: {
+          altura_mm: number
+          ativo: boolean
+          atualizado_em: string
+          codigo: string
+          criado_em: string
+          espacamento_mm: number
+          id: string
+          largura_mm: number
+          margem_direita_mm: number
+          margem_esquerda_mm: number
+          margem_inferior_mm: number
+          margem_superior_mm: number
+          nome: string
+          ordem: number
+          orientacao: string
+          permitir_rotacao: boolean
+        }
+        Insert: {
+          altura_mm: number
+          ativo?: boolean
+          atualizado_em?: string
+          codigo: string
+          criado_em?: string
+          espacamento_mm?: number
+          id?: string
+          largura_mm: number
+          margem_direita_mm?: number
+          margem_esquerda_mm?: number
+          margem_inferior_mm?: number
+          margem_superior_mm?: number
+          nome: string
+          ordem?: number
+          orientacao?: string
+          permitir_rotacao?: boolean
+        }
+        Update: {
+          altura_mm?: number
+          ativo?: boolean
+          atualizado_em?: string
+          codigo?: string
+          criado_em?: string
+          espacamento_mm?: number
+          id?: string
+          largura_mm?: number
+          margem_direita_mm?: number
+          margem_esquerda_mm?: number
+          margem_inferior_mm?: number
+          margem_superior_mm?: number
+          nome?: string
+          ordem?: number
+          orientacao?: string
+          permitir_rotacao?: boolean
+        }
+        Relationships: []
       }
       foto_express_textos: {
         Row: {
@@ -4588,7 +4658,49 @@ export type Database = {
           orientacao_solicitada: string
           papel: string
           papel_altura_mm: number
+          papel_id: string | null
           papel_largura_mm: number
+          papel_nome: string | null
+          permitir_rotacao: boolean
+          snapshot_confirmado: Json | null
+          trabalho_id: string
+          versao: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "foto_express_montagens"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      foto_express_salvar_montagem_com_papel: {
+        Args: {
+          _assinatura: string
+          _folhas: Json
+          _orientacao_escolhida: string
+          _papel_id: string
+          _trabalho_id: string
+          _versao_esperada: number
+        }
+        Returns: {
+          assinatura: string
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          espacamento_mm: number
+          estado: string
+          id: string
+          margem_direita_mm: number
+          margem_esquerda_mm: number
+          margem_inferior_mm: number
+          margem_superior_mm: number
+          orientacao_escolhida: string
+          orientacao_solicitada: string
+          papel: string
+          papel_altura_mm: number
+          papel_id: string | null
+          papel_largura_mm: number
+          papel_nome: string | null
           permitir_rotacao: boolean
           snapshot_confirmado: Json | null
           trabalho_id: string
