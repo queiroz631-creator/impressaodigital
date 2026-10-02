@@ -55,6 +55,7 @@
 - [x] Download conjunto dos arquivos concluídos em um único ZIP quando houver mais de um
 - [x] Status automáticos do FOTO EXPRESS: edição, montagem pronta, impressão e finalização manual
 - [x] Cores próprias para cada status dos trabalhos e identificação no filtro
+- [x] Montagem automática compara as duas posições permitidas de cada foto e prioriza menos folhas
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
