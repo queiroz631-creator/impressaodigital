@@ -38,6 +38,8 @@
 - [x] Persistir posição, largura e tamanho normalizados, fonte controlada, estilo, alinhamento, rotação e ordem
 - [x] Implementar controles, arraste, duplicação, exclusão e autosave seguro no editor
 - [x] Validar matemática, permissões, desktop e celular sem criar dados reais de teste
+- [x] Mostrar textos salvos nas miniaturas da Galeria
+- [x] Aplicar uma cópia independente do texto selecionado em todas as outras fotos do trabalho
 
 ## FOTO EXPRESS — Etapa 4: revisão e montagem automática
 - [x] Evoluir formatos com área interna normalizada da foto e cor de fundo
