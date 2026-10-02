@@ -117,7 +117,9 @@ function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, orientac
 function montarOrientacao(itens: ItemGaleria[], config: ConfiguracaoMontagem, orientacao: "RETRATO" | "PAISAGEM"): PlanoMontagem {
   const pecas = pecasDosItens(itens);
   const resultados = (["LADO_CURTO", "LADO_LONGO", "AREA", "CANTO"] as const).map((criterio) => montarComCriterio(pecas, config, orientacao, criterio));
-  return resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || JSON.stringify(a.folhas).localeCompare(JSON.stringify(b.folhas)))[0];
+  const melhor = resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || JSON.stringify(a.folhas).localeCompare(JSON.stringify(b.folhas)))[0];
+  if (!melhor) throw new Error("Não foi possível calcular a montagem para este papel.");
+  return melhor;
 }
 const round = (n: number) => Number(n.toFixed(3));
 
