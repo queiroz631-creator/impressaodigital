@@ -1554,6 +1554,7 @@ export type Database = {
           atualizado_em: string
           categoria: string
           codigo: string
+          cor_card: string
           cor_fundo: string
           criado_em: string
           id: string
@@ -1573,6 +1574,7 @@ export type Database = {
           atualizado_em?: string
           categoria?: string
           codigo: string
+          cor_card?: string
           cor_fundo?: string
           criado_em?: string
           id?: string
@@ -1592,6 +1594,7 @@ export type Database = {
           atualizado_em?: string
           categoria?: string
           codigo?: string
+          cor_card?: string
           cor_fundo?: string
           criado_em?: string
           id?: string

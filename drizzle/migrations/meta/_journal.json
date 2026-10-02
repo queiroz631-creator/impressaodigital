@@ -267,6 +267,13 @@
       "when": 1790977299415,
       "tag": "0037_foto_express_formatos_papel_padrao_montagem_grupos",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1790978282845,
+      "tag": "0038_foto_express_cor_visual_formatos",
+      "breakpoints": true
     }
   ]
 }
