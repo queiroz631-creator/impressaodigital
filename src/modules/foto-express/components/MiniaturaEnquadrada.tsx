@@ -1,8 +1,8 @@
 import { Images } from "lucide-react";
-import type { ItemGaleria } from "../types";
+import type { ItemGaleria, TextoFoto } from "../types";
 import { PecaFoto } from "./PecaFoto";
 
-export function MiniaturaEnquadrada({ item }: { item: ItemGaleria }) {
+export function MiniaturaEnquadrada({ item, textos = [] }: { item: ItemGaleria; textos?: TextoFoto[] }) {
   const larguraCm = item.largura_personalizada_cm ?? item.formato?.largura_cm;
   const alturaCm = item.altura_personalizada_cm ?? item.formato?.altura_cm;
 
@@ -21,7 +21,7 @@ export function MiniaturaEnquadrada({ item }: { item: ItemGaleria }) {
 
   return <div className="relative flex min-h-40 w-full items-center justify-center overflow-hidden rounded-md bg-muted p-3">
     <div className="relative max-h-56 max-w-full overflow-hidden border border-border bg-background shadow-sm" style={{ aspectRatio: formato.largura / formato.altura, width: formato.largura >= formato.altura ? "100%" : "auto", height: formato.largura < formato.altura ? "14rem" : "auto" }}>
-      {item.thumbnailUrl ? <PecaFoto item={item} /> : <ImagemAusente />}
+      {item.thumbnailUrl ? <PecaFoto item={item} textos={textos} /> : <ImagemAusente />}
     </div>
   </div>;
 }

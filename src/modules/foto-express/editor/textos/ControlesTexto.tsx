@@ -1,4 +1,4 @@
-import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Bold, Copy, Italic, Plus, Trash2 } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Bold, Copy, Images, Italic, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,16 +9,18 @@ import { Toggle } from "@/components/ui/toggle";
 import type { TextoFoto } from "../../types";
 import { CORES_TEXTO, FONTES_TEXTO, type AlinhamentoTexto, type FonteTextoId, type RotacaoTexto } from "../../lib/texto";
 
-export function ControlesTexto({ textos, selecionado, somenteLeitura, salvando, onAdicionar, onSelecionar, onChange, onCommit, onDuplicar, onExcluir, onMover }: {
+export function ControlesTexto({ textos, selecionado, somenteLeitura, salvando, quantidadeOutrasFotos, onAdicionar, onSelecionar, onChange, onCommit, onDuplicar, onAplicarTodas, onExcluir, onMover }: {
   textos: TextoFoto[];
   selecionado: TextoFoto | null;
   somenteLeitura: boolean;
   salvando: boolean;
+  quantidadeOutrasFotos: number;
   onAdicionar: () => void;
   onSelecionar: (id: string) => void;
   onChange: (texto: TextoFoto) => void;
   onCommit: (texto: TextoFoto) => void;
   onDuplicar: (texto: TextoFoto) => void;
+  onAplicarTodas: (texto: TextoFoto) => void;
   onExcluir: (texto: TextoFoto) => void;
   onMover: (texto: TextoFoto, direcao: -1 | 1) => void;
 }) {
@@ -45,6 +47,7 @@ export function ControlesTexto({ textos, selecionado, somenteLeitura, salvando, 
       <div className="space-y-2"><Label>Rotação</Label><Select value={String(selecionado.rotacao)} disabled={somenteLeitura} onValueChange={(v) => mudarEConfirmar({ rotacao: Number(v) as RotacaoTexto })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{[0, 90, 180, 270].map((graus) => <SelectItem key={graus} value={String(graus)}>{graus}°</SelectItem>)}</SelectContent></Select></div>
       <div className="grid grid-cols-2 gap-2"><Button type="button" variant="outline" disabled={somenteLeitura} onClick={() => onMover(selecionado, -1)}><ArrowDown className="mr-2 h-4 w-4" />Abaixo</Button><Button type="button" variant="outline" disabled={somenteLeitura} onClick={() => onMover(selecionado, 1)}><ArrowUp className="mr-2 h-4 w-4" />Acima</Button></div>
       <div className="grid grid-cols-2 gap-2"><Button type="button" variant="outline" disabled={somenteLeitura} onClick={() => onDuplicar(selecionado)}><Copy className="mr-2 h-4 w-4" />Duplicar</Button><Button type="button" variant="destructive" disabled={somenteLeitura} onClick={() => onExcluir(selecionado)}><Trash2 className="mr-2 h-4 w-4" />Excluir</Button></div>
+      <Button type="button" variant="outline" className="w-full" disabled={somenteLeitura || salvando || quantidadeOutrasFotos === 0} onClick={() => onAplicarTodas(selecionado)}><Images className="mr-2 h-4 w-4" />Aplicar em todas as fotos</Button>
     </>}
   </div>;
 }
