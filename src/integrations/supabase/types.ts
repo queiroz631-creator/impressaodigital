@@ -1539,6 +1539,7 @@ export type Database = {
           area_foto_y: number
           ativo: boolean
           atualizado_em: string
+          categoria: string
           codigo: string
           cor_fundo: string
           criado_em: string
@@ -1556,6 +1557,7 @@ export type Database = {
           area_foto_y?: number
           ativo?: boolean
           atualizado_em?: string
+          categoria?: string
           codigo: string
           cor_fundo?: string
           criado_em?: string
@@ -1573,6 +1575,7 @@ export type Database = {
           area_foto_y?: number
           ativo?: boolean
           atualizado_em?: string
+          categoria?: string
           codigo?: string
           cor_fundo?: string
           criado_em?: string

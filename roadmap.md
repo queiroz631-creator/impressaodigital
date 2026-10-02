@@ -26,6 +26,7 @@
 - [x] Miniaturas da Galeria com formato e enquadramento salvos; 4:3 sem formato
 - [x] Troca de formato diretamente no editor com recálculo de crop e DPI
 - [x] Formatos com bordas individuais e miniatura de teste atualizada ao vivo
+- [x] Formatos classificados por categoria e filtro com padrão Todos na tela de cadastro
 - [x] Autosave atômico, navegação entre fotos e modo somente leitura
 - [x] Verificação em desktop e celular sem alterar dados reais
 

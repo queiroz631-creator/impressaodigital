@@ -232,6 +232,13 @@
       "when": 1790891491177,
       "tag": "0032_foto_express_corrigir_gatilhos_atualizado_em",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790909610957,
+      "tag": "0033_foto_express_categorias_formatos",
+      "breakpoints": true
     }
   ]
 }
