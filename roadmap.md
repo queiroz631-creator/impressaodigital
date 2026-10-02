@@ -57,6 +57,7 @@
 - [x] Cores próprias para cada status dos trabalhos e identificação no filtro
 - [x] Montagem automática compara as duas posições permitidas de cada foto e prioriza menos folhas
 - [x] Formato obrigatório por lote, papel padrão no formato e montagem agrupada automaticamente por papel
+- [x] Cor visual configurável por formato nos cards de Formatos e da Galeria
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
