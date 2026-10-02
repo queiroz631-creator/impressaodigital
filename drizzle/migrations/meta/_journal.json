@@ -260,6 +260,13 @@
       "when": 1790967792068,
       "tag": "0036_foto_express_status_automaticos",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1790977299415,
+      "tag": "0037_foto_express_formatos_papel_padrao_montagem_grupos",
+      "breakpoints": true
     }
   ]
 }
