@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AlertCircle, ArrowLeft, ChevronLeft, ChevronRight, CloudOff, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/AppLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissoes } from "@/hooks/usePermissoes";
-import { criarTextoFotoExpress, duplicarTextoFotoExpress, excluirTextoFotoExpress, moverTextoFotoExpress, salvarEdicaoFotoExpress, salvarTextoFotoExpress } from "@/lib/foto-express.functions";
+import { aplicarTextoTodasFotosFotoExpress, criarTextoFotoExpress, duplicarTextoFotoExpress, excluirTextoFotoExpress, moverTextoFotoExpress, salvarEdicaoFotoExpress, salvarTextoFotoExpress } from "@/lib/foto-express.functions";
 import { useFormatos, useItemEditor, useItensGaleria, useTextosItem } from "../hooks/useFotoExpress";
 import { calcularQualidadeFoto } from "../lib/qualidade";
 import { derivarCrop, dimensoesMoldura, limitarPosicao, calcularGeometria, type EdicaoFoto } from "../lib/transformacaoFoto";
@@ -32,6 +33,7 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   const criarTexto = useServerFn(criarTextoFotoExpress);
   const salvarTexto = useServerFn(salvarTextoFotoExpress);
   const duplicarTexto = useServerFn(duplicarTextoFotoExpress);
+  const aplicarTextoTodas = useServerFn(aplicarTextoTodasFotosFotoExpress);
   const excluirTexto = useServerFn(excluirTextoFotoExpress);
   const moverTexto = useServerFn(moverTextoFotoExpress);
   const itemQuery = useItemEditor(trabalhoId, itemId);
@@ -176,6 +178,20 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
     try { await moverTexto({ data: { trabalhoId, itemId, textoId: texto.id, direcao } }); const resultado = await textosQuery.refetch(); if (resultado.data) setTextos(resultado.data); setEstadoTexto("SALVO"); }
     catch { setEstadoTexto("ERRO"); }
   };
+  const aplicarCamadaEmTodas = async (texto: TextoFoto) => {
+    const quantidade = Math.max(0, (itensQuery.data?.length ?? 1) - 1);
+    if (quantidade === 0 || !window.confirm(`Aplicar uma cópia independente deste texto em ${quantidade} outra(s) foto(s)?`)) return;
+    setEstadoTexto("SALVANDO");
+    try {
+      const resultado = await aplicarTextoTodas({ data: { trabalhoId, itemId, textoId: texto.id } });
+      await queryClient.invalidateQueries({ queryKey: ["foto-express", "textos-trabalho"] });
+      setEstadoTexto("SALVO");
+      toast.success(`Texto aplicado em ${resultado.total} foto(s).`);
+    } catch (erro) {
+      setEstadoTexto("ERRO");
+      toast.error(erro instanceof Error ? erro.message : "Não foi possível aplicar o texto nas fotos.");
+    }
+  };
 
    if (itemQuery.isLoading || formatosQuery.isLoading || carregandoPermissoes) return <div className="space-y-4 p-4 sm:p-6"><Skeleton className="h-10 w-64" /><Skeleton className="h-[520px] w-full" /></div>;
   if (itemQuery.isError || !item) return <div className="p-4 sm:p-6"><Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Não foi possível abrir a foto</AlertTitle><AlertDescription className="space-y-3"><p>Confira sua conexão e tente novamente.</p><Button variant="outline" onClick={() => itemQuery.refetch()}>Tentar novamente</Button></AlertDescription></Alert></div>;
@@ -197,7 +213,7 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
         {imagemFalhou && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertTitle>Imagem indisponível</AlertTitle><AlertDescription><Button variant="outline" className="mt-2" onClick={async () => { setImagemFalhou(false); await itemQuery.refetch(); }}>Tentar novamente</Button></AlertDescription></Alert>}
         <div className="flex items-center justify-between gap-2"><Button variant="outline" disabled={!anterior} onClick={() => navegarPara(anterior)}><ChevronLeft className="mr-1 h-4 w-4" />Anterior</Button><span className="text-sm text-muted-foreground">{indice >= 0 ? `${indice + 1} de ${lista.length}` : ""}</span><Button variant="outline" disabled={!proximo} onClick={() => navegarPara(proximo)}>Próxima<ChevronRight className="ml-1 h-4 w-4" /></Button></div>
       </div>
-      <Card className="xl:sticky xl:top-4 xl:max-h-[calc(100dvh-2rem)] xl:overflow-y-auto"><CardHeader className="flex-row items-center justify-between space-y-0"><CardTitle className="text-lg">Ajustes</CardTitle><Badge variant={estadoSalvar === "ERRO" || estadoTexto === "ERRO" ? "destructive" : "outline"}>{(mutation.isPending || estadoTexto === "SALVANDO") && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}{estadoTexto === "ERRO" ? "Erro ao salvar texto" : estadoTexto === "SALVANDO" ? "Salvando texto" : estado}</Badge></CardHeader><CardContent><Tabs defaultValue="foto"><TabsList className="grid w-full grid-cols-2"><TabsTrigger value="foto">Foto</TabsTrigger><TabsTrigger value="textos">Textos</TabsTrigger></TabsList><TabsContent value="foto" className="space-y-6 pt-4"><ControlesEditor edicao={edicao} formatoId={formatoId} formatos={formatosQuery.data ?? []} orientacao={orientacao} somenteLeitura={!podeEditar} onChange={alterarEdicao} onFormato={alterarFormato} onOrientacao={alterarOrientacao} onCommit={pedirSalvar} onReset={redefinir} /><IndicadorQualidade resultado={qualidade} />{estadoSalvar === "ERRO" && <Button className="w-full" variant="destructive" onClick={executarSalvar}>Tentar salvar novamente</Button>}</TabsContent><TabsContent value="textos" className="pt-4"><ControlesTexto textos={textos} selecionado={textos.find((texto) => texto.id === textoSelecionadoId) ?? null} somenteLeitura={!podeEditar} salvando={estadoTexto === "SALVANDO"} onAdicionar={adicionarTexto} onSelecionar={setTextoSelecionadoId} onChange={(texto) => { substituirTexto(texto); agendarTexto(texto); }} onCommit={persistirTexto} onDuplicar={duplicarCamada} onExcluir={excluirCamada} onMover={moverCamada} /></TabsContent></Tabs></CardContent></Card>
+      <Card className="xl:sticky xl:top-4 xl:max-h-[calc(100dvh-2rem)] xl:overflow-y-auto"><CardHeader className="flex-row items-center justify-between space-y-0"><CardTitle className="text-lg">Ajustes</CardTitle><Badge variant={estadoSalvar === "ERRO" || estadoTexto === "ERRO" ? "destructive" : "outline"}>{(mutation.isPending || estadoTexto === "SALVANDO") && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}{estadoTexto === "ERRO" ? "Erro ao salvar texto" : estadoTexto === "SALVANDO" ? "Salvando texto" : estado}</Badge></CardHeader><CardContent><Tabs defaultValue="foto"><TabsList className="grid w-full grid-cols-2"><TabsTrigger value="foto">Foto</TabsTrigger><TabsTrigger value="textos">Textos</TabsTrigger></TabsList><TabsContent value="foto" className="space-y-6 pt-4"><ControlesEditor edicao={edicao} formatoId={formatoId} formatos={formatosQuery.data ?? []} orientacao={orientacao} somenteLeitura={!podeEditar} onChange={alterarEdicao} onFormato={alterarFormato} onOrientacao={alterarOrientacao} onCommit={pedirSalvar} onReset={redefinir} /><IndicadorQualidade resultado={qualidade} />{estadoSalvar === "ERRO" && <Button className="w-full" variant="destructive" onClick={executarSalvar}>Tentar salvar novamente</Button>}</TabsContent><TabsContent value="textos" className="pt-4"><ControlesTexto textos={textos} selecionado={textos.find((texto) => texto.id === textoSelecionadoId) ?? null} somenteLeitura={!podeEditar} salvando={estadoTexto === "SALVANDO" || estadoTexto === "PENDENTE"} quantidadeOutrasFotos={Math.max(0, lista.length - 1)} onAdicionar={adicionarTexto} onSelecionar={setTextoSelecionadoId} onChange={(texto) => { substituirTexto(texto); agendarTexto(texto); }} onCommit={persistirTexto} onDuplicar={duplicarCamada} onAplicarTodas={aplicarCamadaEmTodas} onExcluir={excluirCamada} onMover={moverCamada} /></TabsContent></Tabs></CardContent></Card>
     </div>
   </div>;
 }
