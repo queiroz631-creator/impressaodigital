@@ -27,6 +27,7 @@ import { Route as CurriculosIdRouteImport } from './routes/curriculos.$id'
 import { Route as FotoExpressIndexRouteImport } from './routes/foto-express.index'
 import { Route as FotoExpressFormatosRouteImport } from './routes/foto-express.formatos'
 import { Route as FotoExpressNovoRouteImport } from './routes/foto-express.novo'
+import { Route as FotoExpressPapeisRouteImport } from './routes/foto-express.papeis'
 import { Route as OrcamentoTokenRouteImport } from './routes/orcamento.$token'
 import { Route as SorteiosPublicoIndexRouteImport } from './routes/sorteios-publico.index'
 import { Route as SorteiosPublicoCadastroRouteImport } from './routes/sorteios-publico.cadastro'
@@ -159,6 +160,11 @@ const FotoExpressFormatosRoute = FotoExpressFormatosRouteImport.update({
 const FotoExpressNovoRoute = FotoExpressNovoRouteImport.update({
   id: '/foto-express/novo',
   path: '/foto-express/novo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FotoExpressPapeisRoute = FotoExpressPapeisRouteImport.update({
+  id: '/foto-express/papeis',
+  path: '/foto-express/papeis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrcamentoTokenRoute = OrcamentoTokenRouteImport.update({
@@ -411,6 +417,7 @@ export interface FileRoutesByFullPath {
   '/curriculos/$id': typeof CurriculosIdRoute
   '/foto-express/formatos': typeof FotoExpressFormatosRoute
   '/foto-express/novo': typeof FotoExpressNovoRoute
+  '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -474,6 +481,7 @@ export interface FileRoutesByTo {
   '/curriculos/$id': typeof CurriculosIdRoute
   '/foto-express/formatos': typeof FotoExpressFormatosRoute
   '/foto-express/novo': typeof FotoExpressNovoRoute
+  '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -538,6 +546,7 @@ export interface FileRoutesById {
   '/curriculos/$id': typeof CurriculosIdRoute
   '/foto-express/formatos': typeof FotoExpressFormatosRoute
   '/foto-express/novo': typeof FotoExpressNovoRoute
+  '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -603,6 +612,7 @@ export interface FileRouteTypes {
     | '/curriculos/$id'
     | '/foto-express/formatos'
     | '/foto-express/novo'
+    | '/foto-express/papeis'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -666,6 +676,7 @@ export interface FileRouteTypes {
     | '/curriculos/$id'
     | '/foto-express/formatos'
     | '/foto-express/novo'
+    | '/foto-express/papeis'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -729,6 +740,7 @@ export interface FileRouteTypes {
     | '/curriculos/$id'
     | '/foto-express/formatos'
     | '/foto-express/novo'
+    | '/foto-express/papeis'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -793,6 +805,7 @@ export interface RootRouteChildren {
   CurriculosIdRoute: typeof CurriculosIdRoute
   FotoExpressFormatosRoute: typeof FotoExpressFormatosRoute
   FotoExpressNovoRoute: typeof FotoExpressNovoRoute
+  FotoExpressPapeisRoute: typeof FotoExpressPapeisRoute
   OrcamentoTokenRoute: typeof OrcamentoTokenRoute
   SorteiosPublicoCadastroRoute: typeof SorteiosPublicoCadastroRoute
   SorteiosPublicoCuponsRoute: typeof SorteiosPublicoCuponsRoute
@@ -965,6 +978,13 @@ declare module '@tanstack/react-router' {
       path: '/foto-express/novo'
       fullPath: '/foto-express/novo'
       preLoaderRoute: typeof FotoExpressNovoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/foto-express/papeis': {
+      id: '/foto-express/papeis'
+      path: '/foto-express/papeis'
+      fullPath: '/foto-express/papeis'
+      preLoaderRoute: typeof FotoExpressPapeisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orcamento/$token': {
@@ -1302,6 +1322,7 @@ const rootRouteChildren: RootRouteChildren = {
   CurriculosIdRoute: CurriculosIdRoute,
   FotoExpressFormatosRoute: FotoExpressFormatosRoute,
   FotoExpressNovoRoute: FotoExpressNovoRoute,
+  FotoExpressPapeisRoute: FotoExpressPapeisRoute,
   OrcamentoTokenRoute: OrcamentoTokenRoute,
   SorteiosPublicoCadastroRoute: SorteiosPublicoCadastroRoute,
   SorteiosPublicoCuponsRoute: SorteiosPublicoCuponsRoute,
