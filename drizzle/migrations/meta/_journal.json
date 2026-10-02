@@ -239,6 +239,13 @@
       "when": 1790909610957,
       "tag": "0033_foto_express_categorias_formatos",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1790910217671,
+      "tag": "0034_foto_express_papeis_montagem",
+      "breakpoints": true
     }
   ]
 }

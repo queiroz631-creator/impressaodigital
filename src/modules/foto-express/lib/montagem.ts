@@ -1,9 +1,8 @@
 import type { ItemGaleria, TextoFoto } from "../types";
 
-export type PapelId = "A4" | "A3";
 export type OrientacaoPapel = "AUTOMATICA" | "RETRATO" | "PAISAGEM";
 export type ConfiguracaoMontagem = {
-  papel: PapelId; orientacao: OrientacaoPapel;
+  papelId: string; papelNome: string; larguraMm: number; alturaMm: number; orientacao: OrientacaoPapel;
   margemSuperiorMm: number; margemInferiorMm: number; margemEsquerdaMm: number; margemDireitaMm: number;
   espacamentoMm: number; permitirRotacao: boolean;
 };
@@ -11,10 +10,6 @@ export type OcorrenciaMontagem = { itemId: string; indiceCopia: number; xMm: num
 export type FolhaMontagem = { numero: number; larguraMm: number; alturaMm: number; ocorrencias: OcorrenciaMontagem[] };
 export type PlanoMontagem = { folhas: FolhaMontagem[]; orientacaoEscolhida: Exclude<OrientacaoPapel, "AUTOMATICA">; areaUtilMm2: number; areaOcupadaMm2: number; aproveitamento: number };
 
-export const PAPEIS: Record<PapelId, { nome: string; larguraMm: number; alturaMm: number }> = {
-  A4: { nome: "A4", larguraMm: 210, alturaMm: 297 },
-  A3: { nome: "A3", larguraMm: 297, alturaMm: 420 },
-};
 export const cmParaMm = (cm: number) => cm * 10;
 export const mmParaPixels = (mm: number, dpi: number) => mm / 25.4 * dpi;
 
@@ -30,9 +25,8 @@ function pecasDosItens(itens: ItemGaleria[]): Peca[] {
 }
 
 function montarOrientacao(itens: ItemGaleria[], config: ConfiguracaoMontagem, orientacao: "RETRATO" | "PAISAGEM"): PlanoMontagem {
-  const base = PAPEIS[config.papel];
-  const larguraFolha = orientacao === "PAISAGEM" ? Math.max(base.larguraMm, base.alturaMm) : Math.min(base.larguraMm, base.alturaMm);
-  const alturaFolha = orientacao === "PAISAGEM" ? Math.min(base.larguraMm, base.alturaMm) : Math.max(base.larguraMm, base.alturaMm);
+  const larguraFolha = orientacao === "PAISAGEM" ? Math.max(config.larguraMm, config.alturaMm) : Math.min(config.larguraMm, config.alturaMm);
+  const alturaFolha = orientacao === "PAISAGEM" ? Math.min(config.larguraMm, config.alturaMm) : Math.max(config.larguraMm, config.alturaMm);
   const utilW = larguraFolha - config.margemEsquerdaMm - config.margemDireitaMm;
   const utilH = alturaFolha - config.margemSuperiorMm - config.margemInferiorMm;
   if (utilW <= 0 || utilH <= 0) throw new Error("As margens eliminam a área útil do papel.");
