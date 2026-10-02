@@ -15,7 +15,7 @@
 - Textos do FOTO EXPRESS pertencem ao item e usam posição, largura e tamanho normalizados sobre a área física completa do formato, independentes da transformação da fotografia.
 - A aplicação de um texto em todas as fotos do FOTO EXPRESS cria cópias independentes por item em uma única operação transacional.
 - Exclusões e uploads incompletos do FOTO EXPRESS usam uma fila transacional no banco; objetos do Storage só são removidos no servidor após o banco liberar a limpeza.
-- A montagem do FOTO EXPRESS usa um motor puro, determinístico e baseado em milímetros; plano, folhas e ocorrências são persistidos atomicamente para permitir reprodução e detecção de desatualização.
+- A montagem do FOTO EXPRESS usa um motor puro, determinístico e baseado em milímetros que compara as rotações permitidas e prioriza menos folhas; plano, folhas e ocorrências são persistidos atomicamente para permitir reprodução e detecção de desatualização.
 - Papéis de montagem do FOTO EXPRESS são catálogos reutilizáveis; cada montagem persiste um snapshot das medidas para preservar histórico e gerações.
 - A geração final do FOTO EXPRESS usa snapshot imutável e renderização Canvas a 300 DPI no navegador; o servidor define destinos, autoriza uploads e valida integralmente os arquivos antes de concluí-los.
 - O editor FOTO EXPRESS usa uma lista leve de IDs para navegar; somente a foto aberta recebe URL temporária, evitando limites do Storage em trabalhos grandes.

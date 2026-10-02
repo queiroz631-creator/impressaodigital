@@ -14,6 +14,10 @@ export const cmParaMm = (cm: number) => cm * 10;
 export const mmParaPixels = (mm: number, dpi: number) => mm / 25.4 * dpi;
 
 type Peca = { itemId: string; indiceCopia: number; largura: number; altura: number };
+type RetanguloLivre = { x: number; y: number; largura: number; altura: number };
+type FolhaEmMontagem = FolhaMontagem & { livres: RetanguloLivre[] };
+type CriterioEncaixe = "LADO_CURTO" | "LADO_LONGO" | "AREA" | "CANTO";
+
 function pecasDosItens(itens: ItemGaleria[]): Peca[] {
   return itens.flatMap((item) => {
     const largura = cmParaMm(Number(item.largura_personalizada_cm ?? item.formato?.largura_cm ?? 0));
@@ -24,29 +28,96 @@ function pecasDosItens(itens: ItemGaleria[]): Peca[] {
   }).sort((a, b) => b.largura * b.altura - a.largura * a.altura || b.altura - a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia);
 }
 
-function montarOrientacao(itens: ItemGaleria[], config: ConfiguracaoMontagem, orientacao: "RETRATO" | "PAISAGEM"): PlanoMontagem {
+function sobrepoe(a: RetanguloLivre, b: RetanguloLivre) {
+  return a.x < b.x + b.largura - 1e-6 && a.x + a.largura > b.x + 1e-6 && a.y < b.y + b.altura - 1e-6 && a.y + a.altura > b.y + 1e-6;
+}
+
+function contido(a: RetanguloLivre, b: RetanguloLivre) {
+  return a.x >= b.x - 1e-6 && a.y >= b.y - 1e-6 && a.x + a.largura <= b.x + b.largura + 1e-6 && a.y + a.altura <= b.y + b.altura + 1e-6;
+}
+
+function atualizarLivres(livres: RetanguloLivre[], ocupado: RetanguloLivre) {
+  const divididos: RetanguloLivre[] = [];
+  for (const livre of livres) {
+    if (!sobrepoe(livre, ocupado)) { divididos.push(livre); continue; }
+    if (ocupado.x > livre.x + 1e-6) divididos.push({ x: livre.x, y: livre.y, largura: ocupado.x - livre.x, altura: livre.altura });
+    if (ocupado.x + ocupado.largura < livre.x + livre.largura - 1e-6) divididos.push({ x: ocupado.x + ocupado.largura, y: livre.y, largura: livre.x + livre.largura - ocupado.x - ocupado.largura, altura: livre.altura });
+    if (ocupado.y > livre.y + 1e-6) divididos.push({ x: livre.x, y: livre.y, largura: livre.largura, altura: ocupado.y - livre.y });
+    if (ocupado.y + ocupado.altura < livre.y + livre.altura - 1e-6) divididos.push({ x: livre.x, y: ocupado.y + ocupado.altura, largura: livre.largura, altura: livre.y + livre.altura - ocupado.y - ocupado.altura });
+  }
+  return divididos.filter((livre, indice) => livre.largura > 1e-6 && livre.altura > 1e-6 && !divididos.some((outro, outroIndice) => indice !== outroIndice && contido(livre, outro)));
+}
+
+function pontuarEncaixe(livre: RetanguloLivre, largura: number, altura: number, criterio: CriterioEncaixe) {
+  const sobraW = livre.largura - largura;
+  const sobraH = livre.altura - altura;
+  if (criterio === "AREA") return [livre.largura * livre.altura - largura * altura, Math.min(sobraW, sobraH), livre.y, livre.x];
+  if (criterio === "LADO_LONGO") return [Math.max(sobraW, sobraH), Math.min(sobraW, sobraH), livre.y, livre.x];
+  if (criterio === "CANTO") return [livre.y + altura, livre.x + largura, Math.min(sobraW, sobraH), Math.max(sobraW, sobraH)];
+  return [Math.min(sobraW, sobraH), Math.max(sobraW, sobraH), livre.y, livre.x];
+}
+
+function compararPontuacao(a: number[], b: number[]) {
+  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
+    const diferenca = (a[i] ?? 0) - (b[i] ?? 0);
+    if (Math.abs(diferenca) > 1e-6) return diferenca;
+  }
+  return 0;
+}
+
+function ordenarPecas(pecas: Peca[], criterio: CriterioEncaixe) {
+  return [...pecas].sort((a, b) => {
+    if (criterio === "LADO_LONGO") return Math.max(b.largura, b.altura) - Math.max(a.largura, a.altura) || b.largura * b.altura - a.largura * a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia;
+    if (criterio === "CANTO") return b.altura - a.altura || b.largura - a.largura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia;
+    return b.largura * b.altura - a.largura * a.altura || b.altura - a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia;
+  });
+}
+
+function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, orientacao: "RETRATO" | "PAISAGEM", criterio: CriterioEncaixe): PlanoMontagem {
   const larguraFolha = orientacao === "PAISAGEM" ? Math.max(config.larguraMm, config.alturaMm) : Math.min(config.larguraMm, config.alturaMm);
   const alturaFolha = orientacao === "PAISAGEM" ? Math.min(config.larguraMm, config.alturaMm) : Math.max(config.larguraMm, config.alturaMm);
   const utilW = larguraFolha - config.margemEsquerdaMm - config.margemDireitaMm;
   const utilH = alturaFolha - config.margemSuperiorMm - config.margemInferiorMm;
   if (utilW <= 0 || utilH <= 0) throw new Error("As margens eliminam a área útil do papel.");
-  const folhas: FolhaMontagem[] = [];
-  let atual: FolhaMontagem | null = null; let x = 0; let y = 0; let alturaLinha = 0;
-  for (const peca of pecasDosItens(itens)) {
+  const larguraComFolga = utilW + config.espacamentoMm;
+  const alturaComFolga = utilH + config.espacamentoMm;
+  const folhas: FolhaEmMontagem[] = [];
+  for (const peca of ordenarPecas(pecas, criterio)) {
     const opcoes = [{ w: peca.largura, h: peca.altura, r: 0 as const }, ...(config.permitirRotacao ? [{ w: peca.altura, h: peca.largura, r: 90 as const }] : [])];
     if (!opcoes.some((o) => o.w <= utilW + 1e-6 && o.h <= utilH + 1e-6)) throw new Error(`Uma peça de ${peca.largura} × ${peca.altura} mm não cabe na área útil de ${utilW} × ${utilH} mm.`);
-    if (!atual) { atual = { numero: folhas.length + 1, larguraMm: larguraFolha, alturaMm: alturaFolha, ocorrencias: [] }; x = 0; y = 0; alturaLinha = 0; }
-    let opcao = opcoes.find((o) => x + o.w <= utilW + 1e-6 && y + o.h <= utilH + 1e-6);
-    if (!opcao) { x = 0; y += alturaLinha + config.espacamentoMm; alturaLinha = 0; opcao = opcoes.find((o) => o.w <= utilW + 1e-6 && y + o.h <= utilH + 1e-6); }
-    if (!opcao) { folhas.push(atual); atual = { numero: folhas.length + 1, larguraMm: larguraFolha, alturaMm: alturaFolha, ocorrencias: [] }; x = 0; y = 0; alturaLinha = 0; opcao = opcoes.find((o) => o.w <= utilW + 1e-6 && o.h <= utilH + 1e-6); }
-    if (!opcao) throw new Error("Esta foto não cabe na área útil do papel selecionado.");
-    atual.ocorrencias.push({ itemId: peca.itemId, indiceCopia: peca.indiceCopia, xMm: round(config.margemEsquerdaMm + x), yMm: round(config.margemSuperiorMm + y), larguraMm: round(opcao.w), alturaMm: round(opcao.h), rotacaoFolha: opcao.r });
-    x += opcao.w + config.espacamentoMm; alturaLinha = Math.max(alturaLinha, opcao.h);
+    let melhor: { folha: FolhaEmMontagem; livre: RetanguloLivre; opcao: (typeof opcoes)[number]; pontos: number[] } | null = null;
+    for (const folha of folhas) for (const livre of folha.livres) for (const opcao of opcoes) {
+      const larguraOcupada = opcao.w + config.espacamentoMm;
+      const alturaOcupada = opcao.h + config.espacamentoMm;
+      if (larguraOcupada > livre.largura + 1e-6 || alturaOcupada > livre.altura + 1e-6) continue;
+      const pontos = pontuarEncaixe(livre, larguraOcupada, alturaOcupada, criterio);
+      if (!melhor || compararPontuacao(pontos, melhor.pontos) < 0 || (compararPontuacao(pontos, melhor.pontos) === 0 && opcao.r < melhor.opcao.r)) melhor = { folha, livre, opcao, pontos };
+    }
+    if (!melhor) {
+      const folha: FolhaEmMontagem = { numero: folhas.length + 1, larguraMm: larguraFolha, alturaMm: alturaFolha, ocorrencias: [], livres: [{ x: 0, y: 0, largura: larguraComFolga, altura: alturaComFolga }] };
+      folhas.push(folha);
+      for (const livre of folha.livres) for (const opcao of opcoes) {
+        const larguraOcupada = opcao.w + config.espacamentoMm;
+        const alturaOcupada = opcao.h + config.espacamentoMm;
+        if (larguraOcupada > livre.largura + 1e-6 || alturaOcupada > livre.altura + 1e-6) continue;
+        const pontos = pontuarEncaixe(livre, larguraOcupada, alturaOcupada, criterio);
+        if (!melhor || compararPontuacao(pontos, melhor.pontos) < 0 || (compararPontuacao(pontos, melhor.pontos) === 0 && opcao.r < melhor.opcao.r)) melhor = { folha, livre, opcao, pontos };
+      }
+    }
+    if (!melhor) throw new Error("Esta foto não cabe na área útil do papel selecionado.");
+    const ocupado = { x: melhor.livre.x, y: melhor.livre.y, largura: melhor.opcao.w + config.espacamentoMm, altura: melhor.opcao.h + config.espacamentoMm };
+    melhor.folha.ocorrencias.push({ itemId: peca.itemId, indiceCopia: peca.indiceCopia, xMm: round(config.margemEsquerdaMm + ocupado.x), yMm: round(config.margemSuperiorMm + ocupado.y), larguraMm: round(melhor.opcao.w), alturaMm: round(melhor.opcao.h), rotacaoFolha: melhor.opcao.r });
+    melhor.folha.livres = atualizarLivres(melhor.folha.livres, ocupado);
   }
-  if (atual) folhas.push(atual);
-  const areaOcupadaMm2 = pecasDosItens(itens).reduce((s, p) => s + p.largura * p.altura, 0);
+  const areaOcupadaMm2 = pecas.reduce((s, p) => s + p.largura * p.altura, 0);
   const areaUtilMm2 = utilW * utilH * folhas.length;
-  return { folhas, orientacaoEscolhida: orientacao, areaUtilMm2: round(areaUtilMm2), areaOcupadaMm2: round(areaOcupadaMm2), aproveitamento: areaUtilMm2 ? round(areaOcupadaMm2 / areaUtilMm2 * 100) : 0 };
+  return { folhas: folhas.map(({ livres: _livres, ...folha }) => folha), orientacaoEscolhida: orientacao, areaUtilMm2: round(areaUtilMm2), areaOcupadaMm2: round(areaOcupadaMm2), aproveitamento: areaUtilMm2 ? round(areaOcupadaMm2 / areaUtilMm2 * 100) : 0 };
+}
+
+function montarOrientacao(itens: ItemGaleria[], config: ConfiguracaoMontagem, orientacao: "RETRATO" | "PAISAGEM"): PlanoMontagem {
+  const pecas = pecasDosItens(itens);
+  const resultados = (["LADO_CURTO", "LADO_LONGO", "AREA", "CANTO"] as const).map((criterio) => montarComCriterio(pecas, config, orientacao, criterio));
+  return resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || JSON.stringify(a.folhas).localeCompare(JSON.stringify(b.folhas)))[0];
 }
 const round = (n: number) => Number(n.toFixed(3));
 
