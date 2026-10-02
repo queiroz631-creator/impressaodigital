@@ -77,7 +77,7 @@ export function GeracaoImpressao({ trabalhoId, numeroTrabalho, habilitada, folha
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
       toast.success(`${arquivosValidos.length} arquivos reunidos no ZIP.`);
     } catch (erro) {
       toast.error(erro instanceof Error ? erro.message : "Não foi possível preparar o ZIP.");
