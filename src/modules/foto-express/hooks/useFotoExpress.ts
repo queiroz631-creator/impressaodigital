@@ -73,10 +73,37 @@ export function useItensGaleria(trabalhoId: string) {
   });
 }
 
+export function useItensNavegacao(trabalhoId: string) {
+  return useQuery({
+    queryKey: ["foto-express", "itens-navegacao", trabalhoId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("foto_express_itens")
+        .select("id")
+        .eq("trabalho_id", trabalhoId)
+        .order("ordem")
+        .order("criado_em");
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+function erroTemporario(erro: unknown) {
+  if (!erro || typeof erro !== "object") return true;
+  const valor = erro as { status?: number; statusCode?: number; code?: string; message?: string };
+  const status = valor.status ?? valor.statusCode;
+  if (status === 429 || (status !== undefined && status >= 500)) return true;
+  if (status !== undefined && status >= 400 && status < 500) return false;
+  const texto = `${valor.code ?? ""} ${valor.message ?? ""}`.toLowerCase();
+  return texto.includes("429") || texto.includes("rate") || texto.includes("timeout") || texto.includes("network") || texto.includes("fetch");
+}
+
 export function useItemEditor(trabalhoId: string, itemId: string) {
   return useQuery({
     queryKey: ["foto-express", "editor", trabalhoId, itemId],
-    retry: false,
+    retry: (tentativas, erro) => tentativas < 3 && erroTemporario(erro),
+    retryDelay: (tentativa) => Math.min(750 * 2 ** tentativa, 3000),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("foto_express_itens")
