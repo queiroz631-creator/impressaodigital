@@ -26,7 +26,7 @@ export function RevisaoPagina({ trabalhoId }: { trabalhoId: string }) {
   const papeisQuery = usePapeis(); const papeis = papeisQuery.data ?? [];
   const { user } = useAuth(); const { pode } = usePermissoes(user?.id); const podeEditar = pode("foto_express.trabalhos.editar"); const salvar = useServerFn(salvarMontagemFotoExpress); const qc = useQueryClient();
   const [papelId, setPapelId] = useState(""); const [indice, setIndice] = useState(0); const [assinatura, setAssinatura] = useState("");
-  useEffect(() => { if (!papeis.length) return; setPapelId((atual) => atual || (montagemQuery.data?.papel_id && papeis.some((p) => p.id === montagemQuery.data?.papel_id) ? montagemQuery.data.papel_id : papeis[0].id)); }, [papeis, montagemQuery.data?.papel_id]);
+  useEffect(() => { const primeiro = papeis[0]; if (!primeiro) return; setPapelId((atual) => atual || (montagemQuery.data?.papel_id && papeis.some((p) => p.id === montagemQuery.data?.papel_id) ? montagemQuery.data.papel_id : primeiro.id)); }, [papeis, montagemQuery.data?.papel_id]);
   const papelSelecionado = papeis.find((papel) => papel.id === papelId);
   const config = useMemo(() => papelSelecionado ? configurarPapel(papelSelecionado) : null, [papelSelecionado]);
   useEffect(() => { if (config) void assinaturaMontagem(itens, textos, config).then(setAssinatura); else setAssinatura(""); }, [itens, textos, config]);
