@@ -41,6 +41,7 @@
 - [x] Validar matemática, permissões, desktop e celular sem criar dados reais de teste
 - [x] Mostrar textos salvos nas miniaturas da Galeria
 - [x] Aplicar uma cópia independente do texto selecionado em todas as outras fotos do trabalho
+- [x] Seletor visual de emojis com inserção na posição do cursor no editor de texto
 
 ## FOTO EXPRESS — Etapa 4: revisão e montagem automática
 - [x] Evoluir formatos com área interna normalizada da foto e cor de fundo
