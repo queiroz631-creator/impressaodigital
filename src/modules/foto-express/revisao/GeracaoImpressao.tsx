@@ -14,7 +14,7 @@ import { gerarArquivos, type ProgressoGeracao } from "../renderizacao/gerador";
 import { validarManifesto, type PreparacaoGeracao, type SaidaGeracao } from "../renderizacao/types";
 import { useGeracoes } from "../hooks/useFotoExpress";
 
-export function GeracaoImpressao({ trabalhoId, numeroTrabalho, habilitada, folhas, papel, orientacao }: { trabalhoId: string; numeroTrabalho?: number; habilitada: boolean; folhas: number; papel: string; orientacao: string }) {
+export function GeracaoImpressao({ trabalhoId, numeroTrabalho, habilitada, folhas, papel, orientacao }: { trabalhoId: string; numeroTrabalho: number | undefined; habilitada: boolean; folhas: number; papel: string; orientacao: string }) {
   const [saida, setSaida] = useState<SaidaGeracao>("PDF");
   const [progresso, setProgresso] = useState<ProgressoGeracao | null>(null);
   const [baixandoTodos, setBaixandoTodos] = useState(false);
