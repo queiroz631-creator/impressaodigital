@@ -253,6 +253,13 @@
       "when": 1790911034409,
       "tag": "0035_foto_express_aplicar_texto_todas_fotos",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1790967792068,
+      "tag": "0036_foto_express_status_automaticos",
+      "breakpoints": true
     }
   ]
 }
