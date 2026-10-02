@@ -2,6 +2,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 export type Trabalho = Database["public"]["Tables"]["foto_express_trabalhos"]["Row"];
 export type Formato = Database["public"]["Tables"]["foto_express_formatos"]["Row"];
+export type PapelFoto = Database["public"]["Tables"]["foto_express_papeis"]["Row"];
 export type ArquivoFoto = Database["public"]["Tables"]["foto_express_arquivos"]["Row"];
 export type ItemFoto = Database["public"]["Tables"]["foto_express_itens"]["Row"];
 export type ConfiguracaoFoto = Database["public"]["Tables"]["foto_express_configuracoes"]["Row"];

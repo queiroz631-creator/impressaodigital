@@ -1,0 +1,41 @@
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { FileStack, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { PageHeader } from "@/components/AppLayout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { usePermissoes } from "@/hooks/usePermissoes";
+import { usePapeis } from "../hooks/useFotoExpress";
+import type { PapelFoto } from "../types";
+
+type OrientacaoPapel = "AUTOMATICA" | "RETRATO" | "PAISAGEM";
+
+export function PapeisPagina() {
+  const { data = [], isLoading } = usePapeis(true);
+  const { user } = useAuth();
+  const { pode, carregando } = usePermissoes(user?.id);
+  const podeGerenciar = pode("foto_express.formatos.gerenciar");
+  const [edicao, setEdicao] = useState<Partial<PapelFoto> | null>(null);
+  const qc = useQueryClient();
+  const alternar = useMutation({ mutationFn: async (papel: PapelFoto) => { const { error } = await supabase.from("foto_express_papeis").update({ ativo: !papel.ativo }).eq("id", papel.id); if (error) throw error; }, onSuccess: () => void qc.invalidateQueries({ queryKey: ["foto-express", "papeis"] }), onError: (erro: Error) => toast.error(erro.message) });
+  return <><PageHeader titulo="Papéis" subtitulo="Configurações reutilizáveis para montagem das fotos" />{!carregando && podeGerenciar && <div className="mb-4 flex justify-end"><Button onClick={() => setEdicao({ ativo: true, ordem: data.length * 10 + 10, orientacao: "AUTOMATICA", permitir_rotacao: true, margem_superior_mm: 5, margem_inferior_mm: 5, margem_esquerda_mm: 5, margem_direita_mm: 5, espacamento_mm: 2 })}><Plus className="mr-2 h-4 w-4" />Novo papel</Button></div>}{isLoading && <p className="text-sm text-muted-foreground">Carregando...</p>}<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{data.map((papel) => <Card key={papel.id}><CardContent className="flex items-center gap-4 p-4"><div className="flex h-12 w-12 items-center justify-center rounded-md bg-accent"><FileStack className="h-6 w-6 text-accent-foreground" /></div><div className="min-w-0 flex-1"><p className="font-semibold">{papel.nome}</p><p className="text-sm text-muted-foreground">{Number(papel.largura_mm)} × {Number(papel.altura_mm)} mm</p><p className="mt-1 text-xs text-muted-foreground">Margens {Number(papel.margem_superior_mm)} / {Number(papel.margem_direita_mm)} / {Number(papel.margem_inferior_mm)} / {Number(papel.margem_esquerda_mm)} mm</p></div>{podeGerenciar && <div className="flex items-center gap-2"><Switch checked={papel.ativo} onCheckedChange={() => alternar.mutate(papel)} aria-label={`Ativar ${papel.nome}`} /><Button variant="outline" size="sm" onClick={() => setEdicao(papel)}>Editar</Button></div>}</CardContent></Card>)}</div>{edicao && podeGerenciar && <DialogPapel papel={edicao} onClose={() => setEdicao(null)} onSaved={() => { setEdicao(null); void qc.invalidateQueries({ queryKey: ["foto-express", "papeis"] }); }} />}</>;
+}
+
+function DialogPapel({ papel, onClose, onSaved }: { papel: Partial<PapelFoto>; onClose: () => void; onSaved: () => void }) {
+  const [nome, setNome] = useState(papel.nome ?? ""); const [largura, setLargura] = useState(String(papel.largura_mm ?? "")); const [altura, setAltura] = useState(String(papel.altura_mm ?? ""));
+  const [orientacao, setOrientacao] = useState<OrientacaoPapel>((papel.orientacao as OrientacaoPapel | undefined) ?? "AUTOMATICA"); const [superior, setSuperior] = useState(String(papel.margem_superior_mm ?? 5)); const [inferior, setInferior] = useState(String(papel.margem_inferior_mm ?? 5)); const [esquerda, setEsquerda] = useState(String(papel.margem_esquerda_mm ?? 5)); const [direita, setDireita] = useState(String(papel.margem_direita_mm ?? 5)); const [espacamento, setEspacamento] = useState(String(papel.espacamento_mm ?? 2)); const [giro, setGiro] = useState(papel.permitir_rotacao ?? true);
+  const numero = (valor: string) => Number(valor.replace(",", ".")); const medidas = { largura: numero(largura), altura: numero(altura), superior: numero(superior), inferior: numero(inferior), esquerda: numero(esquerda), direita: numero(direita), espacamento: numero(espacamento) };
+  const valida = nome.trim().length > 0 && Object.values(medidas).every(Number.isFinite) && medidas.largura > 0 && medidas.altura > 0 && medidas.superior >= 0 && medidas.inferior >= 0 && medidas.esquerda >= 0 && medidas.direita >= 0 && medidas.espacamento >= 0 && medidas.largura > medidas.esquerda + medidas.direita && medidas.altura > medidas.superior + medidas.inferior;
+  const salvar = useMutation({ mutationFn: async () => { if (!valida) throw new Error("Revise as medidas: as margens precisam deixar uma área útil no papel."); const campos = { nome: nome.trim(), codigo: papel.codigo ?? `PERSONALIZADO-${crypto.randomUUID()}`, largura_mm: medidas.largura, altura_mm: medidas.altura, orientacao, margem_superior_mm: medidas.superior, margem_inferior_mm: medidas.inferior, margem_esquerda_mm: medidas.esquerda, margem_direita_mm: medidas.direita, espacamento_mm: medidas.espacamento, permitir_rotacao: giro, ordem: papel.ordem ?? 100 }; const { error } = papel.id ? await supabase.from("foto_express_papeis").update(campos).eq("id", papel.id) : await supabase.from("foto_express_papeis").insert(campos); if (error) throw error; }, onSuccess: () => { toast.success("Papel salvo."); onSaved(); }, onError: (erro: Error) => toast.error(erro.message) });
+  return <Dialog open onOpenChange={(aberto) => !aberto && onClose()}><DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>{papel.id ? "Editar papel" : "Novo papel"}</DialogTitle></DialogHeader><div className="grid gap-4 sm:grid-cols-2"><Campo label="Nome" value={nome} onChange={setNome} texto /><Campo label="Orientação" value={orientacao} seletor onChange={(valor) => setOrientacao(valor as OrientacaoPapel)} /><Campo label="Largura (mm)" value={largura} onChange={setLargura} /><Campo label="Altura (mm)" value={altura} onChange={setAltura} /><Campo label="Margem superior (mm)" value={superior} onChange={setSuperior} /><Campo label="Margem direita (mm)" value={direita} onChange={setDireita} /><Campo label="Margem inferior (mm)" value={inferior} onChange={setInferior} /><Campo label="Margem esquerda (mm)" value={esquerda} onChange={setEsquerda} /><Campo label="Espaçamento entre fotos (mm)" value={espacamento} onChange={setEspacamento} /><div className="flex items-center justify-between gap-3 rounded-md border p-3"><Label htmlFor="giro-papel">Girar fotos</Label><Switch id="giro-papel" checked={giro} onCheckedChange={setGiro} /></div></div>{!valida && <p className="text-sm text-destructive">Preencha as medidas e mantenha uma área útil entre as margens.</p>}<DialogFooter><Button variant="outline" onClick={onClose}>Cancelar</Button><Button disabled={!valida || salvar.isPending} onClick={() => salvar.mutate()}>Salvar</Button></DialogFooter></DialogContent></Dialog>;
+}
+
+function Campo({ label, value, onChange, texto, seletor }: { label: string; value: string; onChange: (valor: string) => void; texto?: boolean; seletor?: boolean }) { const id = `papel-${label.toLowerCase().replace(/[^a-z]/g, "-")}`; if (seletor) return <div className="space-y-2"><Label htmlFor={id}>{label}</Label><Select value={value} onValueChange={onChange}><SelectTrigger id={id}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="AUTOMATICA">Automática</SelectItem><SelectItem value="RETRATO">Retrato</SelectItem><SelectItem value="PAISAGEM">Paisagem</SelectItem></SelectContent></Select></div>; return <div className="space-y-2"><Label htmlFor={id}>{label}</Label><Input id={id} type={texto ? "text" : "number"} min={texto ? undefined : 0} step={texto ? undefined : 0.5} value={value} onChange={(evento) => onChange(evento.target.value)} /></div>; }

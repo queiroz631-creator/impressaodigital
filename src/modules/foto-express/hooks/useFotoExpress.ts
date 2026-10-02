@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { ArquivoImpressaoFoto, FolhaFoto, Formato, GeracaoFoto, ItemEditor, ItemGaleria, MontagemFoto, OcorrenciaFoto, TextoFoto, Trabalho } from "../types";
+import type { ArquivoImpressaoFoto, FolhaFoto, Formato, GeracaoFoto, ItemEditor, ItemGaleria, MontagemFoto, OcorrenciaFoto, PapelFoto, TextoFoto, Trabalho } from "../types";
 
 export function useFormatos(todos = false) {
   return useQuery({
@@ -11,6 +11,19 @@ export function useFormatos(todos = false) {
       const { data, error } = await q;
       if (error) throw error;
       return data as Formato[];
+    },
+  });
+}
+
+export function usePapeis(todos = false) {
+  return useQuery({
+    queryKey: ["foto-express", "papeis", todos],
+    queryFn: async () => {
+      let consulta = supabase.from("foto_express_papeis").select("*").order("ordem").order("nome");
+      if (!todos) consulta = consulta.eq("ativo", true);
+      const { data, error } = await consulta;
+      if (error) throw error;
+      return data as PapelFoto[];
     },
   });
 }
