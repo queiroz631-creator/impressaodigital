@@ -71,6 +71,8 @@ export type ManifestoFolha = {
   numero: number;
   largura_mm: number;
   altura_mm: number;
+  papel_id?: string | null;
+  papel_nome?: string | null;
   ocorrencias: ManifestoOcorrencia[];
 };
 
