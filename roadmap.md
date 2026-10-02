@@ -56,6 +56,7 @@
 - [x] Status automáticos do FOTO EXPRESS: edição, montagem pronta, impressão e finalização manual
 - [x] Cores próprias para cada status dos trabalhos e identificação no filtro
 - [x] Montagem automática compara as duas posições permitidas de cada foto e prioriza menos folhas
+- [x] Formato obrigatório por lote, papel padrão no formato e montagem agrupada automaticamente por papel
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone

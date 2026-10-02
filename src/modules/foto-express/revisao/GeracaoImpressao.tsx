@@ -89,7 +89,7 @@ export function GeracaoImpressao({ trabalhoId, numeroTrabalho, habilitada, folha
   return <Card>
     <CardHeader><CardTitle className="flex items-center gap-2"><Printer className="h-5 w-5" />Arquivo de impressão</CardTitle></CardHeader>
     <CardContent className="space-y-5">
-      <div className="grid grid-cols-3 gap-3 text-sm"><Dado nome="Papel" valor={papel} /><Dado nome="Orientação" valor={orientacao === "PAISAGEM" ? "Paisagem" : "Retrato"} /><Dado nome="Qualidade" valor="300 DPI" /></div>
+      <div className="grid grid-cols-3 gap-3 text-sm"><Dado nome="Papel" valor={papel} /><Dado nome="Orientação" valor={orientacao === "MISTA" ? "Conforme o papel" : orientacao === "PAISAGEM" ? "Paisagem" : "Retrato"} /><Dado nome="Qualidade" valor="300 DPI" /></div>
       <RadioGroup value={saida} onValueChange={(valor) => setSaida(valor as SaidaGeracao)} className="grid sm:grid-cols-3">
         <Opcao id="saida-pdf" valor="PDF" titulo="PDF" descricao={`${folhas} página(s)`} />
         <Opcao id="saida-jpg" valor="JPG" titulo="JPG" descricao={`${folhas} arquivo(s)`} />
