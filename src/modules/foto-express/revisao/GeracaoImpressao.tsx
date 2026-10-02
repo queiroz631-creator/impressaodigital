@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Download, FileImage, FileText, Loader2, Printer, RotateCcw } from "lucide-react";
+import JSZip from "jszip";
+import { Archive, Download, FileImage, FileText, Loader2, Printer, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,9 +14,11 @@ import { gerarArquivos, type ProgressoGeracao } from "../renderizacao/gerador";
 import { validarManifesto, type PreparacaoGeracao, type SaidaGeracao } from "../renderizacao/types";
 import { useGeracoes } from "../hooks/useFotoExpress";
 
-export function GeracaoImpressao({ trabalhoId, habilitada, folhas, papel, orientacao }: { trabalhoId: string; habilitada: boolean; folhas: number; papel: string; orientacao: string }) {
+export function GeracaoImpressao({ trabalhoId, numeroTrabalho, habilitada, folhas, papel, orientacao }: { trabalhoId: string; numeroTrabalho?: number; habilitada: boolean; folhas: number; papel: string; orientacao: string }) {
   const [saida, setSaida] = useState<SaidaGeracao>("PDF");
   const [progresso, setProgresso] = useState<ProgressoGeracao | null>(null);
+  const [baixandoTodos, setBaixandoTodos] = useState(false);
+  const [progressoDownload, setProgressoDownload] = useState(0);
   const preparar = useServerFn(prepararGeracaoFotoExpress);
   const atualizar = useServerFn(atualizarGeracaoFotoExpress);
   const concluir = useServerFn(concluirGeracaoFotoExpress);
@@ -50,6 +53,39 @@ export function GeracaoImpressao({ trabalhoId, habilitada, folhas, papel, orient
     catch (erro) { toast.error(erro instanceof Error ? erro.message : "Download indisponível."); }
   };
   const ultima = geracoes.data?.[0];
+  const arquivosValidos = ultima?.arquivos.filter((arquivo) => arquivo.estado === "VALIDADO") ?? [];
+  const baixarTodos = async () => {
+    if (arquivosValidos.length < 2 || baixandoTodos) return;
+    setBaixandoTodos(true);
+    setProgressoDownload(0);
+    try {
+      const zip = new JSZip();
+      for (let indice = 0; indice < arquivosValidos.length; indice += 1) {
+        const arquivo = arquivosValidos[indice];
+        if (!arquivo) continue;
+        const resultado = await download({ data: { arquivoId: arquivo.id } });
+        const resposta = await fetch(resultado.url);
+        if (!resposta.ok) throw new Error(`Não foi possível baixar ${resultado.nome}.`);
+        zip.file(resultado.nome, await resposta.blob());
+        setProgressoDownload(indice + 1);
+      }
+      const blob = await zip.generateAsync({ type: "blob", compression: "STORE" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `foto-express-${String(numeroTrabalho ?? trabalhoId.slice(0, 8)).padStart(6, "0")}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`${arquivosValidos.length} arquivos reunidos no ZIP.`);
+    } catch (erro) {
+      toast.error(erro instanceof Error ? erro.message : "Não foi possível preparar o ZIP.");
+    } finally {
+      setBaixandoTodos(false);
+      setProgressoDownload(0);
+    }
+  };
   return <Card>
     <CardHeader><CardTitle className="flex items-center gap-2"><Printer className="h-5 w-5" />Arquivo de impressão</CardTitle></CardHeader>
     <CardContent className="space-y-5">
@@ -64,7 +100,11 @@ export function GeracaoImpressao({ trabalhoId, habilitada, folhas, papel, orient
       {!habilitada && <p className="text-sm text-muted-foreground">Confirme uma montagem atual antes de gerar.</p>}
       {ultima?.estado === "ERRO" && <p className="text-sm text-destructive">{ultima.erro || "A geração não foi concluída."}</p>}
       {ultima?.estado === "PROCESSANDO" && !mutation.isPending && <p className="text-sm text-muted-foreground">{ultima.etapa}</p>}
-      {ultima?.estado === "CONCLUIDA" && <div className="space-y-2 border-t pt-4"><p className="text-sm font-medium">Arquivos concluídos</p><div className="flex flex-wrap gap-2">{ultima.arquivos.filter((arquivo) => arquivo.estado === "VALIDADO").map((arquivo) => <Button key={arquivo.id} variant="outline" size="sm" onClick={() => void abrirDownload(arquivo.id)}>{arquivo.tipo === "PDF" ? <FileText className="mr-2 h-4 w-4" /> : <FileImage className="mr-2 h-4 w-4" />}<Download className="mr-2 h-3.5 w-3.5" />{arquivo.tipo === "PDF" ? "Baixar PDF" : `Folha ${arquivo.folha_numero}`}</Button>)}</div></div>}
+      {ultima?.estado === "CONCLUIDA" && <div className="space-y-3 border-t pt-4">
+        <div className="flex items-center justify-between gap-3"><p className="text-sm font-medium">Arquivos concluídos</p>{arquivosValidos.length > 1 && <Button type="button" size="sm" disabled={baixandoTodos} onClick={() => void baixarTodos()}>{baixandoTodos ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Archive className="mr-2 h-4 w-4" />}{baixandoTodos ? `Preparando ${progressoDownload}/${arquivosValidos.length}` : "Baixar todos"}</Button>}</div>
+        {baixandoTodos && <Progress value={progressoDownload / arquivosValidos.length * 100} />}
+        <div className="flex flex-wrap gap-2">{arquivosValidos.map((arquivo) => <Button key={arquivo.id} variant="outline" size="sm" disabled={baixandoTodos} onClick={() => void abrirDownload(arquivo.id)}>{arquivo.tipo === "PDF" ? <FileText className="mr-2 h-4 w-4" /> : <FileImage className="mr-2 h-4 w-4" />}<Download className="mr-2 h-3.5 w-3.5" />{arquivo.tipo === "PDF" ? "Baixar PDF" : `Folha ${arquivo.folha_numero}`}</Button>)}</div>
+      </div>}
     </CardContent>
   </Card>;
 }
