@@ -23,7 +23,9 @@ import { GeracaoImpressao } from "./GeracaoImpressao";
 
 const configurarPapel = (papel: PapelFoto): ConfiguracaoMontagem => ({
   papelId: papel.id, papelNome: papel.nome, larguraMm: Number(papel.largura_mm), alturaMm: Number(papel.altura_mm),
-  orientacao: papel.orientacao === "RETRATO" || papel.orientacao === "PAISAGEM" ? papel.orientacao : "AUTOMATICA",
+  orientacao: papel.orientacao === "RETRATO" || papel.orientacao === "PAISAGEM"
+    ? papel.orientacao
+    : Number(papel.largura_mm) <= Number(papel.altura_mm) ? "RETRATO" : "PAISAGEM",
   orientacaoFotos: "AUTOMATICA",
   margemSuperiorMm: Number(papel.margem_superior_mm), margemInferiorMm: Number(papel.margem_inferior_mm),
   margemEsquerdaMm: Number(papel.margem_esquerda_mm), margemDireitaMm: Number(papel.margem_direita_mm),
