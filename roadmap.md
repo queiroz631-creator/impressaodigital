@@ -8,6 +8,7 @@
 - [x] Envio bloqueia novas alterações do cliente
 - [x] Montagem e impressão permanecem exclusivas da equipe autorizada
 - [x] Validar páginas públicas e acesso no navegador sem usar dados reais
+- [x] Corrigir abertura do trabalho e do editor no portal público
 - [ ] Validar cadastro, upload, edição e envio com uma conta de teste isolada
 
 ## FOTO EXPRESS — primeira entrega funcional
