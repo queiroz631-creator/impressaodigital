@@ -31,7 +31,6 @@ import { Route as FotoExpressPapeisRouteImport } from './routes/foto-express.pap
 import { Route as FotosIndexRouteImport } from './routes/fotos.index'
 import { Route as FotosAcessoRouteImport } from './routes/fotos.acesso'
 import { Route as FotosCadastroRouteImport } from './routes/fotos.cadastro'
-import { Route as FotosTrabalhosRouteImport } from './routes/fotos.trabalhos'
 import { Route as OrcamentoTokenRouteImport } from './routes/orcamento.$token'
 import { Route as SorteiosPublicoIndexRouteImport } from './routes/sorteios-publico.index'
 import { Route as SorteiosPublicoCadastroRouteImport } from './routes/sorteios-publico.cadastro'
@@ -46,6 +45,7 @@ import { Route as SorteiosNovoRouteImport } from './routes/sorteios.novo'
 import { Route as CurriculoPublicoTokenRouteImport } from './routes/curriculo.publico.$token'
 import { Route as FotoExpressIdFotosRouteImport } from './routes/foto-express.$id.fotos'
 import { Route as FotoExpressIdRevisaoRouteImport } from './routes/foto-express.$id.revisao'
+import { Route as FotosTrabalhosIndexRouteImport } from './routes/fotos.trabalhos.index'
 import { Route as FotosTrabalhosTrabalhoIdRouteImport } from './routes/fotos.trabalhos.$trabalhoId'
 import { Route as SorteiosIdIndexRouteImport } from './routes/sorteios.$id.index'
 import { Route as SorteiosIdCuponsRouteImport } from './routes/sorteios.$id.cupons'
@@ -188,11 +188,6 @@ const FotosCadastroRoute = FotosCadastroRouteImport.update({
   path: '/fotos/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FotosTrabalhosRoute = FotosTrabalhosRouteImport.update({
-  id: '/fotos/trabalhos',
-  path: '/fotos/trabalhos',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OrcamentoTokenRoute = OrcamentoTokenRouteImport.update({
   id: '/orcamento/$token',
   path: '/orcamento/$token',
@@ -264,11 +259,16 @@ const FotoExpressIdRevisaoRoute = FotoExpressIdRevisaoRouteImport.update({
   path: '/foto-express/$id/revisao',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FotosTrabalhosIndexRoute = FotosTrabalhosIndexRouteImport.update({
+  id: '/fotos/trabalhos/',
+  path: '/fotos/trabalhos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FotosTrabalhosTrabalhoIdRoute =
   FotosTrabalhosTrabalhoIdRouteImport.update({
-    id: '/$trabalhoId',
-    path: '/$trabalhoId',
-    getParentRoute: () => FotosTrabalhosRoute,
+    id: '/fotos/trabalhos/$trabalhoId',
+    path: '/fotos/trabalhos/$trabalhoId',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const SorteiosIdIndexRoute = SorteiosIdIndexRouteImport.update({
   id: '/sorteios/$id/',
@@ -458,7 +458,6 @@ export interface FileRoutesByFullPath {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
-  '/fotos/trabalhos': typeof FotosTrabalhosRouteWithChildren
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -486,6 +485,7 @@ export interface FileRoutesByFullPath {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/sortear': typeof SorteiosIdSortearRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
+  '/fotos/trabalhos/': typeof FotosTrabalhosIndexRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
   '/api/public/sorteios/reconciliar-interno': typeof ApiPublicSorteiosReconciliarInternoRoute
@@ -528,7 +528,6 @@ export interface FileRoutesByTo {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
-  '/fotos/trabalhos': typeof FotosTrabalhosRouteWithChildren
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -556,6 +555,7 @@ export interface FileRoutesByTo {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/sortear': typeof SorteiosIdSortearRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
+  '/fotos/trabalhos': typeof FotosTrabalhosIndexRoute
   '/sorteios/$id': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
   '/api/public/sorteios/reconciliar-interno': typeof ApiPublicSorteiosReconciliarInternoRoute
@@ -599,7 +599,6 @@ export interface FileRoutesById {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
-  '/fotos/trabalhos': typeof FotosTrabalhosRouteWithChildren
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -627,6 +626,7 @@ export interface FileRoutesById {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/sortear': typeof SorteiosIdSortearRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
+  '/fotos/trabalhos/': typeof FotosTrabalhosIndexRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
   '/api/public/sorteios/reconciliar-interno': typeof ApiPublicSorteiosReconciliarInternoRoute
@@ -671,7 +671,6 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
-    | '/fotos/trabalhos'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -699,6 +698,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/sortear'
     | '/sorteios/$id/termos'
+    | '/fotos/trabalhos/'
     | '/sorteios/$id/'
     | '/api/public/sorteios/reconciliar'
     | '/api/public/sorteios/reconciliar-interno'
@@ -741,7 +741,6 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
-    | '/fotos/trabalhos'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -769,6 +768,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/sortear'
     | '/sorteios/$id/termos'
+    | '/fotos/trabalhos'
     | '/sorteios/$id'
     | '/api/public/sorteios/reconciliar'
     | '/api/public/sorteios/reconciliar-interno'
@@ -811,7 +811,6 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
-    | '/fotos/trabalhos'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -839,6 +838,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/sortear'
     | '/sorteios/$id/termos'
+    | '/fotos/trabalhos/'
     | '/sorteios/$id/'
     | '/api/public/sorteios/reconciliar'
     | '/api/public/sorteios/reconciliar-interno'
@@ -882,7 +882,6 @@ export interface RootRouteChildren {
   FotoExpressPapeisRoute: typeof FotoExpressPapeisRoute
   FotosAcessoRoute: typeof FotosAcessoRoute
   FotosCadastroRoute: typeof FotosCadastroRoute
-  FotosTrabalhosRoute: typeof FotosTrabalhosRouteWithChildren
   OrcamentoTokenRoute: typeof OrcamentoTokenRoute
   SorteiosPublicoCadastroRoute: typeof SorteiosPublicoCadastroRoute
   SorteiosPublicoCuponsRoute: typeof SorteiosPublicoCuponsRoute
@@ -900,6 +899,7 @@ export interface RootRouteChildren {
   CurriculoPublicoTokenRoute: typeof CurriculoPublicoTokenRoute
   FotoExpressIdFotosRoute: typeof FotoExpressIdFotosRoute
   FotoExpressIdRevisaoRoute: typeof FotoExpressIdRevisaoRoute
+  FotosTrabalhosTrabalhoIdRoute: typeof FotosTrabalhosTrabalhoIdRouteWithChildren
   SorteiosIdCuponsRoute: typeof SorteiosIdCuponsRoute
   SorteiosIdDadosRoute: typeof SorteiosIdDadosRoute
   SorteiosIdEditarRoute: typeof SorteiosIdEditarRoute
@@ -909,6 +909,7 @@ export interface RootRouteChildren {
   SorteiosIdPremiosRoute: typeof SorteiosIdPremiosRoute
   SorteiosIdSortearRoute: typeof SorteiosIdSortearRoute
   SorteiosIdTermosRoute: typeof SorteiosIdTermosRoute
+  FotosTrabalhosIndexRoute: typeof FotosTrabalhosIndexRoute
   SorteiosIdIndexRoute: typeof SorteiosIdIndexRoute
   ApiPublicSorteiosReconciliarRoute: typeof ApiPublicSorteiosReconciliarRoute
   ApiPublicSorteiosReconciliarInternoRoute: typeof ApiPublicSorteiosReconciliarInternoRoute
@@ -1086,13 +1087,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FotosCadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/fotos/trabalhos': {
-      id: '/fotos/trabalhos'
-      path: '/fotos/trabalhos'
-      fullPath: '/fotos/trabalhos'
-      preLoaderRoute: typeof FotosTrabalhosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/orcamento/$token': {
       id: '/orcamento/$token'
       path: '/orcamento/$token'
@@ -1191,12 +1185,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FotoExpressIdRevisaoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fotos/trabalhos/': {
+      id: '/fotos/trabalhos/'
+      path: '/fotos/trabalhos'
+      fullPath: '/fotos/trabalhos/'
+      preLoaderRoute: typeof FotosTrabalhosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/fotos/trabalhos/$trabalhoId': {
       id: '/fotos/trabalhos/$trabalhoId'
-      path: '/$trabalhoId'
+      path: '/fotos/trabalhos/$trabalhoId'
       fullPath: '/fotos/trabalhos/$trabalhoId'
       preLoaderRoute: typeof FotosTrabalhosTrabalhoIdRouteImport
-      parentRoute: typeof FotosTrabalhosRoute
+      parentRoute: typeof rootRouteImport
     }
     '/sorteios/$id/': {
       id: '/sorteios/$id/'
@@ -1426,18 +1427,6 @@ const FotosTrabalhosTrabalhoIdRouteWithChildren =
     FotosTrabalhosTrabalhoIdRouteChildren,
   )
 
-interface FotosTrabalhosRouteChildren {
-  FotosTrabalhosTrabalhoIdRoute: typeof FotosTrabalhosTrabalhoIdRouteWithChildren
-}
-
-const FotosTrabalhosRouteChildren: FotosTrabalhosRouteChildren = {
-  FotosTrabalhosTrabalhoIdRoute: FotosTrabalhosTrabalhoIdRouteWithChildren,
-}
-
-const FotosTrabalhosRouteWithChildren = FotosTrabalhosRoute._addFileChildren(
-  FotosTrabalhosRouteChildren,
-)
-
 interface ApiPublicWhatsappWebhookRouteChildren {
   ApiPublicWhatsappWebhookTokenRoute: typeof ApiPublicWhatsappWebhookTokenRoute
 }
@@ -1472,7 +1461,6 @@ const rootRouteChildren: RootRouteChildren = {
   FotoExpressPapeisRoute: FotoExpressPapeisRoute,
   FotosAcessoRoute: FotosAcessoRoute,
   FotosCadastroRoute: FotosCadastroRoute,
-  FotosTrabalhosRoute: FotosTrabalhosRouteWithChildren,
   OrcamentoTokenRoute: OrcamentoTokenRoute,
   SorteiosPublicoCadastroRoute: SorteiosPublicoCadastroRoute,
   SorteiosPublicoCuponsRoute: SorteiosPublicoCuponsRoute,
@@ -1490,6 +1478,7 @@ const rootRouteChildren: RootRouteChildren = {
   CurriculoPublicoTokenRoute: CurriculoPublicoTokenRoute,
   FotoExpressIdFotosRoute: FotoExpressIdFotosRoute,
   FotoExpressIdRevisaoRoute: FotoExpressIdRevisaoRoute,
+  FotosTrabalhosTrabalhoIdRoute: FotosTrabalhosTrabalhoIdRouteWithChildren,
   SorteiosIdCuponsRoute: SorteiosIdCuponsRoute,
   SorteiosIdDadosRoute: SorteiosIdDadosRoute,
   SorteiosIdEditarRoute: SorteiosIdEditarRoute,
@@ -1499,6 +1488,7 @@ const rootRouteChildren: RootRouteChildren = {
   SorteiosIdPremiosRoute: SorteiosIdPremiosRoute,
   SorteiosIdSortearRoute: SorteiosIdSortearRoute,
   SorteiosIdTermosRoute: SorteiosIdTermosRoute,
+  FotosTrabalhosIndexRoute: FotosTrabalhosIndexRoute,
   SorteiosIdIndexRoute: SorteiosIdIndexRoute,
   ApiPublicSorteiosReconciliarRoute: ApiPublicSorteiosReconciliarRoute,
   ApiPublicSorteiosReconciliarInternoRoute:
