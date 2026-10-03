@@ -241,7 +241,6 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
     }
   };
   const removerCamadaDeTodas = async (texto: TextoFoto) => {
-    if (!window.confirm("Remover este texto de todas as fotos do álbum? Esta ação não pode ser desfeita.")) return;
     setEstadoTexto("SALVANDO");
     try {
       const timer = timersTextoRef.current[texto.id];
