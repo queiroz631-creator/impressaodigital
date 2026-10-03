@@ -309,6 +309,13 @@
       "when": 1791034691416,
       "tag": "0043_foto_express_remover_texto_todas_fotos",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1791035821355,
+      "tag": "0044_foto_express_papel_linhas_precos_orcamento",
+      "breakpoints": true
     }
   ]
 }

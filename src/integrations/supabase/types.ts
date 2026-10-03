@@ -1506,28 +1506,40 @@ export type Database = {
           altura_mm: number
           id: string
           largura_mm: number
+          linha_cor: string
+          linha_espacamento_ativa: boolean
+          linha_espessura_mm: number
           montagem_id: string
           numero: number
           papel_id: string | null
           papel_nome: string | null
+          valor_unitario: number
         }
         Insert: {
           altura_mm: number
           id?: string
           largura_mm: number
+          linha_cor?: string
+          linha_espacamento_ativa?: boolean
+          linha_espessura_mm?: number
           montagem_id: string
           numero: number
           papel_id?: string | null
           papel_nome?: string | null
+          valor_unitario?: number
         }
         Update: {
           altura_mm?: number
           id?: string
           largura_mm?: number
+          linha_cor?: string
+          linha_espacamento_ativa?: boolean
+          linha_espessura_mm?: number
           montagem_id?: string
           numero?: number
           papel_id?: string | null
           papel_nome?: string | null
+          valor_unitario?: number
         }
         Relationships: [
           {
@@ -1960,8 +1972,12 @@ export type Database = {
           codigo: string
           criado_em: string
           espacamento_mm: number
+          faixas_valor: Json
           id: string
           largura_mm: number
+          linha_cor: string
+          linha_espacamento_ativa: boolean
+          linha_espessura_mm: number
           margem_direita_mm: number
           margem_esquerda_mm: number
           margem_inferior_mm: number
@@ -1970,6 +1986,7 @@ export type Database = {
           ordem: number
           orientacao: string
           permitir_rotacao: boolean
+          valor_folha: number
         }
         Insert: {
           altura_mm: number
@@ -1978,8 +1995,12 @@ export type Database = {
           codigo: string
           criado_em?: string
           espacamento_mm?: number
+          faixas_valor?: Json
           id?: string
           largura_mm: number
+          linha_cor?: string
+          linha_espacamento_ativa?: boolean
+          linha_espessura_mm?: number
           margem_direita_mm?: number
           margem_esquerda_mm?: number
           margem_inferior_mm?: number
@@ -1988,6 +2009,7 @@ export type Database = {
           ordem?: number
           orientacao?: string
           permitir_rotacao?: boolean
+          valor_folha?: number
         }
         Update: {
           altura_mm?: number
@@ -1996,8 +2018,12 @@ export type Database = {
           codigo?: string
           criado_em?: string
           espacamento_mm?: number
+          faixas_valor?: Json
           id?: string
           largura_mm?: number
+          linha_cor?: string
+          linha_espacamento_ativa?: boolean
+          linha_espessura_mm?: number
           margem_direita_mm?: number
           margem_esquerda_mm?: number
           margem_inferior_mm?: number
@@ -2006,6 +2032,7 @@ export type Database = {
           ordem?: number
           orientacao?: string
           permitir_rotacao?: boolean
+          valor_folha?: number
         }
         Relationships: []
       }
@@ -2171,9 +2198,11 @@ export type Database = {
           id: string
           numero: number
           observacoes: string
+          orcamento_portal: Json | null
           origem_portal: boolean
           portal_enviado_em: string | null
           status: string
+          valor_estimado: number | null
         }
         Insert: {
           atualizado_em?: string
@@ -2185,9 +2214,11 @@ export type Database = {
           id?: string
           numero?: number
           observacoes?: string
+          orcamento_portal?: Json | null
           origem_portal?: boolean
           portal_enviado_em?: string | null
           status?: string
+          valor_estimado?: number | null
         }
         Update: {
           atualizado_em?: string
@@ -2199,9 +2230,11 @@ export type Database = {
           id?: string
           numero?: number
           observacoes?: string
+          orcamento_portal?: Json | null
           origem_portal?: boolean
           portal_enviado_em?: string | null
           status?: string
+          valor_estimado?: number | null
         }
         Relationships: [
           {
