@@ -2,19 +2,21 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { AlertTriangle, CheckCircle2, Images, LayoutGrid, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Images, LayoutGrid, Loader2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/AppLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { salvarMontagemFotoExpress } from "@/lib/foto-express.functions";
 import { useItensGaleria, useMontagem, usePapeis, useTextosTrabalho, useTrabalho } from "../hooks/useFotoExpress";
 import { calcularQualidadeFoto } from "../lib/qualidade";
-import { assinaturaMontagemPorPapeis, capacidadeEstimadaFormato, montarFolhas, type ConfiguracaoMontagem, type PlanoMontagem } from "../lib/montagem";
+import { assinaturaMontagemPorPapeis, capacidadeEstimadaFormato, montarFolhas, type ConfiguracaoMontagem, type OrientacaoPapel, type PlanoMontagem } from "../lib/montagem";
 import { PreviewFolha } from "../montagem/PreviewFolha";
 import type { ItemGaleria, PapelFoto } from "../types";
 import { GeracaoImpressao } from "./GeracaoImpressao";
@@ -28,6 +30,7 @@ const configurarPapel = (papel: PapelFoto): ConfiguracaoMontagem => ({
 });
 
 type GrupoMontagem = { papel: PapelFoto; config: ConfiguracaoMontagem; itens: ItemGaleria[]; plano: PlanoMontagem };
+type ModoOrientacao = "TODOS" | "POR_PAPEL";
 
 export function RevisaoPagina({ trabalhoId }: { trabalhoId: string }) {
   const { data: trabalho } = useTrabalho(trabalhoId);
@@ -37,6 +40,9 @@ export function RevisaoPagina({ trabalhoId }: { trabalhoId: string }) {
   const { user } = useAuth(); const { pode } = usePermissoes(user?.id); const podeEditar = pode("foto_express.trabalhos.editar");
   const salvar = useServerFn(salvarMontagemFotoExpress); const qc = useQueryClient();
   const [indice, setIndice] = useState(0); const [assinatura, setAssinatura] = useState("");
+  const [modoOrientacao, setModoOrientacao] = useState<ModoOrientacao>("TODOS");
+  const [orientacaoTodos, setOrientacaoTodos] = useState<OrientacaoPapel>("AUTOMATICA");
+  const [orientacoesPorPapel, setOrientacoesPorPapel] = useState<Record<string, OrientacaoPapel>>({});
 
   const resultado = useMemo<{ grupos: GrupoMontagem[]; plano: PlanoMontagem | null; erro: string | null }>(() => {
     if (papeisQuery.isLoading) return { grupos: [], plano: null, erro: null };
@@ -52,7 +58,8 @@ export function RevisaoPagina({ trabalhoId }: { trabalhoId: string }) {
       let proximoNumero = 1;
       for (const papel of papeis) {
         const itensGrupo = mapa.get(papel.id); if (!itensGrupo?.length) continue;
-        const config = configurarPapel(papel); const calculado = montarFolhas(itensGrupo, config);
+        const orientacao = modoOrientacao === "TODOS" ? orientacaoTodos : orientacoesPorPapel[papel.id] ?? "AUTOMATICA";
+        const config = { ...configurarPapel(papel), orientacao }; const calculado = montarFolhas(itensGrupo, config);
         const plano = { ...calculado, folhas: calculado.folhas.map((folha) => ({ ...folha, numero: proximoNumero++, papelId: papel.id, papelNome: papel.nome })) };
         grupos.push({ papel, config, itens: itensGrupo, plano });
       }
@@ -62,7 +69,7 @@ export function RevisaoPagina({ trabalhoId }: { trabalhoId: string }) {
       const areaOcupadaMm2 = grupos.reduce((soma, grupo) => soma + grupo.plano.areaOcupadaMm2, 0);
       return { grupos, plano: { folhas, orientacaoEscolhida: grupos.every((grupo) => grupo.plano.orientacaoEscolhida === grupos[0]?.plano.orientacaoEscolhida) ? (grupos[0]?.plano.orientacaoEscolhida ?? "RETRATO") : "RETRATO", areaUtilMm2, areaOcupadaMm2, aproveitamento: areaUtilMm2 ? Number((areaOcupadaMm2 / areaUtilMm2 * 100).toFixed(3)) : 0 }, erro: null };
     } catch (erro) { return { grupos: [], plano: null, erro: erro instanceof Error ? erro.message : "Não foi possível montar as folhas." }; }
-  }, [itens, papeis, papeisQuery.isLoading]);
+  }, [itens, modoOrientacao, orientacaoTodos, orientacoesPorPapel, papeis, papeisQuery.isLoading]);
 
   useEffect(() => { const configs = resultado.grupos.map((grupo) => grupo.config); if (configs.length) void assinaturaMontagemPorPapeis(itens, textos, configs).then(setAssinatura); else setAssinatura(""); }, [itens, textos, resultado.grupos]);
   useEffect(() => { setIndice(0); }, [resultado.plano?.folhas.length]);
@@ -83,6 +90,15 @@ export function RevisaoPagina({ trabalhoId }: { trabalhoId: string }) {
   }), [itens]);
 
   const desatualizada = Boolean(montagemQuery.data && montagemQuery.data.assinatura !== assinatura);
+  const alterarModoOrientacao = (modo: ModoOrientacao) => {
+    if (modo === "POR_PAPEL") setOrientacoesPorPapel(Object.fromEntries(resultado.grupos.map((grupo) => [grupo.papel.id, orientacaoTodos])));
+    setModoOrientacao(modo);
+  };
+  const restaurarOrientacoes = () => {
+    setOrientacaoTodos("AUTOMATICA");
+    setOrientacoesPorPapel(Object.fromEntries(resultado.grupos.map((grupo) => [grupo.papel.id, "AUTOMATICA"])));
+    setIndice(0);
+  };
   const mutation = useMutation({
     mutationFn: async () => {
       if (!resultado.plano?.folhas.length || !resultado.grupos.length) throw new Error(resultado.erro ?? "Não há folhas para confirmar.");
@@ -100,10 +116,19 @@ export function RevisaoPagina({ trabalhoId }: { trabalhoId: string }) {
     {resultado.erro && <Alert variant="destructive" className="mb-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Montagem indisponível</AlertTitle><AlertDescription>{resultado.erro}</AlertDescription></Alert>}
     <div className="grid items-start gap-5 xl:grid-cols-[380px_minmax(0,1fr)]"><div className="space-y-4">
       <Card><CardHeader><CardTitle>Dados do trabalho</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-3 text-sm"><Dado nome="Fotos" valor={String(itens.length)} /><Dado nome="Cópias" valor={String(itens.reduce((soma, item) => soma + item.quantidade, 0))} /><Dado nome="Cliente" valor={trabalho?.cliente_nome || "Não informado"} /><Dado nome="Telefone" valor={trabalho?.cliente_telefone || "Não informado"} /></CardContent></Card>
-      <Card><CardHeader><CardTitle>Papéis da montagem</CardTitle></CardHeader><CardContent className="space-y-4">{resultado.grupos.map((grupo) => <div key={grupo.papel.id} className="space-y-2 border-b pb-4 last:border-b-0 last:pb-0"><div className="flex items-center justify-between gap-2"><p className="font-medium">{grupo.papel.nome}</p><Badge variant="outline">{grupo.plano.folhas.length} folha(s)</Badge></div><p className="text-sm text-muted-foreground">{grupo.itens.length} foto(s) · {grupo.itens.reduce((soma, item) => soma + item.quantidade, 0)} cópia(s) · {grupo.plano.aproveitamento}% aproveitado</p><div className="flex flex-wrap gap-1.5">{[...new Map(grupo.itens.filter((item) => item.formato).map((item) => [item.formato?.id, item.formato])).values()].map((formato) => formato ? <Badge key={formato.id} variant="secondary">{formato.nome}: até {capacidadeEstimadaFormato(formato, grupo.papel)}/folha</Badge> : null)}</div></div>)}</CardContent></Card>
+      <Card><CardHeader><div className="flex items-center justify-between gap-3"><CardTitle>Orientação da montagem</CardTitle><Button type="button" variant="ghost" size="sm" disabled={!podeEditar || !resultado.grupos.length} onClick={restaurarOrientacoes}><RotateCcw className="mr-2 h-4 w-4" />Restaurar</Button></div></CardHeader><CardContent className="space-y-4">
+        {resultado.grupos.length > 1 && <div className="space-y-2"><Label htmlFor="modo-orientacao">Configurar</Label><Select value={modoOrientacao} onValueChange={(valor: ModoOrientacao) => alterarModoOrientacao(valor)} disabled={!podeEditar}><SelectTrigger id="modo-orientacao"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os papéis juntos</SelectItem><SelectItem value="POR_PAPEL">Cada papel separadamente</SelectItem></SelectContent></Select></div>}
+        {(resultado.grupos.length <= 1 || modoOrientacao === "TODOS") && <OrientacaoSelect id="orientacao-todos" label={resultado.grupos.length > 1 ? "Orientação para todos" : "Orientação"} value={orientacaoTodos} onChange={setOrientacaoTodos} disabled={!podeEditar} />}
+        <p className="text-xs text-muted-foreground">Automática escolhe a posição que usa menos folhas.</p>
+      </CardContent></Card>
+      <Card><CardHeader><CardTitle>Papéis da montagem</CardTitle></CardHeader><CardContent className="space-y-4">{resultado.grupos.map((grupo) => <div key={grupo.papel.id} className="space-y-3 border-b pb-4 last:border-b-0 last:pb-0"><div className="flex items-center justify-between gap-2"><p className="font-medium">{grupo.papel.nome}</p><Badge variant="outline">{grupo.plano.folhas.length} folha(s)</Badge></div>{resultado.grupos.length > 1 && modoOrientacao === "POR_PAPEL" && <OrientacaoSelect id={`orientacao-${grupo.papel.id}`} label={`Orientação de ${grupo.papel.nome}`} value={orientacoesPorPapel[grupo.papel.id] ?? "AUTOMATICA"} onChange={(orientacao) => setOrientacoesPorPapel((atuais) => ({ ...atuais, [grupo.papel.id]: orientacao }))} disabled={!podeEditar} />}<p className="text-sm text-muted-foreground">{grupo.itens.length} foto(s) · {grupo.itens.reduce((soma, item) => soma + item.quantidade, 0)} cópia(s) · {grupo.plano.aproveitamento}% aproveitado</p><div className="flex flex-wrap gap-1.5">{[...new Map(grupo.itens.filter((item) => item.formato).map((item) => [item.formato?.id, item.formato])).values()].map((formato) => formato ? <Badge key={formato.id} variant="secondary">{formato.nome}: até {capacidadeEstimadaFormato(formato, grupo.papel)}/folha</Badge> : null)}</div></div>)}</CardContent></Card>
       {resultado.plano && <GeracaoImpressao trabalhoId={trabalhoId} numeroTrabalho={trabalho?.numero} habilitada={Boolean(podeEditar && montagemQuery.data && !desatualizada && montagemQuery.data.snapshot_confirmado)} folhas={resultado.plano.folhas.length} papel={resultado.grupos.length > 1 ? `${resultado.grupos.length} papéis` : resultado.grupos[0]?.papel.nome ?? "—"} orientacao={orientacaoGeracao} />}
     </div><Card><CardHeader><div className="flex flex-wrap items-center justify-between gap-3"><CardTitle className="flex items-center gap-2"><LayoutGrid className="h-5 w-5" />Prévia das folhas</CardTitle>{resultado.plano && <div className="flex flex-wrap gap-2"><Badge variant="outline">{resultado.plano.folhas.length} folha(s)</Badge><Badge variant="outline">{resultado.grupos.length} papel(is)</Badge><Badge variant="outline">{resultado.plano.aproveitamento}% aproveitado</Badge></div>}</div></CardHeader><CardContent className="space-y-5">{resultado.plano && <PreviewFolha plano={resultado.plano} indice={indice} onIndice={setIndice} itens={itens} textos={textos} />}<Button className="w-full" disabled={!podeEditar || mutation.isPending || !resultado.plano?.folhas.length || !assinatura || Boolean(resultado.erro)} onClick={() => mutation.mutate()}>{mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}Confirmar montagem</Button></CardContent></Card></div>
   </>;
 }
 
 function Dado({ nome, valor }: { nome: string; valor: string }) { return <div className="min-w-0"><p className="text-xs text-muted-foreground">{nome}</p><p className="truncate font-medium">{valor}</p></div>; }
+
+function OrientacaoSelect({ id, label, value, onChange, disabled }: { id: string; label: string; value: OrientacaoPapel; onChange: (valor: OrientacaoPapel) => void; disabled: boolean }) {
+  return <div className="space-y-2"><Label htmlFor={id}>{label}</Label><Select value={value} onValueChange={(valor: OrientacaoPapel) => onChange(valor)} disabled={disabled}><SelectTrigger id={id}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="AUTOMATICA">Automática</SelectItem><SelectItem value="RETRATO">Retrato</SelectItem><SelectItem value="PAISAGEM">Paisagem</SelectItem></SelectContent></Select></div>;
+}
