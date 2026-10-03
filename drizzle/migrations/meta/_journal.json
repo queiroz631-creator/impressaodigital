@@ -323,6 +323,13 @@
       "when": 1791036029462,
       "tag": "0045_foto_express_snapshot_valor_folhas",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1791036641177,
+      "tag": "0046_foto_express_formato_visivel_portal",
+      "breakpoints": true
     }
   ]
 }

@@ -1578,6 +1578,7 @@ export type Database = {
           ordem: number
           padrao: boolean
           papel_padrao_id: string | null
+          visivel_portal: boolean
         }
         Insert: {
           altura_cm: number
@@ -1598,6 +1599,7 @@ export type Database = {
           ordem?: number
           padrao?: boolean
           papel_padrao_id?: string | null
+          visivel_portal?: boolean
         }
         Update: {
           altura_cm?: number
@@ -1618,6 +1620,7 @@ export type Database = {
           ordem?: number
           padrao?: boolean
           papel_padrao_id?: string | null
+          visivel_portal?: boolean
         }
         Relationships: [
           {
