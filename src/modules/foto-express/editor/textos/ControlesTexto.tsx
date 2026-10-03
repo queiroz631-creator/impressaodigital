@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowUp, Bold, Copy, Images, Italic, Loader2, Plus, SmilePlus, Trash2 } from "lucide-react";
+import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -120,7 +121,14 @@ export function ControlesTexto({ textos, selecionado, somenteLeitura, salvando, 
       <div className="grid grid-cols-2 gap-2"><Button type="button" variant="outline" disabled={somenteLeitura} onClick={() => onMover(selecionado, -1)}><ArrowDown className="mr-2 h-4 w-4" />Abaixo</Button><Button type="button" variant="outline" disabled={somenteLeitura} onClick={() => onMover(selecionado, 1)}><ArrowUp className="mr-2 h-4 w-4" />Acima</Button></div>
       <div className="grid grid-cols-2 gap-2"><Button type="button" variant="outline" disabled={somenteLeitura} onClick={() => onDuplicar(selecionado)}><Copy className="mr-2 h-4 w-4" />Duplicar</Button><Button type="button" variant="destructive" disabled={somenteLeitura} onClick={() => onExcluir(selecionado)}><Trash2 className="mr-2 h-4 w-4" />Excluir</Button></div>
       <Button type="button" variant="outline" className="w-full" disabled={somenteLeitura || aplicandoTodas || quantidadeOutrasFotos === 0} onClick={aplicarEmTodas}>{aplicandoTodas ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Images className="mr-2 h-4 w-4" />}{aplicandoTodas ? "Aplicando..." : "Aplicar em todas as fotos"}</Button>
-      <Button type="button" variant="destructive" className="w-full" disabled={somenteLeitura || removendoTodas} onClick={removerDeTodas}>{removendoTodas ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}{removendoTodas ? "Removendo..." : "Remover de todas as fotos"}</Button>
+      <ConfirmarExclusao
+        titulo="Remover texto de todas as fotos?"
+        descricao="O texto selecionado será removido de todas as fotos deste álbum. Esta ação não poderá ser desfeita."
+        rotuloConfirmar="Remover de todas"
+        onConfirmar={removerDeTodas}
+      >
+        <Button type="button" variant="destructive" className="w-full" disabled={somenteLeitura || removendoTodas}>{removendoTodas ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}{removendoTodas ? "Removendo..." : "Remover de todas as fotos"}</Button>
+      </ConfirmarExclusao>
     </>}
   </div>;
 }
