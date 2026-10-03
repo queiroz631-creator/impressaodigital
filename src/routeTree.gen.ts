@@ -28,6 +28,9 @@ import { Route as FotoExpressIndexRouteImport } from './routes/foto-express.inde
 import { Route as FotoExpressFormatosRouteImport } from './routes/foto-express.formatos'
 import { Route as FotoExpressNovoRouteImport } from './routes/foto-express.novo'
 import { Route as FotoExpressPapeisRouteImport } from './routes/foto-express.papeis'
+import { Route as FotosIndexRouteImport } from './routes/fotos.index'
+import { Route as FotosAcessoRouteImport } from './routes/fotos.acesso'
+import { Route as FotosCadastroRouteImport } from './routes/fotos.cadastro'
 import { Route as OrcamentoTokenRouteImport } from './routes/orcamento.$token'
 import { Route as SorteiosPublicoIndexRouteImport } from './routes/sorteios-publico.index'
 import { Route as SorteiosPublicoCadastroRouteImport } from './routes/sorteios-publico.cadastro'
@@ -165,6 +168,21 @@ const FotoExpressNovoRoute = FotoExpressNovoRouteImport.update({
 const FotoExpressPapeisRoute = FotoExpressPapeisRouteImport.update({
   id: '/foto-express/papeis',
   path: '/foto-express/papeis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FotosIndexRoute = FotosIndexRouteImport.update({
+  id: '/fotos/',
+  path: '/fotos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FotosAcessoRoute = FotosAcessoRouteImport.update({
+  id: '/fotos/acesso',
+  path: '/fotos/acesso',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FotosCadastroRoute = FotosCadastroRouteImport.update({
+  id: '/fotos/cadastro',
+  path: '/fotos/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrcamentoTokenRoute = OrcamentoTokenRouteImport.update({
@@ -418,6 +436,8 @@ export interface FileRoutesByFullPath {
   '/foto-express/formatos': typeof FotoExpressFormatosRoute
   '/foto-express/novo': typeof FotoExpressNovoRoute
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
+  '/fotos/acesso': typeof FotosAcessoRoute
+  '/fotos/cadastro': typeof FotosCadastroRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -429,6 +449,7 @@ export interface FileRoutesByFullPath {
   '/sorteios/novo': typeof SorteiosNovoRoute
   '/curriculos/': typeof CurriculosIndexRoute
   '/foto-express/': typeof FotoExpressIndexRoute
+  '/fotos/': typeof FotosIndexRoute
   '/sorteios-publico/': typeof SorteiosPublicoIndexRoute
   '/sorteios/': typeof SorteiosIndexRoute
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
@@ -482,6 +503,8 @@ export interface FileRoutesByTo {
   '/foto-express/formatos': typeof FotoExpressFormatosRoute
   '/foto-express/novo': typeof FotoExpressNovoRoute
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
+  '/fotos/acesso': typeof FotosAcessoRoute
+  '/fotos/cadastro': typeof FotosCadastroRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -493,6 +516,7 @@ export interface FileRoutesByTo {
   '/sorteios/novo': typeof SorteiosNovoRoute
   '/curriculos': typeof CurriculosIndexRoute
   '/foto-express': typeof FotoExpressIndexRoute
+  '/fotos': typeof FotosIndexRoute
   '/sorteios-publico': typeof SorteiosPublicoIndexRoute
   '/sorteios': typeof SorteiosIndexRoute
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
@@ -547,6 +571,8 @@ export interface FileRoutesById {
   '/foto-express/formatos': typeof FotoExpressFormatosRoute
   '/foto-express/novo': typeof FotoExpressNovoRoute
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
+  '/fotos/acesso': typeof FotosAcessoRoute
+  '/fotos/cadastro': typeof FotosCadastroRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -558,6 +584,7 @@ export interface FileRoutesById {
   '/sorteios/novo': typeof SorteiosNovoRoute
   '/curriculos/': typeof CurriculosIndexRoute
   '/foto-express/': typeof FotoExpressIndexRoute
+  '/fotos/': typeof FotosIndexRoute
   '/sorteios-publico/': typeof SorteiosPublicoIndexRoute
   '/sorteios/': typeof SorteiosIndexRoute
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
@@ -613,6 +640,8 @@ export interface FileRouteTypes {
     | '/foto-express/formatos'
     | '/foto-express/novo'
     | '/foto-express/papeis'
+    | '/fotos/acesso'
+    | '/fotos/cadastro'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -624,6 +653,7 @@ export interface FileRouteTypes {
     | '/sorteios/novo'
     | '/curriculos/'
     | '/foto-express/'
+    | '/fotos/'
     | '/sorteios-publico/'
     | '/sorteios/'
     | '/curriculo/publico/$token'
@@ -677,6 +707,8 @@ export interface FileRouteTypes {
     | '/foto-express/formatos'
     | '/foto-express/novo'
     | '/foto-express/papeis'
+    | '/fotos/acesso'
+    | '/fotos/cadastro'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -688,6 +720,7 @@ export interface FileRouteTypes {
     | '/sorteios/novo'
     | '/curriculos'
     | '/foto-express'
+    | '/fotos'
     | '/sorteios-publico'
     | '/sorteios'
     | '/curriculo/publico/$token'
@@ -741,6 +774,8 @@ export interface FileRouteTypes {
     | '/foto-express/formatos'
     | '/foto-express/novo'
     | '/foto-express/papeis'
+    | '/fotos/acesso'
+    | '/fotos/cadastro'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -752,6 +787,7 @@ export interface FileRouteTypes {
     | '/sorteios/novo'
     | '/curriculos/'
     | '/foto-express/'
+    | '/fotos/'
     | '/sorteios-publico/'
     | '/sorteios/'
     | '/curriculo/publico/$token'
@@ -806,6 +842,8 @@ export interface RootRouteChildren {
   FotoExpressFormatosRoute: typeof FotoExpressFormatosRoute
   FotoExpressNovoRoute: typeof FotoExpressNovoRoute
   FotoExpressPapeisRoute: typeof FotoExpressPapeisRoute
+  FotosAcessoRoute: typeof FotosAcessoRoute
+  FotosCadastroRoute: typeof FotosCadastroRoute
   OrcamentoTokenRoute: typeof OrcamentoTokenRoute
   SorteiosPublicoCadastroRoute: typeof SorteiosPublicoCadastroRoute
   SorteiosPublicoCuponsRoute: typeof SorteiosPublicoCuponsRoute
@@ -817,6 +855,7 @@ export interface RootRouteChildren {
   SorteiosNovoRoute: typeof SorteiosNovoRoute
   CurriculosIndexRoute: typeof CurriculosIndexRoute
   FotoExpressIndexRoute: typeof FotoExpressIndexRoute
+  FotosIndexRoute: typeof FotosIndexRoute
   SorteiosPublicoIndexRoute: typeof SorteiosPublicoIndexRoute
   SorteiosIndexRoute: typeof SorteiosIndexRoute
   CurriculoPublicoTokenRoute: typeof CurriculoPublicoTokenRoute
@@ -985,6 +1024,27 @@ declare module '@tanstack/react-router' {
       path: '/foto-express/papeis'
       fullPath: '/foto-express/papeis'
       preLoaderRoute: typeof FotoExpressPapeisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fotos/': {
+      id: '/fotos/'
+      path: '/fotos'
+      fullPath: '/fotos/'
+      preLoaderRoute: typeof FotosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fotos/acesso': {
+      id: '/fotos/acesso'
+      path: '/fotos/acesso'
+      fullPath: '/fotos/acesso'
+      preLoaderRoute: typeof FotosAcessoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fotos/cadastro': {
+      id: '/fotos/cadastro'
+      path: '/fotos/cadastro'
+      fullPath: '/fotos/cadastro'
+      preLoaderRoute: typeof FotosCadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orcamento/$token': {
@@ -1323,6 +1383,8 @@ const rootRouteChildren: RootRouteChildren = {
   FotoExpressFormatosRoute: FotoExpressFormatosRoute,
   FotoExpressNovoRoute: FotoExpressNovoRoute,
   FotoExpressPapeisRoute: FotoExpressPapeisRoute,
+  FotosAcessoRoute: FotosAcessoRoute,
+  FotosCadastroRoute: FotosCadastroRoute,
   OrcamentoTokenRoute: OrcamentoTokenRoute,
   SorteiosPublicoCadastroRoute: SorteiosPublicoCadastroRoute,
   SorteiosPublicoCuponsRoute: SorteiosPublicoCuponsRoute,
@@ -1334,6 +1396,7 @@ const rootRouteChildren: RootRouteChildren = {
   SorteiosNovoRoute: SorteiosNovoRoute,
   CurriculosIndexRoute: CurriculosIndexRoute,
   FotoExpressIndexRoute: FotoExpressIndexRoute,
+  FotosIndexRoute: FotosIndexRoute,
   SorteiosPublicoIndexRoute: SorteiosPublicoIndexRoute,
   SorteiosIndexRoute: SorteiosIndexRoute,
   CurriculoPublicoTokenRoute: CurriculoPublicoTokenRoute,
