@@ -18,7 +18,7 @@ const GRUPOS_EMOJI = [
   { nome: "Família e ocasiões", emojis: ["👶", "🍼", "🧸", "🎓", "💍", "👰", "🤵", "🏠", "🐾", "🐶", "🐱", "🎄", "🎅", "🐰", "☀️", "🌈", "⚽", "📸"] },
 ] as const;
 
-export function ControlesTexto({ textos, selecionado, somenteLeitura, salvando, quantidadeOutrasFotos, onAdicionar, onSelecionar, onChange, onCommit, onDuplicar, onAplicarTodas, onExcluir, onMover }: {
+export function ControlesTexto({ textos, selecionado, somenteLeitura, salvando, quantidadeOutrasFotos, onAdicionar, onSelecionar, onChange, onCommit, onDuplicar, onAplicarTodas, onRemoverTodas, onExcluir, onMover }: {
   textos: TextoFoto[];
   selecionado: TextoFoto | null;
   somenteLeitura: boolean;
@@ -30,11 +30,13 @@ export function ControlesTexto({ textos, selecionado, somenteLeitura, salvando, 
   onCommit: (texto: TextoFoto) => void;
   onDuplicar: (texto: TextoFoto) => void;
   onAplicarTodas: (texto: TextoFoto) => void | Promise<void>;
+  onRemoverTodas: (texto: TextoFoto) => void | Promise<void>;
   onExcluir: (texto: TextoFoto) => void;
   onMover: (texto: TextoFoto, direcao: -1 | 1) => void;
 }) {
   const campoTextoRef = useRef<HTMLTextAreaElement>(null);
   const [aplicandoTodas, setAplicandoTodas] = useState(false);
+  const [removendoTodas, setRemovendoTodas] = useState(false);
   const mudar = (patch: Partial<TextoFoto>) => selecionado && onChange({ ...selecionado, ...patch });
   const mudarEConfirmar = (patch: Partial<TextoFoto>) => {
     if (!selecionado) return;
@@ -66,6 +68,15 @@ export function ControlesTexto({ textos, selecionado, somenteLeitura, salvando, 
       await onAplicarTodas(selecionado);
     } finally {
       setAplicandoTodas(false);
+    }
+  };
+  const removerDeTodas = async () => {
+    if (!selecionado || removendoTodas) return;
+    setRemovendoTodas(true);
+    try {
+      await onRemoverTodas(selecionado);
+    } finally {
+      setRemovendoTodas(false);
     }
   };
   return <div className="space-y-5">
@@ -109,6 +120,7 @@ export function ControlesTexto({ textos, selecionado, somenteLeitura, salvando, 
       <div className="grid grid-cols-2 gap-2"><Button type="button" variant="outline" disabled={somenteLeitura} onClick={() => onMover(selecionado, -1)}><ArrowDown className="mr-2 h-4 w-4" />Abaixo</Button><Button type="button" variant="outline" disabled={somenteLeitura} onClick={() => onMover(selecionado, 1)}><ArrowUp className="mr-2 h-4 w-4" />Acima</Button></div>
       <div className="grid grid-cols-2 gap-2"><Button type="button" variant="outline" disabled={somenteLeitura} onClick={() => onDuplicar(selecionado)}><Copy className="mr-2 h-4 w-4" />Duplicar</Button><Button type="button" variant="destructive" disabled={somenteLeitura} onClick={() => onExcluir(selecionado)}><Trash2 className="mr-2 h-4 w-4" />Excluir</Button></div>
       <Button type="button" variant="outline" className="w-full" disabled={somenteLeitura || aplicandoTodas || quantidadeOutrasFotos === 0} onClick={aplicarEmTodas}>{aplicandoTodas ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Images className="mr-2 h-4 w-4" />}{aplicandoTodas ? "Aplicando..." : "Aplicar em todas as fotos"}</Button>
+      <Button type="button" variant="destructive" className="w-full" disabled={somenteLeitura || removendoTodas} onClick={removerDeTodas}>{removendoTodas ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}{removendoTodas ? "Removendo..." : "Remover de todas as fotos"}</Button>
     </>}
   </div>;
 }

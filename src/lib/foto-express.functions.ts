@@ -284,6 +284,17 @@ export const aplicarTextoTodasFotosFotoExpress = createServerFn({ method: "POST"
     return { total: total ?? 0 };
   });
 
+export const removerTextoTodasFotosFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => textoAcaoSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: total, error } = await context.supabase.rpc("foto_express_remover_texto_todas_fotos", {
+      _trabalho_id: data.trabalhoId, _item_id: data.itemId, _texto_id: data.textoId,
+    });
+    if (error) throw new Error(error.message);
+    return { total: total ?? 0 };
+  });
+
 export const excluirTextoFotoExpress = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => textoAcaoSchema.parse(input))
