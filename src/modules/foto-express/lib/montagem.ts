@@ -14,7 +14,7 @@ export type PlanoMontagem = { folhas: FolhaMontagem[]; orientacaoEscolhida: Excl
 export const cmParaMm = (cm: number) => cm * 10;
 export const mmParaPixels = (mm: number, dpi: number) => mm / 25.4 * dpi;
 
-type Peca = { itemId: string; indiceCopia: number; largura: number; altura: number };
+type Peca = { itemId: string; indiceCopia: number; largura: number; altura: number; rotacaoBase: 0 | 90 };
 type RetanguloLivre = { x: number; y: number; largura: number; altura: number };
 type FolhaEmMontagem = FolhaMontagem & { livres: RetanguloLivre[] };
 type CriterioEncaixe = "LADO_CURTO" | "LADO_LONGO" | "AREA" | "CANTO";
@@ -23,11 +23,15 @@ type PreferenciaRotacao = "ORIGINAL" | "GIRADA" | "MAIOR_HORIZONTAL" | "MAIOR_VE
 
 function pecasDosItens(itens: ItemGaleria[], orientacaoFotos: OrientacaoPapel): Peca[] {
   return itens.flatMap((item) => {
-    const largura = cmParaMm(Number(item.largura_personalizada_cm ?? item.formato?.largura_cm ?? 0));
-    const altura = cmParaMm(Number(item.altura_personalizada_cm ?? item.formato?.altura_cm ?? 0));
+    const larguraNatural = cmParaMm(Number(item.largura_personalizada_cm ?? item.formato?.largura_cm ?? 0));
+    const alturaNatural = cmParaMm(Number(item.altura_personalizada_cm ?? item.formato?.altura_cm ?? 0));
     const paisagem = orientacaoFotos === "PAISAGEM" || (orientacaoFotos === "AUTOMATICA" && (item.orientacao === "PAISAGEM" || (item.orientacao === "AUTOMATICA" && item.arquivo.largura_px >= item.arquivo.altura_px)));
-    const dimensoes = paisagem ? { largura: Math.max(largura, altura), altura: Math.min(largura, altura) } : { largura: Math.min(largura, altura), altura: Math.max(largura, altura) };
-    return Array.from({ length: Math.max(0, item.quantidade) }, (_, i) => ({ itemId: item.id, indiceCopia: i + 1, ...dimensoes }));
+    const naturalPaisagem = larguraNatural > alturaNatural;
+    const rotacaoBase = naturalPaisagem === paisagem ? 0 as const : 90 as const;
+    const dimensoes = rotacaoBase === 90
+      ? { largura: alturaNatural, altura: larguraNatural }
+      : { largura: larguraNatural, altura: alturaNatural };
+    return Array.from({ length: Math.max(0, item.quantidade) }, (_, i) => ({ itemId: item.id, indiceCopia: i + 1, rotacaoBase, ...dimensoes }));
   }).sort((a, b) => b.largura * b.altura - a.largura * a.altura || b.altura - a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia);
 }
 
@@ -83,9 +87,9 @@ function ordenarPecas(pecas: Peca[], criterio: CriterioOrdem) {
 }
 
 function opcoesDaPeca(peca: Peca, permitirRotacao: boolean, preferencia: PreferenciaRotacao) {
-  const original = { w: peca.largura, h: peca.altura, r: 0 as const };
+  const original = { w: peca.largura, h: peca.altura, r: peca.rotacaoBase };
   if (!permitirRotacao || Math.abs(peca.largura - peca.altura) < 1e-6) return [original];
-  const girada = { w: peca.altura, h: peca.largura, r: 90 as const };
+  const girada = { w: peca.altura, h: peca.largura, r: (peca.rotacaoBase === 90 ? 0 : 90) as 0 | 90 };
   if (preferencia === "GIRADA") return [girada, original];
   if (preferencia === "MAIOR_HORIZONTAL") return original.w >= original.h ? [original, girada] : [girada, original];
   if (preferencia === "MAIOR_VERTICAL") return original.h >= original.w ? [original, girada] : [girada, original];
