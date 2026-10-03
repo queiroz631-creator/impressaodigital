@@ -139,8 +139,10 @@ function montarOrientacao(itens: ItemGaleria[], config: ConfiguracaoMontagem, or
   const resultados: PlanoMontagem[] = [];
   const criterios = ["LADO_CURTO", "LADO_LONGO", "AREA", "CANTO"] as const;
   const ordens = ["AREA", "LADO_LONGO", "LARGURA", "ALTURA", "PROPORCAO", "ALTERNADA"] as const;
-  const preferencias = config.permitirRotacao ? ["ORIGINAL", "GIRADA", "MAIOR_HORIZONTAL", "MAIOR_VERTICAL", "ALTERNADA"] as const : ["ORIGINAL"] as const;
-  for (const criterio of criterios) for (const ordem of ordens) for (const preferencia of preferencias) resultados.push(montarComCriterio(pecas, config, orientacao, criterio, ordem, preferencia));
+  const permitirRotacaoDosFormatos = config.permitirRotacao && config.orientacaoFotos === "AUTOMATICA";
+  const preferencias = permitirRotacaoDosFormatos ? ["ORIGINAL", "GIRADA", "MAIOR_HORIZONTAL", "MAIOR_VERTICAL", "ALTERNADA"] as const : ["ORIGINAL"] as const;
+  const configEfetiva = { ...config, permitirRotacao: permitirRotacaoDosFormatos };
+  for (const criterio of criterios) for (const ordem of ordens) for (const preferencia of preferencias) resultados.push(montarComCriterio(pecas, configEfetiva, orientacao, criterio, ordem, preferencia));
   const melhor = resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || JSON.stringify(a.folhas).localeCompare(JSON.stringify(b.folhas)))[0];
   if (!melhor) throw new Error("Não foi possível calcular a montagem para este papel.");
   return melhor;

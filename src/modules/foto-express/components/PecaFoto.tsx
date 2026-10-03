@@ -3,11 +3,11 @@ import { familiaFonte, FONTES_TEXTO } from "../lib/texto";
 import type { ItemGaleria, TextoFoto } from "../types";
 
 const PADRAO: EdicaoFoto = { zoom: 1, posicaoX: 0, posicaoY: 0, rotacao: 0, espelharHorizontal: false, espelharVertical: false, modoAjuste: "PREENCHER" };
-export function PecaFoto({ item, textos = [], identificacao }: { item: ItemGaleria; textos?: TextoFoto[]; identificacao?: string }) {
+export function PecaFoto({ item, textos = [], identificacao, orientacaoFormato }: { item: ItemGaleria; textos?: TextoFoto[]; identificacao?: string; orientacaoFormato?: "RETRATO" | "PAISAGEM" }) {
   const f = item.formato; if (!f) return null;
   const largura = Number(item.largura_personalizada_cm ?? f.largura_cm); const altura = Number(item.altura_personalizada_cm ?? f.altura_cm);
   const edicao: EdicaoFoto = item.configuracao ? { zoom: Number(item.configuracao.zoom), posicaoX: Number(item.configuracao.posicao_x), posicaoY: Number(item.configuracao.posicao_y), rotacao: Number(item.configuracao.rotacao), espelharHorizontal: item.configuracao.espelhar_horizontal, espelharVertical: item.configuracao.espelhar_vertical, modoAjuste: item.configuracao.modo_ajuste === "AJUSTAR" ? "AJUSTAR" : "PREENCHER" } : PADRAO;
-  const dimensoes = dimensoesMoldura(largura, altura, item.orientacao, { largura: item.arquivo.largura_px, altura: item.arquivo.altura_px }, edicao.rotacao);
+  const dimensoes = dimensoesMoldura(largura, altura, orientacaoFormato ?? item.orientacao, { largura: item.arquivo.largura_px, altura: item.arquivo.altura_px }, edicao.rotacao);
   const area = { x: Number(f.area_foto_x), y: Number(f.area_foto_y), w: Number(f.area_foto_largura), h: Number(f.area_foto_altura) };
   const moldura = { largura: dimensoes.largura * area.w * 100, altura: dimensoes.altura * area.h * 100 };
   const g = calcularGeometria({ largura: item.arquivo.largura_px, altura: item.arquivo.altura_px }, moldura, edicao);
