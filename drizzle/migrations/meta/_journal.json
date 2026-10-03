@@ -295,6 +295,13 @@
       "when": 1791002782084,
       "tag": "0041_foto_express_logo_portal",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1791029553604,
+      "tag": "0042_foto_express_atualizar_texto_todas_fotos",
+      "breakpoints": true
     }
   ]
 }
