@@ -17,6 +17,8 @@ type Peca = { itemId: string; indiceCopia: number; largura: number; altura: numb
 type RetanguloLivre = { x: number; y: number; largura: number; altura: number };
 type FolhaEmMontagem = FolhaMontagem & { livres: RetanguloLivre[] };
 type CriterioEncaixe = "LADO_CURTO" | "LADO_LONGO" | "AREA" | "CANTO";
+type CriterioOrdem = "AREA" | "LADO_LONGO" | "LARGURA" | "ALTURA" | "PROPORCAO" | "ALTERNADA";
+type PreferenciaRotacao = "ORIGINAL" | "GIRADA" | "MAIOR_HORIZONTAL" | "MAIOR_VERTICAL" | "ALTERNADA";
 
 function pecasDosItens(itens: ItemGaleria[]): Peca[] {
   return itens.flatMap((item) => {
@@ -65,15 +67,32 @@ function compararPontuacao(a: number[], b: number[]) {
   return 0;
 }
 
-function ordenarPecas(pecas: Peca[], criterio: CriterioEncaixe) {
+function ordenarPecas(pecas: Peca[], criterio: CriterioOrdem) {
   return [...pecas].sort((a, b) => {
     if (criterio === "LADO_LONGO") return Math.max(b.largura, b.altura) - Math.max(a.largura, a.altura) || b.largura * b.altura - a.largura * a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia;
-    if (criterio === "CANTO") return b.altura - a.altura || b.largura - a.largura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia;
+    if (criterio === "LARGURA") return b.largura - a.largura || b.altura - a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia;
+    if (criterio === "ALTURA") return b.altura - a.altura || b.largura - a.largura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia;
+    if (criterio === "PROPORCAO") return Math.max(b.largura / b.altura, b.altura / b.largura) - Math.max(a.largura / a.altura, a.altura / a.largura) || b.largura * b.altura - a.largura * a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia;
+    if (criterio === "ALTERNADA") {
+      const grupoA = a.itemId.charCodeAt(0) + a.indiceCopia; const grupoB = b.itemId.charCodeAt(0) + b.indiceCopia;
+      return grupoA % 2 - grupoB % 2 || b.largura * b.altura - a.largura * a.altura || b.altura - a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia;
+    }
     return b.largura * b.altura - a.largura * a.altura || b.altura - a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia;
   });
 }
 
-function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, orientacao: "RETRATO" | "PAISAGEM", criterio: CriterioEncaixe): PlanoMontagem {
+function opcoesDaPeca(peca: Peca, permitirRotacao: boolean, preferencia: PreferenciaRotacao) {
+  const original = { w: peca.largura, h: peca.altura, r: 0 as const };
+  if (!permitirRotacao || Math.abs(peca.largura - peca.altura) < 1e-6) return [original];
+  const girada = { w: peca.altura, h: peca.largura, r: 90 as const };
+  if (preferencia === "GIRADA") return [girada, original];
+  if (preferencia === "MAIOR_HORIZONTAL") return original.w >= original.h ? [original, girada] : [girada, original];
+  if (preferencia === "MAIOR_VERTICAL") return original.h >= original.w ? [original, girada] : [girada, original];
+  if (preferencia === "ALTERNADA") return peca.indiceCopia % 2 === 0 ? [girada, original] : [original, girada];
+  return [original, girada];
+}
+
+function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, orientacao: "RETRATO" | "PAISAGEM", criterio: CriterioEncaixe, ordem: CriterioOrdem, preferenciaRotacao: PreferenciaRotacao): PlanoMontagem {
   const larguraFolha = orientacao === "PAISAGEM" ? Math.max(config.larguraMm, config.alturaMm) : Math.min(config.larguraMm, config.alturaMm);
   const alturaFolha = orientacao === "PAISAGEM" ? Math.min(config.larguraMm, config.alturaMm) : Math.max(config.larguraMm, config.alturaMm);
   const utilW = larguraFolha - config.margemEsquerdaMm - config.margemDireitaMm;
@@ -82,8 +101,8 @@ function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, orientac
   const larguraComFolga = utilW + config.espacamentoMm;
   const alturaComFolga = utilH + config.espacamentoMm;
   const folhas: FolhaEmMontagem[] = [];
-  for (const peca of ordenarPecas(pecas, criterio)) {
-    const opcoes = [{ w: peca.largura, h: peca.altura, r: 0 as const }, ...(config.permitirRotacao ? [{ w: peca.altura, h: peca.largura, r: 90 as const }] : [])];
+  for (const peca of ordenarPecas(pecas, ordem)) {
+    const opcoes = opcoesDaPeca(peca, config.permitirRotacao, preferenciaRotacao);
     if (!opcoes.some((o) => o.w <= utilW + 1e-6 && o.h <= utilH + 1e-6)) throw new Error(`Uma peça de ${peca.largura} × ${peca.altura} mm não cabe na área útil de ${utilW} × ${utilH} mm.`);
     let melhor: { folha: FolhaEmMontagem; livre: RetanguloLivre; opcao: (typeof opcoes)[number]; pontos: number[] } | null = null;
     for (const folha of folhas) for (const livre of folha.livres) for (const opcao of opcoes) {
@@ -91,7 +110,7 @@ function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, orientac
       const alturaOcupada = opcao.h + config.espacamentoMm;
       if (larguraOcupada > livre.largura + 1e-6 || alturaOcupada > livre.altura + 1e-6) continue;
       const pontos = pontuarEncaixe(livre, larguraOcupada, alturaOcupada, criterio);
-      if (!melhor || compararPontuacao(pontos, melhor.pontos) < 0 || (compararPontuacao(pontos, melhor.pontos) === 0 && opcao.r < melhor.opcao.r)) melhor = { folha, livre, opcao, pontos };
+       if (!melhor || compararPontuacao(pontos, melhor.pontos) < 0) melhor = { folha, livre, opcao, pontos };
     }
     if (!melhor) {
       const folha: FolhaEmMontagem = { numero: folhas.length + 1, larguraMm: larguraFolha, alturaMm: alturaFolha, ocorrencias: [], livres: [{ x: 0, y: 0, largura: larguraComFolga, altura: alturaComFolga }] };
@@ -101,7 +120,7 @@ function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, orientac
         const alturaOcupada = opcao.h + config.espacamentoMm;
         if (larguraOcupada > livre.largura + 1e-6 || alturaOcupada > livre.altura + 1e-6) continue;
         const pontos = pontuarEncaixe(livre, larguraOcupada, alturaOcupada, criterio);
-        if (!melhor || compararPontuacao(pontos, melhor.pontos) < 0 || (compararPontuacao(pontos, melhor.pontos) === 0 && opcao.r < melhor.opcao.r)) melhor = { folha, livre, opcao, pontos };
+         if (!melhor || compararPontuacao(pontos, melhor.pontos) < 0) melhor = { folha, livre, opcao, pontos };
       }
     }
     if (!melhor) throw new Error("Esta foto não cabe na área útil do papel selecionado.");
@@ -116,7 +135,11 @@ function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, orientac
 
 function montarOrientacao(itens: ItemGaleria[], config: ConfiguracaoMontagem, orientacao: "RETRATO" | "PAISAGEM"): PlanoMontagem {
   const pecas = pecasDosItens(itens);
-  const resultados = (["LADO_CURTO", "LADO_LONGO", "AREA", "CANTO"] as const).map((criterio) => montarComCriterio(pecas, config, orientacao, criterio));
+  const resultados: PlanoMontagem[] = [];
+  const criterios = ["LADO_CURTO", "LADO_LONGO", "AREA", "CANTO"] as const;
+  const ordens = ["AREA", "LADO_LONGO", "LARGURA", "ALTURA", "PROPORCAO", "ALTERNADA"] as const;
+  const preferencias = config.permitirRotacao ? ["ORIGINAL", "GIRADA", "MAIOR_HORIZONTAL", "MAIOR_VERTICAL", "ALTERNADA"] as const : ["ORIGINAL"] as const;
+  for (const criterio of criterios) for (const ordem of ordens) for (const preferencia of preferencias) resultados.push(montarComCriterio(pecas, config, orientacao, criterio, ordem, preferencia));
   const melhor = resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || JSON.stringify(a.folhas).localeCompare(JSON.stringify(b.folhas)))[0];
   if (!melhor) throw new Error("Não foi possível calcular a montagem para este papel.");
   return melhor;

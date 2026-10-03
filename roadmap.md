@@ -56,6 +56,7 @@
 - [x] Status automáticos do FOTO EXPRESS: edição, montagem pronta, impressão e finalização manual
 - [x] Cores próprias para cada status dos trabalhos e identificação no filtro
 - [x] Montagem automática compara as duas posições permitidas de cada foto e prioriza menos folhas
+- [x] Montagem automática ampliada para comparar ordens e preferências de giro antes de escolher o menor número de folhas
 - [x] Formato obrigatório por lote, papel padrão no formato e montagem agrupada automaticamente por papel
 - [x] Cor visual configurável por formato nos cards de Formatos e da Galeria
 
