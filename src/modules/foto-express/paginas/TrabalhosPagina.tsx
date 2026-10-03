@@ -35,11 +35,11 @@ export function TrabalhosPagina() {
     mutationFn: async (id: string) => {
       const { data: atualizado, error: erro } = await supabase.from("foto_express_trabalhos").update({ status: "FINALIZADO" }).eq("id", id).eq("status", "IMPRESSO").select("id").maybeSingle();
       if (erro) throw erro;
-      if (!atualizado) throw new Error("Este trabalho não está mais disponível para finalização.");
+      if (!atualizado) throw new Error("Este álbum não está mais disponível para finalização.");
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["foto-express", "trabalhos"] });
-      toast.success("Trabalho finalizado.");
+      toast.success("Álbum finalizado.");
     },
     onError: (erro: Error) => toast.error(erro.message),
   });
@@ -49,19 +49,19 @@ export function TrabalhosPagina() {
   }, [busca, data, status]);
 
   return <>
-    <PageHeader titulo="FOTO EXPRESS" subtitulo="Trabalhos de fotos para impressão" />
+    <PageHeader titulo="FOTO EXPRESS" subtitulo="Álbuns de fotos para impressão" />
     <Card className="mb-4"><CardContent className="flex flex-col gap-4 p-4"><div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="text-sm font-semibold">Link público do portal</p><p className="truncate text-xs text-muted-foreground">{urlPublicaFotoExpress()}</p></div><Button variant="outline" size="sm" onClick={() => void navigator.clipboard.writeText(urlPublicaFotoExpress()).then(() => toast.success("Link do portal copiado."))}><Link2 className="mr-2 h-4 w-4" />Copiar link</Button></div><LogoDoPortal /></CardContent></Card>
     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="grid flex-1 gap-2 sm:max-w-2xl sm:grid-cols-[1fr_210px]">
         <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Buscar por número, nome ou telefone" value={busca} onChange={(e) => setBusca(e.target.value)} /></div>
         <Select value={status} onValueChange={setStatus}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem>{Object.entries(STATUS).map(([valor, item]) => <SelectItem key={valor} value={valor}><span className="flex items-center gap-2"><Circle className={`h-2.5 w-2.5 ${item.ponto}`} aria-hidden="true" />{item.nome}</span></SelectItem>)}</SelectContent></Select>
       </div>
-      <Button asChild><Link to="/foto-express/novo"><Plus className="mr-2 h-4 w-4" />Novo trabalho</Link></Button>
+      <Button asChild><Link to="/foto-express/novo"><Plus className="mr-2 h-4 w-4" />Novo álbum</Link></Button>
     </div>
-    {isLoading && <p className="text-sm text-muted-foreground">Carregando trabalhos...</p>}
+    {isLoading && <p className="text-sm text-muted-foreground">Carregando álbuns...</p>}
     {error && <p className="text-sm text-destructive">{(error as Error).message}</p>}
-    {!isLoading && filtrados.length === 0 && <Card><CardContent className="flex flex-col items-center gap-3 p-12 text-center"><Camera className="h-10 w-10 text-muted-foreground" /><p className="font-semibold">Nenhum trabalho encontrado</p><p className="text-sm text-muted-foreground">Crie um novo trabalho para enviar e preparar as fotos.</p></CardContent></Card>}
-    <div className="grid gap-3">{filtrados.map((trabalho) => { const statusVisual = STATUS[trabalho.status]; return <Card key={trabalho.id}><CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0 space-y-1"><div className="flex flex-wrap items-center gap-2"><span className="font-bold">#{String(trabalho.numero).padStart(6, "0")}</span><Badge variant="outline" className={statusVisual?.cor}>{statusVisual?.nome ?? trabalho.status}</Badge></div><p className="truncate font-medium">{trabalho.cliente_nome || "CLIENTE NÃO INFORMADO"}</p><p className="text-xs text-muted-foreground">{trabalho.cliente_telefone || "Sem telefone"} · {trabalho.foto_express_itens[0]?.count ?? 0} foto(s)</p><p className="text-xs text-muted-foreground">Criado em {dataHora(trabalho.criado_em)} · alterado em {dataHora(trabalho.atualizado_em)}</p></div><div className="flex flex-wrap gap-2">{trabalho.status === "IMPRESSO" && <Button type="button" variant="outline" disabled={finalizar.isPending} onClick={() => finalizar.mutate(trabalho.id)}><CheckCircle2 className="mr-2 h-4 w-4" />Finalizar</Button>}<Button asChild variant="outline"><Link to="/foto-express/$id/fotos" params={{ id: trabalho.id }}>Abrir trabalho</Link></Button></div></CardContent></Card>; })}</div>
+    {!isLoading && filtrados.length === 0 && <Card><CardContent className="flex flex-col items-center gap-3 p-12 text-center"><Camera className="h-10 w-10 text-muted-foreground" /><p className="font-semibold">Nenhum álbum encontrado</p><p className="text-sm text-muted-foreground">Crie um novo álbum para enviar e preparar as fotos.</p></CardContent></Card>}
+    <div className="grid gap-3">{filtrados.map((trabalho) => { const statusVisual = STATUS[trabalho.status]; return <Card key={trabalho.id}><CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0 space-y-1"><div className="flex flex-wrap items-center gap-2"><span className="font-bold">#{String(trabalho.numero).padStart(6, "0")}</span><Badge variant="outline" className={statusVisual?.cor}>{statusVisual?.nome ?? trabalho.status}</Badge></div><p className="truncate font-medium">{trabalho.cliente_nome || "CLIENTE NÃO INFORMADO"}</p><p className="text-xs text-muted-foreground">{trabalho.cliente_telefone || "Sem telefone"} · {trabalho.foto_express_itens[0]?.count ?? 0} foto(s)</p><p className="text-xs text-muted-foreground">Criado em {dataHora(trabalho.criado_em)} · alterado em {dataHora(trabalho.atualizado_em)}</p></div><div className="flex flex-wrap gap-2">{trabalho.status === "IMPRESSO" && <Button type="button" variant="outline" disabled={finalizar.isPending} onClick={() => finalizar.mutate(trabalho.id)}><CheckCircle2 className="mr-2 h-4 w-4" />Finalizar</Button>}<Button asChild variant="outline"><Link to="/foto-express/$id/fotos" params={{ id: trabalho.id }}>Abrir álbum</Link></Button></div></CardContent></Card>; })}</div>
   </>;
 }
 

@@ -74,8 +74,8 @@ export async function carregarSessaoFotos() {
 export async function exigirTrabalhoCliente(trabalhoId: string, editavel = false) {
   const contexto = await carregarSessaoFotos();
   const { data: trabalho } = await contexto.admin.from("foto_express_trabalhos").select("*").eq("id", trabalhoId).eq("cliente_id", contexto.cliente.id).eq("origem_portal", true).maybeSingle();
-  if (!trabalho) throw new ErroPortalFotos("NAO_ENCONTRADO", "Trabalho não encontrado.");
-  if (editavel && trabalho.portal_enviado_em) throw new ErroPortalFotos("BLOQUEADO", "Este trabalho já foi enviado para impressão e não pode mais ser alterado.");
+  if (!trabalho) throw new ErroPortalFotos("NAO_ENCONTRADO", "Álbum não encontrado.");
+  if (editavel && trabalho.portal_enviado_em) throw new ErroPortalFotos("BLOQUEADO", "Este álbum já foi enviado para impressão e não pode mais ser alterado.");
   return { ...contexto, trabalho };
 }
 

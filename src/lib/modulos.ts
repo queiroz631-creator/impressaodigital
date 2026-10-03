@@ -237,8 +237,8 @@ export const MODULOS: Modulo[] = [
     itens: [
       {
         id: "foto-express-trabalhos",
-        nome: "Trabalhos",
-        descricao: "Galeria e trabalhos de fotos",
+        nome: "Álbuns",
+        descricao: "Galeria e álbuns de fotos",
         icone: Images,
         ordem: 1,
         ativo: true,
@@ -247,8 +247,8 @@ export const MODULOS: Modulo[] = [
       },
       {
         id: "foto-express-novo",
-        nome: "Novo Trabalho",
-        descricao: "Criar um trabalho de fotos",
+        nome: "Novo Álbum",
+        descricao: "Criar um álbum de fotos",
         icone: ImagePlus,
         ordem: 2,
         ativo: true,
@@ -329,7 +329,7 @@ export const PERMISSOES_SENSIVEIS: { chave: string; nome: string }[] = [
   { chave: "usuarios.gerenciar", nome: "Gerenciar usuários" },
   // Concedida manualmente nos perfis; administradores já têm acesso total.
   { chave: "sorteios.gerenciar", nome: "Gerenciar sorteios" },
-  { chave: "foto_express.trabalhos.editar", nome: "Editar trabalhos do FOTO EXPRESS" },
+  { chave: "foto_express.trabalhos.editar", nome: "Editar álbuns do FOTO EXPRESS" },
   { chave: "foto_express.fotos.enviar", nome: "Enviar fotos no FOTO EXPRESS" },
   { chave: "foto_express.fotos.excluir", nome: "Excluir fotos no FOTO EXPRESS" },
   { chave: "foto_express.formatos.gerenciar", nome: "Gerenciar formatos do FOTO EXPRESS" },
