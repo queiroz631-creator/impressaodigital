@@ -244,6 +244,10 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
     if (!window.confirm("Remover este texto de todas as fotos do álbum? Esta ação não pode ser desfeita.")) return;
     setEstadoTexto("SALVANDO");
     try {
+      const timer = timersTextoRef.current[texto.id];
+      if (timer) window.clearTimeout(timer);
+      delete timersTextoRef.current[texto.id];
+      await (salvamentosTextoRef.current[texto.id] ?? Promise.resolve(null));
       const resultado = await removerTextoTodas({ data: { trabalhoId, itemId, textoId: texto.id } });
       setTextos((atuais) => {
         const proximos = atuais.filter((atual) => atual.id !== texto.id);
