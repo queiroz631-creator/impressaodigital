@@ -7,6 +7,7 @@ export type ConfiguracaoMontagem = {
   margemSuperiorMm: number; margemInferiorMm: number; margemEsquerdaMm: number; margemDireitaMm: number;
   espacamentoMm: number; permitirRotacao: boolean;
   linhaEspacamentoAtiva?: boolean; linhaCor?: string; linhaEspessuraMm?: number;
+  valorFolha?: number; faixasValor?: unknown;
 };
 export type OcorrenciaMontagem = { itemId: string; indiceCopia: number; xMm: number; yMm: number; larguraMm: number; alturaMm: number; rotacaoFolha: 0 | 90 };
 export type FolhaMontagem = { numero: number; larguraMm: number; alturaMm: number; ocorrencias: OcorrenciaMontagem[]; papelId?: string; papelNome?: string; linhaEspacamentoAtiva?: boolean; linhaCor?: string; linhaEspessuraMm?: number; valorUnitario?: number };
