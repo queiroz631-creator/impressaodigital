@@ -56,6 +56,8 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   const [estadoTexto, setEstadoTexto] = useState<EstadoSalvar>("LIMPO");
   const textosCarregadosRef = useRef<string | null>(null);
   const timersTextoRef = useRef<Record<string, number>>({});
+  const textosRef = useRef<TextoFoto[]>([]);
+  const salvamentosTextoRef = useRef<Record<string, Promise<TextoFoto | null>>>({});
 
   const item = itemQuery.data;
   useEffect(() => {
@@ -88,6 +90,7 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   useEffect(() => {
     if (!textosQuery.data || textosCarregadosRef.current === itemId) return;
     setTextos(textosQuery.data);
+    textosRef.current = textosQuery.data;
     setTextoSelecionadoId(null);
     setEstadoTexto("LIMPO");
     textosCarregadosRef.current = itemId;
@@ -142,35 +145,57 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   };
 
   const substituirTexto = useCallback((texto: TextoFoto) => {
-    setTextos((atuais) => atuais.map((atual) => atual.id === texto.id ? texto : atual));
+    setTextos((atuais) => {
+      const proximos = atuais.map((atual) => atual.id === texto.id ? texto : atual);
+      textosRef.current = proximos;
+      return proximos;
+    });
     setEstadoTexto("PENDENTE");
   }, []);
   const persistirTexto = useCallback(async (texto: TextoFoto) => {
-    if (!podeEditar) return;
+    if (!podeEditar) return null;
     const timer = timersTextoRef.current[texto.id];
     if (timer) window.clearTimeout(timer);
     delete timersTextoRef.current[texto.id];
-    setEstadoTexto("SALVANDO");
-    try {
-      const salvo = await salvarTexto({ data: {
-        trabalhoId, itemId, textoId: texto.id, conteudo: texto.conteudo,
-        posicaoX: Number(texto.posicao_x), posicaoY: Number(texto.posicao_y),
-        larguraNormalizada: Number(texto.largura_normalizada), tamanhoNormalizado: Number(texto.tamanho_normalizado),
-        fonteId: texto.fonte_id as "SANS" | "SERIF" | "MONO" | "DECORATIVA", cor: texto.cor,
-        alinhamento: texto.alinhamento as "ESQUERDA" | "CENTRO" | "DIREITA", negrito: texto.negrito,
-        italico: texto.italico, rotacao: Number(texto.rotacao) as 0 | 90 | 180 | 270, versao: texto.versao,
-      } });
-      setTextos((atuais) => atuais.map((atual) => atual.id === texto.id ? salvo : atual));
-      setEstadoTexto("SALVO");
-      return salvo;
-    } catch (erro) {
-      setEstadoTexto("ERRO");
-      if (erro instanceof Error && erro.message.includes("TEXTO_DESATUALIZADO")) {
-        const resultado = await textosQuery.refetch();
-        if (resultado.data) setTextos(resultado.data);
+    const anterior = salvamentosTextoRef.current[texto.id] ?? Promise.resolve(null);
+    const tarefa = anterior.catch(() => null).then(async () => {
+      const atual = textosRef.current.find((itemTexto) => itemTexto.id === texto.id) ?? texto;
+      setEstadoTexto("SALVANDO");
+      try {
+        const salvo = await salvarTexto({ data: {
+          trabalhoId, itemId, textoId: atual.id, conteudo: atual.conteudo,
+          posicaoX: Number(atual.posicao_x), posicaoY: Number(atual.posicao_y),
+          larguraNormalizada: Number(atual.largura_normalizada), tamanhoNormalizado: Number(atual.tamanho_normalizado),
+          fonteId: atual.fonte_id as "SANS" | "SERIF" | "MONO" | "DECORATIVA", cor: atual.cor,
+          alinhamento: atual.alinhamento as "ESQUERDA" | "CENTRO" | "DIREITA", negrito: atual.negrito,
+          italico: atual.italico, rotacao: Number(atual.rotacao) as 0 | 90 | 180 | 270, versao: atual.versao,
+        } });
+        let resultado = salvo;
+        setTextos((atuais) => {
+          const proximos = atuais.map((itemTexto) => {
+            if (itemTexto.id !== atual.id) return itemTexto;
+            resultado = itemTexto === atual ? salvo : { ...itemTexto, versao: salvo.versao };
+            return resultado;
+          });
+          textosRef.current = proximos;
+          return proximos;
+        });
+        setEstadoTexto("SALVO");
+        return resultado;
+      } catch (erro) {
+        setEstadoTexto("ERRO");
+        if (erro instanceof Error && erro.message.includes("TEXTO_DESATUALIZADO")) {
+          const resultado = await textosQuery.refetch();
+          if (resultado.data) {
+            setTextos(resultado.data);
+            textosRef.current = resultado.data;
+          }
+        }
+        return null;
       }
-      return null;
-    }
+    });
+    salvamentosTextoRef.current[texto.id] = tarefa;
+    return tarefa;
   }, [podeEditar, salvarTexto, trabalhoId, itemId, textosQuery]);
   const agendarTexto = useCallback((texto: TextoFoto) => {
     const timer = timersTextoRef.current[texto.id];
