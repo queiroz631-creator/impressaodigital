@@ -17,6 +17,7 @@
 - Exclusões e uploads incompletos do FOTO EXPRESS usam uma fila transacional no banco; objetos do Storage só são removidos no servidor após o banco liberar a limpeza.
 - A montagem do FOTO EXPRESS usa um motor puro, determinístico e baseado em milímetros que mantém a folha fixa e gira a peça completa (formato, foto e textos juntos); Retrato/Paisagem forçam essa posição, Automática otimiza ambas e prioriza menos folhas; plano, folhas e ocorrências são persistidos atomicamente.
 - Papéis de montagem do FOTO EXPRESS são catálogos reutilizáveis; cada montagem persiste um snapshot das medidas para preservar histórico e gerações.
+- O orçamento do FOTO EXPRESS reutiliza o mesmo motor de montagem; preço e linha do papel são congelados no envio ou na montagem para não mudar com o catálogo.
 - Cada lote do FOTO EXPRESS exige um formato com papel padrão; a revisão agrupa e persiste as folhas por papel em uma única montagem atômica.
 - Cada formato do FOTO EXPRESS persiste uma cor de identificação usada consistentemente nos cards de cadastro e da Galeria.
 - A geração final do FOTO EXPRESS usa snapshot imutável e renderização Canvas a 300 DPI no navegador; o servidor define destinos, autoriza uploads e valida integralmente os arquivos antes de concluí-los.

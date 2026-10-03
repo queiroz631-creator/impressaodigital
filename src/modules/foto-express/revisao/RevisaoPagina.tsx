@@ -30,6 +30,8 @@ const configurarPapel = (papel: PapelFoto): ConfiguracaoMontagem => ({
   margemSuperiorMm: Number(papel.margem_superior_mm), margemInferiorMm: Number(papel.margem_inferior_mm),
   margemEsquerdaMm: Number(papel.margem_esquerda_mm), margemDireitaMm: Number(papel.margem_direita_mm),
   espacamentoMm: Number(papel.espacamento_mm), permitirRotacao: papel.permitir_rotacao,
+  linhaEspacamentoAtiva: papel.linha_espacamento_ativa, linhaCor: papel.linha_cor,
+  linhaEspessuraMm: Number(papel.linha_espessura_mm),
 });
 
 type GrupoMontagem = { papel: PapelFoto; config: ConfiguracaoMontagem; itens: ItemGaleria[]; plano: PlanoMontagem };
@@ -63,7 +65,7 @@ export function RevisaoPagina({ trabalhoId }: { trabalhoId: string }) {
         const itensGrupo = mapa.get(papel.id); if (!itensGrupo?.length) continue;
         const orientacaoFotos = modoOrientacao === "TODOS" ? orientacaoTodos : orientacoesPorPapel[papel.id] ?? "AUTOMATICA";
         const config = { ...configurarPapel(papel), orientacaoFotos }; const calculado = montarFolhas(itensGrupo, config);
-        const plano = { ...calculado, folhas: calculado.folhas.map((folha) => ({ ...folha, numero: proximoNumero++, papelId: papel.id, papelNome: papel.nome })) };
+        const plano = { ...calculado, folhas: calculado.folhas.map((folha) => ({ ...folha, numero: proximoNumero++, papelId: papel.id, papelNome: papel.nome, linhaEspacamentoAtiva: papel.linha_espacamento_ativa, linhaCor: papel.linha_cor, linhaEspessuraMm: Number(papel.linha_espessura_mm) })) };
         grupos.push({ papel, config, itens: itensGrupo, plano });
       }
       if (grupos.length !== mapa.size) return { grupos: [], plano: null, erro: "Um papel padrão usado pelas fotos está inativo ou indisponível." };
