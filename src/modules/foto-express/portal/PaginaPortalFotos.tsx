@@ -11,5 +11,5 @@ export function PaginaPortalFotos({ children }: { children: (contexto: { nome: s
   const navigate = useNavigate(); const buscar = useServerFn(obterContextoFotos);
   const contexto = useQuery({ queryKey: ["foto-portal","contexto"], queryFn: () => buscar({}), retry: false });
   useEffect(() => { if (contexto.data && !contexto.data.ok && contexto.data.codigo === "SESSAO") void navigate({ to: "/fotos/acesso" }); }, [contexto.data, navigate]);
-  return <LayoutPortalFotos autenticado><main className="mx-auto min-w-0 max-w-6xl overflow-x-hidden px-3 py-5 sm:px-6 sm:py-7">{contexto.data?.ok ? children(contexto.data.dados) : <div className="space-y-4"><Skeleton className="h-9 w-56"/><Skeleton className="h-48 w-full"/></div>}</main></LayoutPortalFotos>;
+  return <LayoutPortalFotos autenticado><main className="mx-auto min-w-0 max-w-6xl overflow-x-clip px-3 py-5 sm:px-6 sm:py-7">{contexto.data?.ok ? children(contexto.data.dados) : <div className="space-y-4"><Skeleton className="h-9 w-56"/><Skeleton className="h-48 w-full"/></div>}</main></LayoutPortalFotos>;
 }
