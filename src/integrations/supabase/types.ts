@@ -4671,6 +4671,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      foto_express_portal_excluir_itens: {
+        Args: { _cliente_id: string; _item_ids: string[]; _trabalho_id: string }
+        Returns: {
+          limpeza_id: string
+          original_bucket: string
+          original_path: string
+          thumbnail_bucket: string
+          thumbnail_path: string
+        }[]
+      }
       foto_express_registrar_limpeza_upload: {
         Args: {
           _erro?: string

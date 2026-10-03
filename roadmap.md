@@ -1,5 +1,15 @@
 # Roadmap
 
+## FOTO EXPRESS — portal público do cliente
+- [x] Página pública afetiva para impressão de fotos
+- [x] Acesso por CPF e telefone, com cadastro inicial de nome e nascimento
+- [x] Lista e criação de trabalhos isoladas por cliente
+- [x] Upload, galeria, formatos, edição não destrutiva e textos no portal
+- [x] Envio bloqueia novas alterações do cliente
+- [x] Montagem e impressão permanecem exclusivas da equipe autorizada
+- [x] Validar páginas públicas e acesso no navegador sem usar dados reais
+- [ ] Validar cadastro, upload, edição e envio com uma conta de teste isolada
+
 ## FOTO EXPRESS — primeira entrega funcional
 - [x] Grupo próprio no menu: Trabalhos, Novo Trabalho e Formatos
 - [x] Banco incremental, permissões e formatos padrão idempotentes
