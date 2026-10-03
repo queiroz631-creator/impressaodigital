@@ -198,13 +198,13 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   };
   const aplicarCamadaEmTodas = async (texto: TextoFoto) => {
     const quantidade = Math.max(0, (itensQuery.data?.length ?? 1) - 1);
-    if (quantidade === 0 || !window.confirm(`Aplicar uma cópia independente deste texto em ${quantidade} outra(s) foto(s)?`)) return;
+    if (quantidade === 0 || !window.confirm(`Atualizar este texto em ${quantidade} outra(s) foto(s)?`)) return;
     setEstadoTexto("SALVANDO");
     try {
       const resultado = await aplicarTextoTodas({ data: { trabalhoId, itemId, textoId: texto.id } });
       await queryClient.invalidateQueries({ queryKey: ["foto-express", "textos-trabalho"] });
       setEstadoTexto("SALVO");
-      toast.success(`Texto aplicado em ${resultado.total} foto(s).`);
+      toast.success(`Texto atualizado em ${resultado.total} foto(s).`);
     } catch (erro) {
       setEstadoTexto("ERRO");
       toast.error(erro instanceof Error ? erro.message : "Não foi possível aplicar o texto nas fotos.");
