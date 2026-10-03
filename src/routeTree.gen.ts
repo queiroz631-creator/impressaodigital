@@ -433,9 +433,9 @@ const FotoExpressTrabalhoIdFotosItemIdEditarRoute =
   } as any)
 const FotosTrabalhosTrabalhoIdFotosItemIdRoute =
   FotosTrabalhosTrabalhoIdFotosItemIdRouteImport.update({
-    id: '/fotos/trabalhos/$trabalhoId/fotos/$itemId',
-    path: '/fotos/trabalhos/$trabalhoId/fotos/$itemId',
-    getParentRoute: () => rootRouteImport,
+    id: '/fotos/$itemId',
+    path: '/fotos/$itemId',
+    getParentRoute: () => FotosTrabalhosTrabalhoIdRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -929,7 +929,6 @@ export interface RootRouteChildren {
   ApiPublicSorteiosSyncNotasSituacaoRoute: typeof ApiPublicSorteiosSyncNotasSituacaoRoute
   ApiPublicSorteiosSyncSorteioAtivoRoute: typeof ApiPublicSorteiosSyncSorteioAtivoRoute
   FotoExpressTrabalhoIdFotosItemIdEditarRoute: typeof FotoExpressTrabalhoIdFotosItemIdEditarRoute
-  FotosTrabalhosTrabalhoIdFotosItemIdRoute: typeof FotosTrabalhosTrabalhoIdFotosItemIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1405,10 +1404,10 @@ declare module '@tanstack/react-router' {
     }
     '/fotos/trabalhos/$trabalhoId/fotos/$itemId': {
       id: '/fotos/trabalhos/$trabalhoId/fotos/$itemId'
-      path: '/fotos/trabalhos/$trabalhoId/fotos/$itemId'
+      path: '/fotos/$itemId'
       fullPath: '/fotos/trabalhos/$trabalhoId/fotos/$itemId'
       preLoaderRoute: typeof FotosTrabalhosTrabalhoIdFotosItemIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof FotosTrabalhosTrabalhoIdRoute
     }
   }
 }
@@ -1504,8 +1503,6 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicSorteiosSyncSorteioAtivoRoute,
   FotoExpressTrabalhoIdFotosItemIdEditarRoute:
     FotoExpressTrabalhoIdFotosItemIdEditarRoute,
-  FotosTrabalhosTrabalhoIdFotosItemIdRoute:
-    FotosTrabalhosTrabalhoIdFotosItemIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
