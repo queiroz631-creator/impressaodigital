@@ -56,6 +56,7 @@
 - [x] Aplicar uma cópia independente do texto selecionado em todas as outras fotos do trabalho
 - [x] Seletor visual de emojis com inserção na posição do cursor no editor de texto
 - [x] Reaplicar um texto atualiza a camada correspondente nas outras fotos sem criar novas duplicatas
+- [x] Remover o texto selecionado de todas as fotos do álbum em uma única operação confirmada
 
 ## FOTO EXPRESS — Etapa 4: revisão e montagem automática
 - [x] Evoluir formatos com área interna normalizada da foto e cor de fundo

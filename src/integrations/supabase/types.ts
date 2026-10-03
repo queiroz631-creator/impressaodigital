@@ -4721,6 +4721,10 @@ export type Database = {
         }
         Returns: string
       }
+      foto_express_remover_texto_todas_fotos: {
+        Args: { _item_id: string; _texto_id: string; _trabalho_id: string }
+        Returns: number
+      }
       foto_express_salvar_edicao: {
         Args: {
           _crop_altura: number

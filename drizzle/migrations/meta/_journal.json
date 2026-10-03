@@ -302,6 +302,13 @@
       "when": 1791029553604,
       "tag": "0042_foto_express_atualizar_texto_todas_fotos",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1791034691416,
+      "tag": "0043_foto_express_remover_texto_todas_fotos",
+      "breakpoints": true
     }
   ]
 }
