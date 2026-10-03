@@ -288,6 +288,13 @@
       "when": 1791000847995,
       "tag": "0040_foto_express_portal_exclusao",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1791002782084,
+      "tag": "0041_foto_express_logo_portal",
+      "breakpoints": true
     }
   ]
 }
