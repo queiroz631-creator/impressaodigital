@@ -10,6 +10,7 @@
 - [x] Validar páginas públicas e acesso no navegador sem usar dados reais
 - [x] Corrigir abertura do trabalho e do editor no portal público
 - [x] Corrigir troca de formato no editor do portal e ajustar galeria/editor para celular
+- [x] Manter a foto fixa no topo durante a rolagem dos ajustes no editor do portal em celular
 - [ ] Validar cadastro, upload, edição e envio com uma conta de teste isolada
 
 ## FOTO EXPRESS — primeira entrega funcional
