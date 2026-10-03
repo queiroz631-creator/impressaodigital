@@ -157,7 +157,7 @@ const round = (n: number) => Number(n.toFixed(3));
 
 export function montarFolhas(itens: ItemGaleria[], config: ConfiguracaoMontagem): PlanoMontagem {
   if (!itens.length) return { folhas: [], orientacaoEscolhida: "RETRATO", areaUtilMm2: 0, areaOcupadaMm2: 0, aproveitamento: 0 };
-  const enriquecer = (plano: PlanoMontagem): PlanoMontagem => ({ ...plano, folhas: plano.folhas.map((folha) => ({ ...folha, linhaEspacamentoAtiva: config.linhaEspacamentoAtiva, linhaCor: config.linhaCor, linhaEspessuraMm: config.linhaEspessuraMm, valorUnitario: precoUnitarioConfig(config, plano.folhas.length) })) });
+  const enriquecer = (plano: PlanoMontagem): PlanoMontagem => ({ ...plano, folhas: plano.folhas.map((folha) => ({ ...folha, ...(config.linhaEspacamentoAtiva === undefined ? {} : { linhaEspacamentoAtiva: config.linhaEspacamentoAtiva }), ...(config.linhaCor === undefined ? {} : { linhaCor: config.linhaCor }), ...(config.linhaEspessuraMm === undefined ? {} : { linhaEspessuraMm: config.linhaEspessuraMm }), valorUnitario: precoUnitarioConfig(config, plano.folhas.length) })) });
   if (config.orientacao !== "AUTOMATICA") return enriquecer(montarOrientacao(itens, config, config.orientacao));
   const resultados: PlanoMontagem[] = [];
   let ultimoErro: unknown;
