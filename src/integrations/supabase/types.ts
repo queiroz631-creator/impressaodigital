@@ -883,6 +883,7 @@ export type Database = {
           email: string | null
           empresa_nome: string
           endereco: string | null
+          foto_express_logo_url: string | null
           ia_modelo: string | null
           ia_modelo_audio: string | null
           ia_provedor: string
@@ -911,6 +912,7 @@ export type Database = {
           email?: string | null
           empresa_nome?: string
           endereco?: string | null
+          foto_express_logo_url?: string | null
           ia_modelo?: string | null
           ia_modelo_audio?: string | null
           ia_provedor?: string
@@ -939,6 +941,7 @@ export type Database = {
           email?: string | null
           empresa_nome?: string
           endereco?: string | null
+          foto_express_logo_url?: string | null
           ia_modelo?: string | null
           ia_modelo_audio?: string | null
           ia_provedor?: string
