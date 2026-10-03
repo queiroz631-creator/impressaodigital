@@ -6,9 +6,11 @@ export type ConfiguracaoMontagem = {
   orientacaoFotos: OrientacaoPapel;
   margemSuperiorMm: number; margemInferiorMm: number; margemEsquerdaMm: number; margemDireitaMm: number;
   espacamentoMm: number; permitirRotacao: boolean;
+  linhaEspacamentoAtiva?: boolean; linhaCor?: string; linhaEspessuraMm?: number;
+  valorFolha?: number; faixasValor?: unknown;
 };
 export type OcorrenciaMontagem = { itemId: string; indiceCopia: number; xMm: number; yMm: number; larguraMm: number; alturaMm: number; rotacaoFolha: 0 | 90 };
-export type FolhaMontagem = { numero: number; larguraMm: number; alturaMm: number; ocorrencias: OcorrenciaMontagem[]; papelId?: string; papelNome?: string };
+export type FolhaMontagem = { numero: number; larguraMm: number; alturaMm: number; ocorrencias: OcorrenciaMontagem[]; papelId?: string; papelNome?: string; linhaEspacamentoAtiva?: boolean; linhaCor?: string; linhaEspessuraMm?: number; valorUnitario?: number };
 export type PlanoMontagem = { folhas: FolhaMontagem[]; orientacaoEscolhida: Exclude<OrientacaoPapel, "AUTOMATICA">; areaUtilMm2: number; areaOcupadaMm2: number; aproveitamento: number };
 
 export const cmParaMm = (cm: number) => cm * 10;
@@ -155,7 +157,8 @@ const round = (n: number) => Number(n.toFixed(3));
 
 export function montarFolhas(itens: ItemGaleria[], config: ConfiguracaoMontagem): PlanoMontagem {
   if (!itens.length) return { folhas: [], orientacaoEscolhida: "RETRATO", areaUtilMm2: 0, areaOcupadaMm2: 0, aproveitamento: 0 };
-  if (config.orientacao !== "AUTOMATICA") return montarOrientacao(itens, config, config.orientacao);
+  const enriquecer = (plano: PlanoMontagem): PlanoMontagem => ({ ...plano, folhas: plano.folhas.map((folha) => ({ ...folha, ...(config.linhaEspacamentoAtiva === undefined ? {} : { linhaEspacamentoAtiva: config.linhaEspacamentoAtiva }), ...(config.linhaCor === undefined ? {} : { linhaCor: config.linhaCor }), ...(config.linhaEspessuraMm === undefined ? {} : { linhaEspessuraMm: config.linhaEspessuraMm }), valorUnitario: precoUnitarioConfig(config, plano.folhas.length) })) });
+  if (config.orientacao !== "AUTOMATICA") return enriquecer(montarOrientacao(itens, config, config.orientacao));
   const resultados: PlanoMontagem[] = [];
   let ultimoErro: unknown;
   for (const orientacao of ["RETRATO", "PAISAGEM"] as const) {
@@ -163,7 +166,7 @@ export function montarFolhas(itens: ItemGaleria[], config: ConfiguracaoMontagem)
   }
   const melhor = resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || a.orientacaoEscolhida.localeCompare(b.orientacaoEscolhida))[0];
   if (!melhor) throw ultimoErro instanceof Error ? ultimoErro : new Error("Esta foto não cabe na área útil do papel selecionado.");
-  return melhor;
+  return enriquecer(melhor);
 }
 
 export async function assinaturaMontagem(itens: ItemGaleria[], textos: TextoFoto[], config: ConfiguracaoMontagem) {
@@ -194,4 +197,82 @@ export function capacidadeEstimadaFormato(formato: Pick<Formato, "largura_cm" | 
     const normal = capacidadeGrade(larguraFolha, alturaFolha, larguraPeca, alturaPeca);
     return papel.permitir_rotacao ? [normal, capacidadeGrade(larguraFolha, alturaFolha, alturaPeca, larguraPeca)] : [normal];
   }));
+}
+
+export type ResumoPapelFotoExpress = {
+  papelId: string; papelNome: string; copias: number; folhas: number;
+  valorUnitario: number; valorTotal: number; folhaIncompleta: boolean;
+};
+export type OrcamentoFotoExpress = { fotos: number; copias: number; folhas: number; valorTotal: number; grupos: ResumoPapelFotoExpress[] };
+
+function normalizarFaixasPapel(valor: unknown) {
+  if (!Array.isArray(valor)) return [];
+  return valor.map((faixa) => {
+    const item = faixa as { min?: unknown; preco?: unknown };
+    return { min: Number(item.min), preco: Number(item.preco) };
+  }).filter((faixa) => Number.isInteger(faixa.min) && faixa.min > 0 && Number.isFinite(faixa.preco) && faixa.preco >= 0).sort((a, b) => a.min - b.min);
+}
+
+function faixasDoPapel(papel: PapelFoto) { return normalizarFaixasPapel(papel.faixas_valor); }
+
+function precoUnitarioConfig(config: ConfiguracaoMontagem, folhas: number) {
+  let preco = Number(config.valorFolha) || 0;
+  for (const faixa of normalizarFaixasPapel(config.faixasValor)) if (folhas >= faixa.min) preco = faixa.preco;
+  return preco;
+}
+
+export function precoUnitarioPapel(papel: PapelFoto, folhas: number) {
+  let preco = Number(papel.valor_folha) || 0;
+  for (const faixa of faixasDoPapel(papel)) if (folhas >= faixa.min) preco = faixa.preco;
+  return preco;
+}
+
+export function calcularOrcamentoFotoExpress(itens: ItemGaleria[], papeis: PapelFoto[]): OrcamentoFotoExpress {
+  const grupos: ResumoPapelFotoExpress[] = [];
+  for (const papel of papeis) {
+    const itensPapel = itens.filter((item) => item.formato?.papel_padrao_id === papel.id);
+    if (!itensPapel.length) continue;
+    const config: ConfiguracaoMontagem = {
+      papelId: papel.id, papelNome: papel.nome, larguraMm: Number(papel.largura_mm), alturaMm: Number(papel.altura_mm),
+      orientacao: papel.orientacao as OrientacaoPapel, orientacaoFotos: "AUTOMATICA",
+      margemSuperiorMm: Number(papel.margem_superior_mm), margemInferiorMm: Number(papel.margem_inferior_mm),
+      margemEsquerdaMm: Number(papel.margem_esquerda_mm), margemDireitaMm: Number(papel.margem_direita_mm),
+      espacamentoMm: Number(papel.espacamento_mm), permitirRotacao: papel.permitir_rotacao,
+      valorFolha: Number(papel.valor_folha), faixasValor: papel.faixas_valor,
+    };
+    const plano = montarFolhas(itensPapel, config);
+    const folhas = plano.folhas.length;
+    const valorUnitario = precoUnitarioPapel(papel, folhas);
+    const folhaIncompleta = itensPapel.some((item) => {
+      const simulados = itensPapel.map((atual) => atual.id === item.id ? { ...atual, quantidade: atual.quantidade + 1 } : atual);
+      try { return montarFolhas(simulados, config).folhas.length === folhas; } catch { return false; }
+    });
+    grupos.push({ papelId: papel.id, papelNome: papel.nome, copias: itensPapel.reduce((soma, item) => soma + item.quantidade, 0), folhas, valorUnitario, valorTotal: Number((folhas * valorUnitario).toFixed(2)), folhaIncompleta });
+  }
+  return {
+    fotos: itens.length,
+    copias: itens.reduce((soma, item) => soma + item.quantidade, 0),
+    folhas: grupos.reduce((soma, grupo) => soma + grupo.folhas, 0),
+    valorTotal: Number(grupos.reduce((soma, grupo) => soma + grupo.valorTotal, 0).toFixed(2)), grupos,
+  };
+}
+
+export type LinhaEspacamento = { x1: number; y1: number; x2: number; y2: number };
+export function linhasEntrePecas(folha: Pick<FolhaMontagem, "ocorrencias">): LinhaEspacamento[] {
+  const candidatas: Array<LinhaEspacamento & { gap: number }> = [];
+  for (let a = 0; a < folha.ocorrencias.length; a += 1) for (let b = a + 1; b < folha.ocorrencias.length; b += 1) {
+    const primeira = folha.ocorrencias[a]; const segunda = folha.ocorrencias[b];
+    if (!primeira || !segunda) continue;
+    const sobreposicaoY1 = Math.max(primeira.yMm, segunda.yMm); const sobreposicaoY2 = Math.min(primeira.yMm + primeira.alturaMm, segunda.yMm + segunda.alturaMm);
+    const esquerda = primeira.xMm <= segunda.xMm ? primeira : segunda; const direita = esquerda === primeira ? segunda : primeira;
+    const gapX = direita.xMm - (esquerda.xMm + esquerda.larguraMm);
+    if (sobreposicaoY2 > sobreposicaoY1 && gapX >= -1e-6) candidatas.push({ x1: esquerda.xMm + esquerda.larguraMm + gapX / 2, y1: sobreposicaoY1, x2: esquerda.xMm + esquerda.larguraMm + gapX / 2, y2: sobreposicaoY2, gap: gapX });
+    const sobreposicaoX1 = Math.max(primeira.xMm, segunda.xMm); const sobreposicaoX2 = Math.min(primeira.xMm + primeira.larguraMm, segunda.xMm + segunda.larguraMm);
+    const acima = primeira.yMm <= segunda.yMm ? primeira : segunda; const abaixo = acima === primeira ? segunda : primeira;
+    const gapY = abaixo.yMm - (acima.yMm + acima.alturaMm);
+    if (sobreposicaoX2 > sobreposicaoX1 && gapY >= -1e-6) candidatas.push({ x1: sobreposicaoX1, y1: acima.yMm + acima.alturaMm + gapY / 2, x2: sobreposicaoX2, y2: acima.yMm + acima.alturaMm + gapY / 2, gap: gapY });
+  }
+  const menorGap = Math.min(...candidatas.map((linha) => linha.gap));
+  if (!Number.isFinite(menorGap)) return [];
+  return candidatas.filter((linha) => linha.gap <= menorGap + 1e-3).map(({ gap: _gap, ...linha }) => linha);
 }

@@ -73,6 +73,10 @@ export type ManifestoFolha = {
   altura_mm: number;
   papel_id?: string | null;
   papel_nome?: string | null;
+  linha_espacamento_ativa?: boolean;
+  linha_cor?: string;
+  linha_espessura_mm?: number;
+  valor_unitario?: number;
   ocorrencias: ManifestoOcorrencia[];
 };
 
@@ -104,7 +108,7 @@ export type PreparacaoGeracao = {
 export function validarManifesto(valor: Json): ManifestoGeracao {
   if (!valor || Array.isArray(valor) || typeof valor !== "object") throw new Error("Manifesto de geração inválido.");
   const manifesto = valor as unknown as ManifestoGeracao;
-  if (manifesto.versao_manifesto !== 1 || !Array.isArray(manifesto.folhas) || !manifesto.folhas.length || !Array.isArray(manifesto.itens) || !manifesto.itens.length) throw new Error("Versão do manifesto incompatível.");
+  if (![1, 2].includes(manifesto.versao_manifesto) || !Array.isArray(manifesto.folhas) || !manifesto.folhas.length || !Array.isArray(manifesto.itens) || !manifesto.itens.length) throw new Error("Versão do manifesto incompatível.");
   const itens = new Map(manifesto.itens.map((entrada) => [entrada.item.id, entrada]));
   const copias = new Set<string>();
   for (const folha of manifesto.folhas) {

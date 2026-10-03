@@ -1,6 +1,8 @@
 # Roadmap
 
 ## FOTO EXPRESS — portal público do cliente
+- [x] Mostrar capacidade, folhas estimadas e valor progressivo no álbum do cliente
+- [x] Confirmar envio com aviso de folha incompleta e congelar o orçamento apresentado
 - [x] Página pública afetiva para impressão de fotos
 - [x] Acesso por CPF e telefone, com cadastro inicial de nome e nascimento
 - [x] Lista e criação de trabalhos isoladas por cliente
@@ -59,6 +61,8 @@
 - [x] Remover o texto selecionado de todas as fotos do álbum em uma única operação confirmada
 
 ## FOTO EXPRESS — Etapa 4: revisão e montagem automática
+- [x] Configurar linha no espaçamento e renderizá-la na prévia e impressão
+- [x] Configurar valor do papel e faixas por quantidade de folhas
 - [x] Evoluir formatos com área interna normalizada da foto e cor de fundo
 - [x] Criar plano persistente com montagem, folhas e ocorrências em gravação atômica
 - [x] Implementar revisão com alertas de formato, configuração, imagem, quantidade e DPI
