@@ -8,7 +8,7 @@ export const Route = createFileRoute("/foto-express/$id/revisao")({
     { title: "Revisão e montagem | FOTO EXPRESS" },
     { name: "description", content: "Revise as fotos e organize automaticamente as folhas de impressão." },
     { property: "og:title", content: "Revisão e montagem | FOTO EXPRESS" },
-    { property: "og:description", content: "Conferência e montagem de folhas do trabalho fotográfico." },
+    { property: "og:description", content: "Conferência e montagem de folhas do álbum fotográfico." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),
