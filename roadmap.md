@@ -25,6 +25,7 @@
 - [x] Etapas seguintes de editor, textos, revisão e montagem concluídas; geração final permanece fora deste escopo
 
 ## FOTO EXPRESS — correção técnica
+- [x] Permitir ocultar formatos no portal sem desativá-los para a equipe
 - [x] Triggers próprios para `atualizado_em` sem alterar a função global
 - [x] Coerência entre item, arquivo e trabalho garantida no banco
 - [x] Upload e exclusão com fila transacional de limpeza do Storage
