@@ -14,6 +14,7 @@
 - [x] Corrigir troca de formato no editor do portal e ajustar galeria/editor para celular
 - [x] Manter a foto fixa no topo durante a rolagem dos ajustes no editor do portal em celular
 - [x] Mostrar no portal o progresso do lote com a quantidade de fotos enviadas
+- [x] Permitir escolher um papel geral ou por grupo na revisão sem alterar os formatos cadastrados
 - [ ] Validar cadastro, upload, edição e envio com uma conta de teste isolada
 
 ## FOTO EXPRESS — primeira entrega funcional

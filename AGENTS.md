@@ -20,6 +20,7 @@
 - O orçamento do FOTO EXPRESS reutiliza o mesmo motor de montagem; preço e linha do papel são congelados no envio ou na montagem para não mudar com o catálogo.
 - Cada lote do FOTO EXPRESS exige um formato com papel padrão; a revisão agrupa e persiste as folhas por papel em uma única montagem atômica.
 - Cada formato do FOTO EXPRESS persiste uma cor de identificação usada consistentemente nos cards de cadastro e da Galeria.
+- Na revisão do FOTO EXPRESS, o papel pode ser substituído apenas para a nova montagem, de forma geral ou por grupo, sem alterar o papel padrão do formato.
 - A visibilidade de formato no portal é independente do status interno; novas escolhas públicas exigem formato ativo e visível, preservando itens antigos.
 - A geração final do FOTO EXPRESS usa snapshot imutável e renderização Canvas a 300 DPI no navegador; o servidor define destinos, autoriza uploads e valida integralmente os arquivos antes de concluí-los.
 - O editor FOTO EXPRESS usa uma lista leve de IDs para navegar; somente a foto aberta recebe URL temporária, evitando limites do Storage em trabalhos grandes.
