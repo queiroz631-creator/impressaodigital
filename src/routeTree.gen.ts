@@ -31,7 +31,6 @@ import { Route as FotoExpressPapeisRouteImport } from './routes/foto-express.pap
 import { Route as FotosIndexRouteImport } from './routes/fotos.index'
 import { Route as FotosAcessoRouteImport } from './routes/fotos.acesso'
 import { Route as FotosCadastroRouteImport } from './routes/fotos.cadastro'
-import { Route as FotosTrabalhosRouteImport } from './routes/fotos.trabalhos'
 import { Route as OrcamentoTokenRouteImport } from './routes/orcamento.$token'
 import { Route as SorteiosPublicoIndexRouteImport } from './routes/sorteios-publico.index'
 import { Route as SorteiosPublicoCadastroRouteImport } from './routes/sorteios-publico.cadastro'
@@ -46,7 +45,7 @@ import { Route as SorteiosNovoRouteImport } from './routes/sorteios.novo'
 import { Route as CurriculoPublicoTokenRouteImport } from './routes/curriculo.publico.$token'
 import { Route as FotoExpressIdFotosRouteImport } from './routes/foto-express.$id.fotos'
 import { Route as FotoExpressIdRevisaoRouteImport } from './routes/foto-express.$id.revisao'
-import { Route as FotosTrabalhosTrabalhoIdRouteImport } from './routes/fotos.trabalhos.$trabalhoId'
+import { Route as FotosTrabalhosIndexRouteImport } from './routes/fotos.trabalhos.index'
 import { Route as SorteiosIdIndexRouteImport } from './routes/sorteios.$id.index'
 import { Route as SorteiosIdCuponsRouteImport } from './routes/sorteios.$id.cupons'
 import { Route as SorteiosIdDadosRouteImport } from './routes/sorteios.$id.dados'
@@ -65,6 +64,7 @@ import { Route as ApiPublicWhatsappInatividadeRouteImport } from './routes/api/p
 import { Route as ApiPublicWhatsappMidiaRouteImport } from './routes/api/public/whatsapp/midia'
 import { Route as ApiPublicWhatsappStatusRouteImport } from './routes/api/public/whatsapp/status'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
+import { Route as FotosTrabalhosTrabalhoIdIndexRouteImport } from './routes/fotos.trabalhos.$trabalhoId.index'
 import { Route as ApiPublicSorteiosSyncClientesAlteracoesRouteImport } from './routes/api/public/sorteios/sync/clientes-alteracoes'
 import { Route as ApiPublicSorteiosSyncClientesConfirmarRouteImport } from './routes/api/public/sorteios/sync/clientes-confirmar'
 import { Route as ApiPublicSorteiosSyncClientesPendentesLojaRouteImport } from './routes/api/public/sorteios/sync/clientes-pendentes-loja'
@@ -188,11 +188,6 @@ const FotosCadastroRoute = FotosCadastroRouteImport.update({
   path: '/fotos/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FotosTrabalhosRoute = FotosTrabalhosRouteImport.update({
-  id: '/fotos/trabalhos',
-  path: '/fotos/trabalhos',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OrcamentoTokenRoute = OrcamentoTokenRouteImport.update({
   id: '/orcamento/$token',
   path: '/orcamento/$token',
@@ -264,12 +259,11 @@ const FotoExpressIdRevisaoRoute = FotoExpressIdRevisaoRouteImport.update({
   path: '/foto-express/$id/revisao',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FotosTrabalhosTrabalhoIdRoute =
-  FotosTrabalhosTrabalhoIdRouteImport.update({
-    id: '/$trabalhoId',
-    path: '/$trabalhoId',
-    getParentRoute: () => FotosTrabalhosRoute,
-  } as any)
+const FotosTrabalhosIndexRoute = FotosTrabalhosIndexRouteImport.update({
+  id: '/fotos/trabalhos/',
+  path: '/fotos/trabalhos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SorteiosIdIndexRoute = SorteiosIdIndexRouteImport.update({
   id: '/sorteios/$id/',
   path: '/sorteios/$id/',
@@ -365,6 +359,12 @@ const ApiPublicWhatsappWebhookRoute =
     path: '/api/public/whatsapp/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const FotosTrabalhosTrabalhoIdIndexRoute =
+  FotosTrabalhosTrabalhoIdIndexRouteImport.update({
+    id: '/fotos/trabalhos/$trabalhoId/',
+    path: '/fotos/trabalhos/$trabalhoId/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSorteiosSyncClientesAlteracoesRoute =
   ApiPublicSorteiosSyncClientesAlteracoesRouteImport.update({
     id: '/api/public/sorteios/sync/clientes-alteracoes',
@@ -433,9 +433,9 @@ const FotoExpressTrabalhoIdFotosItemIdEditarRoute =
   } as any)
 const FotosTrabalhosTrabalhoIdFotosItemIdRoute =
   FotosTrabalhosTrabalhoIdFotosItemIdRouteImport.update({
-    id: '/fotos/$itemId',
-    path: '/fotos/$itemId',
-    getParentRoute: () => FotosTrabalhosTrabalhoIdRoute,
+    id: '/fotos/trabalhos/$trabalhoId/fotos/$itemId',
+    path: '/fotos/trabalhos/$trabalhoId/fotos/$itemId',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -458,7 +458,6 @@ export interface FileRoutesByFullPath {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
-  '/fotos/trabalhos': typeof FotosTrabalhosRouteWithChildren
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -476,7 +475,6 @@ export interface FileRoutesByFullPath {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
-  '/fotos/trabalhos/$trabalhoId': typeof FotosTrabalhosTrabalhoIdRouteWithChildren
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -486,6 +484,7 @@ export interface FileRoutesByFullPath {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/sortear': typeof SorteiosIdSortearRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
+  '/fotos/trabalhos/': typeof FotosTrabalhosIndexRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
   '/api/public/sorteios/reconciliar-interno': typeof ApiPublicSorteiosReconciliarInternoRoute
@@ -495,6 +494,7 @@ export interface FileRoutesByFullPath {
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/fotos/trabalhos/$trabalhoId/': typeof FotosTrabalhosTrabalhoIdIndexRoute
   '/api/public/sorteios/sync/clientes-alteracoes': typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
   '/api/public/sorteios/sync/clientes-confirmar': typeof ApiPublicSorteiosSyncClientesConfirmarRoute
   '/api/public/sorteios/sync/clientes-pendentes-loja': typeof ApiPublicSorteiosSyncClientesPendentesLojaRoute
@@ -528,7 +528,6 @@ export interface FileRoutesByTo {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
-  '/fotos/trabalhos': typeof FotosTrabalhosRouteWithChildren
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -546,7 +545,6 @@ export interface FileRoutesByTo {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
-  '/fotos/trabalhos/$trabalhoId': typeof FotosTrabalhosTrabalhoIdRouteWithChildren
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -556,6 +554,7 @@ export interface FileRoutesByTo {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/sortear': typeof SorteiosIdSortearRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
+  '/fotos/trabalhos': typeof FotosTrabalhosIndexRoute
   '/sorteios/$id': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
   '/api/public/sorteios/reconciliar-interno': typeof ApiPublicSorteiosReconciliarInternoRoute
@@ -565,6 +564,7 @@ export interface FileRoutesByTo {
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/fotos/trabalhos/$trabalhoId': typeof FotosTrabalhosTrabalhoIdIndexRoute
   '/api/public/sorteios/sync/clientes-alteracoes': typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
   '/api/public/sorteios/sync/clientes-confirmar': typeof ApiPublicSorteiosSyncClientesConfirmarRoute
   '/api/public/sorteios/sync/clientes-pendentes-loja': typeof ApiPublicSorteiosSyncClientesPendentesLojaRoute
@@ -599,7 +599,6 @@ export interface FileRoutesById {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
-  '/fotos/trabalhos': typeof FotosTrabalhosRouteWithChildren
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -617,7 +616,6 @@ export interface FileRoutesById {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
-  '/fotos/trabalhos/$trabalhoId': typeof FotosTrabalhosTrabalhoIdRouteWithChildren
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -627,6 +625,7 @@ export interface FileRoutesById {
   '/sorteios/$id/premios': typeof SorteiosIdPremiosRoute
   '/sorteios/$id/sortear': typeof SorteiosIdSortearRoute
   '/sorteios/$id/termos': typeof SorteiosIdTermosRoute
+  '/fotos/trabalhos/': typeof FotosTrabalhosIndexRoute
   '/sorteios/$id/': typeof SorteiosIdIndexRoute
   '/api/public/sorteios/reconciliar': typeof ApiPublicSorteiosReconciliarRoute
   '/api/public/sorteios/reconciliar-interno': typeof ApiPublicSorteiosReconciliarInternoRoute
@@ -636,6 +635,7 @@ export interface FileRoutesById {
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/fotos/trabalhos/$trabalhoId/': typeof FotosTrabalhosTrabalhoIdIndexRoute
   '/api/public/sorteios/sync/clientes-alteracoes': typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
   '/api/public/sorteios/sync/clientes-confirmar': typeof ApiPublicSorteiosSyncClientesConfirmarRoute
   '/api/public/sorteios/sync/clientes-pendentes-loja': typeof ApiPublicSorteiosSyncClientesPendentesLojaRoute
@@ -671,7 +671,6 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
-    | '/fotos/trabalhos'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -689,7 +688,6 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
-    | '/fotos/trabalhos/$trabalhoId'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -699,6 +697,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/sortear'
     | '/sorteios/$id/termos'
+    | '/fotos/trabalhos/'
     | '/sorteios/$id/'
     | '/api/public/sorteios/reconciliar'
     | '/api/public/sorteios/reconciliar-interno'
@@ -708,6 +707,7 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/fotos/trabalhos/$trabalhoId/'
     | '/api/public/sorteios/sync/clientes-alteracoes'
     | '/api/public/sorteios/sync/clientes-confirmar'
     | '/api/public/sorteios/sync/clientes-pendentes-loja'
@@ -741,7 +741,6 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
-    | '/fotos/trabalhos'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -759,7 +758,6 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
-    | '/fotos/trabalhos/$trabalhoId'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -769,6 +767,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/sortear'
     | '/sorteios/$id/termos'
+    | '/fotos/trabalhos'
     | '/sorteios/$id'
     | '/api/public/sorteios/reconciliar'
     | '/api/public/sorteios/reconciliar-interno'
@@ -778,6 +777,7 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/fotos/trabalhos/$trabalhoId'
     | '/api/public/sorteios/sync/clientes-alteracoes'
     | '/api/public/sorteios/sync/clientes-confirmar'
     | '/api/public/sorteios/sync/clientes-pendentes-loja'
@@ -811,7 +811,6 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
-    | '/fotos/trabalhos'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -829,7 +828,6 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
-    | '/fotos/trabalhos/$trabalhoId'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -839,6 +837,7 @@ export interface FileRouteTypes {
     | '/sorteios/$id/premios'
     | '/sorteios/$id/sortear'
     | '/sorteios/$id/termos'
+    | '/fotos/trabalhos/'
     | '/sorteios/$id/'
     | '/api/public/sorteios/reconciliar'
     | '/api/public/sorteios/reconciliar-interno'
@@ -848,6 +847,7 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/fotos/trabalhos/$trabalhoId/'
     | '/api/public/sorteios/sync/clientes-alteracoes'
     | '/api/public/sorteios/sync/clientes-confirmar'
     | '/api/public/sorteios/sync/clientes-pendentes-loja'
@@ -882,7 +882,6 @@ export interface RootRouteChildren {
   FotoExpressPapeisRoute: typeof FotoExpressPapeisRoute
   FotosAcessoRoute: typeof FotosAcessoRoute
   FotosCadastroRoute: typeof FotosCadastroRoute
-  FotosTrabalhosRoute: typeof FotosTrabalhosRouteWithChildren
   OrcamentoTokenRoute: typeof OrcamentoTokenRoute
   SorteiosPublicoCadastroRoute: typeof SorteiosPublicoCadastroRoute
   SorteiosPublicoCuponsRoute: typeof SorteiosPublicoCuponsRoute
@@ -909,6 +908,7 @@ export interface RootRouteChildren {
   SorteiosIdPremiosRoute: typeof SorteiosIdPremiosRoute
   SorteiosIdSortearRoute: typeof SorteiosIdSortearRoute
   SorteiosIdTermosRoute: typeof SorteiosIdTermosRoute
+  FotosTrabalhosIndexRoute: typeof FotosTrabalhosIndexRoute
   SorteiosIdIndexRoute: typeof SorteiosIdIndexRoute
   ApiPublicSorteiosReconciliarRoute: typeof ApiPublicSorteiosReconciliarRoute
   ApiPublicSorteiosReconciliarInternoRoute: typeof ApiPublicSorteiosReconciliarInternoRoute
@@ -918,6 +918,7 @@ export interface RootRouteChildren {
   ApiPublicWhatsappMidiaRoute: typeof ApiPublicWhatsappMidiaRoute
   ApiPublicWhatsappStatusRoute: typeof ApiPublicWhatsappStatusRoute
   ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRouteWithChildren
+  FotosTrabalhosTrabalhoIdIndexRoute: typeof FotosTrabalhosTrabalhoIdIndexRoute
   ApiPublicSorteiosSyncClientesAlteracoesRoute: typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
   ApiPublicSorteiosSyncClientesConfirmarRoute: typeof ApiPublicSorteiosSyncClientesConfirmarRoute
   ApiPublicSorteiosSyncClientesPendentesLojaRoute: typeof ApiPublicSorteiosSyncClientesPendentesLojaRoute
@@ -928,6 +929,7 @@ export interface RootRouteChildren {
   ApiPublicSorteiosSyncNotasSituacaoRoute: typeof ApiPublicSorteiosSyncNotasSituacaoRoute
   ApiPublicSorteiosSyncSorteioAtivoRoute: typeof ApiPublicSorteiosSyncSorteioAtivoRoute
   FotoExpressTrabalhoIdFotosItemIdEditarRoute: typeof FotoExpressTrabalhoIdFotosItemIdEditarRoute
+  FotosTrabalhosTrabalhoIdFotosItemIdRoute: typeof FotosTrabalhosTrabalhoIdFotosItemIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1086,13 +1088,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FotosCadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/fotos/trabalhos': {
-      id: '/fotos/trabalhos'
-      path: '/fotos/trabalhos'
-      fullPath: '/fotos/trabalhos'
-      preLoaderRoute: typeof FotosTrabalhosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/orcamento/$token': {
       id: '/orcamento/$token'
       path: '/orcamento/$token'
@@ -1191,12 +1186,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FotoExpressIdRevisaoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/fotos/trabalhos/$trabalhoId': {
-      id: '/fotos/trabalhos/$trabalhoId'
-      path: '/$trabalhoId'
-      fullPath: '/fotos/trabalhos/$trabalhoId'
-      preLoaderRoute: typeof FotosTrabalhosTrabalhoIdRouteImport
-      parentRoute: typeof FotosTrabalhosRoute
+    '/fotos/trabalhos/': {
+      id: '/fotos/trabalhos/'
+      path: '/fotos/trabalhos'
+      fullPath: '/fotos/trabalhos/'
+      preLoaderRoute: typeof FotosTrabalhosIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/sorteios/$id/': {
       id: '/sorteios/$id/'
@@ -1324,6 +1319,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWhatsappWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fotos/trabalhos/$trabalhoId/': {
+      id: '/fotos/trabalhos/$trabalhoId/'
+      path: '/fotos/trabalhos/$trabalhoId'
+      fullPath: '/fotos/trabalhos/$trabalhoId/'
+      preLoaderRoute: typeof FotosTrabalhosTrabalhoIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sorteios/sync/clientes-alteracoes': {
       id: '/api/public/sorteios/sync/clientes-alteracoes'
       path: '/api/public/sorteios/sync/clientes-alteracoes'
@@ -1403,40 +1405,13 @@ declare module '@tanstack/react-router' {
     }
     '/fotos/trabalhos/$trabalhoId/fotos/$itemId': {
       id: '/fotos/trabalhos/$trabalhoId/fotos/$itemId'
-      path: '/fotos/$itemId'
+      path: '/fotos/trabalhos/$trabalhoId/fotos/$itemId'
       fullPath: '/fotos/trabalhos/$trabalhoId/fotos/$itemId'
       preLoaderRoute: typeof FotosTrabalhosTrabalhoIdFotosItemIdRouteImport
-      parentRoute: typeof FotosTrabalhosTrabalhoIdRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface FotosTrabalhosTrabalhoIdRouteChildren {
-  FotosTrabalhosTrabalhoIdFotosItemIdRoute: typeof FotosTrabalhosTrabalhoIdFotosItemIdRoute
-}
-
-const FotosTrabalhosTrabalhoIdRouteChildren: FotosTrabalhosTrabalhoIdRouteChildren =
-  {
-    FotosTrabalhosTrabalhoIdFotosItemIdRoute:
-      FotosTrabalhosTrabalhoIdFotosItemIdRoute,
-  }
-
-const FotosTrabalhosTrabalhoIdRouteWithChildren =
-  FotosTrabalhosTrabalhoIdRoute._addFileChildren(
-    FotosTrabalhosTrabalhoIdRouteChildren,
-  )
-
-interface FotosTrabalhosRouteChildren {
-  FotosTrabalhosTrabalhoIdRoute: typeof FotosTrabalhosTrabalhoIdRouteWithChildren
-}
-
-const FotosTrabalhosRouteChildren: FotosTrabalhosRouteChildren = {
-  FotosTrabalhosTrabalhoIdRoute: FotosTrabalhosTrabalhoIdRouteWithChildren,
-}
-
-const FotosTrabalhosRouteWithChildren = FotosTrabalhosRoute._addFileChildren(
-  FotosTrabalhosRouteChildren,
-)
 
 interface ApiPublicWhatsappWebhookRouteChildren {
   ApiPublicWhatsappWebhookTokenRoute: typeof ApiPublicWhatsappWebhookTokenRoute
@@ -1472,7 +1447,6 @@ const rootRouteChildren: RootRouteChildren = {
   FotoExpressPapeisRoute: FotoExpressPapeisRoute,
   FotosAcessoRoute: FotosAcessoRoute,
   FotosCadastroRoute: FotosCadastroRoute,
-  FotosTrabalhosRoute: FotosTrabalhosRouteWithChildren,
   OrcamentoTokenRoute: OrcamentoTokenRoute,
   SorteiosPublicoCadastroRoute: SorteiosPublicoCadastroRoute,
   SorteiosPublicoCuponsRoute: SorteiosPublicoCuponsRoute,
@@ -1499,6 +1473,7 @@ const rootRouteChildren: RootRouteChildren = {
   SorteiosIdPremiosRoute: SorteiosIdPremiosRoute,
   SorteiosIdSortearRoute: SorteiosIdSortearRoute,
   SorteiosIdTermosRoute: SorteiosIdTermosRoute,
+  FotosTrabalhosIndexRoute: FotosTrabalhosIndexRoute,
   SorteiosIdIndexRoute: SorteiosIdIndexRoute,
   ApiPublicSorteiosReconciliarRoute: ApiPublicSorteiosReconciliarRoute,
   ApiPublicSorteiosReconciliarInternoRoute:
@@ -1509,6 +1484,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicWhatsappMidiaRoute: ApiPublicWhatsappMidiaRoute,
   ApiPublicWhatsappStatusRoute: ApiPublicWhatsappStatusRoute,
   ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRouteWithChildren,
+  FotosTrabalhosTrabalhoIdIndexRoute: FotosTrabalhosTrabalhoIdIndexRoute,
   ApiPublicSorteiosSyncClientesAlteracoesRoute:
     ApiPublicSorteiosSyncClientesAlteracoesRoute,
   ApiPublicSorteiosSyncClientesConfirmarRoute:
@@ -1528,6 +1504,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicSorteiosSyncSorteioAtivoRoute,
   FotoExpressTrabalhoIdFotosItemIdEditarRoute:
     FotoExpressTrabalhoIdFotosItemIdEditarRoute,
+  FotosTrabalhosTrabalhoIdFotosItemIdRoute:
+    FotosTrabalhosTrabalhoIdFotosItemIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
