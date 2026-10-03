@@ -2006,6 +2006,77 @@ export type Database = {
         }
         Relationships: []
       }
+      foto_express_portal_sessoes: {
+        Row: {
+          cliente_id: string
+          criado_em: string
+          expira_em: string
+          id: string
+          ip: string | null
+          renovacao_expira_em: string | null
+          renovacao_hash: string | null
+          revogado_em: string | null
+          token_hash: string
+          usado_em: string
+          user_agent: string | null
+        }
+        Insert: {
+          cliente_id: string
+          criado_em?: string
+          expira_em: string
+          id?: string
+          ip?: string | null
+          renovacao_expira_em?: string | null
+          renovacao_hash?: string | null
+          revogado_em?: string | null
+          token_hash: string
+          usado_em?: string
+          user_agent?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          criado_em?: string
+          expira_em?: string
+          id?: string
+          ip?: string | null
+          renovacao_expira_em?: string | null
+          renovacao_hash?: string | null
+          revogado_em?: string | null
+          token_hash?: string
+          usado_em?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_express_portal_sessoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foto_express_portal_tentativas: {
+        Row: {
+          acao: string
+          criado_em: string
+          id: number
+          ip: string
+        }
+        Insert: {
+          acao: string
+          criado_em?: string
+          id?: never
+          ip: string
+        }
+        Update: {
+          acao?: string
+          criado_em?: string
+          id?: never
+          ip?: string
+        }
+        Relationships: []
+      }
       foto_express_textos: {
         Row: {
           alinhamento: string
@@ -2097,6 +2168,8 @@ export type Database = {
           id: string
           numero: number
           observacoes: string
+          origem_portal: boolean
+          portal_enviado_em: string | null
           status: string
         }
         Insert: {
@@ -2109,6 +2182,8 @@ export type Database = {
           id?: string
           numero?: number
           observacoes?: string
+          origem_portal?: boolean
+          portal_enviado_em?: string | null
           status?: string
         }
         Update: {
@@ -2121,6 +2196,8 @@ export type Database = {
           id?: string
           numero?: number
           observacoes?: string
+          origem_portal?: boolean
+          portal_enviado_em?: string | null
           status?: string
         }
         Relationships: [
