@@ -74,18 +74,10 @@ export async function renderizarFolha(manifesto: ManifestoGeracao, folha: Manife
       }
       const largura = Math.round(mmParaPixels(Number(ocorrencia.largura_mm), DPI_IMPRESSAO));
       const altura = Math.round(mmParaPixels(Number(ocorrencia.altura_mm), DPI_IMPRESSAO));
-      const larguraNaturalMm = ocorrencia.rotacao_folha === 90 ? Number(ocorrencia.altura_mm) : Number(ocorrencia.largura_mm);
-      const alturaNaturalMm = ocorrencia.rotacao_folha === 90 ? Number(ocorrencia.largura_mm) : Number(ocorrencia.altura_mm);
-      const larguraNatural = Math.round(mmParaPixels(larguraNaturalMm, DPI_IMPRESSAO));
-      const alturaNatural = Math.round(mmParaPixels(alturaNaturalMm, DPI_IMPRESSAO));
-      const peca = renderizarPeca(item, bitmap, larguraNatural, alturaNatural);
+      const peca = renderizarPeca(item, bitmap, largura, altura);
       const x = Math.round(mmParaPixels(Number(ocorrencia.x_mm), DPI_IMPRESSAO));
       const y = Math.round(mmParaPixels(Number(ocorrencia.y_mm), DPI_IMPRESSAO));
-      contexto.save();
-      if (ocorrencia.rotacao_folha === 90) {
-        contexto.translate(x + largura, y); contexto.rotate(Math.PI / 2); contexto.drawImage(peca, 0, 0, altura, largura);
-      } else contexto.drawImage(peca, x, y, largura, altura);
-      contexto.restore();
+      contexto.drawImage(peca, x, y, largura, altura);
       peca.width = 1; peca.height = 1;
     }
     return folhaCanvas;
