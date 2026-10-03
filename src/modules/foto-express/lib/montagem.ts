@@ -3,6 +3,7 @@ import type { Formato, ItemGaleria, PapelFoto, TextoFoto } from "../types";
 export type OrientacaoPapel = "AUTOMATICA" | "RETRATO" | "PAISAGEM";
 export type ConfiguracaoMontagem = {
   papelId: string; papelNome: string; larguraMm: number; alturaMm: number; orientacao: OrientacaoPapel;
+  orientacaoFotos: OrientacaoPapel;
   margemSuperiorMm: number; margemInferiorMm: number; margemEsquerdaMm: number; margemDireitaMm: number;
   espacamentoMm: number; permitirRotacao: boolean;
 };
@@ -20,11 +21,11 @@ type CriterioEncaixe = "LADO_CURTO" | "LADO_LONGO" | "AREA" | "CANTO";
 type CriterioOrdem = "AREA" | "LADO_LONGO" | "LARGURA" | "ALTURA" | "PROPORCAO" | "ALTERNADA";
 type PreferenciaRotacao = "ORIGINAL" | "GIRADA" | "MAIOR_HORIZONTAL" | "MAIOR_VERTICAL" | "ALTERNADA";
 
-function pecasDosItens(itens: ItemGaleria[]): Peca[] {
+function pecasDosItens(itens: ItemGaleria[], orientacaoFotos: OrientacaoPapel): Peca[] {
   return itens.flatMap((item) => {
     const largura = cmParaMm(Number(item.largura_personalizada_cm ?? item.formato?.largura_cm ?? 0));
     const altura = cmParaMm(Number(item.altura_personalizada_cm ?? item.formato?.altura_cm ?? 0));
-    const paisagem = item.orientacao === "PAISAGEM" || (item.orientacao === "AUTOMATICA" && item.arquivo.largura_px >= item.arquivo.altura_px);
+    const paisagem = orientacaoFotos === "PAISAGEM" || (orientacaoFotos === "AUTOMATICA" && (item.orientacao === "PAISAGEM" || (item.orientacao === "AUTOMATICA" && item.arquivo.largura_px >= item.arquivo.altura_px)));
     const dimensoes = paisagem ? { largura: Math.max(largura, altura), altura: Math.min(largura, altura) } : { largura: Math.min(largura, altura), altura: Math.max(largura, altura) };
     return Array.from({ length: Math.max(0, item.quantidade) }, (_, i) => ({ itemId: item.id, indiceCopia: i + 1, ...dimensoes }));
   }).sort((a, b) => b.largura * b.altura - a.largura * a.altura || b.altura - a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia);
@@ -134,7 +135,7 @@ function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, orientac
 }
 
 function montarOrientacao(itens: ItemGaleria[], config: ConfiguracaoMontagem, orientacao: "RETRATO" | "PAISAGEM"): PlanoMontagem {
-  const pecas = pecasDosItens(itens);
+  const pecas = pecasDosItens(itens, config.orientacaoFotos);
   const resultados: PlanoMontagem[] = [];
   const criterios = ["LADO_CURTO", "LADO_LONGO", "AREA", "CANTO"] as const;
   const ordens = ["AREA", "LADO_LONGO", "LARGURA", "ALTURA", "PROPORCAO", "ALTERNADA"] as const;
