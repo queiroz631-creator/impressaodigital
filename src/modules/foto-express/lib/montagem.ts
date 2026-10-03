@@ -248,20 +248,21 @@ export function calcularOrcamentoFotoExpress(itens: ItemGaleria[], papeis: Papel
 }
 
 export type LinhaEspacamento = { x1: number; y1: number; x2: number; y2: number };
-export function linhasEntrePecas(folha: Pick<FolhaMontagem, "ocorrencias">, espacamentoMm: number): LinhaEspacamento[] {
-  if (espacamentoMm <= 0) return [];
-  const linhas: LinhaEspacamento[] = [];
+export function linhasEntrePecas(folha: Pick<FolhaMontagem, "ocorrencias">): LinhaEspacamento[] {
+  const candidatas: Array<LinhaEspacamento & { gap: number }> = [];
   for (let a = 0; a < folha.ocorrencias.length; a += 1) for (let b = a + 1; b < folha.ocorrencias.length; b += 1) {
     const primeira = folha.ocorrencias[a]; const segunda = folha.ocorrencias[b];
     if (!primeira || !segunda) continue;
     const sobreposicaoY1 = Math.max(primeira.yMm, segunda.yMm); const sobreposicaoY2 = Math.min(primeira.yMm + primeira.alturaMm, segunda.yMm + segunda.alturaMm);
     const esquerda = primeira.xMm <= segunda.xMm ? primeira : segunda; const direita = esquerda === primeira ? segunda : primeira;
     const gapX = direita.xMm - (esquerda.xMm + esquerda.larguraMm);
-    if (sobreposicaoY2 > sobreposicaoY1 && gapX >= -1e-6 && gapX <= espacamentoMm + 1e-6) linhas.push({ x1: esquerda.xMm + esquerda.larguraMm + gapX / 2, y1: sobreposicaoY1, x2: esquerda.xMm + esquerda.larguraMm + gapX / 2, y2: sobreposicaoY2 });
+    if (sobreposicaoY2 > sobreposicaoY1 && gapX >= -1e-6) candidatas.push({ x1: esquerda.xMm + esquerda.larguraMm + gapX / 2, y1: sobreposicaoY1, x2: esquerda.xMm + esquerda.larguraMm + gapX / 2, y2: sobreposicaoY2, gap: gapX });
     const sobreposicaoX1 = Math.max(primeira.xMm, segunda.xMm); const sobreposicaoX2 = Math.min(primeira.xMm + primeira.larguraMm, segunda.xMm + segunda.larguraMm);
     const acima = primeira.yMm <= segunda.yMm ? primeira : segunda; const abaixo = acima === primeira ? segunda : primeira;
     const gapY = abaixo.yMm - (acima.yMm + acima.alturaMm);
-    if (sobreposicaoX2 > sobreposicaoX1 && gapY >= -1e-6 && gapY <= espacamentoMm + 1e-6) linhas.push({ x1: sobreposicaoX1, y1: acima.yMm + acima.alturaMm + gapY / 2, x2: sobreposicaoX2, y2: acima.yMm + acima.alturaMm + gapY / 2 });
+    if (sobreposicaoX2 > sobreposicaoX1 && gapY >= -1e-6) candidatas.push({ x1: sobreposicaoX1, y1: acima.yMm + acima.alturaMm + gapY / 2, x2: sobreposicaoX2, y2: acima.yMm + acima.alturaMm + gapY / 2, gap: gapY });
   }
-  return linhas;
+  const menorGap = Math.min(...candidatas.map((linha) => linha.gap));
+  if (!Number.isFinite(menorGap)) return [];
+  return candidatas.filter((linha) => linha.gap <= menorGap + 1e-3).map(({ gap: _gap, ...linha }) => linha);
 }

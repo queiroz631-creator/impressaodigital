@@ -89,9 +89,8 @@ export async function renderizarFolha(manifesto: ManifestoGeracao, folha: Manife
     }
     if (folha.linha_espacamento_ativa) {
       const ocorrencias = folha.ocorrencias.map((o) => ({ itemId: o.item_id, indiceCopia: o.indice_copia, xMm: Number(o.x_mm), yMm: Number(o.y_mm), larguraMm: Number(o.largura_mm), alturaMm: Number(o.altura_mm), rotacaoFolha: Number(o.rotacao_folha) === 90 ? 90 as const : 0 as const }));
-      const gaps = ocorrencias.flatMap((a) => ocorrencias.map((b) => Math.max(b.xMm - a.xMm - a.larguraMm, b.yMm - a.yMm - a.alturaMm))).filter((valor) => valor >= 0);
       contexto.save(); contexto.strokeStyle = folha.linha_cor ?? "#000000"; contexto.lineWidth = Math.max(1, mmParaPixels(Number(folha.linha_espessura_mm ?? .2), DPI_IMPRESSAO));
-      for (const linha of linhasEntrePecas({ ocorrencias }, Math.max(0, ...gaps))) { contexto.beginPath(); contexto.moveTo(mmParaPixels(linha.x1, DPI_IMPRESSAO), mmParaPixels(linha.y1, DPI_IMPRESSAO)); contexto.lineTo(mmParaPixels(linha.x2, DPI_IMPRESSAO), mmParaPixels(linha.y2, DPI_IMPRESSAO)); contexto.stroke(); }
+      for (const linha of linhasEntrePecas({ ocorrencias })) { contexto.beginPath(); contexto.moveTo(mmParaPixels(linha.x1, DPI_IMPRESSAO), mmParaPixels(linha.y1, DPI_IMPRESSAO)); contexto.lineTo(mmParaPixels(linha.x2, DPI_IMPRESSAO), mmParaPixels(linha.y2, DPI_IMPRESSAO)); contexto.stroke(); }
       contexto.restore();
     }
     return folhaCanvas;
