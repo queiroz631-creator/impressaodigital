@@ -46,7 +46,6 @@ import { Route as CurriculoPublicoTokenRouteImport } from './routes/curriculo.pu
 import { Route as FotoExpressIdFotosRouteImport } from './routes/foto-express.$id.fotos'
 import { Route as FotoExpressIdRevisaoRouteImport } from './routes/foto-express.$id.revisao'
 import { Route as FotosTrabalhosIndexRouteImport } from './routes/fotos.trabalhos.index'
-import { Route as FotosTrabalhosTrabalhoIdRouteImport } from './routes/fotos.trabalhos.$trabalhoId'
 import { Route as SorteiosIdIndexRouteImport } from './routes/sorteios.$id.index'
 import { Route as SorteiosIdCuponsRouteImport } from './routes/sorteios.$id.cupons'
 import { Route as SorteiosIdDadosRouteImport } from './routes/sorteios.$id.dados'
@@ -65,6 +64,7 @@ import { Route as ApiPublicWhatsappInatividadeRouteImport } from './routes/api/p
 import { Route as ApiPublicWhatsappMidiaRouteImport } from './routes/api/public/whatsapp/midia'
 import { Route as ApiPublicWhatsappStatusRouteImport } from './routes/api/public/whatsapp/status'
 import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp/webhook'
+import { Route as FotosTrabalhosTrabalhoIdIndexRouteImport } from './routes/fotos.trabalhos.$trabalhoId.index'
 import { Route as ApiPublicSorteiosSyncClientesAlteracoesRouteImport } from './routes/api/public/sorteios/sync/clientes-alteracoes'
 import { Route as ApiPublicSorteiosSyncClientesConfirmarRouteImport } from './routes/api/public/sorteios/sync/clientes-confirmar'
 import { Route as ApiPublicSorteiosSyncClientesPendentesLojaRouteImport } from './routes/api/public/sorteios/sync/clientes-pendentes-loja'
@@ -264,12 +264,6 @@ const FotosTrabalhosIndexRoute = FotosTrabalhosIndexRouteImport.update({
   path: '/fotos/trabalhos/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FotosTrabalhosTrabalhoIdRoute =
-  FotosTrabalhosTrabalhoIdRouteImport.update({
-    id: '/fotos/trabalhos/$trabalhoId',
-    path: '/fotos/trabalhos/$trabalhoId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const SorteiosIdIndexRoute = SorteiosIdIndexRouteImport.update({
   id: '/sorteios/$id/',
   path: '/sorteios/$id/',
@@ -365,6 +359,12 @@ const ApiPublicWhatsappWebhookRoute =
     path: '/api/public/whatsapp/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const FotosTrabalhosTrabalhoIdIndexRoute =
+  FotosTrabalhosTrabalhoIdIndexRouteImport.update({
+    id: '/fotos/trabalhos/$trabalhoId/',
+    path: '/fotos/trabalhos/$trabalhoId/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSorteiosSyncClientesAlteracoesRoute =
   ApiPublicSorteiosSyncClientesAlteracoesRouteImport.update({
     id: '/api/public/sorteios/sync/clientes-alteracoes',
@@ -433,9 +433,9 @@ const FotoExpressTrabalhoIdFotosItemIdEditarRoute =
   } as any)
 const FotosTrabalhosTrabalhoIdFotosItemIdRoute =
   FotosTrabalhosTrabalhoIdFotosItemIdRouteImport.update({
-    id: '/fotos/$itemId',
-    path: '/fotos/$itemId',
-    getParentRoute: () => FotosTrabalhosTrabalhoIdRoute,
+    id: '/fotos/trabalhos/$trabalhoId/fotos/$itemId',
+    path: '/fotos/trabalhos/$trabalhoId/fotos/$itemId',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -475,7 +475,6 @@ export interface FileRoutesByFullPath {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
-  '/fotos/trabalhos/$trabalhoId': typeof FotosTrabalhosTrabalhoIdRouteWithChildren
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -495,6 +494,7 @@ export interface FileRoutesByFullPath {
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/fotos/trabalhos/$trabalhoId/': typeof FotosTrabalhosTrabalhoIdIndexRoute
   '/api/public/sorteios/sync/clientes-alteracoes': typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
   '/api/public/sorteios/sync/clientes-confirmar': typeof ApiPublicSorteiosSyncClientesConfirmarRoute
   '/api/public/sorteios/sync/clientes-pendentes-loja': typeof ApiPublicSorteiosSyncClientesPendentesLojaRoute
@@ -545,7 +545,6 @@ export interface FileRoutesByTo {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
-  '/fotos/trabalhos/$trabalhoId': typeof FotosTrabalhosTrabalhoIdRouteWithChildren
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -565,6 +564,7 @@ export interface FileRoutesByTo {
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/fotos/trabalhos/$trabalhoId': typeof FotosTrabalhosTrabalhoIdIndexRoute
   '/api/public/sorteios/sync/clientes-alteracoes': typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
   '/api/public/sorteios/sync/clientes-confirmar': typeof ApiPublicSorteiosSyncClientesConfirmarRoute
   '/api/public/sorteios/sync/clientes-pendentes-loja': typeof ApiPublicSorteiosSyncClientesPendentesLojaRoute
@@ -616,7 +616,6 @@ export interface FileRoutesById {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
-  '/fotos/trabalhos/$trabalhoId': typeof FotosTrabalhosTrabalhoIdRouteWithChildren
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -636,6 +635,7 @@ export interface FileRoutesById {
   '/api/public/whatsapp/midia': typeof ApiPublicWhatsappMidiaRoute
   '/api/public/whatsapp/status': typeof ApiPublicWhatsappStatusRoute
   '/api/public/whatsapp/webhook': typeof ApiPublicWhatsappWebhookRouteWithChildren
+  '/fotos/trabalhos/$trabalhoId/': typeof FotosTrabalhosTrabalhoIdIndexRoute
   '/api/public/sorteios/sync/clientes-alteracoes': typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
   '/api/public/sorteios/sync/clientes-confirmar': typeof ApiPublicSorteiosSyncClientesConfirmarRoute
   '/api/public/sorteios/sync/clientes-pendentes-loja': typeof ApiPublicSorteiosSyncClientesPendentesLojaRoute
@@ -688,7 +688,6 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
-    | '/fotos/trabalhos/$trabalhoId'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -708,6 +707,7 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/fotos/trabalhos/$trabalhoId/'
     | '/api/public/sorteios/sync/clientes-alteracoes'
     | '/api/public/sorteios/sync/clientes-confirmar'
     | '/api/public/sorteios/sync/clientes-pendentes-loja'
@@ -758,7 +758,6 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
-    | '/fotos/trabalhos/$trabalhoId'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -778,6 +777,7 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/fotos/trabalhos/$trabalhoId'
     | '/api/public/sorteios/sync/clientes-alteracoes'
     | '/api/public/sorteios/sync/clientes-confirmar'
     | '/api/public/sorteios/sync/clientes-pendentes-loja'
@@ -828,7 +828,6 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
-    | '/fotos/trabalhos/$trabalhoId'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -848,6 +847,7 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp/midia'
     | '/api/public/whatsapp/status'
     | '/api/public/whatsapp/webhook'
+    | '/fotos/trabalhos/$trabalhoId/'
     | '/api/public/sorteios/sync/clientes-alteracoes'
     | '/api/public/sorteios/sync/clientes-confirmar'
     | '/api/public/sorteios/sync/clientes-pendentes-loja'
@@ -899,7 +899,6 @@ export interface RootRouteChildren {
   CurriculoPublicoTokenRoute: typeof CurriculoPublicoTokenRoute
   FotoExpressIdFotosRoute: typeof FotoExpressIdFotosRoute
   FotoExpressIdRevisaoRoute: typeof FotoExpressIdRevisaoRoute
-  FotosTrabalhosTrabalhoIdRoute: typeof FotosTrabalhosTrabalhoIdRouteWithChildren
   SorteiosIdCuponsRoute: typeof SorteiosIdCuponsRoute
   SorteiosIdDadosRoute: typeof SorteiosIdDadosRoute
   SorteiosIdEditarRoute: typeof SorteiosIdEditarRoute
@@ -919,6 +918,7 @@ export interface RootRouteChildren {
   ApiPublicWhatsappMidiaRoute: typeof ApiPublicWhatsappMidiaRoute
   ApiPublicWhatsappStatusRoute: typeof ApiPublicWhatsappStatusRoute
   ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRouteWithChildren
+  FotosTrabalhosTrabalhoIdIndexRoute: typeof FotosTrabalhosTrabalhoIdIndexRoute
   ApiPublicSorteiosSyncClientesAlteracoesRoute: typeof ApiPublicSorteiosSyncClientesAlteracoesRoute
   ApiPublicSorteiosSyncClientesConfirmarRoute: typeof ApiPublicSorteiosSyncClientesConfirmarRoute
   ApiPublicSorteiosSyncClientesPendentesLojaRoute: typeof ApiPublicSorteiosSyncClientesPendentesLojaRoute
@@ -929,6 +929,7 @@ export interface RootRouteChildren {
   ApiPublicSorteiosSyncNotasSituacaoRoute: typeof ApiPublicSorteiosSyncNotasSituacaoRoute
   ApiPublicSorteiosSyncSorteioAtivoRoute: typeof ApiPublicSorteiosSyncSorteioAtivoRoute
   FotoExpressTrabalhoIdFotosItemIdEditarRoute: typeof FotoExpressTrabalhoIdFotosItemIdEditarRoute
+  FotosTrabalhosTrabalhoIdFotosItemIdRoute: typeof FotosTrabalhosTrabalhoIdFotosItemIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1192,13 +1193,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FotosTrabalhosIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/fotos/trabalhos/$trabalhoId': {
-      id: '/fotos/trabalhos/$trabalhoId'
-      path: '/fotos/trabalhos/$trabalhoId'
-      fullPath: '/fotos/trabalhos/$trabalhoId'
-      preLoaderRoute: typeof FotosTrabalhosTrabalhoIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/sorteios/$id/': {
       id: '/sorteios/$id/'
       path: '/sorteios/$id'
@@ -1325,6 +1319,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWhatsappWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fotos/trabalhos/$trabalhoId/': {
+      id: '/fotos/trabalhos/$trabalhoId/'
+      path: '/fotos/trabalhos/$trabalhoId'
+      fullPath: '/fotos/trabalhos/$trabalhoId/'
+      preLoaderRoute: typeof FotosTrabalhosTrabalhoIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sorteios/sync/clientes-alteracoes': {
       id: '/api/public/sorteios/sync/clientes-alteracoes'
       path: '/api/public/sorteios/sync/clientes-alteracoes'
@@ -1404,28 +1405,13 @@ declare module '@tanstack/react-router' {
     }
     '/fotos/trabalhos/$trabalhoId/fotos/$itemId': {
       id: '/fotos/trabalhos/$trabalhoId/fotos/$itemId'
-      path: '/fotos/$itemId'
+      path: '/fotos/trabalhos/$trabalhoId/fotos/$itemId'
       fullPath: '/fotos/trabalhos/$trabalhoId/fotos/$itemId'
       preLoaderRoute: typeof FotosTrabalhosTrabalhoIdFotosItemIdRouteImport
-      parentRoute: typeof FotosTrabalhosTrabalhoIdRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface FotosTrabalhosTrabalhoIdRouteChildren {
-  FotosTrabalhosTrabalhoIdFotosItemIdRoute: typeof FotosTrabalhosTrabalhoIdFotosItemIdRoute
-}
-
-const FotosTrabalhosTrabalhoIdRouteChildren: FotosTrabalhosTrabalhoIdRouteChildren =
-  {
-    FotosTrabalhosTrabalhoIdFotosItemIdRoute:
-      FotosTrabalhosTrabalhoIdFotosItemIdRoute,
-  }
-
-const FotosTrabalhosTrabalhoIdRouteWithChildren =
-  FotosTrabalhosTrabalhoIdRoute._addFileChildren(
-    FotosTrabalhosTrabalhoIdRouteChildren,
-  )
 
 interface ApiPublicWhatsappWebhookRouteChildren {
   ApiPublicWhatsappWebhookTokenRoute: typeof ApiPublicWhatsappWebhookTokenRoute
@@ -1478,7 +1464,6 @@ const rootRouteChildren: RootRouteChildren = {
   CurriculoPublicoTokenRoute: CurriculoPublicoTokenRoute,
   FotoExpressIdFotosRoute: FotoExpressIdFotosRoute,
   FotoExpressIdRevisaoRoute: FotoExpressIdRevisaoRoute,
-  FotosTrabalhosTrabalhoIdRoute: FotosTrabalhosTrabalhoIdRouteWithChildren,
   SorteiosIdCuponsRoute: SorteiosIdCuponsRoute,
   SorteiosIdDadosRoute: SorteiosIdDadosRoute,
   SorteiosIdEditarRoute: SorteiosIdEditarRoute,
@@ -1499,6 +1484,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicWhatsappMidiaRoute: ApiPublicWhatsappMidiaRoute,
   ApiPublicWhatsappStatusRoute: ApiPublicWhatsappStatusRoute,
   ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRouteWithChildren,
+  FotosTrabalhosTrabalhoIdIndexRoute: FotosTrabalhosTrabalhoIdIndexRoute,
   ApiPublicSorteiosSyncClientesAlteracoesRoute:
     ApiPublicSorteiosSyncClientesAlteracoesRoute,
   ApiPublicSorteiosSyncClientesConfirmarRoute:
@@ -1518,6 +1504,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicSorteiosSyncSorteioAtivoRoute,
   FotoExpressTrabalhoIdFotosItemIdEditarRoute:
     FotoExpressTrabalhoIdFotosItemIdEditarRoute,
+  FotosTrabalhosTrabalhoIdFotosItemIdRoute:
+    FotosTrabalhosTrabalhoIdFotosItemIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
