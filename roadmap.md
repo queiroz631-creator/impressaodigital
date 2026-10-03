@@ -59,7 +59,7 @@
 - [x] Montagem automática ampliada para comparar ordens e preferências de giro antes de escolher o menor número de folhas
 - [x] Formato obrigatório por lote, papel padrão no formato e montagem agrupada automaticamente por papel
 - [x] Cor visual configurável por formato nos cards de Formatos e da Galeria
-- [x] Orientação da montagem configurável para todos os papéis ou por papel, com restauração automática
+- [x] Orientação das fotos dentro da folha configurável para todos os papéis ou por papel, sem alterar a orientação do papel
 
 - [x] WhatsApp: transcrição fixada abaixo do áudio com destaque âmbar; transcrever somente ao clicar no botão
 - [x] WhatsApp: seletor de ações ao lado de Assumir, controle lateral das anotações e atalho de orçamento só com nome/telefone
