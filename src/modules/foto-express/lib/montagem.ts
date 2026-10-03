@@ -157,7 +157,8 @@ const round = (n: number) => Number(n.toFixed(3));
 
 export function montarFolhas(itens: ItemGaleria[], config: ConfiguracaoMontagem): PlanoMontagem {
   if (!itens.length) return { folhas: [], orientacaoEscolhida: "RETRATO", areaUtilMm2: 0, areaOcupadaMm2: 0, aproveitamento: 0 };
-  if (config.orientacao !== "AUTOMATICA") return montarOrientacao(itens, config, config.orientacao);
+  const enriquecer = (plano: PlanoMontagem): PlanoMontagem => ({ ...plano, folhas: plano.folhas.map((folha) => ({ ...folha, linhaEspacamentoAtiva: config.linhaEspacamentoAtiva, linhaCor: config.linhaCor, linhaEspessuraMm: config.linhaEspessuraMm, valorUnitario: precoUnitarioConfig(config, plano.folhas.length) })) });
+  if (config.orientacao !== "AUTOMATICA") return enriquecer(montarOrientacao(itens, config, config.orientacao));
   const resultados: PlanoMontagem[] = [];
   let ultimoErro: unknown;
   for (const orientacao of ["RETRATO", "PAISAGEM"] as const) {
@@ -165,7 +166,7 @@ export function montarFolhas(itens: ItemGaleria[], config: ConfiguracaoMontagem)
   }
   const melhor = resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || a.orientacaoEscolhida.localeCompare(b.orientacaoEscolhida))[0];
   if (!melhor) throw ultimoErro instanceof Error ? ultimoErro : new Error("Esta foto não cabe na área útil do papel selecionado.");
-  return melhor;
+  return enriquecer(melhor);
 }
 
 export async function assinaturaMontagem(itens: ItemGaleria[], textos: TextoFoto[], config: ConfiguracaoMontagem) {
@@ -204,13 +205,20 @@ export type ResumoPapelFotoExpress = {
 };
 export type OrcamentoFotoExpress = { fotos: number; copias: number; folhas: number; valorTotal: number; grupos: ResumoPapelFotoExpress[] };
 
-function faixasDoPapel(papel: PapelFoto) {
-  const valor = papel.faixas_valor;
+function normalizarFaixasPapel(valor: unknown) {
   if (!Array.isArray(valor)) return [];
   return valor.map((faixa) => {
     const item = faixa as { min?: unknown; preco?: unknown };
     return { min: Number(item.min), preco: Number(item.preco) };
   }).filter((faixa) => Number.isInteger(faixa.min) && faixa.min > 0 && Number.isFinite(faixa.preco) && faixa.preco >= 0).sort((a, b) => a.min - b.min);
+}
+
+function faixasDoPapel(papel: PapelFoto) { return normalizarFaixasPapel(papel.faixas_valor); }
+
+function precoUnitarioConfig(config: ConfiguracaoMontagem, folhas: number) {
+  let preco = Number(config.valorFolha) || 0;
+  for (const faixa of normalizarFaixasPapel(config.faixasValor)) if (folhas >= faixa.min) preco = faixa.preco;
+  return preco;
 }
 
 export function precoUnitarioPapel(papel: PapelFoto, folhas: number) {
@@ -230,6 +238,7 @@ export function calcularOrcamentoFotoExpress(itens: ItemGaleria[], papeis: Papel
       margemSuperiorMm: Number(papel.margem_superior_mm), margemInferiorMm: Number(papel.margem_inferior_mm),
       margemEsquerdaMm: Number(papel.margem_esquerda_mm), margemDireitaMm: Number(papel.margem_direita_mm),
       espacamentoMm: Number(papel.espacamento_mm), permitirRotacao: papel.permitir_rotacao,
+      valorFolha: Number(papel.valor_folha), faixasValor: papel.faixas_valor,
     };
     const plano = montarFolhas(itensPapel, config);
     const folhas = plano.folhas.length;
