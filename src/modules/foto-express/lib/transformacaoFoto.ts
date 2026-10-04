@@ -37,6 +37,10 @@ export function normalizarRotacao(rotacao: number) {
   return ((Math.round(rotacao / 90) * 90) % 360 + 360) % 360;
 }
 
+export function orientacaoDaImagem(largura: number, altura: number): "RETRATO" | "PAISAGEM" {
+  return altura > largura ? "RETRATO" : "PAISAGEM";
+}
+
 export function calcularGeometria(
   original: { largura: number; altura: number },
   moldura: { largura: number; altura: number },
