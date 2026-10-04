@@ -16,7 +16,7 @@ import { usePermissoes } from "@/hooks/usePermissoes";
 import { aplicarTextoTodasFotosFotoExpress, criarTextoFotoExpress, duplicarTextoFotoExpress, excluirTextoFotoExpress, moverTextoFotoExpress, removerTextoTodasFotosFotoExpress, salvarEdicaoFotoExpress, salvarTextoFotoExpress } from "@/lib/foto-express.functions";
 import { useFormatos, useItemEditor, useItensNavegacao, useTextosItem } from "../hooks/useFotoExpress";
 import { calcularQualidadeFoto } from "../lib/qualidade";
-import { derivarCrop, dimensoesMoldura, limitarPosicao, calcularGeometria, type EdicaoFoto } from "../lib/transformacaoFoto";
+import { derivarCrop, dimensoesMoldura, dimensoesVisualizacaoOrientada, limitarPosicao, calcularGeometria, type EdicaoFoto } from "../lib/transformacaoFoto";
 import type { Orientacao, TextoFoto } from "../types";
 import { AreaEdicao } from "./AreaEdicao";
 import { ControlesEditor } from "./ControlesEditor";
@@ -102,7 +102,11 @@ export function EditorFotoPagina({ trabalhoId, itemId }: { trabalhoId: string; i
   }, [textosQuery.data, itemId]);
 
   const formatoSelecionado = useMemo(() => formatosQuery.data?.find((formato) => formato.id === formatoId) ?? (item?.formato?.id === formatoId ? item.formato : null), [formatosQuery.data, formatoId, item]);
-  const formatoCm = useMemo(() => item && formatoSelecionado ? dimensoesMoldura(Number(formatoSelecionado.largura_cm), Number(formatoSelecionado.altura_cm), orientacao, { largura: item.arquivo.largura_px, altura: item.arquivo.altura_px }, edicao.rotacao) : null, [item, formatoSelecionado, orientacao, edicao.rotacao]);
+  const formatoCm = useMemo(() => {
+    if (!item || !formatoSelecionado) return null;
+    const dimensoes = dimensoesMoldura(Number(formatoSelecionado.largura_cm), Number(formatoSelecionado.altura_cm), orientacao, { largura: item.arquivo.largura_px, altura: item.arquivo.altura_px }, edicao.rotacao);
+    return dimensoesVisualizacaoOrientada(dimensoes.largura, dimensoes.altura, orientacao);
+  }, [item, formatoSelecionado, orientacao, edicao.rotacao]);
   const areaFoto = useMemo(() => formatoSelecionado ? { x: Number(formatoSelecionado.area_foto_x), y: Number(formatoSelecionado.area_foto_y), largura: Number(formatoSelecionado.area_foto_largura), altura: Number(formatoSelecionado.area_foto_altura) } : { x: 0, y: 0, largura: 1, altura: 1 }, [formatoSelecionado]);
   const molduraCalculo = useMemo(() => formatoCm ? { largura: formatoCm.largura * areaFoto.largura * 100, altura: formatoCm.altura * areaFoto.altura * 100 } : null, [formatoCm, areaFoto]);
 
