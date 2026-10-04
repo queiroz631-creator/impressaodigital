@@ -16,7 +16,7 @@ export type PlanoMontagem = { folhas: FolhaMontagem[]; orientacaoEscolhida: Excl
 export const cmParaMm = (cm: number) => cm * 10;
 export const mmParaPixels = (mm: number, dpi: number) => mm / 25.4 * dpi;
 
-type Peca = { itemId: string; indiceCopia: number; largura: number; altura: number; rotacaoBase: 0 | 90 };
+type Peca = { itemId: string; indiceCopia: number; largura: number; altura: number };
 type RetanguloLivre = { x: number; y: number; largura: number; altura: number };
 type FolhaEmMontagem = FolhaMontagem & { livres: RetanguloLivre[] };
 type CriterioEncaixe = "LADO_CURTO" | "LADO_LONGO" | "AREA" | "CANTO";
@@ -29,11 +29,10 @@ function pecasDosItens(itens: ItemGaleria[], orientacaoFotos: OrientacaoPapel): 
     const alturaNatural = cmParaMm(Number(item.altura_personalizada_cm ?? item.formato?.altura_cm ?? 0));
     const paisagem = orientacaoFotos === "PAISAGEM" || (orientacaoFotos === "AUTOMATICA" && (item.orientacao === "PAISAGEM" || (item.orientacao === "AUTOMATICA" && item.arquivo.largura_px >= item.arquivo.altura_px)));
     const naturalPaisagem = larguraNatural > alturaNatural;
-    const rotacaoBase = naturalPaisagem === paisagem ? 0 as const : 90 as const;
-    const dimensoes = rotacaoBase === 90
-      ? { largura: alturaNatural, altura: larguraNatural }
-      : { largura: larguraNatural, altura: alturaNatural };
-    return Array.from({ length: Math.max(0, item.quantidade) }, (_, i) => ({ itemId: item.id, indiceCopia: i + 1, rotacaoBase, ...dimensoes }));
+    const dimensoes = naturalPaisagem === paisagem
+      ? { largura: larguraNatural, altura: alturaNatural }
+      : { largura: alturaNatural, altura: larguraNatural };
+    return Array.from({ length: Math.max(0, item.quantidade) }, (_, i) => ({ itemId: item.id, indiceCopia: i + 1, ...dimensoes }));
   }).sort((a, b) => b.largura * b.altura - a.largura * a.altura || b.altura - a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia);
 }
 
@@ -89,9 +88,9 @@ function ordenarPecas(pecas: Peca[], criterio: CriterioOrdem) {
 }
 
 function opcoesDaPeca(peca: Peca, permitirRotacao: boolean, preferencia: PreferenciaRotacao) {
-  const original = { w: peca.largura, h: peca.altura, r: peca.rotacaoBase };
+  const original = { w: peca.largura, h: peca.altura, r: 0 as const };
   if (!permitirRotacao || Math.abs(peca.largura - peca.altura) < 1e-6) return [original];
-  const girada = { w: peca.altura, h: peca.largura, r: (peca.rotacaoBase === 90 ? 0 : 90) as 0 | 90 };
+  const girada = { w: peca.altura, h: peca.largura, r: 90 as const };
   if (preferencia === "GIRADA") return [girada, original];
   if (preferencia === "MAIOR_HORIZONTAL") return original.w >= original.h ? [original, girada] : [girada, original];
   if (preferencia === "MAIOR_VERTICAL") return original.h >= original.w ? [original, girada] : [girada, original];
