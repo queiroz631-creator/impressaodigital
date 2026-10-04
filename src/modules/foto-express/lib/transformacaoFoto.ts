@@ -41,7 +41,7 @@ export function orientacaoDaImagem(largura: number, altura: number): "RETRATO" |
   return altura > largura ? "RETRATO" : "PAISAGEM";
 }
 
-export function dimensoesVisualizacaoGaleria(
+export function dimensoesVisualizacaoOrientada(
   largura: number,
   altura: number,
   orientacao: string,
