@@ -23,11 +23,11 @@ type CriterioEncaixe = "LADO_CURTO" | "LADO_LONGO" | "AREA" | "CANTO";
 type CriterioOrdem = "AREA" | "LADO_LONGO" | "LARGURA" | "ALTURA" | "PROPORCAO" | "ALTERNADA";
 type PreferenciaRotacao = "ORIGINAL" | "GIRADA" | "MAIOR_HORIZONTAL" | "MAIOR_VERTICAL" | "ALTERNADA";
 
-function pecasDosItens(itens: ItemGaleria[], orientacaoFotos: OrientacaoPapel): Peca[] {
+function pecasDosItens(itens: ItemGaleria[]): Peca[] {
   return itens.flatMap((item) => {
     const larguraNatural = cmParaMm(Number(item.largura_personalizada_cm ?? item.formato?.largura_cm ?? 0));
     const alturaNatural = cmParaMm(Number(item.altura_personalizada_cm ?? item.formato?.altura_cm ?? 0));
-    const paisagem = orientacaoFotos === "PAISAGEM" || (orientacaoFotos === "AUTOMATICA" && (item.orientacao === "PAISAGEM" || (item.orientacao === "AUTOMATICA" && item.arquivo.largura_px >= item.arquivo.altura_px)));
+    const paisagem = item.orientacao === "PAISAGEM" || (item.orientacao === "AUTOMATICA" && item.arquivo.largura_px >= item.arquivo.altura_px);
     const naturalPaisagem = larguraNatural > alturaNatural;
     const dimensoes = naturalPaisagem === paisagem
       ? { largura: larguraNatural, altura: alturaNatural }
@@ -87,10 +87,13 @@ function ordenarPecas(pecas: Peca[], criterio: CriterioOrdem) {
   });
 }
 
-function opcoesDaPeca(peca: Peca, permitirRotacao: boolean, preferencia: PreferenciaRotacao) {
+function opcoesDaPeca(peca: Peca, permitirRotacao: boolean, preferencia: PreferenciaRotacao, orientacaoFotos: OrientacaoPapel) {
   const original = { w: peca.largura, h: peca.altura, r: 0 as const };
-  if (!permitirRotacao || Math.abs(peca.largura - peca.altura) < 1e-6) return [original];
+  if (Math.abs(peca.largura - peca.altura) < 1e-6) return [original];
   const girada = { w: peca.altura, h: peca.largura, r: 90 as const };
+  if (orientacaoFotos === "RETRATO") return original.h >= original.w ? [original] : [girada];
+  if (orientacaoFotos === "PAISAGEM") return original.w >= original.h ? [original] : [girada];
+  if (!permitirRotacao) return [original];
   if (preferencia === "GIRADA") return [girada, original];
   if (preferencia === "MAIOR_HORIZONTAL") return original.w >= original.h ? [original, girada] : [girada, original];
   if (preferencia === "MAIOR_VERTICAL") return original.h >= original.w ? [original, girada] : [girada, original];
@@ -108,7 +111,7 @@ function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, criterio
   const alturaComFolga = utilH + config.espacamentoMm;
   const folhas: FolhaEmMontagem[] = [];
   for (const peca of ordenarPecas(pecas, ordem)) {
-    const opcoes = opcoesDaPeca(peca, config.permitirRotacao, preferenciaRotacao);
+    const opcoes = opcoesDaPeca(peca, config.permitirRotacao, preferenciaRotacao, config.orientacaoFotos);
     if (!opcoes.some((o) => o.w <= utilW + 1e-6 && o.h <= utilH + 1e-6)) throw new Error(`Uma peça de ${peca.largura} × ${peca.altura} mm não cabe na área útil de ${utilW} × ${utilH} mm.`);
     let melhor: { folha: FolhaEmMontagem; livre: RetanguloLivre; opcao: (typeof opcoes)[number]; pontos: number[] } | null = null;
     for (const folha of folhas) for (const livre of folha.livres) for (const opcao of opcoes) {
@@ -140,12 +143,12 @@ function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, criterio
 }
 
 function montarNoPapelFixo(itens: ItemGaleria[], config: ConfiguracaoMontagem): PlanoMontagem {
-  const pecas = pecasDosItens(itens, config.orientacaoFotos);
+  const pecas = pecasDosItens(itens);
   const resultados: PlanoMontagem[] = [];
   const criterios = ["LADO_CURTO", "LADO_LONGO", "AREA", "CANTO"] as const;
   const ordens = ["AREA", "LADO_LONGO", "LARGURA", "ALTURA", "PROPORCAO", "ALTERNADA"] as const;
-  const permitirRotacaoDosFormatos = config.permitirRotacao && config.orientacaoFotos === "AUTOMATICA";
-  const preferencias = permitirRotacaoDosFormatos ? ["ORIGINAL", "GIRADA", "MAIOR_HORIZONTAL", "MAIOR_VERTICAL", "ALTERNADA"] as const : ["ORIGINAL"] as const;
+  const permitirRotacaoDosFormatos = config.orientacaoFotos !== "AUTOMATICA" || config.permitirRotacao;
+  const preferencias = config.orientacaoFotos === "AUTOMATICA" && permitirRotacaoDosFormatos ? ["ORIGINAL", "GIRADA", "MAIOR_HORIZONTAL", "MAIOR_VERTICAL", "ALTERNADA"] as const : ["ORIGINAL"] as const;
   const configEfetiva = { ...config, permitirRotacao: permitirRotacaoDosFormatos };
   for (const criterio of criterios) for (const ordem of ordens) for (const preferencia of preferencias) resultados.push(montarComCriterio(pecas, configEfetiva, criterio, ordem, preferencia));
   const melhor = resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || JSON.stringify(a.folhas).localeCompare(JSON.stringify(b.folhas)))[0];
