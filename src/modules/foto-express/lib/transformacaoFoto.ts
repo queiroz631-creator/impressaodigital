@@ -41,6 +41,16 @@ export function orientacaoDaImagem(largura: number, altura: number): "RETRATO" |
   return altura > largura ? "RETRATO" : "PAISAGEM";
 }
 
+export function dimensoesVisualizacaoGaleria(
+  largura: number,
+  altura: number,
+  orientacao: string,
+) {
+  if (orientacao === "RETRATO") return { largura: Math.min(largura, altura), altura: Math.max(largura, altura) };
+  if (orientacao === "PAISAGEM") return { largura: Math.max(largura, altura), altura: Math.min(largura, altura) };
+  return { largura, altura };
+}
+
 export function calcularGeometria(
   original: { largura: number; altura: number },
   moldura: { largura: number; altura: number },

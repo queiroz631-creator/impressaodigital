@@ -1,6 +1,6 @@
 import { Images } from "lucide-react";
 import type { ItemGaleria, TextoFoto } from "../types";
-import { dimensoesMoldura } from "../lib/transformacaoFoto";
+import { dimensoesMoldura, dimensoesVisualizacaoGaleria } from "../lib/transformacaoFoto";
 import { PecaFoto } from "./PecaFoto";
 
 export function MiniaturaEnquadrada({ item, textos = [] }: { item: ItemGaleria; textos?: TextoFoto[] }) {
@@ -15,17 +15,18 @@ export function MiniaturaEnquadrada({ item, textos = [] }: { item: ItemGaleria; 
     </div>;
   }
 
-  const formato = dimensoesMoldura(
+  const formatoCanonico = dimensoesMoldura(
     Number(larguraCm),
     Number(alturaCm),
     item.orientacao,
     { largura: item.arquivo.largura_px, altura: item.arquivo.altura_px },
     Number(item.configuracao?.rotacao ?? 0),
   );
+  const formato = dimensoesVisualizacaoGaleria(formatoCanonico.largura, formatoCanonico.altura, item.orientacao);
 
   return <div className="relative flex min-h-40 w-full items-center justify-center overflow-hidden rounded-md bg-muted p-3">
     <div className="relative max-h-56 max-w-full overflow-hidden border border-border bg-background shadow-sm" style={{ aspectRatio: formato.largura / formato.altura, width: formato.largura >= formato.altura ? "100%" : "auto", height: formato.largura < formato.altura ? "14rem" : "auto" }}>
-      {item.thumbnailUrl ? <PecaFoto item={item} textos={textos} /> : <ImagemAusente />}
+      {item.thumbnailUrl ? <PecaFoto item={item} textos={textos} orientarVisualizacao /> : <ImagemAusente />}
     </div>
   </div>;
 }
