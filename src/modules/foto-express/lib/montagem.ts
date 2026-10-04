@@ -154,7 +154,9 @@ function montarNoPapelFixo(itens: ItemGaleria[], config: ConfiguracaoMontagem): 
   if (config.orientacaoFotos === "AUTOMATICA" && permitirRotacaoDosFormatos) {
     for (const orientacaoFotos of ["RETRATO", "PAISAGEM"] as const) {
       const configUniforme = { ...configEfetiva, orientacaoFotos };
-      for (const criterio of criterios) for (const ordem of ordens) resultados.push(montarComCriterio(pecas, configUniforme, criterio, ordem, "ORIGINAL"));
+      for (const criterio of criterios) for (const ordem of ordens) {
+        try { resultados.push(montarComCriterio(pecas, configUniforme, criterio, ordem, "ORIGINAL")); } catch { /* A orientação uniforme pode não caber neste papel. */ }
+      }
     }
   }
   const quantidadeRetrato = (plano: PlanoMontagem) => plano.folhas.reduce((total, folha) => total + folha.ocorrencias.filter((ocorrencia) => ocorrencia.alturaMm >= ocorrencia.larguraMm).length, 0);
