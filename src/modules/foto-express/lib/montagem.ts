@@ -151,7 +151,14 @@ function montarNoPapelFixo(itens: ItemGaleria[], config: ConfiguracaoMontagem): 
   const preferencias = config.orientacaoFotos === "AUTOMATICA" && permitirRotacaoDosFormatos ? ["ORIGINAL", "GIRADA", "MAIOR_HORIZONTAL", "MAIOR_VERTICAL", "ALTERNADA"] as const : ["ORIGINAL"] as const;
   const configEfetiva = { ...config, permitirRotacao: permitirRotacaoDosFormatos };
   for (const criterio of criterios) for (const ordem of ordens) for (const preferencia of preferencias) resultados.push(montarComCriterio(pecas, configEfetiva, criterio, ordem, preferencia));
-  const melhor = resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || JSON.stringify(a.folhas).localeCompare(JSON.stringify(b.folhas)))[0];
+  if (config.orientacaoFotos === "AUTOMATICA" && permitirRotacaoDosFormatos) {
+    for (const orientacaoFotos of ["RETRATO", "PAISAGEM"] as const) {
+      const configUniforme = { ...configEfetiva, orientacaoFotos };
+      for (const criterio of criterios) for (const ordem of ordens) resultados.push(montarComCriterio(pecas, configUniforme, criterio, ordem, "ORIGINAL"));
+    }
+  }
+  const quantidadeRetrato = (plano: PlanoMontagem) => plano.folhas.reduce((total, folha) => total + folha.ocorrencias.filter((ocorrencia) => ocorrencia.alturaMm >= ocorrencia.larguraMm).length, 0);
+  const melhor = resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || quantidadeRetrato(b) - quantidadeRetrato(a) || JSON.stringify(a.folhas).localeCompare(JSON.stringify(b.folhas)))[0];
   if (!melhor) throw new Error("Não foi possível calcular a montagem para este papel.");
   return melhor;
 }
