@@ -28,6 +28,7 @@
 - [x] Etapas seguintes de editor, textos, revisão e montagem concluídas; geração final permanece fora deste escopo
 
 ## FOTO EXPRESS — correção técnica
+- [x] Reconhecer automaticamente Retrato ou Paisagem ao aplicar formato na Galeria
 - [x] Manter a proporção cadastrada do formato também nas orientações Retrato e Paisagem
 - [x] Corrigir o aviso incorreto de formato ao navegar para a próxima foto no editor
 - [x] Adicionar exclusão individual com confirmação no card da Galeria
