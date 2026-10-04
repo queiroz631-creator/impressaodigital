@@ -11,7 +11,7 @@
 
 - O aplicativo Windows unificado vive em `api-local/`: sincronização e backup compartilham janela, bandeja e inicialização, mas mantêm tokens e rotinas independentes para evitar regressões.
 - O FOTO EXPRESS vive isolado em `src/modules/foto-express/`; originais, thumbnails e impressões usam buckets privados separados, e itens duplicados reutilizam o mesmo arquivo original para manter a edição não destrutiva.
-- No editor FOTO EXPRESS, formato/zoom/posição/rotação/orientação/modo são canônicos e salvos atomicamente; Automática preserva as dimensões cadastradas do formato, e o crop é derivado e normalizado nas coordenadas do original para futura renderização fiel.
+- No editor FOTO EXPRESS, formato/zoom/posição/rotação/orientação/modo são canônicos e salvos atomicamente; toda orientação preserva as dimensões cadastradas do formato, e o crop é derivado e normalizado nas coordenadas do original para futura renderização fiel.
 - Textos do FOTO EXPRESS pertencem ao item e usam posição, largura e tamanho normalizados sobre a área física completa do formato, independentes da transformação da fotografia.
 - A aplicação ou remoção global de um texto no FOTO EXPRESS usa a camada de mesma ordem em uma única operação transacional; cópias aplicadas continuam independentes.
 - Exclusões e uploads incompletos do FOTO EXPRESS usam uma fila transacional no banco; objetos do Storage só são removidos no servidor após o banco liberar a limpeza.
