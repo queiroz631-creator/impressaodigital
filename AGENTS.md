@@ -15,7 +15,7 @@
 - Textos do FOTO EXPRESS pertencem ao item e usam posição, largura e tamanho normalizados sobre a área física completa do formato, independentes da transformação da fotografia.
 - A aplicação ou remoção global de um texto no FOTO EXPRESS usa a camada de mesma ordem em uma única operação transacional; cópias aplicadas continuam independentes.
 - Exclusões e uploads incompletos do FOTO EXPRESS usam uma fila transacional no banco; objetos do Storage só são removidos no servidor após o banco liberar a limpeza.
-- A montagem do FOTO EXPRESS usa um motor puro, determinístico e baseado em milímetros: a orientação salva define a peça original, o encaixe pode girar somente a peça completa (formato, foto e textos), e Automática compara as posições do papel priorizando menos folhas; plano, folhas e ocorrências são persistidos atomicamente.
+- A montagem do FOTO EXPRESS usa um motor puro, determinístico e baseado em milímetros: o papel mantém sempre largura e altura cadastradas, enquanto Retrato/Paisagem/Automática controlam somente a peça completa (formato, foto e textos); plano, folhas e ocorrências são persistidos atomicamente.
 - Papéis de montagem do FOTO EXPRESS são catálogos reutilizáveis; cada montagem persiste um snapshot das medidas para preservar histórico e gerações.
 - O orçamento do FOTO EXPRESS reutiliza o mesmo motor de montagem; preço e linha do papel são congelados no envio ou na montagem para não mudar com o catálogo.
 - Cada lote do FOTO EXPRESS exige um formato com papel padrão; a revisão agrupa e persiste as folhas por papel em uma única montagem atômica.

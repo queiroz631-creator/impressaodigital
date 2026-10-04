@@ -98,9 +98,9 @@ function opcoesDaPeca(peca: Peca, permitirRotacao: boolean, preferencia: Prefere
   return [original, girada];
 }
 
-function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, orientacao: "RETRATO" | "PAISAGEM", criterio: CriterioEncaixe, ordem: CriterioOrdem, preferenciaRotacao: PreferenciaRotacao): PlanoMontagem {
-  const larguraFolha = orientacao === "PAISAGEM" ? Math.max(config.larguraMm, config.alturaMm) : Math.min(config.larguraMm, config.alturaMm);
-  const alturaFolha = orientacao === "PAISAGEM" ? Math.min(config.larguraMm, config.alturaMm) : Math.max(config.larguraMm, config.alturaMm);
+function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, criterio: CriterioEncaixe, ordem: CriterioOrdem, preferenciaRotacao: PreferenciaRotacao): PlanoMontagem {
+  const larguraFolha = config.larguraMm;
+  const alturaFolha = config.alturaMm;
   const utilW = larguraFolha - config.margemEsquerdaMm - config.margemDireitaMm;
   const utilH = alturaFolha - config.margemSuperiorMm - config.margemInferiorMm;
   if (utilW <= 0 || utilH <= 0) throw new Error("As margens eliminam a área útil do papel.");
@@ -136,10 +136,10 @@ function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, orientac
   }
   const areaOcupadaMm2 = pecas.reduce((s, p) => s + p.largura * p.altura, 0);
   const areaUtilMm2 = utilW * utilH * folhas.length;
-  return { folhas: folhas.map(({ livres: _livres, ...folha }) => folha), orientacaoEscolhida: orientacao, areaUtilMm2: round(areaUtilMm2), areaOcupadaMm2: round(areaOcupadaMm2), aproveitamento: areaUtilMm2 ? round(areaOcupadaMm2 / areaUtilMm2 * 100) : 0 };
+  return { folhas: folhas.map(({ livres: _livres, ...folha }) => folha), orientacaoEscolhida: larguraFolha > alturaFolha ? "PAISAGEM" : "RETRATO", areaUtilMm2: round(areaUtilMm2), areaOcupadaMm2: round(areaOcupadaMm2), aproveitamento: areaUtilMm2 ? round(areaOcupadaMm2 / areaUtilMm2 * 100) : 0 };
 }
 
-function montarOrientacao(itens: ItemGaleria[], config: ConfiguracaoMontagem, orientacao: "RETRATO" | "PAISAGEM"): PlanoMontagem {
+function montarNoPapelFixo(itens: ItemGaleria[], config: ConfiguracaoMontagem): PlanoMontagem {
   const pecas = pecasDosItens(itens, config.orientacaoFotos);
   const resultados: PlanoMontagem[] = [];
   const criterios = ["LADO_CURTO", "LADO_LONGO", "AREA", "CANTO"] as const;
@@ -147,7 +147,7 @@ function montarOrientacao(itens: ItemGaleria[], config: ConfiguracaoMontagem, or
   const permitirRotacaoDosFormatos = config.permitirRotacao && config.orientacaoFotos === "AUTOMATICA";
   const preferencias = permitirRotacaoDosFormatos ? ["ORIGINAL", "GIRADA", "MAIOR_HORIZONTAL", "MAIOR_VERTICAL", "ALTERNADA"] as const : ["ORIGINAL"] as const;
   const configEfetiva = { ...config, permitirRotacao: permitirRotacaoDosFormatos };
-  for (const criterio of criterios) for (const ordem of ordens) for (const preferencia of preferencias) resultados.push(montarComCriterio(pecas, configEfetiva, orientacao, criterio, ordem, preferencia));
+  for (const criterio of criterios) for (const ordem of ordens) for (const preferencia of preferencias) resultados.push(montarComCriterio(pecas, configEfetiva, criterio, ordem, preferencia));
   const melhor = resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || JSON.stringify(a.folhas).localeCompare(JSON.stringify(b.folhas)))[0];
   if (!melhor) throw new Error("Não foi possível calcular a montagem para este papel.");
   return melhor;
@@ -155,17 +155,10 @@ function montarOrientacao(itens: ItemGaleria[], config: ConfiguracaoMontagem, or
 const round = (n: number) => Number(n.toFixed(3));
 
 export function montarFolhas(itens: ItemGaleria[], config: ConfiguracaoMontagem): PlanoMontagem {
-  if (!itens.length) return { folhas: [], orientacaoEscolhida: "RETRATO", areaUtilMm2: 0, areaOcupadaMm2: 0, aproveitamento: 0 };
+  const orientacaoPapelFixo = config.larguraMm > config.alturaMm ? "PAISAGEM" as const : "RETRATO" as const;
+  if (!itens.length) return { folhas: [], orientacaoEscolhida: orientacaoPapelFixo, areaUtilMm2: 0, areaOcupadaMm2: 0, aproveitamento: 0 };
   const enriquecer = (plano: PlanoMontagem): PlanoMontagem => ({ ...plano, folhas: plano.folhas.map((folha) => ({ ...folha, ...(config.linhaEspacamentoAtiva === undefined ? {} : { linhaEspacamentoAtiva: config.linhaEspacamentoAtiva }), ...(config.linhaCor === undefined ? {} : { linhaCor: config.linhaCor }), ...(config.linhaEspessuraMm === undefined ? {} : { linhaEspessuraMm: config.linhaEspessuraMm }), valorUnitario: precoUnitarioConfig(config, plano.folhas.length) })) });
-  if (config.orientacao !== "AUTOMATICA") return enriquecer(montarOrientacao(itens, config, config.orientacao));
-  const resultados: PlanoMontagem[] = [];
-  let ultimoErro: unknown;
-  for (const orientacao of ["RETRATO", "PAISAGEM"] as const) {
-    try { resultados.push(montarOrientacao(itens, config, orientacao)); } catch (erro) { ultimoErro = erro; }
-  }
-  const melhor = resultados.sort((a, b) => a.folhas.length - b.folhas.length || b.aproveitamento - a.aproveitamento || a.orientacaoEscolhida.localeCompare(b.orientacaoEscolhida))[0];
-  if (!melhor) throw ultimoErro instanceof Error ? ultimoErro : new Error("Esta foto não cabe na área útil do papel selecionado.");
-  return enriquecer(melhor);
+  return enriquecer(montarNoPapelFixo(itens, config));
 }
 
 export async function assinaturaMontagem(itens: ItemGaleria[], textos: TextoFoto[], config: ConfiguracaoMontagem) {
@@ -183,19 +176,16 @@ export async function assinaturaMontagemPorPapeis(itens: ItemGaleria[], textos: 
 export function capacidadeEstimadaFormato(formato: Pick<Formato, "largura_cm" | "altura_cm">, papel: PapelFoto) {
   const larguraPeca = cmParaMm(Number(formato.largura_cm)); const alturaPeca = cmParaMm(Number(formato.altura_cm));
   if (larguraPeca <= 0 || alturaPeca <= 0) return 0;
-  const orientacoes = papel.orientacao === "AUTOMATICA" ? ["RETRATO", "PAISAGEM"] as const : [papel.orientacao as "RETRATO" | "PAISAGEM"];
   const capacidadeGrade = (larguraFolha: number, alturaFolha: number, largura: number, altura: number) => {
     const utilW = larguraFolha - Number(papel.margem_esquerda_mm) - Number(papel.margem_direita_mm);
     const utilH = alturaFolha - Number(papel.margem_superior_mm) - Number(papel.margem_inferior_mm);
     const espaco = Number(papel.espacamento_mm);
     return Math.max(0, Math.floor((utilW + espaco) / (largura + espaco)) * Math.floor((utilH + espaco) / (altura + espaco)));
   };
-  return Math.max(...orientacoes.flatMap((orientacao) => {
-    const larguraFolha = orientacao === "PAISAGEM" ? Math.max(Number(papel.largura_mm), Number(papel.altura_mm)) : Math.min(Number(papel.largura_mm), Number(papel.altura_mm));
-    const alturaFolha = orientacao === "PAISAGEM" ? Math.min(Number(papel.largura_mm), Number(papel.altura_mm)) : Math.max(Number(papel.largura_mm), Number(papel.altura_mm));
-    const normal = capacidadeGrade(larguraFolha, alturaFolha, larguraPeca, alturaPeca);
-    return papel.permitir_rotacao ? [normal, capacidadeGrade(larguraFolha, alturaFolha, alturaPeca, larguraPeca)] : [normal];
-  }));
+  const larguraFolha = Number(papel.largura_mm);
+  const alturaFolha = Number(papel.altura_mm);
+  const normal = capacidadeGrade(larguraFolha, alturaFolha, larguraPeca, alturaPeca);
+  return Math.max(...(papel.permitir_rotacao ? [normal, capacidadeGrade(larguraFolha, alturaFolha, alturaPeca, larguraPeca)] : [normal]));
 }
 
 export type ResumoPapelFotoExpress = {

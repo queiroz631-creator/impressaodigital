@@ -28,6 +28,7 @@
 - [x] Etapas seguintes de editor, textos, revisão e montagem concluídas; geração final permanece fora deste escopo
 
 ## FOTO EXPRESS — correção técnica
+- [x] Manter o papel fixo na montagem e aplicar Retrato/Paisagem/Automática somente ao formato completo
 - [x] Corrigir o aproveitamento Automático e preservar a posição original das fotos em Retrato durante a montagem
 - [x] Fazer a prévia do editor acompanhar Retrato ou Paisagem sem alterar o formato cadastrado
 - [x] Fazer a miniatura da Galeria refletir Retrato ou Paisagem após aplicar um formato
