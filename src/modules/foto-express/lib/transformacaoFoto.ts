@@ -127,17 +127,9 @@ export function derivarCrop(
 export function dimensoesMoldura(
   larguraCm: number,
   alturaCm: number,
-  orientacao: string,
+  _orientacao: string,
   _original: { largura: number; altura: number },
   _rotacao: number,
 ) {
-  if (orientacao === "AUTOMATICA") {
-    return { largura: larguraCm, altura: alturaCm };
-  }
-
-  const menor = Math.min(larguraCm, alturaCm);
-  const maior = Math.max(larguraCm, alturaCm);
-  return orientacao === "PAISAGEM"
-    ? { largura: maior, altura: menor }
-    : { largura: menor, altura: maior };
+  return { largura: larguraCm, altura: alturaCm };
 }
