@@ -28,6 +28,7 @@
 - [x] Etapas seguintes de editor, textos, revisão e montagem concluídas; geração final permanece fora deste escopo
 
 ## FOTO EXPRESS — correção técnica
+- [x] Adicionar exclusão individual com confirmação no card da Galeria
 - [x] Manter a proporção cadastrada do formato na orientação Automática no portal e no sistema
 - [x] Permitir ocultar formatos no portal sem desativá-los para a equipe
 - [x] Triggers próprios para `atualizado_em` sem alterar a função global
