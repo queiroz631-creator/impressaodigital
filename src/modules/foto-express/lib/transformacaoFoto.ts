@@ -128,12 +128,16 @@ export function dimensoesMoldura(
   larguraCm: number,
   alturaCm: number,
   orientacao: string,
-  original: { largura: number; altura: number },
-  rotacao: number,
+  _original: { largura: number; altura: number },
+  _rotacao: number,
 ) {
-  const giroLateral = normalizarRotacao(rotacao) % 180 !== 0;
-  const imagemPaisagem = (giroLateral ? original.altura : original.largura) >= (giroLateral ? original.largura : original.altura);
-  const paisagem = orientacao === "PAISAGEM" || (orientacao === "AUTOMATICA" && imagemPaisagem);
-  const menor = Math.min(larguraCm, alturaCm); const maior = Math.max(larguraCm, alturaCm);
-  return paisagem ? { largura: maior, altura: menor } : { largura: menor, altura: maior };
+  if (orientacao === "AUTOMATICA") {
+    return { largura: larguraCm, altura: alturaCm };
+  }
+
+  const menor = Math.min(larguraCm, alturaCm);
+  const maior = Math.max(larguraCm, alturaCm);
+  return orientacao === "PAISAGEM"
+    ? { largura: maior, altura: menor }
+    : { largura: menor, altura: maior };
 }
