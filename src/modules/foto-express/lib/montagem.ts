@@ -31,8 +31,7 @@ function pecasDosItens(itens: ItemGaleria[], orientacaoFotos: OrientacaoPapel): 
     const naturalPaisagem = larguraNatural > alturaNatural;
     const dimensoes = naturalPaisagem === paisagem
       ? { largura: larguraNatural, altura: alturaNatural }
-      ? { largura: alturaNatural, altura: larguraNatural }
-      : { largura: larguraNatural, altura: alturaNatural };
+      : { largura: alturaNatural, altura: larguraNatural };
     return Array.from({ length: Math.max(0, item.quantidade) }, (_, i) => ({ itemId: item.id, indiceCopia: i + 1, ...dimensoes }));
   }).sort((a, b) => b.largura * b.altura - a.largura * a.altura || b.altura - a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia);
 }
