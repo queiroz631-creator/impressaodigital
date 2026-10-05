@@ -331,13 +331,22 @@ export const reabrirEdicaoPortalFotoExpress = createServerFn({ method: "POST" })
     if (!trabalho?.origem_portal || !trabalho.portal_enviado_em) throw new Error("Este álbum não está aguardando produção pelo portal.");
     if (!['EM_EDICAO', 'PRONTO_IMPRESSAO'].includes(trabalho.status)) throw new Error("Este álbum não pode mais ser reaberto.");
 
-    const { count, error: erroGeracao } = await context.supabase
-      .from("foto_express_geracoes")
-      .select("id", { count: "exact", head: true })
+    const { data: montagemAtual, error: erroMontagemAtual } = await context.supabase
+      .from("foto_express_montagens")
+      .select("id,estado")
       .eq("trabalho_id", data.trabalhoId)
-      .in("estado", ["PENDENTE", "PROCESSANDO", "CONCLUIDA"]);
-    if (erroGeracao) throw new Error(erroGeracao.message);
-    if ((count ?? 0) > 0) throw new Error("Este álbum já entrou no processo de impressão e não pode ser reaberto.");
+      .maybeSingle();
+    if (erroMontagemAtual) throw new Error(erroMontagemAtual.message);
+
+    if (montagemAtual && montagemAtual.estado !== "DESATUALIZADA") {
+      const { count, error: erroGeracao } = await context.supabase
+        .from("foto_express_geracoes")
+        .select("id", { count: "exact", head: true })
+        .eq("montagem_id", montagemAtual.id)
+        .in("estado", ["PENDENTE", "PROCESSANDO", "CONCLUIDA"]);
+      if (erroGeracao) throw new Error(erroGeracao.message);
+      if ((count ?? 0) > 0) throw new Error("Este álbum já entrou no processo de impressão e não pode ser reaberto.");
+    }
 
     const { data: reaberto, error } = await context.supabase
       .from("foto_express_trabalhos")
