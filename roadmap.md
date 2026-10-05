@@ -1,7 +1,7 @@
 # Roadmap
 
 ## FOTO EXPRESS — portal público do cliente
-- [ ] Implementar pinça no zoom móvel, nomes públicos dos formatos, controles individuais nos cards e resumo comercial simplificado
+- [x] Implementar pinça no zoom móvel, nomes públicos dos formatos, controles individuais nos cards e resumo comercial simplificado
 - [x] Mostrar capacidade, folhas estimadas e valor progressivo no álbum do cliente
 - [x] Confirmar envio com aviso de folha incompleta e congelar o orçamento apresentado
 - [x] Página pública afetiva para impressão de fotos
