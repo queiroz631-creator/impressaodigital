@@ -1575,6 +1575,7 @@ export type Database = {
           id: string
           largura_cm: number
           nome: string
+          nome_portal: string | null
           ordem: number
           padrao: boolean
           papel_padrao_id: string | null
@@ -1596,6 +1597,7 @@ export type Database = {
           id?: string
           largura_cm: number
           nome: string
+          nome_portal?: string | null
           ordem?: number
           padrao?: boolean
           papel_padrao_id?: string | null
@@ -1617,6 +1619,7 @@ export type Database = {
           id?: string
           largura_cm?: number
           nome?: string
+          nome_portal?: string | null
           ordem?: number
           padrao?: boolean
           papel_padrao_id?: string | null

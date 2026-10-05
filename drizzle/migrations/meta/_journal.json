@@ -337,6 +337,13 @@
       "when": 1791039532810,
       "tag": "0047_foto_express_selecao_papel_na_revisao",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1791161662170,
+      "tag": "0048_foto_express_nome_portal_formato",
+      "breakpoints": true
     }
   ]
 }
