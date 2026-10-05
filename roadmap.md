@@ -30,6 +30,7 @@
 - [x] Etapas seguintes de editor, textos, revisão e montagem concluídas; geração final permanece fora deste escopo
 
 ## FOTO EXPRESS — correção técnica
+- [x] Remover o `pdf-lib` da geração de impressão e empacotar diretamente as folhas JPEG para eliminar o erro `__extends` publicado
 - [x] Carregar o gerador PDF somente no navegador durante a geração para evitar falha na versão publicada
 - [x] Corrigir a geração do PDF de impressão substituindo o empacotador incompatível, sem alterar a renderização das folhas
 - [x] Girar a peça completa na montagem preservando exatamente a orientação e o enquadramento salvos, sem alterar o papel

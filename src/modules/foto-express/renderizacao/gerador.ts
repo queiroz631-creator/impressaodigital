@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { carregarFontesRenderizacao } from "./fontes";
+import { gerarPdfComJpegs } from "./pdfJpeg";
 import { canvasParaJpeg, renderizarFolha } from "./renderizador";
 import type { DestinoGeracao, PreparacaoGeracao } from "./types";
 
@@ -17,8 +18,7 @@ export async function gerarArquivos(preparacao: PreparacaoGeracao, onProgresso: 
   const { manifesto, destinos } = preparacao;
   const destinoPdf = destinos.find((d) => d.tipo === "PDF");
   const precisaJpg = destinos.some((d) => d.tipo === "JPG");
-  const pdfLib = destinoPdf ? await import("pdf-lib") : null;
-  const pdf = pdfLib ? await pdfLib.PDFDocument.create() : null;
+  const paginasPdf: Parameters<typeof gerarPdfComJpegs>[0] = [];
   const memoria = { picoEstimadoBytes: 0, bytesJpgNoPdf: 0 };
   for (let indice = 0; indice < manifesto.folhas.length; indice += 1) {
     const folha = manifesto.folhas[indice];
@@ -33,23 +33,19 @@ export async function gerarArquivos(preparacao: PreparacaoGeracao, onProgresso: 
       onProgresso({ etapa: `Salvando folha ${indice + 1} de ${manifesto.folhas.length}`, atual: indice + 1, total: manifesto.folhas.length });
       await enviar(destino, jpg);
     }
-    if (pdf) {
+    if (destinoPdf) {
       const bytes = new Uint8Array(await jpg.arrayBuffer());
       memoria.bytesJpgNoPdf += bytes.byteLength;
       const largura = Number(folha.largura_mm) * PONTOS_POR_MM;
       const altura = Number(folha.altura_mm) * PONTOS_POR_MM;
-      const imagem = await pdf.embedJpg(bytes);
-      const pagina = pdf.addPage([largura, altura]);
-      pagina.drawImage(imagem, { x: 0, y: 0, width: largura, height: altura });
+      paginasPdf.push({ bytes, larguraPx: canvas.width, alturaPx: canvas.height, larguraPontos: largura, alturaPontos: altura });
     }
     canvas.width = 1; canvas.height = 1;
   }
-  if (pdf && destinoPdf) {
+  if (destinoPdf) {
     onProgresso({ etapa: "Gerando PDF" });
-    const bytes = await pdf.save({ useObjectStreams: true });
-    const conteudoPdf = new Uint8Array(bytes.byteLength);
-    conteudoPdf.set(bytes);
-    const blob = new Blob([conteudoPdf.buffer], { type: "application/pdf" });
+    const bytes = gerarPdfComJpegs(paginasPdf);
+    const blob = new Blob([bytes], { type: "application/pdf" });
     memoria.picoEstimadoBytes = Math.max(memoria.picoEstimadoBytes, memoria.bytesJpgNoPdf + blob.size);
     await enviar(destinoPdf, blob);
   }
