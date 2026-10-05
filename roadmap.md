@@ -9,6 +9,7 @@
 - [x] Lista e criação de trabalhos isoladas por cliente
 - [x] Upload, galeria, formatos, edição não destrutiva e textos no portal
 - [x] Envio bloqueia novas alterações do cliente
+- [x] Permitir à equipe reabrir a edição de álbum enviado enquanto ainda não entrou na impressão
 - [x] Montagem e impressão permanecem exclusivas da equipe autorizada
 - [x] Validar páginas públicas e acesso no navegador sem usar dados reais
 - [x] Corrigir abertura do trabalho e do editor no portal público

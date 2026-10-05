@@ -317,6 +317,48 @@ export const moverTextoFotoExpress = createServerFn({ method: "POST" })
 
 const ocorrenciaMontagemSchema = z.object({ itemId: z.string().uuid(), indiceCopia: z.number().int().positive(), xMm: z.number().nonnegative(), yMm: z.number().nonnegative(), larguraMm: z.number().positive(), alturaMm: z.number().positive(), rotacaoFolha: z.union([z.literal(0), z.literal(90)]) });
 const folhaMontagemSchema = z.object({ numero: z.number().int().positive(), larguraMm: z.number().positive(), alturaMm: z.number().positive(), ocorrencias: z.array(ocorrenciaMontagemSchema) });
+
+export const reabrirEdicaoPortalFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ trabalhoId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: trabalho, error: erroTrabalho } = await context.supabase
+      .from("foto_express_trabalhos")
+      .select("id,status,origem_portal,portal_enviado_em")
+      .eq("id", data.trabalhoId)
+      .maybeSingle();
+    if (erroTrabalho) throw new Error(erroTrabalho.message);
+    if (!trabalho?.origem_portal || !trabalho.portal_enviado_em) throw new Error("Este álbum não está aguardando produção pelo portal.");
+    if (!['EM_EDICAO', 'PRONTO_IMPRESSAO'].includes(trabalho.status)) throw new Error("Este álbum não pode mais ser reaberto.");
+
+    const { count, error: erroGeracao } = await context.supabase
+      .from("foto_express_geracoes")
+      .select("id", { count: "exact", head: true })
+      .eq("trabalho_id", data.trabalhoId)
+      .in("estado", ["PENDENTE", "PROCESSANDO", "CONCLUIDA"]);
+    if (erroGeracao) throw new Error(erroGeracao.message);
+    if ((count ?? 0) > 0) throw new Error("Este álbum já entrou no processo de impressão e não pode ser reaberto.");
+
+    const { error: erroMontagem } = await context.supabase
+      .from("foto_express_montagens")
+      .update({ estado: "DESATUALIZADA", snapshot_confirmado: null })
+      .eq("trabalho_id", data.trabalhoId);
+    if (erroMontagem) throw new Error(erroMontagem.message);
+
+    const { data: reaberto, error } = await context.supabase
+      .from("foto_express_trabalhos")
+      .update({ portal_enviado_em: null, status: "EM_EDICAO" })
+      .eq("id", data.trabalhoId)
+      .eq("origem_portal", true)
+      .in("status", ["EM_EDICAO", "PRONTO_IMPRESSAO"])
+      .not("portal_enviado_em", "is", null)
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!reaberto) throw new Error("O estado deste álbum mudou. Atualize a página e tente novamente.");
+    return { reaberto: true };
+  });
+
 const montagemSchema = z.object({
   trabalhoId: z.string().uuid(), assinatura: z.string().regex(/^[a-f0-9]{64}$/), versao: z.number().int().nonnegative(),
   grupos: z.array(z.object({ papelId: z.string().uuid(), orientacaoEscolhida: z.enum(["RETRATO", "PAISAGEM"]), folhas: z.array(folhaMontagemSchema).min(1) })).min(1),
