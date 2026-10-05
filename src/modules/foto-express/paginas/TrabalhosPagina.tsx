@@ -2,9 +2,10 @@ import { useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, CheckCircle2, Circle, ImageUp, Link2, Plus, RotateCcw, Search } from "lucide-react";
+import { Camera, CheckCircle2, Circle, ImageUp, Link2, LockOpen, Plus, RotateCcw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/AppLayout";
+import { ConfirmarAcao } from "@/components/ConfirmarAcao";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { limparLogoPortalFotos, logoPortalFotosAtual, salvarLogoPortalFotos } from "@/lib/foto-express-logo.functions";
+import { reabrirEdicaoPortalFotoExpress } from "@/lib/foto-express.functions";
 import { brl } from "@/lib/format";
 import { useTrabalhos } from "../hooks/useFotoExpress";
 import { urlPublicaFotoExpress } from "../services/url-publica";
@@ -32,6 +34,15 @@ export function TrabalhosPagina() {
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState("TODOS");
+  const reabrirEdicao = useServerFn(reabrirEdicaoPortalFotoExpress);
+  const reabrir = useMutation({
+    mutationFn: (trabalhoId: string) => reabrirEdicao({ data: { trabalhoId } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["foto-express", "trabalhos"] });
+      toast.success("Edição reaberta para o cliente.");
+    },
+    onError: (erro: Error) => toast.error(erro.message),
+  });
   const finalizar = useMutation({
     mutationFn: async (id: string) => {
       const { data: atualizado, error: erro } = await supabase.from("foto_express_trabalhos").update({ status: "FINALIZADO" }).eq("id", id).eq("status", "IMPRESSO").select("id").maybeSingle();
@@ -62,7 +73,7 @@ export function TrabalhosPagina() {
     {isLoading && <p className="text-sm text-muted-foreground">Carregando álbuns...</p>}
     {error && <p className="text-sm text-destructive">{(error as Error).message}</p>}
     {!isLoading && filtrados.length === 0 && <Card><CardContent className="flex flex-col items-center gap-3 p-12 text-center"><Camera className="h-10 w-10 text-muted-foreground" /><p className="font-semibold">Nenhum álbum encontrado</p><p className="text-sm text-muted-foreground">Crie um novo álbum para enviar e preparar as fotos.</p></CardContent></Card>}
-    <div className="grid gap-3">{filtrados.map((trabalho) => { const statusVisual = STATUS[trabalho.status]; return <Card key={trabalho.id}><CardContent className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 p-4"><div className="min-w-0 space-y-1"><div className="flex flex-wrap items-center gap-2"><span className="font-bold">#{String(trabalho.numero).padStart(6, "0")}</span><Badge variant="outline" className={statusVisual?.cor}>{statusVisual?.nome ?? trabalho.status}</Badge></div><p className="truncate font-medium">{trabalho.cliente_nome || "CLIENTE NÃO INFORMADO"}</p><p className="text-xs text-muted-foreground">{trabalho.cliente_telefone || "Sem telefone"} · {trabalho.foto_express_itens[0]?.count ?? 0} foto(s)</p><p className="text-xs text-muted-foreground">Criado em {dataHora(trabalho.criado_em)} · alterado em {dataHora(trabalho.atualizado_em)}</p>{trabalho.valor_estimado !== null && <p className="pt-1 text-sm font-semibold text-foreground">Valor calculado: {brl(Number(trabalho.valor_estimado))}</p>}</div><div className="flex shrink-0 flex-col gap-2 sm:flex-row">{trabalho.status === "IMPRESSO" && <Button type="button" variant="outline" disabled={finalizar.isPending} onClick={() => finalizar.mutate(trabalho.id)}><CheckCircle2 className="mr-2 h-4 w-4" />Finalizar</Button>}<Button asChild variant="outline"><Link to="/foto-express/$id/fotos" params={{ id: trabalho.id }}>Abrir álbum</Link></Button></div></CardContent></Card>; })}</div>
+    <div className="grid gap-3">{filtrados.map((trabalho) => { const statusVisual = STATUS[trabalho.status]; const podeReabrir = trabalho.origem_portal && trabalho.portal_enviado_em && (trabalho.status === "EM_EDICAO" || trabalho.status === "PRONTO_IMPRESSAO"); return <Card key={trabalho.id}><CardContent className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 p-4"><div className="min-w-0 space-y-1"><div className="flex flex-wrap items-center gap-2"><span className="font-bold">#{String(trabalho.numero).padStart(6, "0")}</span><Badge variant="outline" className={statusVisual?.cor}>{statusVisual?.nome ?? trabalho.status}</Badge></div><p className="truncate font-medium">{trabalho.cliente_nome || "CLIENTE NÃO INFORMADO"}</p><p className="text-xs text-muted-foreground">{trabalho.cliente_telefone || "Sem telefone"} · {trabalho.foto_express_itens[0]?.count ?? 0} foto(s)</p><p className="text-xs text-muted-foreground">Criado em {dataHora(trabalho.criado_em)} · alterado em {dataHora(trabalho.atualizado_em)}</p>{trabalho.valor_estimado !== null && <p className="pt-1 text-sm font-semibold text-foreground">Valor calculado: {brl(Number(trabalho.valor_estimado))}</p>}</div><div className="flex shrink-0 flex-col gap-2 sm:flex-row">{podeReabrir && <ConfirmarAcao titulo="Reabrir edição para o cliente?" descricao="O cliente poderá alterar novamente as fotos deste álbum. Se houver uma montagem preparada, ela precisará ser revisada novamente." rotuloConfirmar="Reabrir edição" onConfirmar={async () => { await reabrir.mutateAsync(trabalho.id); }}><Button type="button" variant="outline" disabled={reabrir.isPending}><LockOpen className="mr-2 h-4 w-4" />Reabrir edição</Button></ConfirmarAcao>}{trabalho.status === "IMPRESSO" && <Button type="button" variant="outline" disabled={finalizar.isPending} onClick={() => finalizar.mutate(trabalho.id)}><CheckCircle2 className="mr-2 h-4 w-4" />Finalizar</Button>}<Button asChild variant="outline"><Link to="/foto-express/$id/fotos" params={{ id: trabalho.id }}>Abrir álbum</Link></Button></div></CardContent></Card>; })}</div>
   </>;
 }
 
