@@ -47,7 +47,9 @@ export async function gerarArquivos(preparacao: PreparacaoGeracao, onProgresso: 
   if (pdf && destinoPdf) {
     onProgresso({ etapa: "Gerando PDF" });
     const bytes = await pdf.save({ useObjectStreams: true });
-    const blob = new Blob([bytes], { type: "application/pdf" });
+    const conteudoPdf = new Uint8Array(bytes.byteLength);
+    conteudoPdf.set(bytes);
+    const blob = new Blob([conteudoPdf.buffer], { type: "application/pdf" });
     memoria.picoEstimadoBytes = Math.max(memoria.picoEstimadoBytes, memoria.bytesJpgNoPdf + blob.size);
     await enviar(destinoPdf, blob);
   }
