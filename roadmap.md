@@ -30,6 +30,7 @@
 - [x] Etapas seguintes de editor, textos, revisão e montagem concluídas; geração final permanece fora deste escopo
 
 ## FOTO EXPRESS — correção técnica
+- [x] Corrigir a geração do PDF de impressão substituindo o empacotador incompatível, sem alterar a renderização das folhas
 - [x] Girar a peça completa na montagem preservando exatamente a orientação e o enquadramento salvos, sem alterar o papel
 - [x] Manter o papel fixo na montagem e aplicar Retrato/Paisagem/Automática somente ao formato completo
 - [x] Corrigir o aproveitamento Automático e preservar a posição original das fotos em Retrato durante a montagem
