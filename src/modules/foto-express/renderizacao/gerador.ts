@@ -1,4 +1,3 @@
-import { PDFDocument } from "pdf-lib";
 import { supabase } from "@/integrations/supabase/client";
 import { carregarFontesRenderizacao } from "./fontes";
 import { canvasParaJpeg, renderizarFolha } from "./renderizador";
@@ -18,7 +17,8 @@ export async function gerarArquivos(preparacao: PreparacaoGeracao, onProgresso: 
   const { manifesto, destinos } = preparacao;
   const destinoPdf = destinos.find((d) => d.tipo === "PDF");
   const precisaJpg = destinos.some((d) => d.tipo === "JPG");
-  const pdf = destinoPdf ? await PDFDocument.create() : null;
+  const pdfLib = destinoPdf ? await import("pdf-lib") : null;
+  const pdf = pdfLib ? await pdfLib.PDFDocument.create() : null;
   const memoria = { picoEstimadoBytes: 0, bytesJpgNoPdf: 0 };
   for (let indice = 0; indice < manifesto.folhas.length; indice += 1) {
     const folha = manifesto.folhas[indice];
