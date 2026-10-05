@@ -322,6 +322,12 @@ export const reabrirEdicaoPortalFotoExpress = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ trabalhoId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    const { data: permitido, error: erroPermissao } = await context.supabase.rpc("pode_foto_express", {
+      _chave: "foto_express.trabalhos.editar",
+    });
+    if (erroPermissao) throw new Error(erroPermissao.message);
+    if (!permitido) throw new Error("Você não tem permissão para reabrir este álbum.");
+
     const { data: trabalho, error: erroTrabalho } = await context.supabase
       .from("foto_express_trabalhos")
       .select("id,status,origem_portal,portal_enviado_em")
@@ -329,7 +335,7 @@ export const reabrirEdicaoPortalFotoExpress = createServerFn({ method: "POST" })
       .maybeSingle();
     if (erroTrabalho) throw new Error(erroTrabalho.message);
     if (!trabalho?.origem_portal || !trabalho.portal_enviado_em) throw new Error("Este álbum não está aguardando produção pelo portal.");
-    if (!['EM_EDICAO', 'PRONTO_IMPRESSAO'].includes(trabalho.status)) throw new Error("Este álbum não pode mais ser reaberto.");
+    if (!["EM_EDICAO", "PRONTO_IMPRESSAO"].includes(trabalho.status)) throw new Error("Este álbum não pode mais ser reaberto.");
 
     const { data: montagemAtual, error: erroMontagemAtual } = await context.supabase
       .from("foto_express_montagens")
@@ -360,7 +366,8 @@ export const reabrirEdicaoPortalFotoExpress = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!reaberto) throw new Error("O estado deste álbum mudou. Atualize a página e tente novamente.");
 
-    const { error: erroMontagem } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: erroMontagem } = await supabaseAdmin
       .from("foto_express_montagens")
       .update({ estado: "DESATUALIZADA", snapshot_confirmado: null })
       .eq("trabalho_id", data.trabalhoId);
