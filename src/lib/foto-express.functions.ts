@@ -339,12 +339,6 @@ export const reabrirEdicaoPortalFotoExpress = createServerFn({ method: "POST" })
     if (erroGeracao) throw new Error(erroGeracao.message);
     if ((count ?? 0) > 0) throw new Error("Este álbum já entrou no processo de impressão e não pode ser reaberto.");
 
-    const { error: erroMontagem } = await context.supabase
-      .from("foto_express_montagens")
-      .update({ estado: "DESATUALIZADA", snapshot_confirmado: null })
-      .eq("trabalho_id", data.trabalhoId);
-    if (erroMontagem) throw new Error(erroMontagem.message);
-
     const { data: reaberto, error } = await context.supabase
       .from("foto_express_trabalhos")
       .update({ portal_enviado_em: null, status: "EM_EDICAO" })
@@ -356,6 +350,12 @@ export const reabrirEdicaoPortalFotoExpress = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!reaberto) throw new Error("O estado deste álbum mudou. Atualize a página e tente novamente.");
+
+    const { error: erroMontagem } = await context.supabase
+      .from("foto_express_montagens")
+      .update({ estado: "DESATUALIZADA", snapshot_confirmado: null })
+      .eq("trabalho_id", data.trabalhoId);
+    if (erroMontagem) throw new Error(erroMontagem.message);
     return { reaberto: true };
   });
 
