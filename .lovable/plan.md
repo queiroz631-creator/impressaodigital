@@ -9,7 +9,7 @@
 
 2. **Identificação e qualidade das fotos**
    - Ao enviar, exibir as fotos em sequência como `001`, `002`, `003` etc., preservando a extensão do arquivo.
-   - Mostrar a descrição da qualidade antes do nome da foto nos cards e no cabeçalho do editor.
+   - Mostrar a descrição da qualidade depois do nome da foto, preferencialmente na mesma linha, nos cards e no cabeçalho do editor.
 
 3. **Nome público do formato**
    - Adicionar ao cadastro de formato um campo separado para o nome exibido ao cliente.
@@ -32,3 +32,4 @@
 - Criar uma migração apenas para o novo nome público do formato e registrá-la em `supabase/migrations/`.
 - Não alterar montagem, orientação do papel, preços ou dados de álbuns existentes.
 - Manter as validações de propriedade e bloqueio depois do envio.
+- Não fazer nenhuma outra alteração fora destes itens.
