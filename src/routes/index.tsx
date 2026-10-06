@@ -67,6 +67,7 @@ import {
   acabamentosDoTipo,
   calcularAcabamentos,
   calcularLinhas,
+  arredondarCentavosCalculadora,
   resumoLinhas,
   rotuloCobranca,
   totalAcabamentos,
@@ -455,7 +456,7 @@ function Calculadora() {
   const tamanhoFinal = estado.formato;
 
   const linhasFinais = useMemo(
-    () => linhas.map((l) => ({ ...l, total: l.total + valorAcabamento })),
+    () => linhas.map((l) => ({ ...l, total: arredondarCentavosCalculadora(l.total + valorAcabamento) })),
     [linhas, valorAcabamento],
   );
   const resumo = resumoLinhas(linhasFinais);
