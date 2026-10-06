@@ -1,6 +1,11 @@
 # Roadmap
 
 ## FOTO EXPRESS — portal público do cliente
+- [ ] Separar os álbuns em abas por status com contadores e incluir os estados Portal e Recebido
+- [ ] Exibir uma miniatura circular de uma foto do álbum nos cards da equipe
+- [ ] Abrir a criação de álbum em modal e remover Novo Álbum do menu lateral
+- [ ] Preservar o grupo aberto do menu e navegar sem recarregar a página
+- [ ] Adicionar um botão para abrir os Avisos da revisão
 - [x] Implementar pinça no zoom móvel, nomes públicos dos formatos, controles individuais nos cards e resumo comercial simplificado
 - [x] Mostrar capacidade, folhas estimadas e valor progressivo no álbum do cliente
 - [x] Confirmar envio com aviso de folha incompleta e congelar o orçamento apresentado
