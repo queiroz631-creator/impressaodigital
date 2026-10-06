@@ -709,3 +709,13 @@ export const rotuloCobranca: Record<CobrancaAcabamento, string> = {
   pagina: "Por página",
   fixo: "Valor fixo",
 };
+
+/** Arredonda centavos: < 0,25 → 0; 0,25 a < 0,75 → 0,50; ≥ 0,75 → próximo inteiro. */
+export function arredondarCentavosCalculadora(valor: number) {
+  const centavos = Math.round(valor * 100);
+  const inteiro = Math.floor(centavos / 100);
+  const resto = centavos - inteiro * 100;
+  if (resto < 25) return inteiro;
+  if (resto < 75) return inteiro + 0.5;
+  return inteiro + 1;
+}
