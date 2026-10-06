@@ -4682,6 +4682,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      foto_express_excluir_album: {
+        Args: { _trabalho_id: string }
+        Returns: {
+          arquivo_id: string
+          limpeza_id: string
+          original_bucket: string
+          original_path: string
+          thumbnail_bucket: string
+          thumbnail_path: string
+        }[]
+      }
       foto_express_excluir_itens: {
         Args: { _item_ids: string[] }
         Returns: {

@@ -351,6 +351,13 @@
       "when": 1791250207477,
       "tag": "0049_foto_express_status_portal_recebido",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1791250621054,
+      "tag": "0050_foto_express_excluir_album",
+      "breakpoints": true
     }
   ]
 }
