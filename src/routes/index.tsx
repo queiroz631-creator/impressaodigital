@@ -67,6 +67,7 @@ import {
   acabamentosDoTipo,
   calcularAcabamentos,
   calcularLinhas,
+  arredondarCentavosCalculadora,
   resumoLinhas,
   rotuloCobranca,
   totalAcabamentos,
