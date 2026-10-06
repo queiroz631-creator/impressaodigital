@@ -34,10 +34,21 @@ export function useTrabalhos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("foto_express_trabalhos")
-        .select("*, foto_express_itens(count)")
+        .select("*, foto_express_itens(count), itens_capa:foto_express_itens(id, ordem, arquivo:foto_express_arquivos!foto_express_itens_arquivo_trabalho_fkey(thumbnail_bucket, thumbnail_path))")
         .order("atualizado_em", { ascending: false });
       if (error) throw error;
-      return data as Array<Trabalho & { foto_express_itens: Array<{ count: number }> }>;
+      const trabalhos = data as unknown as Array<Trabalho & {
+        foto_express_itens: Array<{ count: number }>;
+        itens_capa: Array<{ id: string; ordem: number; arquivo: { thumbnail_bucket: string; thumbnail_path: string } | null }>;
+        capaUrl?: string;
+      }>;
+      await Promise.all(trabalhos.map(async (trabalho) => {
+        const capa = [...trabalho.itens_capa].sort((a, b) => a.ordem - b.ordem)[0]?.arquivo;
+        if (!capa) return;
+        const { data: url } = await supabase.storage.from(capa.thumbnail_bucket).createSignedUrl(capa.thumbnail_path, 3600);
+        if (url?.signedUrl) trabalho.capaUrl = url.signedUrl;
+      }));
+      return trabalhos;
     },
   });
 }

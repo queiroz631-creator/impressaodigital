@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
@@ -124,8 +125,7 @@ export function RevisaoPagina({ trabalhoId }: { trabalhoId: string }) {
   if (itensQuery.isLoading || textosQuery.isLoading) return <p className="text-sm text-muted-foreground">Carregando revisão...</p>;
   const orientacaoGeracao = resultado.grupos.length > 1 ? "MISTA" : resultado.grupos[0]?.plano.orientacaoEscolhida ?? "RETRATO";
   return <><PageHeader titulo={`Revisão #${String(trabalho?.numero ?? "").padStart(6, "0")}`} subtitulo={trabalho?.cliente_nome || "Conferência e montagem automática"} />
-    <div className="mb-4 flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/foto-express/$id/fotos" params={{ id: trabalhoId }}><Images className="mr-2 h-4 w-4" />Galeria</Link></Button>{desatualizada && <Badge variant="destructive" className="self-center">Montagem desatualizada</Badge>}</div>
-    {alertas.length > 0 && <Alert className="mb-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Avisos da revisão</AlertTitle><AlertDescription><ul className="list-disc space-y-1 pl-4">{alertas.map((aviso, i) => <li key={`${aviso}-${i}`}>{aviso}</li>)}</ul></AlertDescription></Alert>}
+    <div className="mb-4 flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/foto-express/$id/fotos" params={{ id: trabalhoId }}><Images className="mr-2 h-4 w-4" />Galeria</Link></Button><Dialog><DialogTrigger asChild><Button type="button" variant="outline"><AlertTriangle className="mr-2 h-4 w-4" />Avisos da revisão<Badge variant={alertas.length ? "destructive" : "secondary"} className="ml-2">{alertas.length}</Badge></Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>Avisos da revisão</DialogTitle><DialogDescription>{alertas.length ? "Confira estes pontos antes de confirmar a montagem." : "Nenhum aviso encontrado nesta revisão."}</DialogDescription></DialogHeader>{alertas.length > 0 && <ul className="max-h-[60dvh] list-disc space-y-2 overflow-y-auto pl-5 text-sm">{alertas.map((aviso, i) => <li key={`${aviso}-${i}`}>{aviso}</li>)}</ul>}</DialogContent></Dialog>{desatualizada && <Badge variant="destructive" className="self-center">Montagem desatualizada</Badge>}</div>
     {resultado.erro && <Alert variant="destructive" className="mb-4"><AlertTriangle className="h-4 w-4" /><AlertTitle>Montagem indisponível</AlertTitle><AlertDescription>{resultado.erro}</AlertDescription></Alert>}
     <div className="grid items-start gap-5 xl:grid-cols-[380px_minmax(0,1fr)]"><div className="space-y-4">
       <Card><CardHeader><CardTitle>Dados do álbum</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-3 text-sm"><Dado nome="Fotos" valor={String(itens.length)} /><Dado nome="Cópias" valor={String(itens.reduce((soma, item) => soma + item.quantidade, 0))} /><Dado nome="Cliente" valor={trabalho?.cliente_nome || "Não informado"} /><Dado nome="Telefone" valor={trabalho?.cliente_telefone || "Não informado"} /></CardContent></Card>

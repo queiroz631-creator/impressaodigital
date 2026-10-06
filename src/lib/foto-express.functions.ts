@@ -335,7 +335,7 @@ export const reabrirEdicaoPortalFotoExpress = createServerFn({ method: "POST" })
       .maybeSingle();
     if (erroTrabalho) throw new Error(erroTrabalho.message);
     if (!trabalho?.origem_portal || !trabalho.portal_enviado_em) throw new Error("Este álbum não está aguardando produção pelo portal.");
-    if (!["EM_EDICAO", "PRONTO_IMPRESSAO"].includes(trabalho.status)) throw new Error("Este álbum não pode mais ser reaberto.");
+    if (!["RECEBIDO", "PRONTO_IMPRESSAO"].includes(trabalho.status)) throw new Error("Este álbum não pode mais ser reaberto.");
 
     const { data: montagemAtual, error: erroMontagemAtual } = await context.supabase
       .from("foto_express_montagens")
@@ -356,10 +356,10 @@ export const reabrirEdicaoPortalFotoExpress = createServerFn({ method: "POST" })
 
     const { data: reaberto, error } = await context.supabase
       .from("foto_express_trabalhos")
-      .update({ portal_enviado_em: null, status: "EM_EDICAO" })
+      .update({ portal_enviado_em: null, status: "PORTAL" })
       .eq("id", data.trabalhoId)
       .eq("origem_portal", true)
-      .in("status", ["EM_EDICAO", "PRONTO_IMPRESSAO"])
+      .in("status", ["RECEBIDO", "PRONTO_IMPRESSAO"])
       .not("portal_enviado_em", "is", null)
       .select("id")
       .maybeSingle();

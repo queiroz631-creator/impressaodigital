@@ -344,6 +344,13 @@
       "when": 1791161662170,
       "tag": "0048_foto_express_nome_portal_formato",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1791250207477,
+      "tag": "0049_foto_express_status_portal_recebido",
+      "breakpoints": true
     }
   ]
 }

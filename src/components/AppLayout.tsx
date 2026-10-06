@@ -78,6 +78,21 @@ export function AppLayout({
 
   useEffect(() => setAberto(false), [pathname]);
 
+  useEffect(() => {
+    try {
+      const salvo = window.localStorage.getItem("menu-grupos-abertos");
+      if (salvo) setGruposAbertos(JSON.parse(salvo) as Record<string, boolean>);
+    } catch { /* Mantém o menu funcional quando o armazenamento não está disponível. */ }
+  }, []);
+
+  const alternarGrupo = (grupoId: string, expandido: boolean) => {
+    setGruposAbertos((atuais) => {
+      const proximos = { ...atuais, [grupoId]: !expandido };
+      try { window.localStorage.setItem("menu-grupos-abertos", JSON.stringify(proximos)); } catch { /* Sem persistência, o estado atual continua válido. */ }
+      return proximos;
+    });
+  };
+
   if (loading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -111,7 +126,7 @@ export function AppLayout({
             <button
               type="button"
               aria-expanded={expandido}
-              onClick={() => setGruposAbertos((prev) => ({ ...prev, [grupo.id]: !expandido }))}
+               onClick={() => alternarGrupo(grupo.id, expandido)}
               className={cn(
                 "flex items-center justify-between px-3 pb-1 pt-4 text-left text-xs font-bold uppercase tracking-wider transition-colors focus:outline-none",
                 cores.titulo,
