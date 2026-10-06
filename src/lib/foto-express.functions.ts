@@ -23,9 +23,10 @@ async function executarLimpezaStorage(limpeza: LimpezaStorage) {
     : await referencia.eq("original_path", limpeza.original_path).maybeSingle();
   if (erroReferencia) return [`Verificação da referência: ${erroReferencia.message}`];
   if (arquivoAtivo) return ["A limpeza foi mantida pendente porque o arquivo ainda está em uso."];
+  const mesmoObjeto = limpeza.original_bucket === limpeza.thumbnail_bucket && limpeza.original_path === limpeza.thumbnail_path;
   const [original, thumbnail] = await Promise.all([
     supabaseAdmin.storage.from(limpeza.original_bucket).remove([limpeza.original_path]),
-    supabaseAdmin.storage.from(limpeza.thumbnail_bucket).remove([limpeza.thumbnail_path]),
+    mesmoObjeto ? Promise.resolve({ error: null }) : supabaseAdmin.storage.from(limpeza.thumbnail_bucket).remove([limpeza.thumbnail_path]),
   ]);
   const erros = [original.error?.message, thumbnail.error?.message].filter(Boolean);
   const { error: erroAtualizacao } = await supabaseAdmin
@@ -175,6 +176,20 @@ export const excluirItensFotoExpress = createServerFn({ method: "POST" })
       limpezasPendentes: resultados.filter((lista) => lista.length > 0).length,
       avisos: [...erros, ...errosAnteriores],
     };
+  });
+
+export const excluirAlbumFotoExpress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ trabalhoId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: limpezas, error } = await context.supabase.rpc("foto_express_excluir_album", {
+      _trabalho_id: data.trabalhoId,
+    });
+    if (error) throw new Error(error.message);
+
+    const resultados = await Promise.all((limpezas ?? []).map(executarLimpezaStorage));
+    const pendentes = resultados.filter((avisos) => avisos.length > 0).length;
+    return { excluido: true, limpezasPendentes: pendentes };
   });
 
 const edicaoSchema = z.object({
