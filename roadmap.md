@@ -1,7 +1,7 @@
 # Roadmap
 
 ## FOTO EXPRESS — portal público do cliente
-- [ ] Permitir excluir um álbum e todas as fotos e arquivos relacionados com confirmação
+- [x] Permitir excluir um álbum e todas as fotos e arquivos relacionados com confirmação
 - [x] Separar os álbuns em abas por status com contadores e incluir os estados Portal e Recebido
 - [x] Exibir uma miniatura circular de uma foto do álbum nos cards da equipe
 - [x] Abrir a criação de álbum em modal e remover Novo Álbum do menu lateral
