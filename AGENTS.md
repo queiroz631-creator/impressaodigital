@@ -25,7 +25,7 @@
 - Formatos do FOTO EXPRESS podem ter um nome público independente; o portal usa esse nome e recorre ao nome interno quando ele não estiver preenchido.
 - A geração final do FOTO EXPRESS usa snapshot imutável, renderização Canvas a 300 DPI e empacotamento PDF interno com as folhas JPEG no navegador; o servidor define destinos, autoriza uploads e valida integralmente os arquivos antes de concluí-los, evitando dependências incompatíveis com o bundle publicado.
 - O editor FOTO EXPRESS usa uma lista leve de IDs para navegar; somente a foto aberta recebe URL temporária, evitando limites do Storage em trabalhos grandes.
-- O status do trabalho FOTO EXPRESS avança no banco conforme edição, confirmação da montagem e conclusão da impressão; finalizar permanece uma ação manual.
+- O fluxo de status do FOTO EXPRESS distingue criação interna, edição no portal, recebimento, preparação, impressão e finalização para organizar as filas sem misturar responsabilidades.
 - The public FOTO EXPRESS portal uses its own HttpOnly customer sessions and server-side ownership checks; customers may edit only before submission, while assembly and printing remain staff-only.
 - A staff user may reopen a portal album only before printing begins; reopening invalidates any prepared assembly before restoring customer editing.
 - The FOTO EXPRESS portal logo is managed independently from other portals and stored privately; public pages receive only temporary signed image URLs.
