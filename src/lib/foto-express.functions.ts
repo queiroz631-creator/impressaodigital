@@ -497,16 +497,16 @@ export const concluirGeracaoFotoExpress = createServerFn({ method: "POST" })
         validados.push({ id: esperado.id, tamanho: blob.size, largura: dimensoes.largura, altura: dimensoes.altura, paginas: null });
       } else {
         if (bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) throw new Error("PDF final inválido.");
-        const { PDFDocument } = await import("pdf-lib");
-        const documento = await PDFDocument.load(bytes, { updateMetadata: false });
-        if (documento.getPageCount() !== folhas.length) throw new Error("Quantidade de páginas do PDF divergente.");
-        documento.getPages().forEach((pagina, indice) => {
+        const { lerPaginasPdf } = await import("@/modules/foto-express/renderizacao/pdfValidacao");
+        const paginasPdf = lerPaginasPdf(bytes);
+        if (paginasPdf.length !== folhas.length) throw new Error("Quantidade de páginas do PDF divergente.");
+        paginasPdf.forEach((pagina, indice) => {
           const folha = folhas[indice]; if (!folha) throw new Error("Folha ausente no manifesto.");
-          const { width, height } = pagina.getSize();
+          const { width, height } = pagina;
           const larguraPt = Number(folha.largura_mm) / 25.4 * 72; const alturaPt = Number(folha.altura_mm) / 25.4 * 72;
           if (Math.abs(width - larguraPt) > 0.5 || Math.abs(height - alturaPt) > 0.5) throw new Error(`Dimensão física inválida na página ${indice + 1}.`);
         });
-        validados.push({ id: esperado.id, tamanho: blob.size, largura: null, altura: null, paginas: documento.getPageCount() });
+        validados.push({ id: esperado.id, tamanho: blob.size, largura: null, altura: null, paginas: paginasPdf.length });
       }
     }
     const { error: erroConclusao } = await context.supabase.rpc("foto_express_concluir_geracao", { _geracao_id: data.geracaoId, _arquivos: validados });
