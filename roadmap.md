@@ -1,6 +1,7 @@
 # Roadmap
 
 ## WhatsApp — impressão de dados do cliente
+- [ ] Adicionar impressão pelo navegador no modal, independente do QZ Tray
 - [x] Modal com nome editável salvo no cadastro, telefone, data, pagamento destacado, descrição e usuário logado
 - [x] Impressão térmica 80 mm via QZ Tray com impressora padrão
 - [x] Validar valores, estados de pagamento, escape HTML, comprovante fictício e compilação sem alterar clientes reais

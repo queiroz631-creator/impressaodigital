@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { useConfiguracao } from "@/hooks/useDados";
 import { listarImpressoras, imprimirComprovante80mm } from "@/lib/impressora";
+import { imprimirComprovanteNavegador } from "@/lib/whatsapp-comprovante-navegador";
 import { htmlComprovante, pagamentoComprovante, valorComprovante, type PagamentoComprovante } from "@/lib/whatsapp-comprovante";
 import { prepararClienteImpressao, salvarNomeClienteImpressao } from "@/lib/whatsapp-cliente-impressao.functions";
 import { normalizarNomePessoa } from "@/lib/nome-pessoa";
@@ -67,11 +68,11 @@ export function ImprimirClienteDialog({ conversaId }: { conversaId: string }) {
   const destaque = pagamentoComprovante({ ...dados, valor: Number.isFinite(dados.valor) ? dados.valor : 0 });
   const mudouNome = normalizarNomePessoa(nome) !== normalizarNomePessoa(cadastro.data?.nome);
 
-  async function executar(imprimir: boolean) {
+  async function executar(imprimir: boolean, metodo: "qz" | "navegador" = "qz") {
     if (!normalizarNomePessoa(nome)) { toast.error("Informe o nome do cliente."); return; }
     if (imprimir && (!Number.isFinite(dados.valor) || dados.valor < 0)) { toast.error("Informe um valor válido, por exemplo 18,50."); return; }
     if (imprimir && pagamento !== "total" && dados.valor <= 0) { toast.error("Informe o valor que falta pagar."); return; }
-    if (imprimir && !impressora) { toast.error("Selecione a impressora térmica."); return; }
+    if (imprimir && metodo === "qz" && !impressora) { toast.error("Selecione a impressora térmica."); return; }
     setOcupado(true);
     try {
       let nomeFinal = cadastro.data?.nome ?? nome;
@@ -83,8 +84,13 @@ export function ImprimirClienteDialog({ conversaId }: { conversaId: string }) {
         toast.success("Nome salvo no cadastro do cliente.");
       }
       if (imprimir) {
-        await imprimirComprovante80mm(htmlComprovante({ ...dados, nome: nomeFinal }), impressora);
-        toast.success("Impressão enviada.");
+        const html = htmlComprovante({ ...dados, nome: nomeFinal });
+        if (metodo === "navegador") {
+          await imprimirComprovanteNavegador(html);
+        } else {
+          await imprimirComprovante80mm(html, impressora);
+          toast.success("Impressão enviada.");
+        }
       }
     } catch (erro) { toast.error(erro instanceof Error ? erro.message : "Não foi possível concluir."); }
     finally { setOcupado(false); }
@@ -107,6 +113,7 @@ export function ImprimirClienteDialog({ conversaId }: { conversaId: string }) {
           <div className="grid gap-1.5"><Label>Impressora térmica — 80 mm</Label><div className="flex gap-2"><Select value={impressora} disabled={ocupado} onValueChange={setImpressora}><SelectTrigger className="min-w-0 flex-1"><SelectValue placeholder="Selecionar impressora" /></SelectTrigger><SelectContent>{opcoes.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent></Select><Button size="icon" variant="outline" aria-label="Conectar QZ Tray" title="Conectar QZ Tray" onClick={() => void conectar()} disabled={conectando || ocupado}><RefreshCw className={conectando ? "h-4 w-4 animate-spin" : "h-4 w-4"} /></Button></div>
           <Button variant="outline" size="sm" disabled={!impressora || ocupado} onClick={() => { try { localStorage.setItem(`whatsapp:termica80:${user?.id ?? ""}`, impressora); toast.success("Impressora padrão salva neste computador."); } catch { toast.error("Não foi possível salvar a impressora padrão."); } }}>Definir como padrão neste computador</Button></div>
           <Button disabled={ocupado || !dados.usuario} onClick={() => void executar(true)}><Printer className="h-4 w-4" />{ocupado ? "Aguarde…" : mudouNome ? "Salvar nome e imprimir" : "Imprimir"}</Button>
+          <Button variant="outline" disabled={ocupado || !dados.usuario} onClick={() => void executar(true, "navegador")}><Printer className="h-4 w-4" />Imprimir pelo navegador</Button>
         </div>}
       </DialogContent>
     </Dialog>
