@@ -1,9 +1,10 @@
 # Roadmap
 
 ## WhatsApp — impressão de dados do cliente
-- [ ] Modal com nome editável salvo no cadastro, telefone, data, pagamento destacado, descrição e usuário logado
-- [ ] Impressão térmica 80 mm via QZ Tray com impressora padrão
-- [ ] Validar sem alterar clientes reais nem enviar impressão de teste
+- [x] Modal com nome editável salvo no cadastro, telefone, data, pagamento destacado, descrição e usuário logado
+- [x] Impressão térmica 80 mm via QZ Tray com impressora padrão
+- [x] Validar valores, estados de pagamento, escape HTML, comprovante fictício e compilação sem alterar clientes reais
+- [ ] Validar impressão física — depende do QZ Tray e da impressora térmica no computador do usuário
 
 ## FOTO EXPRESS — portal público do cliente
 - [x] Permitir excluir um álbum e todas as fotos e arquivos relacionados com confirmação
