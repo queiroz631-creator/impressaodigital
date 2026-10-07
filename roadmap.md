@@ -274,7 +274,7 @@
 - [x] Correção do download automático (chamava método inexistente).
 - [x] Botão "Gerar backup agora": pede `POST /api/backups`, acompanha
       `GET /api/backups/status/<job_id>` e baixa o arquivo ao concluir.
-- [x] Código do servidor de backup guardado como referência em `api-local-backup/servidor/app.py`.
+- [x] Código do servidor de backup guardado como referência em `deploy/servidor-backup/app.py` (pasta api-local-backup removida após unificação).
 - [ ] Pendente do usuário: gerar o novo EXE (`gerar_exe.bat`) e instalar na máquina da loja.
 
 ## API local unificada — sincronização + backup
