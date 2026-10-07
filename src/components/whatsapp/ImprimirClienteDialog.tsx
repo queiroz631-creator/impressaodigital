@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useConfiguracao } from "@/hooks/useDados";
-import { supabase } from "@/integrations/supabase/client";
 import { listarImpressoras, imprimirComprovante80mm } from "@/lib/impressora";
 import { htmlComprovante, pagamentoComprovante, valorComprovante, type PagamentoComprovante } from "@/lib/whatsapp-comprovante";
 import { prepararClienteImpressao, salvarNomeClienteImpressao } from "@/lib/whatsapp-cliente-impressao.functions";
@@ -69,10 +68,10 @@ export function ImprimirClienteDialog({ conversaId }: { conversaId: string }) {
   const mudouNome = normalizarNomePessoa(nome) !== normalizarNomePessoa(cadastro.data?.nome);
 
   async function executar(imprimir: boolean) {
-    if (!normalizarNomePessoa(nome)) return toast.error("Informe o nome do cliente.");
-    if (imprimir && (!Number.isFinite(dados.valor) || dados.valor < 0)) return toast.error("Informe um valor válido, por exemplo 18,50.");
-    if (imprimir && pagamento !== "total" && dados.valor <= 0) return toast.error("Informe o valor que falta pagar.");
-    if (imprimir && !impressora) return toast.error("Selecione a impressora térmica.");
+    if (!normalizarNomePessoa(nome)) { toast.error("Informe o nome do cliente."); return; }
+    if (imprimir && (!Number.isFinite(dados.valor) || dados.valor < 0)) { toast.error("Informe um valor válido, por exemplo 18,50."); return; }
+    if (imprimir && pagamento !== "total" && dados.valor <= 0) { toast.error("Informe o valor que falta pagar."); return; }
+    if (imprimir && !impressora) { toast.error("Selecione a impressora térmica."); return; }
     setOcupado(true);
     try {
       let nomeFinal = cadastro.data?.nome ?? nome;
