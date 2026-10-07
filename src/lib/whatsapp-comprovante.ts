@@ -34,9 +34,9 @@ export function htmlComprovante(dados: DadosComprovante): string {
   const pagamento = pagamentoComprovante(dados);
   return `<html><head><meta charset="UTF-8"><style>
     @page{size:80mm auto;margin:0}body{width:72mm;margin:4mm;font:14px Arial,sans-serif;color:#000;background:#fff;letter-spacing:0;overflow-wrap:anywhere}
-    h1{font-size:18px;margin:0 0 12px}p{margin:8px 0;white-space:pre-wrap}.pagamento{border:2px solid #000;padding:8px 4px;font-size:18px;font-weight:bold;margin:12px 0}hr{border:0;border-top:1px dashed #000}
+    h1{font-size:18px;margin:0 0 12px}p{margin:8px 0;white-space:pre-wrap}.pagamento{width:100%;table-layout:fixed;border-collapse:collapse;margin:12px 0;page-break-inside:avoid;break-inside:avoid}.pagamento td{border:2px solid #000;padding:8px 4px;font-size:18px;font-weight:bold;word-wrap:break-word;page-break-inside:avoid;break-inside:avoid}hr{border:0;border-top:1px dashed #000}
     </style></head><body><h1>IMPRESSÃO DIGITAL</h1><hr><p><b>CLIENTE</b><br>${escapar(normalizarNomePessoa(dados.nome))}</p>
     <p><b>TELEFONE</b><br>${escapar(dados.telefone)}</p><p><b>DATA</b><br>${escapar(dados.data)}</p>
-    <div class="pagamento">${pagamento.titulo}<br>${escapar(pagamento.valor)}</div>
+    <table class="pagamento" role="presentation"><tbody><tr><td>${pagamento.titulo}<br>${escapar(pagamento.valor)}</td></tr></tbody></table>
     <p><b>DESCRIÇÃO</b><br>${escapar(dados.descricao || "—")}</p><hr><p><b>ATENDENTE</b><br>${escapar(dados.usuario)}</p></body></html>`;
 }
