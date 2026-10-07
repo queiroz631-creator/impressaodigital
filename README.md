@@ -6,7 +6,7 @@ This project was built with [Lovable](https://lovable.dev).
 
 **Live app**: https://impressaodigital.lovable.app
 
-## Build with Lovable 2
+## Build with Lovable
 
 Continue developing this project in the [Lovable editor](https://lovable.dev/projects/794a07c8-8935-4198-8eda-84887ff3d9f1).
 
