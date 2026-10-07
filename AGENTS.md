@@ -31,3 +31,4 @@
 - The FOTO EXPRESS portal logo is managed independently from other portals and stored privately; public pages receive only temporary signed image URLs.
 - WhatsApp customer tickets use a dedicated dialog and authenticated name-update functions with the user-scoped client; this updates the master customer rather than only print text.
 - WhatsApp thermal tickets share their HTML between QZ and isolated browser-frame printing, retaining the per-user, per-browser QZ printer preference; this preserves payment emphasis without changing other printer defaults.
+- WhatsApp ticket payment frames use a full-width, collapsed-border single-cell table with page splitting disabled; this keeps the frame within the printable width and avoids displaced block borders in QZ HTML rendering.
