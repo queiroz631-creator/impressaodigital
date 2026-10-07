@@ -57,6 +57,7 @@ import {
   transcreverAudioWhatsapp,
 } from "@/lib/whatsapp.functions";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
+import { ImprimirClienteDialog } from "@/components/whatsapp/ImprimirClienteDialog";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONVERSA,
@@ -1473,6 +1474,8 @@ function Conversa({
             {conversa.atendente_nome ? ` · ${conversa.atendente_nome}` : ""}
           </p>
         </div>
+
+        <ImprimirClienteDialog key={conversa.id} conversaId={conversa.id} />
 
         <Select
           value=""

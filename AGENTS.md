@@ -29,3 +29,5 @@
 - The public FOTO EXPRESS portal uses its own HttpOnly customer sessions and server-side ownership checks; customers may edit only before submission, while assembly and printing remain staff-only.
 - A staff user may reopen a portal album only before printing begins; reopening invalidates any prepared assembly before restoring customer editing.
 - The FOTO EXPRESS portal logo is managed independently from other portals and stored privately; public pages receive only temporary signed image URLs.
+- WhatsApp customer tickets use a dedicated dialog and authenticated name-update functions with the user-scoped client; this updates the master customer rather than only print text.
+- WhatsApp thermal tickets reuse the QZ connection with HTML output at 80 mm and a per-user, per-browser printer preference; this preserves payment emphasis without changing other printer defaults.
