@@ -1,5 +1,10 @@
 # Roadmap
 
+## Correção — Storage no deploy da VPS
+- [ ] Atualizar buckets existentes, criar somente após resposta de inexistência e tratar conflito 409
+- [ ] Explicar erros de limite e acesso sem reduzir limites nem remover arquivos
+- [ ] Testar respostas simuladas sem conectar à VPS
+
 ## Correção — ordem das migrações na VPS
 - [x] Renomear a migração do nome público do formato sem alterar seu SQL
 - [x] Bloquear nomes não datados e datas duplicadas antes de acessar o banco
