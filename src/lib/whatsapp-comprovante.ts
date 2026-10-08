@@ -41,11 +41,14 @@ function escapar(valor: string) {
 // Print-only ink values are intentionally independent from the application theme.
 export function htmlComprovante(dados: DadosComprovante): string {
   const pagamento = pagamentoComprovante(dados);
+  // QZ's HTML renderer can displace HR/border fragments to the end of the roll.
+  // Text separators participate in normal text flow and do not draw borders.
+  const separador = '<p class="separador">--------------------------------</p>';
   return `<html><head><meta charset="UTF-8"><style>
     @page{size:80mm auto;margin:0}body{width:72mm;margin:4mm;font:14px Arial,sans-serif;color:#000;background:#fff;letter-spacing:0;overflow-wrap:anywhere}
-    h1{font-size:18px;margin:0 0 12px}p{margin:8px 0;white-space:pre-wrap}.pagamento{margin:12px 0;page-break-inside:avoid;break-inside:avoid}.pagamento p{margin:8px 4px;font-size:18px;font-weight:bold;word-wrap:break-word}hr{border:0;border-top:1px dashed #000}.pagamento hr{border-top:2px solid #000;margin:0}
-    </style></head><body><h1>IMPRESSÃO DIGITAL</h1><hr><p><b>CLIENTE</b><br>${escapar(normalizarNomePessoa(dados.nome))}</p>
+    h1{font-size:18px;margin:0 0 12px}p{margin:8px 0;white-space:pre-wrap}.pagamento{margin:12px 0;page-break-inside:avoid;break-inside:avoid}.pagamento .valores{margin:8px 4px;font-size:18px;font-weight:bold;word-wrap:break-word}.separador{margin:0;font:14px "Courier New",monospace;white-space:nowrap}
+    </style></head><body><h1>IMPRESSÃO DIGITAL</h1>${separador}<p><b>CLIENTE</b><br>${escapar(normalizarNomePessoa(dados.nome))}</p>
     <p><b>TELEFONE</b><br>${escapar(dados.telefone)}</p><p><b>DATA</b><br>${escapar(dados.data)}</p>
-    <div class="pagamento"><hr><p>${pagamento.titulo}<br>${pagamento.detalhes.map(linha => `${escapar(linha)}<br>`).join("")}${escapar(pagamento.valor)}</p><hr></div>
-    <p><b>DESCRIÇÃO</b><br>${escapar(dados.descricao || "—")}</p><hr><p><b>ATENDENTE</b><br>${escapar(dados.usuario)}</p></body></html>`;
+    <div class="pagamento">${separador}<p class="valores">${pagamento.titulo}<br>${pagamento.detalhes.map(linha => `${escapar(linha)}<br>`).join("")}${escapar(pagamento.valor)}</p>${separador}</div>
+    <p><b>DESCRIÇÃO</b><br>${escapar(dados.descricao || "—")}</p>${separador}<p><b>ATENDENTE</b><br>${escapar(dados.usuario)}</p></body></html>`;
 }
