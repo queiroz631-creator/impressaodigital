@@ -3,7 +3,7 @@
 ## QZ — certificado próprio para Windows
 - [x] Preparar assinatura autenticada e validação de operações locais
 - [x] Preparar geração protegida na VPS e instalação de confiança no Windows
-- [ ] Validar assinatura e bloqueios com dados sintéticos
+- [x] Validar assinatura RSA/SHA-512 e bloqueios com dados sintéticos; conferir compilação e sintaxe dos scripts
 - [ ] Usuário: gerar certificado na VPS, executar deploy e instalar confiança nos Windows (sem acesso remoto disponível)
 
 ## Correção — nomes dos anexos do WhatsApp

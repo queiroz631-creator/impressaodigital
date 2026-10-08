@@ -14,7 +14,7 @@ export async function configurarSegurancaQz(api: any): Promise<void> {
     }
     return hash;
   });
-  api.security.setCertificatePromise((resolve: (value: string) => void) => resolve(certificado));
+  api.security.setCertificatePromise((resolve: (value: string) => void) => resolve(certificado), { rejectOnFailure: true });
   api.security.setSignatureAlgorithm("SHA512");
   api.security.setSignaturePromise((hash: string) => async (resolve: (value: string) => void, reject: (error: unknown) => void) => {
     const mensagem = mensagens.get(hash);
