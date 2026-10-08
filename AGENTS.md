@@ -9,6 +9,8 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
+- VPS migrations must use unique 14-digit timestamp filenames in dependency order; the deploy validates names before database access to prevent numbered files from running before table creation.
+
 - O aplicativo Windows unificado vive em `api-local/`: sincronização e backup compartilham janela, bandeja e inicialização, mas mantêm tokens e rotinas independentes para evitar regressões.
 - O FOTO EXPRESS vive isolado em `src/modules/foto-express/`; originais, thumbnails e impressões usam buckets privados separados, e itens duplicados reutilizam o mesmo arquivo original para manter a edição não destrutiva.
 - No editor FOTO EXPRESS, formato/zoom/posição/rotação/orientação/modo são canônicos e salvos atomicamente; a orientação não altera as dimensões cadastradas, mas gira a proporção exibida na Galeria e no editor; o crop é derivado e normalizado nas coordenadas do original.
