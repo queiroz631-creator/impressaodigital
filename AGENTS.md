@@ -11,6 +11,7 @@
 
 - VPS migrations must use unique 14-digit timestamp filenames in dependency order; the deploy validates names before database access to prevent numbered files from running before table creation.
 - VPS Storage provisioning updates existing buckets, creates only after an explicit not-found response, retries creation conflicts as updates, and fails clearly on access/size errors without deleting objects or silently lowering limits.
+- WhatsApp incoming media storage paths use conversation/file UUIDs and a bounded safe extension through a pure helper, never received filenames or URLs; this prevents filesystem name limits and token leakage while keeping display metadata separate and retries stable.
 
 - O aplicativo Windows unificado vive em `api-local/`: sincronização e backup compartilham janela, bandeja e inicialização, mas mantêm tokens e rotinas independentes para evitar regressões.
 - O FOTO EXPRESS vive isolado em `src/modules/foto-express/`; originais, thumbnails e impressões usam buckets privados separados, e itens duplicados reutilizam o mesmo arquivo original para manter a edição não destrutiva.
