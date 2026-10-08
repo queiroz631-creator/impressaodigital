@@ -14,14 +14,17 @@ const dados: DadosComprovante = {
 };
 
 describe("destaque de pagamento no comprovante térmico", () => {
-  it("usa separadores de texto sem bordas desenhadas pelo QZ", () => {
+  it("restaura o quadro e reduz somente a fonte do pagamento", () => {
     const html = htmlComprovante(dados);
-    expect(html).toContain('<div class="pagamento"><p class="separador">');
+    expect(html).toContain('<div class="pagamento"><p class="valores">');
     expect(html).toContain('<p class="valores">PAGAMENTO PARCIAL');
-    expect(html.match(/<p class="separador">/g)).toHaveLength(4);
+    expect(html.match(/<p class="separador">/g)).toHaveLength(2);
     expect(html).not.toContain('<hr');
     expect(html).not.toContain('<table');
-    expect(html).not.toContain('border');
+    expect(html).toContain('border:1px solid #000;box-sizing:border-box');
+    expect(html).toContain('.pagamento .valores{margin:8px 4px;font-size:16px');
+    expect(html).toContain('font:14px Arial,sans-serif');
+    expect(html).toContain('h1{font-size:18px');
     expect(html).toContain('font-weight:bold');
     expect(html).toContain('page-break-inside:avoid');
   });
