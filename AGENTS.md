@@ -9,7 +9,7 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- VPS migrations must use unique 14-digit timestamp filenames in dependency order; the deploy validates names before database access to prevent numbered files from running before table creation.
+- VPS migrations use unique 14-digit timestamps in dependency order; deploy validates filenames before database access so table creation precedes dependent migrations.
 - VPS Storage provisioning updates existing buckets, creates only after an explicit not-found response, retries creation conflicts as updates, and fails clearly on access/size errors without deleting objects or silently lowering limits.
 - WhatsApp incoming media storage paths use conversation/file UUIDs and a bounded safe extension through a pure helper, never received filenames or URLs; this prevents filesystem name limits and token leakage while keeping display metadata separate and retries stable.
 
