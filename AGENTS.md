@@ -13,7 +13,7 @@
 - VPS Storage provisioning updates existing buckets, creates only after an explicit not-found response, retries creation conflicts as updates, and fails clearly on access/size errors without deleting objects or silently lowering limits.
 - WhatsApp incoming media storage paths use conversation/file UUIDs and a bounded safe extension through a pure helper, never received filenames or URLs; this prevents filesystem name limits and token leakage while keeping display metadata separate and retries stable.
 
-- O aplicativo Windows unificado vive em `api-local/`: sincronização e backup compartilham janela, bandeja e inicialização, mas mantêm tokens e rotinas independentes para evitar regressões.
+- Windows sync/backup share `api-local/` UI/tray but keep tokens and routines independent to avoid regressions.
 - O FOTO EXPRESS vive isolado em `src/modules/foto-express/`; originais, thumbnails e impressões usam buckets privados separados, e itens duplicados reutilizam o mesmo arquivo original para manter a edição não destrutiva.
 - No editor FOTO EXPRESS, formato/zoom/posição/rotação/orientação/modo são canônicos e salvos atomicamente; a orientação não altera as dimensões cadastradas, mas gira a proporção exibida na Galeria e no editor; o crop é derivado e normalizado nas coordenadas do original.
 - Textos do FOTO EXPRESS pertencem ao item e usam posição, largura e tamanho normalizados sobre a área física completa do formato, independentes da transformação da fotografia.
@@ -35,4 +35,6 @@
 - The FOTO EXPRESS portal logo is managed independently from other portals and stored privately; public pages receive only temporary signed image URLs.
 - WhatsApp customer tickets use a dedicated dialog and authenticated name-update functions with the user-scoped client; this updates the master customer rather than only print text.
 - WhatsApp thermal tickets share their HTML between QZ and isolated browser-frame printing, retaining the per-user, per-browser QZ printer preference; this preserves payment emphasis without changing other printer defaults.
-- WhatsApp ticket payment frames use a full-width, collapsed-border single-cell table with page splitting disabled; this keeps the frame within the printable width and avoids displaced block borders in QZ HTML rendering.
+- WhatsApp payment frames use a full-width collapsed-border table without page splitting to prevent displaced QZ borders.
+
+- QZ signing authenticates users, validates fresh printer-only JSON and signs its SHA-256 digest with RSA/SHA-512; private keys stay outside Git on the VPS and Windows gets only the public certificate to prevent key exposure.
