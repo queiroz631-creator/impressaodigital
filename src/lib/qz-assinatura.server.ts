@@ -6,15 +6,18 @@ export function validarPedidoQz(mensagem: string, agora = Date.now()) {
   if (!pedido || typeof pedido !== "object" || Array.isArray(pedido)) throw new Error("Pedido QZ inválido.");
   const p = pedido as Record<string, unknown>;
   if (Object.keys(p).some((k) => !["call", "params", "timestamp"].includes(k))) throw new Error("Pedido QZ inválido.");
-  if (!["printers.find", "printers.getDefault", "print"].includes(String(p.call))) throw new Error("Operação QZ não autorizada.");
-  if (typeof p.timestamp !== "number" || !Number.isFinite(p.timestamp) || Math.abs(agora - p.timestamp) > 120_000) throw new Error("Pedido QZ expirado. Confira o relógio do computador.");
-  if (p.call === "print") {
-    const params = p.params as { printer?: unknown; data?: unknown } | undefined;
+  if (!["printers.find", "printers.getDefault", "print"].includes(String(p['call']))) throw new Error("Operação QZ não autorizada.");
+  if (typeof p['timestamp'] !== "number" || !Number.isFinite(p['timestamp']) || Math.abs(agora - p['timestamp']) > 120_000) throw new Error("Pedido QZ expirado. Confira o relógio do computador.");
+  if (p['call'] === "print") {
+    const params = p['params'] as { printer?: unknown; data?: unknown } | undefined;
     if (!params || typeof params !== "object" || !Array.isArray(params.data) || params.data.length === 0) throw new Error("Impressão QZ inválida.");
     const printer = params.printer;
     if (typeof printer !== "object" || printer === null || !("name" in printer) || typeof printer.name !== "string" || !printer.name.trim() || "file" in printer || "host" in printer) throw new Error("Use uma impressora instalada no computador.");
     for (const item of params.data) {
-      if (!item || typeof item !== "object" || !["plain", "base64"].includes(item.flavor) || !["pixel", "raw"].includes(item.type) || typeof item.data !== "string") throw new Error("Somente dados locais de impressão são permitidos.");
+      if (!item || typeof item !== "object" || typeof item.data !== "string") throw new Error("Somente dados locais de impressão são permitidos.");
+      const pixel = item.type === "pixel" && ((item.format === "html" && item.flavor === "plain") || (item.format === "pdf" && item.flavor === "base64"));
+      const raw = item.type === "raw" && ["plain", "hex", "command"].includes(item.format) && (item.flavor === undefined || ["plain", "hex", "base64"].includes(item.flavor));
+      if (!pixel && !raw) throw new Error("Somente dados locais de impressão são permitidos.");
     }
   }
   return p;
