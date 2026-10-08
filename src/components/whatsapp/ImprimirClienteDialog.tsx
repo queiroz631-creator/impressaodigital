@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useConfiguracao } from "@/hooks/useDados";
 import { listarImpressoras, imprimirComprovante80mm } from "@/lib/impressora";
 import { imprimirComprovanteNavegador } from "@/lib/whatsapp-comprovante-navegador";
-import { htmlComprovante, pagamentoComprovante, valorComprovante, type PagamentoComprovante } from "@/lib/whatsapp-comprovante";
+import { htmlComprovante, pagamentoComprovante, saldoComprovante, valorComprovante, type PagamentoComprovante } from "@/lib/whatsapp-comprovante";
 import { prepararClienteImpressao, salvarNomeClienteImpressao } from "@/lib/whatsapp-cliente-impressao.functions";
 import { normalizarNomePessoa } from "@/lib/nome-pessoa";
 import { formatarTelefone } from "@/lib/whatsapp-comum";
@@ -23,6 +23,8 @@ export function ImprimirClienteDialog({ conversaId }: { conversaId: string }) {
   const [nome, setNome] = useState("");
   const [pagamento, setPagamento] = useState<PagamentoComprovante>("nao_pago");
   const [valor, setValor] = useState("");
+  const [valorServico, setValorServico] = useState("");
+  const [valorPago, setValorPago] = useState("");
   const [descricao, setDescricao] = useState("");
   const [data, setData] = useState("");
   const [impressora, setImpressora] = useState("");
@@ -56,7 +58,7 @@ export function ImprimirClienteDialog({ conversaId }: { conversaId: string }) {
     if (ocupado) return;
     setAberto(estado);
     if (!estado) return;
-    setNome(""); setValor(""); setDescricao(""); setPagamento("nao_pago");
+    setNome(""); setValor(""); setValorServico(""); setValorPago(""); setDescricao(""); setPagamento("nao_pago");
     setData(new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }));
     let padrao = "";
     try { padrao = localStorage.getItem(`whatsapp:termica80:${user?.id ?? ""}`) ?? ""; } catch { /* optional preference */ }
@@ -64,12 +66,19 @@ export function ImprimirClienteDialog({ conversaId }: { conversaId: string }) {
     void conectar();
   }
 
-  const dados = { nome, telefone: formatarTelefone(cadastro.data?.telefone ?? ""), data, pagamento, valor: valorComprovante(valor), descricao, usuario: cadastro.data?.usuario ?? "" };
-  const destaque = pagamentoComprovante({ ...dados, valor: Number.isFinite(dados.valor) ? dados.valor : 0 });
+  const servicoNumerico = valorComprovante(valorServico);
+  const pagoNumerico = valorComprovante(valorPago);
+  const dados = { nome, telefone: formatarTelefone(cadastro.data?.telefone ?? ""), data, pagamento, valor: pagamento === "parcial" ? saldoComprovante(servicoNumerico, pagoNumerico) : valorComprovante(valor), valorServico: pagamento === "parcial" ? servicoNumerico : undefined, valorPago: pagamento === "parcial" ? pagoNumerico : undefined, descricao, usuario: cadastro.data?.usuario ?? "" };
+  const destaque = pagamentoComprovante({ ...dados, valor: Number.isFinite(dados.valor) && dados.valor >= 0 ? dados.valor : 0, valorServico: Number.isFinite(dados.valorServico) ? dados.valorServico : undefined, valorPago: Number.isFinite(dados.valorPago) ? dados.valorPago : undefined });
   const mudouNome = normalizarNomePessoa(nome) !== normalizarNomePessoa(cadastro.data?.nome);
 
   async function executar(imprimir: boolean, metodo: "qz" | "navegador" = "qz") {
     if (!normalizarNomePessoa(nome)) { toast.error("Informe o nome do cliente."); return; }
+    if (imprimir && pagamento === "parcial") {
+      if (!Number.isFinite(servicoNumerico) || servicoNumerico <= 0) { toast.error("Informe um valor válido para o serviço."); return; }
+      if (!Number.isFinite(pagoNumerico) || pagoNumerico <= 0) { toast.error("Informe o valor pago. Se não houve pagamento, selecione Não pago."); return; }
+      if (pagoNumerico >= servicoNumerico) { toast.error("No pagamento parcial, o valor pago deve ser menor que o valor do serviço."); return; }
+    }
     if (imprimir && (!Number.isFinite(dados.valor) || dados.valor < 0)) { toast.error("Informe um valor válido, por exemplo 18,50."); return; }
     if (imprimir && pagamento !== "total" && dados.valor <= 0) { toast.error("Informe o valor que falta pagar."); return; }
     if (imprimir && metodo === "qz" && !impressora) { toast.error("Selecione a impressora térmica."); return; }
@@ -106,8 +115,11 @@ export function ImprimirClienteDialog({ conversaId }: { conversaId: string }) {
           <div className="grid gap-1.5"><Label htmlFor="ticket-nome">Nome</Label><div className="flex gap-2"><Input id="ticket-nome" value={nome} maxLength={200} disabled={ocupado} onChange={e => setNome(e.target.value)} /><Button size="icon" variant="outline" aria-label="Salvar nome no cadastro" title="Salvar nome no cadastro" disabled={ocupado || !mudouNome} onClick={() => void executar(false)}><Save className="h-4 w-4" /></Button></div></div>
           <div className="grid grid-cols-2 gap-3"><div><Label>Telefone</Label><p className="break-words text-sm">{dados.telefone}</p></div><div><Label>Data atual</Label><p className="text-sm">{data}</p></div></div>
           <div className="grid gap-1.5"><Label>Pagamento</Label><Select value={pagamento} disabled={ocupado} onValueChange={v => setPagamento(v as PagamentoComprovante)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="total">Total</SelectItem><SelectItem value="parcial">Parcial</SelectItem><SelectItem value="nao_pago">Não pago</SelectItem></SelectContent></Select></div>
-          <div className="grid gap-1.5"><Label htmlFor="ticket-valor">{pagamento === "total" ? "Valor pago (R$)" : "Valor que falta pagar (R$)"}</Label><Input id="ticket-valor" inputMode="decimal" value={valor} disabled={ocupado} onChange={e => setValor(e.target.value)} placeholder="0,00" /></div>
-          <div className="border-l-4 border-primary bg-muted p-3 font-bold" aria-live="polite"><p>{destaque.titulo}</p><p>{destaque.valor}</p></div>
+          {pagamento === "parcial" ? <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-1.5"><Label htmlFor="ticket-servico">Valor do serviço (R$)</Label><Input id="ticket-servico" inputMode="decimal" value={valorServico} disabled={ocupado} onChange={e => setValorServico(e.target.value)} placeholder="0,00" /></div>
+            <div className="grid gap-1.5"><Label htmlFor="ticket-pago">Valor pago (R$)</Label><Input id="ticket-pago" inputMode="decimal" value={valorPago} disabled={ocupado} onChange={e => setValorPago(e.target.value)} placeholder="0,00" /></div>
+          </div> : <div className="grid gap-1.5"><Label htmlFor="ticket-valor">{pagamento === "total" ? "Valor pago (R$)" : "Valor que falta pagar (R$)"}</Label><Input id="ticket-valor" inputMode="decimal" value={valor} disabled={ocupado} onChange={e => setValor(e.target.value)} placeholder="0,00" /></div>}
+          <div className="border-l-4 border-primary bg-muted p-3 font-bold" aria-live="polite"><p>{destaque.titulo}</p>{destaque.detalhes.map(linha => <p key={linha} className="text-sm font-normal">{linha}</p>)}<p>{destaque.valor}</p></div>
           <div className="grid gap-1.5"><Label htmlFor="ticket-descricao">Descrição</Label><Textarea id="ticket-descricao" value={descricao} maxLength={4000} disabled={ocupado} onChange={e => setDescricao(e.target.value)} /></div>
           <div><Label>Usuário</Label><p className="text-sm">{dados.usuario}</p></div>
           <div className="grid gap-1.5"><Label>Impressora térmica — 80 mm</Label><div className="flex gap-2"><Select value={impressora} disabled={ocupado} onValueChange={setImpressora}><SelectTrigger className="min-w-0 flex-1"><SelectValue placeholder="Selecionar impressora" /></SelectTrigger><SelectContent>{opcoes.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}</SelectContent></Select><Button size="icon" variant="outline" aria-label="Conectar QZ Tray" title="Conectar QZ Tray" onClick={() => void conectar()} disabled={conectando || ocupado}><RefreshCw className={conectando ? "h-4 w-4 animate-spin" : "h-4 w-4"} /></Button></div>
