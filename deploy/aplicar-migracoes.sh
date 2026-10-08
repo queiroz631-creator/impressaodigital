@@ -37,6 +37,12 @@ psql_valor() {
 
 titulo "MIGRAÇÕES DO BANCO"
 
+# Validar antes de conectar ou criar a tabela de controle: nomes não datados
+# podem ordenar alterações antes das migrações que criam suas dependências.
+if ! bash "$RAIZ/deploy/validar-migracoes.sh"; then
+  exit 1
+fi
+
 # --- 1. container -----------------------------------------------------------
 if ! command -v docker >/dev/null 2>&1; then
   erro "Docker não encontrado nesta máquina. Rode este script na VPS."

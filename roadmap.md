@@ -1,5 +1,10 @@
 # Roadmap
 
+## Correção — ordem das migrações na VPS
+- [x] Renomear a migração do nome público do formato sem alterar seu SQL
+- [x] Bloquear nomes não datados e datas duplicadas antes de acessar o banco
+- [x] Validar a ordem corrigida e testar as proteções sem usar banco real
+
 ## WhatsApp — impressão de dados do cliente
 - [x] Adicionar impressão pelo navegador no modal, independente do QZ Tray; validada com comprovante fictício e chamada de impressão interceptada
 - [x] Modal com nome editável salvo no cadastro, telefone, data, pagamento destacado, descrição e usuário logado
