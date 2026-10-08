@@ -3,12 +3,12 @@ import { z } from "zod";
 import { normalizarNomePessoa } from "@/lib/nome-pessoa";
 import { normalizarCpf, validarCpf, validarDataNascimento, validarNomeCompleto } from "@/modules/sorteios/validations/cliente";
 import { ErroPortalFotos, carregarSessaoFotos, criarSessaoFotos, exigirTrabalhoCliente, fotoPortalAdmin, limitarPortalFotos, sairPortalFotos } from "./foto-express-portal.server";
-import { calcularOrcamentoFotoExpress } from "@/modules/foto-express/lib/montagem";
+import { calcularOrcamentoFotoExpress, ErroMontagemFoto } from "@/modules/foto-express/lib/montagem";
 import { orientacaoDaImagem } from "@/modules/foto-express/lib/transformacaoFoto";
 import type { ItemGaleria, PapelFoto } from "@/modules/foto-express/types";
 
 export type ResultadoFotos<T> = { ok: true; dados: T } | { ok: false; codigo: string; mensagem: string };
-async function executar<T>(fn: () => Promise<T>): Promise<ResultadoFotos<T>> { try { return { ok: true, dados: await fn() }; } catch (e) { if (e instanceof ErroPortalFotos) return { ok: false, codigo: e.codigo, mensagem: e.message }; console.error("[foto-express-portal]", e); return { ok: false, codigo: "ERRO", mensagem: "Não foi possível concluir agora. Tente novamente." }; } }
+async function executar<T>(fn: () => Promise<T>): Promise<ResultadoFotos<T>> { try { return { ok: true, dados: await fn() }; } catch (e) { if (e instanceof ErroPortalFotos) return { ok: false, codigo: e.codigo, mensagem: e.message }; if (e instanceof ErroMontagemFoto) return { ok: false, codigo: "PAPEL_INCOMPATIVEL", mensagem: e.message }; console.error("[foto-express-portal]", e); return { ok: false, codigo: "ERRO", mensagem: "Não foi possível concluir agora. Tente novamente." }; } }
 const digitos = (valor?: string | null) => { let d = (valor ?? "").replace(/\D/g, "").replace(/^0+/, ""); if (d.startsWith("55") && d.length > 11) d = d.slice(2); return d; };
 const telefoneConfere = (informado: string, telefone?: string | null, normalizado?: string | null) => { const a = digitos(informado); return a.length >= 10 && (a === digitos(telefone) || a === digitos(normalizado)); };
 const esquemaCpf = z.object({ cpf: z.string().trim().min(1).max(20) });
