@@ -8,6 +8,8 @@ export interface DadosComprovante {
   data: string;
   pagamento: PagamentoComprovante;
   valor: number;
+  valorServico?: number;
+  valorPago?: number;
   descricao: string;
   usuario: string;
 }
@@ -18,10 +20,17 @@ export function valorComprovante(texto: string): number {
   return Number(limpo.replace(",", "."));
 }
 
+export function saldoComprovante(valorServico: number, valorPago: number): number {
+  return (Math.round(valorServico * 100) - Math.round(valorPago * 100)) / 100;
+}
+
 export function pagamentoComprovante(dados: DadosComprovante) {
   return {
     titulo: dados.pagamento === "total" ? "PAGAMENTO TOTAL" : dados.pagamento === "parcial" ? "PAGAMENTO PARCIAL" : "NÃO PAGO",
     valor: `${dados.pagamento === "total" ? "VALOR PAGO" : "FALTA PAGAR"}: ${brl(dados.valor)}`,
+    detalhes: dados.pagamento === "parcial" && dados.valorServico !== undefined && dados.valorPago !== undefined
+      ? [`VALOR DO SERVIÇO: ${brl(dados.valorServico)}`, `VALOR PAGO: ${brl(dados.valorPago)}`]
+      : [],
   };
 }
 
@@ -37,6 +46,6 @@ export function htmlComprovante(dados: DadosComprovante): string {
     h1{font-size:18px;margin:0 0 12px}p{margin:8px 0;white-space:pre-wrap}.pagamento{width:100%;table-layout:fixed;border-collapse:collapse;margin:12px 0;page-break-inside:avoid;break-inside:avoid}.pagamento td{border:2px solid #000;padding:8px 4px;font-size:18px;font-weight:bold;word-wrap:break-word;page-break-inside:avoid;break-inside:avoid}hr{border:0;border-top:1px dashed #000}
     </style></head><body><h1>IMPRESSÃO DIGITAL</h1><hr><p><b>CLIENTE</b><br>${escapar(normalizarNomePessoa(dados.nome))}</p>
     <p><b>TELEFONE</b><br>${escapar(dados.telefone)}</p><p><b>DATA</b><br>${escapar(dados.data)}</p>
-    <table class="pagamento" role="presentation"><tbody><tr><td>${pagamento.titulo}<br>${escapar(pagamento.valor)}</td></tr></tbody></table>
+    <table class="pagamento" role="presentation"><tbody><tr><td>${pagamento.titulo}<br>${pagamento.detalhes.map(linha => `${escapar(linha)}<br>`).join("")}${escapar(pagamento.valor)}</td></tr></tbody></table>
     <p><b>DESCRIÇÃO</b><br>${escapar(dados.descricao || "—")}</p><hr><p><b>ATENDENTE</b><br>${escapar(dados.usuario)}</p></body></html>`;
 }
