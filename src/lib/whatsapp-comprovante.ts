@@ -8,8 +8,8 @@ export interface DadosComprovante {
   data: string;
   pagamento: PagamentoComprovante;
   valor: number;
-  valorServico?: number;
-  valorPago?: number;
+  valorServico?: number | undefined;
+  valorPago?: number | undefined;
   descricao: string;
   usuario: string;
 }
