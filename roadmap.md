@@ -1,5 +1,9 @@
 # Roadmap
 
+## Correção — nomes dos anexos do WhatsApp
+- [x] Usar IDs curtos e extensão segura nos novos caminhos, mantendo nomes de exibição e arquivos existentes
+- [x] Validar nomes longos, URLs com token e repetição sem acessar dados reais (9 cenários aprovados)
+
 ## Correção — Storage no deploy da VPS
 - [x] Atualizar buckets existentes, criar somente após resposta de inexistência e tratar conflito 409
 - [x] Explicar erros de limite e acesso sem reduzir limites nem remover arquivos
