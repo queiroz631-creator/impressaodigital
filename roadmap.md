@@ -1,5 +1,11 @@
 # Roadmap
 
+## QZ — certificado próprio para Windows
+- [x] Preparar assinatura autenticada e validação de operações locais
+- [x] Preparar geração protegida na VPS e instalação de confiança no Windows
+- [x] Validar assinatura RSA/SHA-512 e bloqueios com dados sintéticos; conferir compilação e sintaxe dos scripts
+- [ ] Usuário: gerar certificado na VPS, executar deploy e instalar confiança nos Windows (sem acesso remoto disponível)
+
 ## Correção — nomes dos anexos do WhatsApp
 - [x] Usar IDs curtos e extensão segura nos novos caminhos, mantendo nomes de exibição e arquivos existentes
 - [x] Validar nomes longos, URLs com token e repetição sem acessar dados reais (9 cenários aprovados)

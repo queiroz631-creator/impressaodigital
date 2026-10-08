@@ -7,6 +7,7 @@
  */
 
 import { densidadeQualidade, resumoPerfil, type PerfilImpressao } from "./perfil-impressao";
+import { configurarSegurancaQz } from "./qz-seguranca";
 
 export type MetodoImpressao = "navegador" | "qz";
 
@@ -38,12 +39,13 @@ export function carregarQz(): Promise<any | null> {
 
   if (!carregamentoQz) {
     carregamentoQz = import("qz-tray")
-      .then((mod) => {
+      .then(async (mod) => {
         const api = (mod as any).default ?? mod;
+        await configurarSegurancaQz(api);
         (window as any).qz = api;
         return api;
       })
-      .catch(() => null);
+      .catch((erro) => { ultimoErro = mensagemErro(erro); carregamentoQz = null; return null; });
   }
   return carregamentoQz;
 }
@@ -160,7 +162,7 @@ function vigiarConexao(api: any) {
 export async function conectarQz(): Promise<boolean> {
   const api = await carregarQz();
   if (!api?.websocket) {
-    ultimoErro = "Componente de impressão direta indisponível.";
+    ultimoErro ??= "Componente de impressão direta indisponível.";
     return false;
   }
 
