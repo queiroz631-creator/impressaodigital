@@ -45,7 +45,11 @@ export function carregarQz(): Promise<any | null> {
         (window as any).qz = api;
         return api;
       })
-      .catch((erro) => { ultimoErro = mensagemErro(erro); carregamentoQz = null; return null; });
+      .catch((erro) => {
+        ultimoErro = mensagemErro(erro);
+        carregamentoQz = null;
+        return null;
+      });
   }
   return carregamentoQz;
 }
@@ -251,16 +255,40 @@ export async function listarImpressoras(): Promise<string[]> {
 
 /** HTML preserves bold payment emphasis on thermal tickets without ESC/POS assumptions. */
 export async function imprimirComprovante80mm(html: string, impressora: string): Promise<void> {
-  if (!impressora.trim()) throw new Error("Selecione uma impressora térmica.");
-  if (!(await garantirConexao())) throw new Error(await motivoFalhaQz(impressora));
+  if (!impressora.trim()) {
+    throw new Error("Selecione uma impressora térmica.");
+  }
+
+  if (!(await garantirConexao())) {
+    throw new Error(await motivoFalhaQz(impressora));
+  }
+
   const api = qz();
-  if (!api) throw new Error("Inicie o QZ Tray no computador.");
+
+  if (!api) {
+    throw new Error("Inicie o QZ Tray no computador.");
+  }
+
   try {
     const config = api.configs.create(impressora, {
-      units: "mm", size: { width: 80 }, margins: 0, scaleContent: false,
+      units: "mm",
+      size: {
+        width: 80,
+        height: 100,
+      },
+      margins: 0,
+      scaleContent: false,
       jobName: "Dados do cliente — WhatsApp",
     });
-    await api.print(config, [{ type: "pixel", format: "html", flavor: "plain", data: html }]);
+
+    await api.print(config, [
+      {
+        type: "pixel",
+        format: "html",
+        flavor: "plain",
+        data: html,
+      },
+    ]);
   } catch (erro) {
     throw new Error(mensagemErro(erro));
   }
@@ -272,9 +300,7 @@ export async function obterImpressoraPadrao(configuradas: string[]): Promise<str
   if (validas.length === 0) return null;
   const disponiveis = await listarImpressoras();
   if (disponiveis.length === 0) return validas[0] ?? null;
-  const achada = validas.find((nome) =>
-    disponiveis.some((d) => d.toLowerCase() === nome.toLowerCase()),
-  );
+  const achada = validas.find((nome) => disponiveis.some((d) => d.toLowerCase() === nome.toLowerCase()));
   return achada ?? validas[0] ?? null;
 }
 
@@ -349,10 +375,7 @@ function imprimirPeloNavegador(texto?: string) {
  * Imprime a etiqueta: tenta o agente local (impressão direta) e,
  * quando indisponível, usa a caixa de impressão do navegador em 80mm.
  */
-export async function imprimirEtiqueta(
-  texto: string,
-  impressora?: string | null,
-): Promise<ResultadoImpressao> {
+export async function imprimirEtiqueta(texto: string, impressora?: string | null): Promise<ResultadoImpressao> {
   const conteudo = texto.trim() || textoDaEtiqueta();
 
   if (impressora) {
@@ -421,10 +444,7 @@ export function etiquetaDeTeste(impressora: string | null, largura = 80): string
 }
 
 /** Envia a etiqueta de teste para a impressora configurada. */
-export async function testarImpressora(
-  impressora: string | null,
-  largura = 80,
-): Promise<ResultadoImpressao> {
+export async function testarImpressora(impressora: string | null, largura = 80): Promise<ResultadoImpressao> {
   const texto = etiquetaDeTeste(impressora, largura);
   if (impressora && (await imprimirViaQz(texto, impressora))) {
     return { metodo: "qz", impressora };
@@ -432,9 +452,7 @@ export async function testarImpressora(
   return {
     metodo: "navegador",
     impressora,
-    mensagem: impressora
-      ? await motivoFalhaQz(impressora)
-      : "Adicione uma impressora antes de realizar o teste.",
+    mensagem: impressora ? await motivoFalhaQz(impressora) : "Adicione uma impressora antes de realizar o teste.",
   };
 }
 
@@ -454,12 +472,7 @@ export function opcoesDoPerfil(perfil: PerfilImpressao, impressora: string) {
   return {
     colorType: perfil.cor,
     duplex: perfil.duplex !== "nao",
-    duplexing:
-      perfil.duplex === "longa"
-        ? "duplex-long"
-        : perfil.duplex === "curta"
-          ? "duplex-short"
-          : undefined,
+    duplexing: perfil.duplex === "longa" ? "duplex-long" : perfil.duplex === "curta" ? "duplex-short" : undefined,
     orientation: perfil.orientacao === "paisagem" ? "landscape" : "portrait",
     copies: Math.max(1, Number(perfil.copias) || 1),
     density: densidadeQualidade[perfil.qualidade],
