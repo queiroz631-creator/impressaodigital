@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createHash, generateKeyPairSync, verify } from 'node:crypto';
-import { validarPedidoQz, assinarMensagemQz } from './qz-assinatura.server';
+import { validarPedidoQz, assinarMensagemQz } from '../src/lib/qz-assinatura.server';
 
 const agora = 1_800_000_000_000;
 const pedido = (call: string, params: unknown = null, timestamp = agora) => JSON.stringify({ call, params, timestamp });
