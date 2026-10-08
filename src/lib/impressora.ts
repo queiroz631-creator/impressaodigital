@@ -247,6 +247,23 @@ export async function listarImpressoras(): Promise<string[]> {
   }
 }
 
+/** HTML preserves bold payment emphasis on thermal tickets without ESC/POS assumptions. */
+export async function imprimirComprovante80mm(html: string, impressora: string): Promise<void> {
+  if (!impressora.trim()) throw new Error("Selecione uma impressora térmica.");
+  if (!(await garantirConexao())) throw new Error(await motivoFalhaQz(impressora));
+  const api = qz();
+  if (!api) throw new Error("Inicie o QZ Tray no computador.");
+  try {
+    const config = api.configs.create(impressora, {
+      units: "mm", size: { width: 80 }, margins: 0, scaleContent: false,
+      jobName: "Dados do cliente — WhatsApp",
+    });
+    await api.print(config, [{ type: "pixel", format: "html", flavor: "plain", data: html }]);
+  } catch (erro) {
+    throw new Error(mensagemErro(erro));
+  }
+}
+
 /** Primeira impressora configurada que estiver realmente disponível. */
 export async function obterImpressoraPadrao(configuradas: string[]): Promise<string | null> {
   const validas = configuradas.map((n) => n.trim()).filter(Boolean);
