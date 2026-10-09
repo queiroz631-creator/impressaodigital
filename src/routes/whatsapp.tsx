@@ -58,6 +58,7 @@ import {
 } from "@/lib/whatsapp.functions";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
 import { ImprimirClienteDialog } from "@/components/whatsapp/ImprimirClienteDialog";
+import { CurriculoClienteDialog } from "@/components/whatsapp/CurriculoClienteDialog";
 import { cn } from "@/lib/utils";
 import {
   STATUS_CONVERSA,
@@ -1489,6 +1490,7 @@ function Conversa({
         </div>
 
         <ImprimirClienteDialog key={conversa.id} conversaId={conversa.id} />
+        <CurriculoClienteDialog key={`curriculo-${conversa.id}`} conversaId={conversa.id} autor={atendente} />
 
         <Select
           value=""
