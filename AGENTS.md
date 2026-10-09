@@ -30,7 +30,7 @@
 - A geração final do FOTO EXPRESS usa snapshot imutável, renderização Canvas a 300 DPI e empacotamento PDF interno com as folhas JPEG no navegador; o servidor define destinos, autoriza uploads e valida integralmente os arquivos antes de concluí-los, evitando dependências incompatíveis com o bundle publicado.
 - O editor FOTO EXPRESS usa uma lista leve de IDs para navegar; somente a foto aberta recebe URL temporária, evitando limites do Storage em trabalhos grandes.
 - O fluxo de status do FOTO EXPRESS distingue criação interna, edição no portal, recebimento, preparação, impressão e finalização para organizar as filas sem misturar responsabilidades.
-- FOTO EXPRESS uses HttpOnly customer sessions and server ownership checks; edits stop on submission; assembly/printing are staff-only. Portal function IDs skip staff bearer attachment to avoid editor session waits.
+- FOTO EXPRESS uses HttpOnly customer sessions and server ownership checks; edits stop on submission; assembly/printing are staff-only. Portal function IDs skip staff bearer attachment to avoid session waits.
 - A staff user may reopen a portal album only before printing begins; reopening invalidates any prepared assembly before restoring customer editing.
 - The FOTO EXPRESS portal logo is managed independently from other portals and stored privately; public pages receive only temporary signed image URLs.
 - WhatsApp customer tickets use a dedicated dialog and authenticated name-update functions with the user-scoped client; this updates the master customer rather than only print text.
