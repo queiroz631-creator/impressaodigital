@@ -16,7 +16,9 @@ export type PlanoMontagem = { folhas: FolhaMontagem[]; orientacaoEscolhida: Excl
 export const cmParaMm = (cm: number) => cm * 10;
 export const mmParaPixels = (mm: number, dpi: number) => mm / 25.4 * dpi;
 
-type Peca = { itemId: string; indiceCopia: number; largura: number; altura: number };
+export class ErroMontagemFoto extends Error {}
+const medidaLegivel = (valor: number) => Number(valor.toFixed(2)).toLocaleString("pt-BR");
+type Peca = { itemId: string; indiceCopia: number; largura: number; altura: number; formatoNome: string };
 type RetanguloLivre = { x: number; y: number; largura: number; altura: number };
 type FolhaEmMontagem = FolhaMontagem & { livres: RetanguloLivre[] };
 type CriterioEncaixe = "LADO_CURTO" | "LADO_LONGO" | "AREA" | "CANTO";
@@ -32,7 +34,7 @@ function pecasDosItens(itens: ItemGaleria[]): Peca[] {
     const dimensoes = naturalPaisagem === paisagem
       ? { largura: larguraNatural, altura: alturaNatural }
       : { largura: alturaNatural, altura: larguraNatural };
-    return Array.from({ length: Math.max(0, item.quantidade) }, (_, i) => ({ itemId: item.id, indiceCopia: i + 1, ...dimensoes }));
+    return Array.from({ length: Math.max(0, item.quantidade) }, (_, i) => ({ itemId: item.id, indiceCopia: i + 1, formatoNome: item.formato?.nome_portal?.trim() || item.formato?.nome || "Personalizado", ...dimensoes }));
   }).sort((a, b) => b.largura * b.altura - a.largura * a.altura || b.altura - a.altura || a.itemId.localeCompare(b.itemId) || a.indiceCopia - b.indiceCopia);
 }
 
@@ -106,13 +108,13 @@ function montarComCriterio(pecas: Peca[], config: ConfiguracaoMontagem, criterio
   const alturaFolha = config.alturaMm;
   const utilW = larguraFolha - config.margemEsquerdaMm - config.margemDireitaMm;
   const utilH = alturaFolha - config.margemSuperiorMm - config.margemInferiorMm;
-  if (utilW <= 0 || utilH <= 0) throw new Error("As margens eliminam a área útil do papel.");
+  if (utilW <= 0 || utilH <= 0) throw new ErroMontagemFoto(`Não foi possível calcular o valor do álbum: as margens do papel “${config.papelNome}” não deixam espaço para as fotos. Entre em contato com a loja para corrigir as medidas e margens desse papel.`);
   const larguraComFolga = utilW + config.espacamentoMm;
   const alturaComFolga = utilH + config.espacamentoMm;
   const folhas: FolhaEmMontagem[] = [];
   for (const peca of ordenarPecas(pecas, ordem)) {
     const opcoes = opcoesDaPeca(peca, config.permitirRotacao, preferenciaRotacao, config.orientacaoFotos);
-    if (!opcoes.some((o) => o.w <= utilW + 1e-6 && o.h <= utilH + 1e-6)) throw new Error(`Uma peça de ${peca.largura} × ${peca.altura} mm não cabe na área útil de ${utilW} × ${utilH} mm.`);
+    if (!opcoes.some((o) => o.w <= utilW + 1e-6 && o.h <= utilH + 1e-6)) throw new ErroMontagemFoto(`Não foi possível calcular o valor do álbum: o formato “${peca.formatoNome}” (${medidaLegivel(peca.largura)} × ${medidaLegivel(peca.altura)} mm) não cabe no papel “${config.papelNome}”. A área disponível após as margens é de ${medidaLegivel(utilW)} × ${medidaLegivel(utilH)} mm. Entre em contato com a loja para corrigir o papel vinculado ao formato ou suas medidas e margens.`);
     let melhor: { folha: FolhaEmMontagem; livre: RetanguloLivre; opcao: (typeof opcoes)[number]; pontos: number[] } | null = null;
     for (const folha of folhas) for (const livre of folha.livres) for (const opcao of opcoes) {
       const larguraOcupada = opcao.w + config.espacamentoMm;

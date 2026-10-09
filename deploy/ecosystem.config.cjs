@@ -11,7 +11,9 @@ module.exports = {
       autorestart: true,
       max_memory_restart: "1G",
       // Carrega as variáveis do arquivo .env da raiz do projeto (Node 20.6+)
-      node_args: "--env-file=.env",
+      node_args: require("node:fs").existsSync("/etc/impressaodigital/qz.env")
+        ? "--env-file=.env --env-file=/etc/impressaodigital/qz.env"
+        : "--env-file=.env",
       env: {
         NODE_ENV: "production",
         PORT: 3000,

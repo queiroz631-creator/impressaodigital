@@ -9,7 +9,11 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- O aplicativo Windows unificado vive em `api-local/`: sincronização e backup compartilham janela, bandeja e inicialização, mas mantêm tokens e rotinas independentes para evitar regressões.
+- VPS migrations use unique 14-digit timestamps in dependency order; deploy validates names before database access so tables precede dependent migrations.
+- VPS Storage provisioning updates existing buckets, creates only after an explicit not-found response, retries creation conflicts as updates, and fails clearly on access/size errors without deleting objects or silently lowering limits.
+- WhatsApp incoming media storage paths use conversation/file UUIDs and a bounded safe extension through a pure helper, never received filenames or URLs; this prevents filesystem name limits and token leakage while keeping display metadata separate and retries stable.
+
+- Windows sync/backup share `api-local/` UI/tray but keep tokens and routines independent to avoid regressions.
 - O FOTO EXPRESS vive isolado em `src/modules/foto-express/`; originais, thumbnails e impressões usam buckets privados separados, e itens duplicados reutilizam o mesmo arquivo original para manter a edição não destrutiva.
 - No editor FOTO EXPRESS, formato/zoom/posição/rotação/orientação/modo são canônicos e salvos atomicamente; a orientação não altera as dimensões cadastradas, mas gira a proporção exibida na Galeria e no editor; o crop é derivado e normalizado nas coordenadas do original.
 - Textos do FOTO EXPRESS pertencem ao item e usam posição, largura e tamanho normalizados sobre a área física completa do formato, independentes da transformação da fotografia.
@@ -26,9 +30,11 @@
 - A geração final do FOTO EXPRESS usa snapshot imutável, renderização Canvas a 300 DPI e empacotamento PDF interno com as folhas JPEG no navegador; o servidor define destinos, autoriza uploads e valida integralmente os arquivos antes de concluí-los, evitando dependências incompatíveis com o bundle publicado.
 - O editor FOTO EXPRESS usa uma lista leve de IDs para navegar; somente a foto aberta recebe URL temporária, evitando limites do Storage em trabalhos grandes.
 - O fluxo de status do FOTO EXPRESS distingue criação interna, edição no portal, recebimento, preparação, impressão e finalização para organizar as filas sem misturar responsabilidades.
-- The public FOTO EXPRESS portal uses its own HttpOnly customer sessions and server-side ownership checks; customers may edit only before submission, while assembly and printing remain staff-only.
+- FOTO EXPRESS uses HttpOnly customer sessions and server ownership checks; edits stop on submission; assembly/printing are staff-only. Portal function IDs skip staff bearer attachment to avoid session waits.
 - A staff user may reopen a portal album only before printing begins; reopening invalidates any prepared assembly before restoring customer editing.
 - The FOTO EXPRESS portal logo is managed independently from other portals and stored privately; public pages receive only temporary signed image URLs.
 - WhatsApp customer tickets use a dedicated dialog and authenticated name-update functions with the user-scoped client; this updates the master customer rather than only print text.
 - WhatsApp thermal tickets share their HTML between QZ and isolated browser-frame printing, retaining the per-user, per-browser QZ printer preference; this preserves payment emphasis without changing other printer defaults.
-- WhatsApp ticket payment frames use a full-width, collapsed-border single-cell table with page splitting disabled; this keeps the frame within the printable width and avoids displaced block borders in QZ HTML rendering.
+- WhatsApp tickets frame payment only, keeping other separators as text; scoped styles preserve the rest of the receipt.
+
+- QZ signing authenticates users, validates fresh printer-only JSON and signs its SHA-256 digest with RSA/SHA-512; private keys stay outside Git on the VPS and Windows gets only the public certificate to prevent key exposure.

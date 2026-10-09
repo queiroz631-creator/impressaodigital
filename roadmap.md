@@ -1,5 +1,29 @@
 # Roadmap
 
+## FOTO EXPRESS — login na prévia
+- [x] Identificar e corrigir o bloqueio do botão sem alterar a validação de CPF
+- [x] Validar avanço e mensagens de falha com respostas simuladas, sem dados reais ou publicação
+
+## QZ — certificado próprio para Windows
+- [x] Preparar assinatura autenticada e validação de operações locais
+- [x] Preparar geração protegida na VPS e instalação de confiança no Windows
+- [x] Validar assinatura RSA/SHA-512 e bloqueios com dados sintéticos; conferir compilação e sintaxe dos scripts
+- [ ] Usuário: gerar certificado na VPS, executar deploy e instalar confiança nos Windows (sem acesso remoto disponível)
+
+## Correção — nomes dos anexos do WhatsApp
+- [x] Usar IDs curtos e extensão segura nos novos caminhos, mantendo nomes de exibição e arquivos existentes
+- [x] Validar nomes longos, URLs com token e repetição sem acessar dados reais (9 cenários aprovados)
+
+## Correção — Storage no deploy da VPS
+- [x] Atualizar buckets existentes, criar somente após resposta de inexistência e tratar conflito 409
+- [x] Explicar erros de limite e acesso sem reduzir limites nem remover arquivos
+- [x] Testar respostas simuladas sem conectar à VPS (8 cenários aprovados)
+
+## Correção — ordem das migrações na VPS
+- [x] Renomear a migração do nome público do formato sem alterar seu SQL
+- [x] Bloquear nomes não datados e datas duplicadas antes de acessar o banco
+- [x] Validar a ordem corrigida e testar as proteções sem usar banco real
+
 ## WhatsApp — impressão de dados do cliente
 - [x] Adicionar impressão pelo navegador no modal, independente do QZ Tray; validada com comprovante fictício e chamada de impressão interceptada
 - [x] Modal com nome editável salvo no cadastro, telefone, data, pagamento destacado, descrição e usuário logado

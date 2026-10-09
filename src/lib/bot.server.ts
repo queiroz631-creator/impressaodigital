@@ -8,6 +8,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { chamarZapi, enviarPresencaDigitando } from "@/lib/zapi.server";
+import { caminhoMidiaWhatsapp } from "@/lib/whatsapp-storage-path";
 import {
   FORMATOS,
   acabamentosDoTipo,
@@ -1654,7 +1655,7 @@ async function guardarMidiasPendentes(): Promise<void> {
       const resposta = await fetch(arq.url);
       if (!resposta.ok) continue;
       const bytes = new Uint8Array(await resposta.arrayBuffer());
-      const caminho = `${arq.conversa_id}/${Date.now()}-${(arq.nome ?? "arquivo").replace(/[^\w.-]+/g, "_")}`;
+      const caminho = caminhoMidiaWhatsapp(arq.conversa_id, arq.id, arq.nome, arq.mime_type);
       const { error: erroUpload } = await supabaseAdmin.storage
         .from("whatsapp")
         .upload(caminho, bytes, {
