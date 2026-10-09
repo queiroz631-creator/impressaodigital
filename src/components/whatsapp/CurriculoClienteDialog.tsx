@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { consultarCurriculosConversa } from "@/lib/whatsapp-curriculo.functions";
-import { gerarLinkNovoCurriculo, gerarLinkCurriculo } from "@/lib/curriculo.functions";
 import { enviarTextoWhatsapp, enviarArquivoWhatsapp } from "@/lib/whatsapp.functions";
 import { mensagemLinkCurriculo } from "@/lib/curriculo";
 import { urlPublica } from "@/lib/link-publico";
@@ -25,8 +24,6 @@ export function CurriculoClienteDialog({ conversaId, autor }: { conversaId: stri
   const { pode } = usePermissoes(user?.id);
   const queryClient = useQueryClient();
   const consultar = useServerFn(consultarCurriculosConversa);
-  const gerarNovo = useServerFn(gerarLinkNovoCurriculo);
-  const gerarEdicao = useServerFn(gerarLinkCurriculo);
   const enviarTexto = useServerFn(enviarTextoWhatsapp);
   const enviarArquivo = useServerFn(enviarArquivoWhatsapp);
   const [aberto, setAberto] = useState(false);
@@ -49,15 +46,16 @@ export function CurriculoClienteDialog({ conversaId, autor }: { conversaId: stri
     trava.current = true;
     setOcupado(true);
     try {
-      const atual = await consultar({ data: { conversaId, curriculoId: acao === "novo" ? undefined : selecionado || undefined, carregarPdf: enviar && acao === "pdf" } });
+      const atual = await consultar({ data: { conversaId, curriculoId: acao === "novo" ? undefined : selecionado || undefined, carregarPdf: enviar && acao === "pdf", prepararLink: !enviar && acao !== "pdf" ? acao : undefined } });
       if (acao !== "novo" && (!selecionado || atual.ambiguo)) throw new Error("Selecione um currículo deste cliente.");
       if (!enviar) {
+        if (!atual.link) throw new Error("Não foi possível preparar o link.");
         if (acao === "novo") {
-          const r = await gerarNovo();
+          const r = atual.link;
           setMensagem(mensagemLinkCurriculo(r.mensagem, urlPublica(r.url)));
           setExpira(r.expiraEm);
         } else {
-          const r = await gerarEdicao({ data: { curriculoId: selecionado } });
+          const r = atual.link;
           setMensagem(`Você pode revisar e editar seu currículo por este link:\n${urlPublica(r.url)}\n\nO link vale por 24 horas.`);
           setExpira(r.expiraEm);
         }
@@ -71,6 +69,7 @@ export function CurriculoClienteDialog({ conversaId, autor }: { conversaId: stri
         if (!r.ok) throw new Error(r.erro ?? "Não foi possível enviar o PDF.");
       } else {
         if (!linkPronto || !mensagem.trim()) throw new Error("Prepare a mensagem antes de enviar.");
+        if (new Date(expira).getTime() <= Date.now()) { limparLink(); throw new Error("O link expirou. Prepare uma nova mensagem."); }
         const r = await enviarTexto({ data: { conversaId, telefone: atual.telefone, mensagem: mensagem.trim(), autor } });
         if (!r.ok) throw new Error(r.erro ?? "Não foi possível enviar o link.");
       }
@@ -88,11 +87,11 @@ export function CurriculoClienteDialog({ conversaId, autor }: { conversaId: stri
     <Dialog open={aberto} onOpenChange={(v) => { if (!ocupado) setAberto(v); }}>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Enviar currículo</DialogTitle></DialogHeader>
-        {consulta.isLoading ? <p className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" />Consultando currículos…</p> : consulta.isError ? <div className="space-y-3"><p className="text-sm text-destructive">{consulta.error.message}</p><Button variant="outline" onClick={() => void consulta.refetch()}>Tentar novamente</Button></div> : dados && <div className="space-y-4">
+        {consulta.isFetching ? <p className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" />Consultando currículos…</p> : consulta.isError ? <div className="space-y-3"><p className="text-sm text-destructive">{consulta.error.message}</p><Button variant="outline" onClick={() => void consulta.refetch()}>Tentar novamente</Button></div> : dados && <div className="space-y-4">
           <div><p className="font-medium">{dados.nome}</p><p className="text-sm text-muted-foreground">{formatarTelefone(dados.telefone)}</p></div>
           {dados.ambiguo ? <p className="text-sm text-destructive">Há mais de um cadastro com este telefone. Confira o vínculo do cliente antes de enviar um currículo existente.</p> : dados.curriculos.length === 0 && <p className="text-sm text-muted-foreground">Nenhum currículo vinculado a este cliente.</p>}
           <div className="space-y-2"><Label>Enviar</Label><Select value={acao} disabled={ocupado} onValueChange={(v: Acao) => { setAcao(v); limparLink(); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="novo">Link de novo currículo</SelectItem><SelectItem value="editar" disabled={!podeExistente}>Link para edição</SelectItem><SelectItem value="pdf" disabled={!podeExistente}>PDF do currículo</SelectItem></SelectContent></Select></div>
-          {acao !== "novo" && <div className="space-y-2"><Label>Currículo</Label><Select value={selecionado} disabled={ocupado} onValueChange={(v) => { setCurriculoId(v); limparLink(); }}><SelectTrigger><SelectValue placeholder="Selecione o currículo" /></SelectTrigger><SelectContent>{dados.curriculos.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome_completo || "Currículo"} · {c.status === "completo" ? "Completo" : "Rascunho"} · {dataHoraBR(c.updated_at)}</SelectItem>)}</SelectContent></Select></div>}
+          {acao !== "novo" && <div className="space-y-2"><Label>Currículo</Label><Select value={selecionado} disabled={ocupado} onValueChange={(v) => { setCurriculoId(v); limparLink(); }}><SelectTrigger className="h-auto min-h-9 [&_[data-slot=select-value]]:whitespace-normal"><SelectValue placeholder="Selecione o currículo" /></SelectTrigger><SelectContent>{dados.curriculos.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome_completo || "Currículo"} · {c.status === "completo" ? "Completo" : "Rascunho"} · {dataHoraBR(c.updated_at)}</SelectItem>)}</SelectContent></Select></div>}
           {acao !== "pdf" && !linkPronto && <Button variant="outline" disabled={ocupado || (acao === "editar" && !selecionado)} onClick={() => void executar(false)}>{ocupado && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Preparar mensagem</Button>}
           {acao !== "pdf" && linkPronto && <div className="space-y-2"><Label htmlFor="curriculo-whatsapp-mensagem">Mensagem</Label><Textarea id="curriculo-whatsapp-mensagem" rows={6} value={mensagem} maxLength={4000} disabled={ocupado} onChange={(e) => setMensagem(e.target.value)} /><p className="text-xs text-muted-foreground">Válido até {dataHoraBR(expira)}</p></div>}
           <div className="flex justify-end gap-2"><Button variant="outline" disabled={ocupado} onClick={() => setAberto(false)}>Cancelar</Button><Button disabled={ocupado || (acao === "pdf" ? !selecionado || !podeExistente : !linkPronto || !mensagem.trim())} onClick={() => void executar(true)}>{ocupado ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}{ocupado ? (acao === "pdf" ? "Preparando e enviando…" : "Enviando…") : acao === "pdf" ? "Enviar PDF" : "Enviar link"}</Button></div>
