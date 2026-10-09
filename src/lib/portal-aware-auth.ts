@@ -6,7 +6,7 @@ import * as portalFotos from "@/lib/foto-express-portal.functions";
 export const attachStaffAuth = createMiddleware({ type: "function" }).client(
   async ({ next, serverFnMeta }) => {
     const customerPortal = Object.values(portalFotos).some(
-      (fn) => fn.serverFnMeta.id === serverFnMeta.id,
+      (fn) => fn.url.endsWith(serverFnMeta.id),
     );
     if (customerPortal) return next();
     const { data } = await supabase.auth.getSession();
