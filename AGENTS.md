@@ -33,7 +33,7 @@
 - FOTO EXPRESS uses HttpOnly customer sessions and server ownership checks; edits stop on submission; assembly/printing are staff-only. Portal function IDs skip staff bearer attachment to avoid session waits.
 - A staff user may reopen a portal album only before printing begins; reopening invalidates any prepared assembly before restoring customer editing.
 - The FOTO EXPRESS portal logo is managed independently from other portals and stored privately; public pages receive only temporary signed image URLs.
-- WhatsApp tickets update the master customer via user-scoped functions. Curriculum actions use a dedicated dialog, checked customer association, shared curriculum data/PDF and conversation sends to preserve history.
+- WhatsApp tickets update the master customer via user-scoped functions. Curriculum actions use a dialog, checked customer association, shared curriculum data/PDF and conversation sends to preserve history.
 - WhatsApp thermal tickets share their HTML between QZ and isolated browser-frame printing, retaining the per-user, per-browser QZ printer preference; this preserves payment emphasis without changing other printer defaults.
 - WhatsApp tickets frame payment only, keeping other separators as text; scoped styles preserve the rest of the receipt.
 

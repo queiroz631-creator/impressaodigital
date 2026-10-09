@@ -1,9 +1,9 @@
 # Roadmap
 
 ## WhatsApp — ações de currículo
-- [ ] Modal com links de criação/edição e PDF na conversa selecionada
-- [ ] Reutilizar consulta completa, gerador e envio com associação segura e permissões
-- [ ] Validar estados e envios simulados sem mensagens reais ou publicação
+- [x] Modal com links de criação/edição e PDF na conversa selecionada
+- [x] Reutilizar consulta completa, gerador e envio com associação segura e permissões
+- [x] Validar estados e quatro envios simulados, associação ambígua e falha de permissão; oito testes aprovados sem mensagens reais ou publicação
 
 ## FOTO EXPRESS — orientação no envio
 - [x] Definir Retrato, Paisagem ou Automática pelas dimensões das novas fotos nos envios da equipe e do portal
