@@ -34,6 +34,8 @@
 - [x] Validar a ordem corrigida e testar as proteções sem usar banco real
 
 ## WhatsApp — impressão de dados do cliente
+- [x] Aplicar o plano do modal: pagamento horizontal sem seleção inicial e obrigatório, usuário no topo, padrão compacto e botões quadrados lado a lado; fechar após encaminhamento bem-sucedido
+- [x] Validar o novo modal com dados fictícios: três pagamentos, bloqueio sem seleção, reabertura desmarcada, padrão, erro preservando dados e fechamento nas duas impressões simuladas; quatro testes do comprovante aprovados, sem publicar
 - [x] Adicionar impressão pelo navegador no modal, independente do QZ Tray; validada com comprovante fictício e chamada de impressão interceptada
 - [x] Modal com nome editável salvo no cadastro, telefone, data, pagamento destacado, descrição e usuário logado
 - [x] Impressão térmica 80 mm via QZ Tray com impressora padrão
