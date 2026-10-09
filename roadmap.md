@@ -1,5 +1,9 @@
 # Roadmap
 
+## FOTO EXPRESS — orientação no envio
+- [x] Definir Retrato, Paisagem ou Automática pelas dimensões das novas fotos nos envios da equipe e do portal
+- [ ] Validar com dimensões sintéticas sem alterar fotos existentes
+
 ## FOTO EXPRESS — login na prévia
 - [x] Identificar e corrigir o bloqueio do botão sem alterar a validação de CPF
 - [x] Validar avanço e mensagens de falha com respostas simuladas, sem dados reais ou publicação

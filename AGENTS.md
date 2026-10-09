@@ -14,7 +14,7 @@
 - WhatsApp incoming media storage paths use conversation/file UUIDs and a bounded safe extension through a pure helper, never received filenames or URLs; this prevents filesystem name limits and token leakage while keeping display metadata separate and retries stable.
 
 - Windows sync/backup share `api-local/` UI/tray but keep tokens and routines independent to avoid regressions.
-- O FOTO EXPRESS vive isolado em `src/modules/foto-express/`; originais, thumbnails e impressões usam buckets privados separados, e itens duplicados reutilizam o mesmo arquivo original para manter a edição não destrutiva.
+- FOTO EXPRESS stays isolated in its module, with separate private media buckets and shared originals for duplicates. Both upload flows use one initial-orientation helper, preserving existing edits.
 - No editor FOTO EXPRESS, formato/zoom/posição/rotação/orientação/modo são canônicos e salvos atomicamente; a orientação não altera as dimensões cadastradas, mas gira a proporção exibida na Galeria e no editor; o crop é derivado e normalizado nas coordenadas do original.
 - Textos do FOTO EXPRESS pertencem ao item e usam posição, largura e tamanho normalizados sobre a área física completa do formato, independentes da transformação da fotografia.
 - A aplicação ou remoção global de um texto no FOTO EXPRESS usa a camada de mesma ordem em uma única operação transacional; cópias aplicadas continuam independentes.
