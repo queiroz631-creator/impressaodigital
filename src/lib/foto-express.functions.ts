@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { orientacaoInicialDaImagem } from "@/modules/foto-express/lib/transformacaoFoto";
 
 type LimpezaStorage = {
   limpeza_id: string;
@@ -96,6 +97,12 @@ export const registrarUploadFotoExpress = createServerFn({ method: "POST" })
       _ordem: data.ordem,
     });
     if (!error) {
+      const { error: erroOrientacao } = await context.supabase
+        .from("foto_express_itens")
+        .update({ orientacao: orientacaoInicialDaImagem(data.larguraPx, data.alturaPx) })
+        .eq("id", itemId)
+        .eq("trabalho_id", data.trabalhoId);
+      if (erroOrientacao) throw new Error("A foto foi enviada, mas não foi possível definir a orientação. Ajuste-a na Galeria.");
       await reprocessarLimpezasPendentes();
       return { itemId, limpezaPendente: false };
     }
