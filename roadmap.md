@@ -1,8 +1,8 @@
 # Roadmap
 
 ## FOTO EXPRESS — login na prévia
-- [ ] Identificar e corrigir o bloqueio do botão sem alterar a validação de CPF
-- [ ] Validar avanço e mensagens de falha com respostas simuladas, sem dados reais ou publicação
+- [x] Identificar e corrigir o bloqueio do botão sem alterar a validação de CPF
+- [x] Validar avanço e mensagens de falha com respostas simuladas, sem dados reais ou publicação
 
 ## QZ — certificado próprio para Windows
 - [x] Preparar assinatura autenticada e validação de operações locais
