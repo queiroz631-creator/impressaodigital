@@ -2,6 +2,9 @@ import os
 import subprocess
 import threading
 import uuid
+import json
+import tempfile
+import fcntl
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -22,15 +25,121 @@ BACKUP_SCRIPT = Path(os.environ.get(
     "/root/backups/backup-impressaodigital.sh"
 )).resolve()
 
+JOB_DIR = Path(os.environ.get(
+    "BACKUP_JOB_DIR",
+    "/opt/backup-api/jobs"
+)).resolve()
+
+JOB_LOCK_FILE = JOB_DIR / ".lock"
+
 if not API_TOKEN:
     raise RuntimeError("BACKUP_API_TOKEN não configurado")
 
+JOB_DIR.mkdir(parents=True, exist_ok=True)
+
 backup_lock = threading.Lock()
-backup_jobs = {}
 
 
 def now_iso():
     return datetime.now(timezone.utc).isoformat()
+
+
+def job_path(job_id):
+    try:
+        parsed = uuid.UUID(job_id)
+    except (ValueError, AttributeError):
+        return None
+
+    if str(parsed) != job_id:
+        return None
+
+    return JOB_DIR / f"{job_id}.json"
+
+
+def read_job(job_id):
+    path = job_path(job_id)
+
+    if path is None or not path.is_file():
+        return None
+
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def write_job(job):
+    path = job_path(job["job_id"])
+
+    if path is None:
+        raise RuntimeError("ID de operação inválido.")
+
+    fd, temp_name = tempfile.mkstemp(
+        prefix=f".{job['job_id']}.",
+        suffix=".tmp",
+        dir=str(JOB_DIR)
+    )
+
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(job, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+
+        os.replace(temp_name, path)
+    finally:
+        try:
+            os.unlink(temp_name)
+        except FileNotFoundError:
+            pass
+
+
+def update_job(job_id, **changes):
+    path = job_path(job_id)
+
+    if path is None:
+        raise RuntimeError("ID de operação inválido.")
+
+    with JOB_LOCK_FILE.open("a+", encoding="utf-8") as lock_file:
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+
+        job = read_job(job_id)
+
+        if job is None:
+            raise RuntimeError(
+                f"Operação de backup não encontrada: {job_id}"
+            )
+
+        job.update(changes)
+        write_job(job)
+
+        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+    return job
+
+
+def find_running_job():
+    try:
+        paths = JOB_DIR.glob("*.json")
+    except OSError:
+        return None
+
+    for path in paths:
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                job = json.load(f)
+
+            if job.get("running") and job.get("status") in {
+                "AGUARDANDO",
+                "EXECUTANDO",
+                "EM_ANDAMENTO",
+            }:
+                return job
+        except (OSError, json.JSONDecodeError):
+            continue
+
+    return None
 
 
 def authenticated(f):
@@ -69,9 +178,12 @@ def backup_files():
 
 def backup_job_worker(job_id, arquivos_antes):
     try:
-        backup_jobs[job_id]["status"] = "EXECUTANDO"
-        backup_jobs[job_id]["mensagem"] = "Gerando backup no servidor..."
-        backup_jobs[job_id]["inicio"] = now_iso()
+        update_job(
+            job_id,
+            status="EXECUTANDO",
+            mensagem="Gerando backup no servidor...",
+            inicio=now_iso()
+        )
 
         if not BACKUP_SCRIPT.is_file():
             raise RuntimeError(
@@ -92,7 +204,10 @@ def backup_job_worker(job_id, arquivos_antes):
             timeout=3600
         )
 
-        backup_jobs[job_id]["saida"] = resultado.stdout[-10000:]
+        update_job(
+            job_id,
+            saida=resultado.stdout[-10000:]
+        )
 
         if resultado.returncode != 0:
             raise RuntimeError(
@@ -116,26 +231,39 @@ def backup_job_worker(job_id, arquivos_antes):
             key=lambda p: p.stat().st_mtime
         )
 
-        backup_jobs[job_id]["status"] = "CONCLUIDO"
-        backup_jobs[job_id]["mensagem"] = "Backup criado com sucesso."
-        backup_jobs[job_id]["filename"] = novo.name
-        backup_jobs[job_id]["tamanho_bytes"] = novo.stat().st_size
-        backup_jobs[job_id]["fim"] = now_iso()
+        update_job(
+            job_id,
+            status="CONCLUIDO",
+            mensagem="Backup criado com sucesso.",
+            filename=novo.name,
+            tamanho_bytes=novo.stat().st_size,
+            fim=now_iso(),
+            running=False
+        )
 
     except subprocess.TimeoutExpired:
-        backup_jobs[job_id]["status"] = "ERRO"
-        backup_jobs[job_id]["mensagem"] = (
-            "O backup excedeu o limite máximo de 1 hora."
-        )
-        backup_jobs[job_id]["fim"] = now_iso()
+        try:
+            update_job(
+                job_id,
+                status="ERRO",
+                mensagem="O backup excedeu o limite máximo de 1 hora.",
+                fim=now_iso(),
+                running=False
+            )
+        except Exception:
+            pass
 
     except Exception as e:
-        backup_jobs[job_id]["status"] = "ERRO"
-        backup_jobs[job_id]["mensagem"] = str(e)
-        backup_jobs[job_id]["fim"] = now_iso()
-
-    finally:
-        backup_jobs[job_id]["running"] = False
+        try:
+            update_job(
+                job_id,
+                status="ERRO",
+                mensagem=str(e),
+                fim=now_iso(),
+                running=False
+            )
+        except Exception:
+            pass
 
 
 @app.get("/health")
@@ -187,31 +315,40 @@ def latest_backup():
 @authenticated
 def solicitar_backup():
     with backup_lock:
-        for job in backup_jobs.values():
-            if job.get("running"):
+        with JOB_LOCK_FILE.open("a+", encoding="utf-8") as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+
+            job_em_andamento = find_running_job()
+
+            if job_em_andamento:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
                 return jsonify({
                     "status": "EM_ANDAMENTO",
                     "mensagem": "Já existe um backup em andamento.",
-                    "job_id": job["job_id"]
+                    "job_id": job_em_andamento["job_id"]
                 }), 409
 
-        arquivos_antes = {
-            p.name for p in backup_files()
-        }
+            arquivos_antes = {
+                p.name for p in backup_files()
+            }
 
-        job_id = str(uuid.uuid4())
+            job_id = str(uuid.uuid4())
 
-        backup_jobs[job_id] = {
-            "job_id": job_id,
-            "status": "AGUARDANDO",
-            "mensagem": "Backup sendo iniciado...",
-            "filename": None,
-            "tamanho_bytes": None,
-            "inicio": None,
-            "fim": None,
-            "running": True,
-            "saida": "",
-        }
+            job = {
+                "job_id": job_id,
+                "status": "AGUARDANDO",
+                "mensagem": "Backup sendo iniciado...",
+                "filename": None,
+                "tamanho_bytes": None,
+                "inicio": None,
+                "fim": None,
+                "running": True,
+                "saida": "",
+            }
+
+            write_job(job)
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
         thread = threading.Thread(
             target=backup_job_worker,
@@ -230,7 +367,7 @@ def solicitar_backup():
 @app.get("/api/backups/status/<job_id>")
 @authenticated
 def status_backup(job_id):
-    job = backup_jobs.get(job_id)
+    job = read_job(job_id)
 
     if not job:
         return jsonify({

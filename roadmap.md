@@ -1,5 +1,14 @@
 # Roadmap
 
+## WhatsApp — ações de currículo
+- [x] Modal com links de criação/edição e PDF na conversa selecionada
+- [x] Reutilizar consulta completa, gerador e envio com associação segura e permissões
+- [x] Validar estados e quatro envios simulados, associação ambígua e falha de permissão; oito testes aprovados sem mensagens reais ou publicação
+
+## FOTO EXPRESS — orientação no envio
+- [x] Definir Retrato, Paisagem ou Automática pelas dimensões das novas fotos nos envios da equipe e do portal
+- [x] Validar com dimensões sintéticas sem alterar fotos existentes (7 testes aprovados)
+
 ## FOTO EXPRESS — login na prévia
 - [x] Identificar e corrigir o bloqueio do botão sem alterar a validação de CPF
 - [x] Validar avanço e mensagens de falha com respostas simuladas, sem dados reais ou publicação
@@ -25,6 +34,8 @@
 - [x] Validar a ordem corrigida e testar as proteções sem usar banco real
 
 ## WhatsApp — impressão de dados do cliente
+- [x] Aplicar o plano do modal: pagamento horizontal sem seleção inicial e obrigatório, usuário no topo, padrão compacto e botões quadrados lado a lado; fechar após encaminhamento bem-sucedido
+- [x] Validar o novo modal com dados fictícios: três pagamentos, bloqueio sem seleção, reabertura desmarcada, padrão, erro preservando dados e fechamento nas duas impressões simuladas; quatro testes do comprovante aprovados, sem publicar
 - [x] Adicionar impressão pelo navegador no modal, independente do QZ Tray; validada com comprovante fictício e chamada de impressão interceptada
 - [x] Modal com nome editável salvo no cadastro, telefone, data, pagamento destacado, descrição e usuário logado
 - [x] Impressão térmica 80 mm via QZ Tray com impressora padrão

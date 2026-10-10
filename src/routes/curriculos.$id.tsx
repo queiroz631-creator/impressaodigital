@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { carregarDadosCurriculo } from "@/lib/curriculo-dados";
 import { AppLayout } from "@/components/AppLayout";
 import { CurriculoDocumento } from "@/components/curriculo/CurriculoDocumento";
 import { FormularioCurriculo } from "@/components/curriculo/FormularioCurriculo";
@@ -80,9 +81,6 @@ export const Route = createFileRoute("/curriculos/$id")({
   ),
 });
 
-const CAMPOS =
-  "id, cliente_id, status, nome_completo, cpf, telefone_principal, telefone_principal_descricao, data_nascimento, estado_civil, email, documentacao_completa, habilitacao, categoria_habilitacao, escolaridade, curso_superior, pos_graduacao_nome, endereco, numero, bairro, cidade, uf, cep, objetivo_tipo, objetivo_texto, exibir_data_atualizacao, experiencia_possui, experiencia_frase, habilidades_observacao, foto_url, foto_exibir, created_at, updated_at, completed_at";
-
 function DetalheCurriculo() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -136,54 +134,12 @@ function DetalheCurriculo() {
         objetivos: { id: string; texto: string }[];
       }
     > => {
-      const [c, tel, cur, form, exp, hab, cat, obj] = await Promise.all([
-        supabase.from("curriculos").select(CAMPOS).eq("id", id).maybeSingle(),
-        supabase
-          .from("curriculo_telefones")
-          .select("telefone, tipo")
-          .eq("curriculo_id", id)
-          .order("ordem"),
-        supabase
-          .from("curriculo_cursos")
-          .select("nome_curso, instituicao, ano")
-          .eq("curriculo_id", id)
-          .order("ordem"),
-        supabase
-          .from("curriculo_formacoes")
-          .select("nome_curso, instituicao, ano, nivel")
-          .eq("curriculo_id", id)
-          .order("ordem"),
-        supabase
-          .from("curriculo_experiencias")
-          .select("empresa, cargo, periodo, atividades")
-          .eq("curriculo_id", id)
-          .order("ordem"),
-        supabase
-          .from("curriculo_habilidades")
-          .select("habilidade_id, descricao")
-          .eq("curriculo_id", id)
-          .order("ordem"),
-        supabase
-          .from("habilidades_curriculo")
-          .select("id, descricao")
-          .eq("ativo", true)
-          .order("ordem"),
+      const [dados, cat, obj] = await Promise.all([
+        carregarDadosCurriculo(supabase, id),
+        supabase.from("habilidades_curriculo").select("id, descricao").eq("ativo", true).order("ordem"),
         supabase.from("objetivos_curriculo").select("id, texto").eq("ativo", true).order("ordem"),
       ]);
-
-      if (c.error) throw c.error;
-      if (!c.data) throw new Error("Currículo não encontrado.");
-
-      return {
-        curriculo: c.data as CurriculoCompleto["curriculo"],
-        telefones: tel.data ?? [],
-        cursos: cur.data ?? [],
-        formacoes: form.data ?? [],
-        experiencias: exp.data ?? [],
-        habilidades: hab.data ?? [],
-        catalogo: cat.data ?? [],
-        objetivos: obj.data ?? [],
-      };
+      return { ...dados, catalogo: cat.data ?? [], objetivos: obj.data ?? [] };
     },
   });
 

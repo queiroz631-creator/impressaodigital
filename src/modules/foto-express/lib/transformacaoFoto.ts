@@ -41,6 +41,10 @@ export function orientacaoDaImagem(largura: number, altura: number): "RETRATO" |
   return altura > largura ? "RETRATO" : "PAISAGEM";
 }
 
+export function orientacaoInicialDaImagem(largura: number, altura: number): "AUTOMATICA" | "RETRATO" | "PAISAGEM" {
+  return largura === altura ? "AUTOMATICA" : orientacaoDaImagem(largura, altura);
+}
+
 export function dimensoesVisualizacaoOrientada(
   largura: number,
   altura: number,

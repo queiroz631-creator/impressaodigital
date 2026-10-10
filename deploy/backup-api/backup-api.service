@@ -1,0 +1,19 @@
+[Unit]
+Description=API de Backup Impressao Digital
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/backup-api
+EnvironmentFile=/opt/backup-api/.env
+ExecStart=/opt/backup-api/venv/bin/gunicorn \
+    --workers 2 \
+    --bind 127.0.0.1:3100 \
+    --timeout 3600 \
+    app:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
