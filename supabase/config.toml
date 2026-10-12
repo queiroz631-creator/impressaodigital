@@ -1,1 +1,16 @@
 project_id = "qmnienngwksbeiyczrka"
+
+# Portas movidas para a faixa livre 54468-55231 (exclusao dinamica do Windows
+# reserva 54268-54367, tornando 54321-54324 inacessiveis).
+
+[api]
+port = 54521
+
+[db]
+port = 54522
+
+[studio]
+port = 54523
+
+[inbucket]
+port = 54524
