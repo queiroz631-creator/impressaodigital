@@ -3,6 +3,11 @@
 .env.*
 !.env.example
 
+# Supabase local (branches, temp, config não versionado)
+supabase/.branches/
+supabase/.temp/
+supabase/config.toml.local
+
 # Logs
 logs
 *.log

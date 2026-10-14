@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgentesRouteImport } from './routes/agentes'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BotRouteImport } from './routes/bot'
 import { Route as ClientesRouteImport } from './routes/clientes'
@@ -22,6 +23,10 @@ import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as PrecosRouteImport } from './routes/precos'
 import { Route as UsuariosRouteImport } from './routes/usuarios'
 import { Route as WhatsappRouteImport } from './routes/whatsapp'
+import { Route as AgentesAprovacoesRouteImport } from './routes/agentes.aprovacoes'
+import { Route as AgentesAuditoriaRouteImport } from './routes/agentes.auditoria'
+import { Route as AgentesExecucoesRouteImport } from './routes/agentes.execucoes'
+import { Route as AgentesFerramentasRouteImport } from './routes/agentes.ferramentas'
 import { Route as CurriculosIndexRouteImport } from './routes/curriculos.index'
 import { Route as CurriculosIdRouteImport } from './routes/curriculos.$id'
 import { Route as FotoExpressIndexRouteImport } from './routes/foto-express.index'
@@ -83,6 +88,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgentesRoute = AgentesRouteImport.update({
+  id: '/agentes',
+  path: '/agentes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -142,6 +152,26 @@ const WhatsappRoute = WhatsappRouteImport.update({
   id: '/whatsapp',
   path: '/whatsapp',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AgentesAprovacoesRoute = AgentesAprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
+  getParentRoute: () => AgentesRoute,
+} as any)
+const AgentesAuditoriaRoute = AgentesAuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
+  getParentRoute: () => AgentesRoute,
+} as any)
+const AgentesExecucoesRoute = AgentesExecucoesRouteImport.update({
+  id: '/execucoes',
+  path: '/execucoes',
+  getParentRoute: () => AgentesRoute,
+} as any)
+const AgentesFerramentasRoute = AgentesFerramentasRouteImport.update({
+  id: '/ferramentas',
+  path: '/ferramentas',
+  getParentRoute: () => AgentesRoute,
 } as any)
 const CurriculosIndexRoute = CurriculosIndexRouteImport.update({
   id: '/curriculos/',
@@ -440,6 +470,7 @@ const FotosTrabalhosTrabalhoIdFotosItemIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agentes': typeof AgentesRouteWithChildren
   '/auth': typeof AuthRoute
   '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
@@ -452,6 +483,10 @@ export interface FileRoutesByFullPath {
   '/precos': typeof PrecosRoute
   '/usuarios': typeof UsuariosRoute
   '/whatsapp': typeof WhatsappRoute
+  '/agentes/aprovacoes': typeof AgentesAprovacoesRoute
+  '/agentes/auditoria': typeof AgentesAuditoriaRoute
+  '/agentes/execucoes': typeof AgentesExecucoesRoute
+  '/agentes/ferramentas': typeof AgentesFerramentasRoute
   '/curriculos/$id': typeof CurriculosIdRoute
   '/foto-express/formatos': typeof FotoExpressFormatosRoute
   '/foto-express/novo': typeof FotoExpressNovoRoute
@@ -510,6 +545,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agentes': typeof AgentesRouteWithChildren
   '/auth': typeof AuthRoute
   '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
@@ -522,6 +558,10 @@ export interface FileRoutesByTo {
   '/precos': typeof PrecosRoute
   '/usuarios': typeof UsuariosRoute
   '/whatsapp': typeof WhatsappRoute
+  '/agentes/aprovacoes': typeof AgentesAprovacoesRoute
+  '/agentes/auditoria': typeof AgentesAuditoriaRoute
+  '/agentes/execucoes': typeof AgentesExecucoesRoute
+  '/agentes/ferramentas': typeof AgentesFerramentasRoute
   '/curriculos/$id': typeof CurriculosIdRoute
   '/foto-express/formatos': typeof FotoExpressFormatosRoute
   '/foto-express/novo': typeof FotoExpressNovoRoute
@@ -581,6 +621,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agentes': typeof AgentesRouteWithChildren
   '/auth': typeof AuthRoute
   '/bot': typeof BotRoute
   '/clientes': typeof ClientesRoute
@@ -593,6 +634,10 @@ export interface FileRoutesById {
   '/precos': typeof PrecosRoute
   '/usuarios': typeof UsuariosRoute
   '/whatsapp': typeof WhatsappRoute
+  '/agentes/aprovacoes': typeof AgentesAprovacoesRoute
+  '/agentes/auditoria': typeof AgentesAuditoriaRoute
+  '/agentes/execucoes': typeof AgentesExecucoesRoute
+  '/agentes/ferramentas': typeof AgentesFerramentasRoute
   '/curriculos/$id': typeof CurriculosIdRoute
   '/foto-express/formatos': typeof FotoExpressFormatosRoute
   '/foto-express/novo': typeof FotoExpressNovoRoute
@@ -653,6 +698,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agentes'
     | '/auth'
     | '/bot'
     | '/clientes'
@@ -665,6 +711,10 @@ export interface FileRouteTypes {
     | '/precos'
     | '/usuarios'
     | '/whatsapp'
+    | '/agentes/aprovacoes'
+    | '/agentes/auditoria'
+    | '/agentes/execucoes'
+    | '/agentes/ferramentas'
     | '/curriculos/$id'
     | '/foto-express/formatos'
     | '/foto-express/novo'
@@ -723,6 +773,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agentes'
     | '/auth'
     | '/bot'
     | '/clientes'
@@ -735,6 +786,10 @@ export interface FileRouteTypes {
     | '/precos'
     | '/usuarios'
     | '/whatsapp'
+    | '/agentes/aprovacoes'
+    | '/agentes/auditoria'
+    | '/agentes/execucoes'
+    | '/agentes/ferramentas'
     | '/curriculos/$id'
     | '/foto-express/formatos'
     | '/foto-express/novo'
@@ -793,6 +848,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/agentes'
     | '/auth'
     | '/bot'
     | '/clientes'
@@ -805,6 +861,10 @@ export interface FileRouteTypes {
     | '/precos'
     | '/usuarios'
     | '/whatsapp'
+    | '/agentes/aprovacoes'
+    | '/agentes/auditoria'
+    | '/agentes/execucoes'
+    | '/agentes/ferramentas'
     | '/curriculos/$id'
     | '/foto-express/formatos'
     | '/foto-express/novo'
@@ -864,6 +924,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgentesRoute: typeof AgentesRouteWithChildren
   AuthRoute: typeof AuthRoute
   BotRoute: typeof BotRoute
   ClientesRoute: typeof ClientesRoute
@@ -939,6 +1000,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agentes': {
+      id: '/agentes'
+      path: '/agentes'
+      fullPath: '/agentes'
+      preLoaderRoute: typeof AgentesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1024,6 +1092,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/whatsapp'
       preLoaderRoute: typeof WhatsappRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/agentes/aprovacoes': {
+      id: '/agentes/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/agentes/aprovacoes'
+      preLoaderRoute: typeof AgentesAprovacoesRouteImport
+      parentRoute: typeof AgentesRoute
+    }
+    '/agentes/auditoria': {
+      id: '/agentes/auditoria'
+      path: '/auditoria'
+      fullPath: '/agentes/auditoria'
+      preLoaderRoute: typeof AgentesAuditoriaRouteImport
+      parentRoute: typeof AgentesRoute
+    }
+    '/agentes/execucoes': {
+      id: '/agentes/execucoes'
+      path: '/execucoes'
+      fullPath: '/agentes/execucoes'
+      preLoaderRoute: typeof AgentesExecucoesRouteImport
+      parentRoute: typeof AgentesRoute
+    }
+    '/agentes/ferramentas': {
+      id: '/agentes/ferramentas'
+      path: '/ferramentas'
+      fullPath: '/agentes/ferramentas'
+      preLoaderRoute: typeof AgentesFerramentasRouteImport
+      parentRoute: typeof AgentesRoute
     }
     '/curriculos/': {
       id: '/curriculos/'
@@ -1413,6 +1509,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AgentesRouteChildren {
+  AgentesAprovacoesRoute: typeof AgentesAprovacoesRoute
+  AgentesAuditoriaRoute: typeof AgentesAuditoriaRoute
+  AgentesExecucoesRoute: typeof AgentesExecucoesRoute
+  AgentesFerramentasRoute: typeof AgentesFerramentasRoute
+}
+
+const AgentesRouteChildren: AgentesRouteChildren = {
+  AgentesAprovacoesRoute: AgentesAprovacoesRoute,
+  AgentesAuditoriaRoute: AgentesAuditoriaRoute,
+  AgentesExecucoesRoute: AgentesExecucoesRoute,
+  AgentesFerramentasRoute: AgentesFerramentasRoute,
+}
+
+const AgentesRouteWithChildren =
+  AgentesRoute._addFileChildren(AgentesRouteChildren)
+
 interface ApiPublicWhatsappWebhookRouteChildren {
   ApiPublicWhatsappWebhookTokenRoute: typeof ApiPublicWhatsappWebhookTokenRoute
 }
@@ -1429,6 +1542,7 @@ const ApiPublicWhatsappWebhookRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgentesRoute: AgentesRouteWithChildren,
   AuthRoute: AuthRoute,
   BotRoute: BotRoute,
   ClientesRoute: ClientesRoute,
