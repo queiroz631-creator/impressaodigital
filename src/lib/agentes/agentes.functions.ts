@@ -238,7 +238,7 @@ export const listarAgentes = createServerFn({ method: "GET" })
 
 export const obterAgente = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: agente, error } = await context.supabase
       .from("agentes")
@@ -298,7 +298,7 @@ const entradaAgente = z.object({
 
 export const salvarAgente = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => entradaAgente.parse(input))
+  .validator((input: unknown) => entradaAgente.parse(input))
   .handler(async ({ data, context }) => {
     const { data: pode } = await context.supabase.rpc("pode_agentes", { _chave: "agentes.gerenciar" });
     if (!pode) return { ok: false as const, erro: "Sem permissão para gerenciar agentes.", id: null };
@@ -350,7 +350,7 @@ export const salvarAgente = createServerFn({ method: "POST" })
 
 export const definirAgenteAtivo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ id: z.string().uuid(), ativo: z.boolean() }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -374,7 +374,7 @@ export const definirAgenteAtivo = createServerFn({ method: "POST" })
 
 export const salvarPrompt = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         agenteId: z.string().uuid(),
@@ -470,7 +470,7 @@ const entradaFerramenta = z.object({
 
 export const salvarFerramenta = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => entradaFerramenta.parse(input))
+  .validator((input: unknown) => entradaFerramenta.parse(input))
   .handler(async ({ data, context }) => {
     const { data: pode } = await context.supabase.rpc("pode_agentes", { _chave: "agentes.gerenciar" });
     if (!pode) return { ok: false as const, erro: "Sem permissão para gerenciar ferramentas.", id: null };
@@ -514,7 +514,7 @@ export const salvarFerramenta = createServerFn({ method: "POST" })
 
 export const vincularFerramenta = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         agenteId: z.string().uuid(),
@@ -549,7 +549,7 @@ export const vincularFerramenta = createServerFn({ method: "POST" })
 
 export const desvincularFerramenta = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ agenteId: z.string().uuid(), ferramentaId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -578,7 +578,7 @@ export const desvincularFerramenta = createServerFn({ method: "POST" })
 // ----------------------------------------------------------- execuções
 export const listarExecucoes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         agenteId: z.string().uuid().optional(),
@@ -610,7 +610,7 @@ export const listarExecucoes = createServerFn({ method: "POST" })
 
 export const obterExecucao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: execucao, error } = await context.supabase
       .from("agente_execucoes")
@@ -655,7 +655,7 @@ export const obterExecucao = createServerFn({ method: "POST" })
 // ---------------------------------------------------------- aprovações
 export const listarAprovacoes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         status: z.enum(["pendente", "aprovada", "recusada", "expirada", "todas"]).default("pendente"),
@@ -690,7 +690,7 @@ export const listarAprovacoes = createServerFn({ method: "POST" })
 
 export const decidirAprovacao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         id: z.string().uuid(),
@@ -719,7 +719,7 @@ export const decidirAprovacao = createServerFn({ method: "POST" })
 // ------------------------------------------------------------ auditoria
 export const listarAuditoria = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ limite: z.number().int().min(1).max(300).default(100) }).parse(input ?? {}),
   )
   .handler(async ({ data, context }): Promise<AuditoriaItem[]> => {
