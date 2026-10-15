@@ -23,6 +23,7 @@ import {
   Mic,
   Paperclip,
   Pencil,
+  RotateCcw,
   Trash2,
   Printer,
   Search,
@@ -54,6 +55,7 @@ import {
   enviarMensagemRapidaWhatsapp,
   enviarParaFinalizacao,
   enviarTextoWhatsapp,
+  reenviarMensagemWhatsapp,
   transcreverAudioWhatsapp,
 } from "@/lib/whatsapp.functions";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
@@ -858,6 +860,21 @@ function Conversa({
       }
       toast.success("Mensagem editada.");
       setMsgEditando(null);
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-mensagens"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const reenviarMsgFn = useServerFn(reenviarMensagemWhatsapp);
+  const reenviarMsg = useMutation({
+    mutationFn: async (id: string) => await reenviarMsgFn({ data: { mensagemId: id } }),
+    onSuccess: (r) => {
+      if (!r.ok) {
+        toast.error(r.erro ?? "Não foi possível reenviar a mensagem.");
+      } else {
+        toast.success("Mensagem reenviada.");
+      }
       queryClient.invalidateQueries({ queryKey: ["whatsapp-mensagens"] });
       queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
     },
@@ -1765,6 +1782,18 @@ function Conversa({
                         {m.editada && !m.apagada ? " · editada" : ""}
                         {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
                       </p>
+                      {m.status === "erro" && m.direcao === "saida" && !m.apagada && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-1 h-7 gap-1 px-2 text-[11px]"
+                          disabled={reenviarMsg.isPending}
+                          onClick={() => reenviarMsg.mutate(m.id)}
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          {reenviarMsg.isPending ? "Reenviando…" : "Reenviar"}
+                        </Button>
+                      )}
                     </div>
                     {m.direcao === "entrada" &&
                       !m.apagada &&

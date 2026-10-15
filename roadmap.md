@@ -344,3 +344,5 @@
 - [x] Painel e Encerramento: filtro Concorrem/Todos em todos os indicadores ligados a participantes
 - [x] Painel e Encerramento: valor em notas válidas oculto por padrão com botão de olho
 
+
+- [x] WhatsApp: botão Reenviar em mensagens com erro (reenviarMensagemWhatsapp em src/lib/whatsapp.functions.ts; botão na bolha em src/routes/whatsapp.tsx; sem duplicar histórico; build OK, testes OK; não publicado).
