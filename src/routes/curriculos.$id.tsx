@@ -298,6 +298,26 @@ function DetalheCurriculo() {
     }
   };
 
+  const salvarCpf = async () => {
+    const numeros = somenteNumeros(cpfNovo);
+    if (!cpfValido(numeros)) {
+      toast.error("CPF inválido.");
+      return;
+    }
+    setSalvandoCpf(true);
+    try {
+      await alterarCpf({ data: { curriculoId: id, cpf: numeros } });
+      toast.success("CPF alterado com sucesso.");
+      setCpfAberto(false);
+      await queryClient.invalidateQueries({ queryKey: ["curriculo", id] });
+      await queryClient.invalidateQueries({ queryKey: ["curriculos"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível alterar o CPF.");
+    } finally {
+      setSalvandoCpf(false);
+    }
+  };
+
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -309,6 +329,17 @@ function DetalheCurriculo() {
           {data.curriculo.status === "completo" ? "Completo" : "Rascunho"}
         </Badge>
         <span className="text-xs text-muted-foreground">CPF {formatarCpf(data.curriculo.cpf)}</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-xs"
+          onClick={() => {
+            setCpfNovo(formatarCpf(data.curriculo.cpf));
+            setCpfAberto(true);
+          }}
+        >
+          <Pencil className="mr-1 h-3 w-3" /> Alterar CPF
+        </Button>
 
         <div className="ml-auto flex flex-wrap gap-2">
           <Button
