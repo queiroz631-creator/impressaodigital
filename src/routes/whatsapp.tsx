@@ -1782,6 +1782,18 @@ function Conversa({
                         {m.editada && !m.apagada ? " · editada" : ""}
                         {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
                       </p>
+                      {m.status === "erro" && m.direcao === "saida" && !m.apagada && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-1 h-7 gap-1 px-2 text-[11px]"
+                          disabled={reenviarMsg.isPending}
+                          onClick={() => reenviarMsg.mutate(m.id)}
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          {reenviarMsg.isPending ? "Reenviando…" : "Reenviar"}
+                        </Button>
+                      )}
                     </div>
                     {m.direcao === "entrada" &&
                       !m.apagada &&
