@@ -23,6 +23,7 @@ import {
   Mic,
   Paperclip,
   Pencil,
+  RotateCcw,
   Trash2,
   Printer,
   Search,
@@ -54,6 +55,7 @@ import {
   enviarMensagemRapidaWhatsapp,
   enviarParaFinalizacao,
   enviarTextoWhatsapp,
+  reenviarMensagemWhatsapp,
   transcreverAudioWhatsapp,
 } from "@/lib/whatsapp.functions";
 import { ConfirmarExclusao } from "@/components/ConfirmarExclusao";
