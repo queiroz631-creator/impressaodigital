@@ -48,8 +48,10 @@ import {
 
 import {
   capitalizarTexto,
+  cpfValido,
   formatarCpf,
   formatarTelefone,
+  somenteNumeros,
   type CurriculoCompleto,
   type PayloadEtapa,
 } from "@/lib/curriculo";
@@ -59,7 +61,11 @@ import {
   imprimirCurriculo,
   nomeArquivoCurriculo,
 } from "@/lib/curriculo-pdf";
-import { enviarCurriculoWhatsapp, gerarLinkCurriculo } from "@/lib/curriculo.functions";
+import {
+  alterarCpfCurriculo,
+  enviarCurriculoWhatsapp,
+  gerarLinkCurriculo,
+} from "@/lib/curriculo.functions";
 import { urlPublica } from "@/lib/link-publico";
 import { dataHoraBR } from "@/lib/format";
 
