@@ -542,6 +542,113 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
     return { ok: true as const, erro: null as string | null };
   });
 
+/** Reenvia uma mensagem da loja que ficou com erro, sem duplicar o histórico. */
+export const reenviarMensagemWhatsapp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ mensagemId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { chamarZapi } = await import("@/lib/zapi.server");
+
+    const { data: msg, error } = await context.supabase
+      .from("whatsapp_mensagens")
+      .select(
+        "id, conversa_id, direcao, tipo, texto, apagada, status, arquivo_url, arquivo_nome, mime_type",
+      )
+      .eq("id", data.mensagemId)
+      .maybeSingle();
+    if (error) return { ok: false as const, erro: error.message };
+    if (!msg) return { ok: false as const, erro: "Mensagem não encontrada." };
+    if (msg.direcao !== "saida")
+      return { ok: false as const, erro: "Só é possível reenviar mensagens enviadas pela loja." };
+    if (msg.apagada) return { ok: false as const, erro: "Esta mensagem foi apagada." };
+    if (msg.status !== "erro")
+      return { ok: false as const, erro: "Esta mensagem não está com erro." };
+
+    const { data: conversa } = await context.supabase
+      .from("whatsapp_conversas")
+      .select("telefone, conexao_id")
+      .eq("id", msg.conversa_id)
+      .maybeSingle();
+    const telefone = normalizarTelefone((conversa as { telefone?: string } | null)?.telefone ?? "");
+    if (!telefone) return { ok: false as const, erro: "Telefone da conversa não encontrado." };
+    const conexaoId = (conversa as { conexao_id?: string | null } | null)?.conexao_id ?? null;
+
+    let r: Awaited<ReturnType<typeof chamarZapi>>;
+    if (msg.tipo === "texto") {
+      const texto = (msg.texto ?? "").trim();
+      if (!texto) return { ok: false as const, erro: "Mensagem sem texto para reenviar." };
+      r = await chamarZapi("send-text", {
+        metodo: "POST",
+        corpo: { phone: telefone, message: texto },
+        conexaoId,
+      });
+    } else {
+      if (!msg.arquivo_url) {
+        return {
+          ok: false as const,
+          erro: "Não é possível reenviar: o conteúdo do arquivo não está salvo.",
+        };
+      }
+      const resposta = await fetch(msg.arquivo_url);
+      if (!resposta.ok)
+        return { ok: false as const, erro: "Não foi possível ler o arquivo salvo." };
+      const buffer = Buffer.from(await resposta.arrayBuffer());
+      if (buffer.length > 18 * 1024 * 1024)
+        return { ok: false as const, erro: "Arquivo muito grande para reenviar." };
+      const mime = msg.mime_type ?? "application/octet-stream";
+      const conteudo = `data:${mime};base64,${buffer.toString("base64")}`;
+      if (msg.tipo === "imagem") {
+        r = await chamarZapi("send-image", {
+          metodo: "POST",
+          corpo: { phone: telefone, image: conteudo, caption: "" },
+          conexaoId,
+        });
+      } else {
+        const extensao =
+          ((msg.arquivo_nome ?? "").split(".").pop() ?? "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "") || "bin";
+        r = await chamarZapi(`send-document/${extensao}`, {
+          metodo: "POST",
+          corpo: {
+            phone: telefone,
+            document: conteudo,
+            fileName: msg.arquivo_nome ?? "arquivo",
+            caption: "",
+          },
+          conexaoId,
+        });
+      }
+    }
+
+    if (r.ok) {
+      await context.supabase
+        .from("whatsapp_mensagens")
+        .update({
+          status: "enviada",
+          erro: null,
+          whatsapp_message_id: idDaResposta(r.dados),
+        })
+        .eq("id", msg.id);
+      await context.supabase
+        .from("whatsapp_conversas")
+        .update({
+          ultima_mensagem: msg.texto ?? msg.arquivo_nome ?? "Mensagem",
+          ultima_mensagem_em: new Date().toISOString(),
+        })
+        .eq("id", msg.conversa_id);
+      await promoverParaEmAtendimento(context.supabase, msg.conversa_id, context.userId);
+      return { ok: true as const, erro: null as string | null };
+    }
+
+    const erro = r.erro ?? "Falha ao reenviar a mensagem.";
+    await context.supabase
+      .from("whatsapp_mensagens")
+      .update({ erro })
+      .eq("id", msg.id);
+    return { ok: false as const, erro };
+  });
+
 /** Apaga no WhatsApp do cliente uma mensagem enviada pela loja (mantém no histórico). */
 export const apagarMensagemWhatsapp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
