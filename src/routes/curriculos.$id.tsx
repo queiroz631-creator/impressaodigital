@@ -112,6 +112,9 @@ function DetalheCurriculo() {
   const [enviando, setEnviando] = useState(false);
   const [excluirAberto, setExcluirAberto] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
+  const [cpfAberto, setCpfAberto] = useState(false);
+  const [cpfNovo, setCpfNovo] = useState("");
+  const [salvandoCpf, setSalvandoCpf] = useState(false);
 
   const excluirCurriculo = async () => {
     setExcluindo(true);
@@ -131,6 +134,7 @@ function DetalheCurriculo() {
 
   const gerarLink = useServerFn(gerarLinkCurriculo);
   const enviarWhats = useServerFn(enviarCurriculoWhatsapp);
+  const alterarCpf = useServerFn(alterarCpfCurriculo);
 
   const { data, isLoading } = useQuery({
     queryKey: ["curriculo", id],
