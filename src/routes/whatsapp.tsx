@@ -866,6 +866,21 @@ function Conversa({
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const reenviarMsgFn = useServerFn(reenviarMensagemWhatsapp);
+  const reenviarMsg = useMutation({
+    mutationFn: async (id: string) => await reenviarMsgFn({ data: { mensagemId: id } }),
+    onSuccess: (r) => {
+      if (!r.ok) {
+        toast.error(r.erro ?? "Não foi possível reenviar a mensagem.");
+      } else {
+        toast.success("Mensagem reenviada.");
+      }
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-mensagens"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsapp-conversas"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const apagarMsg = useMutation({
     mutationFn: async (id: string) => await apagarMsgFn({ data: { mensagemId: id } }),
     onSuccess: (r) => {
