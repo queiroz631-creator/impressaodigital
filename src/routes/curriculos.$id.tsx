@@ -503,6 +503,36 @@ function DetalheCurriculo() {
         <CurriculoDocumento ref={documentoRef} dados={dados} />
       )}
 
+      <Dialog open={cpfAberto} onOpenChange={setCpfAberto}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Alterar CPF</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="cpf-novo">Novo CPF</Label>
+            <Input
+              id="cpf-novo"
+              value={cpfNovo}
+              onChange={(e) => setCpfNovo(formatarCpf(somenteNumeros(e.target.value).slice(0, 11)))}
+              placeholder="000.000.000-00"
+              inputMode="numeric"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">
+              O CPF também será atualizado no cadastro do cliente vinculado.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCpfAberto(false)} disabled={salvandoCpf}>
+              Cancelar
+            </Button>
+            <Button onClick={salvarCpf} disabled={salvandoCpf}>
+              {salvandoCpf ? "Salvando…" : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={whatsAberto} onOpenChange={setWhatsAberto}>
         <DialogContent>
           <DialogHeader>
