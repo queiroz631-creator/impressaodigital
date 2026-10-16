@@ -3,7 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Plus, Star } from "lucide-react";
+import { Copy, Plus, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,6 +107,54 @@ function TermosSorteio() {
     setErros({});
   }
 
+  const [copiando, setCopiando] = useState(false);
+
+  /** Abre uma nova versão preenchida com os termos do sorteio anterior (para revisão antes de salvar). */
+  async function copiarAnterior() {
+    if (!sorteio) return;
+    setCopiando(true);
+    try {
+      const { data: anteriores, error } = await supabase
+        .from("sorteios")
+        .select("id, numero_sorteio")
+        .lt("numero_sorteio", sorteio.numero_sorteio)
+        .order("numero_sorteio", { ascending: false });
+      if (error) throw new Error(error.message);
+      for (const s of anteriores ?? []) {
+        const { data: lista, error: e2 } = await supabase
+          .from("sorteio_termos")
+          .select("*")
+          .eq("sorteio_id", s.id)
+          .order("atual", { ascending: false })
+          .order("versao", { ascending: false })
+          .limit(1);
+        if (e2) throw new Error(e2.message);
+        const t = lista?.[0] as SorteioTermos | undefined;
+        if (!t) continue;
+        setEditando("novo");
+        setErros({});
+        setValores({
+          versao: String(proximaVersao),
+          titulo: t.titulo ?? "",
+          regras: t.regras ?? "",
+          como_participar: t.como_participar ?? "",
+          validade: t.validade ?? "",
+          como_sera_realizado: t.como_sera_realizado ?? "",
+          premios: t.premios ?? "",
+          informacoes: t.informacoes ?? "",
+          outras_condicoes: t.outras_condicoes ?? "",
+        });
+        toast.success(`Termos copiados do sorteio nº ${s.numero_sorteio}. Revise e salve.`);
+        return;
+      }
+      toast.error("Nenhum sorteio anterior com termos cadastrados foi encontrado.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setCopiando(false);
+    }
+  }
+
   function abrirEdicao(t: SorteioTermos) {
     setEditando(t.id);
     setErros({});
@@ -147,7 +196,15 @@ function TermosSorteio() {
       <NavSorteio id={id} />
 
       {!consulta && (
-        <div className="mb-4 flex justify-end">
+        <div className="mb-4 flex flex-wrap justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={copiarAnterior}
+            disabled={editando !== null || copiando || !sorteio}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            {copiando ? "Buscando..." : "Copiar do sorteio anterior"}
+          </Button>
           <Button onClick={abrirNovo} disabled={editando !== null}>
             <Plus className="mr-2 h-4 w-4" /> Nova versão
           </Button>
