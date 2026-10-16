@@ -346,3 +346,8 @@
 
 
 - [x] WhatsApp: botão Reenviar em mensagens com erro (reenviarMensagemWhatsapp em src/lib/whatsapp.functions.ts; botão na bolha em src/routes/whatsapp.tsx; sem duplicar histórico; build OK, testes OK; não publicado).
+
+## Concluído — Alterar CPF no currículo (2026-10-15)
+- Botão "Alterar CPF" na tela do currículo (src/routes/curriculos.$id.tsx) com modal, máscara e validação cpfValido.
+- alterarCpfCurriculo (src/lib/curriculo.functions.ts): permissão curriculos.visualizar, validação no servidor, bloqueio de CPF duplicado, atualiza curriculos.cpf e clientes.cpf do cliente vinculado, auditoria curriculo_cpf_alterado.
+- Testado na prévia: inválido, duplicado e válido; CPF original restaurado após o teste. Não publicado.
