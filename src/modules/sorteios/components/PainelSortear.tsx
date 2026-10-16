@@ -75,7 +75,7 @@ export function PainelSortear({ sorteio }: { sorteio: Sorteio }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const encerrado = sorteio.status === "ENCERRADO";
+  const encerrado = sorteio.status === "ENCERRADO" || sorteio.status === "ATIVO";
   const sorteadoTotal = sorteio.status === "SORTEADO";
   const totais = apuracao?.totais;
   const premios = apuracao?.premios ?? [];
@@ -90,7 +90,7 @@ export function PainelSortear({ sorteio }: { sorteio: Sorteio }) {
           <CardTitle className="text-base">Sortear</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Este sorteio ainda não está encerrado.</p>
+          <p className="text-sm text-muted-foreground">Este sorteio ainda não está ativo nem encerrado.</p>
         </CardContent>
       </Card>
     );
