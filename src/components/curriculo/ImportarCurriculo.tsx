@@ -350,7 +350,7 @@ export function ImportarCurriculo({
                 ) : (
                   <span className="h-4 w-4" />
                 )}
-                {t}
+                {i === 0 && convertendo ? "Convertendo Word para PDF…" : t}
               </div>
             ))}
           </div>
