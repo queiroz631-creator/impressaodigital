@@ -32,7 +32,7 @@ export async function converterWordEmPdf(base64: string, extensao: "doc" | "docx
     const perfil = `file://${path.join(dir, "perfil")}`;
     await new Promise<void>((resolve, reject) => {
       cp.execFile(
-        process.env.LIBREOFFICE_BIN || "soffice",
+        process.env["LIBREOFFICE_BIN"] || "soffice",
         [
           `-env:UserInstallation=${perfil}`,
           "--headless",
