@@ -37,6 +37,11 @@ if ! bash deploy/configurar-foto-express-storage.sh; then
   exit 1
 fi
 
+if ! command -v soffice >/dev/null 2>&1; then
+  echo "AVISO: LibreOffice não encontrado. Currículos Word serão lidos sem conversão para PDF."
+  echo "       Instale com: sudo apt-get install -y --no-install-recommends libreoffice-writer-nogui fonts-dejavu fonts-liberation"
+fi
+
 echo "==> Instalando dependências"
 if [ -f package-lock.json ]; then
   npm ci

@@ -352,3 +352,5 @@
 - alterarCpfCurriculo (src/lib/curriculo.functions.ts): permissão curriculos.visualizar, validação no servidor, bloqueio de CPF duplicado, atualiza curriculos.cpf e clientes.cpf do cliente vinculado, auditoria curriculo_cpf_alterado.
 - Testado na prévia: inválido, duplicado e válido; CPF original restaurado após o teste. Não publicado.
 - [x] Sorteios por rodadas: apuração com sorteio ATIVO, cupons acumulam, ganhador sai das próximas rodadas
+
+- [x] Conversão Word→PDF com LibreOffice na importação de currículos (VPS)

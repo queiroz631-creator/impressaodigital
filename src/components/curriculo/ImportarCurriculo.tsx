@@ -34,6 +34,7 @@ import {
 import { resumoImportacao, type CurriculoImportado } from "@/lib/curriculo-import-tipos";
 import {
   atualizarCurriculoImportado,
+  converterCurriculoWord,
   consultarCpfImportacao,
   criarCurriculoImportado,
   interpretarCurriculoImportado,
@@ -78,8 +79,10 @@ export function ImportarCurriculo({
   const consultarCpf = useServerFn(consultarCpfImportacao);
   const criar = useServerFn(criarCurriculoImportado);
   const atualizar = useServerFn(atualizarCurriculoImportado);
+  const converter = useServerFn(converterCurriculoWord);
 
   const [passo, setPasso] = useState<number | null>(null);
+  const [convertendo, setConvertendo] = useState(false);
   const [erro, setErro] = useState("");
   const [dados, setDados] = useState<CurriculoImportado | null>(null);
   const [existente, setExistente] = useState<Existente | null>(null);
@@ -208,7 +211,36 @@ export function ImportarCurriculo({
     }
     try {
       setPasso(0);
-      const texto = await extrairTextoCurriculo(file);
+      const tipo = tipoImportacao(file.name);
+      let arquivoLeitura = file;
+      if ((tipo === "doc" || tipo === "docx") && file.size <= 10 * 1024 * 1024) {
+        setConvertendo(true);
+        try {
+          const buf = new Uint8Array(await file.arrayBuffer());
+          let bin = "";
+          for (let i = 0; i < buf.length; i += 0x8000) {
+            bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+          }
+          const r = await converter({ data: { base64: btoa(bin), extensao: tipo } });
+          if (r.pdf) {
+            const pdfBin = atob(r.pdf);
+            const pdfBytes = new Uint8Array(pdfBin.length);
+            for (let i = 0; i < pdfBin.length; i += 1) pdfBytes[i] = pdfBin.charCodeAt(i);
+            arquivoLeitura = new File([pdfBytes], file.name.replace(/\.docx?$/i, ".pdf"), {
+              type: "application/pdf",
+            });
+          } else if (r.erro === "FALHA_CONVERSAO") {
+            toast.warning(
+              "Não foi possível converter o Word em PDF (arquivo protegido ou danificado). Tentando a leitura direta.",
+            );
+          }
+        } catch {
+          /* sem conversão disponível: segue com a leitura direta do Word */
+        } finally {
+          setConvertendo(false);
+        }
+      }
+      const texto = await extrairTextoCurriculo(arquivoLeitura);
       setTextoExtraido(texto);
       setPasso(2);
       const r = await interpretar({ data: { texto } });
@@ -318,7 +350,7 @@ export function ImportarCurriculo({
                 ) : (
                   <span className="h-4 w-4" />
                 )}
-                {t}
+                {i === 0 && convertendo ? "Convertendo Word para PDF…" : t}
               </div>
             ))}
           </div>
