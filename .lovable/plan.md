@@ -8,7 +8,9 @@
 ## 2. Quantidade de páginas no PDF
 - No cartão do PDF dentro da mensagem aparece "N páginas".
 - A contagem é feita uma vez, na primeira vez que a mensagem aparece na tela, e fica guardada na mensagem. Assim não precisa contar de novo.
-- Se o PDF for protegido ou estiver danificado, aparece "páginas: ?" e nada quebra.
+- PDF com senha: mostra um cadeado e o texto "Protegido por senha".
+- PDF danificado ou que não abre: mostra um triângulo de alerta e o texto "Arquivo danificado".
+- Essa situação também fica guardada na mensagem, e nada na tela quebra.
 
 ## 3. Confirmação de envio, entrega e leitura
 - Nas mensagens enviadas aparecem os tiques do WhatsApp: um tique cinza (enviada), dois cinzas (entregue), dois azuis (lida), e o aviso de erro que já existe.
@@ -22,7 +24,8 @@
 - Na ordem decrescente, a caixa de texto continua no mesmo lugar e a conversa abre no topo (mensagem mais nova).
 
 ## Detalhes técnicos
-- Migração nova (também em `supabase/migrations/`, nome datado): colunas `paginas int null`, `entregue_em timestamptz null`, `lida_em timestamptz null` em `whatsapp_mensagens`; status aceita `entregue` e `lida`.
+- Migração nova (também em `supabase/migrations/`, nome datado): colunas `paginas int null`, `pdf_situacao text null` (`ok`/`protegido`/`danificado`), `entregue_em timestamptz null`, `lida_em timestamptz null` em `whatsapp_mensagens`; status aceita `entregue` e `lida`.
+- Detecção: carregar com `pdf-lib`; erro de criptografia (`EncryptedPDFError` ou `/Encrypt` no arquivo) = protegido; outra falha de leitura ou download = danificado. Ícones Lock e AlertTriangle.
 - `src/lib/whatsapp-webhook.server.ts`: tratar o callback `MessageStatusCallback` da Z-API antes do filtro que hoje descarta não-`ReceivedCallback`; atualizar por `id_mensagem_externa` (ids em `ids[]`) com ordem de prioridade enviada < entregue < lida, guardando o horário do provedor. Sem acionar bot.
 - `src/lib/whatsapp.functions.ts`: função autenticada `salvarPaginasMensagem(id, paginas)`.
 - `src/routes/whatsapp.tsx`: menu do botão Baixar com os dois modos reaproveitando `baixarSelecionados(modo)`; contagem via `contarPaginas` de `src/lib/contagem.ts` quando `paginas` é nulo; ícones Check/CheckCheck; estado `ordem` em localStorage invertendo a lista exibida.
