@@ -5,7 +5,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   AlertCircle,
+  AlertTriangle,
+  ArrowDownWideNarrow,
   ArrowLeft,
+  ArrowUpNarrowWide,
+  Check,
+  CheckCheck,
+  Lock,
   Bot,
   BotOff,
   Calculator,
@@ -45,6 +51,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { analisarPdf, type SituacaoPdf } from "@/lib/pdf-situacao";
+
+/** Tiques do WhatsApp: enviada (1 cinza), entregue (2 cinzas), lida (2 azuis). */
+function TiquesStatus({ status }: { status: string }) {
+  if (status === "lida")
+    return <CheckCheck className="h-3.5 w-3.5 text-sky-500" aria-label="Lida" />;
+  if (status === "entregue")
+    return <CheckCheck className="h-3.5 w-3.5 opacity-70" aria-label="Entregue" />;
+  return <Check className="h-3.5 w-3.5 opacity-70" aria-label="Enviada" />;
+}
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -139,6 +161,8 @@ interface Mensagem {
   editada?: boolean | null;
   apagada?: boolean | null;
   whatsapp_message_id?: string | null;
+  paginas?: number | null;
+  pdf_situacao?: string | null;
 }
 
 interface MensagemRapida {
@@ -769,6 +793,16 @@ function Conversa({
   const [editandoNome, setEditandoNome] = useState(false);
   const [nomeEdicao, setNomeEdicao] = useState("");
   const fim = useRef<HTMLDivElement | null>(null);
+  const [ordemDesc, setOrdemDesc] = useState(false);
+  useEffect(() => {
+    setOrdemDesc(localStorage.getItem("whatsapp-ordem") === "desc");
+  }, []);
+  function alternarOrdem() {
+    const novo = !ordemDesc;
+    setOrdemDesc(novo);
+    localStorage.setItem("whatsapp-ordem", novo ? "desc" : "asc");
+    setTimeout(() => fim.current?.scrollIntoView({ block: novo ? "start" : "end" }), 50);
+  }
   const ultimaPresenca = useRef(0);
   const campoTexto = useRef<HTMLTextAreaElement | null>(null);
   const inputArquivo = useRef<HTMLInputElement | null>(null);
@@ -921,12 +955,12 @@ function Conversa({
     });
   }
 
-  /** Baixa até 3 arquivos separadamente; acima disso, junta tudo num único ZIP. */
-  async function baixarSelecionados() {
+  /** Baixa os selecionados avulsos ou juntos num único ZIP, conforme escolhido. */
+  async function baixarSelecionados(modo: "zip" | "avulso") {
     const ids = Array.from(selecionados);
     if (ids.length === 0 || preparandoZip) return;
 
-    if (ids.length <= 3) {
+    if (modo === "avulso") {
       for (const [i, id] of ids.entries()) {
         const a = document.createElement("a");
         a.href = urlMidia(id, true);
@@ -1249,12 +1283,13 @@ function Conversa({
     if (alturaAntes.current !== null && scroll.current) {
       const diferenca = scroll.current.scrollHeight - alturaAntes.current;
       alturaAntes.current = null;
+      if (ordemDesc) return;
       if (diferenca > 0) {
         scroll.current.scrollTop += diferenca;
         return;
       }
     }
-    fim.current?.scrollIntoView({ block: "end" });
+    fim.current?.scrollIntoView({ block: ordemDesc ? "start" : "end" });
   }, [mensagens]);
 
 
@@ -1591,6 +1626,14 @@ function Conversa({
         <Button
           size="sm"
           variant="outline"
+          title={ordemDesc ? "Mais recentes primeiro" : "Mais antigas primeiro"}
+          onClick={() => alternarOrdem()}
+        >
+          {ordemDesc ? <ArrowDownWideNarrow className="h-4 w-4" /> : <ArrowUpNarrowWide className="h-4 w-4" />}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
           title="Abrir orçamento com nome e telefone do cliente"
           onClick={abrirOrcamento}
         >
@@ -1628,19 +1671,21 @@ function Conversa({
           >
             <Calculator className="mr-1 h-4 w-4" /> Calculadora
           </Button>
-          <Button
-            size="sm"
-            disabled={selecionados.size === 0 || preparandoZip}
-            onClick={() => void baixarSelecionados()}
-            title={
-              selecionados.size > 3
-                ? "Baixar todos em um único ZIP"
-                : "Baixar os arquivos selecionados"
-            }
-          >
-            <Download className="mr-1 h-4 w-4" />{" "}
-            {preparandoZip ? "Preparando..." : selecionados.size > 3 ? "Baixar ZIP" : "Baixar"}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" disabled={selecionados.size === 0 || preparandoZip}>
+                <Download className="mr-1 h-4 w-4" /> {preparandoZip ? "Preparando..." : "Baixar"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => void baixarSelecionados("zip")}>
+                Baixar em ZIP
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void baixarSelecionados("avulso")}>
+                Baixar avulso
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             size="sm"
             variant="ghost"
@@ -1657,7 +1702,13 @@ function Conversa({
       <div className="flex min-h-0 flex-1 gap-3">
         <Card className="flex min-h-0 min-w-0 flex-1 flex-col">
           <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
-            <div ref={scroll} className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+            <div
+              ref={scroll}
+              className={cn(
+                "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1",
+                ordemDesc && "flex-col-reverse",
+              )}
+            >
               {!isLoading &&
                 (semMais ? (
                   (mensagens ?? []).length > 0 && (
@@ -1777,10 +1828,15 @@ function Conversa({
                         <p className="mt-1 text-[10px] italic opacity-80">mensagem apagada</p>
                       )}
 
-                      <p className="mt-1 text-[10px] opacity-70">
-                        {dataHoraCurta(m.data_hora)}
-                        {m.editada && !m.apagada ? " · editada" : ""}
-                        {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
+                      <p className="mt-1 flex items-center justify-end gap-1 text-[10px]">
+                        <span className="opacity-70">
+                          {dataHoraCurta(m.data_hora)}
+                          {m.editada && !m.apagada ? " · editada" : ""}
+                          {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
+                        </span>
+                        {m.direcao === "saida" && m.status !== "erro" && (
+                          <TiquesStatus status={m.status} />
+                        )}
                       </p>
                       {m.status === "erro" && m.direcao === "saida" && !m.apagada && (
                         <Button
@@ -2338,6 +2394,8 @@ function MidiaMensagem({
   const nome = mensagem.arquivo_nome ?? "arquivo";
   const ehImagem = mensagem.tipo === "imagem" || (mensagem.mime_type ?? "").startsWith("image/");
   const ehAudio = mensagem.tipo === "audio" || (mensagem.mime_type ?? "").startsWith("audio/");
+  const ehPdf =
+    (mensagem.mime_type ?? "").includes("pdf") || nome.toLowerCase().endsWith(".pdf");
 
   if (!mensagem.arquivo_url) {
     return <p className="mb-1 text-xs opacity-80">📎 {nome}</p>;
@@ -2452,7 +2510,10 @@ function MidiaMensagem({
     return (
       <div className="mb-1 flex items-center gap-2 rounded-lg border border-current/20 bg-background/20 px-2 py-2">
         <FileText className="h-5 w-5 shrink-0" />
-        <span className="min-w-0 flex-1 truncate text-xs">{nome}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-xs">{nome}</span>
+          {ehPdf && <InfoPdf mensagem={mensagem} />}
+        </span>
       </div>
     );
   }
@@ -2464,8 +2525,63 @@ function MidiaMensagem({
       className="mb-1 flex items-center gap-2 rounded-lg border border-current/20 bg-background/20 px-2 py-2"
     >
       <FileText className="h-5 w-5 shrink-0" />
-      <span className="min-w-0 flex-1 truncate text-xs">{nome}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-xs">{nome}</span>
+        {ehPdf && <InfoPdf mensagem={mensagem} />}
+      </span>
       <Download className="h-4 w-4 shrink-0" />
     </a>
+  );
+}
+
+/** Mostra páginas do PDF, cadeado (senha) ou alerta (danificado). Conta uma vez e guarda. */
+function InfoPdf({ mensagem }: { mensagem: Mensagem }) {
+  const [info, setInfo] = useState<{ situacao: string | null; paginas: number | null }>({
+    situacao: mensagem.pdf_situacao ?? null,
+    paginas: mensagem.paginas ?? null,
+  });
+
+  useEffect(() => {
+    if (info.situacao) return;
+    let cancelado = false;
+    void (async () => {
+      let resultado: { situacao: SituacaoPdf; paginas: number | null };
+      try {
+        const r = await fetch(urlMidia(mensagem.id));
+        if (!r.ok) return; // falha temporária: tenta de novo depois
+        resultado = await analisarPdf(await r.arrayBuffer());
+      } catch {
+        return;
+      }
+      if (cancelado) return;
+      setInfo(resultado);
+      await supabase
+        .from("whatsapp_mensagens")
+        .update({ paginas: resultado.paginas, pdf_situacao: resultado.situacao } as never)
+        .eq("id", mensagem.id);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [mensagem.id, info.situacao]);
+
+  if (!info.situacao) return <span className="block text-[10px] opacity-70">contando páginas…</span>;
+  if (info.situacao === "protegido")
+    return (
+      <span className="flex items-center gap-1 text-[10px] font-semibold opacity-90">
+        <Lock className="h-3 w-3" /> Protegido por senha
+        {info.paginas ? ` · ${info.paginas} pág.` : ""}
+      </span>
+    );
+  if (info.situacao === "danificado")
+    return (
+      <span className="flex items-center gap-1 text-[10px] font-semibold text-destructive">
+        <AlertTriangle className="h-3 w-3" /> Arquivo danificado
+      </span>
+    );
+  return (
+    <span className="block text-[10px] opacity-80">
+      {info.paginas} {info.paginas === 1 ? "página" : "páginas"}
+    </span>
   );
 }
