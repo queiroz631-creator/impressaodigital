@@ -1657,7 +1657,13 @@ function Conversa({
       <div className="flex min-h-0 flex-1 gap-3">
         <Card className="flex min-h-0 min-w-0 flex-1 flex-col">
           <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
-            <div ref={scroll} className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+            <div
+              ref={scroll}
+              className={cn(
+                "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1",
+                ordemDesc && "flex-col-reverse",
+              )}
+            >
               {!isLoading &&
                 (semMais ? (
                   (mensagens ?? []).length > 0 && (
@@ -1777,10 +1783,15 @@ function Conversa({
                         <p className="mt-1 text-[10px] italic opacity-80">mensagem apagada</p>
                       )}
 
-                      <p className="mt-1 text-[10px] opacity-70">
-                        {dataHoraCurta(m.data_hora)}
-                        {m.editada && !m.apagada ? " · editada" : ""}
-                        {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
+                      <p className="mt-1 flex items-center justify-end gap-1 text-[10px]">
+                        <span className="opacity-70">
+                          {dataHoraCurta(m.data_hora)}
+                          {m.editada && !m.apagada ? " · editada" : ""}
+                          {m.status === "erro" ? ` · erro: ${m.erro ?? ""}` : ""}
+                        </span>
+                        {m.direcao === "saida" && m.status !== "erro" && (
+                          <TiquesStatus status={m.status} />
+                        )}
                       </p>
                       {m.status === "erro" && m.direcao === "saida" && !m.apagada && (
                         <Button
@@ -2338,6 +2349,8 @@ function MidiaMensagem({
   const nome = mensagem.arquivo_nome ?? "arquivo";
   const ehImagem = mensagem.tipo === "imagem" || (mensagem.mime_type ?? "").startsWith("image/");
   const ehAudio = mensagem.tipo === "audio" || (mensagem.mime_type ?? "").startsWith("audio/");
+  const ehPdf =
+    (mensagem.mime_type ?? "").includes("pdf") || nome.toLowerCase().endsWith(".pdf");
 
   if (!mensagem.arquivo_url) {
     return <p className="mb-1 text-xs opacity-80">📎 {nome}</p>;
@@ -2452,7 +2465,10 @@ function MidiaMensagem({
     return (
       <div className="mb-1 flex items-center gap-2 rounded-lg border border-current/20 bg-background/20 px-2 py-2">
         <FileText className="h-5 w-5 shrink-0" />
-        <span className="min-w-0 flex-1 truncate text-xs">{nome}</span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-xs">{nome}</span>
+          {ehPdf && <InfoPdf mensagem={mensagem} />}
+        </span>
       </div>
     );
   }
@@ -2464,8 +2480,63 @@ function MidiaMensagem({
       className="mb-1 flex items-center gap-2 rounded-lg border border-current/20 bg-background/20 px-2 py-2"
     >
       <FileText className="h-5 w-5 shrink-0" />
-      <span className="min-w-0 flex-1 truncate text-xs">{nome}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-xs">{nome}</span>
+        {ehPdf && <InfoPdf mensagem={mensagem} />}
+      </span>
       <Download className="h-4 w-4 shrink-0" />
     </a>
+  );
+}
+
+/** Mostra páginas do PDF, cadeado (senha) ou alerta (danificado). Conta uma vez e guarda. */
+function InfoPdf({ mensagem }: { mensagem: Mensagem }) {
+  const [info, setInfo] = useState<{ situacao: string | null; paginas: number | null }>({
+    situacao: mensagem.pdf_situacao ?? null,
+    paginas: mensagem.paginas ?? null,
+  });
+
+  useEffect(() => {
+    if (info.situacao) return;
+    let cancelado = false;
+    void (async () => {
+      let resultado: { situacao: SituacaoPdf; paginas: number | null };
+      try {
+        const r = await fetch(urlMidia(mensagem.id));
+        if (!r.ok) return; // falha temporária: tenta de novo depois
+        resultado = await analisarPdf(await r.arrayBuffer());
+      } catch {
+        return;
+      }
+      if (cancelado) return;
+      setInfo(resultado);
+      await supabase
+        .from("whatsapp_mensagens")
+        .update({ paginas: resultado.paginas, pdf_situacao: resultado.situacao } as never)
+        .eq("id", mensagem.id);
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [mensagem.id, info.situacao]);
+
+  if (!info.situacao) return <span className="block text-[10px] opacity-70">contando páginas…</span>;
+  if (info.situacao === "protegido")
+    return (
+      <span className="flex items-center gap-1 text-[10px] font-semibold opacity-90">
+        <Lock className="h-3 w-3" /> Protegido por senha
+        {info.paginas ? ` · ${info.paginas} pág.` : ""}
+      </span>
+    );
+  if (info.situacao === "danificado")
+    return (
+      <span className="flex items-center gap-1 text-[10px] font-semibold text-destructive">
+        <AlertTriangle className="h-3 w-3" /> Arquivo danificado
+      </span>
+    );
+  return (
+    <span className="block text-[10px] opacity-80">
+      {info.paginas} {info.paginas === 1 ? "página" : "páginas"}
+    </span>
   );
 }
