@@ -5,7 +5,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   AlertCircle,
+  AlertTriangle,
+  ArrowDownWideNarrow,
   ArrowLeft,
+  ArrowUpNarrowWide,
+  Check,
+  CheckCheck,
+  Lock,
   Bot,
   BotOff,
   Calculator,
@@ -45,6 +51,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { analisarPdf, type SituacaoPdf } from "@/lib/pdf-situacao";
+
+/** Tiques do WhatsApp: enviada (1 cinza), entregue (2 cinzas), lida (2 azuis). */
+function TiquesStatus({ status }: { status: string }) {
+  if (status === "lida")
+    return <CheckCheck className="h-3.5 w-3.5 text-sky-500" aria-label="Lida" />;
+  if (status === "entregue")
+    return <CheckCheck className="h-3.5 w-3.5 opacity-70" aria-label="Entregue" />;
+  return <Check className="h-3.5 w-3.5 opacity-70" aria-label="Enviada" />;
+}
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -139,6 +161,8 @@ interface Mensagem {
   editada?: boolean | null;
   apagada?: boolean | null;
   whatsapp_message_id?: string | null;
+  paginas?: number | null;
+  pdf_situacao?: string | null;
 }
 
 interface MensagemRapida {
@@ -769,6 +793,16 @@ function Conversa({
   const [editandoNome, setEditandoNome] = useState(false);
   const [nomeEdicao, setNomeEdicao] = useState("");
   const fim = useRef<HTMLDivElement | null>(null);
+  const [ordemDesc, setOrdemDesc] = useState(false);
+  useEffect(() => {
+    setOrdemDesc(localStorage.getItem("whatsapp-ordem") === "desc");
+  }, []);
+  function alternarOrdem() {
+    const novo = !ordemDesc;
+    setOrdemDesc(novo);
+    localStorage.setItem("whatsapp-ordem", novo ? "desc" : "asc");
+    setTimeout(() => fim.current?.scrollIntoView({ block: novo ? "start" : "end" }), 50);
+  }
   const ultimaPresenca = useRef(0);
   const campoTexto = useRef<HTMLTextAreaElement | null>(null);
   const inputArquivo = useRef<HTMLInputElement | null>(null);
@@ -921,12 +955,12 @@ function Conversa({
     });
   }
 
-  /** Baixa até 3 arquivos separadamente; acima disso, junta tudo num único ZIP. */
-  async function baixarSelecionados() {
+  /** Baixa os selecionados avulsos ou juntos num único ZIP, conforme escolhido. */
+  async function baixarSelecionados(modo: "zip" | "avulso") {
     const ids = Array.from(selecionados);
     if (ids.length === 0 || preparandoZip) return;
 
-    if (ids.length <= 3) {
+    if (modo === "avulso") {
       for (const [i, id] of ids.entries()) {
         const a = document.createElement("a");
         a.href = urlMidia(id, true);
@@ -1249,12 +1283,13 @@ function Conversa({
     if (alturaAntes.current !== null && scroll.current) {
       const diferenca = scroll.current.scrollHeight - alturaAntes.current;
       alturaAntes.current = null;
+      if (ordemDesc) return;
       if (diferenca > 0) {
         scroll.current.scrollTop += diferenca;
         return;
       }
     }
-    fim.current?.scrollIntoView({ block: "end" });
+    fim.current?.scrollIntoView({ block: ordemDesc ? "start" : "end" });
   }, [mensagens]);
 
 
@@ -1591,6 +1626,14 @@ function Conversa({
         <Button
           size="sm"
           variant="outline"
+          title={ordemDesc ? "Mais recentes primeiro" : "Mais antigas primeiro"}
+          onClick={() => alternarOrdem()}
+        >
+          {ordemDesc ? <ArrowDownWideNarrow className="h-4 w-4" /> : <ArrowUpNarrowWide className="h-4 w-4" />}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
           title="Abrir orçamento com nome e telefone do cliente"
           onClick={abrirOrcamento}
         >
@@ -1628,19 +1671,21 @@ function Conversa({
           >
             <Calculator className="mr-1 h-4 w-4" /> Calculadora
           </Button>
-          <Button
-            size="sm"
-            disabled={selecionados.size === 0 || preparandoZip}
-            onClick={() => void baixarSelecionados()}
-            title={
-              selecionados.size > 3
-                ? "Baixar todos em um único ZIP"
-                : "Baixar os arquivos selecionados"
-            }
-          >
-            <Download className="mr-1 h-4 w-4" />{" "}
-            {preparandoZip ? "Preparando..." : selecionados.size > 3 ? "Baixar ZIP" : "Baixar"}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" disabled={selecionados.size === 0 || preparandoZip}>
+                <Download className="mr-1 h-4 w-4" /> {preparandoZip ? "Preparando..." : "Baixar"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => void baixarSelecionados("zip")}>
+                Baixar em ZIP
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void baixarSelecionados("avulso")}>
+                Baixar avulso
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             size="sm"
             variant="ghost"
