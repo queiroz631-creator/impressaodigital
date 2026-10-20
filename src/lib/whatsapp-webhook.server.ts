@@ -255,6 +255,31 @@ export async function processarWebhookWhatsapp(request: Request, token: string):
   // mas nunca aciona o bot nem reabre atendimento.
   const ehSaidaPropria = corpo.fromMe === true;
 
+  // Aviso de entrega/leitura de mensagem enviada: atualiza os tiques sem
+  // acionar o bot. Nunca rebaixa (lida não volta a entregue/enviada).
+  if (corpo.type === "MessageStatusCallback") {
+    const b = bruto as { status?: string; ids?: unknown; momment?: number };
+    const st = String(b.status ?? "").toUpperCase();
+    const novo = st === "READ" || st === "PLAYED" ? "lida" : st === "RECEIVED" ? "entregue" : null;
+    const ids = Array.isArray(b.ids) ? b.ids.filter((x): x is string => typeof x === "string") : [];
+    if (novo && ids.length > 0) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const quando = new Date(typeof b.momment === "number" ? b.momment : Date.now()).toISOString();
+      const bloqueados = novo === "lida" ? ["lida", "erro"] : ["entregue", "lida", "erro"];
+      const campos: Record<string, unknown> = { status: novo };
+      if (novo === "lida") campos.lida_em = quando;
+      else campos.entregue_em = quando;
+      const { error } = await supabaseAdmin
+        .from("whatsapp_mensagens")
+        .update(campos as never)
+        .in("whatsapp_message_id", ids)
+        .eq("direcao", "saida")
+        .not("status", "in", `(${bloqueados.join(",")})`);
+      if (error) return new Response("Falha ao registrar status", { status: 500 });
+    }
+    return Response.json({ ok: true, status: novo });
+  }
+
   // A Z-API envia vários tipos de callback (entrega, status, presença).
   // Só o "ReceivedCallback" é mensagem de cliente; o resto causaria laço.
   if (corpo.type && corpo.type !== "ReceivedCallback" && !ehSaidaPropria) {
