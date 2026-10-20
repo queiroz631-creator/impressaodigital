@@ -266,9 +266,8 @@ export async function processarWebhookWhatsapp(request: Request, token: string):
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const quando = new Date(typeof b.momment === "number" ? b.momment : Date.now()).toISOString();
       const bloqueados = novo === "lida" ? ["lida", "erro"] : ["entregue", "lida", "erro"];
-      const campos: Record<string, unknown> = { status: novo };
-      if (novo === "lida") campos.lida_em = quando;
-      else campos.entregue_em = quando;
+      const campos =
+        novo === "lida" ? { status: novo, lida_em: quando } : { status: novo, entregue_em: quando };
       const { error } = await supabaseAdmin
         .from("whatsapp_mensagens")
         .update(campos as never)
