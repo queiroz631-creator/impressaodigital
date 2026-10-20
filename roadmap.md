@@ -1,5 +1,11 @@
 # Roadmap
 
+## WhatsApp — Evolution e Z-API
+- [ ] Adicionar provedor e credenciais independentes em Conexões, preservando cadastros Z-API
+- [ ] Adaptar operações existentes e normalizar webhooks da Evolution sem alterar o bot
+- [ ] Testar compatibilidade e isolamento; conexão real depende do servidor e das credenciais
+- [ ] Aplicar mudança no banco — bloqueada enquanto Lovable Cloud estiver indisponível
+
 ## WhatsApp — ações de currículo
 - [x] Modal com links de criação/edição e PDF na conversa selecionada
 - [x] Reutilizar consulta completa, gerador e envio com associação segura e permissões
