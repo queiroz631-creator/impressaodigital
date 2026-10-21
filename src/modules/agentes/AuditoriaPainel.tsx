@@ -1,11 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Loader2, RefreshCw, MessageSquare, Wrench, Zap, ShieldAlert, ScrollText, Settings, GitBranch } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/AppLayout";
 import { listarAuditoria } from "@/lib/agentes/agentes.functions";
+
+const ATALHOS = [
+  { rota: "/agentes/chat", nome: "Chat Operacional", icone: MessageSquare },
+  { rota: "/agentes/ferramentas", nome: "Ferramentas", icone: Wrench },
+  { rota: "/agentes/execucoes", nome: "Execuções", icone: Zap },
+  { rota: "/agentes/aprovacoes", nome: "Aprovações", icone: ShieldAlert },
+  { rota: "/agentes/auditoria", nome: "Auditoria", icone: ScrollText },
+  { rota: "/agentes/configuracoes", nome: "Configurações", icone: Settings },
+] as const;
 
 export default function AuditoriaPainel() {
   const fnListar = useServerFn(listarAuditoria);
@@ -16,7 +26,19 @@ export default function AuditoriaPainel() {
       <PageHeader
         titulo="Auditoria"
         subtitulo="Registro somente de inclusão das operações sensíveis da Central de Agentes."
+        semPaddingHorizontal
       />
+
+      <div className="flex flex-wrap gap-2">
+        {ATALHOS.map((atalho) => (
+          <Button key={atalho.rota} variant="outline" size="sm" asChild>
+            <Link to={atalho.rota}>
+              <atalho.icone className="mr-2 h-4 w-4" />
+              {atalho.nome}
+            </Link>
+          </Button>
+        ))}
+      </div>
 
       <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={() => void auditoria.refetch()}>

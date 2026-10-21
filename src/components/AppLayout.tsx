@@ -289,13 +289,24 @@ function SidebarHeader() {
   );
 }
 
-export function PageHeader({ titulo, subtitulo }: { titulo: string; subtitulo?: string }) {
+export function PageHeader({
+  titulo,
+  subtitulo,
+  semPaddingHorizontal = false,
+}: { titulo: string; subtitulo?: string; semPaddingHorizontal?: boolean }) {
+  const innerClassName = semPaddingHorizontal
+    ? "flex items-center gap-4"
+    : "flex items-center gap-4 px-5 sm:px-8";
+
   return (
     <div
-      className="mb-6 rounded-2xl px-5 py-6 text-navy-foreground shadow-card sm:px-8"
+      className={cn(
+        "mb-6 rounded-2xl py-6 text-navy-foreground shadow-card",
+        semPaddingHorizontal ? "px-0" : "px-5 sm:px-8"
+      )}
       style={{ backgroundImage: "var(--gradient-header)" }}
     >
-      <div className="flex items-center gap-4">
+      <div className={innerClassName}>
         <img
           src={logo}
           alt=""

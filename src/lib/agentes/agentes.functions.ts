@@ -137,6 +137,35 @@ export interface AuditoriaItem {
   criado_em: string;
 }
 
+export interface VersaoAgenteDetalhe {
+  id: string;
+  tipo: string;
+  versao: number;
+  ativo: boolean;
+  conteudo: Json;
+  observacao: string;
+  criado_por: string | null;
+  criado_em: string;
+}
+
+export interface ProvedorIAStatus {
+  provedor: string;
+  modelo_texto: string;
+  modelo_audio: string;
+  tem_chave_propria: boolean;
+  status: "configurado" | "sem_chave" | "usando_gateway";
+}
+
+export interface ConfiguracaoCentral {
+  limite_profundidade_agentes: number;
+  timeout_execucao_segundos: number;
+  max_tentativas_padrao: number;
+  lease_tarefa_segundos: number;
+  aprovacao_expira_horas: number;
+  idempotencia_expira_dias: number;
+  auditoria_retencao_dias: number;
+}
+
 export interface MetricasCentral {
   agentes_total: number;
   agentes_ativos: number;
@@ -763,7 +792,11 @@ export const metricasCentral = createServerFn({ method: "GET" })
       supabaseAdmin.from("agente_aprovacoes").select("id", head).eq("status", "pendente"),
       supabaseAdmin.from("agente_tarefas").select("id", head).eq("status", "aguardando"),
       supabaseAdmin.from("agente_dispositivos").select("id", head).eq("ativo", true),
-      supabaseAdmin.from("agente_worker_heartbeats").select("id", head).gte("ultimo_ping", desdePing),
+      supabaseAdmin
+        .from("agente_worker_heartbeats")
+        .select("id", head)
+        .gte("ultimo_ping", desdePing)
+        .neq("status", "parado"),
     ]);
 
     return {
@@ -778,4 +811,260 @@ export const metricasCentral = createServerFn({ method: "GET" })
       workers_online: workersOnline.count ?? 0,
       atualizado_em: new Date().toISOString(),
     };
+  });
+
+// --------------------------------------------------------- versões de agente
+export const listarVersoesAgente = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z.object({ agenteId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<VersaoAgenteDetalhe[]> => {
+    const { data: pode } = await context.supabase.rpc("pode_agentes", { _chave: "agentes.visualizar" });
+    if (!pode) throw new Error("Sem permissão para visualizar versões.");
+
+    const { data: versoes, error } = await context.supabase
+      .from("agente_versoes")
+      .select("id, tipo, versao, ativo, conteudo, observacao, criado_por, criado_em")
+      .eq("agente_id", data.agenteId)
+      .order("tipo")
+      .order("versao", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (versoes ?? []) as VersaoAgenteDetalhe[];
+  });
+
+export const ativarVersaoAgente = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z.object({ versaoId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: pode } = await context.supabase.rpc("pode_agentes", { _chave: "agentes.gerenciar" });
+    if (!pode) return { ok: false as const, erro: "Sem permissão para gerenciar agentes." };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Obter a versão para saber o agente_id e tipo
+    const { data: versao, error: errVersao } = await supabaseAdmin
+      .from("agente_versoes")
+      .select("agente_id, tipo")
+      .eq("id", data.versaoId)
+      .maybeSingle();
+    if (errVersao || !versao) return { ok: false as const, erro: "Versão não encontrada." };
+
+    // Desativar outras versões do mesmo tipo
+    await supabaseAdmin
+      .from("agente_versoes")
+      .update({ ativo: false })
+      .eq("agente_id", versao.agente_id)
+      .eq("tipo", versao.tipo);
+
+    // Ativar a selecionada
+    const { error: errAtivar } = await supabaseAdmin
+      .from("agente_versoes")
+      .update({ ativo: true })
+      .eq("id", data.versaoId);
+    if (errAtivar) return { ok: false as const, erro: "Não foi possível ativar a versão." };
+
+    // Atualizar o agente com o prompt/config atual
+    const campo = versao.tipo === "prompt" ? "system_prompt_atual_id" : "config_atual_id";
+    await supabaseAdmin.from("agentes").update({ [campo]: data.versaoId } as Record<string, string>).eq("id", versao.agente_id);
+
+    await auditar(context, `agente.versao_ativada`, { tipo: versao.tipo }, {
+      agenteId: versao.agente_id,
+      entidade: "agente_versoes",
+      entidadeId: data.versaoId,
+    });
+
+    return { ok: true as const, erro: null };
+  });
+
+export const excluirVersaoAgente = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z.object({ versaoId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: pode } = await context.supabase.rpc("pode_agentes", { _chave: "agentes.gerenciar" });
+    if (!pode) return { ok: false as const, erro: "Sem permissão para gerenciar agentes." };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: versao, error: errVersao } = await supabaseAdmin
+      .from("agente_versoes")
+      .select("agente_id, tipo, ativo")
+      .eq("id", data.versaoId)
+      .maybeSingle();
+    if (errVersao || !versao) return { ok: false as const, erro: "Versão não encontrada." };
+    if (versao.ativo) return { ok: false as const, erro: "Não é possível excluir a versão ativa. Ative outra primeiro." };
+
+    const { error } = await supabaseAdmin.from("agente_versoes").delete().eq("id", data.versaoId);
+    if (error) return { ok: false as const, erro: "Não foi possível excluir a versão." };
+
+    await auditar(context, `agente.versao_excluida`, { tipo: versao.tipo }, {
+      agenteId: versao.agente_id,
+      entidade: "agente_versoes",
+      entidadeId: data.versaoId,
+    });
+
+    return { ok: true as const, erro: null };
+  });
+
+// ------------------------------------------------------- provedores de IA
+export const obterStatusProvedoresIA = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ProvedorIAStatus[]> => {
+    const { data: pode } = await context.supabase.rpc("pode_agentes", { _chave: "agentes.visualizar" });
+    if (!pode) throw new Error("Sem permissão para visualizar a Central de Agentes.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { resolverConfigIA, PROVEDORES_IA, MODELOS_PADRAO } = await import("@/lib/ia-chave.server");
+
+    const cfg = await resolverConfigIA();
+    const { data: chaves } = await supabaseAdmin.from("ia_credenciais").select("provedor");
+    const temChave = (p: string) => (chaves ?? []).some((c) => c.provedor === p);
+
+    return PROVEDORES_IA.map((p) => {
+      const padrao = MODELOS_PADRAO[p];
+      const proprio = p === "openai_proprio" || p === "gemini_proprio";
+      let status: "configurado" | "sem_chave" | "usando_gateway" = "configurado";
+      if (proprio && !temChave(p)) status = "sem_chave";
+      if (p === cfg.provedor && proprio && !temChave(p)) status = "usando_gateway";
+
+      return {
+        provedor: p,
+        modelo_texto: cfg.provedor === p ? cfg.modeloTexto : padrao.texto,
+        modelo_audio: cfg.provedor === p ? cfg.modeloAudio : padrao.audio,
+        tem_chave_propria: temChave(p),
+        status,
+      };
+    });
+  });
+
+export const testarConexaoIA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: pode } = await context.supabase.rpc("pode_agentes", { _chave: "agentes.gerenciar" });
+    if (!pode) throw new Error("Sem permissão para testar conexão de IA.");
+
+    const { gerarTextoIA, limparCacheIA, resolverConfigIA } = await import("@/lib/ia-chave.server");
+    limparCacheIA();
+    const cfg = await resolverConfigIA();
+
+    const r = await gerarTextoIA(
+      "Responda somente com a palavra OK, sem pontuação.",
+      "Teste de conexão da Central de Agentes.",
+      {},
+    );
+
+    if (r.conteudo)
+      return {
+        ok: true as const,
+        provedor: cfg.provedor,
+        modelo: cfg.modeloTexto,
+        resposta: r.conteudo.slice(0, 120),
+      };
+
+    return {
+      ok: false as const,
+      provedor: cfg.provedor,
+      modelo: cfg.modeloTexto,
+      mensagem: `Falha na conexão (status ${r.status}).`,
+    };
+  });
+
+// --------------------------------------------------- configuração da central
+export const obterConfiguracaoCentral = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ConfiguracaoCentral> => {
+    const { data: pode } = await context.supabase.rpc("pode_agentes", { _chave: "agentes.visualizar" });
+    if (!pode) throw new Error("Sem permissão para visualizar configurações.");
+
+    // Por enquanto retorna valores padrão; futuramente virá de uma tabela de config
+    return {
+      limite_profundidade_agentes: 5,
+      timeout_execucao_segundos: 300,
+      max_tentativas_padrao: 3,
+      lease_tarefa_segundos: 60,
+      aprovacao_expira_horas: 24,
+      idempotencia_expira_dias: 30,
+      auditoria_retencao_dias: 365,
+    };
+  });
+
+// ------------------------------------------------------- dispositivos (Windows)
+export const listarDispositivos = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: pode } = await context.supabase.rpc("pode_agentes", { _chave: "agentes.visualizar" });
+    if (!pode) throw new Error("Sem permissão para visualizar dispositivos.");
+
+    const { data, error } = await context.supabase
+      .from("agente_dispositivos")
+      .select("id, agente_id, nome, token_hash, versao, ultimo_ping, ativo, criado_em, atualizado_em")
+      .order("criado_em", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const registrarDispositivo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z.object({ agenteId: z.string().uuid(), nome: z.string().trim().min(2).max(80) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: pode } = await context.supabase.rpc("pode_agentes", { _chave: "agentes.dispositivos.gerenciar" });
+    if (!pode) return { ok: false as const, erro: "Sem permissão para gerenciar dispositivos.", token: null };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const crypto = await import("node:crypto");
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    const { data: dispositivo, error } = await supabaseAdmin
+      .from("agente_dispositivos")
+      .insert({
+        agente_id: data.agenteId,
+        nome: data.nome,
+        token_hash: tokenHash,
+        ativo: true,
+      })
+      .select("id")
+      .maybeSingle();
+    if (error || !dispositivo) return { ok: false as const, erro: "Não foi possível registrar o dispositivo.", token: null };
+
+    await auditar(context, "dispositivo.registrado", { nome: data.nome }, {
+      agenteId: data.agenteId,
+      entidade: "agente_dispositivos",
+      entidadeId: dispositivo.id,
+    });
+
+    // Retorna o token APENAS uma vez (no momento do cadastro)
+    return { ok: true as const, erro: null, token, dispositivoId: dispositivo.id };
+  });
+
+export const revogarDispositivo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z.object({ dispositivoId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: pode } = await context.supabase.rpc("pode_agentes", { _chave: "agentes.dispositivos.gerenciar" });
+    if (!pode) return { ok: false as const, erro: "Sem permissão para gerenciar dispositivos." };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { error } = await supabaseAdmin
+      .from("agente_dispositivos")
+      .update({ ativo: false })
+      .eq("id", data.dispositivoId);
+    if (error) return { ok: false as const, erro: "Não foi possível revogar o dispositivo." };
+
+    await auditar(context, "dispositivo.revogado", {}, {
+      entidade: "agente_dispositivos",
+      entidadeId: data.dispositivoId,
+    });
+
+    return { ok: true as const, erro: null };
   });

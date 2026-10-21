@@ -13,6 +13,11 @@ export const ROTULOS_TIPO_AGENTE: Record<string, string> = {
   personalizado: "Personalizado",
 };
 
+export const ROTULOS_TIPO_VERSAO: Record<string, string> = {
+  prompt: "Prompt",
+  config: "Configuração",
+};
+
 export const ROTULOS_STATUS_EXECUCAO: Record<string, string> = {
   pendente: "Pendente",
   executando: "Executando",

@@ -7,7 +7,26 @@
  */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { chamarZapi, enviarPresencaDigitando } from "@/lib/zapi.server";
+import {
+  enviarMidiaPelaConexao,
+  enviarPresencaPelaConexao,
+  enviarTextoPelaConexao,
+} from "@/lib/whatsapp/provedor.server";
+import type { EnvioMidia, TipoMidia } from "@/lib/whatsapp/providers/tipos";
+
+/** "Digitando..." pelo provedor da conexão; falha silenciosa (nunca bloqueia o bot). */
+async function enviarPresencaDigitando(
+  telefone: string,
+  duracaoMs: number,
+  conexaoId: string | null,
+): Promise<void> {
+  try {
+    await enviarPresencaPelaConexao(conexaoId, telefone, duracaoMs);
+  } catch {
+    /* presença é cosmética */
+  }
+}
+import { obterBytesDaMidia } from "@/lib/whatsapp/midia.server";
 import { caminhoMidiaWhatsapp } from "@/lib/whatsapp-storage-path";
 import {
   FORMATOS,
@@ -183,34 +202,17 @@ async function urlDaMidia(url: string): Promise<string | null> {
   return data?.signedUrl ?? null;
 }
 
-/** Endpoint e corpo da Z-API conforme o tipo de arquivo. */
+/** Mídia a enviar conforme o tipo de arquivo (o provedor da conexão monta a requisição). */
 function envioDeMidia(
   telefone: string,
   tipo: string,
   url: string,
   legenda: string,
   nome: string | null | undefined,
-): { caminho: string; corpo: Record<string, unknown> } | null {
-  switch (tipo) {
-    case "imagem":
-      return { caminho: "send-image", corpo: { phone: telefone, image: url, caption: legenda } };
-    case "audio":
-      return { caminho: "send-audio", corpo: { phone: telefone, audio: url } };
-    case "video":
-      return { caminho: "send-video", corpo: { phone: telefone, video: url, caption: legenda } };
-    case "documento": {
-      const arquivo = nome || "documento.pdf";
-      const extensao = (arquivo.split(".").pop() || "pdf").toLowerCase();
-      return {
-        caminho: `send-document/${extensao}`,
-        corpo: { phone: telefone, document: url, fileName: arquivo, caption: legenda },
-      };
-    }
-    default:
-      return null;
-  }
+): EnvioMidia | null {
+  if (!["imagem", "audio", "video", "documento"].includes(tipo)) return null;
+  return { telefone, tipo: tipo as TipoMidia, url, legenda, nomeArquivo: nome ?? null };
 }
-
 /** Tentativas de envio antes de desistir da mensagem. */
 const TENTATIVAS_ENVIO = 3;
 
@@ -236,7 +238,7 @@ async function responder(
     ? `${cabecalho}\n\n${texto}${complemento}`
     : `${cabecalho}${complemento}`;
 
-  let envio: { caminho: string; corpo: Record<string, unknown> } | null = null;
+  let envio: EnvioMidia | null = null;
   if (midia?.url) {
     const link = await urlDaMidia(midia.url);
     if (link) envio = envioDeMidia(conversa.telefone, midia.tipo, link, mensagem, midia.nome);
@@ -245,8 +247,6 @@ async function responder(
       await responder(conversa, texto, botoes);
     }
   }
-  if (!envio)
-    envio = { caminho: "send-text", corpo: { phone: conversa.telefone, message: mensagem } };
 
   // Mostra "digitando..." no WhatsApp do cliente antes de enviar, com duração
   // proporcional ao tamanho da mensagem (1,5s a 4s).
@@ -259,17 +259,16 @@ async function responder(
   let erro: string | null = null;
 
   for (let tentativa = 1; tentativa <= TENTATIVAS_ENVIO && !entregue; tentativa += 1) {
-    const r = await chamarZapi(envio.caminho, {
-      metodo: "POST",
-      corpo: envio.corpo,
-      conexaoId: conversa.conexao_id ?? null,
-    });
-    const dados = (r.dados ?? {}) as { messageId?: unknown; zaapId?: unknown; error?: unknown };
-    idMensagem = dados.messageId ?? dados.zaapId ?? null;
+    // Envio pelo provedor da conexão (Z-API ou Evolution).
+    const r = envio
+      ? await enviarMidiaPelaConexao(conversa.conexao_id ?? null, envio)
+      : await enviarTextoPelaConexao(conversa.conexao_id ?? null, {
+          telefone: conversa.telefone,
+          texto: mensagem,
+        });
+    idMensagem = r.ok ? r.dados.mensagemId : null;
     entregue = r.ok && Boolean(idMensagem);
-    erro = entregue
-      ? null
-      : (r.erro ?? (dados.error ? String(dados.error) : "A operadora não confirmou o envio."));
+    erro = entregue ? null : r.ok ? "A operadora não confirmou o envio." : r.erro.mensagem;
     // Espera curta antes de repetir (falha momentânea de rede ou da operadora).
     if (!entregue && tentativa < TENTATIVAS_ENVIO) await new Promise((x) => setTimeout(x, 1500));
   }
@@ -277,7 +276,7 @@ async function responder(
   await supabaseAdmin.from("whatsapp_mensagens").insert({
     conversa_id: conversa.id,
     direcao: "saida",
-    tipo: envio.caminho === "send-text" ? "texto" : (midia?.tipo ?? "texto"),
+    tipo: envio ? (midia?.tipo ?? "texto") : "texto",
     texto,
     ...(midia?.nome ? { arquivo_nome: midia.nome } : {}),
     autor: "Bot",
@@ -1652,9 +1651,11 @@ async function guardarMidiasPendentes(): Promise<void> {
   for (const arq of arquivos ?? []) {
     if (!arq.url) continue;
     try {
-      const resposta = await fetch(arq.url);
-      if (!resposta.ok) continue;
-      const bytes = new Uint8Array(await resposta.arrayBuffer());
+      // URL comum: download direto (como sempre). Referência do provedor
+      // (Evolution): baixada pela própria conexão.
+      const midia = await obterBytesDaMidia(arq.url);
+      if (!midia.ok) continue;
+      const bytes = midia.bytes;
       const caminho = caminhoMidiaWhatsapp(arq.conversa_id, arq.id, arq.nome, arq.mime_type);
       const { error: erroUpload } = await supabaseAdmin.storage
         .from("whatsapp")

@@ -17,6 +17,13 @@ export default defineConfig({
     optimizeDeps: {
       exclude: ["@tanstack/react-start"],
     },
+    server: {
+      // Túneis públicos (ex.: Cloudflare Quick Tunnel) usados para receber
+      // webhooks de provedores enquanto o sistema roda localmente. O hostname
+      // do túnel é aleatório a cada execução, então liberamos o domínio
+      // inteiro em vez de um host fixo. Não afeta produção.
+      allowedHosts: [".trycloudflare.com"],
+    },
     define: {
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(supabaseUrl),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(supabaseKey),

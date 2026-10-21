@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Loader2, RefreshCw, MessageSquare, Wrench, Zap, ShieldAlert, ScrollText, Settings, GitBranch } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,15 @@ import {
 } from "@/lib/agentes/agentes.functions";
 import { ROTULOS_STATUS_APROVACAO, rotulo } from "@/lib/agentes/utils/rotulos";
 
+const ATALHOS = [
+  { rota: "/agentes/chat", nome: "Chat Operacional", icone: MessageSquare },
+  { rota: "/agentes/ferramentas", nome: "Ferramentas", icone: Wrench },
+  { rota: "/agentes/execucoes", nome: "Execuções", icone: Zap },
+  { rota: "/agentes/aprovacoes", nome: "Aprovações", icone: ShieldAlert },
+  { rota: "/agentes/auditoria", nome: "Auditoria", icone: ScrollText },
+  { rota: "/agentes/configuracoes", nome: "Configurações", icone: Settings },
+] as const;
+
 export default function AprovacoesPainel() {
   const qc = useQueryClient();
   const fnListar = useServerFn(listarAprovacoes);
@@ -47,7 +57,19 @@ export default function AprovacoesPainel() {
       <PageHeader
         titulo="Aprovações"
         subtitulo="Operações sensíveis aguardando decisão. A decisão apenas libera ou cancela a etapa — nada é executado aqui."
+        semPaddingHorizontal
       />
+
+      <div className="flex flex-wrap gap-2">
+        {ATALHOS.map((atalho) => (
+          <Button key={atalho.rota} variant="outline" size="sm" asChild>
+            <Link to={atalho.rota}>
+              <atalho.icone className="mr-2 h-4 w-4" />
+              {atalho.nome}
+            </Link>
+          </Button>
+        ))}
+      </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <Select value={status} onValueChange={setStatus}>

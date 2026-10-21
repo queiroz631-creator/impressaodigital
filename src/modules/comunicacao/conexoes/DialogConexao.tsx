@@ -34,6 +34,7 @@ export default function DialogConexao({ aberto, conexao, onFechar, onSalvo }: Pr
   const [clientToken, setClientToken] = useState("");
   const [ordem, setOrdem] = useState(0);
   const [salvando, setSalvando] = useState(false);
+  const evolution = conexao?.provedor === "evolution";
 
   useEffect(() => {
     if (!aberto) return;
@@ -54,16 +55,19 @@ export default function DialogConexao({ aberto, conexao, onFechar, onSalvo }: Pr
     }
     setSalvando(true);
     try {
-      const base = {
-        nome: nome.trim(),
-        telefone: telefone.trim(),
-        cor,
-        baseUrl: baseUrl.trim(),
-        instanceId: instanceId.trim(),
-        instanceToken: instanceToken.trim(),
-        clientToken: clientToken.trim(),
-        ordem,
-      };
+      // Conexões Evolution não têm credenciais Z-API: só dados de identificação.
+      const base = evolution
+        ? { nome: nome.trim(), telefone: telefone.trim(), cor, ordem }
+        : {
+            nome: nome.trim(),
+            telefone: telefone.trim(),
+            cor,
+            baseUrl: baseUrl.trim(),
+            instanceId: instanceId.trim(),
+            instanceToken: instanceToken.trim(),
+            clientToken: clientToken.trim(),
+            ordem,
+          };
       const r = conexao
         ? await atualizar({ data: { ...base, id: conexao.id } })
         : await criar({ data: { ...base, ativo: true } });
@@ -130,6 +134,8 @@ export default function DialogConexao({ aberto, conexao, onFechar, onSalvo }: Pr
             </div>
           </div>
 
+          {!evolution && (
+            <>
           <div className="space-y-1.5">
             <Label htmlFor="cx-base">Endereço da API</Label>
             <Input id="cx-base" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} />
@@ -168,6 +174,8 @@ export default function DialogConexao({ aberto, conexao, onFechar, onSalvo }: Pr
               placeholder={conexao ? "manter o atual" : ""}
             />
           </div>
+            </>
+          )}
         </div>
 
         <DialogFooter>

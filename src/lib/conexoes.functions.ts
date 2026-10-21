@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { BASE_WEBHOOK_PADRAO } from "@/lib/whatsapp/webhook-url";
 
 /**
  * Conexões de WhatsApp (Z-API). As credenciais (instance token / client token)
@@ -19,9 +20,15 @@ export interface ConexaoPublica {
   base_url: string;
   webhook_url: string;
   tem_credenciais: boolean;
+  provedor: string;
+  servidor_id: string | null;
+  id_externo: string | null;
+  status: string | null;
+  status_atualizado_em: string | null;
+  ultimo_erro: string | null;
 }
 
-/** Endereço público usado como base dos webhooks. */
+/** Endereço público usado como base dos webhooks (conexão Z-API: comportamento anterior). */
 async function urlBaseWebhook(): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data } = await supabaseAdmin
@@ -29,11 +36,13 @@ async function urlBaseWebhook(): Promise<string> {
     .select("app_url")
     .limit(1)
     .maybeSingle();
-  const bruto =
-    (data as { app_url?: string | null } | null)?.app_url?.trim() ||
-    process.env["SITE_URL"] ||
-    "https://impressaodigital.lovable.app";
-  return bruto.replace(/\/+$/, "");
+  const { resolverBaseWebhook } = await import("@/lib/whatsapp/webhook-url");
+  const r = resolverBaseWebhook({
+    variavelAmbiente: null, // Z-API: segue a ordem antiga (app_url → SITE_URL → domínio Lovable)
+    appUrl: (data as { app_url?: string | null } | null)?.app_url ?? null,
+    siteUrl: process.env["SITE_URL"] ?? null,
+  });
+  return r.base ?? BASE_WEBHOOK_PADRAO;
 }
 
 function enderecoWebhook(base: string, token: string): string {
@@ -62,11 +71,26 @@ export const listarConexoes = createServerFn({ method: "GET" })
     const consulta = supabaseAdmin
       .from("whatsapp_conexoes")
       .select(
-        "id, nome, telefone, cor, ativo, ordem, base_url, webhook_token, instance_id, instance_token, client_token",
+        "id, nome, telefone, cor, ativo, ordem, base_url, webhook_token, instance_id, instance_token, client_token, provedor, servidor_id, id_externo, status, status_atualizado_em, ultimo_erro",
       )
       .order("ordem");
 
-    const { data } = await (admin ? consulta : consulta.eq("id", p!.conexao_id!));
+    const { data: dadosNovos, error: erroNovos } = await (admin
+      ? consulta
+      : consulta.eq("id", p!.conexao_id!));
+
+    // Banco ainda sem a migração multiprovedor: lista só com as colunas antigas.
+    let data = dadosNovos;
+    if (erroNovos) {
+      const legado = supabaseAdmin
+        .from("whatsapp_conexoes")
+        .select(
+          "id, nome, telefone, cor, ativo, ordem, base_url, webhook_token, instance_id, instance_token, client_token",
+        )
+        .order("ordem");
+      const r = await (admin ? legado : legado.eq("id", p!.conexao_id!));
+      data = (r.data ?? []) as unknown as typeof dadosNovos;
+    }
     const base = await urlBaseWebhook();
 
     return (data ?? []).map((c) => ({
@@ -79,6 +103,12 @@ export const listarConexoes = createServerFn({ method: "GET" })
       base_url: c.base_url ?? "https://api.z-api.io",
       webhook_url: enderecoWebhook(base, c.webhook_token),
       tem_credenciais: Boolean(c.instance_id && c.instance_token && c.client_token),
+      provedor: c.provedor ?? "zapi",
+      servidor_id: c.servidor_id ?? null,
+      id_externo: c.id_externo ?? null,
+      status: c.status ?? null,
+      status_atualizado_em: c.status_atualizado_em ?? null,
+      ultimo_erro: admin ? (c.ultimo_erro ?? null) : null,
     }));
   });
 

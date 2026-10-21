@@ -1,6 +1,9 @@
 /**
- * Extração de texto de currículos enviados (PDF, DOCX e tentativa em DOC).
- * Roda no navegador do usuário autenticado — o arquivo nunca é armazenado.
+ * Extração de texto de currículos enviados (PDF, DOCX e DOC).
+ * - PDF: extração direta no navegador (pdfjs-dist)
+ * - DOCX/DOC: envia para o servidor que converte para PDF (docx2pdf + Word)
+ *   e extrai o texto do PDF gerado, removendo arquivos temporários ao final.
+ * O arquivo nunca é armazenado permanentemente.
  */
 
 export const TAMANHO_MAXIMO_IMPORT = 10 * 1024 * 1024;
@@ -46,43 +49,35 @@ async function textoDePdf(file: File): Promise<string> {
   return partes.join("\n");
 }
 
-async function textoDeDocx(file: File): Promise<string> {
-  const { unzipSync, strFromU8 } = await import("fflate");
-  const zip = unzipSync(new Uint8Array(await file.arrayBuffer()));
-  const doc = zip["word/document.xml"];
-  if (!doc) throw new ErroImportacao("ARQUIVO_INVALIDO");
-  const xml = strFromU8(doc);
-
-  return xml
-    .replace(/<w:tab[^>]*\/>/g, " ")
-    .replace(/<\/w:p>/g, "\n")
-    .replace(/<\/w:tr>/g, "\n")
-    .replace(/<\/w:tc>/g, " | ")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#x?[0-9a-fA-F]+;/g, " ")
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+/** Converte DOC/DOCX para PDF no servidor e extrai texto do PDF gerado. */
+async function converterDocNoServidor(file: File): Promise<string> {
+  const base64 = await fileToBase64(file);
+  const { converterDocParaPdf } = await import("@/lib/curriculo-conversao.server");
+  const r = await converterDocParaPdf({ data: { arquivoBase64: base64, nomeArquivo: file.name } });
+  if (!r.ok) {
+    // Usar o erro detalhado se disponível
+    const mensagem = r.detalhe || r.erro || "Erro desconhecido";
+    const codigo = r.erro === "PDF_SEM_TEXTO" ? "PDF_SEM_TEXTO" : 
+                   r.erro === "LIBREOFFICE_NAO_INSTALADO" ? "LIBREOFFICE_NAO_INSTALADO" : 
+                   "FALHA_CONVERSAO";
+    throw new ErroImportacao(`${codigo}: ${mensagem}`);
+  }
+  return r.texto!;
 }
 
-/** .doc antigo: tentativa de recuperar trechos legíveis do binário. */
-async function textoDeDoc(file: File): Promise<string> {
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const bruto = new TextDecoder("latin1").decode(bytes);
-  const legivel = bruto
-    .replace(/[^\x20-\x7E\u00C0-\u00FF\n]/g, " ")
-    .replace(/\s{3,}/g, "\n")
-    .trim();
-  const palavras = legivel.split(/\s+/).filter((p) => p.length > 2);
-  if (palavras.length < 40) throw new ErroImportacao("DOC_ILEGIVEL");
-  return legivel;
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
-/** Lê o arquivo e devolve o texto extraído. */
+/** Lê o arquivo e devolve o texto extraído.
+ * - PDF: extração local (pdfjs-dist)
+ * - DOCX/DOC: conversão server-side para PDF + extração (docx2pdf + Word)
+ */
 export async function extrairTextoCurriculo(file: File): Promise<string> {
   const tipo = tipoImportacao(file.name);
   if (!tipo) throw new ErroImportacao("FORMATO_NAO_SUPORTADO");
@@ -90,17 +85,20 @@ export async function extrairTextoCurriculo(file: File): Promise<string> {
 
   let texto = "";
   try {
-    if (tipo === "pdf") texto = await textoDePdf(file);
-    else if (tipo === "docx") texto = await textoDeDocx(file);
-    else texto = await textoDeDoc(file);
+    if (tipo === "pdf") {
+      texto = await textoDePdf(file);
+    } else {
+      // DOCX e DOC: conversão server-side para PDF + extração
+      texto = await converterDocNoServidor(file);
+    }
   } catch (e) {
     if (e instanceof ErroImportacao) throw e;
-    throw new ErroImportacao(tipo === "doc" ? "DOC_ILEGIVEL" : "ARQUIVO_INVALIDO");
+    throw new ErroImportacao("ARQUIVO_INVALIDO");
   }
 
   const limpo = texto.replace(/\u0000/g, "").trim();
   if (limpo.replace(/\s+/g, "").length < 60) {
-    throw new ErroImportacao(tipo === "pdf" ? "PDF_SEM_TEXTO" : "SEM_TEXTO");
+    throw new ErroImportacao("SEM_TEXTO");
   }
   return limpo.slice(0, 40000);
 }
@@ -119,6 +117,10 @@ export function mensagemErroImportacao(codigo: string): string {
       return "O documento não possui texto para leitura.";
     case "ARQUIVO_INVALIDO":
       return "Arquivo corrompido ou ilegível. Tente enviar outro arquivo.";
+    case "LIBREOFFICE_NAO_INSTALADO":
+      return "LibreOffice não está instalado no servidor. Necessário para converter DOC/DOCX para PDF. Contate o administrador.";
+    case "FALHA_CONVERSAO":
+      return "Falha ao converter o documento para PDF. Verifique se o arquivo não está corrompido e tente novamente.";
     case "IA_INDISPONIVEL":
       return "Não foi possível interpretar o currículo agora. Tente novamente em instantes.";
     case "IA_OCUPADA":

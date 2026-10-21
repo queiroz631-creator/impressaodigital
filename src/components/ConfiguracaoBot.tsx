@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Bot, Clock, MessageSquare, Save, Send, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { simularBot } from "@/lib/bot.functions";
+import { garantirConfigBotConexao } from "@/lib/whatsapp-provedores.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -221,6 +222,30 @@ export function ConfiguracaoBot() {
     },
   });
 
+  // Conexão sem configuração registrada (ex.: instância de teste criada antes
+  // desta tela): cria os padrões no servidor uma única vez e recarrega. Sem
+  // isso o formulário nunca é montado e a tela fica presa no carregamento.
+  const garantir = useServerFn(garantirConfigBotConexao);
+  const jaGarantiu = useRef<string | null>(null);
+  useEffect(() => {
+    if (!conexaoAtual || config.isLoading || config.isError) return;
+    if (config.data) return;
+    if (jaGarantiu.current === conexaoAtual) return;
+    jaGarantiu.current = conexaoAtual;
+    garantir({ data: { conexaoId: conexaoAtual } })
+      .then((r: { ok: boolean; erro: string | null }) => {
+        if (!r.ok) {
+          toast.error(r.erro ?? "Não foi possível preparar a configuração do bot.");
+          return;
+        }
+        queryClient.invalidateQueries({ queryKey: ["whatsapp-config-bot", conexaoAtual] });
+        queryClient.invalidateQueries({ queryKey: ["bot-horarios", conexaoAtual] });
+      })
+      .catch((e: unknown) => {
+        toast.error(e instanceof Error ? e.message : "Falha ao preparar a configuração do bot.");
+      });
+  }, [conexaoAtual, config.isLoading, config.isError, config.data, garantir, queryClient]);
+
   const horarios = useQuery({
     queryKey: ["bot-horarios", conexaoAtual],
     enabled: Boolean(conexaoAtual),
@@ -358,8 +383,19 @@ export function ConfiguracaoBot() {
     );
   }
 
-  if (config.isLoading || carregandoConexao || !form)
-    return <Skeleton className="h-64 max-w-4xl" />;
+  if (config.isLoading || carregandoConexao) return <Skeleton className="h-64 max-w-4xl" />;
+
+  // A consulta falhou ou a configuração não pôde ser preparada: mostra o
+  // motivo em vez de ficar carregando para sempre.
+  if (config.isError) {
+    return (
+      <p className="max-w-4xl py-10 text-center text-sm text-muted-foreground">
+        Não foi possível carregar a configuração do bot desta conexão. Atualize a página ou verifique
+        a conexão com o servidor.
+      </p>
+    );
+  }
+  if (!form) return <Skeleton className="h-64 max-w-4xl" />;
 
   const id = config.data?.id;
 

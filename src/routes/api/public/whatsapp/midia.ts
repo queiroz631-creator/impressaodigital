@@ -29,6 +29,22 @@ export const Route = createFileRoute("/api/public/whatsapp/midia")({
           return new Response("Arquivo não encontrado", { status: 404 });
         }
 
+        // Mídia que o provedor não entrega por URL (Evolution): baixada pela conexão.
+        const { lerUrlMidiaProvedor } = await import("@/lib/whatsapp/providers/evolution-ids");
+        if (lerUrlMidiaProvedor(data.arquivo_url)) {
+          const { obterBytesDaMidia } = await import("@/lib/whatsapp/midia.server");
+          const m = await obterBytesDaMidia(data.arquivo_url);
+          if (!m.ok) return new Response("Falha ao obter o arquivo", { status: 502 });
+          const nomeSeguro = (data.arquivo_nome ?? "arquivo").replace(/["\\\r\n]/g, "");
+          return new Response(m.bytes as unknown as BodyInit, {
+            headers: {
+              "Content-Type": data.mime_type ?? m.mime ?? "application/octet-stream",
+              "Cache-Control": "private, max-age=3600",
+              "Content-Disposition": `${baixar ? "attachment" : "inline"}; filename="${nomeSeguro}"`,
+            },
+          });
+        }
+
         const origem = await fetch(data.arquivo_url);
         if (!origem.ok || !origem.body) {
           return new Response("Falha ao obter o arquivo", { status: 502 });

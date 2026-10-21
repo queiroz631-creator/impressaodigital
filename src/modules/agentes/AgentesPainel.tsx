@@ -5,6 +5,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Activity,
   ClipboardList,
+  MessageSquare,
   Monitor,
   Pencil,
   Plus,
@@ -12,6 +13,8 @@ import {
   ShieldAlert,
   Wrench,
   Zap,
+  Settings,
+  GitBranch,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -29,13 +32,16 @@ import {
 import { ROTULOS_TIPO_AGENTE, rotulo } from "@/lib/agentes/utils/rotulos";
 import DialogAgente from "./DialogAgente";
 import DialogFerramentas from "./DialogFerramentas";
+import DialogVersoes from "./DialogVersoes";
 import { iconeAgente } from "./icones";
 
 const ATALHOS = [
+  { rota: "/agentes/chat", nome: "Chat Operacional", icone: MessageSquare },
   { rota: "/agentes/ferramentas", nome: "Ferramentas", icone: Wrench },
   { rota: "/agentes/execucoes", nome: "Execuções", icone: Zap },
   { rota: "/agentes/aprovacoes", nome: "Aprovações", icone: ShieldAlert },
   { rota: "/agentes/auditoria", nome: "Auditoria", icone: ScrollText },
+  { rota: "/agentes/configuracoes", nome: "Configurações", icone: Settings },
 ] as const;
 
 export default function AgentesPainel() {
@@ -52,6 +58,7 @@ export default function AgentesPainel() {
   const [dialogo, setDialogo] = useState(false);
   const [selecionado, setSelecionado] = useState<AgenteResumo | null>(null);
   const [ferramentasDe, setFerramentasDe] = useState<AgenteResumo | null>(null);
+  const [versoesDe, setVersoesDe] = useState<AgenteResumo | null>(null);
 
   const podeGerir = permissoes.data?.gerenciar ?? false;
   const m = metricas.data;
@@ -77,6 +84,7 @@ export default function AgentesPainel() {
       <PageHeader
         titulo="Central de Agentes"
         subtitulo="Agentes de IA, ferramentas autorizadas e acompanhamento das execuções."
+        semPaddingHorizontal
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -177,6 +185,10 @@ export default function AgentesPainel() {
                     <Wrench className="mr-2 h-4 w-4" />
                     Ferramentas
                   </Button>
+                  <Button variant="outline" size="sm" onClick={() => setVersoesDe(agente)}>
+                    <GitBranch className="mr-2 h-4 w-4" />
+                    Versões
+                  </Button>
                   <Switch
                     checked={agente.ativo}
                     disabled={!podeGerir}
@@ -203,6 +215,12 @@ export default function AgentesPainel() {
         aberto={!!ferramentasDe}
         agente={ferramentasDe}
         aoFechar={() => setFerramentasDe(null)}
+      />
+      <DialogVersoes
+        aberto={!!versoesDe}
+        agenteId={versoesDe?.id ?? null}
+        agenteNome={versoesDe?.nome ?? ""}
+        aoFechar={() => setVersoesDe(null)}
       />
     </div>
   );

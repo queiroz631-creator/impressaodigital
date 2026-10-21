@@ -205,6 +205,64 @@ export type Database = {
           },
         ];
       };
+      agente_alertas: {
+        Row: {
+          atualizado_em: string;
+          chave_dedup: string;
+          criado_em: string;
+          dados: NonNullable<Json>;
+          descricao: string | null;
+          id: string;
+          origem: string;
+          reconhecido_em: string | null;
+          reconhecido_por: string | null;
+          referencia_id: string | null;
+          referencia_tipo: string | null;
+          resolvido_em: string | null;
+          severidade: string;
+          status: string;
+          tipo: string;
+          titulo: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          atualizado_em?: string;
+          chave_dedup: string;
+          criado_em?: string;
+          dados?: NonNullable<Json>;
+          descricao?: string | null;
+          id?: string;
+          origem: string;
+          reconhecido_em?: string | null;
+          reconhecido_por?: string | null;
+          referencia_id?: string | null;
+          referencia_tipo?: string | null;
+          resolvido_em?: string | null;
+          severidade: string;
+          status?: string;
+          tipo: string;
+          titulo: string;
+        };
+        Update: {
+          atualizado_em?: string;
+          chave_dedup?: string;
+          criado_em?: string;
+          dados?: NonNullable<Json>;
+          descricao?: string | null;
+          id?: string;
+          origem?: string;
+          reconhecido_em?: string | null;
+          reconhecido_por?: string | null;
+          referencia_id?: string | null;
+          referencia_tipo?: string | null;
+          resolvido_em?: string | null;
+          severidade?: string;
+          status?: string;
+          tipo?: string;
+          titulo?: string;
+        };
+        Relationships: [];
+      };
       agente_automacoes: {
         Row: {
           acao: NonNullable<Json>;
@@ -213,12 +271,28 @@ export type Database = {
           atualizado_em: string;
           condicoes: NonNullable<Json>;
           criado_em: string;
+          criado_por: string | null;
           cron: string | null;
+          descricao: string | null;
+          desativar_apos_falhas: number;
+          dias_semana: number[];
           evento: string | null;
+          executar_em: string | null;
+          falhas_consecutivas: number;
+          ferramentas_permitidas: string[];
+          frequencia: string | null;
+          fuso: string;
+          hora_local: string | null;
           id: string;
+          intervalo_minutos: number | null;
+          max_tentativas: number;
           nome: string;
+          proxima_execucao_em: string | null;
           tipo_gatilho: string;
+          tolerancia_minutos: number;
           ultima_execucao_em: string | null;
+          ultimo_erro: string | null;
+          ultimo_status: string | null;
         };
         ComputedFields: never;
         Insert: {
@@ -228,12 +302,28 @@ export type Database = {
           atualizado_em?: string;
           condicoes?: NonNullable<Json>;
           criado_em?: string;
+          criado_por?: string | null;
           cron?: string | null;
+          descricao?: string | null;
+          desativar_apos_falhas?: number;
+          dias_semana?: number[];
           evento?: string | null;
+          executar_em?: string | null;
+          falhas_consecutivas?: number;
+          ferramentas_permitidas?: string[];
+          frequencia?: string | null;
+          fuso?: string;
+          hora_local?: string | null;
           id?: string;
+          intervalo_minutos?: number | null;
+          max_tentativas?: number;
           nome: string;
+          proxima_execucao_em?: string | null;
           tipo_gatilho: string;
+          tolerancia_minutos?: number;
           ultima_execucao_em?: string | null;
+          ultimo_erro?: string | null;
+          ultimo_status?: string | null;
         };
         Update: {
           acao?: NonNullable<Json>;
@@ -242,12 +332,28 @@ export type Database = {
           atualizado_em?: string;
           condicoes?: NonNullable<Json>;
           criado_em?: string;
+          criado_por?: string | null;
           cron?: string | null;
+          descricao?: string | null;
+          desativar_apos_falhas?: number;
+          dias_semana?: number[];
           evento?: string | null;
+          executar_em?: string | null;
+          falhas_consecutivas?: number;
+          ferramentas_permitidas?: string[];
+          frequencia?: string | null;
+          fuso?: string;
+          hora_local?: string | null;
           id?: string;
+          intervalo_minutos?: number | null;
+          max_tentativas?: number;
           nome?: string;
+          proxima_execucao_em?: string | null;
           tipo_gatilho?: string;
+          tolerancia_minutos?: number;
           ultima_execucao_em?: string | null;
+          ultimo_erro?: string | null;
+          ultimo_status?: string | null;
         };
         Relationships: [
           {
@@ -5136,14 +5242,22 @@ export type Database = {
           ativo: boolean;
           base_url: string;
           client_token: string;
+          config_provedor: NonNullable<Json>;
           cor: string;
           created_at: string;
           id: string;
+          id_externo: string | null;
           instance_id: string;
           instance_token: string;
           nome: string;
           ordem: number;
+          provedor: string;
+          servidor_id: string | null;
+          status: string;
+          status_atualizado_em: string | null;
           telefone: string;
+          ultimo_erro: string | null;
+          ultimo_erro_em: string | null;
           updated_at: string;
           webhook_token: string;
         };
@@ -5152,14 +5266,22 @@ export type Database = {
           ativo?: boolean;
           base_url?: string;
           client_token?: string;
+          config_provedor?: NonNullable<Json>;
           cor?: string;
           created_at?: string;
           id?: string;
+          id_externo?: string | null;
           instance_id?: string;
           instance_token?: string;
           nome: string;
           ordem?: number;
+          provedor?: string;
+          servidor_id?: string | null;
+          status?: string;
+          status_atualizado_em?: string | null;
           telefone?: string;
+          ultimo_erro?: string | null;
+          ultimo_erro_em?: string | null;
           updated_at?: string;
           webhook_token?: string;
         };
@@ -5167,21 +5289,145 @@ export type Database = {
           ativo?: boolean;
           base_url?: string;
           client_token?: string;
+          config_provedor?: NonNullable<Json>;
           cor?: string;
           created_at?: string;
           id?: string;
+          id_externo?: string | null;
           instance_id?: string;
           instance_token?: string;
           nome?: string;
           ordem?: number;
+          provedor?: string;
+          servidor_id?: string | null;
+          status?: string;
+          status_atualizado_em?: string | null;
           telefone?: string;
+          ultimo_erro?: string | null;
+          ultimo_erro_em?: string | null;
           updated_at?: string;
           webhook_token?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_conexoes_servidor_id_fkey";
+            columns: ["servidor_id"];
+            isOneToOne: false;
+            referencedRelation: "whatsapp_servidores";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      whatsapp_servidores: {
+        Row: {
+          ativo: boolean;
+          base_url: string;
+          created_at: string;
+          criado_por: string | null;
+          id: string;
+          nome: string;
+          provedor: string;
+          segredo_ref: string | null;
+          ultimo_erro: string | null;
+          ultimo_teste_em: string | null;
+          ultimo_teste_ok: boolean | null;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          ativo?: boolean;
+          base_url: string;
+          created_at?: string;
+          criado_por?: string | null;
+          id?: string;
+          nome: string;
+          provedor: string;
+          segredo_ref?: string | null;
+          ultimo_erro?: string | null;
+          ultimo_teste_em?: string | null;
+          ultimo_teste_ok?: boolean | null;
+          updated_at?: string;
+        };
+        Update: {
+          ativo?: boolean;
+          base_url?: string;
+          created_at?: string;
+          criado_por?: string | null;
+          id?: string;
+          nome?: string;
+          provedor?: string;
+          segredo_ref?: string | null;
+          ultimo_erro?: string | null;
+          ultimo_teste_em?: string | null;
+          ultimo_teste_ok?: boolean | null;
+          updated_at?: string;
+        };
         Relationships: [];
+      };
+      whatsapp_eventos: {
+        Row: {
+          conexao_id: string;
+          dedup_key: string;
+          erro: string | null;
+          id: string;
+          payload: NonNullable<Json>;
+          processado_em: string | null;
+          provedor: string;
+          recebido_em: string;
+          status: string;
+          tentativas: number;
+          tipo: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          conexao_id: string;
+          dedup_key: string;
+          erro?: string | null;
+          id?: string;
+          payload?: NonNullable<Json>;
+          processado_em?: string | null;
+          provedor: string;
+          recebido_em?: string;
+          status?: string;
+          tentativas?: number;
+          tipo: string;
+        };
+        Update: {
+          conexao_id?: string;
+          dedup_key?: string;
+          erro?: string | null;
+          id?: string;
+          payload?: NonNullable<Json>;
+          processado_em?: string | null;
+          provedor?: string;
+          recebido_em?: string;
+          status?: string;
+          tentativas?: number;
+          tipo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_eventos_conexao_id_fkey";
+            columns: ["conexao_id"];
+            isOneToOne: false;
+            referencedRelation: "whatsapp_conexoes";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       whatsapp_config: {
         Row: {
+          agente_atendimento_ativo: boolean;
+          agente_atendimento_dias_semana: number[];
+          agente_atendimento_exigir_validacao: boolean;
+          agente_atendimento_ferramentas_permitidas: string[];
+          agente_atendimento_horario_fim: string;
+          agente_atendimento_horario_inicio: string;
+          agente_atendimento_id: string | null;
+          agente_atendimento_max_contexto_mensagens: number;
+          agente_atendimento_msg_ativacao: string;
+          agente_atendimento_msg_fora_horario: string;
+          agente_atendimento_msg_transferencia: string;
           app_url: string;
           base_url: string;
           bot_24h: boolean;
@@ -5246,6 +5492,17 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          agente_atendimento_ativo?: boolean;
+          agente_atendimento_dias_semana?: number[];
+          agente_atendimento_exigir_validacao?: boolean;
+          agente_atendimento_ferramentas_permitidas?: string[];
+          agente_atendimento_horario_fim?: string;
+          agente_atendimento_horario_inicio?: string;
+          agente_atendimento_id?: string | null;
+          agente_atendimento_max_contexto_mensagens?: number;
+          agente_atendimento_msg_ativacao?: string;
+          agente_atendimento_msg_fora_horario?: string;
+          agente_atendimento_msg_transferencia?: string;
           app_url?: string;
           base_url?: string;
           bot_24h?: boolean;
@@ -5309,6 +5566,17 @@ export type Database = {
           webhook_token?: string;
         };
         Update: {
+          agente_atendimento_ativo?: boolean;
+          agente_atendimento_dias_semana?: number[];
+          agente_atendimento_exigir_validacao?: boolean;
+          agente_atendimento_ferramentas_permitidas?: string[];
+          agente_atendimento_horario_fim?: string;
+          agente_atendimento_horario_inicio?: string;
+          agente_atendimento_id?: string | null;
+          agente_atendimento_max_contexto_mensagens?: number;
+          agente_atendimento_msg_ativacao?: string;
+          agente_atendimento_msg_fora_horario?: string;
+          agente_atendimento_msg_transferencia?: string;
           app_url?: string;
           base_url?: string;
           bot_24h?: boolean;
@@ -5373,6 +5641,13 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: "whatsapp_config_agente_atendimento_id_fkey";
+            columns: ["agente_atendimento_id"];
+            isOneToOne: false;
+            referencedRelation: "agentes";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "whatsapp_config_conexao_id_fkey";
             columns: ["conexao_id"];
             isOneToOne: false;
@@ -5397,6 +5672,8 @@ export type Database = {
       };
       whatsapp_conversas: {
         Row: {
+          agente_processando: boolean;
+          agente_processando_em: string | null;
           atendente_id: string | null;
           atendente_nome: string | null;
           atendimento_numero: number;
@@ -5434,6 +5711,8 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          agente_processando?: boolean;
+          agente_processando_em?: string | null;
           atendente_id?: string | null;
           atendente_nome?: string | null;
           atendimento_numero?: number;
@@ -5470,6 +5749,8 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          agente_processando?: boolean;
+          agente_processando_em?: string | null;
           atendente_id?: string | null;
           atendente_nome?: string | null;
           atendimento_numero?: number;
@@ -5650,6 +5931,66 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      whatsapp_conexao_registrar_status: {
+        Args: { _conexao_id: string; _erro?: string; _status: string };
+        Returns: boolean;
+      };
+      whatsapp_evento_concluir: {
+        Args: { _erro?: string; _id: string; _status: string };
+        Returns: boolean;
+      };
+      whatsapp_evento_registrar: {
+        Args: {
+          _conexao_id: string;
+          _dedup_key: string;
+          _payload?: Json;
+          _provedor: string;
+          _tipo: string;
+        };
+        Returns: Array<{ id: string; novo: boolean; status: string; tentativas: number }>;
+      };
+      whatsapp_eventos_limpar: { Args: { _dias?: number }; Returns: number };
+      agente_agendar_automacoes: {
+        Args: { _limite?: number };
+        Returns: Json;
+      };
+      agente_alerta_atualizar_status: {
+        Args: { _id: string; _status: string };
+        Returns: boolean;
+      };
+      agente_automacao_historico: {
+        Args: { _automacao_id: string; _limite?: number };
+        Returns: Json;
+      };
+      agente_eventos_permitidos: {
+        Args: Record<PropertyKey, never>;
+        Returns: string[];
+      };
+      agente_gerar_alertas: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      agente_heartbeats_manter: {
+        Args: { _inativo_minutos?: number; _retencao_dias?: number };
+        Returns: Json;
+      };
+      agente_monitoramento_resumo: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      agente_proxima_execucao: {
+        Args: {
+          _apos: string;
+          _dias: number[];
+          _executar_em: string;
+          _frequencia: string;
+          _fuso: string;
+          _hora: string;
+          _intervalo: number;
+          _tipo: string;
+        };
+        Returns: string;
+      };
       agente_concluir_tarefa: {
         Args: { _erro?: string; _status: string; _tarefa_id: string };
         Returns: boolean;

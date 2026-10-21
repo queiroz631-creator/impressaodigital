@@ -28,5 +28,10 @@ BEGIN
   END LOOP;
 END $$;
 
+-- Idempotente: esta mesma constraint tambem e criada em 20260901154827. Em um
+-- banco criado do zero ela ja existe aqui, entao removemos antes de recriar.
+ALTER TABLE public.whatsapp_conversas
+  DROP CONSTRAINT IF EXISTS whatsapp_conversas_telefone_key;
+
 ALTER TABLE public.whatsapp_conversas
   ADD CONSTRAINT whatsapp_conversas_telefone_key UNIQUE (telefone);
