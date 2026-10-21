@@ -34,15 +34,19 @@ export const Route = createFileRoute("/api/public/whatsapp/midia")({
           return new Response("Falha ao obter o arquivo", { status: 502 });
         }
 
-        const nome = (data.arquivo_nome ?? "arquivo").replace(/["\\\r\n]/g, "");
-        const tipo =
+        const { montarContentDisposition } = await import("@/lib/content-disposition");
+        const tipoBruto =
           data.mime_type ?? origem.headers.get("content-type") ?? "application/octet-stream";
+        const tipo = /^[\x20-\x7e]+$/.test(tipoBruto) ? tipoBruto : "application/octet-stream";
 
         return new Response(origem.body, {
           headers: {
             "Content-Type": tipo,
             "Cache-Control": "private, max-age=3600",
-            "Content-Disposition": `${baixar ? "attachment" : "inline"}; filename="${nome}"`,
+            "Content-Disposition": montarContentDisposition(
+              data.arquivo_nome,
+              baixar ? "attachment" : "inline",
+            ),
           },
         });
       },
