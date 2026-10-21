@@ -956,3 +956,14 @@ Status: **Etapa 2 implementada**. Migracoes aplicadas **somente no Supabase loca
 - **Validacao:** Vitest 371/371 (+6); 
 pm run build OK; 	sc sem erros novos (semearam-se tipos explicitos nos callbacks; restantes sao pre-existentes).
 - **Proximo:** mensagem real da Evolution (tunel) ainda pendente; migrar chamadores manuais para a fachada; Etapa 7 (backoff/saude); QR real; deploy/commit so com autorizacao.
+
+**20/10/2026 - Commit do trabalho acumulado + merge da main (producao) na desenvolvimento (so local)**
+- **Commit `b0b0aba8`** ("feat: central de agentes, multiprovedor WhatsApp e correcao do Configurar Bot"): 111 arquivos (central de agentes, multiprovedor WhatsApp, worker, correcao do Configurar Bot, 12 migracoes, config de deploy). Ficaram de FORA (temporarios, nao versionados): `impressaodigital.zip`, `MEMORIA_TEMP.md`, `MEMORIA_TEMP_ETAPA61.md`, `test-libreoffice*.ts`, `test-server-function*.ts`. Varredura de segredos limpa (so o regex de PEM em `qz-assinatura.server.ts`, sem chave real).
+- **`main` local removida** antes do merge (nao tinha commits exclusivos); o merge usou `origin/main` (`b4ffddfb`, 49 commits de producao).
+- **Merge `4fae0c0d`** ("merge: traz a main (producao) para a desenvolvimento"), 3 conflitos resolvidos:
+  - `src/integrations/supabase/types.ts`: mantidos OS DOIS blocos (`graphql_public` da desenvolvimento + `__InternalSupabase` da main). Acrescentado `ultima_mensagem_id` (Row/Insert/Update) que faltava nos tipos gerados (erro de tsc pre-existente).
+  - `src/lib/curriculo-conversao.server.ts` (add/add): mantidas AS DUAS funcoes, pois cada lado define uma e ha um chamador para cada — `converterDocParaPdf` (server function da leitura de texto, usada por `curriculo-import.ts`) e `converterWordEmPdf` (conversao do anexo, usada por `curriculo-import.functions.ts`).
+  - `src/lib/whatsapp-webhook.server.ts`: mantido o lado da desenvolvimento (delega ao `pipeline.server.ts` multiprovedor); o bloco Z-API inline da main ja foi extraido para o pipeline/adaptador.
+- **Regressao encontrada e corrigida no merge:** a versao multiprovedor NAO tratava `MessageStatusCallback` (tiques de entrega/leitura) — o bloco da main tratava. Restaurado no lugar certo: novo tipo de evento `status_mensagem` em `providers/tipos.ts`; adaptador Z-API emite `status_mensagem` (READ/PLAYED -> lida, RECEIVED -> entregue, com `ids` e `momment`); pipeline ganhou `processarStatusMensagem` (atualiza so mensagens de saida e NUNCA rebaixa: lida/final nao volta a entregue; erro nao e sobrescrito). `banco-falso.ts` ganhou `in()` e `not()`.
+- **Testes novos:** 11 (4 no adaptador Z-API + 7 no webhook). **Vitest 382/382**; `npm run build` OK; `tsc` sem erros nos arquivos do merge (a contagem global sobe ~3 por arquivos que so existem depois do merge, vindos da main).
+- **Nada foi enviado:** `desenvolvimento` esta 51 commits a frente de `origin/desenvolvimento`; VPS e remoto intocados.
