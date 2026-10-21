@@ -91,6 +91,8 @@ import {
   rotuloStatusConversa,
   type StatusConversa,
 } from "@/lib/whatsapp-comum";
+import { ordenarConversas } from "@/lib/whatsapp-ordem";
+
 
 import { useConexaoSelecionada, useConexoesVisiveis } from "@/hooks/useConexoes";
 import {
@@ -457,7 +459,7 @@ function Atendimento() {
 
   const hoje = hojeTexto;
   const digitosBusca = termo.replace(/\D/g, "");
-  const lista = (conversas ?? []).filter((c) => {
+  const filtradas = (conversas ?? []).filter((c) => {
     // Pesquisando: ignora a aba e a data; vale nome, telefone e conteúdo das mensagens.
     if (termo) {
       const nome = normalizar(c.nome_contato ?? "");
@@ -477,11 +479,8 @@ function Atendimento() {
     return true;
   });
   // Ordem da lista de conversas, conforme o botão ao lado da pesquisa.
-  lista.sort((a, b) => {
-    const ta = new Date(a.ultima_mensagem_em ?? a.created_at).getTime() || 0;
-    const tb = new Date(b.ultima_mensagem_em ?? b.created_at).getTime() || 0;
-    return conversasRecentesPrimeiro ? tb - ta : ta - tb;
-  });
+  const lista = ordenarConversas(filtradas, conversasRecentesPrimeiro);
+
 
   const finalizadosOcultos =
     aba === "finalizado" && !todasFinalizadas && !termo
