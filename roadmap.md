@@ -360,3 +360,10 @@
 - [x] Sorteios por rodadas: apuração com sorteio ATIVO, cupons acumulam, ganhador sai das próximas rodadas
 
 - [x] Conversão Word→PDF com LibreOffice na importação de currículos (VPS)
+
+## WhatsApp — ordem da lista de conversas
+- [x] Botão ao lado da pesquisa alterna "conversas mais novas primeiro" (padrão) e "mais antigas primeiro"; preferência salva no navegador
+- [x] Botão antigo dentro da conversa (ordem das mensagens) removido; as mensagens voltam à ordem normal, com a mais recente embaixo
+- [x] Regra isolada em `src/lib/whatsapp-ordem.ts` com 5 testes (`tests/whatsapp-ordem.test.ts`); 39 testes aprovados, build OK, não publicado
+- [ ] Validar na prévia com conversas reais — bloqueado: o banco de dados está pausado e não pôde ser retomado aqui (créditos do Lovable Cloud esgotados no workspace)
+
