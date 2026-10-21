@@ -320,6 +320,18 @@ function Atendimento() {
   const [todasFinalizadas, setTodasFinalizadas] = useState(false);
   const [idsBuscaMensagem, setIdsBuscaMensagem] = useState<Set<string> | null>(null);
 
+  // Ordem da lista de conversas: mais novas primeiro (padrão) ou mais antigas primeiro.
+  const [conversasRecentesPrimeiro, setConversasRecentesPrimeiro] = useState(true);
+  useEffect(() => {
+    setConversasRecentesPrimeiro(localStorage.getItem("whatsapp-ordem-conversas") !== "asc");
+  }, []);
+  function alternarOrdemConversas() {
+    const novo = !conversasRecentesPrimeiro;
+    setConversasRecentesPrimeiro(novo);
+    localStorage.setItem("whatsapp-ordem-conversas", novo ? "desc" : "asc");
+  }
+
+
   // Trocar de aba volta a mostrar somente os finalizados de hoje.
   useEffect(() => {
     setTodasFinalizadas(false);
@@ -464,6 +476,13 @@ function Atendimento() {
     }
     return true;
   });
+  // Ordem da lista de conversas, conforme o botão ao lado da pesquisa.
+  lista.sort((a, b) => {
+    const ta = new Date(a.ultima_mensagem_em ?? a.created_at).getTime() || 0;
+    const tb = new Date(b.ultima_mensagem_em ?? b.created_at).getTime() || 0;
+    return conversasRecentesPrimeiro ? tb - ta : ta - tb;
+  });
+
   const finalizadosOcultos =
     aba === "finalizado" && !todasFinalizadas && !termo
       ? (conversas ?? []).filter(
@@ -486,28 +505,54 @@ function Atendimento() {
 
   const painelContatos = (
     <div className="flex min-h-0 flex-col gap-3">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          placeholder="Pesquisar nome, telefone ou conteúdo da mensagem..."
-          className="pl-9 pr-10"
-        />
-        {busca.length > 0 && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground"
-            aria-label="Limpar pesquisa"
-            title="Limpar pesquisa"
-            onClick={() => setBusca("")}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Pesquisar nome, telefone ou conteúdo da mensagem..."
+            className="pl-9 pr-10"
+          />
+          {busca.length > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground"
+              aria-label="Limpar pesquisa"
+              title="Limpar pesquisa"
+              onClick={() => setBusca("")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 shrink-0"
+          aria-label={
+            conversasRecentesPrimeiro
+              ? "Mostrar conversas mais antigas primeiro"
+              : "Mostrar conversas mais novas primeiro"
+          }
+          title={
+            conversasRecentesPrimeiro
+              ? "Conversas mais novas primeiro — clique para ver as mais antigas"
+              : "Conversas mais antigas primeiro — clique para ver as mais novas"
+          }
+          onClick={alternarOrdemConversas}
+        >
+          {conversasRecentesPrimeiro ? (
+            <ArrowDownWideNarrow className="h-4 w-4" />
+          ) : (
+            <ArrowUpNarrowWide className="h-4 w-4" />
+          )}
+        </Button>
       </div>
+
 
       <div className="flex flex-wrap gap-1">
         {STATUS_CONVERSA.map((s) => {
@@ -793,16 +838,6 @@ function Conversa({
   const [editandoNome, setEditandoNome] = useState(false);
   const [nomeEdicao, setNomeEdicao] = useState("");
   const fim = useRef<HTMLDivElement | null>(null);
-  const [ordemDesc, setOrdemDesc] = useState(false);
-  useEffect(() => {
-    setOrdemDesc(localStorage.getItem("whatsapp-ordem") === "desc");
-  }, []);
-  function alternarOrdem() {
-    const novo = !ordemDesc;
-    setOrdemDesc(novo);
-    localStorage.setItem("whatsapp-ordem", novo ? "desc" : "asc");
-    setTimeout(() => fim.current?.scrollIntoView({ block: novo ? "start" : "end" }), 50);
-  }
   const ultimaPresenca = useRef(0);
   const campoTexto = useRef<HTMLTextAreaElement | null>(null);
   const inputArquivo = useRef<HTMLInputElement | null>(null);
@@ -1283,14 +1318,14 @@ function Conversa({
     if (alturaAntes.current !== null && scroll.current) {
       const diferenca = scroll.current.scrollHeight - alturaAntes.current;
       alturaAntes.current = null;
-      if (ordemDesc) return;
       if (diferenca > 0) {
         scroll.current.scrollTop += diferenca;
         return;
       }
     }
-    fim.current?.scrollIntoView({ block: ordemDesc ? "start" : "end" });
+    fim.current?.scrollIntoView({ block: "end" });
   }, [mensagens]);
+
 
 
   useEffect(() => {
@@ -1626,14 +1661,6 @@ function Conversa({
         <Button
           size="sm"
           variant="outline"
-          title={ordemDesc ? "Mais recentes primeiro" : "Mais antigas primeiro"}
-          onClick={() => alternarOrdem()}
-        >
-          {ordemDesc ? <ArrowDownWideNarrow className="h-4 w-4" /> : <ArrowUpNarrowWide className="h-4 w-4" />}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
           title="Abrir orçamento com nome e telefone do cliente"
           onClick={abrirOrcamento}
         >
@@ -1704,11 +1731,9 @@ function Conversa({
           <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
             <div
               ref={scroll}
-              className={cn(
-                "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1",
-                ordemDesc && "flex-col-reverse",
-              )}
+              className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1"
             >
+
               {!isLoading &&
                 (semMais ? (
                   (mensagens ?? []).length > 0 && (
