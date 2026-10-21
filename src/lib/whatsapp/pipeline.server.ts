@@ -12,7 +12,7 @@
 
 import { dentroDaJanela, ehMensagemCortesia, lerCfgCortesia } from "@/lib/whatsapp-cortesia";
 import { montarUrlMidiaProvedor } from "./providers/evolution-ids";
-import type { EventoIgnorado, EventoMensagem, EventoNormalizado, EventoRevogacao } from "./providers/tipos";
+import type { EventoIgnorado, EventoMensagem, EventoNormalizado, EventoRevogacao, EventoStatusMensagem } from "./providers/tipos";
 
 export type DesfechoEvento = "processado" | "ignorado" | "erro";
 
@@ -107,6 +107,27 @@ async function processarIgnorado(db: Admin, ev: EventoIgnorado): Promise<Resulta
     return json({ ok: true, ignorado: true, motivo: "edicao" });
   }
   return json({ ok: true, ignorado: true, ...(ev.motivo ? { motivo: ev.motivo } : {}) });
+}
+
+/**
+ * Aviso de entrega/leitura de mensagem já enviada: atualiza os tiques das
+ * mensagens de saída. Nunca rebaixa um status (lida não volta a entregue) e
+ * nunca aciona o bot. Só mensagens de saída são afetadas.
+ */
+async function processarStatusMensagem(db: Admin, ev: EventoStatusMensagem): Promise<ResultadoPipeline> {
+  const bloqueados = ev.status === "lida" ? ["lida", "erro"] : ["entregue", "lida", "erro"];
+  const campos =
+    ev.status === "lida"
+      ? { status: ev.status, lida_em: ev.quando }
+      : { status: ev.status, entregue_em: ev.quando };
+  const { error } = await db
+    .from("whatsapp_mensagens")
+    .update(campos as never)
+    .in("whatsapp_message_id", ev.ids)
+    .eq("direcao", "saida")
+    .not("status", "in", `(${bloqueados.join(",")})`);
+  if (error) return falha("Falha ao registrar status", 500);
+  return json({ ok: true, status: ev.status });
 }
 
 async function processarMensagem(db: Admin, conexaoId: string, ev: EventoMensagem): Promise<ResultadoPipeline> {
@@ -504,6 +525,8 @@ export async function processarEventoNormalizado(conexaoId: string, ev: EventoNo
       return processarIgnorado(db, ev);
     case "mensagem_revogada":
       return processarRevogacao(db, ev);
+    case "status_mensagem":
+      return processarStatusMensagem(db, ev);
     default:
       return processarMensagem(db, conexaoId, ev);
   }

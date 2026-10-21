@@ -133,6 +133,23 @@ export class ConsultaFalsa implements PromiseLike<{ data: unknown; error: Erro |
     return this;
   }
 
+  /** `in(coluna, valores)`: mantém as linhas cujo valor está na lista. */
+  in(coluna: string, valores: readonly unknown[]): this {
+    this.filtros.push((l) => valores.includes(l[coluna]));
+    return this;
+  }
+
+  /**
+   * `not(coluna, "in", "(a,b,c)")`: mantém as linhas cujo valor NÃO está na
+   * lista textual (o mesmo formato usado pelo PostgREST).
+   */
+  not(coluna: string, operador: string, valor: string): this {
+    if (operador !== "in") throw new Error(`BancoFalso: operador 'not' não suportado: ${operador}`);
+    const lista = valor.replace(/^\(|\)$/g, "").split(",").map((v) => v.trim());
+    this.filtros.push((l) => !lista.includes(String(l[coluna])));
+    return this;
+  }
+
   order(coluna: string, opcoes?: { ascending?: boolean }): this {
     this.ordem = { coluna, asc: opcoes?.ascending !== false };
     return this;

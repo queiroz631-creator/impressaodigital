@@ -73,6 +73,26 @@ export const interpretarCurriculoImportado = createServerFn({ method: "POST" })
     return { dados: r.dados, existente, iaUsada: r.iaUsada, erroIA: r.erroIA };
   });
 
+/** Converte DOC/DOCX em PDF com o LibreOffice do servidor; devolve o PDF em base64 ou um código de erro. */
+export const converterCurriculoWord = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        base64: z.string().min(10).max(14_000_000),
+        extensao: z.enum(["doc", "docx"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { converterWordEmPdf, ErroConversao } = await import("@/lib/curriculo-conversao.server");
+    try {
+      return { pdf: await converterWordEmPdf(data.base64, data.extensao), erro: "" };
+    } catch (e) {
+      return { pdf: "", erro: e instanceof ErroConversao ? e.message : "FALHA_CONVERSAO" };
+    }
+  });
+
 /** Verifica se um CPF informado manualmente já possui currículo. */
 export const consultarCpfImportacao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -48,8 +48,10 @@ import {
 
 import {
   capitalizarTexto,
+  cpfValido,
   formatarCpf,
   formatarTelefone,
+  somenteNumeros,
   type CurriculoCompleto,
   type PayloadEtapa,
 } from "@/lib/curriculo";
@@ -59,7 +61,11 @@ import {
   imprimirCurriculo,
   nomeArquivoCurriculo,
 } from "@/lib/curriculo-pdf";
-import { enviarCurriculoWhatsapp, gerarLinkCurriculo } from "@/lib/curriculo.functions";
+import {
+  alterarCpfCurriculo,
+  enviarCurriculoWhatsapp,
+  gerarLinkCurriculo,
+} from "@/lib/curriculo.functions";
 import { urlPublica } from "@/lib/link-publico";
 import { dataHoraBR } from "@/lib/format";
 
@@ -106,6 +112,9 @@ function DetalheCurriculo() {
   const [enviando, setEnviando] = useState(false);
   const [excluirAberto, setExcluirAberto] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
+  const [cpfAberto, setCpfAberto] = useState(false);
+  const [cpfNovo, setCpfNovo] = useState("");
+  const [salvandoCpf, setSalvandoCpf] = useState(false);
 
   const excluirCurriculo = async () => {
     setExcluindo(true);
@@ -125,6 +134,7 @@ function DetalheCurriculo() {
 
   const gerarLink = useServerFn(gerarLinkCurriculo);
   const enviarWhats = useServerFn(enviarCurriculoWhatsapp);
+  const alterarCpf = useServerFn(alterarCpfCurriculo);
 
   const { data, isLoading } = useQuery({
     queryKey: ["curriculo", id],
@@ -288,6 +298,26 @@ function DetalheCurriculo() {
     }
   };
 
+  const salvarCpf = async () => {
+    const numeros = somenteNumeros(cpfNovo);
+    if (!cpfValido(numeros)) {
+      toast.error("CPF inválido.");
+      return;
+    }
+    setSalvandoCpf(true);
+    try {
+      await alterarCpf({ data: { curriculoId: id, cpf: numeros } });
+      toast.success("CPF alterado com sucesso.");
+      setCpfAberto(false);
+      await queryClient.invalidateQueries({ queryKey: ["curriculo", id] });
+      await queryClient.invalidateQueries({ queryKey: ["curriculos"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível alterar o CPF.");
+    } finally {
+      setSalvandoCpf(false);
+    }
+  };
+
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -299,6 +329,17 @@ function DetalheCurriculo() {
           {data.curriculo.status === "completo" ? "Completo" : "Rascunho"}
         </Badge>
         <span className="text-xs text-muted-foreground">CPF {formatarCpf(data.curriculo.cpf)}</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-xs"
+          onClick={() => {
+            setCpfNovo(formatarCpf(data.curriculo.cpf));
+            setCpfAberto(true);
+          }}
+        >
+          <Pencil className="mr-1 h-3 w-3" /> Alterar CPF
+        </Button>
 
         <div className="ml-auto flex flex-wrap gap-2">
           <Button
@@ -461,6 +502,36 @@ function DetalheCurriculo() {
       ) : (
         <CurriculoDocumento ref={documentoRef} dados={dados} />
       )}
+
+      <Dialog open={cpfAberto} onOpenChange={setCpfAberto}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Alterar CPF</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="cpf-novo">Novo CPF</Label>
+            <Input
+              id="cpf-novo"
+              value={cpfNovo}
+              onChange={(e) => setCpfNovo(formatarCpf(somenteNumeros(e.target.value).slice(0, 11)))}
+              placeholder="000.000.000-00"
+              inputMode="numeric"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">
+              O CPF também será atualizado no cadastro do cliente vinculado.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCpfAberto(false)} disabled={salvandoCpf}>
+              Cancelar
+            </Button>
+            <Button onClick={salvarCpf} disabled={salvandoCpf}>
+              {salvandoCpf ? "Salvando…" : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={whatsAberto} onOpenChange={setWhatsAberto}>
         <DialogContent>

@@ -25,6 +25,11 @@ const corpoSchema = z
     type: z.string().nullish(),
     notification: z.string().nullish(),
     isEdit: z.boolean().nullish(),
+    // Aviso de entrega/leitura: `ids` são as mensagens afetadas e `momment`
+    // é o instante informado pela Z-API.
+    ids: z.array(z.string()).nullish(),
+    momment: z.number().nullish(),
+    status: z.string().nullish(),
     referencedMessage: z.object({ messageId: z.string().nullish() }).partial().nullish(),
     text: z.object({ message: z.string().optional() }).partial().nullish(),
     image: z
@@ -157,6 +162,21 @@ export function normalizarWebhookZapi(bruto: unknown): EventoNormalizado {
   }
 
   const ehSaidaPropria = corpo.fromMe === true;
+
+  // Aviso de entrega/leitura de mensagem já enviada: atualiza os tiques sem
+  // acionar o bot. Nunca rebaixa (lida não volta a entregue/enviada).
+  if (corpo.type === "MessageStatusCallback") {
+    const st = String(corpo.status ?? "").toUpperCase();
+    const novo = st === "READ" || st === "PLAYED" ? "lida" : st === "RECEIVED" ? "entregue" : null;
+    const ids = (corpo.ids ?? []).filter((x): x is string => typeof x === "string");
+    if (!novo || ids.length === 0) return { tipo: "ignorado", motivo: corpo.type, idExterno };
+    return {
+      tipo: "status_mensagem",
+      ids,
+      status: novo,
+      quando: new Date(typeof corpo.momment === "number" ? corpo.momment : Date.now()).toISOString(),
+    };
+  }
 
   // A Z-API envia vários tipos de callback (entrega, status, presença).
   // Só o "ReceivedCallback" é mensagem de cliente; o resto causaria laço.

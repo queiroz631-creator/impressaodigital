@@ -1,7 +1,16 @@
 /**
- * Conversão de DOC/DOCX para PDF e extração de texto.
- * Somente servidor (usa LibreOffice headless - funciona em Linux/Windows/macOS).
- * Arquivos temporários são removidos após a extração.
+ * Conversão de currículos Word (DOC/DOCX) em PDF, somente servidor.
+ *
+ * Duas necessidades convivem aqui:
+ *  - `converterDocParaPdf`: server function usada pela leitura do texto do
+ *    documento (extrai o texto do PDF gerado pelo LibreOffice headless).
+ *  - `converterWordEmPdf`: conversão simples usada no anexo do currículo,
+ *    com validação do PDF e limpeza garantida dos arquivos temporários
+ *    (roda na VPS; sem LibreOffice devolve SEM_CONVERSOR).
+ *
+ * Na hospedagem sem LibreOffice, `converterWordEmPdf` devolve SEM_CONVERSOR e
+ * `converterDocParaPdf` devolve LIBREOFFICE_NAO_INSTALADO. Os arquivos
+ * temporários são sempre removidos, inclusive em falha.
  */
 
 import { createServerFn } from "@tanstack/react-start";
@@ -45,7 +54,7 @@ async function verificarLibreOffice(): Promise<{ ok: boolean; caminho?: string; 
   ];
 
   // Adicionar caminhos do PATH
-  const pathDirs = (process.env.PATH || "").split(path.delimiter);
+  const pathDirs = (process.env["PATH"] || "").split(path.delimiter);
   for (const dir of pathDirs) {
     caminhosComuns.push(path.join(dir, "libreoffice"));
     caminhosComuns.push(path.join(dir, "soffice"));
@@ -55,9 +64,6 @@ async function verificarLibreOffice(): Promise<{ ok: boolean; caminho?: string; 
 
   for (const cmd of caminhosComuns) {
     try {
-      const { execFile } = await import("child_process");
-      const { promisify } = await import("util");
-      const execFileAsync = promisify(execFile);
       await execFileAsync(cmd, ["--version"], { timeout: 5000 });
       return { ok: true, caminho: cmd };
     } catch {
@@ -72,11 +78,11 @@ async function verificarLibreOffice(): Promise<{ ok: boolean; caminho?: string; 
  * Converte DOC/DOCX para PDF usando LibreOffice headless e extrai texto.
  * Remove arquivos temporários ao final.
  */
-async function converterEExtrairTexto(arquivoBase64: string, nomeArquivo: string): Promise<{ ok: boolean; texto?: string; erro?: string; detalhe?: string }> {
+async function converterEExtrairTexto(arquivoBase64: string, nomeArquivo: string): Promise<{ ok: boolean; texto?: string; erro?: string; detalhe?: string | undefined }> {
   // Verificar se LibreOffice está disponível
   const checkLibreOffice = await verificarLibreOffice();
   if (!checkLibreOffice.ok) {
-    return { ok: false, erro: "LIBREOFFICE_NAO_INSTALADO", detalhe: checkLibreOffice.erro };
+    return { ok: false, erro: "LIBREOFFICE_NAO_INSTALADO", detalhe: checkLibreOffice.erro ?? undefined };
   }
 
   const libreOfficeCmd = checkLibreOffice.caminho!;
@@ -94,13 +100,12 @@ async function converterEExtrairTexto(arquivoBase64: string, nomeArquivo: string
     // 2. Converter para PDF usando LibreOffice headless
     // No Windows usar soffice.com (versão console), no Linux/macOS usar o comando detectado
     const isWindows = process.platform === "win32";
-    const convertCmd = isWindows && libreOfficeCmd.endsWith("soffice.com") 
+    const convertCmd = isWindows && libreOfficeCmd.endsWith("soffice.com")
       ? libreOfficeCmd  // Já é soffice.com
       : libreOfficeCmd;
 
-    let conversionResult;
     try {
-      conversionResult = await execFileAsync(convertCmd, [
+      await execFileAsync(convertCmd, [
         "--headless",
         "--convert-to", "pdf",
         "--outdir", tempDir,
@@ -114,7 +119,7 @@ async function converterEExtrairTexto(arquivoBase64: string, nomeArquivo: string
 
     // O LibreOffice cria o PDF com o mesmo nome base na pasta de saída
     const expectedPdf = path.join(tempDir, `curriculo_${id}.pdf`);
-    
+
     if (!fs.existsSync(expectedPdf)) {
       // Tentar encontrar o PDF gerado (pode ter nome ligeiramente diferente)
       const files = fs.readdirSync(tempDir).filter(f => f.startsWith(`curriculo_${id}`) && f.endsWith(".pdf"));
@@ -130,7 +135,7 @@ async function converterEExtrairTexto(arquivoBase64: string, nomeArquivo: string
 
     const pdfData = fs.readFileSync(expectedPdf);
     const doc = await pdfjs.getDocument({ data: new Uint8Array(pdfData) }).promise;
-    
+
     const partes: string[] = [];
     for (let p = 1; p <= doc.numPages; p += 1) {
       const pagina = await doc.getPage(p);
@@ -153,7 +158,7 @@ async function converterEExtrairTexto(arquivoBase64: string, nomeArquivo: string
     }
 
     const texto = partes.join("\n").trim();
-    
+
     if (!texto || texto.replace(/\s+/g, "").length < 60) {
       return { ok: false, erro: "PDF_SEM_TEXTO", detalhe: "O PDF gerado não contém texto legível (mínimo 60 caracteres)." };
     }
@@ -173,7 +178,70 @@ async function converterEExtrairTexto(arquivoBase64: string, nomeArquivo: string
 export const converterDocParaPdf = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => converterSchema.parse(input))
-  .handler(async ({ data }): Promise<{ ok: boolean; texto?: string; erro?: string; detalhe?: string }> => {
+  .handler(async ({ data }: { data: z.infer<typeof converterSchema> }): Promise<{ ok: boolean; texto?: string; erro?: string; detalhe?: string | undefined }> => {
     // Verificar permissão (qualquer usuário autenticado pode importar currículo)
     return await converterEExtrairTexto(data.arquivoBase64, data.nomeArquivo);
   });
+
+/** Erro de conversão com código legível (SEM_CONVERSOR, ARQUIVO_INVALIDO, ...). */
+export class ErroConversao extends Error {}
+
+/**
+ * Converte um currículo Word (base64) em PDF e devolve o PDF em base64.
+ * Usada no anexo do currículo; na VPS usa `LIBREOFFICE_BIN` (padrão `soffice`).
+ */
+export async function converterWordEmPdf(base64: string, extensao: "doc" | "docx"): Promise<string> {
+  let fsPromises: typeof import("node:fs/promises");
+  let os2: typeof import("node:os");
+  let path2: typeof import("node:path");
+  let cp: typeof import("node:child_process");
+  try {
+    fsPromises = await import("node:fs/promises");
+    os2 = await import("node:os");
+    path2 = await import("node:path");
+    cp = await import("node:child_process");
+    if (typeof cp.execFile !== "function") throw new Error();
+  } catch {
+    throw new ErroConversao("SEM_CONVERSOR");
+  }
+
+  const bytes = Buffer.from(base64, "base64");
+  if (bytes.length === 0) throw new ErroConversao("ARQUIVO_INVALIDO");
+  if (bytes.length > 10 * 1024 * 1024) throw new ErroConversao("ARQUIVO_GRANDE");
+
+  const dir = await fsPromises.mkdtemp(path2.join(os2.tmpdir(), "curriculo-conv-"));
+  try {
+    const entrada = path2.join(dir, `curriculo.${extensao}`);
+    await fsPromises.writeFile(entrada, bytes);
+    const perfil = `file://${path2.join(dir, "perfil")}`;
+    await new Promise<void>((resolve, reject) => {
+      cp.execFile(
+        process.env["LIBREOFFICE_BIN"] || "soffice",
+        [
+          `-env:UserInstallation=${perfil}`,
+          "--headless",
+          "--norestore",
+          "--nolockcheck",
+          "--convert-to",
+          "pdf",
+          "--outdir",
+          dir,
+          entrada,
+        ],
+        { timeout: 45000, killSignal: "SIGKILL" },
+        (erro) => {
+          if (!erro) return resolve();
+          const codigo = (erro as NodeJS.ErrnoException).code;
+          reject(new ErroConversao(codigo === "ENOENT" ? "SEM_CONVERSOR" : "FALHA_CONVERSAO"));
+        },
+      );
+    });
+    const pdf = await fsPromises.readFile(path2.join(dir, "curriculo.pdf")).catch(() => null);
+    if (!pdf || pdf.length < 100 || pdf.subarray(0, 5).toString() !== "%PDF-") {
+      throw new ErroConversao("FALHA_CONVERSAO");
+    }
+    return pdf.toString("base64");
+  } finally {
+    await fsPromises.rm(dir, { recursive: true, force: true }).catch(() => undefined);
+  }
+}

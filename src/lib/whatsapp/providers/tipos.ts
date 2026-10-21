@@ -209,6 +209,17 @@ export interface EventoRevogacao {
   idAlvo: string | null;
 }
 
+/** Aviso de entrega/leitura de mensagem já enviada (atualiza os tiques). */
+export interface EventoStatusMensagem {
+  tipo: "status_mensagem";
+  /** Identificadores das mensagens no provedor afetadas pelo aviso. */
+  ids: string[];
+  /** Novo status: "entregue" ou "lida" (nunca rebaixa o que já está registrado). */
+  status: "entregue" | "lida";
+  /** Momento informado pelo provedor (ISO 8601). */
+  quando: string;
+}
+
 /** Callback que não é mensagem de cliente (entrega, presença, grupo, etc.). */
 export interface EventoIgnorado {
   tipo: "ignorado";
@@ -221,7 +232,7 @@ export interface EventoIgnorado {
   edicao?: { idAlvo: string; novoTexto: string } | null;
 }
 
-export type EventoNormalizado = EventoMensagem | EventoRevogacao | EventoIgnorado;
+export type EventoNormalizado = EventoMensagem | EventoRevogacao | EventoStatusMensagem | EventoIgnorado;
 
 export interface ProvedorWhatsApp {
   readonly id: ProvedorId;

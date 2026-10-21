@@ -28,6 +28,8 @@ echo "==> [1/7] Atualizando o sistema"
 apt-get update -y
 apt-get upgrade -y
 apt-get install -y ca-certificates curl gnupg git ufw build-essential
+# LibreOffice sem interface gráfica: converte currículos Word em PDF antes da leitura
+apt-get install -y --no-install-recommends libreoffice-writer-nogui fonts-dejavu fonts-liberation
 
 echo "==> [2/7] Instalando Node.js 20 LTS"
 if ! command -v node >/dev/null 2>&1; then

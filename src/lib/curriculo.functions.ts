@@ -177,6 +177,72 @@ export const invalidarLinkCurriculo = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Altera o CPF do currículo e, quando houver cliente vinculado, também do cadastro. */
+export const alterarCpfCurriculo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ curriculoId: z.string().uuid(), cpf: z.string().min(11).max(14) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: permitido, error: erroPermissao } = await context.supabase.rpc("tem_permissao", {
+      _user_id: context.userId,
+      _chave: "curriculos.visualizar",
+    });
+    if (erroPermissao || !permitido) {
+      throw new Error("Você não tem permissão para alterar o CPF do currículo.");
+    }
+
+    const { cpfValido, somenteNumeros } = await import("@/lib/curriculo");
+    const cpf = somenteNumeros(data.cpf);
+    if (!cpfValido(cpf)) throw new Error("CPF inválido.");
+
+    const { data: atual, error: erroAtual } = await context.supabase
+      .from("curriculos")
+      .select("id, cpf, cliente_id")
+      .eq("id", data.curriculoId)
+      .single();
+    if (erroAtual || !atual) throw new Error("Currículo não encontrado.");
+    if (atual.cpf === cpf) return { ok: true };
+
+    const { data: emUso, error: erroUso } = await context.supabase
+      .from("curriculos")
+      .select("id")
+      .eq("cpf", cpf)
+      .neq("id", data.curriculoId)
+      .limit(1);
+    if (erroUso) throw new Error("Não foi possível verificar o CPF.");
+    if (emUso && emUso.length > 0) {
+      throw new Error("Este CPF já está em uso por outro currículo.");
+    }
+
+    const { error: erroUpdate } = await context.supabase
+      .from("curriculos")
+      .update({ cpf })
+      .eq("id", data.curriculoId);
+    if (erroUpdate) throw new Error("Não foi possível alterar o CPF do currículo.");
+
+    if (atual.cliente_id) {
+      const { error: erroCliente } = await context.supabase
+        .from("clientes")
+        .update({ cpf })
+        .eq("id", atual.cliente_id);
+      if (erroCliente) {
+        throw new Error(
+          "O CPF do currículo foi alterado, mas não foi possível atualizar o cadastro do cliente.",
+        );
+      }
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("whatsapp_auditoria").insert({
+      usuario_id: context.userId,
+      acao: "curriculo_cpf_alterado",
+      detalhe: `Currículo ${data.curriculoId}`,
+    });
+
+    return { ok: true };
+  });
+
 export const enviarCurriculoWhatsapp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>

@@ -32,6 +32,11 @@ export type Database = {
       [_ in never]: never;
     };
   };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.15"
+  }
   public: {
     Tables: {
       acabamentos: {
@@ -5707,6 +5712,7 @@ export type Database = {
           total_mensagens: number;
           ultima_mensagem: string | null;
           ultima_mensagem_em: string | null;
+          ultima_mensagem_id: string | null;
           updated_at: string;
         };
         ComputedFields: never;
@@ -5746,6 +5752,7 @@ export type Database = {
           total_mensagens?: number;
           ultima_mensagem?: string | null;
           ultima_mensagem_em?: string | null;
+          ultima_mensagem_id?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -5784,6 +5791,7 @@ export type Database = {
           total_mensagens?: number;
           ultima_mensagem?: string | null;
           ultima_mensagem_em?: string | null;
+          ultima_mensagem_id?: string | null;
           updated_at?: string;
         };
         Relationships: [

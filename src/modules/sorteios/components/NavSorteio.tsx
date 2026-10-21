@@ -16,7 +16,7 @@ const ABAS = [
 export function NavSorteio({ id }: { id: string }) {
   const { data: sorteio } = useSorteio(id);
   const mostrarEncerramento = sorteio?.status === "ATIVO" || sorteio?.status === "ENCERRADO";
-  const mostrarSortear = sorteio?.status === "ENCERRADO" || sorteio?.status === "SORTEADO";
+  const mostrarSortear = sorteio?.status === "ATIVO" || sorteio?.status === "ENCERRADO" || sorteio?.status === "SORTEADO";
 
   const abas = [
     ...ABAS,

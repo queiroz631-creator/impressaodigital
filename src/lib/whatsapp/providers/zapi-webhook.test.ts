@@ -152,3 +152,33 @@ describe("normalizarWebhookZapi — revogação e edição", () => {
     ).toMatchObject({ tipo: "ignorado", motivo: "EditCallback", edicao: { idAlvo: "M1", novoTexto: "x" } });
   });
 });
+
+describe("normalizarWebhookZapi — avisos de entrega/leitura", () => {
+  it("READ → status_mensagem `lida` com os ids e o instante informados", () => {
+    expect(
+      normalizarWebhookZapi({ type: "MessageStatusCallback", status: "READ", ids: ["S1", "S2"], momment: 1700000000000 }),
+    ).toEqual({
+      tipo: "status_mensagem",
+      ids: ["S1", "S2"],
+      status: "lida",
+      quando: new Date(1700000000000).toISOString(),
+    });
+  });
+
+  it("PLAYED também é `lida` e RECEIVED é `entregue`", () => {
+    expect(normalizarWebhookZapi({ type: "MessageStatusCallback", status: "PLAYED", ids: ["S1"] })).toMatchObject({ status: "lida" });
+    expect(normalizarWebhookZapi({ type: "MessageStatusCallback", status: "RECEIVED", ids: ["S1"] })).toMatchObject({ status: "entregue" });
+  });
+
+  it("sem momento informado usa o instante atual (ISO válido)", () => {
+    const ev = normalizarWebhookZapi({ type: "MessageStatusCallback", status: "READ", ids: ["S1"] });
+    expect(ev).toMatchObject({ tipo: "status_mensagem" });
+    if (ev.tipo === "status_mensagem") expect(Number.isNaN(Date.parse(ev.quando))).toBe(false);
+  });
+
+  it("status desconhecido ou sem ids é ignorado (não altera histórico)", () => {
+    expect(normalizarWebhookZapi({ type: "MessageStatusCallback", status: "SENT", ids: ["S1"] })).toMatchObject({ tipo: "ignorado", motivo: "MessageStatusCallback" });
+    expect(normalizarWebhookZapi({ type: "MessageStatusCallback", status: "READ", ids: [] })).toMatchObject({ tipo: "ignorado" });
+    expect(normalizarWebhookZapi({ type: "MessageStatusCallback", status: "READ" })).toMatchObject({ tipo: "ignorado" });
+  });
+});

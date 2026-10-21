@@ -487,3 +487,65 @@ describe("Agente de Atendimento por conexão", () => {
     expect(conversas()[0]).toMatchObject({ conexao_id: "c2", bot_pendente: true });
   });
 });
+
+describe("avisos de entrega/leitura (MessageStatusCallback)", () => {
+  /** Semeia uma mensagem de saída já enviada, referenciada pelo provedor. */
+  function semearSaida(id: string, status: string) {
+    ref.banco.semear("whatsapp_mensagens", [
+      { id: `m-${id}`, conversa_id: "conv1", whatsapp_message_id: id, direcao: "saida", status },
+    ]);
+  }
+
+  const status = (id: string) => mensagens().find((m) => m["whatsapp_message_id"] === id)?.["status"];
+
+  it("READ marca como lida e preenche lida_em; responde com o status", async () => {
+    semearSaida("S1", "enviada");
+    const r = await chamar({ type: "MessageStatusCallback", status: "READ", ids: ["S1"], momment: 1700000000000 });
+    expect(r.json).toEqual({ ok: true, status: "lida" });
+    expect(status("S1")).toBe("lida");
+    expect(mensagens()[0]?.["lida_em"]).toBe(new Date(1700000000000).toISOString());
+  });
+
+  it("RECEIVED marca como entregue", async () => {
+    semearSaida("S1", "enviada");
+    const r = await chamar({ type: "MessageStatusCallback", status: "RECEIVED", ids: ["S1"] });
+    expect(r.json).toEqual({ ok: true, status: "entregue" });
+    expect(status("S1")).toBe("entregue");
+    expect(mensagens()[0]?.["entregue_em"]).toBeTruthy();
+  });
+
+  it("aviso sem ids é ignorado (nunca altera o histórico)", async () => {
+    semearSaida("S1", "enviada");
+    const r = await chamar({ type: "MessageStatusCallback", status: "RECEIVED" });
+    expect(r.json).toMatchObject({ ok: true, ignorado: true, motivo: "MessageStatusCallback" });
+    expect(status("S1")).toBe("enviada");
+  });
+
+  it("nunca rebaixa: lida não volta a entregue", async () => {
+    semearSaida("S1", "lida");
+    await chamar({ type: "MessageStatusCallback", status: "RECEIVED", ids: ["S1"] });
+    expect(status("S1")).toBe("lida");
+  });
+
+  it("erro não é sobrescrito por aviso de status", async () => {
+    semearSaida("S1", "erro");
+    await chamar({ type: "MessageStatusCallback", status: "READ", ids: ["S1"] });
+    expect(status("S1")).toBe("erro");
+  });
+
+  it("afeta só mensagens de saída", async () => {
+    ref.banco.semear("whatsapp_mensagens", [
+      { id: "m-entrada", conversa_id: "conv1", whatsapp_message_id: "S1", direcao: "entrada", status: "recebida" },
+    ]);
+    await chamar({ type: "MessageStatusCallback", status: "READ", ids: ["S1"] });
+    expect(status("S1")).toBe("recebida");
+  });
+
+  it("não grava mensagem nem aciona o agente", async () => {
+    semearSaida("S1", "enviada");
+    const r = await chamar({ type: "MessageStatusCallback", status: "READ", ids: ["S1"] });
+    expect(r.json).toEqual({ ok: true, status: "lida" });
+    expect(mensagens()).toHaveLength(1);
+    expect(chamadasDoAgente()).toHaveLength(0);
+  });
+});
