@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Gift, Loader2, Ticket } from "lucide-react";
+import { Loader2, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,10 +17,9 @@ import { CampoTelefone } from "@/modules/sorteios/components/publico/CamposPubli
 import { formatarCpf } from "@/modules/sorteios/validations/cliente";
 import { dataBR, dataHoraBR } from "@/lib/format";
 
-type Premio = {
-  nome: string; descricao: string; imagem: string | null; condicoes: string; local: string;
-  instrucoes: string; numero: string; prazo_em: string;
-};
+import { ComprovantePublico, type PremioComprovante } from "./ComprovantePublico";
+
+type Premio = PremioComprovante;
 
 export function PaginaPublicaNumeroSorte({ numero }: { numero: string }) {
   const obter = useServerFn(obterCampanhaPublica);
@@ -61,7 +60,7 @@ export function PaginaPublicaNumeroSorte({ numero }: { numero: string }) {
       </div>
 
       {c.premio ? (
-        <ResultadoPremiado premio={c.premio} jaGanhou />
+        <ComprovantePublico premio={c.premio} jaGanhou />
       ) : aviso ? (
         <Card><CardContent className="p-6 text-center font-medium">{aviso}</CardContent></Card>
       ) : c.participante ? (
@@ -182,7 +181,7 @@ function Consulta({ numero, nome, aoMudar }: { numero: string; nome: string; aoM
     }
   }
 
-  if (premio) return <ResultadoPremiado premio={premio} />;
+  if (premio) return <ComprovantePublico premio={premio} />;
 
   return (
     <Card><CardContent className="space-y-4 pt-6">
@@ -201,32 +200,6 @@ function Consulta({ numero, nome, aoMudar }: { numero: string; nome: string; aoM
       </Button>
       <button type="button" className="w-full text-sm text-muted-foreground underline"
         onClick={() => void sair().then(aoMudar)}>Não sou eu</button>
-    </CardContent></Card>
-  );
-}
-
-function ResultadoPremiado({ premio, jaGanhou }: { premio: Premio; jaGanhou?: boolean }) {
-  return (
-    <Card className="border-primary"><CardContent className="space-y-3 pt-6 text-center">
-      <Gift className="mx-auto h-10 w-10 text-primary" />
-      {jaGanhou ? (
-        <p className="font-semibold">Você já foi contemplado nesta campanha e não poderá participar novamente.</p>
-      ) : (
-        <p className="text-2xl font-bold text-primary">Parabéns! Você ganhou!</p>
-      )}
-      {premio.imagem && <img src={premio.imagem} alt={premio.nome} className="mx-auto max-h-56 rounded-lg object-contain" />}
-      <p className="text-xl font-semibold">{premio.nome}</p>
-      {premio.descricao && <p className="whitespace-pre-line text-muted-foreground">{premio.descricao}</p>}
-      <div className="space-y-1 text-left text-sm">
-        <p><span className="font-medium">Número:</span> {premio.numero}</p>
-        {premio.condicoes && <p><span className="font-medium">Condições:</span> {premio.condicoes}</p>}
-        {premio.instrucoes && <p><span className="font-medium">Instruções:</span> {premio.instrucoes}</p>}
-        <p><span className="font-medium">Retirar até:</span> {dataHoraBR(premio.prazo_em)}</p>
-        {premio.local && <p><span className="font-medium">Local:</span> {premio.local}</p>}
-      </div>
-      <p className="rounded-md bg-muted p-3 text-sm font-medium">
-        Guarde esta informação! Seu comprovante de retirada será disponibilizado após a confirmação da premiação.
-      </p>
     </CardContent></Card>
   );
 }
