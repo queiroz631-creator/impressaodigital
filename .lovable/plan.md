@@ -4,10 +4,10 @@ Sem publicar, sem alterar a `main`, sem dados de teste no banco da loja, sem mex
 
 ## 0. Isolamento (primeiro passo, obrigatório)
 
-- Confirmado: a prévia usa o mesmo banco da loja. Portanto nenhum teste que grave dados roda nela.
-- Criar um **rascunho isolado** do projeto, que tem banco e storage próprios, com a mesma estrutura (migrações aplicadas do zero). Todos os testes integrados, de carga e de tela rodam lá, com dados sintéticos (CPFs gerados válidos, telefones fictícios).
-- Antes de qualquer gravação, o script confere que está apontando para o banco do rascunho; se não estiver, aborta.
-- Se o rascunho isolado não puder ser criado, paro aqui e reporto o impedimento; a auditoria de código e banco (somente leitura) continua.
+- Trabalho continua no projeto principal, sem rascunho, conforme seu pedido.
+- A prévia usa o mesmo banco da loja, então não há banco isolado. Por isso, seguindo o próprio documento (item 3) e a regra de não criar dados de teste na loja: **nenhum teste que grave dados será executado** (integrados, concorrência, carga, telas com prêmios).
+- O que será feito: auditoria somente leitura, correções, testes automáticos que não tocam o banco e roteiros prontos para rodar depois num banco de testes (ex.: Supabase local na VPS de desenvolvimento).
+- Os itens que exigem banco isolado ficam registrados como pendência no relatório, e o módulo não será declarado pronto para produção enquanto não forem executados.
 
 ## 1. Auditoria somente leitura (código + banco atual)
 
