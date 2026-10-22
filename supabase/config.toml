@@ -14,3 +14,11 @@ port = 54523
 
 [inbucket]
 port = 54524
+
+[auth]
+# O ambiente de DESENVOLVIMENTO e publicado em https://dev.zapapi.tech.
+# Sem isto o GoTrue do stack local manda os links de e-mail (confirmacao,
+# recuperacao de senha) para http://127.0.0.1:3000, que nao existe fora da
+# maquina do stack.
+site_url = "https://dev.zapapi.tech"
+additional_redirect_urls = ["https://dev.zapapi.tech"]
