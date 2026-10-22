@@ -1022,3 +1022,18 @@ pm run build OK; 	sc sem erros novos (semearam-se tipos explicitos nos callbacks
 - **Varredura de segredos:** o `.env` esta git-ignored e **nao** versionado; nenhum valor de credencial (chave/token/segredo) foi parar no commit. Os unicos valores do `.env` presentes no conteudo sao **URLs publicas** (`ZAPI_BASE_URL`, `SITE_URL` e o `WHATSAPP_WEBHOOK_BASE_URL` do tunel efemero, documentado na MEMORIA). `VITE_SUPABASE_PROJECT_ID` ja era publico no `.env.example`. Padroes (`sk-`, `AIza`, `eyJ`, `ghp_`, `AKIA`, PEM, hex64) -> **nenhuma ocorrencia**.
 - **Fora do commit (permanecem untracked, como nos commits anteriores):** `MEMORIA_TEMP.md`, `MEMORIA_TEMP_ETAPA61.md`, `impressaodigital.zip`, `test-libreoffice.ts`, `test-libreoffice-direct.ts`, `test-server-function.ts`, `test-server-function2.ts`. **Sugestao pendente:** adicionar padroes desses temporarios ao `.gitignore` para evitar `git add -A` acidental.
 - **Nao publicado:** apenas `commit` local. `desenvolvimento` esta **53 commits a frente** de `origin/desenvolvimento`; o reflog remoto mostra pushes antigos de 07/10, 11/10 e 14/10 - **nada foi publicado nesta sessao**. Push e migracoes na VPS continuam **dependendo de autorizacao explicita**.
+
+**21/10/2026 - `.gitignore`: padroes para os temporarios de depuracao**
+- **Pergunta:** "adicionar padrões desses temporários ao .gitignore para evitar um git add -A acidental."
+- **Contexto:** o commit `76f7403b` deixou 7 arquivos temporarios de fora (untracked). Sem padrao no `.gitignore`, um `git add -A` futuro poderia versiona-los por engano.
+- **Verificacao ANTES de editar** (para nao esconder arquivo legitimo): `git ls-files` nao retornou **nenhum** `.zip`, `test-*.ts` ou `.mjs` versionado; o unico `MEMORIA*` rastreado e `MEMORIA.md`. O `.gitignore` usa **CRLF** nas 42 linhas - o padrao foi mantido em CRLF (54 CRLF / 0 LF depois).
+- **Secao adicionada ao fim do `.gitignore`:**
+  - `/MEMORIA_TEMP*.md` -> cobre `MEMORIA_TEMP.md` e `MEMORIA_TEMP_ETAPA61.md`
+  - `/test-*.ts` -> cobre `test-libreoffice.ts`, `test-libreoffice-direct.ts`, `test-server-function.ts`, `test-server-function2.ts`
+  - `/tmp-*.ts` e `/repro.ts` -> mesma familia de scripts soltos ja usados em depuracoes anteriores (`tmp-reconfig-webhook.ts`, `repro.ts`, `v1-v4.ts`)
+  - `/*.mjs` -> scripts `.mjs` avulsos na raiz (nenhum hoje)
+  - `/*.zip` -> `impressaodigital.zip` e afins na raiz
+- **Todos ancorados na raiz** (`/`) de proposito: os testes reais do projeto usam `*.test.ts` dentro de `src/` e nao sao afetados; subpastas continuam versionaveis.
+- **Resultado verificado:** os 7 arquivos estao agora ignorados (`git check-ignore -v` confirma o padrao de cada um); `git status` mostra **apenas** o `.gitignore`; nenhum arquivo **rastreado** casa com os novos padroes (o `.gitignore` nao retroage sobre arquivos ja versionados, mas aqui nao havia nenhum); `git add -A --dry-run` passaria a adicionar **so** o `.gitignore`.
+- **Observacao:** os arquivos continuam **no disco** (apenas deixam de ser candidatos ao commit). `git add -f` ainda os forcaria - de proposito, para nao travar uma inclusao legitima.
+- **Commits:** `76f7403b` (feat) + `54bb2fd6` (docs/MEMORIA) + este (`chore: padroes do .gitignore` e `docs: registra na MEMORIA`).

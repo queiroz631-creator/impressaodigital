@@ -40,3 +40,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Arquivos temporários de depuração (nunca versionar)
+# MEMORIA_TEMP.md, MEMORIA_TEMP_ETAPA61.md
+/MEMORIA_TEMP*.md
+# Scripts de teste soltos na raiz (test-libreoffice.ts, test-server-function.ts, ...)
+/test-*.ts
+/tmp-*.ts
+/repro.ts
+# Scripts .mjs avulsos na raiz
+/*.mjs
+# ZIPs de backup na raiz (impressaodigital.zip)
+/*.zip
