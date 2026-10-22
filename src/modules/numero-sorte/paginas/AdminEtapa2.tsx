@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { dataHoraBR, telefoneBR } from "@/lib/format";
+import { dataHoraBR } from "@/lib/format";
 
 const BUCKET = "numero-sorte-divulgacao";
 const TIPOS = ["image/jpeg", "image/png", "image/webp"];
@@ -161,8 +161,8 @@ const ROTULO_RESULTADO: Record<string, string> = {
 };
 
 function mascararTelefone(t: string | null) {
-  const f = telefoneBR(t);
-  return f ? f.replace(/\d(?=\d{0,3}-?\d{0,4}$)/g, "•").replace(/•/g, "*").slice(0, -4) + f.slice(-4) : "-";
+  const d = (t ?? "").replace(/\D/g, "");
+  return d.length >= 4 ? `****-${d.slice(-4)}` : "-";
 }
 
 export function Participacoes({ campanhas }: { campanhas: { id: string; numero: number; nome: string }[] }) {

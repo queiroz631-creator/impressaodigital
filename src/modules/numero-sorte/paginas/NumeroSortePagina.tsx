@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissoes } from "@/hooks/usePermissoes";
+import { BotaoLinkCampanha, ImagemDialog, Participacoes } from "./AdminEtapa2";
 import { IndicadorCard } from "@/modules/sorteios/components/IndicadorCard";
 import {
   CAPACIDADE_CAMPANHA,
@@ -100,7 +101,8 @@ export function NumeroSortePagina() {
         <TabsContent value="premios">
           <Premios campanhaId={campanhaSel} setCampanhaId={setCampanhaSel} />
         </TabsContent>
-        {["participacoes", "retirada", "estatisticas", "configuracoes"].map((v) => (
+        <TabsContent value="participacoes"><Participacoes campanhas={campanhasLista} /></TabsContent>
+        {["retirada", "estatisticas", "configuracoes"].map((v) => (
           <TabsContent key={v} value={v}>
             <Card>
               <CardContent className="p-8 text-center text-sm text-muted-foreground">
@@ -153,6 +155,7 @@ function Campanhas({ abrirPremios }: { abrirPremios: (id: string) => void }) {
   const qc = useQueryClient();
   const { data: campanhas = [], isLoading } = useCampanhas();
   const [editando, setEditando] = useState<Partial<Campanha> | null>(null);
+  const [imagemDe, setImagemDe] = useState<Campanha | null>(null);
 
   const mudarSituacao = useMutation({
     mutationFn: async ({ c, s }: { c: Campanha; s: SituacaoCampanha }) => {
@@ -200,6 +203,10 @@ function Campanhas({ abrirPremios }: { abrirPremios: (id: string) => void }) {
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={() => abrirPremios(c.id)}>Prêmios</Button>
+              {s !== "rascunho" && <BotaoLinkCampanha numero={c.numero} nome={c.nome} />}
+              {podeGerir && (
+                <Button variant="outline" size="sm" onClick={() => setImagemDe(c)}>Banner</Button>
+              )}
               {podeGerir && s !== "encerrada" && (
                 <Button variant="outline" size="sm" onClick={() => setEditando(c)}>Editar</Button>
               )}
@@ -225,6 +232,11 @@ function Campanhas({ abrirPremios }: { abrirPremios: (id: string) => void }) {
         );
       })}
       {editando && <FormCampanha inicial={editando} fechar={() => setEditando(null)} />}
+      {imagemDe && (
+        <ImagemDialog tabela="numero_sorte_campanhas" id={imagemDe.id} path={imagemDe.banner_path}
+          pasta="banners" rotulo="Banner da campanha" fechar={() => setImagemDe(null)}
+          aoMudar={() => qc.invalidateQueries({ queryKey: [CHAVE] })} />
+      )}
     </div>
   );
 }
@@ -317,6 +329,8 @@ function Premios({ campanhaId, setCampanhaId }: { campanhaId: string; setCampanh
   const [novo, setNovo] = useState(false);
   const [vendoNumeros, setVendoNumeros] = useState<Premio | null>(null);
   const [adicionando, setAdicionando] = useState<Premio | null>(null);
+  const [imagemPremio, setImagemPremio] = useState<Premio | null>(null);
+  const qcPremios = useQueryClient();
 
   const { data: premios = [] } = useQuery({
     queryKey: [CHAVE, "premios", campanhaId],
@@ -375,6 +389,7 @@ function Premios({ campanhaId, setCampanhaId }: { campanhaId: string; setCampanh
               </div>
               {podeGerir && (
                 <>
+                  <Button variant="outline" size="sm" onClick={() => setImagemPremio(p)}>Imagem</Button>
                   <Button variant="outline" size="sm" onClick={() => setVendoNumeros(p)}><Eye className="mr-1 h-4 w-4" /> Números</Button>
                   {campanha?.situacao !== "encerrada" && (
                     <Button variant="outline" size="sm" onClick={() => setAdicionando(p)}>Adicionar unidades</Button>
@@ -387,6 +402,11 @@ function Premios({ campanhaId, setCampanhaId }: { campanhaId: string; setCampanh
       })}
       {novo && campanha && <FormPremio campanha={campanha} fechar={() => setNovo(false)} />}
       {vendoNumeros && <NumerosDialog premio={vendoNumeros} fechar={() => setVendoNumeros(null)} />}
+      {imagemPremio && (
+        <ImagemDialog tabela="numero_sorte_premios" id={imagemPremio.id} path={imagemPremio.imagem_path}
+          pasta="premios" rotulo="Imagem do prêmio" fechar={() => setImagemPremio(null)}
+          aoMudar={() => qcPremios.invalidateQueries({ queryKey: [CHAVE] })} />
+      )}
       {adicionando && <AdicionarUnidades premio={adicionando} fechar={() => setAdicionando(null)} />}
     </div>
   );
