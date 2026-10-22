@@ -204,30 +204,30 @@ async function urlDaImagem(valor: string): Promise<string | null> {
   return data?.signedUrl ?? null;
 }
 
-/** Publica um status na Z-API. */
+/** Publica um status pelo provedor da conexão. */
 export async function publicarStatus(
   reg: StatusRegistro,
 ): Promise<{ ok: boolean; erro: string | null }> {
-  const { chamarZapi } = await import("@/lib/zapi.server");
+  const { publicarStatusPelaConexao } = await import("@/lib/whatsapp/provedor.server");
 
   if (reg.tipo === "imagem") {
     const url = reg.imagem_url ? await urlDaImagem(reg.imagem_url) : null;
     if (!url) return { ok: false, erro: "Imagem não encontrada." };
-    const ri = await chamarZapi("send-image-status", {
-      metodo: "POST",
-      corpo: { image: url, caption: reg.legenda || "" },
-      conexaoId: reg.conexao_id,
+    const ri = await publicarStatusPelaConexao(reg.conexao_id, {
+      tipo: "imagem",
+      imagemUrl: url,
+      legenda: reg.legenda || "",
     });
-    return { ok: ri.ok, erro: ri.ok ? null : (ri.erro ?? "Falha ao publicar o status.") };
+    return { ok: ri.ok, erro: ri.ok ? null : ri.erro.mensagem };
   }
 
-  const r = await chamarZapi("send-text-status", {
-    metodo: "POST",
-    corpo: { message: reg.texto, backgroundColor: reg.cor_fundo },
-    conexaoId: reg.conexao_id,
+  const r = await publicarStatusPelaConexao(reg.conexao_id, {
+    tipo: "texto",
+    texto: reg.texto,
+    corFundo: reg.cor_fundo,
   });
 
-  return { ok: r.ok, erro: r.ok ? null : (r.erro ?? "Falha ao publicar o status.") };
+  return { ok: r.ok, erro: r.ok ? null : r.erro.mensagem };
 }
 
 /** Publica um agendamento e registra o resultado. */

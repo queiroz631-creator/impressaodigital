@@ -3,13 +3,35 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizarTelefone } from "@/lib/whatsapp-comum";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { TipoMidia } from "@/lib/whatsapp/providers/tipos";
 
-/** Lê o identificador da mensagem devolvido pela Z-API (permite editar/apagar depois). */
-function idDaResposta(dados: unknown): string | null {
-  if (!dados || typeof dados !== "object") return null;
-  const d = dados as { messageId?: unknown; zaapId?: unknown; id?: unknown };
-  const bruto = d.messageId ?? d.zaapId ?? d.id;
-  return bruto ? String(bruto) : null;
+/**
+ * Envio pelo provedor da conexão (fachada multiprovedor). O atendente NÃO
+ * conhece Z-API nem Evolution: a conexão da conversa define por onde a
+ * mensagem sai. Nunca lança — devolve `{ ok, mensagemId, erro }`.
+ */
+async function enviarTextoPelaConversa(
+  conexaoId: string | null,
+  telefone: string,
+  texto: string,
+): Promise<{ ok: boolean; mensagemId: string | null; erro: string | null }> {
+  const { enviarTextoPelaConexao } = await import("@/lib/whatsapp/provedor.server");
+  const r = await enviarTextoPelaConexao(conexaoId, { telefone, texto });
+  return r.ok
+    ? { ok: true, mensagemId: r.dados.mensagemId, erro: null }
+    : { ok: false, mensagemId: null, erro: r.erro.mensagem };
+}
+
+async function enviarMidiaPelaConversa(
+  conexaoId: string | null,
+  telefone: string,
+  midia: { tipo: TipoMidia; url: string; legenda?: string; nomeArquivo?: string | null },
+): Promise<{ ok: boolean; mensagemId: string | null; erro: string | null }> {
+  const { enviarMidiaPelaConexao } = await import("@/lib/whatsapp/provedor.server");
+  const r = await enviarMidiaPelaConexao(conexaoId, { telefone, ...midia });
+  return r.ok
+    ? { ok: true, mensagemId: r.dados.mensagemId, erro: null }
+    : { ok: false, mensagemId: null, erro: r.erro.mensagem };
 }
 
 /**
@@ -73,24 +95,14 @@ export const enviarTextoWhatsapp = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { chamarZapi } = await import("@/lib/zapi.server");
-
     const telefone = normalizarTelefone(data.telefone);
     if (!telefone) throw new Error("Telefone inválido.");
 
+    // Envia pelo provedor da conexão da conversa (Z-API ou Evolution).
     const conexaoId = await conexaoDaConversa(context.supabase, data.conversaId);
-    const r = await chamarZapi("send-text", {
-      metodo: "POST",
-      corpo: { phone: telefone, message: data.mensagem },
-      conexaoId,
-    });
+    const r = await enviarTextoPelaConversa(conexaoId, telefone, data.mensagem);
 
     if (data.conversaId) {
-      const idMensagem =
-        r.dados && typeof r.dados === "object" && "messageId" in r.dados
-          ? String((r.dados as { messageId: unknown }).messageId)
-          : null;
-
       await context.supabase.from("whatsapp_mensagens").insert({
         conversa_id: data.conversaId,
         direcao: "saida",
@@ -98,8 +110,8 @@ export const enviarTextoWhatsapp = createServerFn({ method: "POST" })
         texto: data.mensagem,
         autor: data.autor ?? "Atendente",
         status: r.ok ? "enviada" : "erro",
-        erro: r.ok ? null : (r.erro ?? "Falha no envio"),
-        whatsapp_message_id: idMensagem,
+        erro: r.ok ? null : r.erro,
+        whatsapp_message_id: r.mensagemId,
       });
 
       if (r.ok) {
@@ -132,11 +144,11 @@ export const enviarDigitandoWhatsapp = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { enviarPresencaDigitando } = await import("@/lib/zapi.server");
+    const { enviarPresencaPelaConexao } = await import("@/lib/whatsapp/provedor.server");
     const telefone = normalizarTelefone(data.telefone);
     if (!telefone) return { ok: false as const };
     const conexaoId = await conexaoDaConversa(context.supabase, data.conversaId);
-    await enviarPresencaDigitando(telefone, 4000, conexaoId);
+    await enviarPresencaPelaConexao(conexaoId, telefone, 4000);
     return { ok: true as const };
   });
 
@@ -158,8 +170,6 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { chamarZapi } = await import("@/lib/zapi.server");
-
     const telefone = normalizarTelefone(data.telefone);
     if (!telefone) throw new Error("Telefone inválido.");
 
@@ -174,28 +184,13 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
       ? data.base64
       : `data:${mimePadrao};base64,${data.base64}`;
 
-    // Documentos genéricos usam a extensão do nome do arquivo na rota da Z-API.
-    const extensao =
-      (data.nomeArquivo.split(".").pop() ?? "").toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
-
     const conexaoId = await conexaoDaConversa(context.supabase, data.conversaId);
-    const r =
-      data.tipo === "imagem"
-        ? await chamarZapi("send-image", {
-            metodo: "POST",
-            corpo: { phone: telefone, image: conteudo, caption: data.legenda ?? "" },
-            conexaoId,
-          })
-        : await chamarZapi(`send-document/${data.tipo === "pdf" ? "pdf" : extensao}`, {
-            metodo: "POST",
-            corpo: {
-              phone: telefone,
-              document: conteudo,
-              fileName: data.nomeArquivo,
-              caption: data.legenda ?? "",
-            },
-            conexaoId,
-          });
+    const r = await enviarMidiaPelaConversa(conexaoId, telefone, {
+      tipo: data.tipo === "imagem" ? "imagem" : "documento",
+      url: conteudo,
+      legenda: data.legenda ?? "",
+      nomeArquivo: data.nomeArquivo,
+    });
 
     if (data.conversaId) {
       await context.supabase.from("whatsapp_mensagens").insert({
@@ -206,8 +201,8 @@ export const enviarArquivoWhatsapp = createServerFn({ method: "POST" })
         arquivo_nome: data.nomeArquivo,
         autor: data.autor ?? "Atendente",
         status: r.ok ? "enviada" : "erro",
-        erro: r.ok ? null : (r.erro ?? "Falha no envio"),
-        whatsapp_message_id: idDaResposta(r.dados),
+        erro: r.ok ? null : r.erro,
+        whatsapp_message_id: r.mensagemId,
       });
 
       if (r.ok) {
@@ -360,8 +355,6 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { chamarZapi } = await import("@/lib/zapi.server");
-
     const { data: conversa } = await context.supabase
       .from("whatsapp_conversas")
       .select("telefone, conexao_id")
@@ -388,7 +381,7 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
       return { ok: false as const, erro: "Mensagem rápida sem imagem." };
 
     let mime: string | null = null;
-    let r: Awaited<ReturnType<typeof chamarZapi>>;
+    let r: { ok: boolean; mensagemId: string | null; erro: string | null };
     if (comImagem) {
       const { data: blob, error: errImg } = await context.supabase.storage
         .from("mensagens-rapidas")
@@ -397,21 +390,14 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
         return { ok: false as const, erro: "Não foi possível ler a imagem salva." };
       mime = blob.type || "image/jpeg";
       const base64 = Buffer.from(await blob.arrayBuffer()).toString("base64");
-      r = await chamarZapi("send-image", {
-        metodo: "POST",
-        corpo: {
-          phone: telefone,
-          image: `data:${mime};base64,${base64}`,
-          caption: rapida.tipo === "texto_imagem" ? (texto ?? "") : "",
-        },
-        conexaoId,
+      r = await enviarMidiaPelaConversa(conexaoId, telefone, {
+        tipo: "imagem",
+        url: `data:${mime};base64,${base64}`,
+        legenda: rapida.tipo === "texto_imagem" ? (texto ?? "") : "",
+        nomeArquivo: rapida.imagem_nome,
       });
     } else {
-      r = await chamarZapi("send-text", {
-        metodo: "POST",
-        corpo: { phone: telefone, message: texto as string },
-        conexaoId,
-      });
+      r = await enviarTextoPelaConversa(conexaoId, telefone, texto as string);
     }
 
     await context.supabase.from("whatsapp_mensagens").insert({
@@ -423,8 +409,8 @@ export const enviarMensagemRapidaWhatsapp = createServerFn({ method: "POST" })
       mime_type: mime,
       autor: data.autor ?? "Atendente",
       status: r.ok ? "enviada" : "erro",
-      erro: r.ok ? null : (r.erro ?? "Falha no envio"),
-      whatsapp_message_id: idDaResposta(r.dados),
+      erro: r.ok ? null : r.erro,
+      whatsapp_message_id: r.mensagemId,
     });
 
     if (r.ok) {
@@ -454,8 +440,6 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
     z.object({ mensagemId: z.string().uuid(), texto: z.string().min(1).max(4000) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { chamarZapi } = await import("@/lib/zapi.server");
-
     const { data: msg, error } = await context.supabase
       .from("whatsapp_mensagens")
       .select(
@@ -480,36 +464,57 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
       .maybeSingle();
     const telefone = normalizarTelefone((conversa as { telefone?: string } | null)?.telefone ?? "");
     if (!telefone) return { ok: false as const, erro: "Telefone da conversa não encontrado." };
-
-    // A Z-API não possui edição de mensagem: apagamos a original no WhatsApp
-    // do cliente e reenviamos o texto corrigido logo em seguida.
-    const consultaApagar = `messages?messageId=${encodeURIComponent(msg.whatsapp_message_id)}&phone=${encodeURIComponent(telefone)}&owner=true`;
     const conexaoId = (conversa as { conexao_id?: string | null } | null)?.conexao_id ?? null;
-    const rApagar = await chamarZapi(consultaApagar, { metodo: "DELETE", conexaoId });
-    if (!rApagar.ok) {
-      return {
-        ok: false as const,
-        erro:
-          rApagar.erro ??
-          "O WhatsApp recusou apagar a mensagem original (o prazo pode ter expirado).",
-      };
-    }
 
-    const r = await chamarZapi("send-text", {
-      metodo: "POST",
-      corpo: { phone: telefone, message: data.texto },
-      conexaoId,
-    });
-    if (!r.ok) {
-      await context.supabase
-        .from("whatsapp_mensagens")
-        .update({ apagada: true, apagada_em: new Date().toISOString() })
-        .eq("id", msg.id);
-      return {
-        ok: false as const,
-        erro:
-          r.erro ?? "A mensagem antiga foi apagada, mas o texto corrigido não pôde ser enviado.",
-      };
+    const { editarMensagemPelaConexao, apagarMensagemPelaConexao, enviarTextoPelaConexao } =
+      await import("@/lib/whatsapp/provedor.server");
+    const { obterProvedorDaConexao } = await import("@/lib/whatsapp/providers/registro.server");
+
+    // Provedores com edição nativa (Evolution) editam no lugar; os demais
+    // (Z-API) não têm edição: apagamos a original e reenviamos o texto.
+    const provedor = await obterProvedorDaConexao(conexaoId);
+    const editaNativo = provedor.ok && provedor.dados.capacidades.editarMensagem;
+
+    let novoId: string | null = null;
+
+    if (editaNativo) {
+      const rEditar = await editarMensagemPelaConexao(conexaoId, {
+        telefone,
+        mensagemId: msg.whatsapp_message_id,
+        texto: data.texto,
+      });
+      if (!rEditar.ok) {
+        return { ok: false as const, erro: rEditar.erro.mensagem };
+      }
+      novoId = msg.whatsapp_message_id;
+    } else {
+      const rApagar = await apagarMensagemPelaConexao(conexaoId, {
+        telefone,
+        mensagemId: msg.whatsapp_message_id,
+      });
+      if (!rApagar.ok) {
+        return {
+          ok: false as const,
+          erro:
+            rApagar.erro.mensagem ||
+            "O WhatsApp recusou apagar a mensagem original (o prazo pode ter expirado).",
+        };
+      }
+
+      const r = await enviarTextoPelaConexao(conexaoId, { telefone, texto: data.texto });
+      if (!r.ok) {
+        await context.supabase
+          .from("whatsapp_mensagens")
+          .update({ apagada: true, apagada_em: new Date().toISOString() })
+          .eq("id", msg.id);
+        return {
+          ok: false as const,
+          erro:
+            r.erro.mensagem ||
+            "A mensagem antiga foi apagada, mas o texto corrigido não pôde ser enviado.",
+        };
+      }
+      novoId = r.dados.mensagemId;
     }
 
     await context.supabase
@@ -519,7 +524,7 @@ export const editarMensagemWhatsapp = createServerFn({ method: "POST" })
         texto_original: msg.texto_original ?? msg.texto,
         editada: true,
         editada_em: new Date().toISOString(),
-        whatsapp_message_id: idDaResposta(r.dados) ?? msg.whatsapp_message_id,
+        whatsapp_message_id: novoId ?? msg.whatsapp_message_id,
       })
       .eq("id", msg.id);
 
@@ -547,8 +552,6 @@ export const reenviarMensagemWhatsapp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ mensagemId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { chamarZapi } = await import("@/lib/zapi.server");
-
     const { data: msg, error } = await context.supabase
       .from("whatsapp_mensagens")
       .select(
@@ -573,15 +576,11 @@ export const reenviarMensagemWhatsapp = createServerFn({ method: "POST" })
     if (!telefone) return { ok: false as const, erro: "Telefone da conversa não encontrado." };
     const conexaoId = (conversa as { conexao_id?: string | null } | null)?.conexao_id ?? null;
 
-    let r: Awaited<ReturnType<typeof chamarZapi>>;
+    let r: { ok: boolean; mensagemId: string | null; erro: string | null };
     if (msg.tipo === "texto") {
       const texto = (msg.texto ?? "").trim();
       if (!texto) return { ok: false as const, erro: "Mensagem sem texto para reenviar." };
-      r = await chamarZapi("send-text", {
-        metodo: "POST",
-        corpo: { phone: telefone, message: texto },
-        conexaoId,
-      });
+      r = await enviarTextoPelaConversa(conexaoId, telefone, texto);
     } else {
       if (!msg.arquivo_url) {
         return {
@@ -597,28 +596,12 @@ export const reenviarMensagemWhatsapp = createServerFn({ method: "POST" })
         return { ok: false as const, erro: "Arquivo muito grande para reenviar." };
       const mime = msg.mime_type ?? "application/octet-stream";
       const conteudo = `data:${mime};base64,${buffer.toString("base64")}`;
-      if (msg.tipo === "imagem") {
-        r = await chamarZapi("send-image", {
-          metodo: "POST",
-          corpo: { phone: telefone, image: conteudo, caption: "" },
-          conexaoId,
-        });
-      } else {
-        const extensao =
-          ((msg.arquivo_nome ?? "").split(".").pop() ?? "")
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "") || "bin";
-        r = await chamarZapi(`send-document/${extensao}`, {
-          metodo: "POST",
-          corpo: {
-            phone: telefone,
-            document: conteudo,
-            fileName: msg.arquivo_nome ?? "arquivo",
-            caption: "",
-          },
-          conexaoId,
-        });
-      }
+      r = await enviarMidiaPelaConversa(conexaoId, telefone, {
+        tipo: msg.tipo === "imagem" ? "imagem" : "documento",
+        url: conteudo,
+        legenda: "",
+        nomeArquivo: msg.arquivo_nome,
+      });
     }
 
     if (r.ok) {
@@ -627,7 +610,7 @@ export const reenviarMensagemWhatsapp = createServerFn({ method: "POST" })
         .update({
           status: "enviada",
           erro: null,
-          whatsapp_message_id: idDaResposta(r.dados),
+          whatsapp_message_id: r.mensagemId,
         })
         .eq("id", msg.id);
       await context.supabase
@@ -654,8 +637,6 @@ export const apagarMensagemWhatsapp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ mensagemId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { chamarZapi } = await import("@/lib/zapi.server");
-
     const { data: msg, error } = await context.supabase
       .from("whatsapp_mensagens")
       .select("id, conversa_id, direcao, apagada, whatsapp_message_id, data_hora")
@@ -677,11 +658,14 @@ export const apagarMensagemWhatsapp = createServerFn({ method: "POST" })
     const telefone = normalizarTelefone((conversa as { telefone?: string } | null)?.telefone ?? "");
     if (!telefone) return { ok: false as const, erro: "Telefone da conversa não encontrado." };
 
-    const consulta = `messages?messageId=${encodeURIComponent(msg.whatsapp_message_id)}&phone=${encodeURIComponent(telefone)}&owner=true`;
     const conexaoId = (conversa as { conexao_id?: string | null } | null)?.conexao_id ?? null;
-    const r = await chamarZapi(consulta, { metodo: "DELETE", conexaoId });
+    const { apagarMensagemPelaConexao } = await import("@/lib/whatsapp/provedor.server");
+    const r = await apagarMensagemPelaConexao(conexaoId, {
+      telefone,
+      mensagemId: msg.whatsapp_message_id,
+    });
     if (!r.ok) {
-      return { ok: false as const, erro: r.erro ?? "O WhatsApp recusou apagar esta mensagem." };
+      return { ok: false as const, erro: r.erro.mensagem || "O WhatsApp recusou apagar esta mensagem." };
     }
 
     await context.supabase

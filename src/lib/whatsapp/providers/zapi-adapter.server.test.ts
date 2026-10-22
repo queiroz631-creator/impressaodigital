@@ -293,3 +293,26 @@ describe("resolvedor de provedor lendo o banco", () => {
     expect(await obterProvedorDaConexao("conn-z")).toMatchObject({ ok: false, erro: { codigo: "nao_configurado" } });
   });
 });
+
+describe("credenciais da conexão — nunca cair na instância principal por engano", () => {
+  it("conexão Z-API sem credenciais próprias usa o ambiente (comportamento histórico)", async () => {
+    estado.conexao = { provedor: "zapi", base_url: "", instance_id: null, instance_token: null, client_token: null };
+    const r = await enviarTextoPelaConexao("conn-zapi", { telefone: "1", texto: "a" });
+    expect(r).toMatchObject({ ok: true });
+    expect(String(fetchMock.mock.calls[0]![0])).toBe(`${BASE}/send-text`);
+  });
+
+  it("conexão de OUTRO provedor sem credenciais Z-API NÃO usa o ambiente: nao_configurado e nenhuma rede", async () => {
+    estado.conexao = { provedor: "evolution", base_url: "", instance_id: null, instance_token: null, client_token: null };
+    const r = await enviarTextoPelaConexao("conn-evo", { telefone: "1", texto: "a" });
+    expect(r).toMatchObject({ ok: false, erro: { codigo: "nao_configurado" } });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("conexão Z-API com credenciais próprias continua isolada", async () => {
+    estado.conexao = { provedor: "zapi", base_url: "", instance_id: "CID", instance_token: "CTOK", client_token: "CCLI" };
+    const r = await enviarTextoPelaConexao("conn-zapi", { telefone: "1", texto: "a" });
+    expect(r).toMatchObject({ ok: true });
+    expect(String(fetchMock.mock.calls[0]![0])).toBe("https://api.z-api.io/instances/CID/token/CTOK/send-text");
+  });
+});

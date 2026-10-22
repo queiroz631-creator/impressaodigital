@@ -6,9 +6,9 @@
  * multiprovedor) e registra a saída no histórico (`whatsapp_mensagens`).
  * Nunca lança: devolve o resultado para o chamador decidir o fallback.
  *
- * Para conexões Z-API, as credenciais ficam em `whatsapp_conexoes` e são
- * resolvidas por `chamarZapi`, que aplica o fallback para as variáveis de
- * ambiente da conexão principal (comportamento preservado pelo adaptador).
+ * Para conexões Z-API, as credenciais ficam em `whatsapp_conexoes`; a conexão
+ * principal (sem credenciais próprias) usa as variáveis de ambiente. Conexões
+ * de outro provedor nunca herdam essas credenciais.
  */
 
 import { enviarTextoPelaConexao } from "@/lib/whatsapp/provedor.server";

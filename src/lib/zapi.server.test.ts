@@ -146,6 +146,29 @@ describe("credenciais", () => {
     expect((await credenciaisDaConexao(null))?.instanceId).toBe("ENV_ID");
     expect(estado.consultas).toHaveLength(0);
   });
+
+  it("conexão de OUTRO provedor sem credenciais próprias NÃO usa o ambiente (evita enviar pelo número errado)", async () => {
+    estado.conexao = {
+      provedor: "evolution",
+      base_url: "",
+      instance_id: "",
+      instance_token: "",
+      client_token: "",
+    };
+    expect(await credenciaisDaConexao("c-evo")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("conexão Z-API sem credenciais próprias mantém o fallback do ambiente", async () => {
+    estado.conexao = {
+      provedor: "zapi",
+      base_url: "",
+      instance_id: "",
+      instance_token: "",
+      client_token: "",
+    };
+    expect((await credenciaisDaConexao("c-zapi"))?.instanceId).toBe("ENV_ID");
+  });
 });
 
 describe("chamarZapi — resposta", () => {

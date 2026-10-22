@@ -19,8 +19,17 @@ export function lerCredenciaisZapi(): CredenciaisZapi | null {
 }
 
 /**
- * Credenciais de uma conexão cadastrada em "Conexões". Quando a conexão não
- * tiver credenciais próprias, usa as variáveis de ambiente (conexão principal).
+ * Credenciais da Z-API de uma conexão cadastrada em "Conexões".
+ *
+ * Uma conexão que tenha credenciais Z-API próprias usa as suas. Se a conexão
+ * NÃO tiver credenciais (ou não existir), o resultado depende do provedor:
+ *
+ *  - conexão de OUTRO provedor (ex.: Evolution) devolve `null`: jamais caímos
+ *    nas credenciais da instância principal, o que enviaria a mensagem pelo
+ *    número errado;
+ *  - conexão Z-API sem credenciais próprias (ou sem conexão informada) mantém
+ *    o fallback para as variáveis de ambiente — comportamento histórico da
+ *    conexão principal.
  */
 export async function credenciaisDaConexao(
   conexaoId?: string | null,
@@ -30,7 +39,7 @@ export async function credenciaisDaConexao(
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data } = await supabaseAdmin
     .from("whatsapp_conexoes")
-    .select("base_url, instance_id, instance_token, client_token")
+    .select("base_url, instance_id, instance_token, client_token, provedor")
     .eq("id", conexaoId)
     .maybeSingle();
 
@@ -39,16 +48,24 @@ export async function credenciaisDaConexao(
     instance_id: string | null;
     instance_token: string | null;
     client_token: string | null;
+    provedor: string | null;
   } | null;
 
-  if (!c || !c.instance_id || !c.instance_token || !c.client_token) return lerCredenciaisZapi();
+  const temCredenciais = Boolean(c?.instance_id && c?.instance_token && c?.client_token);
+  if (temCredenciais) {
+    return {
+      baseUrl: (c!.base_url || "https://api.z-api.io").replace(/\/+$/, ""),
+      instanceId: c!.instance_id!,
+      instanceToken: c!.instance_token!,
+      clientToken: c!.client_token!,
+    };
+  }
 
-  return {
-    baseUrl: (c.base_url || "https://api.z-api.io").replace(/\/+$/, ""),
-    instanceId: c.instance_id,
-    instanceToken: c.instance_token,
-    clientToken: c.client_token,
-  };
+  // Sem credenciais próprias: só a conexão Z-API (ou inexistente) usa o
+  // fallback do ambiente. Qualquer outro provedor nunca é enviado pela Z-API.
+  if (c && c.provedor && c.provedor !== "zapi") return null;
+
+  return lerCredenciaisZapi();
 }
 
 /**

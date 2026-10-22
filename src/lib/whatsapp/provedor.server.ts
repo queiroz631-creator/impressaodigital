@@ -14,6 +14,7 @@ import type {
   EnvioTexto,
   MidiaBaixada,
   ProvedorWhatsApp,
+  PublicarStatusEntrada,
   Resultado,
   ResultadoEnvio,
   StatusConexao,
@@ -54,6 +55,14 @@ export function consultarStatusDaConexao(conexaoId: string | null): Promise<Resu
 
 export function editarMensagemPelaConexao(conexaoId: string | null, e: EditarMensagem): Promise<Resultado<null>> {
   return com(conexaoId, (p) => p.editarMensagem({ conexaoId }, e));
+}
+
+/** Publica um status (stories) pelo provedor da conexão. */
+export function publicarStatusPelaConexao(
+  conexaoId: string | null,
+  e: PublicarStatusEntrada,
+): Promise<Resultado<null>> {
+  return com(conexaoId, (p) => p.publicarStatus({ conexaoId }, e));
 }
 
 /** Baixa uma mídia que o provedor não entrega por URL direta (ex.: Evolution). */

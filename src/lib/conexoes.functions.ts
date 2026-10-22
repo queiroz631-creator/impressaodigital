@@ -270,7 +270,7 @@ export const excluirConexao = createServerFn({ method: "POST" })
     return { ok: true as const, erro: null };
   });
 
-/** Consulta na Z-API se o número da conexão está conectado. */
+/** Consulta no provedor da conexão se o número está conectado. */
 export const testarConexao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
@@ -282,34 +282,24 @@ export const testarConexao = createServerFn({ method: "POST" })
     if (!admin)
       return { ok: false as const, conectado: false, detalhe: "Somente administradores." };
 
-    const { chamarZapi } = await import("@/lib/zapi.server");
-    const r = await chamarZapi("status", { conexaoId: data.id });
+    const { consultarStatusDaConexao } = await import("@/lib/whatsapp/provedor.server");
+    const r = await consultarStatusDaConexao(data.id);
     if (!r.ok) {
       return {
         ok: false as const,
         conectado: false,
-        detalhe: r.erro ?? "Não foi possível consultar o status.",
+        detalhe: r.erro.mensagem,
       };
     }
 
-    const dados = (r.dados ?? {}) as { connected?: boolean; error?: string };
     return {
       ok: true as const,
-      conectado: Boolean(dados.connected),
-      detalhe:
-        dados.error ??
-        (dados.connected ? "Número conectado." : "Número desconectado — leia o QR Code na Z-API."),
+      conectado: r.dados.conectado,
+      detalhe: r.dados.detalhe,
     };
   });
 
-const CAMINHOS_WEBHOOK = [
-  { gravar: "update-webhook-received", rotulo: "Ao receber" },
-  { gravar: "update-webhook-delivery", rotulo: "Ao enviar" },
-  { gravar: "update-webhook-message-status", rotulo: "Status da mensagem" },
-  { gravar: "update-webhook-disconnected", rotulo: "Ao desconectar" },
-] as const;
-
-/** Grava na Z-API o endereço de webhook desta conexão (somente sob comando). */
+/** Grava no provedor da conexão o endereço de webhook desta conexão (somente sob comando). */
 export const reconfigurarWebhookConexao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
@@ -323,40 +313,24 @@ export const reconfigurarWebhookConexao = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: conexao } = await supabaseAdmin
       .from("whatsapp_conexoes")
-      .select("webhook_token")
+      .select("webhook_token, provedor")
       .eq("id", data.id)
       .maybeSingle();
 
-    const token = (conexao as { webhook_token?: string } | null)?.webhook_token;
+    const registro = conexao as { webhook_token?: string; provedor?: string | null } | null;
+    const token = registro?.webhook_token;
     if (!token) return { ok: false as const, erro: "Conexão não encontrada.", url: null };
 
-    const url = enderecoWebhook(await urlBaseWebhook(), token);
-    const { chamarZapi } = await import("@/lib/zapi.server");
+    const provedor = registro?.provedor || "zapi";
 
-    const falhas: string[] = [];
-    for (const c of CAMINHOS_WEBHOOK) {
-      const r = await chamarZapi(c.gravar, {
-        metodo: "PUT",
-        corpo: { value: url },
-        conexaoId: data.id,
-      });
-      if (!r.ok) {
-        console.error(`Falha ao gravar webhook ${c.gravar}`, r.erro);
-        falhas.push(c.rotulo);
-      }
-    }
+    // O provedor da conexão define como gravar o webhook (Z-API ou Evolution).
+    const { reconfigurarWebhookConexao: gravarNoProvedor, urlBaseWebhook: baseDoProvedor } =
+      await import("@/lib/whatsapp/webhook-config.server");
+    const r = await gravarNoProvedor(data.id);
 
-    await chamarZapi("update-notify-sent-by-me", {
-      metodo: "PUT",
-      corpo: { notifySentByMe: true },
-      conexaoId: data.id,
-    });
+    const { base } = await baseDoProvedor(provedor);
+    const url = base ? enderecoWebhook(base, token) : null;
 
-    if (falhas.length === CAMINHOS_WEBHOOK.length) {
-      return { ok: false as const, erro: "A Z-API não aceitou os novos endereços.", url: null };
-    }
-    if (falhas.length > 0) {
-      return { ok: true as const, erro: `Não foi possível atualizar: ${falhas.join(", ")}.`, url };
-    }
+    if (!r.ok) return { ok: false as const, erro: r.erro, url: null };
     return { ok: true as const, erro: null as string | null, url };
   });

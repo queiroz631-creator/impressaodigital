@@ -33,14 +33,19 @@ export const Route = createFileRoute("/api/public/whatsapp/midia")({
         const { lerUrlMidiaProvedor } = await import("@/lib/whatsapp/providers/evolution-ids");
         if (lerUrlMidiaProvedor(data.arquivo_url)) {
           const { obterBytesDaMidia } = await import("@/lib/whatsapp/midia.server");
+          const { montarContentDisposition } = await import("@/lib/whatsapp/content-disposition");
           const m = await obterBytesDaMidia(data.arquivo_url);
           if (!m.ok) return new Response("Falha ao obter o arquivo", { status: 502 });
-          const nomeSeguro = (data.arquivo_nome ?? "arquivo").replace(/["\\\r\n]/g, "");
           return new Response(m.bytes as unknown as BodyInit, {
             headers: {
               "Content-Type": data.mime_type ?? m.mime ?? "application/octet-stream",
               "Cache-Control": "private, max-age=3600",
-              "Content-Disposition": `${baixar ? "attachment" : "inline"}; filename="${nomeSeguro}"`,
+              // O nome vem do provedor e pode ter acento em Unicode decomposto,
+              // o que quebraria o header (ByteString). O helper normaliza.
+              "Content-Disposition": montarContentDisposition(
+                baixar ? "attachment" : "inline",
+                data.arquivo_nome,
+              ),
             },
           });
         }
@@ -50,7 +55,7 @@ export const Route = createFileRoute("/api/public/whatsapp/midia")({
           return new Response("Falha ao obter o arquivo", { status: 502 });
         }
 
-        const nome = (data.arquivo_nome ?? "arquivo").replace(/["\\\r\n]/g, "");
+        const { montarContentDisposition } = await import("@/lib/whatsapp/content-disposition");
         const tipo =
           data.mime_type ?? origem.headers.get("content-type") ?? "application/octet-stream";
 
@@ -58,7 +63,10 @@ export const Route = createFileRoute("/api/public/whatsapp/midia")({
           headers: {
             "Content-Type": tipo,
             "Cache-Control": "private, max-age=3600",
-            "Content-Disposition": `${baixar ? "attachment" : "inline"}; filename="${nome}"`,
+            "Content-Disposition": montarContentDisposition(
+              baixar ? "attachment" : "inline",
+              data.arquivo_nome,
+            ),
           },
         });
       },

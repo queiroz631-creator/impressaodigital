@@ -257,9 +257,12 @@ export const enviarCurriculoWhatsapp = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { chamarZapi, conexaoPorTelefone } = await import("@/lib/zapi.server");
+    const { conexaoPorTelefone } = await import("@/lib/zapi.server");
     const { normalizarTelefone } = await import("@/lib/whatsapp-comum");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { enviarTextoPelaConexao, enviarMidiaPelaConexao } = await import(
+      "@/lib/whatsapp/provedor.server"
+    );
 
     const telefone = normalizarTelefone(data.telefone);
     if (!telefone) throw new Error("Telefone inválido.");
@@ -267,29 +270,26 @@ export const enviarCurriculoWhatsapp = createServerFn({ method: "POST" })
     const conexaoId = await conexaoPorTelefone(telefone);
 
     if (data.mensagem?.trim()) {
-      await chamarZapi("send-text", {
-        metodo: "POST",
-        corpo: { phone: telefone, message: data.mensagem.trim() },
-        conexaoId,
-      });
+      await enviarTextoPelaConexao(conexaoId, { telefone, texto: data.mensagem.trim() });
     }
 
     const documento = data.pdfBase64.startsWith("data:")
       ? data.pdfBase64
       : `data:application/pdf;base64,${data.pdfBase64}`;
 
-    const r = await chamarZapi("send-document/pdf", {
-      metodo: "POST",
-      corpo: { phone: telefone, document: documento, fileName: data.nomeArquivo },
-      conexaoId,
+    const r = await enviarMidiaPelaConexao(conexaoId, {
+      telefone,
+      tipo: "documento",
+      url: documento,
+      nomeArquivo: data.nomeArquivo,
     });
 
     await supabaseAdmin.from("whatsapp_auditoria").insert({
       usuario_id: context.userId,
       acao: "curriculo_enviado_whatsapp",
-      detalhe: `Currículo ${data.curriculoId} → ${telefone}${r.ok ? "" : ` (falha: ${r.erro})`}`,
+      detalhe: `Currículo ${data.curriculoId} → ${telefone}${r.ok ? "" : ` (falha: ${r.erro.mensagem})`}`,
     });
 
-    if (!r.ok) throw new Error(r.erro ?? "Não foi possível enviar o currículo.");
+    if (!r.ok) throw new Error(r.erro.mensagem);
     return { ok: true };
   });
