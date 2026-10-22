@@ -39,17 +39,28 @@ function aberta(c: { situacao: string; inicio_em: string | null; fim_em: string 
   return true;
 }
 
+/**
+ * Prêmio do cliente da sessão (titular já verificado por CPF + telefone).
+ * Emite o comprovante na primeira vez; depois devolve sempre o mesmo.
+ */
 async function premioDoCliente(campanhaId: string, clienteId: string) {
   const { admin, urlAssinada } = await import("./numero-sorte-publico.server");
   const supabase = await admin();
+  await supabase.rpc("numero_sorte_vencer_premiacoes");
   const { data } = await supabase
     .from("numero_sorte_premiacoes")
-    .select("situacao, reservado_em, prazo_em, numero_sorte_premios(nome, descricao, imagem_path, condicoes_retirada, local_retirada, instrucoes), numero_sorte_numeros(codigo)")
+    .select("id, situacao, reservado_em, prazo_em, numero_sorte_premios(nome, descricao, imagem_path, condicoes_retirada, local_retirada, instrucoes), numero_sorte_numeros(codigo), numero_sorte_campanhas(nome), clientes(nome)")
     .eq("campanha_id", campanhaId)
     .eq("cliente_id", clienteId)
     .maybeSingle();
   if (!data) return null;
   const p = data.numero_sorte_premios;
+  let comprovante: { token: string; codigo: string } | null = null;
+  if (data.situacao !== "cancelado") {
+    const { data: c, error } = await supabase.rpc("numero_sorte_emitir_comprovante", { _premiacao_id: data.id });
+    if (error) console.error("[numero-sorte] comprovante", error);
+    else comprovante = c as { token: string; codigo: string };
+  }
   return {
     nome: p?.nome ?? "",
     descricao: p?.descricao ?? "",
@@ -58,9 +69,13 @@ async function premioDoCliente(campanhaId: string, clienteId: string) {
     local: p?.local_retirada ?? "",
     instrucoes: p?.instrucoes ?? "",
     numero: data.numero_sorte_numeros?.codigo ?? "",
+    campanha: data.numero_sorte_campanhas?.nome ?? "",
+    cliente: data.clientes?.nome ?? "",
     situacao: data.situacao,
     reservado_em: data.reservado_em,
     prazo_em: data.prazo_em,
+    token: comprovante?.token ?? null,
+    codigoRetirada: comprovante?.codigo ?? null,
   };
 }
 
