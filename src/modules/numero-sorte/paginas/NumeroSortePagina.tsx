@@ -30,8 +30,12 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { RetiradaPainel } from "@/modules/numero-sorte/retirada/RetiradaPainel";
 import { usePermissoes } from "@/hooks/usePermissoes";
-import { BotaoLinkCampanha, ImagemDialog, Participacoes } from "./AdminEtapa2";
-import { IndicadorCard } from "@/modules/sorteios/components/IndicadorCard";
+import { BotaoLinkCampanha, ImagemDialog } from "./AdminEtapa2";
+import {
+  DashboardNumeroSorte,
+  EstatisticasCampanha,
+  RelatoriosNumeroSorte,
+} from "../estatisticas/EstatisticasNumeroSorte";
 import {
   CAPACIDADE_CAMPANHA,
   ROTULO_SITUACAO,
@@ -91,55 +95,36 @@ export function NumeroSortePagina() {
           <TabsTrigger value="estatisticas">Estatísticas</TabsTrigger>
           <TabsTrigger value="configuracoes">Configurações</TabsTrigger>
         </TabsList>
-        <TabsContent value="dashboard"><Dashboard /></TabsContent>
+        <TabsContent value="dashboard"><DashboardNumeroSorte campanhas={campanhasLista} /></TabsContent>
         <TabsContent value="campanhas">
           <Campanhas
             abrirPremios={(id) => {
               setCampanhaSel(id);
               setAba("premios");
             }}
+            abrirEstatisticas={(id) => {
+              setCampanhaSel(id);
+              setAba("estatisticas");
+            }}
           />
         </TabsContent>
         <TabsContent value="premios">
           <Premios campanhaId={campanhaSel} setCampanhaId={setCampanhaSel} />
         </TabsContent>
-        <TabsContent value="participacoes"><Participacoes campanhas={campanhasLista} /></TabsContent>
+        <TabsContent value="participacoes"><RelatoriosNumeroSorte campanhas={campanhasLista} /></TabsContent>
         <TabsContent value="retirada"><RetiradaPainel campanhas={campanhasLista} /></TabsContent>
-        {["estatisticas", "configuracoes"].map((v) => (
-          <TabsContent key={v} value={v}>
-            <Card>
-              <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                Esta área chega na próxima etapa.
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
+        <TabsContent value="estatisticas">
+          <EstatisticasCampanha campanhas={campanhasLista} campanhaId={campanhaSel} setCampanhaId={setCampanhaSel} />
+        </TabsContent>
+        <TabsContent value="configuracoes">
+          <Card>
+            <CardContent className="p-8 text-center text-sm text-muted-foreground">
+              Esta área chega na próxima etapa.
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </>
-  );
-}
-
-function Dashboard() {
-  const { data: campanhas = [] } = useCampanhas();
-  const { data: premios = [] } = useQuery({
-    queryKey: [CHAVE, "premios-todos"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("numero_sorte_premios").select("quantidade");
-      if (error) throw error;
-      return data;
-    },
-  });
-  const conta = (s: SituacaoCampanha) => campanhas.filter((c) => c.situacao === s).length;
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <IndicadorCard titulo="Campanhas" valor={campanhas.length} icone={<Ticket />} />
-      <IndicadorCard titulo="Ativas" valor={conta("ativa")} />
-      <IndicadorCard titulo="Encerradas" valor={conta("encerrada")} />
-      <IndicadorCard
-        titulo="Unidades premiadas"
-        valor={premios.reduce((s, p) => s + p.quantidade, 0)}
-      />
-    </div>
   );
 }
 
@@ -151,7 +136,7 @@ const corSituacao: Record<SituacaoCampanha, "default" | "secondary" | "destructi
   encerrada: "secondary",
 };
 
-function Campanhas({ abrirPremios }: { abrirPremios: (id: string) => void }) {
+function Campanhas({ abrirPremios, abrirEstatisticas }: { abrirPremios: (id: string) => void; abrirEstatisticas: (id: string) => void }) {
   const { user } = useAuth();
   const { pode } = usePermissoes(user?.id);
   const podeGerir = pode("numero_sorte.campanhas.gerenciar");
@@ -206,6 +191,7 @@ function Campanhas({ abrirPremios }: { abrirPremios: (id: string) => void }) {
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={() => abrirPremios(c.id)}>Prêmios</Button>
+              <Button variant="outline" size="sm" onClick={() => abrirEstatisticas(c.id)}>Ver estatísticas</Button>
               {s !== "rascunho" && <BotaoLinkCampanha numero={c.numero} nome={c.nome} />}
               {podeGerir && (
                 <Button variant="outline" size="sm" onClick={() => setImagemDe(c)}>Banner</Button>
