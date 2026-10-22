@@ -32,6 +32,7 @@ import { Route as FotoExpressPapeisRouteImport } from './routes/foto-express.pap
 import { Route as FotosIndexRouteImport } from './routes/fotos.index'
 import { Route as FotosAcessoRouteImport } from './routes/fotos.acesso'
 import { Route as FotosCadastroRouteImport } from './routes/fotos.cadastro'
+import { Route as NumeroDaSorteCampanhaRouteImport } from './routes/numero-da-sorte.$campanha'
 import { Route as OrcamentoTokenRouteImport } from './routes/orcamento.$token'
 import { Route as SorteiosPublicoIndexRouteImport } from './routes/sorteios-publico.index'
 import { Route as SorteiosPublicoCadastroRouteImport } from './routes/sorteios-publico.cadastro'
@@ -192,6 +193,11 @@ const FotosAcessoRoute = FotosAcessoRouteImport.update({
 const FotosCadastroRoute = FotosCadastroRouteImport.update({
   id: '/fotos/cadastro',
   path: '/fotos/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NumeroDaSorteCampanhaRoute = NumeroDaSorteCampanhaRouteImport.update({
+  id: '/numero-da-sorte/$campanha',
+  path: '/numero-da-sorte/$campanha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrcamentoTokenRoute = OrcamentoTokenRouteImport.update({
@@ -465,6 +471,7 @@ export interface FileRoutesByFullPath {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
+  '/numero-da-sorte/$campanha': typeof NumeroDaSorteCampanhaRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -536,6 +543,7 @@ export interface FileRoutesByTo {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
+  '/numero-da-sorte/$campanha': typeof NumeroDaSorteCampanhaRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -608,6 +616,7 @@ export interface FileRoutesById {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
+  '/numero-da-sorte/$campanha': typeof NumeroDaSorteCampanhaRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -681,6 +690,7 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
+    | '/numero-da-sorte/$campanha'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -752,6 +762,7 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
+    | '/numero-da-sorte/$campanha'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -823,6 +834,7 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
+    | '/numero-da-sorte/$campanha'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -895,6 +907,7 @@ export interface RootRouteChildren {
   FotoExpressPapeisRoute: typeof FotoExpressPapeisRoute
   FotosAcessoRoute: typeof FotosAcessoRoute
   FotosCadastroRoute: typeof FotosCadastroRoute
+  NumeroDaSorteCampanhaRoute: typeof NumeroDaSorteCampanhaRoute
   OrcamentoTokenRoute: typeof OrcamentoTokenRoute
   SorteiosPublicoCadastroRoute: typeof SorteiosPublicoCadastroRoute
   SorteiosPublicoCuponsRoute: typeof SorteiosPublicoCuponsRoute
@@ -1106,6 +1119,13 @@ declare module '@tanstack/react-router' {
       path: '/fotos/cadastro'
       fullPath: '/fotos/cadastro'
       preLoaderRoute: typeof FotosCadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/numero-da-sorte/$campanha': {
+      id: '/numero-da-sorte/$campanha'
+      path: '/numero-da-sorte/$campanha'
+      fullPath: '/numero-da-sorte/$campanha'
+      preLoaderRoute: typeof NumeroDaSorteCampanhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orcamento/$token': {
@@ -1468,6 +1488,7 @@ const rootRouteChildren: RootRouteChildren = {
   FotoExpressPapeisRoute: FotoExpressPapeisRoute,
   FotosAcessoRoute: FotosAcessoRoute,
   FotosCadastroRoute: FotosCadastroRoute,
+  NumeroDaSorteCampanhaRoute: NumeroDaSorteCampanhaRoute,
   OrcamentoTokenRoute: OrcamentoTokenRoute,
   SorteiosPublicoCadastroRoute: SorteiosPublicoCadastroRoute,
   SorteiosPublicoCuponsRoute: SorteiosPublicoCuponsRoute,
