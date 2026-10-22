@@ -37,8 +37,11 @@ import {
   RelatoriosNumeroSorte,
 } from "../estatisticas/EstatisticasNumeroSorte";
 import {
-  CAPACIDADE_CAMPANHA,
   ROTULO_SITUACAO,
+  capacidadeIntervalo,
+  montarCodigo,
+  sufixoDoLimite,
+  validarIntervalo,
   proximasSituacoes,
   type SituacaoCampanha,
 } from "../lib/codigo";
@@ -242,7 +245,19 @@ function FormCampanha({ inicial, fechar }: { inicial: Partial<Campanha>; fechar:
     condicoes: inicial.condicoes ?? "",
     limiteConsultas: inicial.limite_consultas_cliente?.toString() ?? "",
     maxParticipacoes: inicial.max_participacoes_cliente?.toString() ?? "",
+    numInicial: inicial.numero ? montarCodigo(inicial.numero, inicial.sufixo_inicial ?? 0) : "00000",
+    numFinal: inicial.numero ? montarCodigo(inicial.numero, inicial.sufixo_final ?? 99999) : "99999",
   });
+  const { data: gerados = 0 } = useQuery({
+    queryKey: [CHAVE, "gerados", inicial.id],
+    enabled: !!inicial.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("numero_sorte_premios").select("quantidade").eq("campanha_id", inicial.id!);
+      if (error) throw error;
+      return data.reduce((s, p) => s + p.quantidade, 0);
+    },
+  });
+  const travado = gerados > 0;
   const salvar = useMutation({
     mutationFn: async () => {
       if (!f.nome.trim()) throw new Error("Informe o nome da campanha.");
@@ -258,9 +273,26 @@ function FormCampanha({ inicial, fechar }: { inicial: Partial<Campanha>; fechar:
       };
       if (dados.inicio_em && dados.fim_em && dados.fim_em <= dados.inicio_em)
         throw new Error("O encerramento deve ser depois do início.");
+      let ini: number, fim: number;
+      if (inicial.numero) {
+        ini = sufixoDoLimite(f.numInicial, inicial.numero);
+        fim = sufixoDoLimite(f.numFinal, inicial.numero);
+      } else {
+        if (!/^\d{5}$/.test(f.numInicial) || !/^\d{5}$/.test(f.numFinal))
+          throw new Error("Informe exatamente 5 dígitos para o início e o fim do intervalo.");
+        ini = Number(f.numInicial);
+        fim = Number(f.numFinal);
+      }
+      const erroIntervalo = validarIntervalo(
+        { inicial: inicial.sufixo_inicial ?? 0, final: inicial.sufixo_final ?? 99999 },
+        { inicial: ini, final: fim },
+        travado,
+      );
+      if (erroIntervalo) throw new Error(erroIntervalo);
+      const comIntervalo = travado ? dados : { ...dados, sufixo_inicial: ini, sufixo_final: fim };
       const { data, error } = inicial.id
-        ? await supabase.from("numero_sorte_campanhas").update(dados).eq("id", inicial.id).select("id").single()
-        : await supabase.from("numero_sorte_campanhas").insert(dados).select("id").single();
+        ? await supabase.from("numero_sorte_campanhas").update(comIntervalo).eq("id", inicial.id).select("id").single()
+        : await supabase.from("numero_sorte_campanhas").insert(comIntervalo).select("id").single();
       if (error) throw error;
       await supabase.from("numero_sorte_auditoria").insert({
         campanha_id: data.id,
@@ -296,6 +328,23 @@ function FormCampanha({ inicial, fechar }: { inicial: Partial<Campanha>; fechar:
             <div><Label>Limite de consultas por cliente</Label><Input type="number" min={1} placeholder="Sem limite" {...campo("limiteConsultas")} /></div>
             <div><Label>Máx. participações por cliente</Label><Input type="number" min={1} placeholder="Sem limite" {...campo("maxParticipacoes")} /></div>
           </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label>{inicial.numero ? "Número inicial" : "Número inicial (prefixo + 5 dígitos)"}</Label>
+              <Input inputMode="numeric" disabled={travado} {...campo("numInicial")} />
+            </div>
+            <div>
+              <Label>{inicial.numero ? "Número final" : "Número final (prefixo + 5 dígitos)"}</Label>
+              <Input inputMode="numeric" disabled={travado} {...campo("numFinal")} />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {travado
+              ? "Esta campanha já tem números gerados: use “Ampliar intervalo” na aba Prêmios."
+              : inicial.numero
+                ? `Os números devem começar com ${inicial.numero} e ter 5 dígitos depois dele.`
+                : "Informe só os 5 últimos dígitos; o prefixo é o número da campanha, definido ao salvar."}
+          </p>
           {!inicial.id && (
             <p className="text-xs text-muted-foreground">O número da campanha é gerado automaticamente e nunca é reaproveitado.</p>
           )}
@@ -351,16 +400,15 @@ function Premios({ campanhaId, setCampanhaId }: { campanhaId: string; setCampanh
             {campanhas.map((c) => <SelectItem key={c.id} value={c.id}>#{c.numero} · {c.nome}</SelectItem>)}
           </SelectContent>
         </Select>
-        {campanha && (
-          <span className="text-xs text-muted-foreground">
-            {usados.toLocaleString("pt-BR")} de {CAPACIDADE_CAMPANHA.toLocaleString("pt-BR")} números usados
-          </span>
-        )}
         <div className="flex-1" />
         {campanha && podeGerir && campanha.situacao !== "encerrada" && (
           <Button onClick={() => setNovo(true)}><Plus className="mr-2 h-4 w-4" /> Novo prêmio</Button>
         )}
       </div>
+      {campanha && (
+        <IntervaloCampanha campanha={campanha} usados={usados}
+          podeGerir={pode("numero_sorte.campanhas.gerenciar")} />
+      )}
       {!campanhaId && <p className="text-sm text-muted-foreground">Escolha uma campanha para ver os prêmios.</p>}
       {campanhaId && premios.length === 0 && (
         <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Nenhum prêmio nesta campanha.</CardContent></Card>
@@ -398,6 +446,90 @@ function Premios({ campanhaId, setCampanhaId }: { campanhaId: string; setCampanh
       )}
       {adicionando && <AdicionarUnidades premio={adicionando} fechar={() => setAdicionando(null)} />}
     </div>
+  );
+}
+
+function IntervaloCampanha({ campanha, usados, podeGerir }: { campanha: Campanha; usados: number; podeGerir: boolean }) {
+  const qc = useQueryClient();
+  const total = capacidadeIntervalo(campanha.sufixo_inicial, campanha.sufixo_final);
+  const [aberto, setAberto] = useState(false);
+  const [novoFinal, setNovoFinal] = useState("");
+  const [confirmando, setConfirmando] = useState(false);
+  const ampliar = useMutation({
+    mutationFn: async (sufixo: number) => {
+      const { error } = await supabase.rpc("numero_sorte_ampliar_intervalo", { _campanha_id: campanha.id, _novo_final: sufixo });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Intervalo ampliado.");
+      qc.invalidateQueries({ queryKey: [CHAVE] });
+      setAberto(false);
+      setConfirmando(false);
+    },
+    onError: (e) => toast.error(erroMsg(e)),
+  });
+  let sufixoNovo: number | null = null;
+  let erro: string | null = null;
+  if (novoFinal) {
+    try {
+      sufixoNovo = sufixoDoLimite(novoFinal, campanha.numero);
+      if (sufixoNovo <= campanha.sufixo_final) erro = "O novo número final deve ser maior que o atual.";
+    } catch (e) {
+      erro = erroMsg(e);
+    }
+  }
+  const item = (rotulo: string, valor: string | number) => (
+    <div><p className="text-xs text-muted-foreground">{rotulo}</p><p className="font-semibold">{typeof valor === "number" ? valor.toLocaleString("pt-BR") : valor}</p></div>
+  );
+  return (
+    <Card>
+      <CardContent className="flex flex-wrap items-end gap-6 p-4">
+        {item("Prefixo", String(campanha.numero))}
+        {item("Número inicial", montarCodigo(campanha.numero, campanha.sufixo_inicial))}
+        {item("Número final", montarCodigo(campanha.numero, campanha.sufixo_final))}
+        {item("Possíveis", total)}
+        {item("Já gerados", usados)}
+        {item("Restantes", Math.max(0, total - usados))}
+        <div className="flex-1" />
+        {podeGerir && campanha.situacao !== "encerrada" && campanha.sufixo_final < 99999 && (
+          <Button variant="outline" size="sm" onClick={() => { setNovoFinal(""); setConfirmando(false); setAberto(true); }}>
+            Ampliar intervalo
+          </Button>
+        )}
+      </CardContent>
+      {aberto && (
+        <Dialog open onOpenChange={(o) => !o && setAberto(false)}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Ampliar intervalo · campanha #{campanha.numero}</DialogTitle></DialogHeader>
+            {!confirmando ? (
+              <div className="space-y-2">
+                <Label>Novo número final</Label>
+                <Input inputMode="numeric" value={novoFinal} placeholder={montarCodigo(campanha.numero, 99999)}
+                  onChange={(e) => setNovoFinal(e.target.value)} />
+                {erro && <p className="text-xs text-destructive">{erro}</p>}
+                <p className="text-xs text-muted-foreground">Números já gerados, participações e comprovantes não são alterados.</p>
+              </div>
+            ) : (
+              <div className="space-y-1 text-sm">
+                <p>Intervalo anterior: <strong>{montarCodigo(campanha.numero, campanha.sufixo_inicial)} até {montarCodigo(campanha.numero, campanha.sufixo_final)}</strong></p>
+                <p>Novo intervalo: <strong>{montarCodigo(campanha.numero, campanha.sufixo_inicial)} até {montarCodigo(campanha.numero, sufixoNovo!)}</strong></p>
+                <p className="text-muted-foreground">Confirma a ampliação?</p>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => (confirmando ? setConfirmando(false) : setAberto(false))}>
+                {confirmando ? "Voltar" : "Cancelar"}
+              </Button>
+              {!confirmando ? (
+                <Button disabled={sufixoNovo === null || !!erro} onClick={() => setConfirmando(true)}>Continuar</Button>
+              ) : (
+                <Button disabled={ampliar.isPending} onClick={() => ampliar.mutate(sufixoNovo!)}>Confirmar ampliação</Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </Card>
   );
 }
 

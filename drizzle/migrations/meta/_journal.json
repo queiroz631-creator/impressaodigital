@@ -414,6 +414,13 @@
       "when": 1792687570793,
       "tag": "0058_numero_sorte_etapa4_relatorios",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1792694728226,
+      "tag": "0059_numero_sorte_intervalo",
+      "breakpoints": true
     }
   ]
 }
