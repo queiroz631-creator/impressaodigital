@@ -76,6 +76,7 @@ function useCampanhas() {
 export function NumeroSortePagina() {
   const [aba, setAba] = useState("dashboard");
   const [campanhaSel, setCampanhaSel] = useState<string>("");
+  const { data: campanhasLista = [] } = useCampanhas();
   return (
     <>
       <PageHeader titulo="Nº da Sorte" subtitulo="Campanhas com números premiados" />
