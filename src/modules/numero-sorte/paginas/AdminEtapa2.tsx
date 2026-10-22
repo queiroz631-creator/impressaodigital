@@ -82,7 +82,7 @@ export function GerenciarImagem({
     if (error) throw error;
   }
 
-  async function enviar(arq: File) {
+    if (!path) { setPrevia(null); return; }
     if (!TIPOS.includes(arq.type)) return toast.error("Use JPG, PNG ou WebP.");
     if (arq.size > 5 * 1024 * 1024) return toast.error("A imagem deve ter até 5 MB.");
     setOcupado(true);
