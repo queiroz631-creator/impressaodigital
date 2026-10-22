@@ -1,13 +1,17 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import * as portalFotos from "@/lib/foto-express-portal.functions";
+import * as portalNumeroSorte from "@/lib/numero-sorte-publico.functions";
+
+const funcoesPortal = [...Object.values(portalFotos), ...Object.values(portalNumeroSorte)].filter(
+  (fn): fn is { url: string } & typeof fn =>
+    typeof fn === "function" && typeof (fn as { url?: unknown }).url === "string",
+);
 
 // Customer functions enforce their independent HttpOnly session on the server.
 export const attachStaffAuth = createMiddleware({ type: "function" }).client(
   async ({ next, serverFnMeta }) => {
-    const customerPortal = Object.values(portalFotos).some(
-      (fn) => fn.url.endsWith(serverFnMeta.id),
-    );
+    const customerPortal = funcoesPortal.some((fn) => fn.url.endsWith(serverFnMeta.id));
     if (customerPortal) return next();
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
