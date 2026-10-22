@@ -348,7 +348,8 @@ const SITUACOES: Record<TipoRelatorio, Record<string, string>> = {
   retiradas: ROTULO_PREMIACAO,
 };
 
-type Linha = Record<string, string | number | boolean | null>;
+type V = string | number | boolean | null | undefined;
+type Linha = Partial<Record<"campanha_id" | "cliente_id" | "campanha_numero" | "nome" | "telefone" | "cpf" | "consultas" | "distintos" | "primeiro_acesso" | "ultima" | "premiado" | "situacao" | "cliente" | "numero" | "criado_em" | "resultado" | "premio" | "reservado_em" | "prazo_em" | "entregue_em" | "entregue_por" | "excecao_prazo", V>>;
 
 export function RelatoriosNumeroSorte({ campanhas }: { campanhas: Campanha[] }) {
   const [tipo, setTipo] = useState<TipoRelatorio>("participantes");
