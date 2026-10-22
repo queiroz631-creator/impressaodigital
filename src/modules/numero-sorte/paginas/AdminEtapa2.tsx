@@ -83,8 +83,8 @@ export function GerenciarImagem({
   }
 
   async function enviar(arq: File) {
-    if (!TIPOS.includes(arq.type)) return toast.error("Use JPG, PNG ou WebP.");
-    if (arq.size > 5 * 1024 * 1024) return toast.error("A imagem deve ter até 5 MB.");
+    if (!TIPOS.includes(arq.type)) { toast.error("Use JPG, PNG ou WebP."); return; }
+    if (arq.size > 5 * 1024 * 1024) { toast.error("A imagem deve ter até 5 MB."); return; }
     setOcupado(true);
     try {
       const ext = arq.type === "image/png" ? "png" : arq.type === "image/webp" ? "webp" : "jpg";
