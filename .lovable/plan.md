@@ -24,6 +24,8 @@ Nova área dentro de Marketing, sem alterar Sorteios, FOTO EXPRESS ou o restante
 - Consulta do número: "Que pena!" ou "Parabéns" com prêmio, condições, prazo e local; o prêmio fica reservado definitivamente para aquele cliente.
 - Proteção contra tentativas em massa: limite por aparelho/IP, por cliente e por campanha, bloqueio temporário e registro de atividade suspeita.
 
+- Regra do ganhador: cliente premiado não pode mais consultar números na mesma campanha (bloqueio no servidor pelo CPF); continua livre para participar de outras campanhas ativas e pode reabrir o próprio comprovante.
+
 ## Etapa 3 — Comprovante e retirada
 
 - Comprovante com QR Code e código curto próprios (não é o número da sorte, sem CPF/telefone), baixar como imagem, compartilhar e copiar código; recuperação pelo próprio cliente.
