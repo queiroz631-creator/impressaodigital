@@ -73,7 +73,7 @@ export function GerenciarImagem({
   const campo = tabela === "numero_sorte_campanhas" ? "banner_path" : "imagem_path";
 
   useEffect(() => {
-    if (!path) return setPrevia(null);
+    if (!path) { setPrevia(null); return; }
     void supabase.storage.from(BUCKET).createSignedUrl(path, 600).then(({ data }) => setPrevia(data?.signedUrl ?? null));
   }, [path]);
 
@@ -82,7 +82,7 @@ export function GerenciarImagem({
     if (error) throw error;
   }
 
-    if (!path) { setPrevia(null); return; }
+  async function enviar(arq: File) {
     if (!TIPOS.includes(arq.type)) return toast.error("Use JPG, PNG ou WebP.");
     if (arq.size > 5 * 1024 * 1024) return toast.error("A imagem deve ter até 5 MB.");
     setOcupado(true);
