@@ -373,3 +373,9 @@
 - [ ] Etapa 2: página pública, cadastro reaproveitando clientes, consulta; ganhador não participa mais da mesma campanha (só de outras ativas); banner/imagens
 - [ ] Etapa 3: comprovante com QR Code/código curto e retirada
 - [ ] Etapa 4: dashboard completo, estatísticas, relatórios CSV
+
+## Nº da Sorte — Etapa 3 (comprovante e retirada, implementada)
+- [x] Comprovante com QR Code e código curto, PDF/imagem/compartilhar, recuperação pela sessão do titular
+- [x] Retirada: câmera/código, confirmação transacional, exceção de prazo, revogação, histórico
+- [ ] Testar com dados reais no banco de testes (aguarda banco de testes)
+- [ ] Etapa 4 (aguarda pedido)
