@@ -2501,6 +2501,8 @@ export type Database = {
           numero: number
           regulamento: string
           situacao: string
+          sufixo_final: number
+          sufixo_inicial: number
         }
         Insert: {
           atualizado_em?: string
@@ -2518,6 +2520,8 @@ export type Database = {
           numero?: number
           regulamento?: string
           situacao?: string
+          sufixo_final?: number
+          sufixo_inicial?: number
         }
         Update: {
           atualizado_em?: string
@@ -2535,6 +2539,8 @@ export type Database = {
           numero?: number
           regulamento?: string
           situacao?: string
+          sufixo_final?: number
+          sufixo_inicial?: number
         }
         Relationships: []
       }
@@ -2642,6 +2648,47 @@ export type Database = {
             columns: ["numero_id"]
             isOneToOne: false
             referencedRelation: "numero_sorte_numeros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      numero_sorte_intervalo_historico: {
+        Row: {
+          campanha_id: string
+          criado_em: string
+          final_anterior: number
+          final_novo: number
+          id: string
+          inicial_anterior: number
+          inicial_novo: number
+          usuario_id: string | null
+        }
+        Insert: {
+          campanha_id: string
+          criado_em?: string
+          final_anterior: number
+          final_novo: number
+          id?: string
+          inicial_anterior: number
+          inicial_novo: number
+          usuario_id?: string | null
+        }
+        Update: {
+          campanha_id?: string
+          criado_em?: string
+          final_anterior?: number
+          final_novo?: number
+          id?: string
+          inicial_anterior?: number
+          inicial_novo?: number
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "numero_sorte_intervalo_historico_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_campanhas"
             referencedColumns: ["id"]
           },
         ]
@@ -5539,6 +5586,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      numero_sorte_ampliar_intervalo: {
+        Args: { _campanha_id: string; _novo_final: number }
+        Returns: undefined
       }
       numero_sorte_codigo_retirada: { Args: never; Returns: string }
       numero_sorte_confirmar_entrega: {
