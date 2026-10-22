@@ -342,6 +342,8 @@ export const PERMISSOES_SENSIVEIS: { chave: string; nome: string }[] = [
   { chave: "numero_sorte.retiradas.excecao", nome: "Exceção de prazo e revogação de comprovantes do Nº da Sorte" },
   { chave: "numero_sorte.auditoria.visualizar", nome: "Ver auditoria do Nº da Sorte" },
   { chave: "numero_sorte.relatorios.visualizar", nome: "Ver relatórios do Nº da Sorte" },
+  { chave: "numero_sorte.estatisticas.visualizar", nome: "Ver dashboard e estatísticas do Nº da Sorte" },
+  { chave: "numero_sorte.exportar", nome: "Exportar relatórios do Nº da Sorte (CSV)" },
 ];
 
 /** Todas as chaves de permissão do sistema (módulos + telas + sensíveis). */
