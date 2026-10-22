@@ -18,6 +18,7 @@ import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as MelhoriasRouteImport } from './routes/melhorias'
 import { Route as MensagensRapidasRouteImport } from './routes/mensagens-rapidas'
+import { Route as NumeroSorteRouteImport } from './routes/numero-sorte'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as PrecosRouteImport } from './routes/precos'
 import { Route as UsuariosRouteImport } from './routes/usuarios'
@@ -121,6 +122,11 @@ const MelhoriasRoute = MelhoriasRouteImport.update({
 const MensagensRapidasRoute = MensagensRapidasRouteImport.update({
   id: '/mensagens-rapidas',
   path: '/mensagens-rapidas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NumeroSorteRoute = NumeroSorteRouteImport.update({
+  id: '/numero-sorte',
+  path: '/numero-sorte',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrcamentosRoute = OrcamentosRouteImport.update({
@@ -448,6 +454,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
   '/mensagens-rapidas': typeof MensagensRapidasRoute
+  '/numero-sorte': typeof NumeroSorteRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/usuarios': typeof UsuariosRoute
@@ -518,6 +525,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
   '/mensagens-rapidas': typeof MensagensRapidasRoute
+  '/numero-sorte': typeof NumeroSorteRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/usuarios': typeof UsuariosRoute
@@ -589,6 +597,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
   '/mensagens-rapidas': typeof MensagensRapidasRoute
+  '/numero-sorte': typeof NumeroSorteRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/usuarios': typeof UsuariosRoute
@@ -661,6 +670,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/melhorias'
     | '/mensagens-rapidas'
+    | '/numero-sorte'
     | '/orcamentos'
     | '/precos'
     | '/usuarios'
@@ -731,6 +741,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/melhorias'
     | '/mensagens-rapidas'
+    | '/numero-sorte'
     | '/orcamentos'
     | '/precos'
     | '/usuarios'
@@ -801,6 +812,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/melhorias'
     | '/mensagens-rapidas'
+    | '/numero-sorte'
     | '/orcamentos'
     | '/precos'
     | '/usuarios'
@@ -872,6 +884,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   MelhoriasRoute: typeof MelhoriasRoute
   MensagensRapidasRoute: typeof MensagensRapidasRoute
+  NumeroSorteRoute: typeof NumeroSorteRoute
   OrcamentosRoute: typeof OrcamentosRoute
   PrecosRoute: typeof PrecosRoute
   UsuariosRoute: typeof UsuariosRoute
@@ -995,6 +1008,13 @@ declare module '@tanstack/react-router' {
       path: '/mensagens-rapidas'
       fullPath: '/mensagens-rapidas'
       preLoaderRoute: typeof MensagensRapidasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/numero-sorte': {
+      id: '/numero-sorte'
+      path: '/numero-sorte'
+      fullPath: '/numero-sorte'
+      preLoaderRoute: typeof NumeroSorteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orcamentos': {
@@ -1437,6 +1457,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   MelhoriasRoute: MelhoriasRoute,
   MensagensRapidasRoute: MensagensRapidasRoute,
+  NumeroSorteRoute: NumeroSorteRoute,
   OrcamentosRoute: OrcamentosRoute,
   PrecosRoute: PrecosRoute,
   UsuariosRoute: UsuariosRoute,
