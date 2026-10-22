@@ -5562,12 +5562,29 @@ export type Database = {
         Args: { _campanha_id: string; _dados: Json; _quantidade: number }
         Returns: string
       }
+      numero_sorte_dashboard: {
+        Args: {
+          _ate?: string
+          _campanha?: string
+          _de?: string
+          _situacao?: string
+        }
+        Returns: Json
+      }
+      numero_sorte_detalhe_participante: {
+        Args: { _campanha: string; _cliente: string }
+        Returns: Json
+      }
       numero_sorte_detalhe_premiacao: {
         Args: { _premiacao_id: string }
         Returns: Json
       }
       numero_sorte_emitir_comprovante: {
         Args: { _premiacao_id: string }
+        Returns: Json
+      }
+      numero_sorte_estatisticas_campanha: {
+        Args: { _campanha: string }
         Returns: Json
       }
       numero_sorte_gerar_numeros: {
@@ -5586,6 +5603,25 @@ export type Database = {
           _telefone_normalizado: string
         }
         Returns: string
+      }
+      numero_sorte_mascarar_cpf: { Args: { _cpf: string }; Returns: string }
+      numero_sorte_mascarar_telefone: {
+        Args: { _tel: string }
+        Returns: string
+      }
+      numero_sorte_relatorio: {
+        Args: {
+          _ate?: string
+          _busca?: string
+          _campanha?: string
+          _de?: string
+          _limite?: number
+          _offset?: number
+          _premio?: string
+          _situacao?: string
+          _tipo: string
+        }
+        Returns: Json
       }
       numero_sorte_resumo_premios: {
         Args: { _campanha_id: string }
