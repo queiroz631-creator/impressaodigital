@@ -28,7 +28,8 @@ import {
 import { ROTULO_SITUACAO } from "../lib/codigo";
 
 type Campanha = Database["public"]["Tables"]["numero_sorte_campanhas"]["Row"];
-type Mapa = Record<string, number>;
+type Chave = "reservado" | "entregue" | "vencido" | "cancelado" | "repetida" | "bloqueada" | "limite" | "nao_premiado" | "premiado" | "invalida" | "disponivel";
+type Mapa = Partial<Record<Chave, number>> & Record<string, number | undefined>;
 const CORES = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 const TODAS = "__todas";
 const SEM_DADOS = "Esta campanha ainda não possui participações.";
@@ -101,7 +102,7 @@ function Grafico({ titulo, vazio, children }: { titulo: string; vazio: boolean; 
 }
 
 function pizza(m: Mapa, rotulos: Record<string, string>) {
-  return Object.entries(m).filter(([, v]) => v > 0).map(([k, v]) => ({ nome: rotulos[k] ?? k, valor: v }));
+  return Object.entries(m).filter(([, v]) => (v ?? 0) > 0).map(([k, v]) => ({ nome: rotulos[k] ?? k, valor: v ?? 0 }));
 }
 const ROT_NUM: Record<string, string> = { disponivel: "Disponíveis", reservado: "Reservados", entregue: "Entregues", vencido: "Vencidos", cancelado: "Cancelados" };
 
@@ -124,7 +125,7 @@ export function DashboardNumeroSorte({ campanhas }: { campanhas: Campanha[] }) {
       const { data, error } = await supabase.rpc("numero_sorte_dashboard", {
         _campanha: f.campanha || undefined, _situacao: f.situacao || undefined,
         _de: p.de ?? undefined, _ate: p.ate ?? undefined,
-      });
+      } as never);
       if (error) throw error;
       return data as unknown as Dash;
     },
@@ -389,7 +390,7 @@ function Relatorio({ tipo, campanhas }: { tipo: TipoRelatorio; campanhas: Campan
   const { data, isLoading, error } = useQuery({
     queryKey: ["numero-sorte", "relatorio", args, pagina],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("numero_sorte_relatorio", { ...args, _limite: 50, _offset: pagina * 50 });
+      const { data, error } = await supabase.rpc("numero_sorte_relatorio", { ...args, _limite: 50, _offset: pagina * 50 } as never);
       if (error) throw error;
       return data as unknown as { total: number; linhas: Linha[] };
     },

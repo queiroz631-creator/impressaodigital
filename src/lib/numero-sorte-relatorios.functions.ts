@@ -45,7 +45,7 @@ export const exportarRelatorioNumeroSorte = createServerFn({ method: "POST" })
         _premio: data.premio ?? undefined,
         _limite: 1000,
         _offset: offset,
-      });
+      } as never);
       if (error) {
         console.error("exportar relatorio", error);
         throw new Error("Não foi possível gerar o relatório.");
