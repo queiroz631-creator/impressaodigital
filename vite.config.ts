@@ -22,7 +22,11 @@ export default defineConfig({
       // webhooks de provedores enquanto o sistema roda localmente. O hostname
       // do túnel é aleatório a cada execução, então liberamos o domínio
       // inteiro em vez de um host fixo. Não afeta produção.
-      allowedHosts: [".trycloudflare.com"],
+      //
+      // dev.zapapi.tech: ambiente de DESENVOLVIMENTO na VPS (2.24.95.54),
+      // acessado pelo Traefik. Sem esta entrada o Vite responde 403
+      // ("This host is not allowed") porque o proxy entrega o Host público.
+      allowedHosts: [".trycloudflare.com", "dev.zapapi.tech"],
     },
     define: {
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(supabaseUrl),
