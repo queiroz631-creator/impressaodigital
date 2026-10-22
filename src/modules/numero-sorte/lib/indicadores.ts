@@ -120,7 +120,7 @@ export function formatarLinhaExportacao(l: Record<string, unknown>): Record<stri
     const v = l[k];
     if (typeof v === "string") out[k] = new Date(v).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
   }
-  if (typeof l.resultado === "string") out.resultado = ROTULO_RESULTADO[l.resultado] ?? l.resultado;
-  if (typeof l.situacao === "string" && ROTULO_PREMIACAO[l.situacao]) out.situacao = ROTULO_PREMIACAO[l.situacao];
+  if (typeof l["resultado"] === "string") out["resultado"] = ROTULO_RESULTADO[l["resultado"]] ?? l["resultado"];
+  if (typeof l["situacao"] === "string" && ROTULO_PREMIACAO[l["situacao"]]) out["situacao"] = ROTULO_PREMIACAO[l["situacao"]];
   return out;
 }
