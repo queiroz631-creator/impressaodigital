@@ -1730,7 +1730,7 @@ function Conversa({
           <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
             <div
               ref={scroll}
-              className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1"
+              className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1"
             >
 
               {!isLoading &&
