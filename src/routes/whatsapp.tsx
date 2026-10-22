@@ -39,8 +39,17 @@ import {
   UserCheck,
   X,
   Zap,
+  Smile,
   type LucideIcon,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+const GRUPOS_EMOJI_CHAT = [
+  { nome: "Rostos", emojis: ["😀", "😃", "😄", "😁", "😊", "😍", "🥰", "😘", "😎", "🤩", "🥳", "😂", "🤣", "😉", "😋", "🤗", "🤭", "😇", "🤔", "😅", "😢", "😭", "😡", "😴"] },
+  { nome: "Gestos", emojis: ["👍", "👎", "👏", "🙌", "🤝", "🙏", "💪", "👌", "✌️", "🤞", "👋", "🤟", "👉", "👆", "☝️", "✋"] },
+  { nome: "Corações e símbolos", emojis: ["❤️", "💖", "💝", "💯", "✅", "❌", "⚠️", "⭐", "✨", "🔥", "🎉", "🎁", "📌", "📍", "⏰", "📅"] },
+  { nome: "Trabalho", emojis: ["🖨️", "📄", "📑", "📎", "📸", "🖼️", "📦", "🚚", "💰", "💳", "🧾", "📞", "📱", "💬", "🏪", "🕐"] },
+];
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
@@ -1988,6 +1997,51 @@ function Conversa({
               >
                 <Zap className="h-4 w-4" />
               </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" aria-label="Adicionar emoji" title="Adicionar emoji">
+                    <Smile className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  side="top"
+                  className="max-h-80 w-80 space-y-3 overflow-y-auto p-3"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  onCloseAutoFocus={(e) => e.preventDefault()}
+                >
+                  {GRUPOS_EMOJI_CHAT.map((grupo) => (
+                    <div key={grupo.nome} className="space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground">{grupo.nome}</p>
+                      <div className="grid grid-cols-8 gap-0.5">
+                        {grupo.emojis.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            aria-label={`Inserir ${emoji}`}
+                            className="flex h-8 w-8 items-center justify-center rounded text-xl hover:bg-accent"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              const campo = campoTexto.current;
+                              const inicio = campo?.selectionStart ?? texto.length;
+                              const fim = campo?.selectionEnd ?? texto.length;
+                              const novo = texto.slice(0, inicio) + emoji + texto.slice(fim);
+                              setTexto(novo);
+                              const pos = inicio + emoji.length;
+                              requestAnimationFrame(() => {
+                                campo?.focus();
+                                campo?.setSelectionRange(pos, pos);
+                              });
+                            }}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </PopoverContent>
+              </Popover>
               <Textarea
                 ref={campoTexto}
                 value={texto}
