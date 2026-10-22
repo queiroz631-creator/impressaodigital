@@ -367,3 +367,9 @@
 - [x] Regra isolada em `src/lib/whatsapp-ordem.ts` com 5 testes (`tests/whatsapp-ordem.test.ts`); 39 testes aprovados, build OK, não publicado
 - [ ] Validar na prévia com conversas reais — bloqueado: o banco de dados está pausado e não pôde ser retomado aqui (créditos do Lovable Cloud esgotados no workspace)
 
+
+## Nº da Sorte (Marketing)
+- [x] Etapa 1: campanhas, prêmios e geração segura dos números no painel
+- [ ] Etapa 2: página pública, cadastro reaproveitando clientes, consulta; ganhador não participa mais da mesma campanha (só de outras ativas); banner/imagens
+- [ ] Etapa 3: comprovante com QR Code/código curto e retirada
+- [ ] Etapa 4: dashboard completo, estatísticas, relatórios CSV
