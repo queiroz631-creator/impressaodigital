@@ -53,3 +53,36 @@ export function codigoPertenceCampanha(codigo: string, numeroCampanha: number): 
   const d = decomporCodigo(codigo);
   return !!d && d.campanha === numeroCampanha;
 }
+
+/** Lê um número completo do intervalo ("1200000") e devolve o sufixo, validando o prefixo. */
+export function sufixoDoLimite(texto: string, numeroCampanha: number): number {
+  const limpo = texto.trim();
+  const prefixo = String(numeroCampanha);
+  if (!/^\d+$/.test(limpo) || limpo.length !== prefixo.length + DIGITOS_SUFIXO || !limpo.startsWith(prefixo))
+    throw new Error(`O número deve começar com ${prefixo} e ter exatamente 5 dígitos depois dele.`);
+  return Number(limpo.slice(-DIGITOS_SUFIXO));
+}
+
+export function capacidadeIntervalo(inicial: number, final: number): number {
+  return final - inicial + 1;
+}
+
+/** Valida um intervalo de sufixos; com números gerados, só aceita ampliação do final. */
+export function validarIntervalo(
+  atual: { inicial: number; final: number },
+  novo: { inicial: number; final: number },
+  temNumeros: boolean,
+): string | null {
+  if (novo.inicial < 0 || novo.final > CAPACIDADE_CAMPANHA - 1) return "Intervalo fora do limite do prefixo.";
+  if (novo.inicial > novo.final) return "O número inicial deve ser menor ou igual ao final.";
+  if (temNumeros) {
+    if (novo.inicial !== atual.inicial) return "Com números gerados, o número inicial não pode mudar.";
+    if (novo.final < atual.final) return "Com números gerados, o intervalo só pode ser ampliado.";
+  }
+  return null;
+}
+
+/** Verdadeiro quando cabem `quantidade` novos números no intervalo. */
+export function cabeNoIntervalo(inicial: number, final: number, usados: number, quantidade: number): boolean {
+  return usados + quantidade <= capacidadeIntervalo(inicial, final);
+}
