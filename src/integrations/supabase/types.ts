@@ -2449,6 +2449,211 @@ export type Database = {
         }
         Relationships: []
       }
+      numero_sorte_auditoria: {
+        Row: {
+          campanha_id: string | null
+          criado_em: string
+          detalhe: Json
+          evento: string
+          id: string
+          usuario_id: string | null
+        }
+        Insert: {
+          campanha_id?: string | null
+          criado_em?: string
+          detalhe?: Json
+          evento: string
+          id?: string
+          usuario_id?: string | null
+        }
+        Update: {
+          campanha_id?: string | null
+          criado_em?: string
+          detalhe?: Json
+          evento?: string
+          id?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "numero_sorte_auditoria_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_campanhas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      numero_sorte_campanhas: {
+        Row: {
+          atualizado_em: string
+          banner_path: string | null
+          condicoes: string
+          criado_em: string
+          criado_por: string | null
+          descricao: string
+          fim_em: string | null
+          id: string
+          inicio_em: string | null
+          limite_consultas_cliente: number | null
+          max_participacoes_cliente: number | null
+          nome: string
+          numero: number
+          regulamento: string
+          situacao: string
+        }
+        Insert: {
+          atualizado_em?: string
+          banner_path?: string | null
+          condicoes?: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string
+          fim_em?: string | null
+          id?: string
+          inicio_em?: string | null
+          limite_consultas_cliente?: number | null
+          max_participacoes_cliente?: number | null
+          nome: string
+          numero?: number
+          regulamento?: string
+          situacao?: string
+        }
+        Update: {
+          atualizado_em?: string
+          banner_path?: string | null
+          condicoes?: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string
+          fim_em?: string | null
+          id?: string
+          inicio_em?: string | null
+          limite_consultas_cliente?: number | null
+          max_participacoes_cliente?: number | null
+          nome?: string
+          numero?: number
+          regulamento?: string
+          situacao?: string
+        }
+        Relationships: []
+      }
+      numero_sorte_numeros: {
+        Row: {
+          campanha_id: string
+          codigo: string
+          criado_em: string
+          id: string
+          premio_id: string
+          situacao: string
+          sufixo: number
+        }
+        Insert: {
+          campanha_id: string
+          codigo: string
+          criado_em?: string
+          id?: string
+          premio_id: string
+          situacao?: string
+          sufixo: number
+        }
+        Update: {
+          campanha_id?: string
+          codigo?: string
+          criado_em?: string
+          id?: string
+          premio_id?: string
+          situacao?: string
+          sufixo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "numero_sorte_numeros_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_campanhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "numero_sorte_numeros_premio_id_fkey"
+            columns: ["premio_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_premios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      numero_sorte_premios: {
+        Row: {
+          atualizado_em: string
+          campanha_id: string
+          condicoes_retirada: string
+          criado_em: string
+          criado_por: string | null
+          descricao: string
+          exige_documento: boolean
+          id: string
+          imagem_path: string | null
+          instrucoes: string | null
+          limite_por_cpf: number | null
+          local_retirada: string | null
+          nome: string
+          observacoes: string | null
+          prazo_retirada_dias: number
+          quantidade: number
+          situacao: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          atualizado_em?: string
+          campanha_id: string
+          condicoes_retirada?: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string
+          exige_documento?: boolean
+          id?: string
+          imagem_path?: string | null
+          instrucoes?: string | null
+          limite_por_cpf?: number | null
+          local_retirada?: string | null
+          nome: string
+          observacoes?: string | null
+          prazo_retirada_dias?: number
+          quantidade?: number
+          situacao?: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          atualizado_em?: string
+          campanha_id?: string
+          condicoes_retirada?: string
+          criado_em?: string
+          criado_por?: string | null
+          descricao?: string
+          exige_documento?: boolean
+          id?: string
+          imagem_path?: string | null
+          instrucoes?: string | null
+          limite_por_cpf?: number | null
+          local_retirada?: string | null
+          nome?: string
+          observacoes?: string | null
+          prazo_retirada_dias?: number
+          quantidade?: number
+          situacao?: string
+          valor_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "numero_sorte_premios_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_campanhas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       objetivos_curriculo: {
         Row: {
           ativo: boolean
@@ -5012,6 +5217,26 @@ export type Database = {
         }
         Returns: boolean
       }
+      numero_sorte_criar_premio: {
+        Args: { _campanha_id: string; _dados: Json; _quantidade: number }
+        Returns: string
+      }
+      numero_sorte_gerar_numeros: {
+        Args: { _premio_id: string; _quantidade: number }
+        Returns: number
+      }
+      numero_sorte_resumo_premios: {
+        Args: { _campanha_id: string }
+        Returns: {
+          cancelado: number
+          disponivel: number
+          entregue: number
+          premio_id: string
+          reservado: number
+          vencido: number
+        }[]
+      }
+      numero_sorte_sufixo_aleatorio: { Args: never; Returns: number }
       pode_foto_express: { Args: { _chave?: string }; Returns: boolean }
       pode_sorteios: { Args: never; Returns: boolean }
       sorteio_apuracao_resumo: { Args: { _sorteio_id: string }; Returns: Json }

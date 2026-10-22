@@ -14,6 +14,7 @@ import {
   Settings,
   Sparkles,
   Store,
+  Ticket,
   Users,
   UsersRound,
   Zap,
@@ -213,6 +214,16 @@ export const MODULOS: Modulo[] = [
         permissao: "sorteios.visualizar",
       },
       {
+        id: "numero-sorte",
+        nome: "Nº da Sorte",
+        descricao: "Campanhas com números premiados em panfletos",
+        icone: Ticket,
+        ordem: 3,
+        ativo: true,
+        rota: "/numero-sorte",
+        permissao: "numero_sorte.visualizar",
+      },
+      {
         id: "promocoes",
         nome: "Promoções",
         descricao: "Ofertas e campanhas promocionais",
@@ -322,6 +333,11 @@ export const PERMISSOES_SENSIVEIS: { chave: string; nome: string }[] = [
   { chave: "foto_express.fotos.enviar", nome: "Enviar fotos no FOTO EXPRESS" },
   { chave: "foto_express.fotos.excluir", nome: "Excluir fotos no FOTO EXPRESS" },
   { chave: "foto_express.formatos.gerenciar", nome: "Gerenciar formatos do FOTO EXPRESS" },
+  { chave: "numero_sorte.campanhas.gerenciar", nome: "Gerenciar campanhas do Nº da Sorte" },
+  { chave: "numero_sorte.premios.gerenciar", nome: "Gerenciar prêmios e ver números do Nº da Sorte" },
+  { chave: "numero_sorte.participantes.visualizar", nome: "Ver participantes do Nº da Sorte" },
+  { chave: "numero_sorte.retiradas.validar", nome: "Validar retiradas do Nº da Sorte" },
+  { chave: "numero_sorte.relatorios.visualizar", nome: "Ver relatórios do Nº da Sorte" },
 ];
 
 /** Todas as chaves de permissão do sistema (módulos + telas + sensíveis). */
