@@ -2538,6 +2538,59 @@ export type Database = {
         }
         Relationships: []
       }
+      numero_sorte_comprovantes: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          codigo_hash: string
+          emitido_em: string
+          id: string
+          premiacao_id: string
+          revogado_em: string | null
+          revogado_motivo: string | null
+          revogado_por: string | null
+          token: string
+          token_hash: string
+          utilizado_em: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          codigo_hash: string
+          emitido_em?: string
+          id?: string
+          premiacao_id: string
+          revogado_em?: string | null
+          revogado_motivo?: string | null
+          revogado_por?: string | null
+          token: string
+          token_hash: string
+          utilizado_em?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          codigo_hash?: string
+          emitido_em?: string
+          id?: string
+          premiacao_id?: string
+          revogado_em?: string | null
+          revogado_motivo?: string | null
+          revogado_por?: string | null
+          token?: string
+          token_hash?: string
+          utilizado_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "numero_sorte_comprovantes_premiacao_id_fkey"
+            columns: ["premiacao_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_premiacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       numero_sorte_consultas: {
         Row: {
           campanha_id: string
@@ -2812,6 +2865,51 @@ export type Database = {
             columns: ["campanha_id"]
             isOneToOne: false
             referencedRelation: "numero_sorte_campanhas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      numero_sorte_retiradas: {
+        Row: {
+          comprovante_id: string | null
+          entregue_em: string
+          entregue_por: string
+          excecao_prazo: boolean
+          id: string
+          justificativa: string | null
+          premiacao_id: string
+        }
+        Insert: {
+          comprovante_id?: string | null
+          entregue_em?: string
+          entregue_por: string
+          excecao_prazo?: boolean
+          id?: string
+          justificativa?: string | null
+          premiacao_id: string
+        }
+        Update: {
+          comprovante_id?: string | null
+          entregue_em?: string
+          entregue_por?: string
+          excecao_prazo?: boolean
+          id?: string
+          justificativa?: string | null
+          premiacao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "numero_sorte_retiradas_comprovante_id_fkey"
+            columns: ["comprovante_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_comprovantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "numero_sorte_retiradas_premiacao_id_fkey"
+            columns: ["premiacao_id"]
+            isOneToOne: true
+            referencedRelation: "numero_sorte_premiacoes"
             referencedColumns: ["id"]
           },
         ]
@@ -5442,6 +5540,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      numero_sorte_codigo_retirada: { Args: never; Returns: string }
+      numero_sorte_confirmar_entrega: {
+        Args: {
+          _excecao: boolean
+          _justificativa: string
+          _premiacao_id: string
+        }
+        Returns: Json
+      }
       numero_sorte_consultar: {
         Args: {
           _campanha_id: string
@@ -5455,9 +5562,21 @@ export type Database = {
         Args: { _campanha_id: string; _dados: Json; _quantidade: number }
         Returns: string
       }
+      numero_sorte_detalhe_premiacao: {
+        Args: { _premiacao_id: string }
+        Returns: Json
+      }
+      numero_sorte_emitir_comprovante: {
+        Args: { _premiacao_id: string }
+        Returns: Json
+      }
       numero_sorte_gerar_numeros: {
         Args: { _premio_id: string; _quantidade: number }
         Returns: number
+      }
+      numero_sorte_historico_retiradas: {
+        Args: { _campanha_id: string }
+        Returns: Json
       }
       numero_sorte_identificar_cliente: {
         Args: {
@@ -5479,7 +5598,16 @@ export type Database = {
           vencido: number
         }[]
       }
+      numero_sorte_revogar_comprovante: {
+        Args: { _motivo: string; _premiacao_id: string }
+        Returns: Json
+      }
       numero_sorte_sufixo_aleatorio: { Args: never; Returns: number }
+      numero_sorte_validar_retirada: {
+        Args: { _codigo: string; _token: string }
+        Returns: Json
+      }
+      numero_sorte_vencer_premiacoes: { Args: never; Returns: number }
       pode_foto_express: { Args: { _chave?: string }; Returns: boolean }
       pode_sorteios: { Args: never; Returns: boolean }
       sorteio_apuracao_resumo: { Args: { _sorteio_id: string }; Returns: Json }
