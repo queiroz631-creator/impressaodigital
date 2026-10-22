@@ -15,7 +15,7 @@ import {
 } from "@/lib/numero-sorte-publico.functions";
 import { CampoTelefone } from "@/modules/sorteios/components/publico/CamposPublico";
 import { formatarCpf } from "@/modules/sorteios/validations/cliente";
-import { dataBR, dataHoraBR } from "@/lib/format";
+import { dataBR } from "@/lib/format";
 
 import { ComprovantePublico, type PremioComprovante } from "./ComprovantePublico";
 
