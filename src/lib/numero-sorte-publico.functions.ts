@@ -111,12 +111,31 @@ export const obterCampanhaPublica = createServerFn({ method: "GET" })
 
 const identificacao = z.object({
   numero: z.coerce.number().int().positive(),
-  nome: z.string().trim().min(3).max(120),
+  nome: z.string().trim().max(120).default(""),
   cpf: z.string().trim().max(20),
   telefone: z.string().trim().max(25),
   aceiteRegulamento: z.literal(true),
   aceiteMarketing: z.boolean(),
 });
+
+/** Primeiro passo do acesso (igual ao FOTO EXPRESS): reconhece o CPF já cadastrado. */
+export const iniciarAcessoNumeroSorte = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ numero: z.coerce.number().int().positive(), cpf: z.string().trim().max(20) }).parse(d))
+  .handler(({ data }) =>
+    executar(async () => {
+      const s = await import("./numero-sorte-publico.server");
+      await s.limitarIp("identificar_cpf", 15);
+      const c = await carregarCampanha(data.numero);
+      if (!aberta(c)) throw new s.ErroPublico("FECHADA", "Esta campanha não está recebendo participações agora.");
+      const cpf = normalizarCpf(data.cpf);
+      if (!cpf || !validarCpf(cpf).ok) throw new s.ErroPublico("CPF", "CPF inválido.");
+      const supabase = await s.admin();
+      const { data: cli } = await supabase.from("clientes").select("nome,telefone,telefone_normalizado").eq("cpf", cpf).maybeSingle();
+      const tel = s.normalizarTelefone(cli?.telefone_normalizado || cli?.telefone || "");
+      const nome = cli?.nome?.trim() || null;
+      return { encontrado: !!cli, nome, pedeNome: !nome, telefoneFinal: tel.length >= 4 ? tel.slice(-4) : null };
+    }),
+  );
 
 export const identificarParticipante = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => identificacao.parse(d))
@@ -128,6 +147,8 @@ export const identificarParticipante = createServerFn({ method: "POST" })
       if (!aberta(c)) throw new s.ErroPublico("FECHADA", "Esta campanha não está recebendo participações agora.");
       const vCpf = validarCpf(data.cpf);
       if (!vCpf.ok) throw new s.ErroPublico("CPF", vCpf.erro!);
+      const { data: existente } = await (await s.admin()).from("clientes").select("nome").eq("cpf", normalizarCpf(data.cpf)!).maybeSingle();
+      if (existente?.nome?.trim()) data.nome = existente.nome.trim();
       const vNome = validarNomeCompleto(data.nome);
       if (!vNome.ok) throw new s.ErroPublico("NOME", vNome.erro!);
       const tel = s.normalizarTelefone(data.telefone);
