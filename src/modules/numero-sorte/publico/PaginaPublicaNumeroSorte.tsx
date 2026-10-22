@@ -127,8 +127,8 @@ function Identificacao({ numero, aoEntrar }: { numero: string; aoEntrar: () => v
   return (
     <Card><CardContent className="space-y-4 pt-6">
       <p className="font-semibold">Informe seus dados para participar</p>
-      <div className="space-y-1"><Label>Nome completo</Label><Input value={nome} onChange={(e) => setNome(e.target.value)} autoComplete="name" /></div>
-      <div className="space-y-1"><Label>CPF</Label><Input inputMode="numeric" value={cpf} onChange={(e) => setCpf(formatarCpf(e.target.value))} /></div>
+      <div className="space-y-1"><Label htmlFor="ns-nome">Nome completo</Label><Input id="ns-nome" value={nome} onChange={(e) => setNome(e.target.value)} autoComplete="name" /></div>
+      <div className="space-y-1"><Label htmlFor="ns-cpf">CPF</Label><Input id="ns-cpf" inputMode="numeric" value={cpf} onChange={(e) => setCpf(formatarCpf(e.target.value))} /></div>
       <CampoTelefone valor={telefone} aoMudar={setTelefone} />
       <label className="flex items-start gap-3 text-sm"><Checkbox checked={regulamento} onCheckedChange={(v) => setRegulamento(v === true)} />Li e aceito o regulamento da campanha.</label>
       <label className="flex items-start gap-3 text-sm"><Checkbox checked={marketing} onCheckedChange={(v) => setMarketing(v === true)} />Aceito receber novidades e promoções (opcional).</label>
