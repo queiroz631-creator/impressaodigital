@@ -336,7 +336,11 @@ export const PERMISSOES_SENSIVEIS: { chave: string; nome: string }[] = [
   { chave: "numero_sorte.campanhas.gerenciar", nome: "Gerenciar campanhas do Nº da Sorte" },
   { chave: "numero_sorte.premios.gerenciar", nome: "Gerenciar prêmios e ver números do Nº da Sorte" },
   { chave: "numero_sorte.participantes.visualizar", nome: "Ver participantes do Nº da Sorte" },
+  { chave: "numero_sorte.retiradas.visualizar", nome: "Ver histórico de retiradas do Nº da Sorte" },
   { chave: "numero_sorte.retiradas.validar", nome: "Validar retiradas do Nº da Sorte" },
+  { chave: "numero_sorte.retiradas.confirmar", nome: "Confirmar entrega de prêmios do Nº da Sorte" },
+  { chave: "numero_sorte.retiradas.excecao", nome: "Exceção de prazo e revogação de comprovantes do Nº da Sorte" },
+  { chave: "numero_sorte.auditoria.visualizar", nome: "Ver auditoria do Nº da Sorte" },
   { chave: "numero_sorte.relatorios.visualizar", nome: "Ver relatórios do Nº da Sorte" },
 ];
 
