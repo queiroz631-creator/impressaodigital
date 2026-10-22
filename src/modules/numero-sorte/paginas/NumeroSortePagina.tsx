@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
+import { RetiradaPainel } from "@/modules/numero-sorte/retirada/RetiradaPainel";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { BotaoLinkCampanha, ImagemDialog, Participacoes } from "./AdminEtapa2";
 import { IndicadorCard } from "@/modules/sorteios/components/IndicadorCard";
@@ -103,11 +104,12 @@ export function NumeroSortePagina() {
           <Premios campanhaId={campanhaSel} setCampanhaId={setCampanhaSel} />
         </TabsContent>
         <TabsContent value="participacoes"><Participacoes campanhas={campanhasLista} /></TabsContent>
-        {["retirada", "estatisticas", "configuracoes"].map((v) => (
+        <TabsContent value="retirada"><RetiradaPainel campanhas={campanhasLista} /></TabsContent>
+        {["estatisticas", "configuracoes"].map((v) => (
           <TabsContent key={v} value={v}>
             <Card>
               <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                Esta área chega nas próximas etapas (página pública, comprovante e retirada).
+                Esta área chega na próxima etapa.
               </CardContent>
             </Card>
           </TabsContent>

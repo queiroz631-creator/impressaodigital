@@ -48,6 +48,7 @@ import { Route as CurriculoPublicoTokenRouteImport } from './routes/curriculo.pu
 import { Route as FotoExpressIdFotosRouteImport } from './routes/foto-express.$id.fotos'
 import { Route as FotoExpressIdRevisaoRouteImport } from './routes/foto-express.$id.revisao'
 import { Route as FotosTrabalhosIndexRouteImport } from './routes/fotos.trabalhos.index'
+import { Route as NumeroDaSorteValidarTokenRouteImport } from './routes/numero-da-sorte.validar.$token'
 import { Route as SorteiosIdIndexRouteImport } from './routes/sorteios.$id.index'
 import { Route as SorteiosIdCuponsRouteImport } from './routes/sorteios.$id.cupons'
 import { Route as SorteiosIdDadosRouteImport } from './routes/sorteios.$id.dados'
@@ -276,6 +277,12 @@ const FotosTrabalhosIndexRoute = FotosTrabalhosIndexRouteImport.update({
   path: '/fotos/trabalhos/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NumeroDaSorteValidarTokenRoute =
+  NumeroDaSorteValidarTokenRouteImport.update({
+    id: '/numero-da-sorte/validar/$token',
+    path: '/numero-da-sorte/validar/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SorteiosIdIndexRoute = SorteiosIdIndexRouteImport.update({
   id: '/sorteios/$id/',
   path: '/sorteios/$id/',
@@ -489,6 +496,7 @@ export interface FileRoutesByFullPath {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
+  '/numero-da-sorte/validar/$token': typeof NumeroDaSorteValidarTokenRoute
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -561,6 +569,7 @@ export interface FileRoutesByTo {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
+  '/numero-da-sorte/validar/$token': typeof NumeroDaSorteValidarTokenRoute
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -634,6 +643,7 @@ export interface FileRoutesById {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
+  '/numero-da-sorte/validar/$token': typeof NumeroDaSorteValidarTokenRoute
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -708,6 +718,7 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
+    | '/numero-da-sorte/validar/$token'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -780,6 +791,7 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
+    | '/numero-da-sorte/validar/$token'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -852,6 +864,7 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
+    | '/numero-da-sorte/validar/$token'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -925,6 +938,7 @@ export interface RootRouteChildren {
   CurriculoPublicoTokenRoute: typeof CurriculoPublicoTokenRoute
   FotoExpressIdFotosRoute: typeof FotoExpressIdFotosRoute
   FotoExpressIdRevisaoRoute: typeof FotoExpressIdRevisaoRoute
+  NumeroDaSorteValidarTokenRoute: typeof NumeroDaSorteValidarTokenRoute
   SorteiosIdCuponsRoute: typeof SorteiosIdCuponsRoute
   SorteiosIdDadosRoute: typeof SorteiosIdDadosRoute
   SorteiosIdEditarRoute: typeof SorteiosIdEditarRoute
@@ -1233,6 +1247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FotosTrabalhosIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/numero-da-sorte/validar/$token': {
+      id: '/numero-da-sorte/validar/$token'
+      path: '/numero-da-sorte/validar/$token'
+      fullPath: '/numero-da-sorte/validar/$token'
+      preLoaderRoute: typeof NumeroDaSorteValidarTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sorteios/$id/': {
       id: '/sorteios/$id/'
       path: '/sorteios/$id'
@@ -1506,6 +1527,7 @@ const rootRouteChildren: RootRouteChildren = {
   CurriculoPublicoTokenRoute: CurriculoPublicoTokenRoute,
   FotoExpressIdFotosRoute: FotoExpressIdFotosRoute,
   FotoExpressIdRevisaoRoute: FotoExpressIdRevisaoRoute,
+  NumeroDaSorteValidarTokenRoute: NumeroDaSorteValidarTokenRoute,
   SorteiosIdCuponsRoute: SorteiosIdCuponsRoute,
   SorteiosIdDadosRoute: SorteiosIdDadosRoute,
   SorteiosIdEditarRoute: SorteiosIdEditarRoute,
