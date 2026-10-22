@@ -44,3 +44,12 @@ const TRANSICOES: Record<SituacaoCampanha, SituacaoCampanha[]> = {
 export function proximasSituacoes(atual: SituacaoCampanha): SituacaoCampanha[] {
   return TRANSICOES[atual];
 }
+
+/** Limite padrão de consultas por cliente quando a campanha não define um. */
+export const LIMITE_PADRAO_CONSULTAS = 10;
+
+/** Só dígitos; verdadeiro quando o código tem o prefixo da campanha + 5 dígitos. */
+export function codigoPertenceCampanha(codigo: string, numeroCampanha: number): boolean {
+  const d = decomporCodigo(codigo);
+  return !!d && d.campanha === numeroCampanha;
+}

@@ -2538,6 +2538,61 @@ export type Database = {
         }
         Relationships: []
       }
+      numero_sorte_consultas: {
+        Row: {
+          campanha_id: string
+          cliente_id: string | null
+          codigo: string
+          criado_em: string
+          id: string
+          ip_hash: string | null
+          numero_id: string | null
+          resultado: string
+        }
+        Insert: {
+          campanha_id: string
+          cliente_id?: string | null
+          codigo: string
+          criado_em?: string
+          id?: string
+          ip_hash?: string | null
+          numero_id?: string | null
+          resultado: string
+        }
+        Update: {
+          campanha_id?: string
+          cliente_id?: string | null
+          codigo?: string
+          criado_em?: string
+          id?: string
+          ip_hash?: string | null
+          numero_id?: string | null
+          resultado?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "numero_sorte_consultas_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_campanhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "numero_sorte_consultas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "numero_sorte_consultas_numero_id_fkey"
+            columns: ["numero_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_numeros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       numero_sorte_numeros: {
         Row: {
           campanha_id: string
@@ -2576,6 +2631,113 @@ export type Database = {
           },
           {
             foreignKeyName: "numero_sorte_numeros_premio_id_fkey"
+            columns: ["premio_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_premios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      numero_sorte_participacoes: {
+        Row: {
+          aceite_marketing: boolean
+          aceite_regulamento_em: string
+          campanha_id: string
+          cliente_id: string
+          criado_em: string
+          id: string
+          ip_hash: string | null
+        }
+        Insert: {
+          aceite_marketing?: boolean
+          aceite_regulamento_em?: string
+          campanha_id: string
+          cliente_id: string
+          criado_em?: string
+          id?: string
+          ip_hash?: string | null
+        }
+        Update: {
+          aceite_marketing?: boolean
+          aceite_regulamento_em?: string
+          campanha_id?: string
+          cliente_id?: string
+          criado_em?: string
+          id?: string
+          ip_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "numero_sorte_participacoes_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_campanhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "numero_sorte_participacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      numero_sorte_premiacoes: {
+        Row: {
+          campanha_id: string
+          cliente_id: string
+          id: string
+          numero_id: string
+          prazo_em: string
+          premio_id: string
+          reservado_em: string
+          situacao: string
+        }
+        Insert: {
+          campanha_id: string
+          cliente_id: string
+          id?: string
+          numero_id: string
+          prazo_em: string
+          premio_id: string
+          reservado_em?: string
+          situacao?: string
+        }
+        Update: {
+          campanha_id?: string
+          cliente_id?: string
+          id?: string
+          numero_id?: string
+          prazo_em?: string
+          premio_id?: string
+          reservado_em?: string
+          situacao?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "numero_sorte_premiacoes_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_campanhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "numero_sorte_premiacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "numero_sorte_premiacoes_numero_id_fkey"
+            columns: ["numero_id"]
+            isOneToOne: true
+            referencedRelation: "numero_sorte_numeros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "numero_sorte_premiacoes_premio_id_fkey"
             columns: ["premio_id"]
             isOneToOne: false
             referencedRelation: "numero_sorte_premios"
@@ -2653,6 +2815,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      numero_sorte_sessoes: {
+        Row: {
+          campanha_id: string
+          cliente_id: string
+          criado_em: string
+          expira_em: string
+          id: string
+          token_hash: string
+        }
+        Insert: {
+          campanha_id: string
+          cliente_id: string
+          criado_em?: string
+          expira_em: string
+          id?: string
+          token_hash: string
+        }
+        Update: {
+          campanha_id?: string
+          cliente_id?: string
+          criado_em?: string
+          expira_em?: string
+          id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "numero_sorte_sessoes_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "numero_sorte_campanhas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "numero_sorte_sessoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      numero_sorte_tentativas: {
+        Row: {
+          acao: string
+          criado_em: string
+          id: string
+          ip_hash: string
+        }
+        Insert: {
+          acao: string
+          criado_em?: string
+          id?: string
+          ip_hash: string
+        }
+        Update: {
+          acao?: string
+          criado_em?: string
+          id?: string
+          ip_hash?: string
+        }
+        Relationships: []
       }
       objetivos_curriculo: {
         Row: {
@@ -5217,6 +5442,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      numero_sorte_consultar: {
+        Args: {
+          _campanha_id: string
+          _cliente_id: string
+          _codigo: string
+          _ip_hash: string
+        }
+        Returns: Json
+      }
       numero_sorte_criar_premio: {
         Args: { _campanha_id: string; _dados: Json; _quantidade: number }
         Returns: string
@@ -5224,6 +5458,15 @@ export type Database = {
       numero_sorte_gerar_numeros: {
         Args: { _premio_id: string; _quantidade: number }
         Returns: number
+      }
+      numero_sorte_identificar_cliente: {
+        Args: {
+          _cpf: string
+          _nome: string
+          _telefone: string
+          _telefone_normalizado: string
+        }
+        Returns: string
       }
       numero_sorte_resumo_premios: {
         Args: { _campanha_id: string }
