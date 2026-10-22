@@ -10,11 +10,12 @@ import { Label } from "@/components/ui/label";
 import {
   consultarNumeroSorte,
   identificarParticipante,
+  iniciarAcessoNumeroSorte,
   obterCampanhaPublica,
   sairNumeroSorte,
 } from "@/lib/numero-sorte-publico.functions";
 import { CampoTelefone } from "@/modules/sorteios/components/publico/CamposPublico";
-import { formatarCpf } from "@/modules/sorteios/validations/cliente";
+import { formatarCpf, validarCpf } from "@/modules/sorteios/validations/cliente";
 import { dataBR } from "@/lib/format";
 
 import { ComprovantePublico, type PremioComprovante } from "./ComprovantePublico";
@@ -97,7 +98,10 @@ function Moldura({ children }: { children: React.ReactNode }) {
 }
 
 function Identificacao({ numero, aoEntrar }: { numero: string; aoEntrar: () => void }) {
+  const iniciar = useServerFn(iniciarAcessoNumeroSorte);
   const identificar = useServerFn(identificarParticipante);
+  const [passo, setPasso] = useState<1 | 2>(1);
+  const [dica, setDica] = useState<{ nome: string | null; final: string | null; pedeNome: boolean }>({ nome: null, final: null, pedeNome: true });
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -108,11 +112,20 @@ function Identificacao({ numero, aoEntrar }: { numero: string; aoEntrar: () => v
 
   async function enviar() {
     setErro("");
-    if (!regulamento) return setErro("Para participar, aceite o regulamento.");
     setEnviando(true);
     try {
+      if (passo === 1) {
+        const v = validarCpf(cpf);
+        if (!v.ok) return setErro(v.erro ?? "CPF inválido.");
+        const r = await iniciar({ data: { numero, cpf } });
+        if (!r.ok) return setErro(r.mensagem);
+        setDica({ nome: r.dados.nome, final: r.dados.telefoneFinal, pedeNome: r.dados.pedeNome });
+        setPasso(2);
+        return;
+      }
+      if (!regulamento) return setErro("Para participar, aceite o regulamento.");
       const r = await identificar({
-        data: { numero, nome, cpf, telefone, aceiteRegulamento: true, aceiteMarketing: marketing },
+        data: { numero, nome: dica.pedeNome ? nome : "", cpf, telefone, aceiteRegulamento: true, aceiteMarketing: marketing },
       });
       if (!r.ok) return setErro(r.mensagem);
       aoEntrar();
@@ -125,17 +138,29 @@ function Identificacao({ numero, aoEntrar }: { numero: string; aoEntrar: () => v
 
   return (
     <Card><CardContent className="space-y-4 pt-6">
-      <p className="font-semibold">Informe seus dados para participar</p>
-      <div className="space-y-1"><Label htmlFor="ns-nome">Nome completo</Label><Input id="ns-nome" value={nome} onChange={(e) => setNome(e.target.value)} autoComplete="name" /></div>
-      <div className="space-y-1"><Label htmlFor="ns-cpf">CPF</Label><Input id="ns-cpf" inputMode="numeric" value={cpf} onChange={(e) => setCpf(formatarCpf(e.target.value))} /></div>
-      <CampoTelefone valor={telefone} aoMudar={setTelefone} />
-      <label className="flex items-start gap-3 text-sm"><Checkbox checked={regulamento} onCheckedChange={(v) => setRegulamento(v === true)} />Li e aceito o regulamento da campanha.</label>
-      <label className="flex items-start gap-3 text-sm"><Checkbox checked={marketing} onCheckedChange={(v) => setMarketing(v === true)} />Aceito receber novidades e promoções (opcional).</label>
-      <p className="text-xs text-muted-foreground">Seus dados são usados apenas para controlar sua participação e a entrega do prêmio, e não são exibidos nesta página.</p>
+      {passo === 1 ? (
+        <>
+          <p className="font-semibold">Informe seu CPF para participar</p>
+          <div className="space-y-1"><Label htmlFor="ns-cpf">CPF</Label><Input id="ns-cpf" inputMode="numeric" autoFocus value={cpf} onChange={(e) => setCpf(formatarCpf(e.target.value))} /></div>
+        </>
+      ) : (
+        <>
+          <div>
+            {dica.nome ? <p className="font-medium">Olá, {dica.nome}!</p> : <p className="font-semibold">Complete seu cadastro</p>}
+            {dica.final && <p className="text-sm text-muted-foreground">Confirme o telefone terminado em ****-{dica.final}</p>}
+          </div>
+          {dica.pedeNome && <div className="space-y-1"><Label htmlFor="ns-nome">Nome completo</Label><Input id="ns-nome" value={nome} onChange={(e) => setNome(e.target.value)} autoComplete="name" /></div>}
+          <CampoTelefone valor={telefone} aoMudar={setTelefone} />
+          <label className="flex items-start gap-3 text-sm"><Checkbox checked={regulamento} onCheckedChange={(v) => setRegulamento(v === true)} />Li e aceito o regulamento da campanha.</label>
+          <label className="flex items-start gap-3 text-sm"><Checkbox checked={marketing} onCheckedChange={(v) => setMarketing(v === true)} />Aceito receber novidades e promoções (opcional).</label>
+          <p className="text-xs text-muted-foreground">Seus dados são usados apenas para controlar sua participação e a entrega do prêmio.</p>
+        </>
+      )}
       {erro && <p className="text-sm text-destructive">{erro}</p>}
       <Button className="h-12 w-full text-base" disabled={enviando} onClick={() => void enviar()}>
         {enviando && <Loader2 className="h-5 w-5 animate-spin" />} Continuar
       </Button>
+      {passo === 2 && <Button variant="ghost" className="w-full" onClick={() => { setPasso(1); setTelefone(""); setNome(""); setErro(""); }}>Usar outro CPF</Button>}
     </CardContent></Card>
   );
 }
