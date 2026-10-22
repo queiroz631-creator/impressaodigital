@@ -1037,3 +1037,12 @@ pm run build OK; 	sc sem erros novos (semearam-se tipos explicitos nos callbacks
 - **Resultado verificado:** os 7 arquivos estao agora ignorados (`git check-ignore -v` confirma o padrao de cada um); `git status` mostra **apenas** o `.gitignore`; nenhum arquivo **rastreado** casa com os novos padroes (o `.gitignore` nao retroage sobre arquivos ja versionados, mas aqui nao havia nenhum); `git add -A --dry-run` passaria a adicionar **so** o `.gitignore`.
 - **Observacao:** os arquivos continuam **no disco** (apenas deixam de ser candidatos ao commit). `git add -f` ainda os forcaria - de proposito, para nao travar uma inclusao legitima.
 - **Commits:** `76f7403b` (feat) + `54bb2fd6` (docs/MEMORIA) + este (`chore: padroes do .gitignore` e `docs: registra na MEMORIA`).
+
+**21/10/2026 - Push da branch `desenvolvimento` para o GitHub**
+- **Pergunta:** "faça o push para desenvolvimento".
+- **Antes de enviar:** `git merge-base --is-ancestor origin/desenvolvimento HEAD` -> **fast-forward confirmado**, portanto **nao foi preciso `--force`** (e nao seria aceitavel reescrever historico publicado, conforme `AGENTS.md`). Branch local `desenvolvimento` com upstream `origin/desenvolvimento`. `origin/main` (**`b4ffddfb`**) **nao foi tocado** - o push foi so para `desenvolvimento`.
+- **Conteudo enviado:** **55 commits**, 139 arquivos, **+20.622 / -940** linhas. Deles, os 3 desta sessao (`76f7403b` feat, `54bb2fd6` docs, `21a352eb` chore) mais o historico acumulado desde 14/10, incluindo o merge `4fae0c0d` que traz a `main` (producao) para a `desenvolvimento`.
+- **Resultado:** `881462b6..21a352eb  desenvolvimento -> desenvolvimento` (exit code 0). Reflog remoto confirma `update by push` em 21/10 21:41 -0300. **Conferido na API publica do GitHub**: `21a352eb`, `54bb2fd6` e `76f7403b` estao no topo da branch `desenvolvimento` no repositorio `queiroz631-creator/impressaodigital`.
+- **Estado:** `desenvolvimento` e `origin/desenvolvimento` **sincronizados** (sem ahead/behind). Working tree limpa. `origin/main` intacto.
+- **Nota Lovable:** `AGENTS.md` avisa que push na branch conectada sincroniza de volta no Lovable e aparece no editor - por isso a branch foi mantida em estado funcional antes do envio (**Vitest 400/400** e `npm run build` OK no commit `76f7403b`; os 2 commits seguintes so alteram `.gitignore` e `MEMORIA.md`).
+- **Ainda pendente (exige autorizacao especifica):** aplicar as migracoes do multiprovedor na **VPS** e o **deploy** do build de producao (`NITRO_PRESET=node-server npm run build` + PM2). Nada disso foi feito.
