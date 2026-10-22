@@ -4500,10 +4500,14 @@ export type Database = {
           direcao: string
           editada: boolean
           editada_em: string | null
+          entregue_em: string | null
           erro: string | null
           id: string
+          lida_em: string | null
           mime_type: string | null
+          paginas: number | null
           payload: Json
+          pdf_situacao: string | null
           status: string
           texto: string | null
           texto_original: string | null
@@ -4524,10 +4528,14 @@ export type Database = {
           direcao?: string
           editada?: boolean
           editada_em?: string | null
+          entregue_em?: string | null
           erro?: string | null
           id?: string
+          lida_em?: string | null
           mime_type?: string | null
+          paginas?: number | null
           payload?: Json
+          pdf_situacao?: string | null
           status?: string
           texto?: string | null
           texto_original?: string | null
@@ -4548,10 +4556,14 @@ export type Database = {
           direcao?: string
           editada?: boolean
           editada_em?: string | null
+          entregue_em?: string | null
           erro?: string | null
           id?: string
+          lida_em?: string | null
           mime_type?: string | null
+          paginas?: number | null
           payload?: Json
+          pdf_situacao?: string | null
           status?: string
           texto?: string | null
           texto_original?: string | null

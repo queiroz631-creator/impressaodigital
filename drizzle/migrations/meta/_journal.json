@@ -365,6 +365,13 @@
       "when": 1792115049456,
       "tag": "0051_sorteio_rodadas_ativas",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1792633388726,
+      "tag": "0052_whatsapp_mensagens_paginas_leitura",
+      "breakpoints": true
     }
   ]
 }
