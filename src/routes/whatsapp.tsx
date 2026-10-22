@@ -39,8 +39,17 @@ import {
   UserCheck,
   X,
   Zap,
-  type LucideIcon,
+  Smile,
+  X as XIcone,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+const GRUPOS_EMOJI_CHAT = [
+  { nome: "Rostos", emojis: ["😀", "😃", "😄", "😁", "😊", "😍", "🥰", "😘", "😎", "🤩", "🥳", "😂", "🤣", "😉", "😋", "🤗", "🤭", "😇", "🤔", "😅", "😢", "😭", "😡", "😴"] },
+  { nome: "Gestos", emojis: ["👍", "👎", "👏", "🙌", "🤝", "🙏", "💪", "👌", "✌️", "🤞", "👋", "🤟", "👉", "👆", "☝️", "✋"] },
+  { nome: "Corações e símbolos", emojis: ["❤️", "💖", "💝", "💯", "✅", "❌", "⚠️", "⭐", "✨", "🔥", "🎉", "🎁", "📌", "📍", "⏰", "📅"] },
+  { nome: "Trabalho", emojis: ["🖨️", "📄", "📑", "📎", "📸", "🖼️", "📦", "🚚", "💰", "💳", "🧾", "📞", "📱", "💬", "🏪", "🕐"] },
+];
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout, PageHeader } from "@/components/AppLayout";
