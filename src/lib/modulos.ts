@@ -14,7 +14,6 @@ import {
   Settings,
   Sparkles,
   Store,
-  Ticket,
   Users,
   UsersRound,
   Zap,
