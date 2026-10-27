@@ -18,7 +18,6 @@ import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as MelhoriasRouteImport } from './routes/melhorias'
 import { Route as MensagensRapidasRouteImport } from './routes/mensagens-rapidas'
-import { Route as NumeroSorteRouteImport } from './routes/numero-sorte'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as PrecosRouteImport } from './routes/precos'
 import { Route as UsuariosRouteImport } from './routes/usuarios'
@@ -32,7 +31,6 @@ import { Route as FotoExpressPapeisRouteImport } from './routes/foto-express.pap
 import { Route as FotosIndexRouteImport } from './routes/fotos.index'
 import { Route as FotosAcessoRouteImport } from './routes/fotos.acesso'
 import { Route as FotosCadastroRouteImport } from './routes/fotos.cadastro'
-import { Route as NumeroDaSorteCampanhaRouteImport } from './routes/numero-da-sorte.$campanha'
 import { Route as OrcamentoTokenRouteImport } from './routes/orcamento.$token'
 import { Route as SorteiosPublicoIndexRouteImport } from './routes/sorteios-publico.index'
 import { Route as SorteiosPublicoCadastroRouteImport } from './routes/sorteios-publico.cadastro'
@@ -48,7 +46,6 @@ import { Route as CurriculoPublicoTokenRouteImport } from './routes/curriculo.pu
 import { Route as FotoExpressIdFotosRouteImport } from './routes/foto-express.$id.fotos'
 import { Route as FotoExpressIdRevisaoRouteImport } from './routes/foto-express.$id.revisao'
 import { Route as FotosTrabalhosIndexRouteImport } from './routes/fotos.trabalhos.index'
-import { Route as NumeroDaSorteValidarTokenRouteImport } from './routes/numero-da-sorte.validar.$token'
 import { Route as SorteiosIdIndexRouteImport } from './routes/sorteios.$id.index'
 import { Route as SorteiosIdCuponsRouteImport } from './routes/sorteios.$id.cupons'
 import { Route as SorteiosIdDadosRouteImport } from './routes/sorteios.$id.dados'
@@ -126,11 +123,6 @@ const MensagensRapidasRoute = MensagensRapidasRouteImport.update({
   path: '/mensagens-rapidas',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NumeroSorteRoute = NumeroSorteRouteImport.update({
-  id: '/numero-sorte',
-  path: '/numero-sorte',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OrcamentosRoute = OrcamentosRouteImport.update({
   id: '/orcamentos',
   path: '/orcamentos',
@@ -194,11 +186,6 @@ const FotosAcessoRoute = FotosAcessoRouteImport.update({
 const FotosCadastroRoute = FotosCadastroRouteImport.update({
   id: '/fotos/cadastro',
   path: '/fotos/cadastro',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NumeroDaSorteCampanhaRoute = NumeroDaSorteCampanhaRouteImport.update({
-  id: '/numero-da-sorte/$campanha',
-  path: '/numero-da-sorte/$campanha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrcamentoTokenRoute = OrcamentoTokenRouteImport.update({
@@ -277,12 +264,6 @@ const FotosTrabalhosIndexRoute = FotosTrabalhosIndexRouteImport.update({
   path: '/fotos/trabalhos/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NumeroDaSorteValidarTokenRoute =
-  NumeroDaSorteValidarTokenRouteImport.update({
-    id: '/numero-da-sorte/validar/$token',
-    path: '/numero-da-sorte/validar/$token',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const SorteiosIdIndexRoute = SorteiosIdIndexRouteImport.update({
   id: '/sorteios/$id/',
   path: '/sorteios/$id/',
@@ -467,7 +448,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
   '/mensagens-rapidas': typeof MensagensRapidasRoute
-  '/numero-sorte': typeof NumeroSorteRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/usuarios': typeof UsuariosRoute
@@ -478,7 +458,6 @@ export interface FileRoutesByFullPath {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
-  '/numero-da-sorte/$campanha': typeof NumeroDaSorteCampanhaRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -496,7 +475,6 @@ export interface FileRoutesByFullPath {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
-  '/numero-da-sorte/validar/$token': typeof NumeroDaSorteValidarTokenRoute
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -540,7 +518,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
   '/mensagens-rapidas': typeof MensagensRapidasRoute
-  '/numero-sorte': typeof NumeroSorteRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/usuarios': typeof UsuariosRoute
@@ -551,7 +528,6 @@ export interface FileRoutesByTo {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
-  '/numero-da-sorte/$campanha': typeof NumeroDaSorteCampanhaRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -569,7 +545,6 @@ export interface FileRoutesByTo {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
-  '/numero-da-sorte/validar/$token': typeof NumeroDaSorteValidarTokenRoute
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -614,7 +589,6 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/melhorias': typeof MelhoriasRoute
   '/mensagens-rapidas': typeof MensagensRapidasRoute
-  '/numero-sorte': typeof NumeroSorteRoute
   '/orcamentos': typeof OrcamentosRoute
   '/precos': typeof PrecosRoute
   '/usuarios': typeof UsuariosRoute
@@ -625,7 +599,6 @@ export interface FileRoutesById {
   '/foto-express/papeis': typeof FotoExpressPapeisRoute
   '/fotos/acesso': typeof FotosAcessoRoute
   '/fotos/cadastro': typeof FotosCadastroRoute
-  '/numero-da-sorte/$campanha': typeof NumeroDaSorteCampanhaRoute
   '/orcamento/$token': typeof OrcamentoTokenRoute
   '/sorteios-publico/cadastro': typeof SorteiosPublicoCadastroRoute
   '/sorteios-publico/cupons': typeof SorteiosPublicoCuponsRoute
@@ -643,7 +616,6 @@ export interface FileRoutesById {
   '/curriculo/publico/$token': typeof CurriculoPublicoTokenRoute
   '/foto-express/$id/fotos': typeof FotoExpressIdFotosRoute
   '/foto-express/$id/revisao': typeof FotoExpressIdRevisaoRoute
-  '/numero-da-sorte/validar/$token': typeof NumeroDaSorteValidarTokenRoute
   '/sorteios/$id/cupons': typeof SorteiosIdCuponsRoute
   '/sorteios/$id/dados': typeof SorteiosIdDadosRoute
   '/sorteios/$id/editar': typeof SorteiosIdEditarRoute
@@ -689,7 +661,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/melhorias'
     | '/mensagens-rapidas'
-    | '/numero-sorte'
     | '/orcamentos'
     | '/precos'
     | '/usuarios'
@@ -700,7 +671,6 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
-    | '/numero-da-sorte/$campanha'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -718,7 +688,6 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
-    | '/numero-da-sorte/validar/$token'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -762,7 +731,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/melhorias'
     | '/mensagens-rapidas'
-    | '/numero-sorte'
     | '/orcamentos'
     | '/precos'
     | '/usuarios'
@@ -773,7 +741,6 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
-    | '/numero-da-sorte/$campanha'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -791,7 +758,6 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
-    | '/numero-da-sorte/validar/$token'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -835,7 +801,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/melhorias'
     | '/mensagens-rapidas'
-    | '/numero-sorte'
     | '/orcamentos'
     | '/precos'
     | '/usuarios'
@@ -846,7 +811,6 @@ export interface FileRouteTypes {
     | '/foto-express/papeis'
     | '/fotos/acesso'
     | '/fotos/cadastro'
-    | '/numero-da-sorte/$campanha'
     | '/orcamento/$token'
     | '/sorteios-publico/cadastro'
     | '/sorteios-publico/cupons'
@@ -864,7 +828,6 @@ export interface FileRouteTypes {
     | '/curriculo/publico/$token'
     | '/foto-express/$id/fotos'
     | '/foto-express/$id/revisao'
-    | '/numero-da-sorte/validar/$token'
     | '/sorteios/$id/cupons'
     | '/sorteios/$id/dados'
     | '/sorteios/$id/editar'
@@ -909,7 +872,6 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   MelhoriasRoute: typeof MelhoriasRoute
   MensagensRapidasRoute: typeof MensagensRapidasRoute
-  NumeroSorteRoute: typeof NumeroSorteRoute
   OrcamentosRoute: typeof OrcamentosRoute
   PrecosRoute: typeof PrecosRoute
   UsuariosRoute: typeof UsuariosRoute
@@ -920,7 +882,6 @@ export interface RootRouteChildren {
   FotoExpressPapeisRoute: typeof FotoExpressPapeisRoute
   FotosAcessoRoute: typeof FotosAcessoRoute
   FotosCadastroRoute: typeof FotosCadastroRoute
-  NumeroDaSorteCampanhaRoute: typeof NumeroDaSorteCampanhaRoute
   OrcamentoTokenRoute: typeof OrcamentoTokenRoute
   SorteiosPublicoCadastroRoute: typeof SorteiosPublicoCadastroRoute
   SorteiosPublicoCuponsRoute: typeof SorteiosPublicoCuponsRoute
@@ -938,7 +899,6 @@ export interface RootRouteChildren {
   CurriculoPublicoTokenRoute: typeof CurriculoPublicoTokenRoute
   FotoExpressIdFotosRoute: typeof FotoExpressIdFotosRoute
   FotoExpressIdRevisaoRoute: typeof FotoExpressIdRevisaoRoute
-  NumeroDaSorteValidarTokenRoute: typeof NumeroDaSorteValidarTokenRoute
   SorteiosIdCuponsRoute: typeof SorteiosIdCuponsRoute
   SorteiosIdDadosRoute: typeof SorteiosIdDadosRoute
   SorteiosIdEditarRoute: typeof SorteiosIdEditarRoute
@@ -1037,13 +997,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MensagensRapidasRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/numero-sorte': {
-      id: '/numero-sorte'
-      path: '/numero-sorte'
-      fullPath: '/numero-sorte'
-      preLoaderRoute: typeof NumeroSorteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/orcamentos': {
       id: '/orcamentos'
       path: '/orcamentos'
@@ -1133,13 +1086,6 @@ declare module '@tanstack/react-router' {
       path: '/fotos/cadastro'
       fullPath: '/fotos/cadastro'
       preLoaderRoute: typeof FotosCadastroRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/numero-da-sorte/$campanha': {
-      id: '/numero-da-sorte/$campanha'
-      path: '/numero-da-sorte/$campanha'
-      fullPath: '/numero-da-sorte/$campanha'
-      preLoaderRoute: typeof NumeroDaSorteCampanhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orcamento/$token': {
@@ -1245,13 +1191,6 @@ declare module '@tanstack/react-router' {
       path: '/fotos/trabalhos'
       fullPath: '/fotos/trabalhos/'
       preLoaderRoute: typeof FotosTrabalhosIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/numero-da-sorte/validar/$token': {
-      id: '/numero-da-sorte/validar/$token'
-      path: '/numero-da-sorte/validar/$token'
-      fullPath: '/numero-da-sorte/validar/$token'
-      preLoaderRoute: typeof NumeroDaSorteValidarTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sorteios/$id/': {
@@ -1498,7 +1437,6 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   MelhoriasRoute: MelhoriasRoute,
   MensagensRapidasRoute: MensagensRapidasRoute,
-  NumeroSorteRoute: NumeroSorteRoute,
   OrcamentosRoute: OrcamentosRoute,
   PrecosRoute: PrecosRoute,
   UsuariosRoute: UsuariosRoute,
@@ -1509,7 +1447,6 @@ const rootRouteChildren: RootRouteChildren = {
   FotoExpressPapeisRoute: FotoExpressPapeisRoute,
   FotosAcessoRoute: FotosAcessoRoute,
   FotosCadastroRoute: FotosCadastroRoute,
-  NumeroDaSorteCampanhaRoute: NumeroDaSorteCampanhaRoute,
   OrcamentoTokenRoute: OrcamentoTokenRoute,
   SorteiosPublicoCadastroRoute: SorteiosPublicoCadastroRoute,
   SorteiosPublicoCuponsRoute: SorteiosPublicoCuponsRoute,
@@ -1527,7 +1464,6 @@ const rootRouteChildren: RootRouteChildren = {
   CurriculoPublicoTokenRoute: CurriculoPublicoTokenRoute,
   FotoExpressIdFotosRoute: FotoExpressIdFotosRoute,
   FotoExpressIdRevisaoRoute: FotoExpressIdRevisaoRoute,
-  NumeroDaSorteValidarTokenRoute: NumeroDaSorteValidarTokenRoute,
   SorteiosIdCuponsRoute: SorteiosIdCuponsRoute,
   SorteiosIdDadosRoute: SorteiosIdDadosRoute,
   SorteiosIdEditarRoute: SorteiosIdEditarRoute,
