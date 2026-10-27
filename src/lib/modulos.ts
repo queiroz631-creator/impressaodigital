@@ -214,16 +214,6 @@ export const MODULOS: Modulo[] = [
         permissao: "sorteios.visualizar",
       },
       {
-        id: "numero-sorte",
-        nome: "Nº da Sorte",
-        descricao: "Campanhas com números premiados em panfletos",
-        icone: Ticket,
-        ordem: 3,
-        ativo: true,
-        rota: "/numero-sorte",
-        permissao: "numero_sorte.visualizar",
-      },
-      {
         id: "promocoes",
         nome: "Promoções",
         descricao: "Ofertas e campanhas promocionais",
