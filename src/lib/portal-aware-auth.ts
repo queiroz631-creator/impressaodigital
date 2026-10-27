@@ -1,9 +1,8 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import * as portalFotos from "@/lib/foto-express-portal.functions";
-import * as portalNumeroSorte from "@/lib/numero-sorte-publico.functions";
 
-const funcoesPortal = [...Object.values(portalFotos), ...Object.values(portalNumeroSorte)].filter(
+const funcoesPortal = [...Object.values(portalFotos)].filter(
   (fn): fn is { url: string } & typeof fn =>
     typeof fn === "function" && typeof (fn as { url?: unknown }).url === "string",
 );
