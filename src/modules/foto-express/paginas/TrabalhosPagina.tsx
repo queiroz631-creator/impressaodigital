@@ -2,7 +2,8 @@ import { useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, CheckCircle2, Circle, ImageUp, Link2, LockOpen, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
+import { Camera, CheckCircle2, Circle, ImageUp, Link2, LockOpen, Plus, RotateCcw, Search, Trash2, Users } from "lucide-react";
+import { ClientesPortalLista } from "./ClientesPortalLista";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/AppLayout";
 import { ConfirmarAcao } from "@/components/ConfirmarAcao";
@@ -41,6 +42,7 @@ export function TrabalhosPagina() {
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState<(typeof ORDEM_STATUS)[number]>("RASCUNHO");
   const [novoAlbumAberto, setNovoAlbumAberto] = useState(false);
+  const [visao, setVisao] = useState<"albuns" | "clientes">("albuns");
   const reabrirEdicao = useServerFn(reabrirEdicaoPortalFotoExpress);
   const excluirAlbum = useServerFn(excluirAlbumFotoExpress);
   const reabrir = useMutation({
@@ -81,6 +83,8 @@ export function TrabalhosPagina() {
   return <>
     <PageHeader titulo="FOTO EXPRESS" subtitulo="Álbuns de fotos para impressão" />
     <Card className="mb-4"><CardContent className="flex flex-col gap-4 p-4"><div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="text-sm font-semibold">Link público do portal</p><p className="truncate text-xs text-muted-foreground">{urlPublicaFotoExpress()}</p></div><Button variant="outline" size="sm" onClick={() => void navigator.clipboard.writeText(urlPublicaFotoExpress()).then(() => toast.success("Link do portal copiado."))}><Link2 className="mr-2 h-4 w-4" />Copiar link</Button></div><LogoDoPortal /></CardContent></Card>
+    <Tabs value={visao} onValueChange={(v) => setVisao(v as "albuns" | "clientes")} className="mb-4"><TabsList><TabsTrigger value="albuns"><Camera className="mr-2 h-4 w-4" />Álbuns</TabsTrigger><TabsTrigger value="clientes"><Users className="mr-2 h-4 w-4" />Clientes do portal</TabsTrigger></TabsList></Tabs>
+    {visao === "clientes" ? <ClientesPortalLista /> : <>
     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="relative flex-1 sm:max-w-2xl"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Buscar por número, nome ou telefone" value={busca} onChange={(e) => setBusca(e.target.value)} /></div>
       <Button type="button" onClick={() => setNovoAlbumAberto(true)}><Plus className="mr-2 h-4 w-4" />Novo álbum</Button>
@@ -90,6 +94,7 @@ export function TrabalhosPagina() {
     {error && <p className="text-sm text-destructive">{(error as Error).message}</p>}
     {!isLoading && filtrados.length === 0 && <Card><CardContent className="flex flex-col items-center gap-3 p-12 text-center"><Camera className="h-10 w-10 text-muted-foreground" /><p className="font-semibold">Nenhum álbum encontrado</p><p className="text-sm text-muted-foreground">Crie um novo álbum para enviar e preparar as fotos.</p></CardContent></Card>}
     <div className="grid gap-3">{filtrados.map((trabalho) => { const statusVisual = STATUS[trabalho.status]; const podeReabrir = trabalho.origem_portal && trabalho.portal_enviado_em && (trabalho.status === "RECEBIDO" || trabalho.status === "PRONTO_IMPRESSAO"); return <Card key={trabalho.id}><CardContent className="grid gap-4 p-4 sm:grid-cols-[64px_minmax(0,1fr)_auto] sm:items-center"><div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border bg-muted">{trabalho.capaUrl ? <img src={trabalho.capaUrl} alt="" className="h-full w-full object-cover" /> : <Camera className="h-6 w-6 text-muted-foreground" />}</div><div className="min-w-0 space-y-1"><div className="flex flex-wrap items-center gap-2"><span className="font-bold">#{String(trabalho.numero).padStart(6, "0")}</span><Badge variant="outline" className={statusVisual?.cor}>{statusVisual?.nome ?? trabalho.status}</Badge></div><p className="truncate font-medium">{trabalho.cliente_nome || "CLIENTE NÃO INFORMADO"}</p><p className="text-xs text-muted-foreground">{trabalho.cliente_telefone || "Sem telefone"} · {trabalho.foto_express_itens[0]?.count ?? 0} foto(s)</p><p className="text-xs text-muted-foreground">Criado em {dataHora(trabalho.criado_em)} · alterado em {dataHora(trabalho.atualizado_em)}</p>{trabalho.valor_estimado !== null && <p className="pt-1 text-sm font-semibold text-foreground">Valor calculado: {brl(Number(trabalho.valor_estimado))}</p>}</div><div className="flex shrink-0 flex-col gap-2 sm:flex-row">{podeReabrir && <ConfirmarAcao titulo="Reabrir edição para o cliente?" descricao="O cliente poderá alterar novamente as fotos deste álbum. Se houver uma montagem preparada, ela precisará ser revisada novamente." rotuloConfirmar="Reabrir edição" onConfirmar={async () => { await reabrir.mutateAsync(trabalho.id); }}><Button type="button" variant="outline" disabled={reabrir.isPending}><LockOpen className="mr-2 h-4 w-4" />Reabrir edição</Button></ConfirmarAcao>}{trabalho.status === "IMPRESSO" && <Button type="button" variant="outline" disabled={finalizar.isPending} onClick={() => finalizar.mutate(trabalho.id)}><CheckCircle2 className="mr-2 h-4 w-4" />Finalizar</Button>}<Button asChild variant="outline"><Link to="/foto-express/$id/fotos" params={{ id: trabalho.id }}>Abrir álbum</Link></Button><ConfirmarExclusao titulo={`Excluir o álbum #${String(trabalho.numero).padStart(6, "0")}?`} descricao="Todas as fotos, edições, montagens e arquivos de impressão deste álbum serão excluídos. Esta ação não poderá ser desfeita." rotuloConfirmar="Excluir álbum" onConfirmar={async () => { await excluir.mutateAsync(trabalho.id); }}><Button type="button" variant="destructive" size="icon" disabled={excluir.isPending} aria-label={`Excluir álbum ${trabalho.numero}`} title="Excluir álbum"><Trash2 className="h-4 w-4" /></Button></ConfirmarExclusao></div></CardContent></Card>; })}</div>
+    </>}
     <Dialog open={novoAlbumAberto} onOpenChange={setNovoAlbumAberto}><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl"><DialogHeader><DialogTitle>Novo álbum</DialogTitle><DialogDescription>Comece pelos dados do atendimento.</DialogDescription></DialogHeader><NovoTrabalhoPagina emModal onCancelar={() => setNovoAlbumAberto(false)} /></DialogContent></Dialog>
   </>;
 }
