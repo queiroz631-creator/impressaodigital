@@ -51,7 +51,7 @@ export const listarClientesPortalFotos = createServerFn({ method: "GET" })
       if (error) throw new Error(error.message);
       for (const c of data ?? []) {
         const info = mapa.get(c.id)!;
-        clientes.push({ id: c.id, nome: c.nome ?? "", telefone: c.telefone ?? "", cpf: c.cpf ?? "", dataNascimento: c.data_nascimento, primeiroAcesso: info.primeiro, ultimoAcesso: info.ultimo, albuns: info.albuns });
+        clientes.push({ id: c.id, nome: c.nome ?? "", telefone: c.telefone ?? "", cpf: c.cpf ?? "", dataNascimento: c.data_nascimento, email: c.email ?? "", observacao: c.observacao ?? "", primeiroAcesso: info.primeiro, ultimoAcesso: info.ultimo, albuns: info.albuns });
       }
     }
     return clientes.sort((a, b) => (b.ultimoAcesso ?? b.primeiroAcesso ?? "").localeCompare(a.ultimoAcesso ?? a.primeiroAcesso ?? ""));
