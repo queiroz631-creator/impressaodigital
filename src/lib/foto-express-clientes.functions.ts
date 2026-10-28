@@ -7,6 +7,8 @@ export type ClientePortalFotos = {
   telefone: string;
   cpf: string;
   dataNascimento: string | null;
+  email: string;
+  observacao: string;
   primeiroAcesso: string | null;
   ultimoAcesso: string | null;
   albuns: number;
