@@ -47,7 +47,7 @@ export const listarClientesPortalFotos = createServerFn({ method: "GET" })
     if (!ids.length) return [] as ClientePortalFotos[];
     const clientes: ClientePortalFotos[] = [];
     for (let i = 0; i < ids.length; i += 200) {
-      const { data, error } = await supabaseAdmin.from("clientes").select("id, nome, telefone, cpf, data_nascimento").in("id", ids.slice(i, i + 200));
+      const { data, error } = await supabaseAdmin.from("clientes").select("id, nome, telefone, cpf, data_nascimento, email, observacao").in("id", ids.slice(i, i + 200));
       if (error) throw new Error(error.message);
       for (const c of data ?? []) {
         const info = mapa.get(c.id)!;
