@@ -7,6 +7,8 @@ export type ClientePortalFotos = {
   telefone: string;
   cpf: string;
   dataNascimento: string | null;
+  email: string;
+  observacao: string;
   primeiroAcesso: string | null;
   ultimoAcesso: string | null;
   albuns: number;
@@ -45,11 +47,11 @@ export const listarClientesPortalFotos = createServerFn({ method: "GET" })
     if (!ids.length) return [] as ClientePortalFotos[];
     const clientes: ClientePortalFotos[] = [];
     for (let i = 0; i < ids.length; i += 200) {
-      const { data, error } = await supabaseAdmin.from("clientes").select("id, nome, telefone, cpf, data_nascimento").in("id", ids.slice(i, i + 200));
+      const { data, error } = await supabaseAdmin.from("clientes").select("id, nome, telefone, cpf, data_nascimento, email, observacao").in("id", ids.slice(i, i + 200));
       if (error) throw new Error(error.message);
       for (const c of data ?? []) {
         const info = mapa.get(c.id)!;
-        clientes.push({ id: c.id, nome: c.nome ?? "", telefone: c.telefone ?? "", cpf: c.cpf ?? "", dataNascimento: c.data_nascimento, primeiroAcesso: info.primeiro, ultimoAcesso: info.ultimo, albuns: info.albuns });
+        clientes.push({ id: c.id, nome: c.nome ?? "", telefone: c.telefone ?? "", cpf: c.cpf ?? "", dataNascimento: c.data_nascimento, email: c.email ?? "", observacao: c.observacao ?? "", primeiroAcesso: info.primeiro, ultimoAcesso: info.ultimo, albuns: info.albuns });
       }
     }
     return clientes.sort((a, b) => (b.ultimoAcesso ?? b.primeiroAcesso ?? "").localeCompare(a.ultimoAcesso ?? a.primeiroAcesso ?? ""));
