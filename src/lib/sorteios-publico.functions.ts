@@ -126,6 +126,8 @@ function conferirValorMinimo(sorteio: SorteioRow, valorCentavos: number) {
 export const obterSorteioAtivoPublico = createServerFn({ method: "GET" }).handler(async () =>
   executar(async () => {
     const sorteio = await obterSorteioAtivo();
+    const periodo = periodoAberto(sorteio);
+    if (!periodo.aberto) throw new ErroPortal("PERIODO", periodo.mensagem ?? "Indisponível.");
     return { sorteio: dadosPublicosSorteio(sorteio) };
   }),
 );
