@@ -460,6 +460,17 @@ function Calculadora() {
     [linhas, valorAcabamento],
   );
   const resumo = resumoLinhas(linhasFinais);
+
+  /** Impressão simples acima de R$ 20,00 passa automaticamente para a categoria Cópia (uma vez por cruzamento). */
+  const acimaLimiteCopia =
+    estado.tipoServico === "simples" && linhasFinais.some((l) => Number(l.total) > 20);
+  const acimaLimiteAnterior = useRef(false);
+  useEffect(() => {
+    if (acimaLimiteCopia && !acimaLimiteAnterior.current && !estado.copiaManual) {
+      set("copiaManual", true);
+    }
+    acimaLimiteAnterior.current = acimaLimiteCopia;
+  }, [acimaLimiteCopia, estado.copiaManual, set]);
   const quantidadeTotal = estado.arquivos + paginasAdicionais + estado.copiasAdicionais;
   const semQuantidade = quantidadeTotal <= 0;
   /** Decisões obrigatórias antes de exibir valores/resumo. */
@@ -1639,9 +1650,10 @@ function Calculadora() {
                       : "border-magenta-ink text-magenta-ink hover:bg-magenta-ink/10 hover:text-magenta-ink"
                   }
                   onClick={() => set("copiaManual", !estado.copiaManual)}
+                  title={estado.copiaManual ? "Categoria atual: Cópia" : "Categoria atual: Impressão"}
                 >
                   <Copy className="h-4 w-4" />
-                  Cópia Manual {estado.copiaManual ? "(ativa)" : ""}
+                  {estado.copiaManual ? "IMPRESSÃO" : "CÓPIA"}
                 </Button>
                 <p className="text-xs text-muted-foreground">
                   Ativado, mostra em valores de impressão apenas os materiais da categoria &quot;Cópia&quot;.
