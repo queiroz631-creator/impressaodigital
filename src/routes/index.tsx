@@ -461,16 +461,25 @@ function Calculadora() {
   );
   const resumo = resumoLinhas(linhasFinais);
 
-  /** Impressão simples acima de R$ 20,00 passa automaticamente para a categoria Cópia (uma vez por cruzamento). */
-  const acimaLimiteCopia =
-    estado.tipoServico === "simples" && linhasFinais.some((l) => Number(l.total) > 20);
-  const acimaLimiteAnterior = useRef(false);
+  /**
+   * Impressão simples: acima de R$ 20,00 passa para Cópia; abaixo volta para Impressão
+   * (somente ao cruzar o limite). O limite usa sempre os preços da categoria Impressão
+   * para não oscilar quando os preços de Cópia forem menores.
+   */
+  const acimaLimiteCopia = useMemo(() => {
+    if (estado.tipoServico !== "simples") return false;
+    const linhasImpressao = calcularLinhas(materiais ?? [], { ...entrada, copiaManual: false });
+    return linhasImpressao.some((l) => arredondarCentavosCalculadora(l.total + valorAcabamento) > 20);
+  }, [estado.tipoServico, materiais, entrada, valorAcabamento]);
+  const acimaLimiteAnterior = useRef<boolean | null>(null);
   useEffect(() => {
-    if (acimaLimiteCopia && !acimaLimiteAnterior.current && !estado.copiaManual) {
-      set("copiaManual", true);
-    }
+    const anterior = acimaLimiteAnterior.current;
     acimaLimiteAnterior.current = acimaLimiteCopia;
-  }, [acimaLimiteCopia, estado.copiaManual, set]);
+    if (anterior === null || anterior === acimaLimiteCopia) return;
+    if (estado.tipoServico !== "simples") return;
+    if (acimaLimiteCopia && !estado.copiaManual) set("copiaManual", true);
+    if (!acimaLimiteCopia && estado.copiaManual) set("copiaManual", false);
+  }, [acimaLimiteCopia, estado.copiaManual, estado.tipoServico, set]);
   const quantidadeTotal = estado.arquivos + paginasAdicionais + estado.copiasAdicionais;
   const semQuantidade = quantidadeTotal <= 0;
   /** Decisões obrigatórias antes de exibir valores/resumo. */
