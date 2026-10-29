@@ -59,3 +59,25 @@ export function LayoutPublico({
     </div>
   );
 }
+
+/** Tela só com a logo, usada quando não há sorteio disponível. */
+export function TelaSomenteLogo({ mensagem }: { mensagem?: string | null }) {
+  const { data: logo } = useQuery({
+    queryKey: ["sorteios", "logo-portal"],
+    queryFn: () => logoPortalPublica(),
+    staleTime: 5 * 60 * 1000,
+  });
+  return (
+    <div className="tema-portal-sorteios min-h-screen bg-muted/40 flex flex-col items-center justify-center gap-6 px-6 text-center">
+      <img
+        src={logo?.url ?? logoSorteios.url}
+        alt="Queiroz Papelaria"
+        className="w-56 max-w-[70vw] object-contain"
+        onError={(e) => {
+          e.currentTarget.src = logoSorteios.url;
+        }}
+      />
+      {mensagem && <p className="text-sm text-muted-foreground max-w-xs">{mensagem}</p>}
+    </div>
+  );
+}

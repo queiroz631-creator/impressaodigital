@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { LayoutPublico } from "@/modules/sorteios/components/publico/LayoutPublico";
+import { LayoutPublico, TelaSomenteLogo } from "@/modules/sorteios/components/publico/LayoutPublico";
 import { CampoCpf } from "@/modules/sorteios/components/publico/CamposPublico";
 import { iniciarAcessoPublico, obterSorteioAtivoPublico } from "@/lib/sorteios-publico.functions";
 import { validarCpf } from "@/modules/sorteios/validations/cliente";
@@ -75,6 +75,17 @@ function EntradaPortal() {
     } finally {
       setEnviando(false);
     }
+  }
+
+  if (sorteio.isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (indisponivel || sorteio.isError) {
+    return <TelaSomenteLogo mensagem="No momento não há sorteio em andamento." />;
   }
 
   return (
